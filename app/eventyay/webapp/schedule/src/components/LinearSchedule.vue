@@ -28,6 +28,7 @@ import { getLocalizedString, normalizePopularityCount } from '../utils'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import { isShiftSchedule } from '../teamshifts-adapter'
+import { getDayAtScrollPosition, updateDayEndSpace } from '../dayNavigation'
 
 export default {
 	components: { TalkSession, ShiftSession },
@@ -52,6 +53,7 @@ export default {
 		},
 		currentDay: String,
 		forceScrollDay: { type: Number, default: 0 },
+		navigationDay: String,
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
@@ -85,8 +87,7 @@ export default {
 	data () {
 		return {
 			getLocalizedString,
-			scrolledDay: null,
-			_scrollDayUpdate: false
+			scrolledDay: null
 		}
 	},
 	computed: {
@@ -190,51 +191,25 @@ export default {
 	},
 	watch: {
 		forceScrollDay () {
-			this.scrollToDay(this.currentDay, { force: true })
+			this.$nextTick(() => this.scrollToDay(this.currentDay, { force: true }))
 		},
-		async sortObserverKey () {
-			await this.$nextTick()
-			if (this.observer) {
-				this.observer.disconnect()
-			}
-			this.observer = new IntersectionObserver(this.onIntersect, {
-				root: this.scrollParent,
-				rootMargin: '-45% 0px'
-			})
-			let lastBucket
-			for (const [ref, el] of Object.entries(this.$refs)) {
-				if (!ref.startsWith('bucket')) continue
-				const date = moment(el[0].dataset.date).tz(this.timezone)
-				if (lastBucket) {
-					if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
-				}
-				lastBucket = date
-				this.observer.observe(el[0])
-			}
+		sortObserverKey () {
+			this.$nextTick(() => this.onScheduleScroll())
 		},
-		currentDay (day) {
-			if (this._scrollDayUpdate) {
-				this._scrollDayUpdate = false
-				return
-			}
-			this.scrollToDay(day)
+		sessionBuckets () {
+			this.$nextTick(() => this.onScheduleScroll())
+		},
+		scrollParent () {
+			this.bindScrollParent()
 		}
 	},
 	async mounted () {
+		const navigationDay = this.navigationDay
 		await this.$nextTick()
-		this.observer = new IntersectionObserver(this.onIntersect, {
-			root: this.scrollParent,
-			rootMargin: '-45% 0px'
-		})
-		let lastBucket
-		for (const [ref, el] of Object.entries(this.$refs)) {
-			if (!ref.startsWith('bucket')) continue
-			const date = moment(el[0].dataset.date).tz(this.timezone)
-			if (lastBucket) {
-				if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
-			}
-			lastBucket = date
-			this.observer.observe(el[0])
+		this.bindScrollParent()
+		if (navigationDay && navigationDay === this.currentDay) {
+			this.scrollToDay(navigationDay, { force: true })
+			return
 		}
 		// scroll to now
 		// scroll to now, unless URL overrides now
@@ -252,7 +227,19 @@ export default {
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},
+	beforeUnmount () {
+		this._dayScrollTarget?.removeEventListener('scroll', this.onScheduleScroll)
+		window.removeEventListener('resize', this.onScheduleScroll)
+		cancelAnimationFrame(this._dayScrollFrame)
+	},
 	methods: {
+		bindScrollParent () {
+			this._dayScrollTarget?.removeEventListener('scroll', this.onScheduleScroll)
+			this._dayScrollTarget = this.scrollParent || window
+			this._dayScrollTarget.addEventListener('scroll', this.onScheduleScroll, { passive: true })
+			window.addEventListener('resize', this.onScheduleScroll)
+			this.$nextTick(() => this.onScheduleScroll())
+		},
 		titleSortKey (session) {
 			const localizedTitle = getLocalizedString(session?.title)
 			return (localizedTitle || '').toString().toLowerCase()
@@ -355,27 +342,39 @@ export default {
 			if (!dayBucket) return
 			const el = this.$refs[this.getBucketName(dayBucket.date)]?.[0]
 			if (!el) return
+			this.updateDayEndSpace()
+			const clearance = this.getStickyClearance()
 			if (this.scrollParent) {
-				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - 8
-				this.scrollParent.scrollTop = top
+				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - clearance
+				this.scrollParent.scrollTo({ top, behavior: 'instant' })
 			} else {
-				window.scroll({ top: el.offsetTop + this.getOffsetTop() - 8 })
+				window.scrollBy({ top: el.getBoundingClientRect().top - clearance, behavior: 'instant' })
 			}
 			this.scrolledDay = moment.tz(dayStr, 'YYYY-MM-DD', this.timezone).startOf('day')
 		},
-		onIntersect (results) {
-			if (!this.showDayHeaders) return
-			const intersection = results[0]
-			const day = moment(intersection.target.dataset.date).tz(this.timezone).startOf('day')
-			if (intersection.isIntersecting) {
-				this.scrolledDay = day
-				this._scrollDayUpdate = true
+		updateDayEndSpace () {
+			const bucket = Object.values(this.bucketFirstByDay).at(-1)
+			const lastDay = bucket && this.showDayHeaders ? this.$refs[this.getBucketName(bucket.date)]?.[0] : null
+			updateDayEndSpace(this.$el, lastDay, this.scrollParent?.clientHeight || window.innerHeight, this.getStickyClearance())
+		},
+		onScheduleScroll () {
+			if (this._dayScrollFrame) return
+			this._dayScrollFrame = requestAnimationFrame(() => {
+				this._dayScrollFrame = null
+				this.updateDayEndSpace()
+				if (!this.showDayHeaders) return
+				const top = (this.scrollParent?.getBoundingClientRect().top || 0) + this.getStickyClearance()
+				const bounds = this.$el.getBoundingClientRect()
+				if (bounds.bottom <= top) return
+				const starts = Object.values(this.bucketFirstByDay).map(bucket => {
+					const el = this.$refs[this.getBucketName(bucket.date)]?.[0]
+					return el ? { day: bucket.date.format('YYYY-MM-DD'), top: el.getBoundingClientRect().top } : null
+				}).filter(Boolean)
+				const day = getDayAtScrollPosition(starts, top)
+				if (!day) return
+				this.scrolledDay = moment.tz(day, this.timezone).startOf('day')
 				this.$emit('changeDay', this.scrolledDay)
-			} else if (intersection.rootBounds && (intersection.boundingClientRect.y - intersection.rootBounds.y) > 0) {
-				this.scrolledDay = day.clone().subtract(1, 'day')
-				this._scrollDayUpdate = true
-				this.$emit('changeDay', this.scrolledDay)
-			}
+			})
 		}
 	}
 }
@@ -383,6 +382,7 @@ export default {
 <style lang="stylus">
 .c-linear-schedule
 	display: flex
+	padding-bottom: var(--schedule-day-end-padding, 0px)
 	flex-direction: column
 	min-height: 0
 	.bucket
@@ -442,4 +442,8 @@ export default {
 			padding: 12px
 			.title
 				font-size: 22px
+
+@media print
+	.c-linear-schedule
+		padding-bottom: 0
 </style>

@@ -92,6 +92,7 @@ import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString, daysOccupiedBySession } from '../utils'
+import { getDayAtScrollPosition, updateDayEndSpace } from '../dayNavigation'
 import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
@@ -127,6 +128,7 @@ export default {
 		},
 		currentDay: String,
 		forceScrollDay: { type: Number, default: 0 },
+		navigationDay: String,
 		now: Object,
 		timezone: String,
 		locale: String,
@@ -157,7 +159,6 @@ export default {
 			scrollContentWidth: 0,
 			scrollThumbWidth: 100,
 			scrollThumbLeft: 0,
-			_scrollDayUpdate: false,
 			_scrollSource: null,
 			_thumbDrag: null,
 			roomTooltip: { visible: false, text: '', x: 0, y: 0 }
@@ -278,8 +279,13 @@ export default {
 			const slicesLookup = {}
 			const pushSlice = function (date, {hasSession = false, hasBreak = false, hasStart = false, hasEnd = false} = {}) {
 				const name = getSliceName(date)
+				const datebreak = date.valueOf() === date.clone().startOf('day').valueOf()
 				let slice = slicesLookup[name]
 				if (slice) {
+					if (datebreak) {
+						slice.date = date
+						slice.datebreak = true
+					}
 					slice.hasSession = slice.hasSession || hasSession
 					slice.hasBreak = slice.hasBreak || hasBreak
 					slice.hasStart = slice.hasStart || hasStart
@@ -292,7 +298,7 @@ export default {
 						hasBreak,
 						hasStart,
 						hasEnd,
-						datebreak: date.valueOf() === date.clone().startOf('day').valueOf()
+						datebreak
 					}
 					slices.push(slice)
 					slicesLookup[name] = slice
@@ -337,6 +343,10 @@ export default {
 				pushSlice(session.end, {hasEnd: true})
 				// add half hour slices between a session
 				fillHalfHours(session.start, session.end, {hasSession: isProper, hasBreak: !isProper})
+			}
+			// Generated intervals can retain session seconds and miss exact midnight.
+			for (const day of this.occupiedDayKeys) {
+				pushSlice(moment.tz(day, this.timezone).startOf('day'))
 			}
 
 			const sliceIsFraction = function (slice) {
@@ -463,29 +473,25 @@ export default {
 		}
 	},
 	watch: {
-		timeslices () {
-			this.$nextTick(() => this.observeDayBreaks())
+		scrollParent () {
+			this.bindScrollParent()
 		},
-		currentDay (day) {
-			// Only scroll when triggered by toolbar click, not by scroll-based observer
-			if (this._scrollDayUpdate) {
-				this._scrollDayUpdate = false
-				return
-			}
-			this.scrollToDayStart(day)
+		timeslices () {
+			this.$nextTick(() => this.onScheduleScroll())
 		},
 		forceScrollDay () {
-			this.scrollToDayStart(this.currentDay)
+			this.$nextTick(() => this.scrollToDayStart(this.currentDay))
 		}
 	},
 	async mounted () {
-		this.observer = new IntersectionObserver(this.onIntersect, {
-			root: this.scrollParent,
-			rootMargin: '-45% 0px'
-		})
-		this.observeDayBreaks()
+		const navigationDay = this.navigationDay
+		this.bindScrollParent()
 		await this.$nextTick()
 		this.initScrollSync()
+		if (navigationDay && navigationDay === this.currentDay) {
+			this.scrollToDayStart(navigationDay)
+			return
+		}
 		if (!this.$refs.now) return
 		if (this.disableAutoScroll) return
 		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
@@ -494,6 +500,9 @@ export default {
 		this.scrollToNow()
 	},
 	beforeUnmount () {
+		this._dayScrollTarget?.removeEventListener('scroll', this.onScheduleScroll)
+		window.removeEventListener('resize', this.onScheduleScroll)
+		cancelAnimationFrame(this._dayScrollFrame)
 		if (this._gridResizeObserver) {
 			this._gridResizeObserver.disconnect()
 		}
@@ -593,17 +602,15 @@ export default {
 			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
-			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
-			for (const slice of this.timeslices) {
-				const el = this.$refs[slice.name]?.[0]
-				if (!el) continue
-				const rect = el.getBoundingClientRect()
-				// only count as visible if at least 100px are visible
-				const buffer = 100
-				if (rect.top + buffer < window.innerHeight && rect.bottom - buffer > 0) {
-					return slice.date
-				}
-			}
+			const top = (this.scrollParent?.getBoundingClientRect().top || 0) + this.getStickyHeaderClearance()
+			const bounds = this.$el.getBoundingClientRect()
+			if (bounds.bottom <= top || (bounds.top > top && this.$el.previousElementSibling)) return null
+			const starts = [...this.$el.querySelectorAll('.timeslice.datebreak[data-slice-day]')].map(el => ({
+				day: el.dataset.sliceDay,
+				top: el.getBoundingClientRect().top,
+			}))
+			const day = getDayAtScrollPosition(starts, top)
+			return day ? moment.tz(day, this.timezone).startOf('day') : null
 		},
 		getSliceClasses (slice) {
 			return {
@@ -643,9 +650,9 @@ export default {
 			if (!isWindowScroll) {
 				const parentRect = scrollEl.getBoundingClientRect()
 				const delta = rect.top - parentRect.top - clearance
-				scrollEl.scrollTop += delta
+				scrollEl.scrollTo({ top: scrollEl.scrollTop + delta, behavior: 'instant' })
 			} else {
-				window.scrollBy({ top: rect.top - clearance })
+				window.scrollBy({ top: rect.top - clearance, behavior: 'instant' })
 			}
 		},
 		scrollToNow() {
@@ -656,13 +663,17 @@ export default {
 			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
 			const el = this.$el.querySelector(`.timeslice.datebreak[data-slice-day="${dayStr}"]`)
 			if (!el) return
+			this.updateDayEndSpace()
 			this.scrollElementIntoViewWithClearance(el)
 		},
 		initScrollSync () {
 			const viewport = this.$refs.gridViewport
 			if (!viewport) return
 			this.updateScrollbar()
-			this._gridResizeObserver = new ResizeObserver(() => this.updateScrollbar())
+			this._gridResizeObserver = new ResizeObserver(() => {
+				this.updateScrollbar()
+				this.onScheduleScroll()
+			})
 			const grid = viewport.querySelector('.grid')
 			if (grid) this._gridResizeObserver.observe(grid)
 			setTimeout(() => this.updateScrollbar(), 200)
@@ -729,25 +740,25 @@ export default {
 			document.addEventListener('mousemove', onMouseMove)
 			document.addEventListener('mouseup', onMouseUp)
 		},
-		observeDayBreaks () {
-			if (!this.observer) return
-			this.observer.disconnect()
-			for (const [ref, el] of Object.entries(this.$refs)) {
-				if (!ref.startsWith('slice') || !ref.endsWith('00-00')) continue
-				const node = Array.isArray(el) ? el[0] : el
-				if (node) this.observer.observe(node)
-			}
+		bindScrollParent () {
+			this._dayScrollTarget?.removeEventListener('scroll', this.onScheduleScroll)
+			this._dayScrollTarget = this.scrollParent || window
+			this._dayScrollTarget.addEventListener('scroll', this.onScheduleScroll, { passive: true })
+			window.addEventListener('resize', this.onScheduleScroll)
+			this.$nextTick(() => this.onScheduleScroll())
 		},
-		onIntersect (entries) {
-			const intersecting = entries.filter(entry => entry.isIntersecting)
-			if (!intersecting.length) return
-			const entry = intersecting.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-			const dayStr = entry.target.dataset.sliceDay
-			if (!dayStr || dayStr === this.currentDay) return
-			// Only update the active day indicator — don't trigger a scroll jump.
-			// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
-			this._scrollDayUpdate = true
-			this.$emit('changeDay', moment.tz(dayStr, this.timezone).startOf('day'))
+		updateDayEndSpace () {
+			const lastDay = [...this.$el.querySelectorAll('.timeslice.datebreak[data-slice-day]')].at(-1)
+			updateDayEndSpace(this.$el, lastDay, this.scrollParent?.clientHeight || window.innerHeight, this.getStickyHeaderClearance(), !this.$el.nextElementSibling)
+		},
+		onScheduleScroll () {
+			if (this._dayScrollFrame) return
+			this._dayScrollFrame = requestAnimationFrame(() => {
+				this._dayScrollFrame = null
+				this.updateDayEndSpace()
+				const day = this.getScrolledDay()
+				if (day) this.$emit('changeDay', day)
+			})
 		},
 		showRoomTooltip (event, room) {
 			const rect = event.target.getBoundingClientRect()
@@ -767,6 +778,7 @@ export default {
 <style lang="stylus">
 .c-grid-schedule
 	flex: auto
+	padding-bottom: var(--schedule-day-end-padding, 0px)
 	background-color: $clr-grey-50
 	--room-col-min: 320px
 	&.is-shift-mode
@@ -978,6 +990,7 @@ export default {
 
 @media print
 	.c-grid-schedule
+		padding-bottom: 0
 		.sticky-header
 			display: none !important
 		.grid-viewport

@@ -1,5 +1,5 @@
 <template lang="pug">
-.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : sessionsMode ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
+.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : sessionsMode ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']", @wheel.passive="clearDayNavigationLock", @touchstart.passive="clearDayNavigationLock", @keydown="onNavigationKeydown")
 	template(v-if="scheduleUnavailable")
 		.schedule-unavailable
 			.info-message {{ noScheduleMessage }}
@@ -56,6 +56,7 @@
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
+			@fullscreen-change="onFullscreenChange",
 			@goToNow="goToNow")
 		bunt-progress-circular(v-if="dayLoading", size="huge")
 		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",
@@ -73,6 +74,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
+			:navigationDay="userNavigatingToDay",
 			:density="'default'",
 			:timeDensityMinutes="timeDensityMinutes",
 			@changeDay="setCurrentDay($event)",
@@ -80,6 +82,8 @@
 			@unfav="unfav($event)")
 		linear-schedule(ref="scheduleDisplay", v-else,
 			:sessions="sessionsMode ? properSessions : sessions",
+			:forceScrollDay="forceScrollDay",
+			:navigationDay="userNavigatingToDay",
 			:rooms="rooms",
 			:currentDay="currentDay",
 			:now="now",
@@ -327,12 +331,14 @@ export default {
 			displayedGridDay: null,
 			gridScrollDays: [],
 			dayLoading: false,
+			coverageRequest: 0,
 			userTimezone: null,
 			now: moment(),
 			currentDay: null,
 			forceScrollDay: 0,
 			userNavigatingToDay: null,
-			_dayNavTimeout: null,
+			dayNavigationRequest: 0,
+			lastDayNavigationRequest: 0,
 			currentTimezone: null,
 			favs: [],
 			userCode: null,
@@ -785,6 +791,10 @@ export default {
 			this.reloadCompactIndex()
 		},
 		sessionsMode () {
+			if (this._initialized && this.currentDay) {
+				this.beginDayNavigation(this.currentDay)
+				this.requestDayScroll()
+			}
 			if (!this._initialized || !this.schedule?.compact) return
 			this.syncCompactCoverage()
 		},
@@ -969,27 +979,17 @@ export default {
 			}
 			poll()
 		})
-		this.scrollParent = findScrollParent(this.$el.parentElement || this.$el.getRootNode().host)
 		this._onScheduleScroll = () => this.maybeLoadNextGridDay()
-		if (this.scrollParent) {
-			this.scrollParentResizeObserver = new ResizeObserver(this.onScrollParentResize)
-			this.scrollParentResizeObserver.observe(this.scrollParent)
-			this.scrollParentWidth = this.scrollParent.offsetWidth
-			this.scrollParent.addEventListener('scroll', this._onScheduleScroll, { passive: true })
-		} else { // scrolling document
-			window.addEventListener('resize', this.onWindowResize)
-			this.onWindowResize()
-			window.addEventListener('scroll', this._onScheduleScroll, { passive: true })
-		}
+		this.updateScrollParent()
 	},
 	unmounted () {
+		this.scrollParentResizeObserver?.disconnect()
+		window.removeEventListener('resize', this.onWindowResize)
 		if (this._onScheduleScroll) {
 			window.removeEventListener('scroll', this._onScheduleScroll)
 			this.scrollParent?.removeEventListener('scroll', this._onScheduleScroll)
 		}
-	},
-	destroyed () {
-		// TODO destroy observers
+		this.clearDayNavigationLock()
 	},
 	methods: {
 		noteCompactPayload (payload) {
@@ -1093,6 +1093,7 @@ export default {
 		},
 		async syncCompactCoverage () {
 			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return
+			const request = ++this.coverageRequest
 			if (this.scheduleNeedsEveryDay) {
 				this.dayLoading = true
 				try {
@@ -1101,32 +1102,40 @@ export default {
 				} catch (error) {
 					console.error('Failed to load schedule days', error)
 				} finally {
-					this.dayLoading = false
+					if (request === this.coverageRequest) {
+						this.dayLoading = false
+						this.requestDayScroll()
+					}
 				}
 				return
 			}
-			if (!this.currentDay) return
-			const alreadyLoaded = !!this.loadedScheduleDays[this.currentDay]
-			const showingOtherDay = this.gridScrollDays.some(day => day !== this.currentDay && this.loadedScheduleDays[day])
+			if (!this.currentDay) {
+				this.dayLoading = false
+				return
+			}
+			const day = this.currentDay
+			const alreadyLoaded = !!this.loadedScheduleDays[day]
+			const showingOtherDay = this.gridScrollDays.some(shown => shown !== day && this.loadedScheduleDays[shown])
 			if (!alreadyLoaded && !showingOtherDay) this.dayLoading = true
 			try {
-				await this.ensureScheduleDay(this.currentDay, { includeText: false })
-				this.displayedGridDay = this.currentDay
+				await this.ensureScheduleDay(day, { includeText: false })
+				if (request !== this.coverageRequest || day !== this.currentDay) return
+				this.displayedGridDay = day
 				// Keep days already revealed by scrolling. Reset only when the
 				// selected day is not on screen, such as a toolbar jump.
-				if (!this.gridScrollDays.includes(this.currentDay)) {
-					this.gridScrollDays = [this.currentDay]
+				if (!this.gridScrollDays.includes(day)) {
+					this.gridScrollDays = [day]
 				}
-				this.prefetchAdjacentScheduleDays(this.currentDay)
-				if (this.userNavigatingToDay === this.currentDay) {
-					this.$nextTick(() => { this.forceScrollDay++ })
-				}
+				this.prefetchAdjacentScheduleDays(day)
 				this.$nextTick(() => this.maybeLoadNextGridDay())
 				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
 				console.error('Failed to load schedule day', this.currentDay, error)
 			} finally {
-				this.dayLoading = false
+				if (request === this.coverageRequest) {
+					this.dayLoading = false
+					this.requestDayScroll()
+				}
 			}
 		},
 		distanceToScheduleEnd () {
@@ -1155,10 +1164,12 @@ export default {
 			const index = days.indexOf(last)
 			if (index < 0 || index + 1 >= days.length) return
 			const next = days[index + 1]
+			const request = this.coverageRequest
 			const heightBefore = this.scheduleScrollHeight()
 			this._extendingGrid = true
 			try {
 				await this.ensureScheduleDay(next, { includeText: false })
+				if (request !== this.coverageRequest) return
 				if (!this.gridScrollDays.includes(next)) {
 					this.gridScrollDays = [...shown, next]
 				}
@@ -1169,6 +1180,9 @@ export default {
 				return
 			} finally {
 				this._extendingGrid = false
+				if (request !== this.coverageRequest) {
+					this.$nextTick(() => this.maybeLoadNextGridDay())
+				}
 			}
 			this.$nextTick(() => {
 				if (this.scheduleScrollHeight() <= heightBefore) return
@@ -1309,35 +1323,43 @@ export default {
 			}
 		},
 		setCurrentDay (day) {
+			if (this.userNavigatingToDay) return
 			const dayStr = day.format('YYYY-MM-DD')
-			if (this.userNavigatingToDay && dayStr !== this.userNavigatingToDay) {
-				return
-			}
 			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === dayStr)
 			if (!matchingDays.length) return
 			const nextDay = matchingDays[0].format('YYYY-MM-DD')
-			if (nextDay === this.currentDay) {
-				if (this.userNavigatingToDay === nextDay) {
-					this.clearDayNavigationLock()
-				}
-				return
-			}
+			if (nextDay === this.currentDay) return
 			this.currentDay = nextDay
-			if (this.userNavigatingToDay === nextDay) {
-				this.clearDayNavigationLock()
-			}
 		},
 		clearDayNavigationLock () {
-			if (this._dayNavTimeout) {
-				clearTimeout(this._dayNavTimeout)
-				this._dayNavTimeout = null
-			}
 			this.userNavigatingToDay = null
 		},
 		beginDayNavigation (dayId) {
 			this.clearDayNavigationLock()
 			this.userNavigatingToDay = dayId
-			this._dayNavTimeout = setTimeout(() => this.clearDayNavigationLock(), 2000)
+			this.dayNavigationRequest++
+		},
+		requestDayScroll () {
+			const day = this.userNavigatingToDay
+			const request = this.dayNavigationRequest
+			this.$nextTick(() => {
+				if (!day || day !== this.userNavigatingToDay || day !== this.currentDay || this.dayLoading) return
+				if (request !== this.dayNavigationRequest || request === this.lastDayNavigationRequest) return
+				if (this.schedule?.compact) {
+					if (!this.loadedScheduleDays[day]) return
+					if (this.showGrid && !this.sessionsMode && !this.scheduleNeedsEveryDay && !this.gridScrollDays.includes(day)) return
+				}
+				this.lastDayNavigationRequest = request
+				this.forceScrollDay++
+				this.$nextTick(() => {
+					if (request === this.dayNavigationRequest) this.clearDayNavigationLock()
+				})
+			})
+		},
+		onNavigationKeydown (event) {
+			if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) {
+				this.clearDayNavigationLock()
+			}
 		},
 		changeDay (day) {
 			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
@@ -1354,14 +1376,11 @@ export default {
 			} catch (e) {
 				window.location.hash = dayId
 			}
+			this.beginDayNavigation(dayId)
 			if (dayId !== this.currentDay) {
-				this.beginDayNavigation(dayId)
 				this.currentDay = dayId
 			}
-			// Always scroll on toolbar click. When the day is already visible,
-			// scroll-sync may have set currentDay with _scrollDayUpdate, which
-			// skips the currentDay watcher — forceScrollDay handles that case.
-			this.forceScrollDay++
+			this.requestDayScroll()
 		},
 		goToNow() {
 			const todayMoment = this.resolvedNow.clone().tz(this.currentTimezone).startOf('day')
@@ -1372,6 +1391,32 @@ export default {
 			this.$nextTick(() => {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 			})
+		},
+		onFullscreenChange () {
+			if (!this.$el.matches(':fullscreen') && this.scrollParent !== this.$el) return
+			this.beginDayNavigation(this.currentDay)
+			this.updateScrollParent()
+			this.requestDayScroll()
+		},
+		updateScrollParent () {
+			this.scrollParentResizeObserver?.disconnect()
+			this.scrollParent?.removeEventListener('scroll', this._onScheduleScroll)
+			window.removeEventListener('scroll', this._onScheduleScroll)
+			window.removeEventListener('resize', this.onWindowResize)
+			// In a web component, document.fullscreenElement is the shadow host.
+			this.scrollParent = this.$el.matches(':fullscreen')
+				? this.$el
+				: findScrollParent(this.$el.parentElement || this.$el.getRootNode().host) || null
+			if (this.scrollParent) {
+				this.scrollParentResizeObserver = new ResizeObserver(this.onScrollParentResize)
+				this.scrollParentResizeObserver.observe(this.scrollParent)
+				this.scrollParentWidth = this.scrollParent.offsetWidth
+				this.scrollParent.addEventListener('scroll', this._onScheduleScroll, { passive: true })
+			} else {
+				window.addEventListener('resize', this.onWindowResize)
+				this.onWindowResize()
+				window.addEventListener('scroll', this._onScheduleScroll, { passive: true })
+			}
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -1784,6 +1829,8 @@ export default {
 		--pretalx-sticky-top-offset: 0px
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
+		> .c-linear-schedule
+			flex-shrink: 0
 	&.grid-schedule
 		overflow-x: clip
 		margin: 0 auto

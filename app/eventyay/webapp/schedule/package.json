@@ -7,6 +7,7 @@
     "start": "vite",
     "build": "vite build",
     "analyze": "ANALYZE=true npm run build",
+    "test:navigation": "node --test src/dayNavigation.test.js",
     "i18n:extract": "node ../i18n/extract.mjs extract --domain schedule",
     "test:i18n": "node --test \"../i18n/*.test.js\""
   },

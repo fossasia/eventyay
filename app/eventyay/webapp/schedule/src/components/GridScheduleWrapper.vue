@@ -3,7 +3,7 @@
 	grid-schedule(
 		v-for="group in gridGroups",
 		ref="gridSchedules",
-		:key="group.days.join('-')",
+		:key="group.days[0]",
 		:sessions="group.sessions",
 		:rooms="group.rooms",
 		:currentDay="currentDay",
@@ -17,6 +17,7 @@
 		:onHomeServer="onHomeServer",
 		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
+		:navigationDay="navigationDay",
 		:density="density",
 		:timeDensityMinutes="timeDensityMinutes"
 		@changeDay="$emit('changeDay', $event)",
@@ -53,6 +54,7 @@ export default {
 		},
 		disableAutoScroll: Boolean,
 		forceScrollDay: { type: Number, default: 0 },
+		navigationDay: String,
 		density: {
 			type: String,
 			default: 'default'

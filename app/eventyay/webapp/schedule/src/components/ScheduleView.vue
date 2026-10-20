@@ -48,6 +48,7 @@
 				:sessions="filteredSessions",
 				:rooms="computedRooms",
 				:days="computedDays",
+				:forceScrollDay="forceScrollDay",
 				:currentDay="currentDay",
 				:now="resolvedNow",
 				:hasAmPm="resolvedHasAmPm",
@@ -596,9 +597,7 @@ export default {
 		changeDay(day) {
 			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
 			this.currentDay = dayStr
-			if (this.linearScheduleGroupByDay) {
-				this.forceScrollDay++
-			}
+			this.forceScrollDay++
 		},
 		goToNow() {
 			const today = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
@@ -610,7 +609,7 @@ export default {
 			})
 		},
 		setCurrentDay(day) {
-			this.changeDay(day)
+			this.dayScrolled(day)
 		},
 		dayScrolled(day) {
 			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
