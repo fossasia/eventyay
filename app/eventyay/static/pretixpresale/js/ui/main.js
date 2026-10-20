@@ -665,15 +665,12 @@ $(function () {
         });
     }
 
-    const local_tz = moment.tz.guess() || "UTC";
+    const local_tz = moment.tz.guess();
     const localTimeFormat = moment.localeData().longDateFormat('LT') || $("body").attr("data-timeformat") || "h:mm A";
     const localDateTimeFormat = moment.localeData().longDateFormat('LLL') || $("body").attr("data-datetimeformat") || "LL h:mm A";
 
     $("span[data-timezone], small[data-timezone]").each(function() {
         var tzName = $(this).attr("data-timezone")
-        if (!tzName) {
-            return
-        }
         var tzLabel = tzName.replace(/_/g, " ")
         var t = moment.tz($(this).attr("data-time"), tzName)
 

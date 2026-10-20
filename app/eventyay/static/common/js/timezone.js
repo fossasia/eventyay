@@ -13,7 +13,7 @@ const detectBrowserTimezone = () => {
     }
 };
 
-const formatTimezoneLabel = (timezone) => (timezone ? String(timezone).replace(/_/g, ' ') : '');
+const formatTimezoneLabel = (timezone) => timezone.replace(/_/g, ' ');
 
 const setBrowserTimezoneFields = () => {
     const timezone = detectBrowserTimezone();

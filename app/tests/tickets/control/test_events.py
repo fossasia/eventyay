@@ -545,15 +545,17 @@ class EventsTest(SoupTest):
         assert doc.select('[name=date_to_1]')[0]['value'] == '17:00:00'
         assert doc.select('[name=settings-max_items_per_order]')[0]['value'] == '12'
 
-    def test_common_settings_event_timezone_field(self):
+    def test_common_settings_region_timezone_display(self):
         doc = self.get_doc('/common/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))
-        timezone_select = doc.select_one('[name=settings-timezone]')
+        region_select = doc.select_one('[name=settings-timezone]')
+        timezone_output = doc.select_one('[data-region-timezone-display]')
 
-        assert timezone_select is not None
-        assert doc.select_one(f'label[for="{timezone_select["id"]}"]').get_text(strip=True) == 'Event timezone'
-        assert timezone_select.select_one('option[value="Asia/Ho_Chi_Minh"]').get_text(strip=True) == 'Asia/Ho Chi Minh'
-        assert doc.select_one('[data-region-timezone-display]') is None
-        assert doc.select_one('script[src$="eventyay-common/js/ui/region-timezone-display.js"]') is None
+        assert region_select is not None
+        assert timezone_output is not None
+        assert doc.select_one(f'label[for="{region_select["id"]}"]').get_text(strip=True) == 'Region'
+        assert doc.select_one(f'label[for="{timezone_output["id"]}"]').get_text(strip=True) == 'Timezone'
+        assert timezone_output['data-region-timezone-source'] == region_select['id']
+        assert doc.select_one('script[src$="eventyay-common/js/ui/region-timezone-display.js"]')
 
     def test_settings_timezone(self):
         doc = self.get_doc('/control/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))

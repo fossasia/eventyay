@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 class EventCommonSettingsForm(SettingsForm):
     timezone = forms.ChoiceField(
         choices=((a, format_timezone_name(a)) for a in common_timezones),
-        label=_('Event timezone'),
+        label=_('Region'),
     )
 
 

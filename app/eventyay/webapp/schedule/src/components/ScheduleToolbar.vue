@@ -216,12 +216,12 @@
 			.toolbar-right-quick
 				.timezone-area
 					.timezone-compact(ref="timezoneDropdown")
-						button.toolbar-btn.tz-btn(@click="toggleTzDropdown", :title="timezoneLabel")
+						button.toolbar-btn.tz-btn(@click="toggleTzDropdown", :title="timezoneModel.replace(/_/g, ' ')")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								circle(cx="12", cy="12", r="10")
 								line(x1="2", y1="12", x2="22", y2="12")
 								path(d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z")
-							span.tz-label {{ timezoneShortLabel }}
+							span.tz-label {{ timezoneModel.replace(/^.*\//, '').replace(/_/g, ' ') }}
 							svg.chevron-icon(:class="{open: tzOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								path(d="M6 9l6 6 6-6")
 						.tz-dropdown-menu(v-if="tzOpen")
@@ -606,12 +606,6 @@ export default {
 		timezoneModel: {
 			get() { return this.currentTimezone },
 			set(value) { this.$emit('update:currentTimezone', value) }
-		},
-		timezoneLabel() {
-			return this.timezoneModel ? String(this.timezoneModel).replace(/_/g, ' ') : ''
-		},
-		timezoneShortLabel() {
-			return this.timezoneLabel.replace(/^.*\//, '')
 		},
 		recordingModel: {
 			get() { return this.recordingFilter || 'all' },
