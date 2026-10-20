@@ -370,6 +370,7 @@ def test_item_detail_variations(token_client, organizer, event, team, item):
 
 @pytest.mark.django_db
 def test_item_detail_addons(token_client, organizer, event, team, item, category):
+    """Test retrieving product details including associated add-ons."""
     item.addons.create(addon_category=category)
     res = dict(TEST_ITEM_RES)
 
@@ -568,6 +569,7 @@ def test_item_create_giftcard_validation(token_client, organizer, event, item, c
 
 @pytest.mark.django_db
 def test_item_create_with_addon(token_client, organizer, event, item, category, category2, taxrule):
+    """Test product creation with inline add-ons including validation checks."""
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
@@ -1047,6 +1049,7 @@ def test_item_update_with_variation(token_client, organizer, event, item):
 
 @pytest.mark.django_db
 def test_item_update_with_addon(token_client, organizer, event, item, category):
+    """Test rejecting inline add-on updates on existing products via patch."""
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk),
         {
@@ -1460,6 +1463,7 @@ TEST_ADDONS_RES = {
 
 @pytest.mark.django_db
 def test_addons_list(token_client, organizer, event, item, addon, category):
+    """Test listing product add-ons via dedicated nested endpoint."""
     res = dict(TEST_ADDONS_RES)
     res['id'] = addon.pk
     res['addon_category'] = category.pk
@@ -1475,6 +1479,7 @@ def test_addons_list(token_client, organizer, event, item, addon, category):
 
 @pytest.mark.django_db
 def test_addons_detail(token_client, organizer, event, item, addon, category):
+    """Test retrieving specific product add-on details."""
     res = dict(TEST_ADDONS_RES)
     res['id'] = addon.pk
     res['addon_category'] = category.pk
@@ -1487,6 +1492,7 @@ def test_addons_detail(token_client, organizer, event, item, addon, category):
 
 @pytest.mark.django_db
 def test_addons_create(token_client, organizer, event, item, category, category2):
+    """Test creating product add-ons with validation for missing category and count bounds."""
     # Missing addon_category returns 400 Bad Request, not unhandled 500 KeyError
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/addons/'.format(organizer.slug, event.slug, item.pk),
@@ -1568,6 +1574,7 @@ def test_addons_create(token_client, organizer, event, item, category, category2
 
 @pytest.mark.django_db
 def test_addons_update(token_client, organizer, event, item, addon):
+    """Test partial and full updates of product add-on counts and range validation."""
     # Partial update with only min_count
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/products/{}/addons/{}/'.format(organizer.slug, event.slug, item.pk, addon.pk),
@@ -1641,6 +1648,7 @@ def test_addons_update(token_client, organizer, event, item, addon):
 
 @pytest.mark.django_db
 def test_addons_delete(token_client, organizer, event, item, addon):
+    """Test deleting a product add-on via dedicated nested endpoint."""
     resp = token_client.delete(
         '/api/v1/organizers/{}/events/{}/products/{}/addons/{}/'.format(organizer.slug, event.slug, item.pk, addon.pk)
     )
