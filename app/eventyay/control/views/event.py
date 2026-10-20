@@ -1,9 +1,11 @@
+import csv
 import html
 import io
 import json
 import logging
 import operator
 import re
+import tempfile
 from collections import OrderedDict
 from decimal import Decimal, InvalidOperation
 from itertools import groupby
@@ -14,7 +16,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from django.forms import inlineformset_factory
 from django.http import (
     Http404,
@@ -27,7 +29,8 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.timezone import now
+from django.utils.html import strip_tags
+from django.utils.timezone import localtime, now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, FormView, ListView
@@ -1228,6 +1231,19 @@ class EventDelete(RecentAuthenticationRequiredMixin, EventPermissionRequiredMixi
         return reverse('eventyay_common:dashboard')
 
 
+def _csv_text(value):
+    """Keep spreadsheet apps from running exported text as a formula."""
+    value = str(value)
+    if value.startswith(('\t', '\r', '\n')) or value.lstrip().startswith(('=', '+', '-', '@')):
+        return f"'{value}"
+    return value
+
+
+def _csv_plain_text(value):
+    """Export the text of a value the page shows as HTML, such as a link to an object."""
+    return _csv_text(html.unescape(strip_tags(str(value))))
+
+
 class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
     template_name = 'pretixcontrol/event/logs.html'
     model = LogEntry
@@ -1293,10 +1309,79 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
             if self.request.GET.get('object'):
                 qs = qs.filter(object_id=self.request.GET.get('object'))
 
+        query = self.request.GET.get('q', '').strip()
+        if query:
+            search_filter = (
+                Q(action_type__icontains=query)
+                | Q(user__fullname__icontains=query)
+                | Q(user__email__icontains=query)
+                | Q(device__name__icontains=query)
+                | Q(api_token__name__icontains=query)
+                | Q(oauth_application__name__icontains=query)
+            )
+            if self.request.user.has_active_staff_session(
+                self.request.session.session_key
+            ):
+                search_filter |= Q(data__icontains=query)
+
+            qs = qs.filter(search_filter)
+
         return qs
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('download', '') == 'yes':
+            return self._download_csv()
+        return super().get(request, *args, **kwargs)
+
+    def _download_csv(self):
+        """Export every log entry that matches the current filters, not only the current page.
+
+        The rows are written to a temporary file, which moves to disk once it gets
+        large, and the log entries are loaded in chunks, so a long log does not
+        have to fit into memory.
+        """
+        output = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
+        text = io.TextIOWrapper(output, encoding='utf-8', newline='')
+        writer = csv.writer(text, quoting=csv.QUOTE_NONNUMERIC, delimiter=',')
+        writer.writerow([_('Date'), _('User'), _('Object'), _('Action')])
+
+        logs = self.get_queryset().prefetch_related('content_object')
+        for log in logs.iterator(chunk_size=500):
+            if log.user:
+                user = log.user.get_full_name()
+                if log.oauth_application:
+                    user = f'{user} ({log.oauth_application.name})'
+            elif log.device:
+                user = log.device.name
+            elif log.api_token:
+                user = log.api_token.name
+            else:
+                user = ''
+            writer.writerow(
+                [
+                    localtime(log.datetime).replace(microsecond=0).isoformat(),
+                    _csv_text(user),
+                    _csv_plain_text(log.display_object),
+                    _csv_plain_text(log.display()),
+                ]
+            )
+
+        text.flush()
+        text.detach()
+        output.seek(0)
+        return FileResponse(
+            output,
+            as_attachment=True,
+            filename=f'{self.request.event.slug}-logs.csv',
+            content_type='text/csv',
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
+        params = self.request.GET.copy()
+        params.pop('q', None)
+        params.pop('page', None)
+        ctx['clear_search_query'] = params.urlencode()
         ctx['userlist'] = self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
         ctx['devicelist'] = (
             self.request.event.logentry_set.order_by('device__name').distinct().values('device__id', 'device__name')

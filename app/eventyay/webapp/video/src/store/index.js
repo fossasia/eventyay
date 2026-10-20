@@ -125,6 +125,11 @@ export default new Vuex.Store({
 			}
 			return { organizer: null, event: null }
 		},
+		isInterpretationEnabled() {
+			const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
+			const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
+			return Boolean(hasPlugin && hasValidUrl)
+		},
 	},
 	mutations: {
 		updateRooms(state, rooms) {
@@ -148,6 +153,17 @@ export default new Vuex.Store({
 		},
 		setUserLocale(state, locale) {
 			state.userLocale = locale
+		},
+		clearRoomFatalError(state, roomId) {
+			if (!roomId) return
+			if (state.roomFatalErrors?.[roomId]) {
+				const updated = {...state.roomFatalErrors}
+				delete updated[roomId]
+				state.roomFatalErrors = updated
+			}
+			if (state.fatalError?.roomId === roomId) {
+				state.fatalError = null
+			}
 		},
 		updateStageStreamCollapsed(state, stageStreamCollapsed) {
 			state.stageStreamCollapsed = stageStreamCollapsed
@@ -307,18 +323,24 @@ export default new Vuex.Store({
 				case 'server.fatal': {
 					const roomId = state.activeRoom?.id ?? null
 					const errorWithContext = {...error, roomId}
-					state.fatalError = errorWithContext
 					if (roomId) {
 						state.roomFatalErrors = {
 							...state.roomFatalErrors,
 							[roomId]: errorWithContext
 						}
+					} else {
+						state.fatalError = errorWithContext
 					}
 					break
 				}
 				}
 				// TODO handle generic fatal error?
 			})
+		},
+		reconnect() {
+			if (api) {
+				api.reconnect()
+			}
 		},
 		async updateUser({state, dispatch}, update) {
 			await api.call('user.update', update)
