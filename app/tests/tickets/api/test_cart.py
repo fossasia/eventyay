@@ -751,6 +751,24 @@ def test_cartpos_create_with_blocked_seat_allowed(token_client, organizer, event
 
 
 @pytest.mark.django_db
+def test_cartpos_create_omitted_sales_channel(token_client, organizer, event, item, quota, seat):
+    """Test that an omitted sales channel defaults to web for seat availability."""
+    seat.blocked = True
+    seat.save()
+    event.settings.seating_allow_blocked_seats_for_channel = ['web']
+    res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
+    res['product'] = item.pk
+    res['seat'] = seat.seat_guid
+    del res['sales_channel']
+    resp = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/cartpositions/',
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 201
+
+
+@pytest.mark.django_db
 def test_cartpos_create_with_used_seat(token_client, organizer, event, item, quota, seat, question):
     """Test validation error when selecting an already used seat."""
     CartPosition.objects.create(
