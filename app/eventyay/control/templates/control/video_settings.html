@@ -60,31 +60,31 @@
                     <table class="table table-hover align-middle">
                         <thead>
                         <tr>
-                            <th style="width: 45%;">{% trans "Video Provider / System" %}</th>
-                            <th style="width: 35%;">{% trans "Status & Visibility" %}</th>
-                            <th style="width: 20%;" class="text-right">{% trans "Servers / Status" %}</th>
+                            <th class="col-provider-name">{% trans "Video Provider / System" %}</th>
+                            <th class="col-provider-status">{% trans "Status & Visibility" %}</th>
+                            <th class="col-provider-actions text-right">{% trans "Servers / Status" %}</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for p in providers %}
                         <tr data-provider-row="{{ p.id }}">
                             <td>
-                                <div class="media" style="margin: 0;">
-                                    <div class="media-left" style="padding-right: 12px; vertical-align: middle;">
+                                <div class="media provider-media">
+                                    <div class="media-left provider-media-icon">
                                         <span class="fa {{ p.icon }} fa-2x text-muted" aria-hidden="true"></span>
                                     </div>
                                     <div class="media-body">
-                                        <h4 class="media-heading" style="margin: 0 0 4px; font-weight: 600;">
+                                        <h4 class="media-heading provider-title">
                                             {{ p.name }}
                                         </h4>
-                                        <p class="text-muted" style="margin: 0; font-size: 13px; line-height: 1.4;">
+                                        <p class="text-muted provider-desc">
                                             {{ p.description }}
                                         </p>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="provider-toggle-wrap">
                                     <label class="video-server-toggle" title="{% if p.enabled %}{% trans 'Enabled' %}{% else %}{% trans 'Disabled' %}{% endif %}">
                                         <span class="sr-only">{% blocktrans with name=p.name %}Toggle availability for {{ name }}{% endblocktrans %}</span>
                                         <input
@@ -96,7 +96,7 @@
                                         >
                                         <span class="video-server-toggle-slider" aria-hidden="true"></span>
                                     </label>
-                                    <span class="toggle-status-label" style="font-size: 13px;">
+                                    <span class="toggle-status-label">
                                         {% if p.enabled %}
                                             <span class="text-success"><span class="fa fa-check"></span> {% trans "Enabled" %}</span>
                                         {% else %}
@@ -104,7 +104,7 @@
                                         {% endif %}
                                     </span>
                                 </div>
-                                <div class="help-block" style="margin: 4px 0 0; font-size: 11px;">
+                                <div class="help-block provider-help-block">
                                     {% trans "Available for room creation and attendee access" %}
                                 </div>
                             </td>
@@ -122,6 +122,38 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="video-admin-card">
+                <div class="video-tab-header">
+                    <div>
+                        <h3 class="video-tab-title">{% trans "Connection & Resource Limits" %}</h3>
+                        <p class="video-section-subtitle">
+                            {% trans "Control limits on simultaneous client connections across all video-enabled events." %}
+                        </p>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'eventyay_admin:video_admin:settings' %}?tab=general" class="form-horizontal">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_video_max_connections_per_user" class="col-md-3 control-label">
+                            {% trans "Max connections per user" %}
+                        </label>
+                        <div class="col-md-9">
+                            <input type="number" min="0" step="1" name="video_max_connections_per_user" id="id_video_max_connections_per_user" value="{{ video_max_connections_per_user|default:0 }}" class="form-control video-limit-input">
+                            <div class="help-block">
+                                {% trans "Maximum number of simultaneous video connections (open browser tabs or devices) permitted per user within each event. This setting applies to all events. Set to 0 to allow unlimited connections." %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-9 col-md-offset-3">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="fa fa-check" aria-hidden="true"></span> {% trans "Save limit settings" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 

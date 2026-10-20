@@ -1,3 +1,4 @@
+import datetime as dt
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -5,9 +6,10 @@ from django.conf import settings
 from django.core import mail as djmail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import SubmissionStates
+from eventyay.base.models import QueuedMail, Submission, SubmissionStates
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 
 
@@ -33,6 +35,104 @@ def test_can_see_submission(speaker_client, submission):
     response = speaker_client.get(submission.urls.user_base, follow=True)
     assert response.status_code == 200
     assert submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_can_open_submission_when_talks_are_unpublished(speaker_client, submission):
+    event = submission.event
+    event.talks_published = False
+    event.save(update_fields=['talks_published'])
+
+    response = speaker_client.get(submission.urls.user_base, follow=True)
+    assert response.status_code == 200
+    assert submission.title in response.text
+
+    schedule = speaker_client.get(event.urls.schedule, follow=False)
+    assert schedule.status_code == 404
+
+    cfp = speaker_client.get(event.cfp.urls.public, follow=False)
+    assert cfp.status_code == 404
+
+    # When private test mode is enabled, speaker can still access and sees the test mode banner
+    event.settings.private_testmode_tickets = False
+    event.settings.private_testmode_talks = True
+    event.private_testmode = True
+    event.save()
+
+    response = speaker_client.get(submission.urls.user_base, follow=True)
+    assert response.status_code == 200
+    assert (
+        "The talks feature is in test mode, only team member administrators and invited speaker can view this page."
+        in response.text
+    )
+
+    assert speaker_client.get(event.urls.schedule, follow=False).status_code == 404
+    assert speaker_client.get(event.cfp.urls.public, follow=False).status_code == 404
+
+
+@pytest.mark.django_db
+def test_invited_speaker_can_accept_invitation_when_talks_are_unpublished(client, submission, django_user_model):
+    event = submission.event
+    event.talks_published = False
+    event.save(update_fields=['talks_published'])
+
+    user = django_user_model.objects.create_user(
+        email='invitee@speaker.org',
+        password='password123',
+    )
+    client.force_login(user)
+
+    response = client.get(submission.urls.accept_invitation, follow=True)
+    assert response.status_code == 200
+
+    accept_response = client.post(submission.urls.accept_invitation, follow=True)
+    assert accept_response.status_code == 200
+    submission.refresh_from_db()
+    assert user in submission.speakers.all()
+
+
+@pytest.mark.django_db
+def test_testmode_mail_includes_banner(event):
+    event.settings.private_testmode_talks = True
+    event.private_testmode = True
+    event.save()
+
+    mail = QueuedMail.objects.create(
+        event=event,
+        to='speaker@example.org',
+        subject='Proposal accepted',
+        text='Congratulations, your proposal was accepted!',
+    )
+    html = mail.make_html()
+    text = mail.make_text()
+    banner = (
+        'The talks feature is in test mode, only team member administrators and invited speaker can view this page.'
+    )
+    assert banner in html
+    assert banner in text
+
+
+@pytest.mark.django_db
+def test_public_talks_testmode_mail_includes_banner(event):
+    event.settings.talks_testmode = True
+    event.settings.private_testmode_talks = False
+    event.private_testmode = False
+    event.save()
+
+    mail = QueuedMail.objects.create(
+        event=event,
+        to='speaker@example.org',
+        subject='Proposal accepted',
+        text='Congratulations, your proposal was accepted!',
+    )
+    html = mail.make_html()
+    text = mail.make_text()
+    banner = (
+        'Talk pages are currently in test mode. Please do not treat schedules or submissions as final, '
+        'as they may change or be removed without notice.'
+    )
+    assert banner in html
+    assert banner in text
 
 
 @pytest.mark.django_db
@@ -204,6 +304,124 @@ def test_can_save_partial_draft_submission_without_required_fields(speaker_clien
         assert submission.title == AUTO_DRAFT_TITLE
         assert submission.description == "Updated draft description"
         assert submission.state == SubmissionStates.DRAFT
+
+
+def close_cfp_with_draft(submission, access_code=None):
+    event = submission.event
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() - dt.timedelta(days=1)
+    event.cfp.save()
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.access_code = access_code
+        submission.save()
+        return {
+            "title": submission.title,
+            "submission_type": submission.submission_type.pk,
+            "content_locale": submission.content_locale,
+            "description": submission.description,
+            "abstract": submission.abstract,
+            "notes": submission.notes,
+            "resource-TOTAL_FORMS": 0,
+            "resource-INITIAL_FORMS": 0,
+            "resource-MIN_NUM_FORMS": 0,
+            "resource-MAX_NUM_FORMS": 1000,
+            "action": "dedraft",
+        }
+
+
+@pytest.mark.django_db
+def test_draft_with_access_code_can_be_submitted_after_deadline(speaker_client, submission, access_code):
+    access_code.maximum_uses = 1
+    access_code.redeemed = 1
+    access_code.save()
+    data = close_cfp_with_draft(submission, access_code)
+
+    response = speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    assert response.status_code == 200
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.SUBMITTED
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
+def test_draft_without_access_code_cannot_be_submitted_after_deadline(speaker_client, submission):
+    data = close_cfp_with_draft(submission)
+
+    speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.DRAFT
+
+
+@pytest.mark.django_db
+def test_draft_with_expired_access_code_cannot_be_submitted_after_deadline(speaker_client, submission, access_code):
+    access_code.valid_until = now() - dt.timedelta(hours=1)
+    access_code.save()
+    data = close_cfp_with_draft(submission, access_code)
+
+    speaker_client.post(submission.urls.user_base, follow=True, data=data)
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.state == SubmissionStates.DRAFT
+
+
+@pytest.mark.django_db
+def test_saving_draft_with_access_code_uses_the_code(client, user, event, access_code):
+    access_code.maximum_uses = 1
+    access_code.save()
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() - dt.timedelta(days=1)
+    event.cfp.save()
+    client.force_login(user)
+    response = client.get(f"{event.cfp.urls.submit}?access_code={access_code.code}", follow=True)
+    with scope(event=event):
+        submission_type = event.cfp.default_type.pk
+
+    client.post(
+        response.redirect_chain[-1][0],
+        data={
+            "title": "Late talk",
+            "submission_type": submission_type,
+            "content_locale": "en",
+            "description": "Description",
+            "abstract": "Abstract",
+            "action": "draft",
+        },
+        follow=True,
+    )
+
+    with scope(event=event):
+        draft = Submission.all_objects.get(event=event, state=SubmissionStates.DRAFT)
+        assert draft.access_code == access_code
+        assert draft.editable
+    access_code.refresh_from_db()
+    assert access_code.redeemed == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("cfp_open", (True, False))
+def test_used_up_access_code_link_is_rejected(client, user, event, access_code, cfp_open):
+    access_code.maximum_uses = 1
+    access_code.redeemed = 1
+    access_code.save()
+    event.talks_published = True
+    event.save()
+    event.cfp.deadline = now() + dt.timedelta(days=1) if cfp_open else now() - dt.timedelta(days=1)
+    event.cfp.save()
+    client.force_login(user)
+
+    response = client.get(f"{event.cfp.urls.submit}?access_code={access_code.code}", follow=True)
+
+    assert "/info/" not in response.redirect_chain[-1][0]
+    assert "This access code is invalid or has already been used." in response.text
 
 
 @pytest.mark.django_db
@@ -671,15 +889,15 @@ def test_anonymous_invite_acceptance_redirect(client, submission):
 
 
 @pytest.mark.django_db
-def test_authenticated_user_without_permission_gets_403(client, submission, event, django_user_model):
+def test_authenticated_user_without_permission_gets_404(client, submission, event, django_user_model):
     user = django_user_model.objects.create_user(
         email='testuser@example.com',
         password='password123',
     )
     client.force_login(user)
-    # Trying to access the submission edit page should give 403 because they are not a speaker
-    response = client.get(submission.urls.edit, follow=False)
-    assert response.status_code == 403
+    # Trying to access the submission edit page should give 404 because they are not a speaker
+    response = client.get(submission.urls.user_base, follow=True)
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

@@ -305,7 +305,7 @@ class AdminComposeForm(ScheduledAtValidationMixin, forms.Form):
         label=_('Attachment'),
         required=False,
         ext_whitelist=(
-            '.png', '.jpg', '.gif', '.jpeg', '.pdf', '.txt', '.docx',
+            '.png', '.jpg', '.gif', '.jpeg', '.webp', '.pdf', '.txt', '.docx',
             '.gif', '.svg', '.pptx', '.ppt', '.doc', '.xlsx', '.xls',
             '.jfif', '.heic', '.heif', '.pages', '.bmp', '.tif', '.tiff',
         ),
