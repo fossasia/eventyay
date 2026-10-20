@@ -847,9 +847,10 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
         url_pattern = re.compile(r'^(https?://|www\.)[^\s]+$')
 
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
-            s = str(p.render_sample(self.request.event)).strip()
+            sample = p.render_sample(self.request.event)
+            s = str(sample).strip()
 
-            if s.startswith('*') or is_placeholder_html_sample(s):
+            if is_placeholder_html_sample(sample):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
                 ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'

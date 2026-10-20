@@ -1835,3 +1835,31 @@ def test_mail_settings_preview_tiptap_invalid_template_returns_400(settings_clie
     )
     assert response.status_code == 400
     assert 'error' in response.json()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_escapes_html_in_samples(settings_client, event):
+    """An event name containing HTML is escaped in the preview (no XSS), while the
+    QR sample (explicitly marked safe) still renders as an image."""
+    from eventyay.base.i18n import LazyI18nString
+
+    with scopes_disabled():
+        event.name = LazyI18nString('<img src=x onerror=alert(1)>')
+        event.save()
+
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': '<p>{event_name} {ticket_qr}</p>'},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    # The user-set event name is escaped, not injected as a live tag.
+    assert '<img src=x onerror' not in rendered
+    assert '&lt;img src=x onerror' in rendered
+    # The explicitly trusted QR sample still passes through as an image.
+    assert '<img src="data:image/png' in rendered

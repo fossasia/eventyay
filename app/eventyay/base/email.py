@@ -25,6 +25,7 @@ from django.db.models import Count
 from django.dispatch import receiver
 from django.template.loader import get_template
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now as djnow
 from django.utils.translation import gettext_lazy as _
 from sendgrid import SendGridAPIClient
@@ -636,13 +637,15 @@ def base_placeholders(sender: Event, **kwargs):
         return f'<a href="{url}" class="button">{_("Join online event")}</a>'
 
     def sample_ticket_qr(event=None):
-        return render_qr_code_img(
+        # Trusted HTML sample: mark explicitly so previews pass it through unescaped.
+        return mark_safe(render_qr_code_img(
             '{"event":"DEMO","ticket":"sample-secret","lead":"ABCDEF"}',
             alt=str(_('Ticket QR code')),
-        )
+        ))
 
     def sample_download_pdf(event):
-        return (
+        # Trusted HTML sample: mark explicitly so previews pass it through unescaped.
+        return mark_safe(
             f'<a href="{escape(build_absolute_uri(event, "presale:event.index"))}" class="button">'
             f'{escape(download_tickets_button_label("pdf"))}</a>'
         )

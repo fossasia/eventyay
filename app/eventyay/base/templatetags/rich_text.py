@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from django import template
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 from markdownify import markdownify as html_to_markdown
 
 try:
@@ -236,10 +236,14 @@ def email_allowed_attributes(tag: str, name: str, value: str) -> bool:
     return True
 
 
-def is_placeholder_html_sample(sample: str) -> bool:
-    """Return True when a placeholder sample is trusted HTML (button, QR image)."""
-    stripped = str(sample).lstrip()
-    return stripped.startswith('<') and not stripped.startswith('</')
+def is_placeholder_html_sample(sample) -> bool:
+    """Return True only when a sample is explicitly marked as trusted HTML.
+
+    Trust is determined by an explicit ``SafeString`` marker (used for the QR
+    and button samples), not by the sample's content — otherwise a user-set
+    value such as an event name beginning with ``<`` could bypass escaping.
+    """
+    return isinstance(sample, SafeString)
 
 
 def build_email_preview_context(event, base_parameters: list[str]):
@@ -262,11 +266,11 @@ def build_email_preview_context(event, base_parameters: list[str]):
     all_placeholders = {**base_placeholders, **talk_placeholders}
 
     for key, placeholder in all_placeholders.items():
-        sample = str(placeholder.render_sample(event))
+        sample = placeholder.render_sample(event)
         if is_placeholder_html_sample(sample):
-            context_dict[key] = sample
+            context_dict[key] = str(sample)
         else:
-            context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(sample)}</span>'
+            context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict
 
 
