@@ -28,6 +28,7 @@ from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.base.settings import get_video_provider_visibility
 from eventyay.common.gzip import gzip_if_accepted
 from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
@@ -201,6 +202,7 @@ class VideoSPAView(View):
                 'theme': build_video_theme_for_event(event),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
+                'video_providers': get_video_provider_visibility(),
                 'schedule': None,
                 'scheduleMeta': {
                     'version': schedule_version or '',
