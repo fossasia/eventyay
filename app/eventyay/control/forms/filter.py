@@ -762,13 +762,11 @@ class OrderSearchFilterForm(OrderFilterForm):
         queryset=Organizer.objects.none(),
         required=False,
         empty_label=_('All organizers'),
-        widget=forms.Select(
+        widget=Select2(
             attrs={
-                'class': 'form-control',
-                'data-searchable-select': '',
-                'data-search-placeholder': _('Search organizers'),
-                'data-empty-text': _('No matching organizers'),
-                'data-all-label': _('All organizers'),
+                'data-model-select2': 'generic',
+                'data-select2-url': reverse_lazy('control:organizers.select2'),
+                'data-placeholder': _('All organizers'),
             }
         ),
     )

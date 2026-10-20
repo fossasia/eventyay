@@ -252,12 +252,3 @@ class TestEventListStats:
         assert 'data-searchable-select' in html
         assert 'data-search-placeholder="Search events"' in html
         assert 'data-all-label="All events"' in html
-
-    def test_control_order_search_filter_form_searchable_markup(self, admin_client):
-        """Verify Control OrderSearchFilterForm renders organizer filter with searchable select attributes."""
-        response = admin_client.get('/control/search/orders/')
-        assert response.status_code == 200
-        content = response.content.decode()
-        assert 'data-searchable-select' in content
-        assert 'data-search-placeholder="Search organizers"' in content
-        assert 'All organizers</option>' in content
