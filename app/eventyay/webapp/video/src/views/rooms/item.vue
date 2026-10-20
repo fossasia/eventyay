@@ -5,7 +5,15 @@
 			i.mdi.mdi-alert-circle-outline(aria-hidden="true")
 			h2 {{ $t('Feature No Longer Available') }}
 			p.disabled-message {{ roomDisabledReason }}
-			router-link.btn-back-dashboard(:to="{name: 'home'}") {{ $t('Back to Dashboard') }}
+			router-link.btn-back-dashboard(:to="{name: 'about'}") {{ $t('Back to Overview') }}
+	.room-feature-disabled.room-connection-error(v-else-if="roomFatalError")
+		.disabled-card
+			i.mdi.mdi-cloud-off-outline(aria-hidden="true")
+			h2 {{ $t('Room Connection Issue') }}
+			p.disabled-message {{ roomFatalError.message || $t('Could not connect to this room service. Other parts of the event remain accessible.') }}
+			.action-buttons
+				bunt-button.btn-retry(@click="retryRoom") {{ $t('Retry Connection') }}
+				router-link.btn-back-dashboard(:to="{name: 'about'}") {{ $t('Back to Overview') }}
 	.stage(v-else-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.vimeo']", :style="{ '--stage-video-gap': videoGapPx + 'px' }")
 		.stage-canvas-container(ref="stageCanvas")
 			.media-canvas-wrapper(ref="mediaCanvas")
@@ -73,8 +81,6 @@
 	chat(v-else-if="room.modules.length === 1 && modules['chat.native']", :room="room", :module="modules['chat.native']", mode="standalone", :key="room.id")
 	.room-sidebar(v-if="hasSidebar", :class="[unreadTabsClasses, { collapsed: isSidebarCollapsed, 'hover-expanded': isSidebarCollapsed && sidebarHovered }]", role="complementary", @mouseenter="sidebarHovered = true", @mouseleave="sidebarHovered = false")
 		.sidebar-edge-tab(v-if="isSidebarCollapsed && !sidebarHovered && !isMobileLayout")
-			button.expand-btn(@click.stop="toggleSidebar", :title="$t('Expand Sidebar')")
-				i.mdi.mdi-arrow-expand-left
 			.edge-tab-actions
 				button.edge-item-btn(
 					v-if="modules['chat.native']",
@@ -109,10 +115,9 @@
 					bunt-tabs(:model-value="activeSidebarTab", @update:modelValue="onTabSelect")
 						bunt-tab(v-if="modules['chat.native']", id="chat", :header="$t('Chat')")
 						bunt-tab(v-if="modules['question']", id="questions", :header="$t('Questions')")
-						bunt-tab(v-if="modules['poll']", id="polls", :header="$t('Polls')")
 				.single-tab-title(v-else-if="activeSidebarTab") {{ activeTabTitle }}
-				button.sidebar-collapse-btn(v-if="!isMobileLayout", @click="toggleSidebar", :title="$t('Collapse Sidebar')")
-					i.mdi.mdi-arrow-collapse-right
+				button.sidebar-collapse-btn(v-if="!isMobileLayout", @click="toggleSidebar", :title="$t('Unpin / Collapse Sidebar')", :aria-label="$t('Unpin / Collapse Sidebar')")
+					i.mdi.mdi-pin
 			.sidebar-body
 				chat(v-if="modules['chat.native']", v-show="activeSidebarTab === 'chat'", :room="room", :module="modules['chat.native']", mode="compact", :key="room.id", @change="changedTabContent('chat')")
 				questions(v-if="modules['question']", v-show="activeSidebarTab === 'questions'", :module="modules['question']", @change="changedTabContent('questions')")
@@ -193,6 +198,9 @@ export default {
 		},
 		rooms() {
 			return this.$store.state.rooms
+		},
+		roomFatalError() {
+			return this.$store.state.roomFatalErrors?.[this.room?.id] || null
 		},
 		roomIsDisabled() {
 			if (!this.room) return false
@@ -404,6 +412,12 @@ export default {
 		this.$store.dispatch('stopStreamPolling')
 	},
 	methods: {
+		retryRoom() {
+			if (this.room?.id) {
+				this.$store.commit('clearRoomFatalError', this.room.id)
+				this.$store.dispatch('reconnect')
+			}
+		},
 		async fetchListenerToken() {
 			if (!this.room?.id) return;
 			const currentRoomId = this.room.id;
@@ -635,33 +649,37 @@ export default {
 
 		.stage-tools
 			flex: none
-			min-height: 0
-			height: auto
+			min-height: 44px
 			display: flex
 			flex-wrap: wrap
-			align-items: flex-start
+			align-items: center
 			justify-content: space-between
 			width: 100%
 			box-sizing: border-box
-			padding: 6px 12px
+			padding: 4px 12px
 			background-color: var(--clr-surface, #ffffff)
 			border-top: 1px solid var(--clr-grey-200, #e2e8f0)
 			border-bottom: 1px solid var(--clr-grey-200, #e2e8f0)
 			user-select: none
 			color: var(--clr-text-primary, #1e293b)
 			z-index: 12
-			gap: 12px
-			overflow: visible
+			gap: 8px 12px
 
 			.stage-tools-left
 				display: flex
-				flex-direction: column
-				align-items: stretch
-				justify-content: flex-start
-				gap: 4px
+				align-items: center
 				min-width: 0
-				flex: 0 1 auto
-				width: max-content
+				flex: 1 1 auto
+				overflow-x: auto
+				scrollbar-width: none
+				&::-webkit-scrollbar
+					display: none
+
+			.stage-tools-right
+				display: flex
+				align-items: center
+				gap: 8px
+				flex: none
 
 			.tool-section
 				display: flex
@@ -1237,6 +1255,13 @@ export default {
 				color: $clr-grey-700
 				margin: 0 0 24px
 
+			.action-buttons
+				display: flex
+				align-items: center
+				justify-content: center
+				gap: 12px
+				flex-wrap: wrap
+
 			.btn-back-dashboard
 				display: inline-block
 				padding: 9px 22px
@@ -1250,6 +1275,8 @@ export default {
 				&:hover
 					background-color: #286090
 					text-decoration: none
+			.btn-retry
+				button-style(color: $clr-primary)
 
 @keyframes pulse
 	0%
