@@ -17,6 +17,14 @@
             {% trans "No Privacy Policy URL is configured. The consent banner cannot be enabled until one is published." %}
         </div>
     {% endif %}
+    {% if unusable_cmp_script %}
+        <div class="alert alert-warning">
+            {% blocktrans trimmed %}
+                The external CMP script URL is not a valid HTTPS URL, so no consent manager is loaded and
+                embedded content stays blocked for every visitor. Enter an HTTPS script URL below.
+            {% endblocktrans %}
+        </div>
+    {% endif %}
     {% for service in unclassified_services %}
         <div class="alert alert-warning">
             {% blocktrans trimmed with name=service.title %}
@@ -101,6 +109,7 @@
                 <th>{% trans "Service" %}</th>
                 <th>{% trans "Provider" %}</th>
                 <th>{% trans "Consent category" %}</th>
+                <th>{% trans "Data processed" %}</th>
                 <th>{% trans "Country / region" %}</th>
                 <th>{% trans "DPA status" %}</th>
                 <th>{% trans "Enabled" %}</th>
@@ -115,6 +124,7 @@
                     </td>
                     <td>{{ service.provider }}</td>
                     <td>{{ service.get_category_display }}</td>
+                    <td>{{ service.data_processed|truncatechars:80 }}</td>
                     <td>{{ service.region }}</td>
                     <td>{{ service.get_dpa_status_display }}</td>
                     <td>{% if service.enabled %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
@@ -130,7 +140,7 @@
                     </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="7">{% trans "No third-party services are registered yet." %}</td></tr>
+                <tr><td colspan="8">{% trans "No third-party services are registered yet." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

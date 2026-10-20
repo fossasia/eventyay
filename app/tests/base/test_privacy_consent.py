@@ -158,41 +158,90 @@ def youtube(gs):
 
 @pytest.mark.django_db
 def test_embed_is_blocked_when_klaro_can_grant_consent(youtube):
-    """The placeholder is only worth rendering when Klaro knows the service."""
     context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
     assert context['blocked'] is True
+    assert context['consentable'] is True
 
 
 @pytest.mark.django_db
-def test_embed_renders_directly_when_embed_category_is_off(gs, youtube):
-    """With the category off the service is left out of the config, so consent could never be given."""
+def test_embed_stays_blocked_when_embed_category_is_off(gs, youtube):
+    """Klaro can never grant consent then, but showing the frame would skip consent altogether."""
     gs.settings.set('privacy_category_embed_enabled', False)
     context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
-    assert context['blocked'] is False
+    assert context['blocked'] is True
+    assert context['consentable'] is False
 
 
 @pytest.mark.django_db
-def test_embed_renders_directly_when_service_is_disabled(youtube):
+def test_embed_stays_blocked_when_service_is_disabled(youtube):
     youtube.enabled = False
     youtube.save()
     context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
-    assert context['blocked'] is False
+    assert context['blocked'] is True
+    assert context['consentable'] is False
 
 
 @pytest.mark.django_db
-def test_embed_renders_directly_when_service_is_not_registered(gs):
+def test_embed_stays_blocked_when_service_is_not_registered(gs):
     gs.settings.set('privacy_category_embed_enabled', True)
     context = consent_embed('vimeo', 'https://example.org/v', 'Talk recording')
-    assert context['blocked'] is False
+    assert context['blocked'] is True
+    assert context['consentable'] is False
+
+
+@pytest.mark.django_db
+def test_unconsentable_embed_does_not_offer_a_dead_allow_button(gs):
+    html = render_to_string(
+        'eventyay/privacy/embed_placeholder.html',
+        consent_embed('vimeo', 'https://example.org/v', 'Talk recording'),
+    )
+
+    assert '<iframe' not in html
+    assert 'data-privacy-settings' not in html
+    assert 'it is not shown' in html
 
 
 @pytest.mark.django_db
 def test_embed_is_blocked_under_external_cmp_even_if_unpublished(gs):
     """The external CMP bridge reveals embeds by name, independent of Klaro's registry filters."""
     gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'https://cdn.example.org/cmp.js')
     context = consent_embed('vimeo', 'https://example.org/v', 'Talk recording')
     assert context['blocked'] is True
+    assert context['consentable'] is True
     assert context['external'] is True
+
+
+@pytest.mark.django_db
+def test_embed_stays_blocked_when_the_external_cmp_script_is_unusable(gs):
+    """A stored http:// script is never loaded, so nothing could grant consent."""
+    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'http://cdn.example.org/cmp.js')
+    context = consent_embed('youtube', 'https://example.org/v', 'Talk recording')
+    assert context['blocked'] is True
+    assert context['consentable'] is False
+
+
+@pytest.mark.django_db
+def test_consent_cookie_is_stable_while_services_are_unchanged(gs, youtube):
+    assert build_consent_config()['cookieName'] == build_consent_config()['cookieName']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'field, value',
+    [('provider', 'Someone else'), ('purpose', 'Ad targeting'), ('category', ConsentCategory.MARKETING)],
+)
+def test_changing_a_service_resets_earlier_consent(gs, youtube, field, value):
+    """Klaro keys consent on the identifier alone, so a changed service needs a fresh cookie."""
+    gs.settings.set('privacy_category_marketing_enabled', True)
+    before = build_consent_config()['cookieName']
+
+    setattr(youtube, field, value)
+    youtube.save()
+
+    assert build_consent_config()['cookieName'] != before
+    assert build_consent_config()['cookieName'].startswith('eventyay_consent_')
 
 
 @pytest.mark.django_db
@@ -283,7 +332,7 @@ def test_footer_link_and_consent_layer_ship_together():
         ('common/includes/core_footer.html', {}),
         (
             'eventyay/privacy/embed_placeholder.html',
-            {'blocked': True, 'service': 'youtube', 'src': 'https://example.org/v', 'title': 'Talk'},
+            {'blocked': True, 'consentable': True, 'service': 'youtube', 'src': 'https://example.org/v', 'title': 'Talk'},
         ),
     ],
 )

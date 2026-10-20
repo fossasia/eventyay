@@ -1,3 +1,5 @@
+import hashlib
+import json
 from urllib.parse import urlsplit
 
 from django import template
@@ -34,6 +36,21 @@ def public_http_url(value, schemes=('http', 'https')):
     return ''
 
 
+def consent_cookie_name(services):
+    """
+    Name of the cookie Klaro stores consent in, derived from ``services``.
+
+    Klaro remembers consent per service identifier only. Without this, a "yes"
+    given to a service would carry over after an administrator changes its
+    provider, purpose or category, or reuses a deleted service's identifier.
+    Naming the cookie after what the visitor was shown means any such change
+    starts every visitor from a fresh cookie with no consent in it.
+    """
+    identity = sorted([s.name, s.provider, s.purpose, s.category] for s in services)
+    digest = hashlib.sha256(json.dumps(identity).encode()).hexdigest()[:12]
+    return f'eventyay_consent_{digest}'
+
+
 def build_consent_config():
     """
     Build the Klaro configuration from admin settings and the service registry.
@@ -48,10 +65,11 @@ def build_consent_config():
     if provider != ConsentProvider.KLARO:
         return None
 
+    services = list(published_services(settings))
     config = {
         'elementID': 'klaro',
         'storageMethod': 'cookie',
-        'cookieName': 'eventyay_consent',
+        'cookieName': consent_cookie_name(services),
         # Klaro links this from the preference modal.
         'privacyPolicy': public_http_url(settings.get('privacy_policy_url')),
         # Opt-in: Klaro reports no consent for optional services until accepted.
@@ -60,7 +78,7 @@ def build_consent_config():
         'acceptAll': True,
         'hideDeclineAll': False,
         'purposes': [ConsentCategory.NECESSARY.value] + enabled_consent_categories(settings),
-        'services': [service.serialize_public() for service in published_services(settings)],
+        'services': [service.serialize_public() for service in services],
     }
 
     # Klaro has no cookie policy option, so consent.js adds this link to the
@@ -117,32 +135,35 @@ def consent_embed(service, src, title=''):
     """
     Render a third-party embed behind contextual consent.
 
-    While an embed is blocked the frame URL is only emitted as
-    ``data-consent-src``, never as an iframe ``src``, so the browser contacts
-    the third party only after consent. An external CMP loads asynchronously
-    and cannot reliably stop a frame that is already navigating, so under one
-    every embed is blocked and revealed through the ``consent-external.js``
-    bridge.
+    Whenever a consent layer is selected the embed is blocked: the frame URL is
+    only emitted as ``data-consent-src``, never as an iframe ``src``, so the
+    browser contacts the third party only after consent. The built-in banner
+    reveals the frame through ``consent.js``, an external CMP through the
+    ``consent-external.js`` bridge. With consent disabled there is nothing to
+    gate on, so the frame is rendered directly.
 
-    Under the built-in banner a placeholder is only emitted when the visitor can
-    actually unblock it: ``service`` must be published in the Klaro
-    configuration. consent.js swaps the placeholder in once
-    ``getConsent(service)`` is true, which never happens for a service Klaro
-    does not know about (unregistered, disabled, or in a category that is
-    switched off), so such an embed is rendered directly instead of being left
-    permanently unreachable. With consent disabled there is nothing to gate on.
+    ``consentable`` says whether the visitor can unblock the embed at all. It is
+    false when Klaro does not publish ``service`` (unregistered, disabled, or in
+    a category that is switched off) or when the external CMP script is not
+    usable, so none is loaded. The embed still stays blocked then, since showing
+    it would contact the third party without consent; the placeholder only says
+    that the content is unavailable, and the privacy settings warn the
+    administrator.
     """
     gs = GlobalSettingsObject()
     provider = gs.settings.get('privacy_consent_provider') or ConsentProvider.DISABLED
     external = provider == ConsentProvider.EXTERNAL
-    blocked = external or (
-        provider == ConsentProvider.KLARO
-        and published_services(gs.settings).filter(name=service).exists()
-    )
+    if external:
+        consentable = bool(external_cmp_script())
+    elif provider == ConsentProvider.KLARO:
+        consentable = published_services(gs.settings).filter(name=service).exists()
+    else:
+        consentable = False
     return {
         'service': service,
         'src': src,
         'title': title,
-        'blocked': blocked,
+        'blocked': provider in (ConsentProvider.KLARO, ConsentProvider.EXTERNAL),
+        'consentable': consentable,
         'external': external,
     }

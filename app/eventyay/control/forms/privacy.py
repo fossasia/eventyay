@@ -29,10 +29,11 @@ class ThirdPartyServiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # The model allows a blank category, but a service without one is left
-        # out of the consent banner entirely, so it would never be blocked.
-        # Only enforced for new services, so an older service without a
-        # category can still be opened and classified.
-        self.fields['category'].required = not self.instance.pk
+        # out of the consent banner entirely, so visitors could never allow it.
+        # Required unless the stored service has none yet, so an older service
+        # without a category can still be opened and classified, while a
+        # classified one can never be put back into that state.
+        self.fields['category'].required = not self.instance.pk or bool(self.instance.category)
         self.fields['category'].choices = [('', _('Choose a consent category'))] + [
             choice for choice in self.fields['category'].choices if choice[0]
         ]

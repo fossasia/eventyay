@@ -9,7 +9,14 @@
          data-consent-src="{{ src }}"
          data-consent-title="{{ title }}">
         <div class="consent-embed-placeholder" data-consent-placeholder>
-            {% if external %}
+            {% if not consentable %}
+                <p>
+                    {% blocktrans trimmed %}
+                        This content is provided by an external service that cannot be allowed in the
+                        cookie settings at the moment, so it is not shown.
+                    {% endblocktrans %}
+                </p>
+            {% elif external %}
                 <p>
                     {% blocktrans trimmed %}
                         This content is provided by an external service. It loads once you allow

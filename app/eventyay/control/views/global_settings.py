@@ -26,8 +26,9 @@ from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.turnstile import test_turnstile_connection
 from eventyay.base.services.update_check import check_result_table, update_check
-from eventyay.base.models.privacy import ThirdPartyService, enabled_consent_categories
+from eventyay.base.models.privacy import ConsentProvider, ThirdPartyService, enabled_consent_categories
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.templatetags.privacy_consent import external_cmp_script
 from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
@@ -811,6 +812,11 @@ class PrivacySettingsView(AdministratorPermissionRequiredMixin, FormView):
         # the built-in banner can be enabled.
         context['missing_cookie_policy'] = not gs.settings.get('privacy_cookie_policy_url')
         context['missing_privacy_policy'] = not gs.settings.get('privacy_policy_url')
+        # A script URL stored before HTTPS was enforced is never loaded, which
+        # leaves the site without a consent manager and every embed blocked.
+        context['unusable_cmp_script'] = (
+            context['provider'] == ConsentProvider.EXTERNAL and not external_cmp_script()
+        )
         return context
 
     def form_valid(self, form):

@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='thirdpartyservice',
             name='dpa_status',
-            field=models.CharField(choices=[('not_required', 'Not required'), ('pending', 'Pending'), ('signed', 'Signed')], default='not_required', max_length=20, verbose_name='DPA status'),
+            field=models.CharField(choices=[('unknown', 'Not assessed'), ('not_required', 'Not required'), ('pending', 'Pending'), ('signed', 'Signed')], default='unknown', max_length=20, verbose_name='DPA status'),
         ),
         migrations.AddField(
             model_name='thirdpartyservice',

@@ -3247,6 +3247,7 @@ DEFAULT_SETTINGS.update(
             # reject non-URL values such as ``javascript:`` at input time.
             'form_class': forms.URLField,
             'serializer_class': serializers.URLField,
+            'serializer_kwargs': dict(validators=[URLValidator(schemes=['http', 'https'])]),
             'form_kwargs': dict(required=False, label=_('Privacy Policy URL')),
         },
         'privacy_cookie_policy_url': {
@@ -3254,6 +3255,7 @@ DEFAULT_SETTINGS.update(
             'type': str,
             'form_class': forms.URLField,
             'serializer_class': serializers.URLField,
+            'serializer_kwargs': dict(validators=[URLValidator(schemes=['http', 'https'])]),
             'form_kwargs': dict(required=False, label=_('Cookie Policy URL')),
         },
     }

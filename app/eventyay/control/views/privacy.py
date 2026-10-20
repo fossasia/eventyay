@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -20,8 +21,9 @@ class ServiceFormMixin:
         return reverse('eventyay_admin:admin.global.privacy') + '#services'
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, _('Your changes have been saved.'))
-        return super().form_valid(form)
+        return response
 
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
@@ -29,11 +31,29 @@ class ServiceFormMixin:
 
 
 class ServiceCreate(AdministratorPermissionRequiredMixin, ServiceFormMixin, CreateView):
-    pass
+    def form_valid(self, form):
+        # The form's uniqueness check cannot see a service another admin is
+        # adding at the same moment, so the database has the final say.
+        try:
+            with transaction.atomic():
+                return super().form_valid(form)
+        except IntegrityError:
+            form.add_error('name', _('A service with this identifier already exists.'))
+            return self.form_invalid(form)
 
 
 class ServiceUpdate(AdministratorPermissionRequiredMixin, ServiceFormMixin, UpdateView):
-    pass
+    def form_valid(self, form):
+        # A plain save() falls back to an INSERT when its UPDATE matches no row,
+        # which would bring back a service deleted while this form was open.
+        try:
+            form.instance.save(force_update=True)
+        except ThirdPartyService.NotUpdated:
+            messages.error(self.request, _('This service has been deleted in the meantime.'))
+            return HttpResponseRedirect(self.get_success_url())
+        self.object = form.instance
+        messages.success(self.request, _('Your changes have been saved.'))
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class ServiceDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):

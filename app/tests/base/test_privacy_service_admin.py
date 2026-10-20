@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 from django.utils.timezone import now
@@ -12,6 +14,8 @@ from eventyay.base.models.privacy import (
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.privacy_consent import build_consent_config
 from eventyay.control.forms.global_settings import PrivacySettingsForm
+from eventyay.control.forms.privacy import ThirdPartyServiceForm
+from eventyay.control.views.privacy import ServiceUpdate
 
 
 @pytest.fixture
@@ -105,6 +109,83 @@ def test_service_without_a_category_can_still_be_edited(admin_client):
 
 
 @pytest.mark.django_db
+def test_classified_service_cannot_lose_its_category(admin_client, service):
+    """Blanking the category would drop the service from the banner, so visitors could never allow it."""
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': service.pk}),
+        _service_data(name='google-analytics', category=''),
+    )
+
+    assert response.status_code == 200
+    assert 'category' in response.context['form'].errors
+    service.refresh_from_db()
+    assert service.category == ConsentCategory.ANALYTICS
+
+
+@pytest.mark.django_db
+def test_editing_a_service_deleted_meanwhile_does_not_recreate_it(admin_client, service):
+    pk = service.pk
+    stale = ThirdPartyService.objects.get(pk=pk)
+    service.delete()
+
+    with patch.object(ServiceUpdate, 'get_object', return_value=stale):
+        response = admin_client.post(
+            reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': pk}),
+            _service_data(name='google-analytics'),
+        )
+
+    assert response.status_code == 302
+    assert not ThirdPartyService.objects.filter(pk=pk).exists()
+
+
+@pytest.mark.django_db
+def test_identifier_taken_by_a_concurrent_add_is_a_form_error(admin_client):
+    """Both requests pass the form's uniqueness check; the losing insert must not be a server error."""
+    ThirdPartyService.objects.create(name='matomo', title='Matomo', category=ConsentCategory.ANALYTICS)
+
+    with patch.object(ThirdPartyServiceForm, 'validate_unique'):
+        response = admin_client.post(reverse('eventyay_admin:admin.global.privacy.service.add'), _service_data())
+
+    assert response.status_code == 200
+    assert 'name' in response.context['form'].errors
+    assert ThirdPartyService.objects.filter(name='matomo').count() == 1
+
+
+@pytest.mark.django_db
+def test_dpa_status_is_not_assessed_by_default():
+    """Nothing should be recorded as exempt from a DPA until someone has checked."""
+    service = ThirdPartyService.objects.create(name='vimeo', title='Vimeo', category=ConsentCategory.EMBED)
+
+    assert service.dpa_status == DPAStatus.UNKNOWN
+
+
+@pytest.mark.django_db
+def test_overview_lists_the_data_each_service_processes(admin_client):
+    ThirdPartyService.objects.create(
+        name='matomo',
+        title='Matomo',
+        category=ConsentCategory.ANALYTICS,
+        data_processed='IP address, page views',
+    )
+
+    response = admin_client.get(reverse('eventyay_admin:admin.global.privacy'))
+
+    assert 'IP address, page views' in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_overview_warns_about_an_unusable_cmp_script(admin_client):
+    gs = GlobalSettingsObject()
+    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'http://cdn.example.org/cmp.js')
+
+    response = admin_client.get(reverse('eventyay_admin:admin.global.privacy'))
+
+    assert response.context['unusable_cmp_script'] is True
+    assert 'not a valid HTTPS URL' in response.content.decode()
+
+
+@pytest.mark.django_db
 def test_identifier_cannot_be_renamed_after_creation(admin_client, service):
     """Blocked scripts are matched on the identifier, so renaming would stop blocking them."""
     admin_client.post(
@@ -187,6 +268,18 @@ def test_policy_links_must_be_urls(field):
 
     assert not form.is_valid()
     assert form.errors[field] == ['Enter a valid URL.']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('field', ['privacy_policy_url', 'privacy_cookie_policy_url'])
+def test_policy_links_must_be_http(field):
+    """Public pages only link http(s) URLs, so an ftp:// policy would leave the banner without one."""
+    form = PrivacySettingsForm(
+        data=_privacy_settings_data(privacy_consent_provider=ConsentProvider.KLARO, **{field: 'ftp://example.org/p'})
+    )
+
+    assert not form.is_valid()
+    assert form.errors[field] == ['The URL must start with http:// or https://.']
 
 
 @pytest.mark.django_db

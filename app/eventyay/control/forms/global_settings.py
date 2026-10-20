@@ -2,6 +2,7 @@ import logging
 import os
 from collections import OrderedDict
 from typing import List, Union
+from urllib.parse import urlsplit
 
 from django import forms
 from django.conf import settings
@@ -918,6 +919,20 @@ class PrivacySettingsForm(SettingsForm):
                 'Existing deployments stay on "Disabled" until an administrator turns consent on.'
             ),
         )
+
+    def _clean_policy_url(self, field):
+        # URLField also accepts ftp:// URLs, which public pages never link to,
+        # so the banner would be enabled without its policy link.
+        value = self.cleaned_data.get(field)
+        if value and urlsplit(value).scheme.lower() not in ('http', 'https'):
+            raise ValidationError(_('The URL must start with http:// or https://.'), code='http_required')
+        return value
+
+    def clean_privacy_policy_url(self):
+        return self._clean_policy_url('privacy_policy_url')
+
+    def clean_privacy_cookie_policy_url(self):
+        return self._clean_policy_url('privacy_cookie_policy_url')
 
     def clean(self):
         """clean method."""
