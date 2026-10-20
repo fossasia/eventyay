@@ -351,7 +351,12 @@ class Schedule(PretalxModel):
 
         with scope(event=self.event):
             type(self.event).objects.select_for_update().get(pk=self.event_id)
-            self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
+            try:
+                self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
+            except Schedule.DoesNotExist as exc:
+                raise ValidationError(
+                    _('This schedule draft no longer exists. Please reload and try again.')
+                ) from exc
             if self.version:
                 raise ValidationError(
                     _('Cannot freeze schedule version: already versioned as "%(version)s".'),

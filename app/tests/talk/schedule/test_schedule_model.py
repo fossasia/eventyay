@@ -155,6 +155,24 @@ def test_freeze_rejects_stale_draft(slot):
 
 
 @pytest.mark.django_db
+def test_freeze_rejects_reset_draft(slot):
+    """Reject a draft deleted by reset without changing the restored schedule."""
+    event = slot.event
+    with scope(event=event):
+        released, draft = event.wip_schedule.freeze('previous-release', notify_speakers=False)
+        released.unfreeze()
+        schedules = list(event.schedules.order_by('pk').values('pk', 'version', 'published'))
+        slots = list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end'))
+        mail_count = event.queued_mails.count()
+        assert not event.schedules.filter(pk=draft.pk).exists()
+        with pytest.raises(ValidationError, match='draft no longer exists'):
+            draft.freeze('new-release')
+        assert list(event.schedules.order_by('pk').values('pk', 'version', 'published')) == schedules
+        assert list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end')) == slots
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize('version', ('release', 'RELEASE', ' Release '))
 def test_freeze_rejects_duplicate_version_on_another_draft(slot, version):
     """Reject logical duplicate names even when requests hold different drafts."""

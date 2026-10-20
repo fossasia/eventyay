@@ -344,17 +344,25 @@ def test_orga_cannot_release_schedule_without_version_name(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('via_api', (True, False))
+@pytest.mark.parametrize('competing_action', ('release', 'reset'))
 def test_release_reports_competing_release(
-    client, orga_client, orga_user_write_token, event, slot, monkeypatch, via_api
+    client, orga_client, orga_user_write_token, event, slot, monkeypatch, via_api, competing_action
 ):
-    """Report a competing release through both interfaces without overwriting it."""
+    """Report a competing release or reset through both interfaces without overwriting it."""
     original_freeze = Schedule.freeze
+    with scope(event=event):
+        if competing_action == 'reset':
+            released, _ = event.wip_schedule.freeze('previous-release', notify_speakers=False)
+    error_message = 'draft no longer exists' if competing_action == 'reset' else 'already versioned'
 
     def freeze_after_competing_release(draft, *args, **kwargs):
         """Complete another request after this request has loaded its draft."""
         with scope(event=draft.event):
-            competing_draft = Schedule.objects.get(pk=draft.pk)
-            original_freeze(competing_draft, 'competing-release', notify_speakers=False)
+            if competing_action == 'reset':
+                released.unfreeze()
+            else:
+                competing_draft = Schedule.objects.get(pk=draft.pk)
+                original_freeze(competing_draft, 'competing-release', notify_speakers=False)
             return original_freeze(draft, *args, **kwargs)
 
     monkeypatch.setattr(Schedule, 'freeze', freeze_after_competing_release)
@@ -371,17 +379,18 @@ def test_release_reports_competing_release(
             headers={'Authorization': f'Token {orga_user_write_token.token}'},
         )
         assert response.status_code == 400
-        assert 'already versioned' in response.json()['version'][0]
+        assert error_message in response.json()['version'][0]
     else:
         response = orga_client.post(event.orga_urls.release_schedule, data={'version': 'my-release'})
         assert response.status_code == 200
-        assert response.text.count('already versioned') == 1
+        assert response.text.count(error_message) == 1
         assert 'We had trouble saving your input' not in response.text
         assert 'You have to provide a new, unique schedule version!' not in response.text
 
     with scope(event=event):
-        assert event.schedules.count() == schedule_count + 1
-        assert event.schedules.filter(version='competing-release').exists()
+        assert event.schedules.count() == schedule_count + (competing_action == 'release')
+        preserved_version = 'previous-release' if competing_action == 'reset' else 'competing-release'
+        assert event.schedules.filter(version=preserved_version).exists()
         assert not event.schedules.filter(version='my-release').exists()
         assert event.schedules.filter(version__isnull=True).count() == 1
 
