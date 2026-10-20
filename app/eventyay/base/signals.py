@@ -863,6 +863,13 @@ Receivers return ``True`` when another installed component owns organizer billin
 Sender and the ``organizer`` keyword argument are the Organizer instance.
 """
 
+organizer_billing_payment_method_saved = django.dispatch.Signal()
+"""
+Sent after an organizer saves a payment method for future off-session billing.
+Sender and the ``organizer`` keyword argument are the Organizer instance. Additional
+kwargs are ``user``, ``stripe_customer_id`` and ``setup_intent_id``.
+"""
+
 
 def is_legacy_billing_collection_disabled(organizer) -> bool:
     """Return whether an installed component has taken over organizer billing."""
