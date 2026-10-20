@@ -4,6 +4,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Submission, SubmissionStates, SubmissionType, User
 from eventyay.base.models.submission import SpeakerRole
+from eventyay.control.forms.organizer_forms.user_orders_form import UserOrderFilterForm as ControlUserOrderFilterForm
 
 
 @pytest.fixture
@@ -128,9 +129,15 @@ class TestEventListStats:
         assert e2.speaker_counts.get('total', 0) == 0
 
     def test_admin_event_list_stats(self, admin_client, events_with_stats):
-        """Verify statistics in admin event list."""
+        """Verify statistics and searchable select markup in admin event list."""
         response = admin_client.get('/admin/events/')
         assert response.status_code == 200
+        content = response.content.decode()
+        assert 'data-searchable-select' in content
+        assert 'data-search-placeholder="Search organizers"' in content
+        assert 'All organizers</option>' in content
+        assert 'Stats Orga</option>' in content
+        assert 'data-select2-url' not in content
 
         events = response.context['events']
         events_dict = {e.slug: e for e in events}
@@ -146,6 +153,42 @@ class TestEventListStats:
         e2 = events_dict['e2']
         assert e2.session_counts.get(SubmissionStates.CONFIRMED, 0) == 0
         assert e2.speaker_counts.get('total', 0) == 0
+
+    def test_admin_event_list_filter_by_organizer_submission(
+        self, admin_client, orga, other_orga, events_with_stats, other_orga_event
+    ):
+        """Verify filtering admin event list by organizer via GET submission."""
+        orga_id = str(orga.pk)
+        other_orga_id = str(other_orga.pk)
+
+        # 1. Base list without filter
+        response = admin_client.get('/admin/events/')
+        assert response.status_code == 200
+        events = response.context['events']
+        event_slugs = {e.slug for e in events}
+        assert {'e1', 'e2', 'e3'}.issubset(event_slugs)
+        content = response.content.decode()
+        assert 'value="" selected>All organizers' in content
+        assert f'value="{orga_id}">Stats Orga' in content
+        assert f'value="{other_orga_id}">Other Orga' in content
+
+        # 2. Filter by stats-orga via GET form submission
+        response_filtered = admin_client.get('/admin/events/', {'organizer': orga_id})
+        assert response_filtered.status_code == 200
+        filtered_events = response_filtered.context['events']
+        filtered_slugs = {e.slug for e in filtered_events}
+        assert 'e1' in filtered_slugs
+        assert 'e2' in filtered_slugs
+        assert 'e3' not in filtered_slugs
+
+        # 3. Filter by other-orga via GET form submission
+        response_other = admin_client.get('/admin/events/', {'organizer': other_orga_id})
+        assert response_other.status_code == 200
+        other_events = response_other.context['events']
+        other_slugs = {e.slug for e in other_events}
+        assert 'e3' in other_slugs
+        assert 'e1' not in other_slugs
+        assert 'e2' not in other_slugs
 
     def test_orga_event_list_filter_by_organizer_submission(
         self, client, test_user, orga, other_orga, events_with_stats, other_orga_event
@@ -201,3 +244,20 @@ class TestEventListStats:
         assert {'e1', 'e2', 'e3'}.issubset(cleared_slugs)
         content_cleared = response_cleared.content.decode()
         assert 'value="" selected>All organizers' in content_cleared
+
+    def test_control_user_order_filter_form_searchable_markup(self, test_user):
+        """Verify Control UserOrderFilterForm renders event filter with searchable select attributes."""
+        form = ControlUserOrderFilterForm(user=test_user)
+        html = form.as_p()
+        assert 'data-searchable-select' in html
+        assert 'data-search-placeholder="Search events"' in html
+        assert 'data-all-label="All events"' in html
+
+    def test_control_order_search_filter_form_searchable_markup(self, admin_client):
+        """Verify Control OrderSearchFilterForm renders organizer filter with searchable select attributes."""
+        response = admin_client.get('/control/search/orders/')
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'data-searchable-select' in content
+        assert 'data-search-placeholder="Search organizers"' in content
+        assert 'All organizers</option>' in content

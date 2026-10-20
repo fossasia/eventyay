@@ -103,6 +103,7 @@ def use_searchable_organizer_select(form):
             'data-searchable-select': '',
             'data-search-placeholder': _('Search organizers'),
             'data-empty-text': _('No matching organizers'),
+            'data-all-label': _('All organizers'),
         }
     )
     # Replacing the widget drops the choices that were bound to the previous one.

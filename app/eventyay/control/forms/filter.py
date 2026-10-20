@@ -762,11 +762,13 @@ class OrderSearchFilterForm(OrderFilterForm):
         queryset=Organizer.objects.none(),
         required=False,
         empty_label=_('All organizers'),
-        widget=Select2(
+        widget=forms.Select(
             attrs={
-                'data-model-select2': 'generic',
-                'data-select2-url': reverse_lazy('control:organizers.select2'),
-                'data-placeholder': _('All organizers'),
+                'class': 'form-control',
+                'data-searchable-select': '',
+                'data-search-placeholder': _('Search organizers'),
+                'data-empty-text': _('No matching organizers'),
+                'data-all-label': _('All organizers'),
             }
         ),
     )
@@ -1264,11 +1266,13 @@ class EventFilterForm(FilterForm):
         queryset=Organizer.objects.none(),
         required=False,
         empty_label=_('All organizers'),
-        widget=Select2(
+        widget=forms.Select(
             attrs={
-                'data-model-select2': 'generic',
-                'data-select2-url': reverse_lazy('control:organizers.select2'),
-                'data-placeholder': _('All organizers'),
+                'class': 'form-control',
+                'data-searchable-select': '',
+                'data-search-placeholder': _('Search organizers'),
+                'data-empty-text': _('No matching organizers'),
+                'data-all-label': _('All organizers'),
             }
         ),
     )
