@@ -236,7 +236,7 @@ def nav_context_list(request):
         or (query and request.user.email and query.lower() in request.user.email.lower())
         or (query and request.user.fullname and query.lower() in request.user.fullname.lower())
     )
-    total = qs_events.count() + qs_orga.count()
+    total = qs_events.count() + qs_orga.count() + qs_orders.count() + qs_vouchers.count()
     pagesize = 20
     offset = (page - 1) * pagesize
     results = (
