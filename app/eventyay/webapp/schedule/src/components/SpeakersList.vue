@@ -1251,6 +1251,9 @@ export default {
 			cursor: pointer
 			&:hover
 				text-decoration: underline
+	&:not(.is-embedded)
+		.speakers-details .featured-speaker-stack
+			max-width: none
 	.speaker-card
 		display: flex
 		align-items: flex-start
