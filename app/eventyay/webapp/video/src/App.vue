@@ -587,6 +587,9 @@ export default {
 				padding-left: 45px !important
 		+below('m')
 			padding-left: 0 !important
+		> .c-schedule-view, > .c-speakers-list
+			padding-left: 8px
+			padding-right: 8px
 		> .c-schedule-view, > .c-speaker-detail, > .c-speakers-list, > .c-talk-detail, > .c-public-stars
 			flex: 1 1 auto
 			min-height: 0

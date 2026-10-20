@@ -117,7 +117,7 @@
 						| {{ getLocalizedString(session.title) }}
 						span.separator(v-if="s_idx < speaker.sessions.length - 1") ,&nbsp;
 	.speakers-details(v-else-if="filteredSpeakers.length && activeViewMode === 'details'")
-		.featured-speakers-grid(ref="featuredSpeakersGrid")
+		.featured-speakers-grid(ref="featuredSpeakersGrid", :style="featuredGridStyle")
 			.featured-speaker-stack(v-for="(column, colIndex) in featuredColumns", :key="colIndex")
 				.featured-speaker-column(v-for="speaker in column", :key="speaker.code")
 					details.featured-speaker-card
@@ -405,15 +405,19 @@ export default {
 			if (this.featuredOnly) return this.resolvedTotalPages > 1
 			return !this.usesLocalSpeakers && this.resolvedTotalPages > 1
 		},
+		featuredColumnCapacity() {
+			const available = this.speakersGridWidth || (window.innerWidth >= 768 ? Math.min(window.innerWidth - 32, 1140) : 400)
+			if (available >= 960) return 4
+			if (available >= 720) return 3
+			if (available >= 480) return 2
+			return 1
+		},
+		featuredGridStyle() {
+			return {'--speaker-columns': this.featuredColumnCapacity}
+		},
 		featuredColumns() {
 			const speakers = this.filteredSpeakers
-			const available = this.speakersGridWidth || (window.innerWidth >= 768 ? Math.min(window.innerWidth - 32, 1140) : 400)
-			
-			let count = 1
-			if (available >= 960) count = 4
-			else if (available >= 720) count = 3
-			else if (available >= 480) count = 2
-
+			const count = this.featuredColumnCapacity
 			const columnCount = Math.min(count, Math.max(speakers.length, 1))
 			const columns = Array.from({length: columnCount}, () => [])
 			speakers.forEach((speaker, index) => {
@@ -1251,6 +1255,9 @@ export default {
 			cursor: pointer
 			&:hover
 				text-decoration: underline
+	&:not(.is-embedded)
+		.speakers-details .featured-speaker-stack
+			max-width: calc((100% - (18px * (var(--speaker-columns, 4) - 1))) / var(--speaker-columns, 4))
 	.speaker-card
 		display: flex
 		align-items: flex-start
