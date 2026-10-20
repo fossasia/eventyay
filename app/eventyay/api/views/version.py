@@ -29,8 +29,8 @@ def numeric_version(v):
         vnum += v.dev
         vnum += phases['dev'] * 100
     elif v.is_prerelease and v.pre:
-        vnum += v.pre[0]
-        vnum += phases[v.pre[1]] * 100
+        vnum += phases[v.pre[0]] * 100
+        vnum += v.pre[1]
     else:
         vnum += phases['release'] * 100
     for i, part in enumerate(reversed(v.release)):
