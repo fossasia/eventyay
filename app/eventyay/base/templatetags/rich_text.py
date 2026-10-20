@@ -192,7 +192,47 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
-def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
+# Query value the bulk-voucher form adds to the shared preview URL.
+VOUCHER_EMAIL_PREVIEW_CONTEXT = 'voucher'
+
+_VOUCHER_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'voucher_list', 'name')
+
+
+def _preview_placeholder_context(html_body: str) -> list[str]:
+    """Base preview context, plus voucher placeholders when the body uses them.
+
+    Voucher placeholders are added only for bodies that reference them so the
+    voucher ``{url}`` sample does not replace the order status ``{url}``.
+    A body that contains only ``{url}`` stays on the order context. Bulk-voucher
+    previews pass ``preview_context`` instead of widening this check.
+    """
+    parameters = list(_PREVIEW_PLACEHOLDER_CONTEXT)
+    if re.search(
+        r'\{voucher_(?:list|url)\}|data-variable=["\']voucher_(?:list|url)["\']',
+        html_body or '',
+    ):
+        parameters.extend(['voucher_list', 'name'])
+    return parameters
+
+
+def _preview_parameters(html_body: str, preview_context: str | None) -> list[str]:
+    """Placeholder groups for one preview request.
+
+    ``voucher`` is the bulk-voucher form. It always includes ``voucher_list``,
+    so ``{url}`` samples the event shop the same way delivery does.
+    """
+    if preview_context == VOUCHER_EMAIL_PREVIEW_CONTEXT:
+        return list(_VOUCHER_PREVIEW_PARAMETERS)
+    return _preview_placeholder_context(html_body)
+
+
+def expand_email_preview_placeholders(
+    html_body: str,
+    event,
+    *,
+    locale: str | None = None,
+    preview_context: str | None = None,
+) -> str:
     """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview."""
     from eventyay.base.i18n import language
     from eventyay.base.services.mail import expand_email_variable_chips
@@ -202,7 +242,7 @@ def expand_email_preview_placeholders(html_body: str, event, *, locale: str | No
         resolved_locale = event.settings.locale
 
     with language(resolved_locale, event.settings.region):
-        context_dict = build_email_preview_context(event, list(_PREVIEW_PLACEHOLDER_CONTEXT))
+        context_dict = build_email_preview_context(event, _preview_parameters(html_body, preview_context))
         expanded = html_body.format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
