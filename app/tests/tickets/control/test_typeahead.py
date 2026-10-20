@@ -74,3 +74,23 @@ def test_product_meta_values_for_full_access_team_member(client):
 
     assert response.status_code == 200
     assert {result['name'] for result in response.json()['results']} == {'Friday', 'Monday', 'Thursday', 'Tuesday'}
+
+
+@pytest.mark.django_db
+def test_products_select2_treats_non_positive_page_as_first_page(client):
+    organizer, event, _ = _create_product_meta_typeahead_data()
+    user = User.objects.create_user('product-page@example.com', 'dummy')
+    team = Team.objects.create(organizer=organizer, can_change_items=True)
+    team.members.add(user)
+    client.force_login(user)
+
+    response = client.get(
+        reverse(
+            'control:event.products.select2',
+            kwargs={'organizer': organizer.slug, 'event': event.slug},
+        ),
+        {'query': 'Ticket One', 'page': '0'},
+    )
+
+    assert response.status_code == 200
+    assert [result['text'] for result in response.json()['results']] == ['Ticket One']
