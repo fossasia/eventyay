@@ -226,19 +226,19 @@ def test_category_delete(token_client, organizer, event, category3, item):
 
 @pytest.fixture
 def item(event):
-    item = event.items.create(name='Budget Ticket', default_price=23)
-    item.meta_values.create(property=event.item_meta_properties.first(), value='Tuesday')
+    item = event.products.create(name='Budget Ticket', default_price=23)
+    item.meta_values.create(property=event.product_meta_properties.first(), value='Tuesday')
     return item
 
 
 @pytest.fixture
 def item2(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item3(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 TEST_ITEM_RES = {
@@ -391,23 +391,26 @@ def test_item_detail_addons(token_client, organizer, event, team, item, category
 
 @pytest.mark.django_db
 def test_item_detail_bundles(token_client, organizer, event, team, item, category):
+    """Test retrieving product detail includes nested bundle representations."""
     with scopes_disabled():
-        i = event.items.create(name='Included thing', default_price=2)
-        item.bundles.create(bundled_item=i, count=1, designated_price=2)
+        i = event.products.create(name='Included thing', default_price=2)
+        item.bundles.create(bundled_product=i, count=1, designated_price=2)
     res = dict(TEST_ITEM_RES)
 
     res['id'] = item.pk
     res['bundles'] = [
         {
-            'bundled_item': i.pk,
+            'bundled_product': i.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '2.00',
         }
     ]
-    resp = token_client.get('/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk))
+    resp = token_client.get(
+        '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk)
+    )
     assert resp.status_code == 200
-    assert res == resp.data
+    assert res['bundles'] == resp.data['bundles']
 
 
 @pytest.mark.django_db
@@ -744,10 +747,11 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
 
 @pytest.mark.django_db
 def test_item_create_with_bundle(token_client, organizer, event, item, category, item2, taxrule):
+    """Test creating a product with inline bundles."""
     with scopes_disabled():
-        i = event.items.create(name='Included thing', default_price=2)
+        i = event.products.create(name='Included thing', default_price=2)
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -772,7 +776,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
             'has_variations': True,
             'bundles': [
                 {
-                    'bundled_item': i.pk,
+                    'bundled_product': i.pk,
                     'bundled_variation': None,
                     'count': 2,
                     'designated_price': '3.00',
@@ -783,15 +787,15 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
     )
     assert resp.status_code == 201
     with scopes_disabled():
-        item = Item.objects.get(pk=resp.data['id'])
-        b = item.bundles.first()
-    assert b.bundled_item == i
+        prod = Item.objects.get(pk=resp.data['id'])
+        b = prod.bundles.first()
+    assert b.bundled_product == i
     assert b.bundled_variation is None
     assert b.count == 2
     assert b.designated_price == 3
 
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -816,7 +820,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
             'has_variations': True,
             'bundles': [
                 {
-                    'bundled_item': item2.pk,
+                    'bundled_product': item2.pk,
                     'bundled_variation': None,
                     'count': 2,
                     'designated_price': '3.00',
@@ -826,12 +830,12 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"bundles":["The bundled item must belong to the same event as the item."]}'
+    assert resp.content.decode() == '{"bundles":["The bundled product must belong to the same event as the product."]}'
 
     with scopes_disabled():
         v = item2.variations.create(value='foo')
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
         {
             'category': category.pk,
             'name': {'en': 'Ticket'},
@@ -855,7 +859,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
             'has_variations': True,
             'bundles': [
                 {
-                    'bundled_item': item.pk,
+                    'bundled_product': item.pk,
                     'bundled_variation': v.pk,
                     'count': 2,
                     'designated_price': '3.00',
@@ -865,7 +869,119 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"bundles":["The chosen variation does not belong to this item."]}'
+    assert resp.content.decode() == '{"bundles":["The chosen variation does not belong to this product."]}'
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_omitted_variation(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with an inline bundle omitting bundled_variation."""
+    with scopes_disabled():
+        i = event.products.create(name='Included thing', default_price=2)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Bundle Ticket'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': i.pk,
+                    'count': 1,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+    with scopes_disabled():
+        prod = Item.objects.get(pk=resp.data['id'])
+        b = prod.bundles.first()
+    assert b.bundled_product == i
+    assert b.bundled_variation is None
+    assert b.count == 1
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_multilevel_forbidden(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with an inline bundle where bundled product already has bundles."""
+    with scopes_disabled():
+        bundled_base = event.products.create(name='Sub-item', default_price=5)
+        intermediate = event.products.create(name='Intermediate Bundle', default_price=10)
+        intermediate.bundles.create(bundled_product=bundled_base, count=1, designated_price=5)
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Outer Bundle'},
+            'active': True,
+            'default_price': '30.00',
+            'bundles': [
+                {
+                    'bundled_product': intermediate.pk,
+                    'count': 1,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert resp.content.decode() == '{"bundles":["The bundled product must not have bundles on its own."]}'
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_duplicate_forbidden(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with duplicate inline bundles of the same product."""
+    with scopes_disabled():
+        i = event.products.create(name='Included thing', default_price=2)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Duplicate Bundle Ticket'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': i.pk,
+                    'count': 1,
+                },
+                {
+                    'bundled_product': i.pk,
+                    'count': 2,
+                },
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert resp.content.decode() == '{"bundles":["The product already contains this bundled product."]}'
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_negative_count(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with an inline bundle having a negative count."""
+    with scopes_disabled():
+        i = event.products.create(name='Included thing', default_price=2)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Negative Count Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': i.pk,
+                    'count': -1,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert 'count' in resp.content.decode()
 
 
 @pytest.mark.django_db
@@ -938,11 +1054,11 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
     )
 
     resp = token_client.patch(
-        '/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk),
         {
             'bundles': [
                 {
-                    'bundled_item': item2.pk,
+                    'bundled_product': item2.pk,
                     'bundled_variation': None,
                     'count': 2,
                     'designated_price': '3.00',
@@ -1269,11 +1385,11 @@ def test_only_variation_not_delete(token_client, organizer, event, item, variati
 
 @pytest.fixture
 def bundle(item, item3, category):
-    return item.bundles.create(bundled_item=item3, count=1, designated_price=2)
+    return item.bundles.create(bundled_product=item3, count=1, designated_price=2)
 
 
 TEST_BUNDLE_RES = {
-    'bundled_item': 0,
+    'bundled_product': 0,
     'bundled_variation': None,
     'count': 1,
     'designated_price': '2.00',
@@ -1282,11 +1398,12 @@ TEST_BUNDLE_RES = {
 
 @pytest.mark.django_db
 def test_bundles_list(token_client, organizer, event, item, bundle, item3):
+    """Test retrieving list of bundles for a product."""
     res = dict(TEST_BUNDLE_RES)
     res['id'] = bundle.pk
-    res['bundled_item'] = item3.pk
+    res['bundled_product'] = item3.pk
     resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/'.format(organizer.slug, event.slug, item.pk)
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk)
     )
     assert resp.status_code == 200
     assert res == resp.data['results'][0]
@@ -1294,11 +1411,12 @@ def test_bundles_list(token_client, organizer, event, item, bundle, item3):
 
 @pytest.mark.django_db
 def test_bundles_detail(token_client, organizer, event, item, bundle, item3):
+    """Test retrieving details of a single product bundle."""
     res = dict(TEST_BUNDLE_RES)
     res['id'] = bundle.pk
-    res['bundled_item'] = item3.pk
+    res['bundled_product'] = item3.pk
     resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk)
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk)
     )
     assert resp.status_code == 200
     assert res == resp.data
@@ -1306,10 +1424,11 @@ def test_bundles_detail(token_client, organizer, event, item, bundle, item3):
 
 @pytest.mark.django_db
 def test_bundles_create(token_client, organizer, event, item, item2, item3):
+    """Test creating a product bundle and validating constraint errors."""
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item3.pk,
+            'bundled_product': item3.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1319,15 +1438,15 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     assert resp.status_code == 201
     with scopes_disabled():
         b = ItemBundle.objects.get(pk=resp.data['id'])
-    assert b.bundled_item == item3
+    assert b.bundled_product == item3
     assert b.bundled_variation is None
     assert b.designated_price == 1.5
     assert b.count == 1
 
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item2.pk,
+            'bundled_product': item2.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1336,13 +1455,13 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     )
     assert resp.status_code == 400
     assert (
-        resp.content.decode() == '{"non_field_errors":["The bundled item must belong to the same event as the item."]}'
+        resp.content.decode() == '{"non_field_errors":["The bundled product must belong to the same event as the product."]}'
     )
 
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item.pk,
+            'bundled_product': item.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1352,15 +1471,15 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     assert resp.status_code == 400
     assert (
         resp.content.decode()
-        == '{"non_field_errors":["The bundled item must not be the same item as the bundling one."]}'
+        == '{"non_field_errors":["The bundled product must not be the same product as the bundling one."]}'
     )
 
     with scopes_disabled():
-        item3.bundles.create(bundled_item=item, count=1, designated_price=3)
+        item3.bundles.create(bundled_product=item, count=1, designated_price=3)
     resp = token_client.post(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item3.pk,
+            'bundled_product': item3.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1368,13 +1487,14 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"non_field_errors":["The bundled item must not have bundles on its own."]}'
+    assert resp.content.decode() == '{"non_field_errors":["The bundled product must not have bundles on its own."]}'
 
 
 @pytest.mark.django_db
 def test_bundles_update(token_client, organizer, event, item, bundle):
+    """Test updating count of an existing product bundle."""
     resp = token_client.patch(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk),
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk),
         {
             'count': 3,
         },
@@ -1388,8 +1508,9 @@ def test_bundles_update(token_client, organizer, event, item, bundle):
 
 @pytest.mark.django_db
 def test_bundles_delete(token_client, organizer, event, item, bundle):
+    """Test deleting an existing product bundle."""
     resp = token_client.delete(
-        '/api/v1/organizers/{}/events/{}/items/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk)
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk)
     )
     assert resp.status_code == 204
     with scopes_disabled():

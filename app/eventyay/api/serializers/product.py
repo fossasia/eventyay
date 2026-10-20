@@ -258,13 +258,38 @@ class ProductSerializer(I18nAwareModelSerializer):
         return value
 
     def validate_bundles(self, value):
+        """
+        Validate inline product bundles on product creation.
+
+        Ensures that bundled products belong to the same event, required variations are provided,
+        multi-level bundling is prevented, non-negative count is enforced, and duplicate
+        bundled product/variation combinations within the payload are rejected.
+        """
         if not self.instance:
+            seen_bundles = set()
             for b_data in value:
+                bundled_product = b_data.get('bundled_product')
+                bundled_variation = b_data.get('bundled_variation')
+                count = b_data.get('count', 1)
+
                 ProductBundle.clean_productvar(
                     self.context['event'],
-                    b_data['bundled_product'],
-                    b_data['bundled_variation'],
+                    bundled_product,
+                    bundled_variation,
                 )
+                ProductBundle.clean_count(count)
+
+                if bundled_product:
+                    if bundled_product.bundles.exists():
+                        raise ValidationError(_('The bundled product must not have bundles on its own.'))
+
+                    bundle_key = (
+                        bundled_product.pk,
+                        bundled_variation.pk if bundled_variation else None,
+                    )
+                    if bundle_key in seen_bundles:
+                        raise ValidationError(_('The product already contains this bundled product.'))
+                    seen_bundles.add(bundle_key)
         return value
 
     def validate_addons(self, value):

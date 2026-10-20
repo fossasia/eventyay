@@ -1226,6 +1226,8 @@ class ProductBundle(models.Model):
 
     @staticmethod
     def clean_productvar(event, bundled_product, bundled_variation):
+        if not bundled_product:
+            raise ValidationError(_('A product needs to be set for this bundle.'))
         if event != bundled_product.event:
             raise ValidationError(_('The bundled product must belong to the same event as the product.'))
         if bundled_product.has_variations and not bundled_variation:
