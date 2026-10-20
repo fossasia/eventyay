@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import datetime
+import functools
 import json
 import logging
 import re
@@ -1109,7 +1110,10 @@ def _send_enabled_platform_mail_template_receivers(disabled_modules):
     sync_receivers, async_receivers = platform_mail_templates._live_receivers(None)
 
     def is_enabled(receiver):
-        receiver_app = apps.get_containing_app_config(receiver.__module__)
+        func = receiver
+        while isinstance(func, functools.partial):
+            func = func.func
+        receiver_app = apps.get_containing_app_config(func.__module__)
         return not receiver_app or receiver_app.name not in disabled_modules
 
     sync_receivers = [receiver for receiver in sync_receivers if is_enabled(receiver)]
@@ -1205,7 +1209,6 @@ def get_platform_mail_templates() -> list[dict]:
     disabled_modules = GlobalPluginConfig.get_disabled_modules()
     for receiver, response in _send_enabled_platform_mail_template_receivers(disabled_modules):
         if isinstance(response, Exception):
-            logger.error('Mail template receiver %r failed: %s', receiver, response)
             continue
         if response is None:
             continue
@@ -1231,6 +1234,7 @@ def get_platform_mail_templates() -> list[dict]:
             if (
                 not isinstance(key, str)
                 or not key
+                or '/' in key
                 or not isinstance(name, (str, Promise))
                 or not str(name).strip()
                 or not callable(load)
