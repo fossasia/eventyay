@@ -1362,10 +1362,11 @@ class VoucherDuplicate(AdministratorPermissionRequiredMixin, View):
             created_by=str(request.user),
             updated_by=str(request.user),
         )
-        new_voucher.save()
-        new_voucher.limit_events.set(original.limit_events.all())
-        new_voucher.limit_organizer.set(original.limit_organizer.all())
-        platform_fee_voucher_copied.send(sender=None, source=original, voucher=new_voucher)
+        with transaction.atomic():
+            new_voucher.save()
+            new_voucher.limit_events.set(original.limit_events.all())
+            new_voucher.limit_organizer.set(original.limit_organizer.all())
+            platform_fee_voucher_copied.send(sender=None, source=original, voucher=new_voucher)
 
         messages.success(request, _('Voucher duplicated as draft with code %(code)s.') % {'code': new_voucher.code})
         return HttpResponseRedirect(

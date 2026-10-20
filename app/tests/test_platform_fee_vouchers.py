@@ -181,3 +181,20 @@ def test_ticket_fee_respects_platform_fee_flag_and_budget():
     _fee, final_fee, discount = calculate_ticket_fee(Decimal('1000.00'), Decimal('1.00'), event, voucher)
     assert discount == Decimal('0.00')
     assert final_fee == Decimal('10.00')
+
+
+@pytest.mark.django_db
+def test_duplicate_voucher_rolls_back_when_plugin_copy_fails(admin_client):
+    voucher = InvoiceVoucher.objects.create(code='ORIGINAL2', price_mode='percent', value=Decimal('10.00'))
+
+    def receiver(sender, source, voucher, **kwargs):
+        raise RuntimeError('plugin copy failed')
+
+    platform_fee_voucher_copied.connect(receiver, dispatch_uid='test_voucher_copy_fails')
+    try:
+        with pytest.raises(RuntimeError):
+            admin_client.post(reverse('eventyay_admin:admin.voucher.duplicate', kwargs={'voucher': voucher.pk}))
+    finally:
+        platform_fee_voucher_copied.disconnect(dispatch_uid='test_voucher_copy_fails')
+
+    assert list(InvoiceVoucher.objects.values_list('code', flat=True)) == ['ORIGINAL2']

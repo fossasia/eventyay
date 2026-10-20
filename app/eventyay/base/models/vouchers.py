@@ -898,12 +898,12 @@ class InvoiceVoucher(LoggedModel):
             return str(_('No effect'))
         if self.price_mode == PriceModeChoices.PERCENT:
             if self.value == Decimal('100.00'):
-                return str(_('Waives 100% of platform fees'))
-            return str(_('%(pct)s%% platform fee discount') % {'pct': self.value})
+                return str(_('Waives 100%'))
+            return str(_('%(pct)s%% discount') % {'pct': self.value})
         if self.price_mode == PriceModeChoices.SUBTRACT:
             return str(_('Fixed credit %(amount)s') % {'amount': f'{self.value:.2f}'})
         if self.price_mode == PriceModeChoices.SET:
-            return str(_('Set platform fee to %(amount)s') % {'amount': f'{self.value:.2f}'})
+            return str(_('Set price to %(amount)s') % {'amount': f'{self.value:.2f}'})
         return str(_('No effect'))
 
     def get_scope_display(self) -> str:
