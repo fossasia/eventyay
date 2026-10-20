@@ -397,7 +397,9 @@ class Submission(GenerateCode, PretalxModel):
                 self.event.active_review_phase and self.event.active_review_phase.speakers_can_change_submissions
             )
         if self.state == SubmissionStates.DRAFT:
-            return self.cfp_open
+            return self.cfp_open or bool(
+                self.access_code and (not self.access_code.valid_until or now() < self.access_code.valid_until)
+            )
         return self.state in SubmissionStates.accepted_states
 
     @property
@@ -1319,9 +1321,11 @@ def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
     event_id = instance.event_id
     if not event_id:
         return
-    if not TalkSlot.objects.filter(
-        submission_id=instance.pk,
-        schedule__version__isnull=False,
-    ).exists():
-        return
+
+    with scope(event=instance.event):
+        if not TalkSlot.objects.filter(
+            submission_id=instance.pk,
+            schedule__version__isnull=False,
+        ).exists():
+            return
     bump_schedule_cache_version_on_commit(event_id)

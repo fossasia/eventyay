@@ -44,6 +44,7 @@ from eventyay.common.views.mixins import (
     EventPermissionRequired,
     OrderActionMixin,
     PermissionRequired,
+    Sortable,
 )
 from eventyay.orga.forms import CfPForm, SubmissionTypeForm, TalkQuestionForm, TrackForm
 from eventyay.orga.forms.cfp import (
@@ -803,13 +804,26 @@ class CfPQuestionRemind(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.outbox
 
 
-class SubmissionTypeView(OrderActionMixin, OrgaCRUDView):
+class SubmissionTypeView(Sortable, OrderActionMixin, OrgaCRUDView):
     model = SubmissionType
     form_class = SubmissionTypeForm
     template_namespace = 'orga/cfp'
+    sortable_fields = ('name', 'proposals', 'default_duration')
+    secondary_sort = {
+        '': ('position',),
+        'name': ('position',),
+        'proposals': ('position',),
+        'default_duration': ('position',),
+    }
 
     def get_queryset(self):
-        return self.request.event.submission_types.all()
+        qs = self.request.event.submission_types.all().annotate(
+            proposals=Count(
+                'submissions',
+                filter=~Q(submissions__state__in=('deleted', 'draft')),
+            )
+        )
+        return self.sort_queryset(qs)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -861,13 +875,26 @@ class SubmissionTypeDefault(PermissionRequired, View):
         return redirect(request.event.cfp.urls.types)
 
 
-class TrackView(OrderActionMixin, OrgaCRUDView):
+class TrackView(Sortable, OrderActionMixin, OrgaCRUDView):
     model = Track
     form_class = TrackForm
     template_namespace = 'orga/cfp'
+    sortable_fields = ('name', 'color', 'proposals')
+    secondary_sort = {
+        '': ('position',),
+        'name': ('position',),
+        'color': ('position',),
+        'proposals': ('position',),
+    }
 
     def get_queryset(self):
-        return self.request.event.tracks.all()
+        qs = self.request.event.tracks.all().annotate(
+            proposals=Count(
+                'submissions',
+                filter=~Q(submissions__state__in=('deleted', 'draft')),
+            )
+        )
+        return self.sort_queryset(qs)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_view'}
