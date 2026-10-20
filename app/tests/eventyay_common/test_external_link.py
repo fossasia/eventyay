@@ -1,22 +1,28 @@
+import json
 from unittest.mock import Mock, patch
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 import pytest
-from allauth.core import context
-from allauth.socialaccount.models import SocialApp, SocialLogin
-from allauth.socialaccount.providers.google.provider import GoogleProvider
+import requests
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount, SocialApp
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from bs4 import BeautifulSoup
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.urls import resolve, reverse
+from django.urls import reverse
 from django_otp.plugins.otp_static.models import StaticDevice
+from django_scopes import scope
 
+from eventyay.api.models import OAuthApplication
 from eventyay.base.middleware import SecurityMiddleware
+from eventyay.base.models import SeatingPlan
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.views.redirect import safelink
 from eventyay.common.redirects import safe_redirect_url
 from eventyay.common.views import redirect_view
 from eventyay.multidomain.models import KnownDomain
+from eventyay.multidomain.urlreverse import eventreverse
 
 
 EXTERNAL_LINK = '/common/external-link/'
@@ -381,28 +387,83 @@ def test_abandoned_social_flow_does_not_override_native_login(client, user, oaut
     assert response.url == '/common/organizers/'
 
 
-def test_social_login_destinations_are_bound_to_each_oauth_state(client, rf, oauth_provider):
-    provider = GoogleProvider(request=rf.get('/'), app=SocialApp(provider='google', client_id='test-client'))
-    oauth_provider.get_login_url.side_effect = provider.get_login_url
+@pytest.fixture
+def callback_provider(user, monkeypatch):
+    GlobalSettingsObject().settings.set(
+        'login_providers',
+        {'google': {'state': True, 'client_id': 'test-client', 'secret': 'test-secret'}},
+    )
+    SocialApp.objects.create(provider='google', client_id='test-client', secret='test-secret')
+    SocialAccount.objects.create(user=user, provider='google', uid='google-user')
+    EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
+    calls = []
+
+    def provider_response(session, method, url, **kwargs):
+        calls.append((method, url))
+        if url == GoogleOAuth2Adapter.access_token_url:
+            payload = {'access_token': 'test-access-token', 'token_type': 'Bearer', 'expires_in': 3600}
+        elif url == GoogleOAuth2Adapter.identity_url:
+            payload = {'id': 'google-user', 'email': user.email, 'verified_email': True}
+        else:
+            pytest.fail(f'Unexpected provider HTTP request: {method} {url}')
+        response = requests.Response()
+        response.status_code = 200
+        response.headers['Content-Type'] = 'application/json'
+        response._content = json.dumps(payload).encode()
+        return response
+
+    monkeypatch.setattr(requests.Session, 'request', provider_response)
+    return calls
+
+
+@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
+def test_social_login_callbacks_keep_destinations_when_completed_out_of_order(
+    client, user, callback_provider, parameter
+):
+    application = OAuthApplication.objects.create(
+        name='Talk',
+        user=user,
+        client_type='confidential',
+        authorization_grant_type='authorization-code',
+        redirect_uris='https://talk.example/callback',
+    )
+    authorize = (
+        reverse('api-v1:authorize')
+        + '?'
+        + urlencode(
+            {
+                'client_id': application.client_id,
+                'redirect_uri': 'https://talk.example/callback',
+                'response_type': 'code',
+                'scope': 'profile',
+                'state': 'talk-state',
+            }
+        )
+    )
+    targets = [DESTINATION, authorize]
     states = []
-    targets = [DESTINATION, '/common/organizers/']
     for target in targets:
-        response = client.get(reverse('plugins:socialauth:social.oauth.login', args=['google']), {'next': target})
-        login_request = rf.get(response.url)
-        login_request.session = client.session
-        with context.request_context(login_request):
-            kwargs = provider.get_redirect_from_request_kwargs(login_request)
-        state_id = provider.stash_redirect_state(login_request, **kwargs)
-        login_request.session.save()
-        states.append(state_id)
-    for target, state_id in reversed(list(zip(targets, states))):
-        callback = rf.get('/accounts/google/login/callback/')
-        callback.session = client.session
-        state = provider.unstash_redirect_state(callback, state_id)
-        callback.session.save()
-        sociallogin = SocialLogin()
-        sociallogin.state = state
-        assert sociallogin.get_redirect_url(callback) == safe_redirect_url(callback, target)
+        entry = client.get(reverse('plugins:socialauth:social.oauth.login', args=['google']), {parameter: target})
+        provider = client.get(entry.url)
+        assert provider.status_code == 302
+        assert urlsplit(provider.url).hostname == 'accounts.google.com'
+        states.append(parse_qs(urlsplit(provider.url).query)['state'][0])
+    assert states[0] != states[1]
+    for target, state in reversed(list(zip(targets, states))):
+        response = client.get(reverse('google_callback'), {'state': state, 'code': 'test-authorization-code'})
+        assert response.status_code == 302
+        expected = EXTERNAL_LINK + '?' + urlencode({'next': target}) if target == DESTINATION else target
+        assert response.url == expected
+        assert int(client.session['_auth_user_id']) == user.pk
+        if target == DESTINATION:
+            confirmation = client.get(response.url)
+            assert confirmation.status_code == 200
+            assert confirmation.context['destination'] == DESTINATION
+        else:
+            consent = client.get(response.url)
+            assert consent.status_code == 200
+            assert 'Talk' in consent.text
+    assert len(callback_provider) == 4
 
 
 def test_social_login_without_next_does_not_reuse_previous_destination(client, oauth_provider):
@@ -410,18 +471,6 @@ def test_social_login_without_next_does_not_reuse_previous_destination(client, o
     client.get(entry, {'next': DESTINATION})
     client.get(entry)
     assert oauth_provider.get_login_url.call_args.kwargs == {}
-
-
-@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
-def test_social_login_oauth2_handoff_is_bound_to_flow(client, oauth_provider, parameter):
-    params = {'client_id': 'talk-client', 'redirect_uri': 'https://talk.example/callback', 'state': 'talk-state'}
-    target = reverse('api-v1:authorize') + '?' + urlencode(params)
-    assert resolve(urlsplit(target).path).url_name == 'authorize'
-    response = client.get(reverse('plugins:socialauth:social.oauth.login', args=['google']), {parameter: target})
-    assert response.status_code == 302
-    next_url = oauth_provider.get_login_url.call_args.kwargs['next']
-    assert next_url == target
-    assert 'oauth2_params' not in client.session
 
 
 @pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
@@ -447,3 +496,42 @@ def test_signup_returns_to_confirmation_after_registration(client, settings, par
     assert response.request['PATH_INFO'] == EXTERNAL_LINK
     assert response.context['destination'] == DESTINATION
     assert '_auth_user_id' in client.session
+
+
+@pytest.mark.parametrize('has_subevents', [False, True])
+def test_standalone_seating_plan_loads_link_protection(client, event, has_subevents):
+    plan = SeatingPlan.objects.create(organizer=event.organizer, name='Seating', layout='{}')
+    event.has_subevents = has_subevents
+    event.tickets_published = True
+    if not has_subevents:
+        event.seating_plan = plan
+    event.save()
+    kwargs = {}
+    if has_subevents:
+        with scope(event=event, organizer=event.organizer):
+            subevent = event.subevents.create(
+                name='Seated date', date_from=event.date_from, seating_plan=plan, active=True
+            )
+        kwargs['subevent'] = subevent.pk
+    plugin_html = f'<a id="plugin-link" href="{DESTINATION}">External seating link</a>'
+    with patch('eventyay.presale.signals.render_seating_plan.send', return_value=[(None, plugin_html)]):
+        response = client.get(eventreverse(event, 'presale:event.seatingplan', kwargs=kwargs))
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content, 'html.parser')
+    assert page.select_one('#plugin-link')['href'] == DESTINATION
+    script = page.select_one('head script[data-external-link-url]')
+    assert script is not None
+    assert script['data-external-link-url'] == EXTERNAL_LINK
+    assert script['type'] == 'module'
+    assert script['blocking'] == 'render'
+
+
+def test_standalone_signup_page_loads_link_protection(client):
+    response = client.get(reverse('account_signup'))
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content, 'html.parser')
+    script = page.select_one('head script[data-external-link-url]')
+    assert script is not None
+    assert script['data-external-link-url'] == EXTERNAL_LINK
+    assert script['type'] == 'module'
+    assert script['blocking'] == 'render'

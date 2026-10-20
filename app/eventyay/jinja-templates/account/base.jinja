@@ -39,6 +39,8 @@
     {{ {'show': _('Show password'), 'hide': _('Hide password')} | tojson }}
   </script>
   <script type="module" src="{{ static_url('common/js/password_toggle.js') }}"></script>
+  <script type='module' blocking='render' src="{{ static_url('common/js/external-links.js') }}"
+          data-external-link-url="{{ url_for('eventyay_common:external-link') }}"></script>
 </head>
 <body>
   <div class='page-wrapper'>
