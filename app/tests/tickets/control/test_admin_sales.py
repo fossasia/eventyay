@@ -119,7 +119,7 @@ class AdminSalesTest(SoupTest):
             )
         with scope():
             with self.assertRaises(ScopeError):
-                BillingInvoiceEmail.objects.exists()
+                BillingInvoiceEmail.objects.count()
             with (
                 patch('eventyay.common.signals.cache.get', return_value=None),
                 patch('eventyay.base.services.mail.mail_send_task.run') as send,
