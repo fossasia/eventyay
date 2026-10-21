@@ -2185,17 +2185,16 @@ class OrderChangeManager:
                 op.fee.canceled = True
                 op.fee.save(update_fields=['canceled'])
             elif isinstance(op, self.CancelOperation):
-                for gc in op.position.issued_gift_cards.all():
-                    gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                    if gc.value < gc.issued_value:
-                        raise OrderError(
-                            _(
-                                'A position can not be canceled since the gift card {card} purchased in this order has '
-                                'already been redeemed.'
-                            ).format(card=gc.secret)
-                        )
-                    else:
-                        gc.transactions.create(value=-gc.issued_value, order=self.order)
+                for position in [op.position] + list(op.position.addons.filter(canceled=False)):
+                    for card in position.issued_gift_cards.select_for_update():
+                        if card.value < card.issued_value:
+                            raise OrderError(
+                                _(
+                                    'A position can not be canceled since the gift card {card} purchased in this order has '
+                                    'already been redeemed.'
+                                ).format(card=card.secret)
+                            )
+                        card.transactions.create(value=-card.issued_value, order=self.order)
 
                 for opa in op.position.addons.filter(canceled=False):
                     self.order.log_action(
