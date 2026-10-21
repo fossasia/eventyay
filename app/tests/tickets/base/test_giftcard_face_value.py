@@ -4,7 +4,7 @@ from threading import Barrier
 from unittest.mock import patch
 
 import pytest
-from django.db import DatabaseError, close_old_connections
+from django.db import DatabaseError, close_old_connections, connections
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -134,6 +134,8 @@ def test_issuance_failure_rolls_back_order_change(gift_order):
     event, order, position = gift_order
     other = Product.objects.create(event=event, name='Other', default_price=0)
     manager = OrderChangeManager(order)
+    quota = event.quotas.create(name='Other', size=10)
+    quota.products.add(other)
     manager.add_position(other, variation=None, price=Decimal('0'))
     with patch('eventyay.base.models.giftcards.GiftCardTransaction.save', side_effect=DatabaseError('ledger failed')):
         with pytest.raises(DatabaseError, match='ledger failed'):
@@ -142,7 +144,7 @@ def test_issuance_failure_rolls_back_order_change(gift_order):
     assert not position.issued_gift_cards.exists()
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db(transaction=True, available_apps=['eventyay.base'])
 def test_concurrent_signals_issue_one_card(gift_order):
     event, order, position = gift_order
     barrier = Barrier(2)
@@ -154,7 +156,7 @@ def test_concurrent_signals_issue_one_card(gift_order):
                 barrier.wait(timeout=10)
                 signal_listener_issue_giftcards(event, order)
         finally:
-            close_old_connections()
+            connections.close_all()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(issue) for _ in range(2)]
@@ -162,3 +164,22 @@ def test_concurrent_signals_issue_one_card(gift_order):
             future.result(timeout=20)
     assert position.issued_gift_cards.count() == 1
     assert position.issued_gift_cards.get().value == 50
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('credit', [25, 50])
+def test_position_reinstatement_restores_existing_credit(gift_order, credit):
+    event, order, position = gift_order
+    card = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=position)
+    card.transactions.create(value=credit, order=order)
+    other = Product.objects.create(event=event, name='Other', default_price=0)
+    OrderPosition.objects.create(order=order, product=other, price=0)
+    manager = OrderChangeManager(order)
+    manager.cancel(position)
+    manager.commit(check_quotas=False)
+    assert card.value == 0
+    manager = OrderChangeManager(order)
+    manager.reinstate(position)
+    manager.commit(check_quotas=False)
+    assert card.value == credit
+    assert position.issued_gift_cards.count() == 1
