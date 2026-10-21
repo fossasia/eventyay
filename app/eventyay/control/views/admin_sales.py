@@ -1,5 +1,6 @@
 import csv
 from decimal import Decimal
+from urllib.parse import urlsplit
 
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -8,6 +9,8 @@ from django.db.models import Case, CharField, Count, DecimalField, OuterRef, Q, 
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
@@ -132,7 +135,8 @@ class SalesOverview(AdministratorPermissionRequiredMixin, TemplateView):
             )
             search = Q(name__icontains=query)
             search |= Q(organizer__name__icontains=query)
-        queryset = queryset.filter(search)
+        if query:
+            queryset = queryset.filter(search)
         status = self.request.GET.get('status')
         if status:
             queryset = queryset.filter(**{'status' if self.invoices else 'sales_status': status})
@@ -166,7 +170,7 @@ class SalesOverview(AdministratorPermissionRequiredMixin, TemplateView):
                     row.tickets_sold,
                     row.revenue,
                     row.currency,
-                    row.date_from.isoformat(),
+                    row.date_from.isoformat() if row.date_from else '',
                     str(dict(EVENT_STATUSES)[row.sales_status]),
                 )
 
@@ -208,7 +212,14 @@ class InvoiceStatusUpdate(AdministratorPermissionRequiredMixin, View):
                     },
                 )
         messages.success(request, _('Invoice status updated. No charge or refund was initiated.'))
-        return redirect('eventyay_admin:admin.sales.invoices')
+        destination = reverse('eventyay_admin:admin.sales.invoices')
+        next_url = request.POST.get('next', '')
+        if (
+            url_has_allowed_host_and_scheme(next_url, allowed_hosts=set())
+            and urlsplit(next_url).path == destination
+        ):
+            destination = next_url
+        return redirect(destination)
 
 
 class InvoicePaymentDetail(AdministratorPermissionRequiredMixin, TemplateView):
