@@ -54,6 +54,7 @@ def test_cancel_and_reactivate_preserve_actual_issued_credit(gift_order, legacy)
     assert card.value == 0
     reactivate_order(order, force=True)
     assert card.value == original
+    assert position.issued_gift_cards.count() == 1
     assert order.status == Order.STATUS_PAID
 
 
@@ -62,7 +63,9 @@ def test_redeemed_face_value_cannot_be_cancelled(gift_order):
     event, order, position = gift_order
     signal_listener_issue_giftcards(event, order)
     card = position.issued_gift_cards.get()
+    assert position in order.user_cancelable_positions
     card.transactions.create(value=-10)
+    assert position not in order.user_cancelable_positions
     with pytest.raises(OrderError):
         _cancel_order(order, send_mail=False)
     assert card.value == 40
@@ -79,3 +82,19 @@ def test_position_cancellation_reverses_full_credit(gift_order):
     manager.cancel(position)
     manager.commit(check_quotas=False)
     assert card.value == 0
+
+
+@pytest.mark.django_db
+def test_reactivation_restores_each_card_once(gift_order):
+    event, order, position = gift_order
+    cards = []
+    for value in (10, 15):
+        card = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=position)
+        card.transactions.create(value=value, order=order)
+        cards.append(card)
+    for _ in range(2):
+        _cancel_order(order, send_mail=False)
+        assert [card.value for card in cards] == [0, 0]
+        reactivate_order(order, force=True)
+        assert [card.value for card in cards] == [10, 15]
+        assert position.issued_gift_cards.count() == 2
