@@ -169,7 +169,10 @@ def reactivate_order(order: Order, force: bool = False, user: User = None, auth=
     if order.status != Order.STATUS_CANCELED:
         raise OrderError('The order was not canceled.')
 
-    with order.event.lock() as now_dt:
+    with transaction.atomic(), order.event.lock() as now_dt:
+        current_status = Order.objects.select_for_update().values_list('status', flat=True).get(pk=order.pk)
+        if current_status != Order.STATUS_CANCELED:
+            raise OrderError('The order was not canceled.')
         is_available = force or order._is_still_available(now_dt, count_waitinglist=False, check_voucher_usage=True)
         if is_available is True:
             if order.payment_refund_sum >= order.total:
@@ -2595,8 +2598,9 @@ class OrderChangeManager:
             self._reissue_invoice()
             self._clear_tickets_cache()
             self.order.touch()
-        self._check_paid_price_change()
-        self._check_paid_to_free()
+            self._check_paid_price_change()
+            self._check_paid_to_free()
+            signal_listener_issue_giftcards(self.order.event, self.order)
 
         if self.notify:
             notify_user_changed_order(
@@ -3108,6 +3112,8 @@ def change_payment_provider(
 @receiver(order_changed, dispatch_uid='eventyaybase_order_changed_giftcards')
 @transaction.atomic()
 def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
+    # Serialize signals and recheck persisted status before issuing any credit.
+    order = Order.objects.select_for_update().get(pk=order.pk)
     if order.status != Order.STATUS_PAID:
         return
     any_giftcards = False
@@ -3130,4 +3136,6 @@ def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
                 p.save(update_fields=['secret'])
 
     if any_giftcards:
-        tickets.invalidate_cache.apply_async(kwargs={'event': sender.pk, 'order': order.pk})
+        transaction.on_commit(
+            lambda: tickets.invalidate_cache.apply_async(kwargs={'event': sender.pk, 'order': order.pk})
+        )
