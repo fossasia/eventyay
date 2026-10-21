@@ -6,7 +6,13 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product
-from eventyay.base.services.orders import OrderChangeManager, OrderError, _cancel_order, reactivate_order, signal_listener_issue_giftcards
+from eventyay.base.services.orders import (
+    OrderChangeManager,
+    OrderError,
+    _cancel_order,
+    reactivate_order,
+    signal_listener_issue_giftcards,
+)
 
 
 @pytest.fixture
@@ -65,7 +71,7 @@ def test_redeemed_face_value_cannot_be_cancelled(gift_order):
     card = position.issued_gift_cards.get()
     assert position in order.user_cancelable_positions
     card.transactions.create(value=-10)
-    assert position not in order.user_cancelable_positions
+    assert position not in Order.objects.get(pk=order.pk).user_cancelable_positions
     with pytest.raises(OrderError):
         _cancel_order(order, send_mail=False)
     assert card.value == 40
