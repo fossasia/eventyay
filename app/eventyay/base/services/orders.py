@@ -3113,18 +3113,18 @@ def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
     any_giftcards = False
     for p in order.positions.all():
         if p.product.issue_giftcard:
-            issued = Decimal('0.00')
-            for gc in p.issued_gift_cards.all():
-                issued += gc.transactions.first().value
+            # Issued cards retain their recorded credit, including legacy discounted cards.
+            if p.issued_gift_cards.exists():
+                continue
             face_value = p.price_before_voucher if p.price_before_voucher is not None else p.price
-            if face_value - issued > 0:
+            if face_value > 0:
                 gc = sender.organizer.issued_gift_cards.create(
                     currency=sender.currency,
                     issued_in=p,
                     testmode=order.testmode,
                     expires=sender.organizer.default_gift_card_expiry,
                 )
-                gc.transactions.create(value=face_value - issued, order=order)
+                gc.transactions.create(value=face_value, order=order)
                 any_giftcards = True
                 p.secret = gc.secret
                 p.save(update_fields=['secret'])
