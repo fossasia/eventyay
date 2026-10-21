@@ -102,9 +102,9 @@ nav.navbar.navbar-inverse .btn-link:focus i {
    ============================================ */
 
 .navbar-header {
-  float: left;
-  margin-left: 0;
-  padding-left: 0;
+  float: inline-start;
+  margin-inline-start: 0;
+  padding-inline-start: 0;
 }
 
 /* ============================================
@@ -113,11 +113,11 @@ nav.navbar.navbar-inverse .btn-link:focus i {
 
 .navbar-toggle {
   position: relative;
-  float: right;
+  float: inline-end;
   padding: 9px 10px;
   margin-top: 8px;
   margin-bottom: 8px;
-  margin-right: 15px;
+  margin-inline-end: 15px;
   background-color: transparent;
   background-image: none;
   border: 1px solid transparent;
@@ -140,18 +140,18 @@ nav.navbar.navbar-inverse #sidebar-toggle,
   position: relative;
   display: flex;
   align-items: baseline;
-  float: left;
+  float: inline-start;
   font-size: 14px;
   margin-top: 12px;
-  margin-right: 10px;
+  margin-inline-end: 10px;
   margin-bottom: 8px;
-  margin-left: 10px;
+  margin-inline-start: 10px;
   background-color: transparent !important;
   border: none;
   padding-top: 5px;
-  padding-right: 5px;
+  padding-inline-end: 5px;
   padding-bottom: 5px;
-  padding-left: 5px;
+  padding-inline-start: 5px;
   color: #fff;
   z-index: 1;
   cursor: pointer;
@@ -181,17 +181,17 @@ nav.navbar.navbar-inverse #sidebar-toggle i.fa-bars,
    Navbar brand - main.scss
    padding-top: 0.3125rem (5px)
    padding-bottom: 0.3125rem (5px)
-   margin-right: 1rem (16px)
+   margin-inline-end: 1rem (16px)
    ============================================ */
 
 nav.navbar.navbar-inverse .navbar-brand,
 .navbar-inverse .navbar-brand {
-  float: left;
+  float: inline-start;
   display: flex;
   align-items: center;
   height: 50px;
   padding: 5px 0;
-  margin-right: 16px;
+  margin-inline-end: 16px;
   margin-top: 0;
   font-size: 20px;
   line-height: inherit;
@@ -208,7 +208,7 @@ nav.navbar.navbar-inverse .navbar-brand img,
   height: 30px;
   width: auto;
   margin-top: 2px;
-  margin-right: 0.2em;
+  margin-inline-end: 0.2em;
 }
 
 nav.navbar.navbar-inverse .navbar-brand:hover,
@@ -239,22 +239,22 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 }
 
 .navbar-top-links.navbar-right {
-  float: right !important;
-  margin-right: 2px;
+  float: inline-end !important;
+  margin-inline-end: 2px;
 }
 
 .navbar-top-links.navbar-left {
-  float: left !important;
+  float: inline-start !important;
 }
 
 .navbar-top-links li {
   display: inline-block;
-  float: left;
+  float: inline-start;
   height: 50px;
 }
 
 .navbar-top-links li:last-child {
-  margin-right: 15px;
+  margin-inline-end: 15px;
 }
 
 .navbar-top-links li a {
@@ -308,7 +308,7 @@ nav.navbar #language-dropdown > summary {
 /* The gap already spaces the caret; reset the extra margin from _dropdown.css */
 nav.navbar #profile-dropdown > summary i.fa-caret-down,
 nav.navbar #language-dropdown > summary i.fa-caret-down {
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 
 /* ============================================
@@ -340,7 +340,7 @@ nav.navbar.navbar-inverse #button-sudo,
   color: #f8f9fa;
   background: transparent;
   line-height: 20px;
-  margin-left: 2px;
+  margin-inline-start: 2px;
 }
 
 nav.navbar.navbar-inverse #button-shop i,
@@ -388,7 +388,7 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 }
 
 .navbar-nav > li {
-  float: left;
+  float: inline-start;
 }
 
 .navbar-nav > li > a {
@@ -409,7 +409,7 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 
 .mobile-navbar-view-form button {
   position: relative;
-  margin-right: 15px;
+  margin-inline-end: 15px;
   padding: 6px 10px;
   margin-top: 8px;
   margin-bottom: 8px;
@@ -476,7 +476,8 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     justify-content: space-between;
     height: 50px;
     min-height: 50px;
-    padding: 0px 16px 0px 10px;
+    padding-block: 0;
+    padding-inline: 10px 16px;
   }
 
   nav.navbar {
@@ -499,11 +500,13 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 
   nav.navbar.navbar-inverse .navbar-brand img {
     height: 30px;
-    margin: 0 5px 0 0;
+    margin: 0;
+    margin-inline-end: 5px;
   }
 
   nav.navbar.navbar-inverse #sidebar-toggle {
-    margin: 0 10px 2px 0;
+    margin: 0 0 2px;
+    margin-inline-end: 10px;
     padding: 5px;
     height: auto;
     display: flex;
@@ -514,7 +517,8 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     display: flex;
     align-items: center;
     height: 50px;
-    margin: 0 0 0 auto;
+    margin: 0;
+    margin-inline-start: auto;
     padding: 0;
     gap: 4px;
   }
