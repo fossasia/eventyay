@@ -453,3 +453,8 @@
     border: 1px solid #ddd;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
+#tickets-api-base,
+#talks-api-base {
+    overflow-wrap: anywhere;
+}
