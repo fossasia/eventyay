@@ -14651,7 +14651,7 @@ msgstr "나의 발표 제안"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "발표자 이메일"
 
 #: eventyay/common/templates/common/base.html:189
