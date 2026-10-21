@@ -60,6 +60,7 @@
               <td>
                 <form method='post' action='{% url "eventyay_admin:admin.sales.status" pk=row.pk %}'>
                   {% csrf_token %}
+                  <input type='hidden' name='next' value='{{ request.get_full_path }}'>
                   <input type='hidden' name='previous_status' value='{{ row.status }}'>
                   <select class='form-control' name='status' id='invoice-status-{{ row.pk }}' aria-label='{% blocktranslate with number=row.pk %}Status for invoice {{ number }}{% endblocktranslate %}'>
                     {% for value, label in statuses %}<option value='{{ value }}'{% if row.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
