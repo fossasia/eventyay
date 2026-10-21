@@ -6,10 +6,12 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from celery.exceptions import Retry
-from django.db import DatabaseError
-from django.test import Client, override_settings
+from django.core.exceptions import ValidationError
+from django.db import DatabaseError, connection
+from django.test import Client, RequestFactory, override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
+from django_scopes.exceptions import ScopeError
 
 from eventyay.base.models import (
     BillingInvoice,
@@ -23,6 +25,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.services.mail import SendMailException
 from eventyay.common.signals import process_scheduled_emails
+from eventyay.control.views.admin_sales import SalesOverview
 from eventyay.eventyay_common.tasks import (
     billing_invoice_send_email,
     process_auto_billing_charge,
@@ -76,6 +79,67 @@ class AdminSalesTest(SoupTest):
             updated_by='system',
             sent_to_email='billing@example.com',
         )
+
+    def test_export_includes_events_without_dates(self):
+        with scopes_disabled():
+            self.event.date_from = None
+            self.event.save(update_fields=['date_from'])
+        response = self.client.get('/admin/sales/', {'export': 'csv'})
+        self.assertEqual(response.status_code, 200)
+        rows = list(csv.reader(StringIO(response.content.decode())))
+        row = next(row for row in rows[1:] if row[0] == str(self.event.name))
+        self.assertEqual(row[5], '')
+
+    @scopes_disabled()
+    def test_empty_search_does_not_add_like_predicates(self):
+        for invoices in (False, True):
+            for query in ('', '   '):
+                with self.subTest(invoices=invoices, query=query):
+                    view = SalesOverview(invoices=invoices)
+                    view.request = RequestFactory().get('/admin/sales/', {'query': query})
+                    self.assertNotIn('LIKE', str(view.get_queryset().query))
+
+    def test_status_update_preserves_filters_and_rejects_other_destinations(self):
+        destination = '/admin/sales/invoices/?status=n&ordering=id&page=2&query=Community'
+        for target in (destination, 'https://evil.example/admin/sales/invoices/',
+                       '//evil.example/admin/sales/invoices/', '/admin/users/'):
+            with self.subTest(target=target):
+                response = self.client.post(
+                    f'/admin/sales/invoices/{self.invoice.pk}/status/',
+                    {'status': 'n', 'previous_status': 'n', 'next': target},
+                )
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.url, destination if target == destination else '/admin/sales/invoices/')
+
+    def test_billing_worker_sends_without_a_tenant_scope(self):
+        with scopes_disabled():
+            mail = BillingInvoiceEmail.objects.create(
+                invoice=self.invoice, delivery_key='initial', recipient='billing@example.com',
+                subject='Invoice', body='Invoice content', pdf_base64='cGRm', pdf_filename='invoice.pdf',
+            )
+        with self.assertRaises(ScopeError):
+            BillingInvoiceEmail.objects.exists()
+        with (
+            patch('eventyay.common.signals.cache.get', return_value=None),
+            patch('eventyay.base.services.mail.mail_send_task.run') as send,
+        ):
+            process_scheduled_emails(sender=None)
+        send.assert_called_once()
+        with scopes_disabled():
+            mail.refresh_from_db()
+        self.assertIsNotNone(mail.sent_at)
+
+    def test_missing_invoice_id_does_not_contact_stripe(self):
+        with patch('eventyay.helpers.stripe_utils.stripe.PaymentIntent.create') as create:
+            for invoice_id in (None, '', 0):
+                with self.subTest(invoice_id=invoice_id), self.assertRaises(ValidationError):
+                    create_payment_intent(7, 'eur', 'cus_test', 'pm_test', {}, invoice_id)
+        create.assert_not_called()
+
+    def test_outbox_timestamp_has_database_index(self):
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(cursor, BillingInvoiceEmail._meta.db_table)
+        self.assertTrue(any(value['index'] and value['columns'] == ['sent_at'] for value in constraints.values()))
 
     def test_performance_and_csv_use_paid_orders_without_join_multiplication(self):
         response = self.client.get('/admin/sales/')
