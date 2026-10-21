@@ -195,3 +195,37 @@ def test_position_reinstatement_restores_existing_credit(gift_order, credit):
     manager.commit(check_quotas=False)
     assert card.value == credit
     assert position.issued_gift_cards.count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('redeemed', [False, True])
+def test_parent_cancellation_accounts_for_giftcard_addon(gift_order, redeemed):
+    """Reverse add-on credit with its parent or reject cancellation after redemption."""
+    event, order, position = gift_order
+    product = Product.objects.create(event=event, name='Parent', default_price=0)
+    parent = OrderPosition.objects.create(order=order, product=product, price=0)
+    OrderPosition.objects.create(order=order, product=product, price=0)
+    position.addon_to = parent
+    position.save(update_fields=['addon_to'])
+    signal_listener_issue_giftcards(event, order)
+    card = position.issued_gift_cards.get()
+    if redeemed:
+        card.transactions.create(value=-10)
+    manager = OrderChangeManager(order)
+    manager.cancel(parent)
+    if redeemed:
+        with pytest.raises(OrderError, match='already been redeemed'):
+            manager.commit(check_quotas=False)
+        parent.refresh_from_db()
+        position.refresh_from_db()
+        assert not parent.canceled
+        assert not position.canceled
+        assert card.value == 40
+    else:
+        manager.commit(check_quotas=False)
+        assert card.value == 0
+        manager = OrderChangeManager(order)
+        manager.reinstate(parent)
+        manager.commit(check_quotas=False)
+        assert card.value == 50
+        assert position.issued_gift_cards.count() == 1
