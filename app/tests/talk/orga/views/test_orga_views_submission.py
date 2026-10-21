@@ -2,15 +2,20 @@ import datetime as dt
 import io
 import json
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 
 import pytest
 from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, OperationalError, connection, connections, transaction
+from django.http import QueryDict
 from django.utils.timezone import now
 from django_scopes import scope
 from PIL import Image
+from rest_framework.exceptions import ValidationError as APIValidationError
 
+from eventyay.api.serializers.schedule import TalkSlotOrgaSerializer
+from eventyay.api.serializers.submission import SubmissionSerializer
 from eventyay.base.models.log import ActivityLog
 from eventyay.base.models import Answer, Availability, Schedule, Submission, SubmissionStates, TalkSlot
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
@@ -20,6 +25,264 @@ from eventyay.common.session_video import (
     get_session_video_question,
     get_submission_video_url,
 )
+from eventyay.cfp.views.user import SubmissionsEditView
+from eventyay.orga.forms.submission import SubmissionForm
+from eventyay.submission.forms.submission import InfoForm
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('fail_slot', (False, True))
+def test_review_type_default_save_propagates_atomically(event, accepted_submission, mocker, fail_slot):
+    """Saving the default must propagate slots or roll back both default and slot writes."""
+    with scope(event=event):
+        submission_type = accepted_submission.submission_type
+        old_duration = submission_type.default_duration
+        slot = accepted_submission.slots.get(schedule=event.wip_schedule)
+        slot.start = now()
+        slot.end = slot.start + dt.timedelta(minutes=old_duration)
+        slot.save()
+        if fail_slot:
+            mocker.patch.object(Submission, 'update_duration', side_effect=IntegrityError('Propagation failed'))
+        submission_type.default_duration = old_duration + 15
+        if fail_slot:
+            with pytest.raises(IntegrityError, match='Propagation failed'):
+                submission_type.save(update_fields=['default_duration'])
+        else:
+            submission_type.save(update_fields=['default_duration'])
+        submission_type.refresh_from_db()
+        slot.refresh_from_db()
+        expected = old_duration if fail_slot else old_duration + 15
+        assert submission_type.default_duration == expected
+        assert slot.end == slot.start + dt.timedelta(minutes=expected)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('change', ('duration', 'move', 'release', 'reset'))
+def test_review_slot_edit_rechecks_current_draft(event, accepted_submission, room, change):
+    """A slot edit must use current timings and reject a published or deleted target."""
+    with scope(event=event):
+        slot = accepted_submission.slots.get(schedule=event.wip_schedule)
+        slot.start = now()
+        slot.end = slot.start + dt.timedelta(minutes=accepted_submission.get_duration())
+        slot.save()
+        data = {'room': room.pk}
+        if change == 'move':
+            data['start'] = slot.start + dt.timedelta(hours=1)
+        serializer = TalkSlotOrgaSerializer(
+            instance=slot, data=data, partial=True,
+            context={'request': SimpleNamespace(event=event, query_params=QueryDict())},
+        )
+        assert serializer.is_valid(), serializer.errors
+        if change in ('duration', 'move'):
+            accepted_submission.duration = 75
+            accepted_submission.save(update_fields=['duration'])
+            accepted_submission.update_duration()
+            serializer.save()
+            slot.refresh_from_db()
+            assert slot.end == slot.start + dt.timedelta(minutes=75)
+            assert slot.room_id == room.pk
+        else:
+            released, draft = event.release_schedule('slot-review', notify_speakers=False)
+            if change == 'reset':
+                slot = draft.talks.get(submission=accepted_submission)
+                serializer.instance = slot
+                released.unfreeze()
+            with pytest.raises(APIValidationError):
+                serializer.save()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('channel', ('orga', 'cfp'))
+@pytest.mark.parametrize('stale_field', ('description', 'submission_type_id', 'content_locale'))
+def test_review_form_preserves_unmodified_saved_fields(event, submission, speaker_client, mocker, channel, stale_field):
+    """A stale bound form must merge its edits with newer fields from the database."""
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        if channel == 'cfp' and stale_field == 'submission_type_id':
+            event.cfp.deadline = None
+            event.cfp.save(update_fields=['deadline'])
+            event.submission_types.exclude(pk=submission.submission_type_id).update(requires_access_code=True)
+        data = {
+            'title': 'Edited title', 'abstract': submission.abstract, 'description': submission.description,
+            'notes': submission.notes, 'content_locale': submission.content_locale,
+            'submission_type': submission.submission_type_id, 'duration': '', 'slot_count': submission.slot_count,
+        }
+        form_class = SubmissionForm if channel == 'orga' else InfoForm
+        form = form_class(event=event, instance=submission, data=data)
+        assert form.is_valid(), form.errors
+        if channel == 'cfp' and stale_field == 'submission_type_id':
+            assert 'submission_type' in form.default_values
+        if stale_field == 'submission_type_id':
+            saved_value = event.submission_types.create(
+                name='Restricted concurrent type', default_duration=90, requires_access_code=True,
+            ).pk
+        else:
+            saved_value = 'New concurrent description' if stale_field == 'description' else 'de'
+        Submission.all_objects.filter(pk=submission.pk).update(**{stale_field: saved_value})
+        if channel == 'orga':
+            form.save()
+        else:
+            mocker.patch.object(SubmissionsEditView, 'get_form', return_value=form)
+            response = speaker_client.post(submission.urls.user_base, data={
+                'resource-TOTAL_FORMS': 0, 'resource-INITIAL_FORMS': 0,
+            })
+            assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.title == 'Edited title'
+        assert getattr(submission, stale_field) == saved_value
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('override', (None, 30, 45))
+def test_review_api_roundtrip_preserves_duration_override(event, submission, orga_user, override):
+    """Effective duration output must not turn inherited durations into explicit overrides."""
+    with scope(event=event):
+        submission.duration = override
+        submission.save(update_fields=['duration'])
+        new_type = event.submission_types.create(name='Roundtrip type', default_duration=90)
+        context = {'request': SimpleNamespace(event=event, user=orga_user, query_params=QueryDict())}
+        representation = SubmissionSerializer(instance=submission, context=context).data
+        data = {
+            key: representation[key]
+            for key in ('title', 'abstract', 'content_locale', 'duration', 'duration_override')
+            if key in representation
+        }
+        data['submission_type'] = new_type.pk
+        serializer = SubmissionSerializer(instance=submission, data=data, context=context)
+        assert serializer.is_valid(), serializer.errors
+        serializer.save()
+        submission.refresh_from_db()
+        assert submission.duration == override
+        assert submission.get_duration() == (override if override is not None else 90)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('data,expected', (({'duration': 50}, 50), ({'duration_override': 50}, 50),
+                                         ({'duration': 45, 'duration_override': None}, None)))
+def test_review_api_duration_override_writes(event, submission, orga_user, data, expected):
+    """Keep legacy duration writes and allow an explicit override to be cleared."""
+    with scope(event=event):
+        submission.duration = 45
+        submission.save(update_fields=['duration'])
+        serializer = SubmissionSerializer(
+            instance=submission, data=data, partial=True,
+            context={'request': SimpleNamespace(event=event, user=orga_user, query_params=QueryDict())},
+        )
+        assert serializer.is_valid(), serializer.errors
+        serializer.save()
+        submission.refresh_from_db()
+        assert submission.duration == expected
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+@pytest.mark.parametrize('operation', ('slot', 'type', 'api_title', 'orga_title', 'cfp_title'))
+def test_review_event_lock_only_blocks_schedule_edits(request, operation):
+    """Slot/type writes must wait for release, but independent title edits must not."""
+    event = request.getfixturevalue('event')
+    submission = request.getfixturevalue('submission')
+    room = request.getfixturevalue('room')
+    orga_user = request.getfixturevalue('orga_user') if operation == 'api_title' else None
+    speaker_client = request.getfixturevalue('speaker_client') if operation == 'cfp_title' else None
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        slot = event.wip_schedule.talks.create(submission=submission)
+        data = {
+            'title': 'Independent title', 'abstract': submission.abstract, 'description': submission.description,
+            'notes': submission.notes, 'content_locale': submission.content_locale,
+            'submission_type': submission.submission_type_id, 'duration': '', 'slot_count': submission.slot_count,
+            'resource-TOTAL_FORMS': 0, 'resource-INITIAL_FORMS': 0,
+        }
+
+        def edit():
+            """Run a real save on a separate database connection with a short lock timeout."""
+            try:
+                with connections['default'].cursor() as cursor:
+                    cursor.execute("SET lock_timeout = '500ms'")
+                with scope(event=event):
+                    try:
+                        if operation == 'type':
+                            submission_type = event.submission_types.get(pk=submission.submission_type_id)
+                            submission_type.default_duration += 15
+                            submission_type.save(update_fields=['default_duration'])
+                        elif operation == 'cfp_title':
+                            response = speaker_client.post(submission.urls.user_base, data=data)
+                            assert response.status_code == 302
+                        else:
+                            if operation == 'slot':
+                                serializer = TalkSlotOrgaSerializer(
+                                    instance=TalkSlot.objects.get(pk=slot.pk), data={'room': room.pk}, partial=True,
+                                    context={'request': SimpleNamespace(event=event, user=orga_user,
+                                                                        query_params=QueryDict())},
+                                )
+                            elif operation == 'api_title':
+                                serializer = SubmissionSerializer(
+                                    instance=Submission.all_objects.get(pk=submission.pk),
+                                    data={'title': data['title']}, partial=True,
+                                    context={'request': SimpleNamespace(event=event, user=orga_user,
+                                                                        query_params=QueryDict())},
+                                )
+                            else:
+                                serializer = SubmissionForm(
+                                    event=event, instance=Submission.all_objects.get(pk=submission.pk), data=data,
+                                )
+                            assert serializer.is_valid(), serializer.errors
+                            serializer.save()
+                    except OperationalError as error:
+                        return error.__cause__.sqlstate
+                return 'saved'
+            finally:
+                connections.close_all()
+
+        with transaction.atomic():
+            type(event).objects.select_for_update(no_key=True).get(pk=event.pk)
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                result = executor.submit(edit).result(timeout=30)
+        assert result == ('55P03' if operation in ('slot', 'type') else 'saved')
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+def test_review_type_propagation_holds_event_until_all_slots_finish(request, mocker):
+    """A release cannot copy a half-updated group of inherited session durations."""
+    event = request.getfixturevalue('event')
+    first = request.getfixturevalue('accepted_submission')
+    second = request.getfixturevalue('confirmed_submission')
+    checked = []
+    original_update = Submission.update_duration
+
+    def release():
+        """Attempt release while the first propagated submission has finished updating."""
+        try:
+            with connections['default'].cursor() as cursor:
+                cursor.execute("SET lock_timeout = '500ms'")
+            with scope(event=event):
+                try:
+                    event.release_schedule('during-type-edit', notify_speakers=False)
+                except OperationalError as error:
+                    return error.__cause__.sqlstate
+        finally:
+            connections.close_all()
+
+    def update_and_check(instance):
+        """Check another connection after one slot update, before the next one."""
+        original_update(instance)
+        if not checked:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                checked.append(executor.submit(release).result(timeout=30))
+
+    with scope(event=event):
+        submission_type = first.submission_type
+        second.submission_type = submission_type
+        second.duration = None
+        second.save(update_fields=['submission_type', 'duration'])
+        mocker.patch.object(Submission, 'update_duration', update_and_check)
+        submission_type.default_duration += 15
+        submission_type.save(update_fields=['default_duration'])
+        submission_type.update_duration()
+        assert checked == ['55P03']
 
 @pytest.mark.django_db
 def test_orga_can_see_submissions(orga_client, event, submission):

@@ -3212,7 +3212,7 @@ class Event(
         :type user: :class:`~eventyay.base.models.user.User`
         """
         with scope(event=self):
-            type(self).objects.select_for_update().get(pk=self.pk)
+            type(self).objects.select_for_update(no_key=True).get(pk=self.pk)
             with suppress(AttributeError):
                 del self.wip_schedule
             return self.wip_schedule.freeze(name=name, user=user, notify_speakers=notify_speakers, comment=comment)

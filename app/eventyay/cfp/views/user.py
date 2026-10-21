@@ -428,7 +428,17 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         """Save speaker edits and their derived schedule timings in one transaction."""
         if self.can_edit:
             with scope(event=self.request.event):
-                type(self.request.event).objects.select_for_update().get(pk=self.request.event.pk)
+                if (
+                    {'duration', 'submission_type', 'slot_count'}.intersection(form.changed_data)
+                    or self.request.POST.get('action') == 'dedraft'
+                ):
+                    type(self.request.event).objects.select_for_update(no_key=True).get(pk=self.request.event.pk)
+                previous_defaults = {key: getattr(form.instance, key) for key in form.default_values}
+                form.instance.refresh_for_update(form.changed_data)
+                for key, previous in previous_defaults.items():
+                    current = getattr(form.instance, key)
+                    if current != previous:
+                        form.default_values[key] = current
             # Validate formset before saving form to prevent partial persistence
             result = self.save_formset(form.instance)
             if not result:

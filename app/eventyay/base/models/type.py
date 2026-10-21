@@ -3,6 +3,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from i18nfield.fields import I18nCharField
 
 from eventyay.common.urls import EventUrls
@@ -119,8 +120,14 @@ class SubmissionType(OrderedModel, PretalxModel):
 
     update_duration.alters_data = True
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
-        """Auto-assign position for new instances."""
+        """Save type defaults and all inherited draft timings under the event lock."""
+        duration_changed = False
+        if self.pk and (kwargs.get('update_fields') is None or 'default_duration' in kwargs['update_fields']):
+            with scope(event=self.event):
+                type(self.event).objects.select_for_update(no_key=True).get(pk=self.event_id)
+                duration_changed = type(self).objects.get(pk=self.pk).default_duration != self.default_duration
         if self.position is None and self.event_id:
             # Get the max position for this event, default to 0 if no types exist
             max_position = self.event.submission_types.aggregate(
@@ -128,6 +135,8 @@ class SubmissionType(OrderedModel, PretalxModel):
             )['position__max']
             self.position = (max_position or 0) + 1
         super().save(*args, **kwargs)
+        if duration_changed:
+            self.update_duration()
 
     @staticmethod
     def get_order_queryset(event):

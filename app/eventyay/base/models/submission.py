@@ -456,6 +456,16 @@ class Submission(GenerateCode, PretalxModel):
             tags.append({'id': tag.id, 'tag': tag.tag, 'color': tag.color})
         return tags
 
+    def refresh_for_update(self, changed_fields):
+        """Lock and reload a bound submission while retaining only this edit's changed fields."""
+        changes = {
+            field.attname: getattr(self, field.attname)
+            for field in self._meta.concrete_fields if field.name in changed_fields
+        }
+        self.refresh_from_db(from_queryset=type(self).all_objects.select_for_update())
+        for name, value in changes.items():
+            setattr(self, name, value)
+
     def update_duration(self):
         """Apply the submission's duration to its currently scheduled.
 
@@ -464,7 +474,7 @@ class Submission(GenerateCode, PretalxModel):
         Should be called whenever the duration changes.
         """
         with scope(event=self.event), transaction.atomic():
-            type(self.event).objects.select_for_update().get(pk=self.event.pk)
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
             with suppress(AttributeError):
                 del self.event.wip_schedule
             schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)

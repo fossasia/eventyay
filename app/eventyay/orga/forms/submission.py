@@ -132,8 +132,13 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
     def save(self, *args, **kwargs):
         """Save session edits and update draft timing when the effective duration changes."""
         with scope(event=self.event):
-            type(self.event).objects.select_for_update().get(pk=self.event.pk)
-        if 'content_locale' not in self.fields:
+            if self.is_creating or {'duration', 'submission_type', 'slot_count'}.intersection(self.changed_data):
+                type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
+            if self.instance.pk:
+                self.instance.refresh_for_update(self.changed_data)
+                if 'tags' not in self.changed_data:
+                    self.cleaned_data.pop('tags', None)
+        if 'content_locale' not in self.fields and (self.is_creating or not self.instance.content_locale):
             self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
         instance = super().save(*args, **kwargs)
         if self.is_creating:

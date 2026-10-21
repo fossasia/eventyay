@@ -348,7 +348,7 @@ class Schedule(PretalxModel):
             raise Exception('Cannot create schedule version without a version name.')
 
         with scope(event=self.event):
-            type(self.event).objects.select_for_update().get(pk=self.event.pk)
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
             self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
         if self.version:
             raise Exception(f'Cannot freeze schedule version: already versioned as "{self.version}".')
@@ -404,7 +404,7 @@ class Schedule(PretalxModel):
             raise Exception('Cannot unfreeze schedule version: not released yet.')
 
         with scope(event=self.event):
-            type(self.event).objects.select_for_update().get(pk=self.event.pk)
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
             with suppress(AttributeError):
                 del self.event.wip_schedule
             draft = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
