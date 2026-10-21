@@ -3,11 +3,17 @@ from io import BytesIO, StringIO
 
 import pytest
 from django.core.files.base import ContentFile
+from django.utils.translation import override
 from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import CachedFile, Event, Room, SpeakerProfile, Submission, User
+from eventyay.base.models import CachedFile, Event, Room, SpeakerProfile, Submission, TalkQuestion, User
 from eventyay.base.services.orderimport import parse_csv
-from eventyay.base.services.talkimport import import_submission_records, import_submissions
+from eventyay.base.services.talkimport import (
+    ImportExecutionError,
+    _set_question_answer,
+    import_submission_records,
+    import_submissions,
+)
 from eventyay.orga.forms.schedule import ScheduleExportForm
 
 
@@ -288,3 +294,100 @@ def test_import_submission_records_keep_quoted_speaker_columns(event, orga_user)
         assert submission.abstract == DEEPAK_ABSTRACT
         assert list(submission.speakers.values_list('fullname', flat=True)) == ['Deepak Koul']
         assert not User.objects.filter(fullname='1').exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('locale,value,rejected', [
+    ('en', ' OTHER ', True),
+    ('en', 'Unique', False),
+    ('de', 'Andere', False),
+])
+def test_csv_import_rejects_ambiguous_translated_answers(
+    event, orga_user, submission, variant, locale, value, rejected,
+):
+    """Reject ambiguous rows before saving while allowing unambiguous localized choices."""
+    with scope(event=event):
+        question = TalkQuestion.objects.create(event=event, question='Choice', variant=variant, target='submission')
+        first = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        question.options.create(answer={'en': ' other ', 'de': 'Sonstige'}, position=2)
+        unique = question.options.create(answer={'en': 'Unique', 'de': 'Einzigartig'}, position=3)
+        answer = question.answers.create(submission=submission, answer='Original')
+        answer.options.add(unique)
+        original_title = submission.title
+
+    content = export_style_csv(
+        [{'ID': submission.code, 'Title': 'Updated title', 'Choice': value}],
+        headers=['ID', 'Title', 'Choice'],
+    )
+    cached = CachedFile.objects.create(type='text/csv', filename='choices.csv')
+    cached.file.save('choices.csv', ContentFile(content.encode('utf-8')))
+    result = import_submissions(
+        event=event.pk, fileid=str(cached.pk), locale=locale, user_id=orga_user.pk,
+        settings={'code': 'csv:ID', 'title': 'csv:Title', f'question_{question.pk}': 'csv:Choice'},
+    )
+
+    with scope(event=event):
+        submission.refresh_from_db()
+        answer.refresh_from_db()
+        if rejected:
+            assert result['skipped'] == 1
+            assert result['updated'] == 0
+            assert 'ambiguous' in str(result['errors'][0]).lower()
+            assert submission.title == original_title
+            assert answer.answer == 'Original'
+            assert list(answer.options.values_list('pk', flat=True)) == [unique.pk]
+        else:
+            assert result['updated'] == 1
+            assert result['skipped'] == 0
+            assert not result['errors']
+            assert submission.title == 'Updated title'
+            expected = first if locale == 'de' else unique
+            assert list(answer.options.values_list('pk', flat=True)) == [expected.pk]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+def test_import_answer_rejects_ambiguous_choices_without_cache(event, submission, variant):
+    """Uncached imports must not overwrite an answer when its label is ambiguous."""
+    with scope(event=event), override('en'):
+        question = TalkQuestion.objects.create(event=event, question='Choice', variant=variant, target='submission')
+        first = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        question.options.create(answer={'en': 'Other', 'de': 'Sonstige'}, position=2)
+        answer = question.answers.create(submission=submission, answer='Original')
+        answer.options.add(first)
+        with pytest.raises(ImportExecutionError, match='[Aa]mbiguous'):
+            _set_question_answer(question.pk, 'Other', submission=submission, event=event)
+        answer.refresh_from_db()
+        assert answer.answer == 'Original'
+        assert list(answer.options.values_list('pk', flat=True)) == [first.pk]
+
+
+@pytest.mark.django_db
+def test_csv_import_skips_new_ambiguous_row_and_continues(event, orga_user):
+    """A mixed checkbox answer must reject the whole row without creating a session."""
+    with scope(event=event):
+        question = TalkQuestion.objects.create(
+            event=event, question='Choice', variant='multiple_choice', target='submission',
+        )
+        question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        question.options.create(answer={'en': 'Other', 'de': 'Sonstige'}, position=2)
+        unique = question.options.create(answer='Unique', position=3)
+    content = export_style_csv([
+        {'Title': 'Rejected session', 'Choice': 'Unique, Other'},
+        {'Title': 'Imported session', 'Choice': 'Unique'},
+    ], headers=['Title', 'Choice'])
+    cached = CachedFile.objects.create(type='text/csv', filename='choices.csv')
+    cached.file.save('choices.csv', ContentFile(content.encode('utf-8')))
+    result = import_submissions(
+        event=event.pk, fileid=str(cached.pk), locale='en', user_id=orga_user.pk,
+        settings={'title': 'csv:Title', f'question_{question.pk}': 'csv:Choice'},
+    )
+    assert result['created'] == 1
+    assert result['skipped'] == 1
+    assert len(result['errors']) == 1
+    assert 'Row 2:' in str(result['errors'][0])
+    with scope(event=event):
+        assert not Submission.objects.filter(title='Rejected session').exists()
+        answer = question.answers.get(submission__title='Imported session')
+        assert list(answer.options.values_list('pk', flat=True)) == [unique.pk]
