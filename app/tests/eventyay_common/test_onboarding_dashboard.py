@@ -5,12 +5,15 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles import finders
 from django.urls import reverse
 from django.utils import timezone
-from eventyay.base.models import Event, Organizer, Team
+from django_scopes import scopes_disabled
+
 from eventyay.base.meetup import EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE
+from eventyay.base.models import Event, Order, Organizer, Submission, SubmissionType, Team
 from eventyay.eventyay_common.onboarding import (
     _event_kind,
     format_profile_incomplete_message,
@@ -19,16 +22,24 @@ from eventyay.eventyay_common.onboarding import (
     user_needs_onboarding,
 )
 
+
 User = get_user_model()
 
 
 @pytest.fixture
 def new_user(db):
-    return User.objects.create_user(
+    user = User.objects.create_user(
         email='newuser@example.com',
         password='testpass123',
         locale='en',
     )
+    EmailAddress.objects.create(
+        user=user,
+        email=user.email,
+        verified=True,
+        primary=True,
+    )
+    return user
 
 
 @pytest.fixture
@@ -72,9 +83,7 @@ def test_profile_prompt_lists_only_missing_fields(new_user):
     new_user.save(update_fields=['fullname'])
     missing = get_missing_profile_fields(new_user)
     assert missing == ['profile picture']
-    assert format_profile_incomplete_message(missing) == (
-        'Add your profile picture to finish your profile.'
-    )
+    assert format_profile_incomplete_message(missing) == ('Add your profile picture to finish your profile.')
 
 
 @pytest.mark.django_db
@@ -142,11 +151,13 @@ def test_organiser_dashboard_still_shown_for_event_managers(organizer_client, ev
 
 
 @pytest.mark.django_db
-def test_event_card_component_buttons_share_one_style(organizer_client, event):
+def test_event_card_role_aware_module_action_buttons(organizer_client, event):
     response = organizer_client.get(reverse('eventyay_common:dashboard'))
     content = response.content.decode()
-    assert content.count('class="cd-module-btn"') == 3
-    assert 'cd-module-btn--' not in content
+    assert 'cd-module-btn' in content
+    assert 'Tickets' in content
+    assert 'Talks' in content
+    assert 'Video' in content
 
 
 def _declarations_for(css: str, *selectors: str) -> str:
@@ -292,3 +303,176 @@ def test_event_kind_labels_event_series_and_meetup(event):
     event.settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
     assert _event_kind(event)['kind'] == 'meetup'
     assert _event_kind(event)['label'] == 'Meetup'
+
+
+@pytest.mark.django_db
+def test_attendee_dashboard_view(client, new_user, public_upcoming_event):
+    with scopes_disabled():
+        Order.objects.create(
+            event=public_upcoming_event,
+            email=new_user.email,
+            status=Order.STATUS_PAID,
+            code='ATTEND1',
+            datetime=timezone.now(),
+            total=10,
+        )
+    client.force_login(new_user)
+    response = client.get(reverse('eventyay_common:dashboard'))
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'Attendee' in content
+    assert 'My tickets' in content
+    assert 'ATTEND1' in content
+    assert 'View ticket' in content
+    assert 'compact-organising-title' not in content
+
+
+@pytest.mark.django_db
+def test_speaker_dashboard_view(client, new_user, public_upcoming_event):
+    new_user.fullname = 'Speaker User'
+    new_user.save()
+    with scopes_disabled():
+        sub_type = SubmissionType.objects.create(
+            event=public_upcoming_event,
+            name='Standard Talk',
+        )
+        sub = Submission.objects.create(
+            event=public_upcoming_event,
+            submission_type=sub_type,
+            title='My Great Talk',
+            state='accepted',
+        )
+        sub.speakers.add(new_user)
+    client.force_login(new_user)
+    response = client.get(reverse('eventyay_common:dashboard'))
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'Speaker' in content
+    assert 'My sessions and proposals' in content
+    assert 'My Great Talk' in content
+    assert 'My session' in content
+    assert 'Session confirmation required' in content
+    assert 'compact-tickets-title' not in content
+    assert 'compact-organising-title' not in content
+
+
+@pytest.mark.django_db
+def test_needs_your_attention_unpaid_order(client, new_user, public_upcoming_event):
+    with scopes_disabled():
+        Order.objects.create(
+            event=public_upcoming_event,
+            email=new_user.email,
+            status=Order.STATUS_PENDING,
+            require_approval=False,
+            code='PENDING1',
+            datetime=timezone.now(),
+            total=20,
+        )
+    client.force_login(new_user)
+    response = client.get(reverse('eventyay_common:dashboard'))
+    content = response.content.decode()
+    assert 'Needs your attention' in content
+    assert 'Payment pending' in content
+    assert 'Pay now' in content
+
+
+@pytest.mark.django_db
+def test_unverified_user_cannot_see_orders(client, db, public_upcoming_event):
+    unverified_user = User.objects.create_user(
+        email='unverified@example.com',
+        password='testpass123',
+        locale='en',
+    )
+    with scopes_disabled():
+        Order.objects.create(
+            event=public_upcoming_event,
+            email=unverified_user.email,
+            status=Order.STATUS_PAID,
+            code='SECRET99',
+            datetime=timezone.now(),
+            total=10,
+        )
+    client.force_login(unverified_user)
+    response = client.get(reverse('eventyay_common:dashboard'))
+    content = response.content.decode()
+    assert 'SECRET99' not in content
+
+    orders_response = client.get(reverse('eventyay_common:orders'))
+    assert 'SECRET99' not in orders_response.content.decode()
+
+    EmailAddress.objects.create(
+        user=unverified_user,
+        email=unverified_user.email,
+        verified=True,
+        primary=True,
+    )
+    orders_response = client.get(reverse('eventyay_common:orders'))
+    assert 'SECRET99' in orders_response.content.decode()
+
+
+@pytest.mark.django_db
+def test_unverified_speaker_sees_recent_activity(client, public_upcoming_event):
+    speaker = User.objects.create_user(
+        email='speaker_unverified@example.com',
+        password='testpass123',
+        locale='en',
+    )
+    with scopes_disabled():
+        sub_type = SubmissionType.objects.create(
+            event=public_upcoming_event,
+            name='Standard Talk',
+        )
+        sub = Submission.objects.create(
+            event=public_upcoming_event,
+            submission_type=sub_type,
+            title='Unverified Speaker Talk',
+            state='accepted',
+        )
+        sub.speakers.add(speaker)
+
+    client.force_login(speaker)
+    response = client.get(reverse('eventyay_common:dashboard'))
+    sub_url = reverse(
+        'cfp:event.user.submission.edit',
+        kwargs={
+            'organizer': public_upcoming_event.organizer.slug,
+            'event': public_upcoming_event.slug,
+            'code': sub.code,
+        },
+    )
+    activity = response.context['recent_activity']
+    assert any(item['url'] == sub_url and 'Unverified Speaker Talk' in item['title'] for item in activity)
+
+
+@pytest.mark.django_db
+def test_organiser_secondary_links_respect_permissions(client, public_upcoming_event):
+    org_user = User.objects.create_user(
+        email='org_user@example.com',
+        password='testpass123',
+        locale='en',
+    )
+    with scopes_disabled():
+        t = Team.objects.create(
+            organizer=public_upcoming_event.organizer,
+            name='Orders Only Team',
+            can_change_event_settings=False,
+            can_change_items=False,
+            can_view_orders=True,
+            can_change_orders=False,
+        )
+        t.members.add(org_user)
+        t.limit_events.add(public_upcoming_event)
+
+    client.force_login(org_user)
+    response = client.get(reverse('eventyay_common:dashboard'))
+    content = response.content.decode()
+    control_tickets_url = reverse(
+        'control:event.index',
+        kwargs={'organizer': public_upcoming_event.organizer.slug, 'event': public_upcoming_event.slug},
+    )
+    assert control_tickets_url in content
+    settings_url = reverse(
+        'eventyay_common:event.update',
+        kwargs={'organizer': public_upcoming_event.organizer.slug, 'event': public_upcoming_event.slug},
+    )
+    assert settings_url not in content

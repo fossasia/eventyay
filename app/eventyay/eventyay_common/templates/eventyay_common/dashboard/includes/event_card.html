@@ -32,6 +32,16 @@
         <span>{{ card.location }}</span>
       </p>
     {% endif %}
+    {% if card.role_badges or card.status_badge %}
+      <div class="cd-event-card__role-status">
+        {% for rb in card.role_badges %}
+          <span class="cd-badge cd-badge--role cd-badge--role-{{ rb.tone }}">{{ rb.label }}</span>
+        {% endfor %}
+        {% if card.status_badge %}
+          <span class="cd-badge cd-badge--status cd-badge--{{ card.status_badge.tone }}">{{ card.status_badge.label }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
     {% if card.badges %}
       <ul class="cd-event-card__badges">
         {% for badge in card.badges %}
@@ -72,6 +82,17 @@
             </a>
           {% endif %}
         {% endfor %}
+      </div>
+    {% elif card.primary_action and card.secondary_links %}
+      <div class="cd-event-card__actions-wrap">
+        <a class="btn btn-primary btn-sm cd-event-card__primary-btn" href="{{ card.primary_action.url }}">
+          {{ card.primary_action.label }}
+        </a>
+        <div class="cd-event-card__secondary">
+          {% for link in card.secondary_links %}
+            <a href="{{ link.url }}" class="cd-secondary-link">{{ link.label }}</a>
+          {% endfor %}
+        </div>
       </div>
     {% elif card.primary_action %}
       <a class="cd-event-card__action" href="{{ card.primary_action.url }}">
