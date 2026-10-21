@@ -2248,6 +2248,10 @@ class OrderChangeManager:
                 op.position.save(update_fields=['canceled', 'secret'])
             elif isinstance(op, self.ReinstateOperation):
                 for pos_to_check in [op.position] + list(op.position.addons.filter(canceled=True)):
+                    was_canceled = OrderPosition.all.select_for_update().get(pk=pos_to_check.pk).canceled
+                    if was_canceled:
+                        for card in pos_to_check.issued_gift_cards.select_for_update():
+                            card.transactions.create(value=card.issued_value, order=self.order)
                     if pos_to_check.voucher_id:
                         v = Voucher.objects.select_for_update().get(pk=pos_to_check.voucher_id)
                         if v.redeemed >= v.max_usages:
