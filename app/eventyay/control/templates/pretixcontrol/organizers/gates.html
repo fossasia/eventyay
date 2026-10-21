@@ -10,7 +10,8 @@
         <span class="fa fa-plus"></span>
         {% trans "Create a new gate" %}
     </a>
-    <table class="table table-condensed table-hover">
+    {%if gates %}
+        <table class="table table-condensed table-hover">
         <thead>
         <tr>
             <th>{% trans "Gate" %}</th>
@@ -35,4 +36,5 @@
         {% endfor %}
         </tbody>
     </table>
+    {% endif %}
 {% endblock %}
