@@ -88,7 +88,7 @@ class BillingInvoiceEmail(models.Model):
     body = models.TextField()
     pdf_base64 = models.TextField()
     pdf_filename = models.CharField(max_length=255)
-    sent_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True, db_index=True)
     failed_attempts = models.PositiveIntegerField(default=0)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
 
