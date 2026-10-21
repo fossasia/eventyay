@@ -10,7 +10,7 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import JSONField, Q
 from django.db.models.fields.files import FieldFile
-from django.db.models.signals import post_save
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
@@ -30,6 +30,7 @@ from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.database import lock_m2m_parents
 from eventyay.submission.constants import AUTO_DRAFT_TITLE
 from eventyay.submission.signals import submission_state_change
 from eventyay.talk_rules.agenda import (
@@ -1324,3 +1325,24 @@ def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
     ).exists():
         return
     bump_schedule_cache_version_on_commit(event_id)
+
+
+@receiver(m2m_changed, sender=Submission.assigned_reviewers.through)
+@receiver(m2m_changed, sender=Submission.speakers.through)
+def lock_submission_review_access(sender, instance, action, reverse, pk_set, using, **kwargs):
+    """Keep reviewer assignments and speaker exclusions stable during bulk saves."""
+    field = 'assigned_reviewers' if sender is Submission.assigned_reviewers.through else 'speakers'
+    if reverse:
+        # User-side changes can span multiple events.
+        with scopes_disabled():
+            lock_m2m_parents(Submission, field, instance, action, reverse, pk_set, using)
+    else:
+        with scope(event=instance.event_id):
+            lock_m2m_parents(Submission, field, instance, action, reverse, pk_set, using)
+
+
+@receiver(pre_delete, sender=Submission)
+def lock_submission_review_deletion(sender, instance, using, **kwargs):
+    """Lock the proposal before cascading into its reviews and assignments."""
+    with scope(event=instance.event_id):
+        list(Submission.objects.using(using).filter(pk=instance.pk).select_for_update())

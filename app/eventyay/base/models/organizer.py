@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.crypto import get_random_string
@@ -21,10 +21,11 @@ from django_scopes import scope, scopes_disabled
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
-from eventyay.base.operational_logging import emit_logged_action
 from eventyay.base.models.mixins import TimestampedModel
+from eventyay.base.operational_logging import emit_logged_action
 from eventyay.base.validators import OrganizerSlugBanlistValidator
 from eventyay.common.urls import EventUrls, build_absolute_uri
+from eventyay.helpers.database import lock_m2m_parents
 from eventyay.talk_rules.event import (
     can_change_any_organizer_settings,
     can_change_organizer_settings,
@@ -911,6 +912,25 @@ class OrganizerBillingModel(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.organizer.cache.clear()
+
+
+@receiver(m2m_changed, sender=Team.members.through)
+@receiver(m2m_changed, sender=Team.limit_tracks.through)
+@receiver(m2m_changed, sender=Team.limit_events.through)
+def lock_team_permission_changes(sender, instance, action, reverse, pk_set, using, **kwargs):
+    """Keep team access stable while bulk reviews hold shared team locks."""
+    field = {
+        Team.members.through: 'members',
+        Team.limit_tracks.through: 'limit_tracks',
+        Team.limit_events.through: 'limit_events',
+    }[sender]
+    lock_m2m_parents(Team, field, instance, action, reverse, pk_set, using)
+
+
+@receiver(pre_delete, sender=Team)
+def lock_team_deletion(sender, instance, using, **kwargs):
+    """Lock a team before the deletion collector removes its memberships."""
+    list(Team.objects.using(using).filter(pk=instance.pk).select_for_update())
 
 
 @receiver(m2m_changed, sender=Team.members.through)

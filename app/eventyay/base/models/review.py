@@ -1,11 +1,14 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import m2m_changed, pre_delete
+from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django_scopes import ScopedManager
+from django_scopes import ScopedManager, scope
 from i18nfield.fields import I18nCharField
 
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.database import lock_m2m_parents
 from eventyay.talk_rules.person import is_administrator, is_reviewer
 from eventyay.talk_rules.submission import (
     can_be_reviewed,
@@ -289,3 +292,25 @@ class ReviewPhase(OrderedModel, PretalxModel):
     @staticmethod
     def get_order_queryset(event):
         return event.review_phases.all()
+
+
+@receiver(m2m_changed, sender=ReviewScoreCategory.limit_tracks.through)
+def lock_score_category_tracks(sender, instance, action, reverse, pk_set, using, **kwargs):
+    """Lock a category before changing even its first track restriction."""
+    with scope(event=instance.event_id):
+        lock_m2m_parents(ReviewScoreCategory, 'limit_tracks', instance, action, reverse, pk_set, using)
+
+
+@receiver(pre_delete, sender=ReviewScoreCategory)
+@receiver(pre_delete, sender=ReviewPhase)
+def lock_review_configuration_deletion(sender, instance, using, **kwargs):
+    """Take the parent lock before cascading into category or phase relations."""
+    with scope(event=instance.event_id):
+        list(sender.objects.using(using).filter(pk=instance.pk).select_for_update())
+
+
+@receiver(pre_delete, sender=ReviewScore)
+def lock_review_score_deletion(sender, instance, using, **kwargs):
+    """Protect explicit score deletions that run before category deletion."""
+    with scope(event=instance.category.event_id):
+        list(ReviewScoreCategory.objects.using(using).filter(pk=instance.category_id).select_for_update())

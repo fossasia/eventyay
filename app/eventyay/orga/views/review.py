@@ -4,7 +4,8 @@ from contextlib import suppress
 from urllib.parse import urlencode
 
 from django.contrib import messages
-from django.db import transaction
+from django.core.exceptions import PermissionDenied
+from django.db import OperationalError, transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -15,8 +16,9 @@ from django.views import View
 from django.views.generic import FormView, TemplateView
 from django_context_decorator import context
 from django_scopes import scope
+from psycopg.errors import LockNotAvailable
 
-from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, Submission, SubmissionStates
+from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates, Team, User
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView
@@ -25,6 +27,7 @@ from eventyay.common.views.mixins import (
     EventPermissionRequired,
     PermissionRequired,
 )
+from eventyay.helpers.database import lock_rows_shared, try_transaction_lock
 from eventyay.orga.forms.review import (
     DirectionForm,
     ProposalForReviewerForm,
@@ -446,28 +449,55 @@ class BulkReview(EventPermissionRequired, TemplateView):
             for submission in self.submissions
         ]
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
-        """Keep category eligibility and submission tracks stable throughout a bulk save."""
-        with scope(event=request.event):
-            list(request.event.score_categories.order_by('pk').select_for_update())
-            list(
-                ReviewScoreCategory.limit_tracks.through.objects.filter(reviewscorecategory__event=request.event)
-                .order_by('pk')
-                .select_for_update()
-            )
-            submission_ids = list(
-                request.event.submissions.filter(pk__in=self.submissions.values('pk'))
-                .order_by('pk')
-                .select_for_update()
-                .values_list('pk', flat=True)
-            )
-            self.submissions = self.submissions.filter(pk__in=submission_ids)
+        """Save against a locked eligibility snapshot without excluding other readers."""
+        try:
+            with transaction.atomic(), scope(event=request.event):
+                if not try_transaction_lock(f'eventyay.bulk-review:{request.event.pk}:{request.user.pk}'):
+                    messages.error(request, phrases.base.error_saving_changes)
+                    return super().get(request, *args, **kwargs)
+                team_ids = lock_rows_shared(
+                    Team.objects.filter(organizer_id=request.event.organizer_id, members=request.user)
+                )
+                phase_ids = lock_rows_shared(request.event.review_phases.all())
+                category_ids = lock_rows_shared(request.event.score_categories.filter(active=True))
+                # Reload cached authorization only after the permission rows are locked.
+                request.event = type(request.event).objects.get(pk=request.event.pk)
+                request.event.teams = request.event.teams.filter(pk__in=team_ids)
+                request.event.active_review_phase = request.event.review_phases.filter(
+                    pk__in=phase_ids, is_active=True,
+                ).first()
+                request.user = User.objects.get(pk=request.user.pk)
+                if not request.user.is_active or not self.has_permission():
+                    raise PermissionDenied
+                for name in ('submissions', 'categories', 'forms', 'table'):
+                    self.__dict__.pop(name, None)
+                submission_ids = lock_rows_shared(
+                    request.event.submissions.filter(pk__in=self.submissions.values('pk'))
+                )
+                self.submissions = self.submissions.filter(pk__in=submission_ids)
+                self.categories = list(
+                    request.event.score_categories.filter(pk__in=category_ids, active=True)
+                    .prefetch_related('limit_tracks', 'scores')
+                )
+                return self.save_forms(request, *args, **kwargs)
+        except OperationalError as error:
+            if not isinstance(error.__cause__, LockNotAvailable):
+                raise
+        for name in ('submissions', 'categories', 'forms', 'table'):
+            self.__dict__.pop(name, None)
+        messages.error(request, phrases.base.error_saving_changes)
+        return super().get(request, *args, **kwargs)
+
+    def save_forms(self, request, *args, **kwargs):
+        """Persist changed forms and remove obsolete scores from existing reviews."""
         if not all(form.is_valid() for form in self.forms.values()):
             messages.error(self.request, phrases.base.error_saving_changes)
             return super().get(request, *args, **kwargs)
         for form in self.forms.values():
-            if form.has_changed():
+            eligible = {category.pk for category in form.categories}
+            stale_scores = any(category.pk not in eligible for category in form.scores)
+            if form.has_changed() or stale_scores:
                 form.save()
         messages.success(self.request, phrases.base.saved)
         return super().get(request, *args, **kwargs)

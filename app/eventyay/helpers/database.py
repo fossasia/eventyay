@@ -1,6 +1,6 @@
 import contextlib
 
-from django.db import connection, transaction
+from django.db import connection, connections, transaction
 from django.db.models import Aggregate, Field, Lookup
 from django.db.models.expressions import OrderBy
 from django.utils.functional import lazy
@@ -113,3 +113,53 @@ def _of_self():
 
 
 OF_SELF = lazy(_of_self, tuple)()
+
+
+def lock_rows_shared(queryset):
+    """Lock a fixed set of rows for reading without waiting on partial locks.
+
+    Call inside an atomic block and load only the returned IDs afterwards.
+    PostgreSQL shared locks allow independent readers while excluding updates.
+    """
+    database = connections[queryset.db]
+    if database.vendor != 'postgresql':
+        return list(queryset.order_by('pk').select_for_update().values_list('pk', flat=True))
+    if not database.in_atomic_block:
+        raise transaction.TransactionManagementError('Shared row locks require a transaction.')
+    ids = list(queryset.order_by('pk').values_list('pk', flat=True))
+    if not ids:
+        return []
+    table = database.ops.quote_name(queryset.model._meta.db_table)
+    pk = database.ops.quote_name(queryset.model._meta.pk.column)
+    with database.cursor() as cursor:
+        cursor.execute(f'SELECT {pk} FROM {table} WHERE {pk} = ANY(%s) ORDER BY {pk} FOR SHARE NOWAIT', [ids])
+        return [row[0] for row in cursor.fetchall()]
+
+
+def try_transaction_lock(name: str, using: str = 'default') -> bool:
+    """Try a PostgreSQL transaction-scoped mutex without locking an account row."""
+    database = connections[using]
+    if database.vendor != 'postgresql':
+        return True
+    if not database.in_atomic_block:
+        raise transaction.TransactionManagementError('Transaction locks require a transaction.')
+    with database.cursor() as cursor:
+        cursor.execute('SELECT pg_try_advisory_xact_lock(hashtextextended(%s, 0))', [name])
+        return cursor.fetchone()[0]
+
+
+def lock_m2m_parents(model, field, instance, action, reverse, pk_set, using):
+    """Lock relation owners before a many-to-many insertion or deletion.
+
+    Django emits pre-change signals inside the relation's transaction. Locking
+    parents first also protects absent relationships and avoids delete/insert
+    lock inversions with shared parent readers.
+    """
+    if action not in ('pre_add', 'pre_remove', 'pre_clear'):
+        return
+    parents = model.objects.using(using)
+    if reverse:
+        parents = parents.filter(pk__in=pk_set) if pk_set is not None else parents.filter(**{field: instance})
+    else:
+        parents = parents.filter(pk=instance.pk)
+    list(parents.order_by('pk').select_for_update(of=OF_SELF))

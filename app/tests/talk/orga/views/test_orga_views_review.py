@@ -2,15 +2,18 @@ import json
 import re
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
+from threading import Event as ThreadEvent
 
 import pytest
 from django.apps import apps
-from django.db import OperationalError, connection, connections
+from django.db import OperationalError, connection, connections, transaction
+from django.test import Client
 from django_scopes import scope
 
 from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, SubmissionStates, User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 from eventyay.orga.forms.review import ReviewForm
+from eventyay.orga.views.review import BulkReview
 
 
 @pytest.mark.django_db
@@ -52,9 +55,39 @@ def test_bulk_review_respects_score_category_tracks(review_client, submission, t
         assert review.score == (6 if proposal_track == 'matching' else 1)
 
 
+@pytest.mark.django_db
+def test_bulk_review_removes_stale_scores_from_unchanged_forms(review_client, review_user, submission, track):
+    """An unchanged bulk review must discard scores outside its current track."""
+    event = submission.event
+    with scope(event=event):
+        general = event.score_categories.get(active=True)
+        category = ReviewScoreCategory.objects.create(event=event, name='Restricted relevance')
+        category.limit_tracks.add(track)
+        stale_score = ReviewScore.objects.create(category=category, value=5)
+        review = Review.objects.create(submission=submission, user=review_user, text='Unchanged')
+        review.scores.set([stale_score])
+        Review.objects.filter(pk=review.pk).update(score=5)
+
+    response = review_client.post(event.orga_urls.reviews + 'bulk/', data={
+        f'{submission.code}-score_{general.pk}': '',
+        f'{submission.code}-text': 'Unchanged',
+    })
+
+    assert response.status_code == 200
+    assert not response.context['forms'][submission.code].has_changed()
+    with scope(event=event):
+        review.refresh_from_db()
+        assert not review.scores.exists()
+        assert review.score is None
+
+
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
 @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
-@pytest.mark.parametrize('change', ('submission_track', 'replace_limits', 'add_limit'))
+@pytest.mark.parametrize('change', (
+    'submission_track', 'replace_limits', 'add_limit', 'reviewer_access', 'assignment', 'phase',
+    'team_limit', 'team_role', 'event_limit', 'speaker', 'delete_score', 'delete_category',
+    'reverse_limit', 'reverse_assignment',
+))
 def test_bulk_review_keeps_track_eligibility_stable(mocker, request, change):
     """Track and limit edits must wait until a bulk review has finished saving."""
     mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
@@ -62,6 +95,7 @@ def test_bulk_review_keeps_track_eligibility_stable(mocker, request, change):
     track = request.getfixturevalue('track')
     other_track = request.getfixturevalue('other_track')
     review_client = request.getfixturevalue('review_client')
+    review_user = request.getfixturevalue('review_user')
     event = submission.event
     with scope(event=event):
         submission.track = track
@@ -71,6 +105,12 @@ def test_bulk_review_keeps_track_eligibility_stable(mocker, request, change):
         category.limit_tracks.add(track)
         restricted_score = ReviewScore.objects.create(category=category, value=5)
         general_score = general.scores.get(value=1)
+        team = review_user.teams.get(is_reviewer=True)
+        phase = event.active_review_phase
+        if change in ('assignment', 'reverse_assignment'):
+            phase.proposal_visibility = 'assigned'
+            phase.save(update_fields=['proposal_visibility'])
+            submission.assigned_reviewers.add(review_user)
 
     def change_configuration():
         """Attempt a configuration edit using a separate PostgreSQL connection."""
@@ -82,8 +122,33 @@ def test_bulk_review_keeps_track_eligibility_stable(mocker, request, change):
                     event.submissions.filter(pk=submission.pk).update(track=other_track)
                 elif change == 'replace_limits':
                     category.limit_tracks.set([other_track])
-                else:
+                elif change == 'add_limit':
                     general.limit_tracks.add(other_track)
+                elif change == 'reviewer_access':
+                    team.members.remove(review_user)
+                elif change == 'assignment':
+                    submission.assigned_reviewers.remove(review_user)
+                elif change == 'reverse_assignment':
+                    review_user.assigned_reviews.remove(submission)
+                elif change == 'reverse_limit':
+                    other_track.reviewscorecategory_set.add(general)
+                elif change == 'team_limit':
+                    team.limit_tracks.add(other_track)
+                elif change == 'team_role':
+                    team.is_reviewer = False
+                    team.save(update_fields=['is_reviewer'])
+                elif change == 'event_limit':
+                    team.limit_events.remove(event)
+                elif change == 'speaker':
+                    submission.speakers.add(review_user)
+                elif change == 'delete_score':
+                    category.scores.all().delete()
+                elif change == 'delete_category':
+                    with transaction.atomic():
+                        category.scores.all().delete()
+                        category.delete()
+                else:
+                    event.review_phases.filter(pk=phase.pk).update(can_review=False)
         except OperationalError as error:
             return error.__cause__.sqlstate
         finally:
@@ -115,13 +180,181 @@ def test_bulk_review_keeps_track_eligibility_stable(mocker, request, change):
     with ThreadPoolExecutor(max_workers=1) as executor:
         assert executor.submit(change_configuration).result(timeout=30) is None
     data[f'{submission.code}-text'] = 'Updated bulk review'
+    if change == 'delete_score':
+        data[f'{submission.code}-score_{category.pk}'] = ''
     response = review_client.post(url, data=data)
-    assert response.status_code == 200
+    assert response.status_code == (404 if change in ('reviewer_access', 'phase', 'team_role', 'event_limit') else 200)
     with scope(event=event):
         review.refresh_from_db()
-        expected = restricted_score if change == 'add_limit' else general_score
-        assert set(review.scores.values_list('pk', flat=True)) == {expected.pk}
-        assert review.score == expected.value
+        if change in (
+            'reviewer_access', 'assignment', 'phase', 'team_role', 'event_limit', 'team_limit', 'speaker',
+            'reverse_assignment',
+        ):
+            assert review.text == 'Bulk review'
+        else:
+            expected = restricted_score if change in ('add_limit', 'reverse_limit') else general_score
+            assert set(review.scores.values_list('pk', flat=True)) == {expected.pk}
+            assert review.score == expected.value
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+@pytest.mark.parametrize('same_reviewer', (False, True))
+def test_bulk_review_allows_concurrent_reviewers(mocker, request, same_reviewer):
+    """One reviewer's pending save must not lock out another reviewer."""
+    submission = request.getfixturevalue('submission')
+    review_client = request.getfixturevalue('review_client')
+    first_user = request.getfixturevalue('review_user')
+    other_user = request.getfixturevalue('review_user' if same_reviewer else 'other_review_user')
+    other_client = Client()
+    other_client.force_login(other_user)
+    event = submission.event
+    url = event.orga_urls.reviews + 'bulk/'
+    original_save = ReviewForm.save
+
+    def competing_save():
+        """Submit another review while the first transaction remains open."""
+        try:
+            with connections['default'].cursor() as cursor:
+                cursor.execute("SET lock_timeout = '500ms'")
+            return other_client.post(url, {f'{submission.code}-text': 'Other reviewer'}).status_code
+        finally:
+            connections.close_all()
+
+    def save_with_other_reviewer(form, *args, **kwargs):
+        """Exercise a real second bulk POST before saving the first review."""
+        if form.user.pk == first_user.pk:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                assert executor.submit(competing_save).result(timeout=30) == 200
+        return original_save(form, *args, **kwargs)
+
+    mocker.patch.object(ReviewForm, 'save', save_with_other_reviewer)
+    response = review_client.post(url, {f'{submission.code}-text': 'First reviewer'})
+    assert response.status_code == 200
+    with scope(event=event):
+        expected = {'First reviewer'} if same_reviewer else {'First reviewer', 'Other reviewer'}
+        assert set(submission.reviews.values_list('text', flat=True)) == expected
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+def test_bulk_review_omits_categories_created_after_locking(mocker, request):
+    """A category created after the snapshot must never enter the submitted forms."""
+    submission = request.getfixturevalue('submission')
+    review_client = request.getfixturevalue('review_client')
+    other_track = request.getfixturevalue('other_track')
+    event = submission.event
+    category_id, score_id = 10001, 10002
+    created = False
+
+    def create_category():
+        """Insert an unlocked category from another database connection."""
+        try:
+            with scope(event=event):
+                category = ReviewScoreCategory.objects.create(pk=category_id, event=event, name='New category')
+                ReviewScore.objects.create(pk=score_id, category=category, value=5)
+        finally:
+            connections.close_all()
+
+    def insert_after_lock(execute, sql, params, many, context):
+        """Insert immediately after the category-lock statement takes its snapshot."""
+        nonlocal created
+        result = execute(sql, params, many, context)
+        if not created and 'base_reviewscorecategory' in sql and ('FOR SHARE' in sql or 'FOR UPDATE' in sql):
+            created = True
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                executor.submit(create_category).result(timeout=30)
+        return result
+
+    original_save = ReviewForm.save
+
+    def save_with_new_limit(form, *args, **kwargs):
+        """Change the new category's limits after form eligibility was constructed."""
+        with scope(event=event):
+            event.score_categories.get(pk=category_id).limit_tracks.add(other_track)
+        return original_save(form, *args, **kwargs)
+
+    mocker.patch.object(ReviewForm, 'save', save_with_new_limit)
+    with connection.execute_wrapper(insert_after_lock):
+        response = review_client.post(event.orga_urls.reviews + 'bulk/', {
+            f'{submission.code}-score_{category_id}': score_id,
+            f'{submission.code}-text': 'Review without unlocked categories',
+        })
+
+    assert response.status_code == 200
+    assert created
+    assert f'score_{category_id}' not in response.context['forms'][submission.code].fields
+    with scope(event=event):
+        review = submission.reviews.get()
+        assert not review.scores.filter(pk=score_id).exists()
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+def test_bulk_review_busy_settings_do_not_partially_save(request):
+    """An in-flight settings writer must cause a clean rejection, not a lock cycle."""
+    submission = request.getfixturevalue('submission')
+    review_client = request.getfixturevalue('review_client')
+    event = submission.event
+    ready, release = ThreadEvent(), ThreadEvent()
+
+    def hold_settings_edit():
+        """Keep a category write transaction open while the reviewer submits."""
+        try:
+            with transaction.atomic(), scope(event=event):
+                list(event.score_categories.select_for_update())
+                ready.set()
+                assert release.wait(timeout=30)
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        pending = executor.submit(hold_settings_edit)
+        try:
+            assert ready.wait(timeout=30)
+            response = review_client.post(event.orga_urls.reviews + 'bulk/', {
+                f'{submission.code}-text': 'Must not be saved',
+            })
+            assert response.status_code == 200
+            assert any(message.level == 40 for message in response.context['messages'])
+            with scope(event=event):
+                assert not submission.reviews.exists()
+        finally:
+            release.set()
+        pending.result(timeout=30)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('change', ('reviewer_access', 'phase', 'assignment'))
+def test_bulk_review_rechecks_access_after_dispatch(mocker, review_client, review_user, submission, change):
+    """Cached dispatch permission must not survive a revocation before the save."""
+    event = submission.event
+    with scope(event=event):
+        if change == 'assignment':
+            phase = event.active_review_phase
+            phase.proposal_visibility = 'assigned'
+            phase.save(update_fields=['proposal_visibility'])
+            submission.assigned_reviewers.add(review_user)
+    original_post = BulkReview.post
+
+    def post_after_revocation(view, request, *args, **kwargs):
+        """Revoke access after dispatch has already cached its successful check."""
+        with scope(event=event):
+            if change == 'reviewer_access':
+                review_user.teams.get(is_reviewer=True).members.remove(review_user)
+            elif change == 'phase':
+                phase = request.event.active_review_phase
+                phase.can_review = False
+                phase.save(update_fields=['can_review'])
+            else:
+                submission.assigned_reviewers.remove(review_user)
+        return original_post(view, request, *args, **kwargs)
+
+    mocker.patch.object(BulkReview, 'post', post_after_revocation)
+    response = review_client.post(event.orga_urls.reviews + 'bulk/', {f'{submission.code}-text': 'Revoked'})
+    assert response.status_code == (200 if change == 'assignment' else 403)
+    with scope(event=event):
+        assert not submission.reviews.exists()
 
 
 @pytest.mark.parametrize("assigned", (True, False))
