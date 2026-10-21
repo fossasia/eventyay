@@ -22,10 +22,12 @@
 						rect.camera-body(width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
 						path.camera-lens(d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
 						path.camera-slash(d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
-	.warning.no-print(v-if="warnings?.length")
+	.warning.no-print(v-if="warnings?.length", tabindex="0", :aria-label="warningTooltipText(warnings)")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
-			i.fa.fa-exclamation-triangle
+			i.fa.fa-exclamation-triangle(aria-hidden="true")
+		.warning-tooltip(role="tooltip")
+			p(v-for="warning of warnings") {{ warning.message }}
 	button.unschedule-btn.no-print(v-if="showUnschedule", type="button", @pointerdown.stop, @pointerup.stop, @click.stop="onUnschedule", :aria-label="$t('Remove from schedule')", :title="$t('Remove from schedule')")
 		i.fa.fa-times(aria-hidden="true")
 </template>
@@ -34,7 +36,7 @@
 import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import { translate } from '~/lib/i18n'
-import { getLocalizedString } from '~/utils'
+import { getLocalizedString, warningTooltipText } from '~/utils'
 import { resolveMode, resolveSessionKind } from '~/teamshifts-adapter'
 
 interface Speaker {
@@ -209,6 +211,7 @@ function onUnschedule(): void {
 <style lang="stylus">
 sessionTextClamp(lines)
 	min-width: 0
+	min-height: 0
 	display: -webkit-box
 	-webkit-line-clamp: lines
 	line-clamp: lines
@@ -246,7 +249,7 @@ sessionTextExpand()
 	&.clone
 		z-index: 200
 	&.dragging
-		filter: opacity(0.3)
+		opacity: 0.3
 		cursor: inherit
 	&.isbreak
 		background-color: $clr-grey-200
@@ -406,12 +409,46 @@ sessionTextExpand()
 		position: absolute
 		top: 0
 		right: 0
+		z-index: 3
 		padding: 4px
 		margin: 4px
 		color: #b23e65
 		font-size: 16px
-		.warning-icon span
-			padding-right: 4px
+		outline: none
+		&:focus-visible
+			outline: 2px solid var(--color-primary)
+			outline-offset: 1px
+			border-radius: 4px
+		.warning-icon
+			display: flex
+			align-items: center
+			span
+				padding-right: 4px
+		.warning-tooltip
+			display: none
+			position: absolute
+			top: calc(100% + 4px)
+			right: 0
+			width: max-content
+			max-width: 240px
+			padding: 8px 10px
+			background-color: #1e293b
+			color: #fff
+			font-size: 12px
+			font-weight: 500
+			line-height: 1.35
+			text-align: left
+			white-space: normal
+			border-radius: 6px
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18)
+			pointer-events: none
+			p
+				margin: 0
+				& + p
+					margin-top: 4px
+		&:hover .warning-tooltip,
+		&:focus-visible .warning-tooltip
+			display: block
 	&:has(.unschedule-btn)
 		.info
 			padding-right: 26px
@@ -443,10 +480,20 @@ sessionTextExpand()
 			outline: 2px solid var(--color-primary)
 			outline-offset: 1px
 
+	&.short-session
+		overflow: hidden
+		.info
+			overflow: hidden
+			min-height: 0
 	@media (hover: hover) and (pointer: fine)
 		&:hover:not(.dragging, .clone)
+			overflow: visible
+			z-index: 12
 			.title.title-clamped, .speakers.speakers-clamped
 				sessionTextExpand()
+	&:focus-within:not(.dragging, .clone)
+		overflow: visible
+		z-index: 12
 
 html[dir="rtl"],
 html.rtl
@@ -479,6 +526,9 @@ html.rtl
 		.warning
 			right: auto
 			left: 0
+			.warning-tooltip
+				right: auto
+				left: 0
 		&:has(.unschedule-btn)
 			.info
 				padding-right: 8px
@@ -491,7 +541,8 @@ html.rtl
 			left: 4px
 
 @media print
-	.c-linear-schedule-session .unschedule-btn
+	.c-linear-schedule-session .unschedule-btn,
+	.c-linear-schedule-session .warning-tooltip
 		display: none
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300

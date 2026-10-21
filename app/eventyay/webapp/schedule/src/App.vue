@@ -1778,8 +1778,9 @@ export default {
 	--pretalx-clr-text: rgb(13,15,16)
 	&:fullscreen
 		background: #fff
-		padding: 0
+		padding: 0 8px
 		margin: 0
+		box-sizing: border-box
 		overflow: auto
 		--pretalx-sticky-top-offset: 0px
 		> .c-schedule-toolbar

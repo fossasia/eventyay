@@ -10,6 +10,13 @@
 			h1(v-if="!inferredType", v-html="$emojify(config.name)")
 			h1(v-else) {{ roomTypeLabel }} :
 				span.room-name(v-html="$emojify(config.name)")
+		.disabled-provider-alert(v-if="isProviderDisabled")
+			.alert-icon
+				i.fa.fa-exclamation-triangle
+			.alert-text
+				strong {{ $t('Video Provider Disabled') }}: 
+				span(v-if="disabledProviderInfo && disabledProviderInfo.isAttendeeAllowed") {{ $t('This room is configured with {provider}, which has been disabled for organisers by the platform administrator. Organiser controls are unavailable.', { provider: disabledProviderName }) }}
+				span(v-else) {{ $t('This room is configured with {provider}, which has been disabled by the platform administrator. The video feature for this room is unavailable.', { provider: disabledProviderName }) }}
 		.mystery-room(v-if="!inferredType")
 			p {{ $t('This room does not have a video option yet.') }}
 			VideoProviderDropdown(:label="$t('Add Video')", variant="action", @select="addVideoProvider")
@@ -25,6 +32,8 @@ import {
 	applyVideoProviderToConfig,
 	getAvailableVideoProviders,
 	getConfiguredRoomLabel,
+	MODULE_TYPE_TO_PROVIDER,
+	isVideoProviderDisabled,
 } from 'lib/video-providers'
 import features from 'features'
 import EditForm from './EditForm'
@@ -58,8 +67,41 @@ export default {
 				this.hasPermission,
 				this.isAdminMode,
 				(flag) => features.enabled(flag),
-				this.$store.state.world?.video_providers
+				this.$store.state.world?.video_providers || window.eventyay?.video_providers
 			)
+		},
+		disabledProviderInfo() {
+			if (!this.config) return null
+			const videoProviders = this.$store.state.world?.video_providers || window.eventyay?.video_providers
+			if (!videoProviders) return null
+			const modules = this.config.modules || this.config.module_config || []
+			for (const m of modules) {
+				const type = typeof m === 'string' ? m : m?.type
+				const providerId = MODULE_TYPE_TO_PROVIDER[type]
+				if (providerId && isVideoProviderDisabled(providerId, videoProviders)) {
+					const names = {
+						bbb: 'BigBlueButton',
+						zoom: 'Zoom',
+						jitsi: 'Jitsi Meet',
+						janus: 'Janus WebRTC',
+						loungemesh: 'LoungeMesh'
+					}
+					const prov = videoProviders[providerId]
+					const isAttendeeAllowed = prov ? prov.attendee !== false : false
+					return {
+						id: providerId,
+						name: names[providerId] || providerId,
+						isAttendeeAllowed
+					}
+				}
+			}
+			return null
+		},
+		isProviderDisabled() {
+			return Boolean(this.disabledProviderInfo)
+		},
+		disabledProviderName() {
+			return this.disabledProviderInfo?.name || ''
 		}
 	},
 	watch: {
@@ -194,4 +236,23 @@ export default {
 			margin: 0
 			font-size: 16px
 			color: $clr-secondary-text-light
+	.disabled-provider-alert
+		display: flex
+		align-items: center
+		gap: 12px
+		padding: 12px 20px
+		background-color: #fef2f2
+		border-bottom: 1px solid #fee2e2
+		color: #991b1b
+		font-size: 14px
+		line-height: 1.4
+		.alert-icon
+			display: flex
+			align-items: center
+			justify-content: center
+			color: #dc2626
+			font-size: 18px
+			flex-shrink: 0
+		.alert-text
+			flex: 1
 </style>

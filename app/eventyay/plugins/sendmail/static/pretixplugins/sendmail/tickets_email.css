@@ -666,13 +666,50 @@ form.mail-templates-info-dialog__card {
   margin-bottom: 12px;
 }
 
-.mail-template-system-form .checkbox label {
-  padding-left: 0;
+/* Email template checkbox layout, label gap, and vertical alignment */
+.mail-template-system-form .form-group:has(.checkbox),
+.mail-template-form .form-group:has(.checkbox) {
+  margin-top: 15px;
+  margin-bottom: 20px;
 }
 
-.mail-template-system-form .checkbox input[type="checkbox"] {
+.mail-template-system-form .checkbox,
+.mail-template-form .checkbox {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 4px;
+}
+
+.mail-template-system-form .checkbox label,
+.mail-template-form .checkbox label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 0;
+  font-weight: normal;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.mail-template-system-form .checkbox input[type="checkbox"],
+.mail-template-form .checkbox input[type="checkbox"] {
   position: static;
-  margin-left: 0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.mail-template-system-form .help-block,
+.mail-template-form .help-block {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 767.98px) {
+  /* Hide redundant empty control-label spacer only for individual boolean attendee checkboxes */
+  .mail-template-system-form label.control-label[for^="id_mail_send_"],
+  .mail-template-form label.control-label[for^="id_mail_send_"] {
+    display: none;
+  }
 }
 
 @media (max-width: 991px) {
@@ -693,9 +730,5 @@ form.mail-templates-info-dialog__card {
 
   .mail-template-system-form .form-group:has(> .col-md-9 > .checkbox) > label.col-md-3 {
     display: none;
-  }
-
-  .mail-template-system-form .checkbox input[type="checkbox"] {
-    margin-left: 2px;
   }
 }
