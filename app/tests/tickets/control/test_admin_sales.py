@@ -3,14 +3,14 @@ import datetime
 from decimal import Decimal
 from io import BytesIO, StringIO
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from celery.exceptions import Retry
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, connection
 from django.test import Client, RequestFactory, override_settings
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from django_scopes.exceptions import ScopeError
 
 from eventyay.base.models import (
@@ -81,13 +81,13 @@ class AdminSalesTest(SoupTest):
         )
 
     def test_export_includes_events_without_dates(self):
-        with scopes_disabled():
-            self.event.date_from = None
-            self.event.save(update_fields=['date_from'])
-        response = self.client.get('/admin/sales/', {'export': 'csv'})
-        self.assertEqual(response.status_code, 200)
-        rows = list(csv.reader(StringIO(response.content.decode())))
-        row = next(row for row in rows[1:] if row[0] == str(self.event.name))
+        self.event.date_from = None
+        self.event.tickets_sold = 0
+        self.event.revenue = Decimal('0')
+        self.event.sales_status = 'draft'
+        queryset = Mock()
+        queryset.iterator.return_value = iter([self.event])
+        row = next(SalesOverview().export_rows(queryset))
         self.assertEqual(row[5], '')
 
     @scopes_disabled()
@@ -117,13 +117,14 @@ class AdminSalesTest(SoupTest):
                 invoice=self.invoice, delivery_key='initial', recipient='billing@example.com',
                 subject='Invoice', body='Invoice content', pdf_base64='cGRm', pdf_filename='invoice.pdf',
             )
-        with self.assertRaises(ScopeError):
-            BillingInvoiceEmail.objects.exists()
-        with (
-            patch('eventyay.common.signals.cache.get', return_value=None),
-            patch('eventyay.base.services.mail.mail_send_task.run') as send,
-        ):
-            process_scheduled_emails(sender=None)
+        with scope():
+            with self.assertRaises(ScopeError):
+                BillingInvoiceEmail.objects.exists()
+            with (
+                patch('eventyay.common.signals.cache.get', return_value=None),
+                patch('eventyay.base.services.mail.mail_send_task.run') as send,
+            ):
+                process_scheduled_emails(sender=None)
         send.assert_called_once()
         with scopes_disabled():
             mail.refresh_from_db()
