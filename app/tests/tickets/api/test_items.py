@@ -4,6 +4,7 @@ from decimal import Decimal
 from unittest import mock
 
 import pytest
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 import datetime
@@ -988,6 +989,136 @@ def test_item_create_with_bundle_negative_count(token_client, organizer, event, 
 
 
 @pytest.mark.django_db
+def test_item_create_with_bundle_zero_count(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with an inline bundle having a zero count."""
+    with scopes_disabled():
+        i = event.products.create(name='Included thing', default_price=2)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Zero Count Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': i.pk,
+                    'count': 0,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert 'count' in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_none_count(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with an inline bundle having count explicitly set to null."""
+    with scopes_disabled():
+        i = event.products.create(name='Included thing', default_price=2)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Null Count Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': i.pk,
+                    'count': None,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert 'count' in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_omitted_count(token_client, organizer, event, item, category, taxrule):
+    """Test creating a product with an inline bundle omitting the count field defaults to 1."""
+    with scopes_disabled():
+        i = event.products.create(name='Included thing', default_price=2)
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Omitted Count Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': i.pk,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+    with scopes_disabled():
+        prod = Item.objects.get(pk=resp.data['id'])
+        b = prod.bundles.first()
+    assert b.bundled_product == i
+    assert b.count == 1
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_multilevel_batch_detected(token_client, organizer, event, item, category, taxrule):
+    """Test batch inspection prevents multi-level bundles across multiple payload entries."""
+    with scopes_disabled():
+        valid_thing = event.products.create(name='Valid Thing', default_price=2)
+        sub_item = event.products.create(name='Sub Thing', default_price=3)
+        intermediate = event.products.create(name='Intermediate Bundle', default_price=10)
+        intermediate.bundles.create(bundled_product=sub_item, count=1, designated_price=3)
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/'.format(organizer.slug, event.slug),
+        {
+            'category': category.pk,
+            'name': {'en': 'Batch Multi-level Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': valid_thing.pk,
+                    'count': 1,
+                },
+                {
+                    'bundled_product': intermediate.pk,
+                    'count': 2,
+                },
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert resp.content.decode() == '{"bundles":["The bundled product must not have bundles on its own."]}'
+
+
+@pytest.mark.django_db
+def test_product_bundle_clean_count_validation():
+    """Test ProductBundle.clean_count domain validation rules directly."""
+    ItemBundle.clean_count(1)
+    ItemBundle.clean_count(10)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count(None)
+    assert 'The count cannot be empty.' in str(excinfo.value)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count(0)
+    assert 'The count needs to be greater than zero.' in str(excinfo.value)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count(-1)
+    assert 'The count needs to be greater than zero.' in str(excinfo.value)
+
+
+@pytest.mark.django_db
 def test_item_update(token_client, organizer, event, item, category, item2, category2, taxrule2):
     """Test updating product fields and validating constraint errors on update."""
     resp = token_client.patch(
@@ -1509,6 +1640,37 @@ def test_bundles_update(token_client, organizer, event, item, bundle):
     with scopes_disabled():
         a = ItemBundle.objects.get(pk=bundle.pk)
     assert a.count == 3
+
+
+@pytest.mark.django_db
+def test_bundles_create_zero_count(token_client, organizer, event, item, item3):
+    """Test creating a bundle with zero count via the bundle endpoint is rejected."""
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        {
+            'bundled_product': item3.pk,
+            'bundled_variation': None,
+            'count': 0,
+            'designated_price': '1.50',
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert 'count' in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_bundles_update_zero_count(token_client, organizer, event, item, bundle):
+    """Test updating a bundle with zero count via the bundle endpoint is rejected."""
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk),
+        {
+            'count': 0,
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert 'count' in resp.content.decode()
 
 
 @pytest.mark.django_db
