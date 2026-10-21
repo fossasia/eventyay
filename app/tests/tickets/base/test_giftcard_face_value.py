@@ -1,7 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
+from threading import Barrier
 from unittest.mock import patch
 
 import pytest
+from django.db import DatabaseError, close_old_connections
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -104,3 +107,58 @@ def test_reactivation_restores_each_card_once(gift_order):
         reactivate_order(order, force=True)
         assert [card.value for card in cards] == [10, 15]
         assert position.issued_gift_cards.count() == 2
+
+
+@pytest.mark.django_db
+def test_stale_reactivation_does_not_duplicate_credit(gift_order):
+    event, order, position = gift_order
+    signal_listener_issue_giftcards(event, order)
+    _cancel_order(order, send_mail=False)
+    stale_order = Order.objects.get(pk=order.pk)
+    reactivate_order(order, force=True)
+    with pytest.raises(OrderError, match='not canceled'):
+        reactivate_order(stale_order, force=True)
+    assert position.issued_gift_cards.get().value == 50
+
+
+@pytest.mark.django_db
+def test_stale_paid_signal_does_not_issue_pending_order(gift_order):
+    event, order, position = gift_order
+    Order.objects.filter(pk=order.pk).update(status=Order.STATUS_PENDING)
+    signal_listener_issue_giftcards(event, order)
+    assert not position.issued_gift_cards.exists()
+
+
+@pytest.mark.django_db
+def test_issuance_failure_rolls_back_order_change(gift_order):
+    event, order, position = gift_order
+    other = Product.objects.create(event=event, name='Other', default_price=0)
+    manager = OrderChangeManager(order)
+    manager.add_position(other, variation=None, price=Decimal('0'))
+    with patch('eventyay.base.models.giftcards.GiftCardTransaction.save', side_effect=DatabaseError('ledger failed')):
+        with pytest.raises(DatabaseError, match='ledger failed'):
+            manager.commit(check_quotas=False)
+    assert order.positions.count() == 1
+    assert not position.issued_gift_cards.exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_signals_issue_one_card(gift_order):
+    event, order, position = gift_order
+    barrier = Barrier(2)
+
+    def issue():
+        close_old_connections()
+        try:
+            with scope(event=event, organizer=event.organizer):
+                barrier.wait(timeout=10)
+                signal_listener_issue_giftcards(event, order)
+        finally:
+            close_old_connections()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(issue) for _ in range(2)]
+        for future in futures:
+            future.result(timeout=20)
+    assert position.issued_gift_cards.count() == 1
+    assert position.issued_gift_cards.get().value == 50
