@@ -2573,6 +2573,7 @@ class OrderChangeManager:
             return None
 
     def commit(self, check_quotas=True):
+        """Apply queued order changes and gift-card issuance in one transaction."""
         if self._committed:
             # an order change can only be committed once
             raise OrderError(error_messages['internal'])
@@ -3115,6 +3116,7 @@ def change_payment_provider(
 @receiver(order_changed, dispatch_uid='eventyaybase_order_changed_giftcards')
 @transaction.atomic()
 def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
+    """Serialize paid-order issuance while preserving existing cards and recorded credit."""
     # Serialize signals and recheck persisted status before issuing any credit.
     order = Order.objects.select_for_update().get(pk=order.pk)
     if order.status != Order.STATUS_PAID:
