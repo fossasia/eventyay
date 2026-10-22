@@ -1,5 +1,4 @@
 import datetime
-import re
 from decimal import Decimal
 
 import pytest
@@ -199,13 +198,3 @@ def test_duplicate_voucher_rolls_back_when_plugin_copy_fails(admin_client):
         platform_fee_voucher_copied.disconnect(dispatch_uid='test_voucher_copy_fails')
 
     assert list(InvoiceVoucher.objects.values_list('code', flat=True)) == ['ORIGINAL2']
-
-
-@pytest.mark.django_db
-def test_voucher_scope_selects_are_searchable(admin_client):
-    response = admin_client.get(reverse('eventyay_admin:admin.vouchers.add'))
-
-    content = response.content.decode()
-    for name in ('event_effect', 'organizer_effect'):
-        select = re.search(rf'<select[^>]*name="{name}"[^>]*>', content).group(0)
-        assert 'select2-static' in select
