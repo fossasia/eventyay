@@ -220,7 +220,7 @@ class VideoServerScopeMixin:
             self.fields["organizers"].queryset = Organizer.objects.all().order_by("name")
             self.fields["organizers"].required = False
             self.fields["organizers"].widget.attrs.update({
-                "class": "form-control select2-static",
+                "class": "form-control select2-multi",
                 "data-placeholder": _("Search and select organizers..."),
                 "multiple": "multiple",
             })
@@ -234,7 +234,7 @@ class VideoServerScopeMixin:
                 self.fields["events"].queryset = Event.objects.all().order_by("name")
             self.fields["events"].required = False
             self.fields["events"].widget.attrs.update({
-                "class": "form-control select2-static",
+                "class": "form-control select2-multi",
                 "data-placeholder": _("Search and select events..."),
                 "multiple": "multiple",
             })
