@@ -48,8 +48,10 @@ def test_remove_marks_deleted_and_preserves_answers(submission, question):
 def test_list_hides_deleted_unless_filtered(orga_client, event, submission):
     with scope(event=event):
         deleted = _create(event, SubmissionStates.DELETED, title='Deleted Proposal Title')
-        choices = [choice for choice, _ in SubmissionFilterForm(event=event).fields['state'].choices]
+        state_choices = dict(SubmissionFilterForm(event=event).fields['state'].choices)
+        choices = list(state_choices)
     assert SubmissionStates.DELETED in choices and SubmissionStates.DRAFT not in choices
+    assert state_choices[SubmissionStates.REJECTED] == 'not accepted'
 
     for query, visible in [
         ('', {submission}),

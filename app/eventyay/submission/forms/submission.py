@@ -471,7 +471,7 @@ class SubmissionFilterForm(forms.Form):
     state = forms.MultipleChoiceField(
         required=False,
         choices=[
-            (state, name)
+            (state, phrases.submission.not_accepted if state == SubmissionStates.REJECTED else name)
             for (state, name) in SubmissionStates.get_choices()
             if state != SubmissionStates.DRAFT
         ],
