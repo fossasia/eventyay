@@ -6,15 +6,14 @@ We welcome contributions to Eventyay.
 
 1. Fork the repository
 2. Clone your fork
-3. Create a branch from `dev` (see [Branch
-creation](#branch-creation))
+3. Create a branch from `dev` (see [Branch creation](#branch-creation))
 4. Refer to [`README.rst`](README.rst) for development setup instructions
 
 ## Branch creation
 
 Create a **new branch from `dev`** for every change. Do not commit directly to `dev` or `main`.
 
-### Branch naming 
+### Branch naming
 
 Use a **prefix that describes the kind of change**, then a short slug. Use the same vocabulary in branch names, commit messages, and PR titles.
 
@@ -60,8 +59,7 @@ Area labels come from **changed files**, not the branch name. See [`.github/scri
 
 ## Commit messages
 
-Write messages that explain **what**
-changed and **why** when the why is not obvious. Avoid vague subjects like “fix bugs” or “update code”.
+Write messages that explain **what** changed and **why** when the why is not obvious. Avoid vague subjects like “fix bugs” or “update code”.
 
 ### Format
 
