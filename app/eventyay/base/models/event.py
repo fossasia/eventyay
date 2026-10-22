@@ -36,7 +36,7 @@ from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.timezone import make_aware, now
-from django.utils.translation import gettext
+from django.utils.translation import gettext, override
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager, scope, scopes_disabled
 from i18nfield.fields import I18nCharField, I18nTextField
@@ -80,6 +80,7 @@ from eventyay.talk_rules.event import (
     can_create_events,
     has_any_permission,
     has_talk_permission,
+    is_event_speaker,
     is_event_visible,
 )
 
@@ -854,7 +855,7 @@ class Event(
         rules_permissions = {
             'orga_access': has_any_permission,
             'talk_orga_access': has_talk_permission,
-            'view': is_event_visible | has_any_permission,
+            'view': is_event_visible | has_any_permission | is_event_speaker,
             'update': can_change_event_settings,
             'create': can_create_events,
         }
@@ -2245,6 +2246,61 @@ class Event(
     def private_testmode_talks_enabled(self):
         return self.private_testmode and self.settings.get('private_testmode_talks', False, as_type=bool)
 
+    def send_orga_mail(self, text, stats=False, **kwargs):
+        from eventyay.base.models import QueuedMail
+
+        class SafeDict(dict):
+            def __missing__(self, key):
+                return '{' + key + '}'
+
+        context = {
+            'event_dashboard': self.orga_urls.base.full() if hasattr(self, 'orga_urls') else '',
+            'event_review': self.orga_urls.reviews.full() if hasattr(self, 'orga_urls') else '',
+            'event_schedule': self.orga_urls.schedule.full() if hasattr(self, 'orga_urls') else '',
+            'event_submissions': self.orga_urls.submissions.full() if hasattr(self, 'orga_urls') else '',
+            'event_team': self.orga_urls.team_settings.full() if hasattr(self, 'orga_urls') else '',
+        }
+        with scope(event=self):
+            context['submission_count'] = self.submissions.all().count() if hasattr(self, 'submissions') else 0
+            if stats:
+                context.update(
+                    {
+                        'talk_count': (
+                            self.current_schedule.talks.filter(is_visible=True).count()
+                            if self.current_schedule
+                            else 0
+                        ),
+                        'review_count': self.reviews.count() if hasattr(self, 'reviews') else 0,
+                        'schedule_count': (
+                            max(0, self.schedules.count() - 1)
+                            if hasattr(self, 'schedules')
+                            else 0
+                        ),
+                        'mail_count': (
+                            self.queued_mails.filter(sent__isnull=False).count()
+                            if hasattr(self, 'queued_mails')
+                            else 0
+                        ),
+                    }
+                )
+        if kwargs:
+            context.update(kwargs)
+
+        with override(self.locale):
+            try:
+                formatted_text = str(text).format_map(SafeDict(context))
+            except (ValueError, KeyError, IndexError):
+                formatted_text = str(text)
+
+            mail = QueuedMail(
+                event=self,
+                subject=_('News from your content system'),
+                text=formatted_text,
+                to=self.email,
+                locale=self.locale,
+            )
+            mail.send()
+
     def _component_presale_status(self, *, published: bool, private_testmode_enabled: bool, testmode: bool):
         if private_testmode_enabled:
             text = _('live (private test mode)') if self.live else _('in private test mode')
@@ -2495,10 +2551,11 @@ class Event(
         from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.log import ActivityLog, LogEntry
         from eventyay.base.models.mail import QueuedMail
-        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
         from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.submission import Submission
         from eventyay.base.models.systemlog import SystemLog
 
         self.cartposition_set.filter(addon_to__isnull=False).delete()
@@ -2534,8 +2591,11 @@ class Event(
         self.vouchers.all().delete()
         self.products.all().delete()
         self.subevents.all().delete()
-        self.talkquestions.all().delete()
-        self.submissions.all().delete()
+        from django_scopes import scope
+
+        with scope(event=self):
+            TalkQuestion.all_objects.filter(event=self).delete()
+            Submission.all_objects.filter(event=self).delete()
         self.rooms.all().delete()
         self.tracks.all().delete()
         self.tags.all().delete()
@@ -2574,9 +2634,10 @@ class Event(
         from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.profile import SpeakerProfile
         from eventyay.base.models.feedback import Feedback
-        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.submission import Submission
 
         answers = Answer.objects.filter(question__event=self)
         for answer in answers.only('pk', 'answer_file').iterator():
@@ -2603,8 +2664,11 @@ class Event(
         # Clear unsent (outbox) emails linked to this event
         QueuedMail.objects.filter(event=self, sent__isnull=True).delete()
 
-        self.talkquestions.all().delete()
-        self.submissions.all().delete()
+        from django_scopes import scope
+
+        with scope(event=self):
+            TalkQuestion.all_objects.filter(event=self).delete()
+            Submission.all_objects.filter(event=self).delete()
         self.rooms.all().delete()
         self.tracks.all().delete()
         self.tags.all().delete()

@@ -44,16 +44,18 @@
 		.shift-manage.mt-2.text-right(v-else-if="caps.canAssignMembers && !isBreak && session.room")
 			button.btn.btn-sm.btn-assign-members(type="button", @pointerdown.stop, @click.stop="$emit('assignMembers', session)") {{ session.roles?.some(r => r.assigned.length < r.capacity) ? $t('Sign Up') : $t('Manage') }}
 
-	.warning.no-print(v-if="warnings?.length")
+	.warning.no-print(v-if="warnings?.length", tabindex="0", :aria-label="warningTooltipText(warnings)")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
-			i.fa.fa-exclamation-triangle
+			i.fa.fa-exclamation-triangle(aria-hidden="true")
+		.warning-tooltip(role="tooltip")
+			p(v-for="warning of warnings") {{ warning.message }}
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
-import { getLocalizedString } from '~/utils'
+import { getLocalizedString, warningTooltipText } from '~/utils'
 import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import type { RoleAssignment } from '~/schemas'

@@ -41,6 +41,7 @@ from eventyay.common.views.mixins import (
     EventPermissionRequired,
     OrderActionMixin,
     PermissionRequired,
+    Sortable,
 )
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
@@ -535,14 +536,21 @@ class QuickScheduleView(PermissionRequired, UpdateView):
         return self.request.path
 
 
-class RoomView(OrderActionMixin, OrgaCRUDView):
+class RoomView(Sortable, OrderActionMixin, OrgaCRUDView):
     model = Room
     form_class = RoomForm
     template_namespace = 'orga/schedule'
+    sortable_fields = ('name', 'capacity')
+    secondary_sort = {
+        '': ('position',),
+        'name': ('position',),
+        'capacity': ('position',),
+    }
 
     def get_queryset(self):
         # Filter out soft-deleted rooms to sync with video component
-        return self.request.event.rooms.filter(deleted=False).with_has_linked_sessions()
+        qs = self.request.event.rooms.filter(deleted=False).with_has_linked_sessions()
+        return self.sort_queryset(qs)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -624,6 +632,8 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         return ctx
 
     def order_handler(self, request, *args, **kwargs):
+        if not self.can_reorder():
+            return HttpResponseBadRequest('Reordering is only allowed in default position order.')
         order = request.POST.get('order')
         if order:
             pks = [pk.strip() for pk in order.split(',') if pk.strip()]

@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-room-manager
 	dashboard-layout
-		panel.media
+		panel.media(:class="{'is-call-media': isServerStreamRoom}")
 			.manage-room-header
 				bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 				.manage-room-title(v-if="room") {{ room.name }}
@@ -13,29 +13,112 @@
 				.banner-content
 					.banner-title {{ $t('Feature Disabled') }}
 					.banner-message {{ $t('This feature is no longer available. Please contact system administrator.') }}
-			media-source-placeholder(v-else)
-		panel.schedule(v-if="$features.enabled('schedule-control') && !isServerStreamRoom")
-			.header
-				h3 {{ $t('Schedule') }}
-			SchedulePanel(:room="room")
-		panel.polls(v-if="!isServerStreamRoom && !isEmbeddedSuiteRoom && modules['poll']")
-			.header
-				h3 {{ $t('Polls') }}
-				.actions
-					bunt-button#btn-create-poll(@click="showCreatePollPrompt") {{ $t('Create Poll') }}
-					bunt-icon-button(@click="showUrlPopup('poll', $event)") presentation
-			polls(:module="modules['poll']", @edit="startEditingPoll")
-		panel.questions(v-if="!isServerStreamRoom && !isEmbeddedSuiteRoom && modules['question']")
-			.header
-				h3 {{ $t('Questions') }}
-				.actions
-					bunt-icon-button(@click="showUrlPopup('question', $event)") presentation
-					menu-dropdown(v-if="hasPermission('room:question.moderate')", v-model="showingQuestionsMenu", strategy="fixed")
-						template(#button="{toggle}")
-							bunt-icon-button(@click="toggle") dots-vertical
-						template(#menu)
-							.archive-all(@click="requestArchiveAll") {{ $t('Archive All') }}
-			questions(:module="modules['question']")
+			.server-stream-disabled-banner.server-stream-error-banner(v-else-if="roomFatalError")
+				i.mdi.mdi-cloud-off-outline
+				.banner-content
+					.banner-title {{ $t('Room Connection Issue') }}
+					.banner-message {{ roomFatalError.message || $t('Could not establish connection to the meeting service.') }}
+				bunt-button.btn-retry(@click="retryRoom") {{ $t('Retry') }}
+			.media-stage-wrapper(v-else)
+				.player-viewport
+					media-source-placeholder
+				.stream-info-panel(v-if="isLivestreamRoom")
+					.stream-meta-bar
+						.source-badge(:class="`badge-${livestreamInfo.type}`")
+							i.mdi(:class="livestreamInfo.icon")
+							span.source-title {{ livestreamInfo.label }}
+						.stream-links
+							button.btn-stream-link(v-if="livestreamInfo.externalUrl", type="button", @click="copyText(livestreamInfo.externalUrl)")
+								i.mdi(:class="copiedStreamUrl ? 'mdi-check' : 'mdi-content-copy'")
+								span {{ copiedStreamUrl ? $t('Copied!') : $t('Copy Stream Link') }}
+							a.btn-stream-link(v-if="roomAttendeeUrl", :href="roomAttendeeUrl", target="_blank", rel="noopener noreferrer")
+								i.mdi.mdi-account-eye-outline
+								span {{ $t('Attendee View') }}
+
+					.live-now-card(v-if="currentLiveSession")
+						.card-badge
+							span.live-dot
+							span.live-label {{ $t('LIVE NOW') }}
+						.card-body
+							h4.session-title {{ currentLiveSession.title }}
+							.session-meta
+								span.time
+									i.mdi.mdi-clock-outline
+									| {{ formatTime(currentLiveSession.start) }} – {{ formatTime(currentLiveSession.end) }}
+								span.speakers(v-if="currentLiveSession.speakers && currentLiveSession.speakers.length > 0")
+									i.mdi.mdi-account-outline
+									| {{ currentLiveSession.speakers.map(s => s.name || s.code).join(', ') }}
+							a.session-link(v-if="currentLiveSession.url", :href="currentLiveSession.url", target="_blank", rel="noopener noreferrer")
+								i.mdi.mdi-link-variant
+								span {{ $t('Session Details') }}
+
+					.stream-schedule-section
+						.section-header
+							.header-title
+								i.mdi.mdi-calendar-clock-outline
+								span {{ $t('Stream Schedule') }}
+							span.session-count(v-if="roomScheduledSessions.length > 0") {{ roomScheduledSessions.length }} {{ roomScheduledSessions.length === 1 ? $t('talk') : $t('talks') }}
+						.schedule-timeline(v-if="roomScheduledSessions.length > 0")
+							.timeline-item(
+								v-for="session in roomScheduledSessions",
+								:key="session.id || session.title",
+								:class="{'is-current': currentLiveSession && currentLiveSession.id === session.id}"
+							)
+								.item-time
+									span.time-start {{ formatTime(session.start) }}
+									span.time-end {{ formatTime(session.end) }}
+									span.time-date {{ formatDate(session.start) }}
+								.item-content
+									.item-title-row
+										span.item-title {{ session.title }}
+										span.badge-current-pill(v-if="currentLiveSession && currentLiveSession.id === session.id") {{ $t('Now') }}
+									.item-speakers(v-if="session.speakers && session.speakers.length > 0")
+										i.mdi.mdi-account-outline
+										span {{ session.speakers.map(s => s.name || s.code).join(', ') }}
+									.item-actions(v-if="session.url || session.stream_url")
+										a.link-item(v-if="session.url", :href="session.url", target="_blank", rel="noopener noreferrer")
+											i.mdi.mdi-information-outline
+											span {{ $t('Details') }}
+										a.link-item(v-if="session.stream_url", :href="session.stream_url", target="_blank", rel="noopener noreferrer")
+											i.mdi.mdi-play-circle-outline
+											span {{ $t('Direct Stream') }}
+						.schedule-empty(v-else)
+							i.mdi.mdi-calendar-blank-outline
+							p {{ $t('No sessions scheduled in this room yet.') }}
+							router-link.btn-schedule-link(v-if="hasPermission('room:update')", :to="{name: 'admin:rooms:item', params: {roomId: room.id}}")
+								i.mdi.mdi-plus
+								span {{ $t('Configure Stream & Schedule') }}
+		panel.stage-tools(v-if="!isServerStreamRoom && !isEmbeddedSuiteRoom && ($features.enabled('schedule-control') || modules['poll'] || modules['question'])")
+			.room-schedule-section(v-if="$features.enabled('schedule-control')")
+				.schedule-toggle-header
+					.header-left(@click="scheduleComputeSession = !scheduleComputeSession", role="button", tabindex="0", @keydown.enter.space.prevent="scheduleComputeSession = !scheduleComputeSession")
+						i.mdi.mdi-calendar-clock-outline
+						span.section-title {{ $t('Room schedule auto-compute') }}
+					.header-right
+						bunt-switch(
+							name="schedule-compute-session",
+							v-model="scheduleComputeSession",
+							:tooltip="$t('Compute current session from schedule')",
+							:aria-label="$t('Room schedule auto-compute')"
+						)
+			.split-section.section-polls(v-if="modules['poll']")
+				.header
+					h3 {{ $t('Polls') }}
+					.actions
+						bunt-button#btn-create-poll(@click="showCreatePollPrompt") {{ $t('Create Poll') }}
+						bunt-icon-button(@click="showUrlPopup('poll', $event)") presentation
+				polls(:module="modules['poll']", @edit="startEditingPoll")
+			.split-section.section-questions(v-if="modules['question']")
+				.header
+					h3 {{ $t('Questions') }}
+					.actions
+						bunt-icon-button(@click="showUrlPopup('question', $event)") presentation
+						menu-dropdown(v-if="hasPermission('room:question.moderate')", v-model="showingQuestionsMenu", strategy="fixed")
+							template(#button="{toggle}")
+								bunt-icon-button(@click="toggle") dots-vertical
+							template(#menu)
+								.archive-all(@click="requestArchiveAll") {{ $t('Archive All') }}
+				questions(:module="modules['question']")
 		panel.chat(v-if="!isServerStreamRoom && !isEmbeddedSuiteRoom && modules['chat.native']")
 			.header.chat-manage-header
 				h3 {{ $t('Chat') }}
@@ -77,108 +160,106 @@
 								span {{ $t('Reject') }}
 
 			chat(:room="room", :module="modules['chat.native']", mode="compact", :key="room.id", :hidden-message-ids="pendingMessageIds")
-		panel.server-stream(v-if="isServerStreamRoom")
+		panel.server-stream(v-if="isServerStreamRoom", :class="{'is-minimized': isServerStreamPanelMinimized}")
 			.header
-				h3 {{ serverStreamInfo.title }}
-				.status-badge(:class="isRoomDisabled ? 'badge-disabled' : 'badge-active'")
-					i.mdi(:class="isRoomDisabled ? 'mdi-cancel' : 'mdi-check-circle'")
-					span {{ isRoomDisabled ? $t('Disabled') : $t('Active') }}
-			.server-stream-body
+				.header-title-group(v-show="!isServerStreamPanelMinimized")
+					h3 {{ serverStreamInfo.title }}
+					.status-badge(:class="isRoomDisabled ? 'badge-disabled' : 'badge-active'")
+						i.mdi(:class="isRoomDisabled ? 'mdi-cancel' : 'mdi-check-circle'")
+						span {{ isRoomDisabled ? $t('Disabled') : $t('Active') }}
+					.participant-badge(v-if="occupancyCount > 0", :title="`${occupancyCount} ${occupancyCount === 1 ? $t('participant') : $t('participants')}`")
+						i.mdi.mdi-account-group-outline
+						span {{ occupancyCount }}
+				.header-minimized-icon(v-show="isServerStreamPanelMinimized", :title="$t('Management Panel')")
+					i.mdi(:class="serverStreamInfo.icon")
+					span.mini-participant-count(v-if="occupancyCount > 0") {{ occupancyCount }}
+				bunt-icon-button.btn-toggle-minimize(
+					@click="isServerStreamPanelMinimized = !isServerStreamPanelMinimized",
+					:tooltip="isServerStreamPanelMinimized ? $t('Expand Management Panel') : $t('Minimize Panel')",
+					tooltip-placement="left",
+					:tooltip-fixed="true"
+				) {{ isServerStreamPanelMinimized ? 'chevron-left' : 'chevron-right' }}
+			.server-stream-body(v-show="!isServerStreamPanelMinimized")
 				.server-stream-notice(v-if="isRoomDisabled")
 					i.mdi.mdi-alert-circle-outline
 					.notice-body
 						.notice-title {{ $t('This feature is no longer available. Please contact system administrator.') }}
 						.notice-desc {{ $t('This server-based video provider has been disabled by administrators. Attendees cannot view or access this room.') }}
-				.action-cards
-					.action-card
-						.action-icon(:class="serverStreamInfo.providerId")
-							i.mdi(:class="serverStreamInfo.icon")
-						.action-details
-							h4 {{ $t('Join / Launch Meeting') }}
-							p {{ $t('Launch the video conference with moderator privileges.') }}
-						router-link.btn-action(
-							v-if="!isRoomDisabled",
-							:to="{name: 'room', params: {roomId: room.id}}"
-						)
-							i.mdi.mdi-open-in-new
-							span {{ $t('Join as Host') }}
-						span.btn-action.btn-action--disabled(v-else)
-							i.mdi.mdi-cancel
-							span {{ $t('Unavailable') }}
-					.action-card
-						.action-icon.share-icon
-							i.mdi.mdi-share-variant-outline
-						.action-details
-							h4 {{ $t('Attendee Link') }}
-							p {{ $t('Direct URL to share with attendees or speakers.') }}
-						button.btn-action.btn-action--copy(type="button", @click="copyRoomLink")
-							i.mdi(:class="copiedLink ? 'mdi-check' : 'mdi-content-copy'")
-							span {{ copiedLink ? $t('Copied!') : $t('Copy Link') }}
-				.metrics-grid
-					.metric-card
-						.metric-value {{ occupancyCount }}
-						.metric-label
-							i.mdi.mdi-account-group-outline
-							span {{ occupancyCount === 1 ? $t('Participant') : $t('Participants') }}
-					.metric-card
-						.metric-value {{ serverStreamInfo.providerName }}
-						.metric-label
-							i.mdi.mdi-server-network
-							span {{ $t('Provider') }}
-					.metric-card
-						.metric-value {{ roomServerInfo }}
-						.metric-label
-							i.mdi.mdi-router-wireless
-							span {{ $t('Assigned Server') }}
-				.minimal-schedule-section(v-if="$features.enabled('schedule-control')")
-					.minimal-schedule-header(@click="scheduleExpanded = !scheduleExpanded")
-						.header-left
+				.action-section
+					router-link.btn-join-host(
+						v-if="!isRoomDisabled",
+						:to="{name: 'room', params: {roomId: room.id}}"
+					)
+						i.mdi.mdi-open-in-new
+						span {{ $t('Join Meeting as Host') }}
+					span.btn-join-host.btn-action--disabled(v-else)
+						i.mdi.mdi-cancel
+						span {{ $t('Unavailable') }}
+
+					.attendee-link-card
+						.link-card-header
+							.header-left
+								i.mdi.mdi-share-variant-outline
+								span.link-title {{ $t('Attendee Meeting Link') }}
+							span.link-desc {{ $t('Share with attendees / speakers') }}
+						.link-input-group
+							input.link-input(
+								type="text",
+								readonly,
+								:value="roomAttendeeUrl",
+								@click="$event.target.select()",
+								:title="roomAttendeeUrl"
+							)
+							button.btn-copy-link(type="button", @click="copyRoomLink")
+								i.mdi(:class="copiedLink ? 'mdi-check' : 'mdi-content-copy'")
+								span {{ copiedLink ? $t('Copied!') : $t('Copy Link') }}
+				.room-schedule-section(v-if="$features.enabled('schedule-control')")
+					.schedule-toggle-header
+						.header-left(@click="scheduleComputeSession = !scheduleComputeSession", role="button", tabindex="0", @keydown.enter.space.prevent="scheduleComputeSession = !scheduleComputeSession")
 							i.mdi.mdi-calendar-clock-outline
-							span.section-title {{ $t('Room Schedule') }}
-							span.minimal-badge {{ $t('Minimal') }}
+							span.section-title {{ $t('Room Schedule Auto-compute') }}
 						.header-right
-							span.schedule-state {{ scheduleComputeSession ? $t('Auto-compute: On') : $t('Auto-compute: Off') }}
-							i.mdi(:class="scheduleExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'")
-					.minimal-schedule-body(v-show="scheduleExpanded")
-						SchedulePanel(:room="room")
+							bunt-switch(
+								name="server-stream-schedule-compute",
+								v-model="scheduleComputeSession",
+								:tooltip="$t('Compute current session from schedule')",
+								:aria-label="$t('Room Schedule Auto-compute')"
+							)
 				.config-section(v-if="activeConfigList.length > 0")
 					.config-section-header
-						h4 {{ $t('Room Controls & Moderation Policies') }}
+						h4 {{ $t('Room Controls & Policies') }}
 						.config-save-badge(v-if="configSaveSuccess")
 							i.mdi.mdi-check-circle
 							span {{ $t('Saved') }}
 						.config-saving-spinner(v-else-if="isSavingConfig")
 							i.mdi.mdi-loading.mdi-spin
 							span {{ $t('Updating…') }}
-					.config-grid
-						.config-item(
+					.config-list
+						.config-row(
 							v-for="item in activeConfigList",
 							:key="item.key",
 							:class="{'is-interactive': canManageSettings, 'is-saving': savingKey === item.key}"
 						)
-							.config-item-main
-								.config-label-group
-									span.config-label {{ item.label }}
-									span.config-desc(v-if="item.description") {{ item.description }}
-								.config-action(v-if="canManageSettings")
-									button.btn-config-toggle(
-										type="button",
-										:class="item.enabled ? 'toggle-on' : 'toggle-off'",
-										:disabled="isSavingConfig",
-										@click="toggleConfigSetting(item)"
-									)
-										span.toggle-slider
-										span.toggle-text {{ item.value }}
-								span.config-value(v-else, :class="item.enabled ? 'val-enabled' : 'val-disabled'")
-									i.mdi(:class="item.enabled ? 'mdi-check' : 'mdi-close'")
-									span {{ item.value }}
+							.config-label-group
+								span.config-label {{ item.label }}
+								span.config-desc(v-if="item.description") {{ item.description }}
+							.config-action(v-if="canManageSettings")
+								button.btn-config-toggle(
+									type="button",
+									:class="item.enabled ? 'toggle-on' : 'toggle-off'",
+									:disabled="isSavingConfig",
+									@click="toggleConfigSetting(item)"
+								)
+									span.toggle-slider
+									span.toggle-text {{ item.value }}
+							span.config-value(v-else, :class="item.enabled ? 'val-enabled' : 'val-disabled'")
+								i.mdi(:class="item.enabled ? 'mdi-check' : 'mdi-close'")
+								span {{ item.value }}
 				.moderation-guidance
 					i.mdi.mdi-information-outline
 					.guidance-text
 						strong {{ $t('In-Meeting Moderation') }}:&nbsp;
 						span {{ $t('Audio muting, webcam controls, presentation sharing, and attendee moderation are managed in real time directly within the meeting window.') }}
-		panel.no-modules(v-if="Object.keys(modules).length === 1 && !isServerStreamRoom")
-			p {{ $t('No modules to manage in this room') }}
 	.ui-background-blocker(v-if="showingPresentationUrlFor", @click="showingPresentationUrlFor = null")
 	transition(name="url-popup-anim")
 		.url-popup(v-if="showingPresentationUrlFor", ref="urlPopup")
@@ -231,16 +312,18 @@ import MenuDropdown from 'components/MenuDropdown'
 import Polls from 'components/Polls'
 import Prompt from 'components/Prompt'
 import Questions from 'components/Questions'
-import SchedulePanel from './ManagePanels/Schedule'
 import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
 import { getRoomOccupancyCount } from 'lib/room-occupancy'
 
 export default {
 	name: 'RoomManager',
-	components: { Chat, ConfirmPrompt, CopyableText, DashboardLayout, MediaSourcePlaceholder, MenuDropdown, Panel, Polls, Prompt, Questions, SchedulePanel },
+	components: { Chat, ConfirmPrompt, CopyableText, DashboardLayout, MediaSourcePlaceholder, MenuDropdown, Panel, Polls, Prompt, Questions },
 	props: {
 		room: Object,
 		modules: Object
+	},
+	inject: {
+		leaveMediaSource: { default: null }
 	},
 	provide: {
 		isManaging: true
@@ -258,7 +341,8 @@ export default {
 			processedMessageIds: new Set(),
 			moderationReady: false,
 			copiedLink: false,
-			scheduleExpanded: false,
+			copiedStreamUrl: false,
+			isServerStreamPanelMinimized: false,
 			isSavingConfig: false,
 			savingKey: null,
 			configSaveSuccess: false
@@ -304,8 +388,19 @@ export default {
 				(this.modules?.['call.zoom'] && (this.hasPermission('room:update') || this.$store.getters.isAdminMode))
 			)
 		},
-		scheduleComputeSession() {
-			return Boolean(this.room?.schedule_data?.computeSession)
+		scheduleComputeSession: {
+			get() {
+				return Boolean(this.room?.schedule_data?.computeSession)
+			},
+			set(value) {
+				const schedule_data = value ? { computeSession: true } : null
+				this.$store.dispatch('updateRoomSchedule', {
+					room: this.room,
+					schedule_data
+				}).catch(err => {
+					console.error(`Failed to update schedule data for room ${this.room?.id}:`, err)
+				})
+			}
 		},
 		pendingMessageIds() {
 			return this.pendingQueue.map(item => item.id)
@@ -327,6 +422,9 @@ export default {
 		isServerStreamRoom() {
 			return Boolean(this.serverStreamModule)
 		},
+		roomFatalError() {
+			return this.$store.state.roomFatalErrors?.[this.room?.id] || null
+		},
 		isRoomDisabled() {
 			if (!this.room) return false
 			if (this.room.is_disabled) return true
@@ -340,6 +438,102 @@ export default {
 				routeRoomId: this.$route.params.roomId,
 				roomViewers: this.$store.state.roomViewers,
 			})
+		},
+		roomAttendeeUrl() {
+			if (!this.room) return ''
+			if (window.eventyay?.publicVideoUrl) {
+				const publicBase = window.eventyay.publicVideoUrl.replace(/\/+$/, '')
+				return window.location.origin + publicBase + '/rooms/' + this.room.id
+			}
+			const path = this.$router.resolve({ name: 'room', params: { roomId: this.room.id } }).href
+			return window.location.origin + path
+		},
+		livestreamModule() {
+			if (!this.modules) return null
+			return (
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.vimeo'] ||
+				this.modules['livestream.native'] ||
+				this.modules['livestream.iframe'] ||
+				null
+			)
+		},
+		isLivestreamRoom() {
+			return Boolean(this.livestreamModule)
+		},
+		livestreamInfo() {
+			const mod = this.livestreamModule
+			if (!mod) {
+				return {
+					type: 'stream',
+					label: this.$t('Live Stream'),
+					icon: 'mdi-video',
+					id: null,
+					url: null,
+					externalUrl: null
+				}
+			}
+			const cfg = mod.config || {}
+			if (mod.type === 'livestream.youtube') {
+				const ytid = cfg.ytid || ''
+				const url = ytid ? `https://www.youtube.com/watch?v=${ytid}` : (cfg.url || null)
+				return {
+					type: 'youtube',
+					label: this.$t('YouTube Stream'),
+					icon: 'mdi-youtube',
+					id: ytid,
+					url: url,
+					externalUrl: url
+				}
+			}
+			if (mod.type === 'livestream.vimeo') {
+				const vimeoid = cfg.vimeoid || ''
+				const url = vimeoid ? `https://vimeo.com/${vimeoid}` : (cfg.url || null)
+				return {
+					type: 'vimeo',
+					label: this.$t('Vimeo Stream'),
+					icon: 'mdi-vimeo',
+					id: vimeoid,
+					url: url,
+					externalUrl: url
+				}
+			}
+			if (mod.type === 'livestream.native') {
+				const hlsUrl = cfg.hls_url || cfg.url || ''
+				return {
+					type: 'native',
+					label: this.$t('HLS / Native Stream'),
+					icon: 'mdi-broadcast',
+					id: null,
+					url: hlsUrl,
+					externalUrl: hlsUrl
+				}
+			}
+			return {
+				type: 'iframe',
+				label: this.$t('Web Stream'),
+				icon: 'mdi-web',
+				id: null,
+				url: cfg.url || null,
+				externalUrl: cfg.url || null
+			}
+		},
+		roomScheduledSessions() {
+			if (!this.sessions || !this.room) return []
+			const roomId = String(this.room.id)
+			const roomPretalxId = this.room.pretalx_id != null ? String(this.room.pretalx_id) : null
+			return this.sessions.filter(s => {
+				if (!s) return false
+				const sRoom = s.room
+				if (!sRoom) return false
+				const sRoomId = String(sRoom.id != null ? sRoom.id : sRoom)
+				const sPretalxId = sRoom.pretalx_id != null ? String(sRoom.pretalx_id) : null
+				return sRoomId === roomId || (roomPretalxId && (sRoomId === roomPretalxId || sPretalxId === roomPretalxId))
+			}).sort((a, b) => a.start.valueOf() - b.start.valueOf())
+		},
+		currentLiveSession() {
+			const nowSessions = this.sessionsScheduledNow || []
+			return this.roomScheduledSessions.find(s => nowSessions.some(nowS => nowS.id === s.id)) || null
 		},
 		serverStreamInfo() {
 			if (this.modules['call.bigbluebutton']) {
@@ -631,6 +825,26 @@ export default {
 		if (this._popperInstance) this._popperInstance.destroy()
 	},
 	methods: {
+		formatTime(momentDate) {
+			if (!momentDate) return ''
+			return momentDate.format('HH:mm')
+		},
+		formatDate(momentDate) {
+			if (!momentDate) return ''
+			return momentDate.format('ddd, MMM D')
+		},
+		async copyText(text) {
+			if (!text) return
+			try {
+				await navigator.clipboard.writeText(text)
+				this.copiedStreamUrl = true
+				setTimeout(() => {
+					this.copiedStreamUrl = false
+				}, 2000)
+			} catch (e) {
+				console.warn('Failed to copy text', e)
+			}
+		},
 		checkPermissions() {
 			if (!this.hasOrganiserPermissions) {
 				const roomId = this.room?.id || this.$route.params.roomId
@@ -709,23 +923,34 @@ export default {
 			})
 			return window.location.origin + resolved.href + '#token=' + this.token
 		},
-		onBack() {
+		retryRoom() {
 			if (this.room?.id) {
-				this.$router.push({ name: 'room', params: { roomId: this.room.id } })
+				this.$store.commit('clearRoomFatalError', this.room.id)
+				this.$store.dispatch('reconnect')
+			}
+		},
+		async onBack() {
+			try {
+				await this.$store.dispatch('chat/leaveCall')
+			} catch (err) {
+				console.warn('Failed to leave chat call during room exit:', err)
+			}
+			if (this.leaveMediaSource) {
+				this.leaveMediaSource(this.room)
+			}
+			if (window.eventyay?.isOrganizerArea || this.$route.name === 'organizer' || this.$route.name?.startsWith('admin') || this.$route.name === 'room:manage') {
+				this.$router.push({ name: 'organizer' }).catch(err => {
+					console.warn('Failed navigation to organizer:', err)
+				})
 			} else {
-				this.$router.push({ name: 'admin:rooms:index' })
+				this.$router.push({ name: 'about' }).catch(err => {
+					console.warn('Failed navigation to about:', err)
+				})
 			}
 		},
 		copyRoomLink() {
-			if (!this.room) return
-			let url
-			if (window.eventyay?.publicVideoUrl) {
-				const publicBase = window.eventyay.publicVideoUrl.replace(/\/+$/, '')
-				url = window.location.origin + publicBase + '/rooms/' + this.room.id
-			} else {
-				const path = this.$router.resolve({ name: 'room', params: { roomId: this.room.id } }).href
-				url = window.location.origin + path
-			}
+			const url = this.roomAttendeeUrl
+			if (!url) return
 			if (navigator?.clipboard?.writeText) {
 				navigator.clipboard.writeText(url).then(() => {
 					this.copiedLink = true
@@ -811,19 +1036,40 @@ export default {
 	max-width: 100%
 	flex: auto
 	overflow-x: hidden
-	.schedule
-		flex: auto
-		// margin-top: 360px
-		// padding: 16px
-		h3
-			margin: 0
+	.c-dashboard-layout
+		> .column
+			&:has(.media), &.media
+				flex: 2 1 0px !important
+				max-width: none !important
+				min-width: 0 !important
+
+			&:not(:has(.media)):not(.media)
+				&:has(.server-stream), &.server-stream
+					flex: 0 0 380px
+					max-width: 420px
+					min-width: 320px
+					transition: flex 0.2s ease, max-width 0.2s ease, min-width 0.2s ease
+
+					&.is-minimized, &:has(.is-minimized)
+						flex: 0 0 52px
+						max-width: 52px
+						min-width: 52px
+
+				&:has(.stage-tools), &.stage-tools
+					flex: 0 0 380px
+					max-width: 420px
+					min-width: 320px
+
+				&:has(.chat), &.chat
+					flex: 0 0 360px
+					max-width: 400px
+					min-width: 300px
+
 	.c-dashboard-layout-panel
 		display: flex
 		flex-direction: column
 		min-height: 0
 		flex: 1 1 0px
-		// width: var(--chatbar-width)
-		// border-left: border-separator()
 		.header
 			display: flex
 			justify-content: space-between
@@ -839,8 +1085,455 @@ export default {
 				icon-button-style(style: clear)
 		.c-chat
 			min-height: 0
-	.media .c-media-source-placeholder
-		height: 360px
+
+	.media
+		background: #ffffff
+		display: flex
+		flex-direction: column
+		min-height: 0
+		flex: 1 1 0px
+		overflow: hidden
+
+		.manage-room-header
+			flex: none
+			background-color: $clr-white
+			border-bottom: 1px solid #e2e8f0
+
+		.media-stage-wrapper
+			display: flex
+			flex-direction: column
+			flex: 1 1 0px
+			min-height: 0
+			overflow-y: auto
+			background: #ffffff
+
+		.player-viewport
+			flex: none
+			width: 100%
+			background: #000000
+			display: flex
+			justify-content: center
+			align-items: center
+			.c-media-source-placeholder
+				width: 100%
+				aspect-ratio: 16 / 9
+				max-height: 52vh
+				background: #000000
+
+		&.is-call-media
+			.media-stage-wrapper
+				overflow: hidden
+			.player-viewport
+				flex: 1 1 0px
+				height: 100%
+				min-height: 0
+				.c-media-source-placeholder
+					height: 100%
+					aspect-ratio: unset
+					max-height: none
+
+		.stream-info-panel
+			display: flex
+			flex-direction: column
+			padding: 16px 20px 32px
+			background: #ffffff
+			gap: 16px
+			color: #1e293b
+
+			.stream-meta-bar
+				display: flex
+				justify-content: space-between
+				align-items: center
+				flex-wrap: wrap
+				gap: 12px
+				padding-bottom: 12px
+				border-bottom: 1px solid #e2e8f0
+
+				.source-badge
+					display: inline-flex
+					align-items: center
+					gap: 6px
+					padding: 4px 10px
+					border-radius: 6px
+					font-size: 13px
+					font-weight: 600
+					background: #f1f5f9
+					color: #475569
+
+					&.badge-youtube
+						background: #fef2f2
+						color: #dc2626
+						i
+							color: #dc2626
+
+					&.badge-vimeo
+						background: #eff6ff
+						color: #1a98ff
+						i
+							color: #1a98ff
+
+					&.badge-native
+						background: #f5f3ff
+						color: #7c3aed
+						i
+							color: #7c3aed
+
+				.stream-links
+					display: flex
+					align-items: center
+					gap: 8px
+					flex-wrap: wrap
+
+					.btn-stream-link
+						display: inline-flex
+						align-items: center
+						gap: 6px
+						padding: 5px 12px
+						border-radius: 6px
+						font-size: 12px
+						font-weight: 600
+						background: #f8fafc
+						color: #334155
+						border: 1px solid #cbd5e1
+						text-decoration: none
+						cursor: pointer
+						transition: all 0.15s ease
+
+						&:hover
+							background: #f1f5f9
+							color: #0f172a
+							border-color: #94a3b8
+
+			.live-now-card
+				display: flex
+				flex-direction: column
+				background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)
+				border: 1px solid #fde68a
+				border-radius: 8px
+				padding: 14px 16px
+				gap: 8px
+
+				.card-badge
+					display: inline-flex
+					align-items: center
+					gap: 6px
+					.live-dot
+						width: 8px
+						height: 8px
+						border-radius: 50%
+						background: #dc2626
+						box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2)
+					.live-label
+						font-size: 11px
+						font-weight: 800
+						letter-spacing: 0.5px
+						color: #b45309
+
+				.card-body
+					display: flex
+					flex-direction: column
+					gap: 6px
+
+					.session-title
+						margin: 0
+						font-size: 15px
+						font-weight: 700
+						color: #78350f
+
+					.session-meta
+						display: flex
+						flex-wrap: wrap
+						gap: 12px
+						font-size: 13px
+						color: #92400e
+
+						span
+							display: inline-flex
+							align-items: center
+							gap: 4px
+
+					.session-link
+						align-self: flex-start
+						display: inline-flex
+						align-items: center
+						gap: 4px
+						font-size: 12px
+						font-weight: 600
+						color: #b45309
+						text-decoration: underline
+						margin-top: 4px
+
+			.stream-schedule-section
+				display: flex
+				flex-direction: column
+				gap: 12px
+
+				.section-header
+					display: flex
+					justify-content: space-between
+					align-items: center
+					.header-title
+						display: inline-flex
+						align-items: center
+						gap: 6px
+						font-size: 14px
+						font-weight: 700
+						color: #334155
+					.session-count
+						font-size: 12px
+						font-weight: 500
+						color: #64748b
+						background: #f1f5f9
+						padding: 2px 8px
+						border-radius: 10px
+
+				.schedule-timeline
+					display: flex
+					flex-direction: column
+					gap: 8px
+
+					.timeline-item
+						display: flex
+						gap: 14px
+						padding: 10px 14px
+						border-radius: 8px
+						background: #f8fafc
+						border: 1px solid #e2e8f0
+						transition: all 0.15s ease
+
+						&:hover
+							background: #ffffff
+							border-color: #cbd5e1
+							box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05)
+
+						&.is-current
+							background: #eff6ff
+							border-color: #bfdbfe
+
+						.item-time
+							display: flex
+							flex-direction: column
+							min-width: 65px
+							flex: none
+							font-size: 12px
+							font-weight: 600
+							color: #475569
+							line-height: 1.3
+							.time-end
+								color: #94a3b8
+								font-weight: 400
+							.time-date
+								font-size: 11px
+								color: #94a3b8
+								font-weight: 400
+								margin-top: 2px
+
+						.item-content
+							display: flex
+							flex-direction: column
+							gap: 4px
+							flex: 1 1 0px
+							min-width: 0
+
+							.item-title-row
+								display: flex
+								align-items: center
+								gap: 8px
+								.item-title
+									font-size: 13px
+									font-weight: 600
+									color: #1e293b
+									overflow: hidden
+									text-overflow: ellipsis
+									white-space: nowrap
+								.badge-current-pill
+									font-size: 10px
+									font-weight: 700
+									padding: 1px 6px
+									border-radius: 10px
+									background: #3b82f6
+									color: #ffffff
+
+							.item-speakers
+								display: flex
+								align-items: center
+								gap: 4px
+								font-size: 12px
+								color: #64748b
+
+							.item-actions
+								display: flex
+								gap: 10px
+								margin-top: 4px
+								.link-item
+									display: inline-flex
+									align-items: center
+									gap: 4px
+									font-size: 11px
+									font-weight: 500
+									color: #2563eb
+									text-decoration: none
+									&:hover
+										text-decoration: underline
+
+				.schedule-empty
+					display: flex
+					flex-direction: column
+					align-items: center
+					justify-content: center
+					padding: 24px 16px
+					background: #f8fafc
+					border-radius: 8px
+					border: 1px dashed #cbd5e1
+					color: #64748b
+					text-align: center
+					gap: 6px
+
+					i
+						font-size: 28px
+						color: #94a3b8
+
+					p
+						margin: 0
+						font-size: 13px
+
+					.btn-schedule-link
+						margin-top: 6px
+						display: inline-flex
+						align-items: center
+						gap: 4px
+						padding: 4px 10px
+						font-size: 12px
+						font-weight: 600
+						color: #2563eb
+						background: #eff6ff
+						border-radius: 6px
+						text-decoration: none
+						&:hover
+							background: #dbeafe
+
+	.stage-tools
+		display: flex
+		flex-direction: column
+		min-height: 0
+		flex: 1 1 0px
+		overflow: hidden
+		background: #ffffff
+
+		.room-schedule-section
+			flex: none
+			border-radius: 0
+			border: none
+			border-bottom: 1px solid #e2e8f0
+
+		.split-section
+			flex: 1 1 0px
+			min-height: 0
+			display: flex
+			flex-direction: column
+			overflow: hidden
+
+			& + .split-section
+				border-top: 1px solid #e2e8f0
+
+			> .header
+				flex: none
+				display: flex
+				justify-content: space-between
+				align-items: center
+				height: 56px
+				min-height: 56px
+				padding: 0 16px
+				border-bottom: border-separator()
+				box-sizing: border-box
+
+				h3
+					margin: 0
+					font-size: 16px
+					font-weight: 700
+					color: $clr-primary-text-light
+
+				.actions
+					display: flex
+					gap: 8px
+					align-items: center
+
+					#btn-create-poll
+						themed-button-primary()
+						height: 32px
+						padding: 0 12px
+						font-size: 13px
+
+					.bunt-icon-button
+						icon-button-style(style: clear)
+
+			.c-polls, .c-questions
+				flex: 1 1 0px
+				min-height: 0
+				display: flex
+				flex-direction: column
+				overflow-y: auto
+
+				.polls, .questions
+					flex: 1 1 0px
+					min-height: 0
+					overflow-y: auto
+
+	.room-schedule-section
+		background: #ffffff
+		border: 1px solid #e2e8f0
+		border-radius: 8px
+		overflow: hidden
+
+		.schedule-toggle-header
+			display: flex
+			justify-content: space-between
+			align-items: center
+			padding: 10px 14px
+			background: #f8fafc
+			transition: background 0.15s ease
+
+			.header-left
+				display: flex
+				align-items: center
+				gap: 8px
+				cursor: pointer
+				user-select: none
+				outline: none
+
+				&:focus-visible
+					border-radius: 4px
+					box-shadow: 0 0 0 2px var(--clr-primary, #2185d0)
+
+				i.mdi
+					font-size: 18px
+					color: $clr-primary
+
+				.section-title
+					font-size: 13px
+					font-weight: 700
+					color: #1e293b
+
+			.header-right
+				display: flex
+				align-items: center
+				gap: 8px
+
+				.bunt-switch
+					display: inline-flex
+					align-items: center
+					height: 20px
+					margin: 0
+					margin-bottom: 0
+					white-space: nowrap
+
+					.bunt-switch-track
+						align-self: center
+						margin: 0
+
+					label
+						display: none
+
 	.media .manage-room-header
 		display: flex
 		align-items: center
@@ -876,9 +1569,6 @@ export default {
 				background-color: $clr-grey-100
 			.mdi
 				font-size: 16px
-	.polls
-		#btn-create-poll
-			themed-button-primary()
 
 	.no-modules
 		align-items: center
@@ -916,50 +1606,121 @@ export default {
 				max-width: 440px
 				line-height: 1.5
 
+		.btn-retry
+			button-style(color: $clr-primary)
+			margin-top: 8px
+
 	.server-stream
 		display: flex
 		flex-direction: column
-		min-width: 320px
-		flex: 1 1 420px
+		min-height: 0
+		flex: 1 1 0px
+		background: #ffffff
+		overflow: hidden
+		transition: width 0.2s ease, flex 0.2s ease
+
+		&.is-minimized
+			align-items: center
+			.header
+				padding: 8px 4px
+				justify-content: center
+				flex-direction: column
+				gap: 12px
+				height: auto
+				min-height: 56px
+				border-bottom: none
+
+			.header-minimized-icon
+				display: flex
+				flex-direction: column
+				align-items: center
+				gap: 4px
+				color: $clr-primary
+				font-size: 20px
+				margin-bottom: 8px
+				.mini-participant-count
+					font-size: 11px
+					font-weight: 700
+					background: #e0f2fe
+					color: #0369a1
+					padding: 1px 6px
+					border-radius: 10px
+
+			.btn-toggle-minimize
+				margin: 0
 
 		.header
 			display: flex
 			justify-content: space-between
 			align-items: center
-			padding: 12px 16px
-			border-bottom: 1px solid rgba(0, 0, 0, 0.08)
+			height: 56px
+			min-height: 56px
+			padding: 0 16px
+			border-bottom: 1px solid #e2e8f0
+			background: #ffffff
+			box-sizing: border-box
 
-			h3
-				margin: 0
-				font-size: 16px
-				font-weight: 700
-				color: $clr-primary-text-light
-
-			.status-badge
-				display: inline-flex
+			.header-title-group
+				display: flex
 				align-items: center
-				gap: 5px
-				padding: 3px 10px
-				border-radius: 12px
-				font-size: 12px
-				font-weight: 600
+				gap: 8px
+				min-width: 0
+				flex: 1 1 auto
 
-				&.badge-active
-					background: #ecfdf5
-					color: #059669
-					border: 1px solid #a7f3d0
+				h3
+					margin: 0
+					font-size: 15px
+					font-weight: 700
+					color: $clr-primary-text-light
+					ellipsis()
 
-				&.badge-disabled
-					background: #fef2f2
-					color: #dc2626
-					border: 1px solid #fecaca
+				.status-badge
+					display: inline-flex
+					align-items: center
+					gap: 4px
+					padding: 2px 8px
+					border-radius: 12px
+					font-size: 11px
+					font-weight: 600
+					flex-shrink: 0
+
+					&.badge-active
+						background: #ecfdf5
+						color: #059669
+						border: 1px solid #a7f3d0
+
+					&.badge-disabled
+						background: #fef2f2
+						color: #dc2626
+						border: 1px solid #fecaca
+
+				.participant-badge
+					display: inline-flex
+					align-items: center
+					gap: 4px
+					padding: 2px 8px
+					background: #f0f9ff
+					border: 1px solid #bae6fd
+					border-radius: 12px
+					font-size: 11px
+					font-weight: 600
+					color: #0284c7
+					flex-shrink: 0
+					i
+						font-size: 13px
+
+			.btn-toggle-minimize
+				icon-button-style(style: clear)
+				flex-shrink: 0
 
 		.server-stream-body
 			display: flex
 			flex-direction: column
-			gap: 16px
-			padding: 16px
+			gap: 12px
+			padding: 12px
 			overflow-y: auto
+			flex: 1 1 0px
+			min-height: 0
 
 		.server-stream-notice
 			display: flex
@@ -989,199 +1750,129 @@ export default {
 					color: #b91c1c
 					line-height: 1.4
 
-		.action-cards
-			display: grid
-			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))
-			gap: 12px
+		.action-section
+			display: flex
+			flex-direction: column
+			gap: 8px
+			width: 100%
 
-			.action-card
-				display: flex
-				flex-direction: column
-				gap: 10px
-				padding: 14px
-				background: #ffffff
-				border: 1px solid #e2e8f0
-				border-radius: 8px
-				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03)
-
-				.action-icon
-					display: flex
-					align-items: center
-					justify-content: center
-					width: 36px
-					height: 36px
-					border-radius: 8px
-					font-size: 20px
-
-					&.bbb
-						background: #fef2f2
-						color: #dc2626
-					&.jitsi
-						background: #f0f9ff
-						color: #0284c7
-					&.loungemesh
-						background: #f5f3ff
-						color: #7c3aed
-					&.janus
-						background: #eef2ff
-						color: #4f46e5
-					&.share-icon
-						background: #f8fafc
-						color: #475569
-
-				.action-details
-					h4
-						font-size: 14px
-						font-weight: 600
-						color: #1e293b
-						margin: 0 0 4px 0
-					p
-						font-size: 12px
-						color: #64748b
-						margin: 0
-						line-height: 1.4
-
-				.btn-action
-					display: inline-flex
-					align-items: center
-					justify-content: center
-					gap: 6px
-					padding: 8px 12px
-					border-radius: 6px
-					font-size: 13px
-					font-weight: 600
-					text-decoration: none
-					cursor: pointer
-					border: none
-					background: $clr-primary
-					color: #ffffff
-					margin-top: auto
-					transition: background 0.15s ease
-
-					&:hover
-						background: darken($clr-primary, 10%)
-
-					&.btn-action--disabled
-						background: #f1f5f9
-						color: #94a3b8
-						cursor: not-allowed
-
-					&.btn-action--copy
-						background: #f8fafc
-						color: #334155
-						border: 1px solid #cbd5e1
-						&:hover
-							background: #e2e8f0
-
-		.metrics-grid
-			display: grid
-			grid-template-columns: repeat(3, 1fr)
-			gap: 10px
-
-			.metric-card
-				display: flex
-				flex-direction: column
+			.btn-join-host
+				display: inline-flex
 				align-items: center
 				justify-content: center
-				padding: 12px 8px
-				background: #f8fafc
-				border: 1px solid #e2e8f0
-				border-radius: 8px
-				text-align: center
-
-				.metric-value
-					font-size: 18px
-					font-weight: 700
-					color: #0f172a
-					margin-bottom: 4px
-					white-space: nowrap
-					overflow: hidden
-					text-overflow: ellipsis
-					max-width: 100%
-
-				.metric-label
-					display: flex
-					align-items: center
-					gap: 4px
-					font-size: 11px
-					font-weight: 600
-					color: #64748b
-					i
-						font-size: 13px
-
-		.minimal-schedule-section
-			background: #ffffff
-			border: 1px solid #e2e8f0
-			border-radius: 8px
-			overflow: hidden
-
-			.minimal-schedule-header
-				display: flex
-				justify-content: space-between
-				align-items: center
-				padding: 10px 14px
-				background: #f8fafc
+				gap: 8px
+				height: 38px
+				padding: 0 16px
+				border-radius: 6px
+				font-size: 13px
+				font-weight: 700
+				text-decoration: none
 				cursor: pointer
-				user-select: none
+				border: none
+				box-sizing: border-box
+				background: $clr-primary
+				color: #ffffff
 				transition: background 0.15s ease
 
 				&:hover
+					background: darken($clr-primary, 10%)
+
+				&.btn-action--disabled
 					background: #f1f5f9
+					color: #94a3b8
+					cursor: not-allowed
 
-				.header-left
+			.attendee-link-card
+				display: flex
+				flex-direction: column
+				gap: 6px
+				padding: 8px 10px
+				background: #f8fafc
+				border: 1px solid #e2e8f0
+				border-radius: 6px
+
+				.link-card-header
+					display: flex
+					justify-content: space-between
+					align-items: center
+					flex-wrap: wrap
+					gap: 4px
+
+					.header-left
+						display: flex
+						align-items: center
+						gap: 5px
+
+						i
+							font-size: 15px
+							color: $clr-primary
+
+						.link-title
+							font-size: 12px
+							font-weight: 700
+							color: #1e293b
+
+					.link-desc
+						font-size: 11px
+						color: #64748b
+
+				.link-input-group
 					display: flex
 					align-items: center
-					gap: 8px
+					gap: 6px
+					background: #ffffff
+					border: 1px solid #cbd5e1
+					border-radius: 4px
+					padding: 2px 4px 2px 8px
 
-					i.mdi
-						font-size: 18px
-						color: $clr-primary
+					.link-input
+						flex: 1 1 0px
+						border: none
+						outline: none
+						font-size: 11px
+						color: #334155
+						background: transparent
+						font-family: monospace
+						min-width: 0
+						padding: 4px 0
 
-					.section-title
-						font-size: 13px
-						font-weight: 700
-						color: #1e293b
-
-					.minimal-badge
-						display: inline-block
-						padding: 2px 6px
-						background: #e2e8f0
-						color: #475569
+					.btn-copy-link
+						display: inline-flex
+						align-items: center
+						gap: 4px
+						padding: 4px 10px
 						border-radius: 4px
-						font-size: 10px
+						font-size: 11px
 						font-weight: 600
-						text-transform: uppercase
+						cursor: pointer
+						border: 1px solid #e2e8f0
+						background: #f8fafc
+						color: #334155
+						transition: all 0.15s ease
+						flex-shrink: 0
 
-				.header-right
-					display: flex
-					align-items: center
-					gap: 8px
-					font-size: 12px
-					color: #64748b
+						&:hover
+							background: #e2e8f0
 
-					i.mdi
-						font-size: 18px
-
-			.minimal-schedule-body
-				padding: 8px 14px
-				border-top: 1px solid #e2e8f0
+						i
+							font-size: 13px
 
 		.config-section
 			background: #ffffff
 			border: 1px solid #e2e8f0
 			border-radius: 8px
-			padding: 14px
+			padding: 12px
 
 			.config-section-header
 				display: flex
 				justify-content: space-between
 				align-items: center
-				margin-bottom: 12px
+				margin-bottom: 8px
 
 				h4
-					font-size: 13px
+					font-size: 12px
 					font-weight: 700
-					color: #334155
+					color: #475569
 					margin: 0
 					text-transform: uppercase
 					letter-spacing: 0.5px
@@ -1190,7 +1881,7 @@ export default {
 					display: inline-flex
 					align-items: center
 					gap: 4px
-					font-size: 12px
+					font-size: 11px
 					color: #059669
 					font-weight: 600
 
@@ -1198,20 +1889,20 @@ export default {
 					display: inline-flex
 					align-items: center
 					gap: 4px
-					font-size: 12px
+					font-size: 11px
 					color: $clr-primary
 					font-weight: 500
 
-			.config-grid
-				display: grid
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))
-				gap: 10px
+			.config-list
+				display: flex
+				flex-direction: column
+				gap: 6px
 
-				.config-item
+				.config-row
 					display: flex
 					justify-content: space-between
 					align-items: center
-					padding: 10px 12px
+					padding: 6px 8px
 					background: #f8fafc
 					border: 1px solid #e2e8f0
 					border-radius: 6px
@@ -1226,27 +1917,23 @@ export default {
 						opacity: 0.6
 						pointer-events: none
 
-					.config-item-main
-						display: flex
-						justify-content: space-between
-						align-items: center
-						width: 100%
-						gap: 10px
-
 					.config-label-group
 						display: flex
 						flex-direction: column
-						gap: 2px
+						gap: 1px
+						min-width: 0
+						flex: 1 1 auto
 
 						.config-label
 							color: #1e293b
 							font-weight: 600
-							font-size: 13px
+							font-size: 12px
 
 						.config-desc
 							color: #64748b
-							font-size: 11px
-							line-height: 1.3
+							font-size: 10px
+							line-height: 1.2
+							ellipsis()
 
 					.config-action
 						flex-shrink: 0
@@ -1254,14 +1941,14 @@ export default {
 					.btn-config-toggle
 						display: inline-flex
 						align-items: center
-						gap: 6px
-						padding: 4px 10px
-						border-radius: 14px
-						font-size: 12px
+						gap: 4px
+						padding: 3px 8px
+						border-radius: 12px
+						font-size: 11px
 						font-weight: 600
 						cursor: pointer
 						border: 1px solid transparent
-						transition: all 0.2s ease
+						transition: all 0.15s ease
 
 						&.toggle-on
 							background: #ecfdf5
@@ -1282,33 +1969,33 @@ export default {
 						align-items: center
 						gap: 4px
 						font-weight: 600
-						font-size: 12px
+						font-size: 11px
 
 						&.val-enabled
 							color: #059669
 							i
-								font-size: 14px
+								font-size: 13px
 						&.val-disabled
 							color: #94a3b8
 							i
-								font-size: 14px
+								font-size: 13px
 
 		.moderation-guidance
 			display: flex
-			gap: 10px
+			gap: 8px
 			align-items: flex-start
-			padding: 12px
+			padding: 8px 10px
 			background: #f0f9ff
 			border: 1px solid #bae6fd
-			border-radius: 8px
-			font-size: 12px
+			border-radius: 6px
+			font-size: 11px
 			color: #0369a1
-			line-height: 1.5
+			line-height: 1.4
 
 			> i.mdi
-				font-size: 18px
+				font-size: 15px
 				flex-shrink: 0
-				margin-top: 1px
+
 	.url-popup
 		z-index: 1000
 		width: var(--chatbar-width, 360px)
