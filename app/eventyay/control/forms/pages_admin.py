@@ -346,7 +346,7 @@ class GlobalBannerContentForm(PageContentSettingsForm):
 
 
 class DefaultPageContentForm(PageContentSettingsForm):
-    """Editor for a single default page (Terms, Privacy, Pricing, Support, Documentation)."""
+    """Editor for a single default page (Terms, Privacy, Support, Documentation)."""
 
     def __init__(self, *args, slug=None, **kwargs):
         if slug not in DEFAULT_PAGE_SLUGS:
