@@ -630,8 +630,13 @@ watch(draggedSession, (val) => {
   }
 })
 
+function isUnassignedListClosed(): boolean {
+  return isMobile.value ? isUnassignedCollapsed.value : isSidebarCollapsed.value
+}
+
 function checkIsOverUnassigned(x: number, y: number): boolean {
   if (typeof document === 'undefined') return false
+  if (isUnassignedListClosed()) return false
   if (!cachedUnassignedRect) {
     const el = document.getElementById('unassigned')
     cachedUnassignedRect = el ? el.getBoundingClientRect() : null
@@ -1541,6 +1546,7 @@ function onNewBreakKeydown(event: KeyboardEvent) {
 }
 
 function onUnassignedEnter() {
+  if (isUnassignedListClosed()) return
   isUnassigning.value = true
 }
 
@@ -1580,14 +1586,6 @@ function startNewBreak({ event }: DragStartEvent) {
 
 function startDragging({ event, session }: DragStartEvent) {
   isUnassigning.value = false
-  if (session.start && session.id) {
-    if (isSidebarCollapsed.value) {
-      isSidebarCollapsed.value = false
-    }
-    if (isUnassignedCollapsed.value) {
-      isUnassignedCollapsed.value = false
-    }
-  }
   if (availabilities && availabilities.talks[session.id! ?? 0] && availabilities.talks[session.id! ?? 0].length !== 0) {
     session.availabilities = availabilities.talks[session.id! ?? 0]
   }
@@ -1641,7 +1639,7 @@ async function unscheduleSession(session: { id: number | string; code?: string |
 
 async function stopDragging(event?: PointerEvent): Promise<void> {
   const session = draggedSession.value
-  const wasOverLeft = isUnassigning.value || (event && checkIsOverUnassigned(event.clientX, event.clientY))
+  const wasOverLeft = !isUnassignedListClosed() && (isUnassigning.value || Boolean(event && checkIsOverUnassigned(event.clientX, event.clientY)))
 
   try {
     if (wasOverLeft && session) {

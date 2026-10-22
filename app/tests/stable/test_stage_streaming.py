@@ -230,8 +230,14 @@ def test_clear_stream_schedules_when_stage_leaves_schedule_driven(
     async def fake_broadcast_stream_change(room_id, stream_schedule, reload=False):
         broadcasts.append((room_id, stream_schedule, reload))
 
+    async def fake_broadcast_upcoming_stream(room_id, stream_schedule):
+        return None
+
     monkeypatch.setattr(
         room_service, "broadcast_stream_change", fake_broadcast_stream_change
+    )
+    monkeypatch.setattr(
+        room_service, "broadcast_upcoming_stream", fake_broadcast_upcoming_stream
     )
 
     room.module_config = [
