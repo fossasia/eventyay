@@ -91,7 +91,7 @@ import moment from 'moment-timezone'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
-import { getLocalizedString, daysOccupiedBySession } from '../utils'
+import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll } from '../utils'
 import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
@@ -464,7 +464,7 @@ export default {
 	},
 	watch: {
 		timeslices () {
-			this.$nextTick(() => this.observeDayBreaks())
+			this.$nextTick(() => this.commitScrolledDay())
 		},
 		currentDay (day) {
 			// Only scroll when triggered by toolbar click, not by scroll-based observer
@@ -476,14 +476,13 @@ export default {
 		},
 		forceScrollDay () {
 			this.scrollToDayStart(this.currentDay)
+		},
+		scrollParent () {
+			this.rebindDayTracking()
 		}
 	},
 	async mounted () {
-		this.observer = new IntersectionObserver(this.onIntersect, {
-			root: this.scrollParent,
-			rootMargin: '-45% 0px'
-		})
-		this.observeDayBreaks()
+		this.rebindDayTracking()
 		await this.$nextTick()
 		this.initScrollSync()
 		if (!this.$refs.now) return
@@ -494,6 +493,12 @@ export default {
 		this.scrollToNow()
 	},
 	beforeUnmount () {
+		this._scrollGeneration = (this._scrollGeneration || 0) + 1
+		if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
+		this._scrollAnim = null
+		const scroller = isDocumentScroller(this.scrollParent) ? document.documentElement : this.scrollParent
+		if (scroller?.style) scroller.style.scrollBehavior = ''
+		this.unbindDayTracking()
 		if (this._gridResizeObserver) {
 			this._gridResizeObserver.disconnect()
 		}
@@ -652,11 +657,80 @@ export default {
 			if (!this.$refs.now) return
 			this.scrollElementIntoViewWithClearance(this.$refs.now)
 		},
+		toolbarBottomY () {
+			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
+			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
+			if (toolbar) return toolbar.getBoundingClientRect().bottom
+			return isDocumentScroller(this.scrollParent) ? 0 : this.scrollParent.getBoundingClientRect().top
+		},
+		writeScrollTop (top) {
+			writeScrollOffset(this.scrollParent, top)
+		},
+		animateScrollBy (delta, done) {
+			const scrollEl = this.scrollParent
+			const scroller = isDocumentScroller(scrollEl) ? document.documentElement : scrollEl
+			const read = () => readScrollOffset(scrollEl)
+			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
+			const generation = (this._scrollGeneration || 0) + 1
+			this._scrollGeneration = generation
+			const start = read()
+			const target = start + delta
+			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			const duration = reduceMotion || Math.abs(delta) < 2 ? 0 : 80
+			const previous = scroller.style.scrollBehavior
+			scroller.style.scrollBehavior = 'auto'
+			const finish = () => {
+				if (this._scrollGeneration !== generation) return
+				scroller.style.scrollBehavior = previous
+				this._scrollAnim = null
+				if (done) done()
+			}
+			if (!duration) {
+				this.writeScrollTop(target)
+				finish()
+				return
+			}
+			const startedAt = performance.now()
+			const tick = (now) => {
+				if (this._scrollGeneration !== generation) return
+				const progress = Math.min(1, (now - startedAt) / duration)
+				const eased = 1 - Math.pow(1 - progress, 3)
+				this.writeScrollTop(start + (target - start) * eased)
+				if (progress < 1) this._scrollAnim = requestAnimationFrame(tick)
+				else finish()
+			}
+			this._scrollAnim = requestAnimationFrame(tick)
+		},
 		scrollToDayStart (day) {
 			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
-			const el = this.$el.querySelector(`.timeslice.datebreak[data-slice-day="${dayStr}"]`)
+			const el = this.$el.querySelector(`.grid > .timeslice.datebreak[data-slice-day="${dayStr}"]`)
 			if (!el) return
-			this.scrollElementIntoViewWithClearance(el)
+			const header = this.$el.querySelector('.sticky-header')
+			const headerHeight = header ? header.offsetHeight : 0
+			const gridTop = this.$el.getBoundingClientRect().top
+			const breakTop = el.getBoundingClientRect().top
+			// A grid that starts on this day must move fully under the toolbar.
+			// Otherwise the previous day's room bar stays stuck on screen.
+			const dayStartsGrid = breakTop - gridTop <= headerHeight + 8
+			const anchorTop = dayStartsGrid ? gridTop : breakTop - headerHeight
+			this._ignoreScrollDay = true
+			this.animateScrollBy(anchorTop - this.toolbarBottomY(), () => {
+				const drift = (dayStartsGrid ? this.$el.getBoundingClientRect().top : el.getBoundingClientRect().top - headerHeight) - this.toolbarBottomY()
+				if (Math.abs(drift) > 12) this.writeScrollTop(readScrollOffset(this.scrollParent) + drift)
+				this._ignoreScrollDay = false
+				this.updateStickyHeader()
+			})
+		},
+		updateStickyHeader () {
+			if (!this.$el) return
+			const line = this.readingLineY()
+			const rect = this.$el.getBoundingClientRect()
+			const header = this.$el.querySelector('.sticky-header')
+			const headerTop = header ? header.getBoundingClientRect().top : rect.top
+			const containsLine = rect.top <= line + 1 && rect.bottom >= line - 1
+			// Hide only a room bar that is stuck over a different day's grid.
+			const stuckOverAnotherDay = headerTop <= line + 2 && rect.top < line && !containsLine
+			this.$el.classList.toggle('is-day-offscreen', stuckOverAnotherDay)
 		},
 		initScrollSync () {
 			const viewport = this.$refs.gridViewport
@@ -729,23 +803,41 @@ export default {
 			document.addEventListener('mousemove', onMouseMove)
 			document.addEventListener('mouseup', onMouseUp)
 		},
-		observeDayBreaks () {
-			if (!this.observer) return
-			this.observer.disconnect()
-			for (const [ref, el] of Object.entries(this.$refs)) {
-				if (!ref.startsWith('slice') || !ref.endsWith('00-00')) continue
-				const node = Array.isArray(el) ? el[0] : el
-				if (node) this.observer.observe(node)
-			}
+		rebindDayTracking () {
+			this.unbindDayTracking()
+			this._unbindDayScroll = bindPassiveScroll(this.scrollParent, () => {
+				this.updateStickyHeader()
+				this.commitScrolledDay()
+			})
+			this.$nextTick(() => {
+				this.updateStickyHeader()
+				this.commitScrolledDay()
+			})
 		},
-		onIntersect (entries) {
-			const intersecting = entries.filter(entry => entry.isIntersecting)
-			if (!intersecting.length) return
-			const entry = intersecting.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-			const dayStr = entry.target.dataset.sliceDay
+		unbindDayTracking () {
+			this._unbindDayScroll?.()
+			this._unbindDayScroll = null
+		},
+		readingLineY () {
+			const origin = isDocumentScroller(this.scrollParent) ? 0 : this.scrollParent.getBoundingClientRect().top
+			return origin + this.getStickyHeaderClearance()
+		},
+		commitScrolledDay () {
+			if (this._ignoreScrollDay || !this.$el) return
+			// Days with different rooms are separate grids. An off-screen grid's
+			// own heading lines up with its own header, so it must not vote.
+			const line = this.readingLineY()
+			const rect = this.$el.getBoundingClientRect()
+			if (rect.bottom < line - 1 || rect.top > line + 1) return
+			const breaks = [...this.$el.querySelectorAll('.grid > .timeslice.datebreak[data-slice-day]')]
+			breaks.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)
+			if (!breaks.length) return
+			let dayStr = breaks[0].dataset.sliceDay
+			for (const el of breaks) {
+				if (el.getBoundingClientRect().top <= line + 1) dayStr = el.dataset.sliceDay
+				else break
+			}
 			if (!dayStr || dayStr === this.currentDay) return
-			// Only update the active day indicator — don't trigger a scroll jump.
-			// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
 			this._scrollDayUpdate = true
 			this.$emit('changeDay', moment.tz(dayStr, this.timezone).startOf('day'))
 		},
@@ -776,6 +868,9 @@ export default {
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
 		z-index: 25
 		background-color: $clr-white
+	&.is-day-offscreen
+		.sticky-header
+			visibility: hidden
 	.rooms-bar
 		overflow: hidden
 		.rooms-inner
