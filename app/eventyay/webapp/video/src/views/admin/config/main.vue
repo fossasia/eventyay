@@ -5,10 +5,13 @@
 		h1 {{ $t('Settings') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!loaded && !error")
-		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
+		.config-error(v-if="error && !loaded")
+			.error-message {{ $t('We could not fetch the current configuration.') }}
+			bunt-button.btn-retry(@click="retryFetch") {{ $t('Retry') }}
 		.ui-form-body(v-if="loaded")
 			.config-tabs(role="tablist")
 				button.tab-btn(type="button", role="tab", v-if="hasGeneral", :class="{active: activeTab === 'general'}", @click="activeTab = 'general'") {{ $t('General & Live Features') }}
+				button.tab-btn(type="button", role="tab", v-if="hasInterpretation", :class="{active: activeTab === 'interpretation'}", @click="activeTab = 'interpretation'") {{ $t('Interpretation') }}
 				button.tab-btn(type="button", role="tab", v-if="hasBBB", :class="{active: activeTab === 'bbb'}", @click="activeTab = 'bbb'") {{ $t('BigBlueButton') }}
 				button.tab-btn(type="button", role="tab", v-if="hasZoom", :class="{active: activeTab === 'zoom'}", @click="activeTab = 'zoom'") {{ $t('Zoom') }}
 				button.tab-btn(type="button", role="tab", v-if="hasJitsi", :class="{active: activeTab === 'jitsi'}", @click="activeTab = 'jitsi'") {{ $t('Jitsi Meet') }}
@@ -35,8 +38,6 @@
 				h2 {{ $t('Tracking and statistics') }}
 				bunt-checkbox(v-model="config.track_room_views", :label="$t('Track room views')", name="track_room_views")
 				bunt-checkbox(v-model="config.track_video_event_views", :label="$t('Track video event views')", name="track_video_event_views")
-				h2 {{ $t('System details') }}
-				bunt-input(v-model="config.connection_limit", :label="$t('Max connections')", name="connection_limit", :hint="$t('Set to 0 to allow unlimited connections per user')", :validation="v$.config.connection_limit")
 			.tab-content(v-if="hasBBB", v-show="activeTab === 'bbb'")
 				h2 {{ $t('Settings for newly-created BBB rooms') }}
 				bunt-checkbox(v-model="config.bbb_defaults.record", :label="$t('Allow recording')", name="record")
@@ -76,6 +77,11 @@
 					template(#default="{focus, blur}")
 						textarea(@focus="focus", @blur="blur", v-model="hlsConfig")
 				.json-error-message(v-if="v$.hlsConfig.$invalid") {{ v$.hlsConfig.$errors[0]?.$message || $t('Invalid JSON') }}
+			.tab-content(v-if="hasInterpretation", v-show="activeTab === 'interpretation'")
+				h2 {{ $t('Enable Interpretation') }}
+				bunt-checkbox(v-model="config.interpretation.is_enabled", :label="$t('Enable live interpretation for this event')", name="interpretation_is_enabled")
+				bunt-checkbox(v-model="config.interpretation.use_plugin_streams", :label="$t('Use plugin language streams in the video room')", name="interpretation_use_plugin_streams")
+				p.help-block(v-if="config.interpretation.use_plugin_streams", style="margin-left: 32px; color: #64748b; font-size: 13px; max-width: 600px; line-height: 1.4;") {{ $t('When enabled, the video room audio translation dropdown reads language streams from this plugin instead of the core video room module.') }}
 	.ui-form-actions(v-if="loaded")
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 		.errors {{ validationErrors.join(', ') }}
@@ -91,15 +97,26 @@ import { required, integer, isJson, url } from 'lib/validators'
 const store = useStore()
 const loaded = ref(false)
 
+const videoProviders = computed(() => store.state.world?.video_providers || window.eventyay?.video_providers || {})
+
+const isProviderEnabledForOrganizer = (provId) => {
+	const prov = videoProviders.value[provId]
+	if (prov === undefined) return true
+	if (prov === false) return false
+	return prov.organizer !== false
+}
+
 const hasGeneral = computed(() => Boolean(store.getters['hasPermission']?.('world:update') || store.getters['isAdminMode']))
-const hasBBB = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
-const hasZoom = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
-const hasJitsi = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.jitsi') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
-const hasJanus = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.chat') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
+const hasBBB = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('bbb')))
+const hasZoom = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.bbb') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('zoom')))
+const hasJitsi = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.jitsi') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('jitsi')))
+const hasJanus = computed(() => Boolean((store.getters['hasPermission']?.('world:rooms.create.chat') || store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']) && isProviderEnabledForOrganizer('janus')))
 const hasStage = computed(() => Boolean(store.getters['hasPermission']?.('world:rooms.create.stage') || store.getters['isAdminMode']))
+const hasInterpretation = computed(() => Boolean(window.eventyay?.plugins?.some(p => p.includes('interpretation'))))
 
 const defaultTab = computed(() => {
 	if (hasGeneral.value) return 'general'
+	if (hasInterpretation.value) return 'interpretation'
 	if (hasBBB.value) return 'bbb'
 	if (hasZoom.value) return 'zoom'
 	if (hasJitsi.value) return 'jitsi'
@@ -112,6 +129,7 @@ const activeTab = ref(defaultTab.value)
 watch([hasGeneral, hasBBB, hasZoom, hasJitsi, hasJanus, hasStage], () => {
 	const validTabs = []
 	if (hasGeneral.value) validTabs.push('general')
+	if (hasInterpretation.value) validTabs.push('interpretation')
 	if (hasBBB.value) validTabs.push('bbb')
 	if (hasZoom.value) validTabs.push('zoom')
 	if (hasJitsi.value) validTabs.push('jitsi')
@@ -123,7 +141,6 @@ watch([hasGeneral, hasBBB, hasZoom, hasJitsi, hasJanus, hasStage], () => {
 })
 
 const config = ref({
-	connection_limit: 0,
 	conftool_url: '',
 	conftool_password: '',
 	track_room_views: true,
@@ -166,6 +183,10 @@ const config = ref({
 		enable_platform_chat: true,
 		enable_platform_qa: false,
 		enable_platform_polls: false
+	},
+	interpretation: {
+		is_enabled: false,
+		use_plugin_streams: false
 	}
 })
 const hlsConfig = ref('')
@@ -179,10 +200,6 @@ const validationErrors = computed(() => v$.value.$errors?.map(e => e.$message) |
 // Validation rules
 const rules = computed(() => ({
 	config: {
-		connection_limit: {
-			required: required(i18n.t('Max connections is required')),
-			integer: integer(i18n.t('Max connections must be a number'))
-		},
 		...(features?.enabled('conftool') && config.value?.conftool_url ? {
 			conftool_url: { url: url(i18n.t('Conftool URL must be a URL')) }
 		} : {})
@@ -236,14 +253,40 @@ async function fetchConfig() {
 				kiosks: false,
 				direct_messaging: false,
 				announcements: false
-			}, data.live_features || {})
+			}, data.live_features || {}),
+			interpretation: {
+				is_enabled: false,
+				use_plugin_streams: false
+			}
 		}
 		hlsConfig.value = data.video_player?.['hls.js'] ? JSON.stringify(data.video_player['hls.js'], null, 2) : ''
+		if (window.eventyay?.interpretation) {
+			config.value.interpretation.is_enabled = Boolean(window.eventyay.interpretation.isEnabled)
+			config.value.interpretation.use_plugin_streams = Boolean(window.eventyay.interpretation.usePluginStreams)
+		} else if (hasInterpretation.value && window.eventyay?.interpretationUrl) {
+			try {
+				const response = await fetch(window.eventyay.interpretationUrl, { credentials: 'same-origin' })
+				if (response.ok) {
+					const html = await response.text()
+					const parser = new DOMParser()
+					const doc = parser.parseFromString(html, 'text/html')
+					config.value.interpretation.is_enabled = doc.querySelector('input[name="interpretation-interpretation_is_enabled"]')?.checked || false
+					config.value.interpretation.use_plugin_streams = doc.querySelector('input[name="interpretation-interpretation_use_plugin_streams"]')?.checked || false
+				}
+			} catch (e) {
+				console.error('Failed to fetch interpretation settings', e)
+			}
+		}
 		loaded.value = true
 	} catch (e) {
 		error.value = e.message || e.toString()
 		console.error(e)
 	}
+}
+
+function retryFetch() {
+	error.value = null
+	fetchConfig()
 }
 
 onMounted(() => {
@@ -270,7 +313,6 @@ async function save() {
 	try {
 		const patch = {}
 		if (hasGeneral.value) {
-			patch.connection_limit = parseInt(config.value.connection_limit, 10) || 0
 			patch.track_room_views = Boolean(config.value.track_room_views)
 			patch.track_event_views = Boolean(config.value.track_video_event_views)
 			patch.track_video_event_views = Boolean(config.value.track_video_event_views)
@@ -305,6 +347,31 @@ async function save() {
 			}
 		}
 		const updated = await api.call('world.config.patch', patch)
+		if (hasInterpretation.value && window.eventyay?.interpretationUrl) {
+			const csrfToken = window.eventyay?.csrfToken || document.cookie.split('; ').find(row => row.startsWith('eventyay_csrftoken='))?.split('=')[1]
+			const formData = new URLSearchParams()
+			if (csrfToken) formData.append('csrfmiddlewaretoken', csrfToken)
+			formData.append('interpretation_event_settings_save', '1')
+			if (config.value.interpretation.is_enabled) formData.append('interpretation-interpretation_is_enabled', 'on')
+			if (config.value.interpretation.use_plugin_streams) formData.append('interpretation-interpretation_use_plugin_streams', 'on')
+			
+			const resp = await fetch(window.eventyay.interpretationUrl, {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					...(csrfToken ? {'X-CSRFToken': csrfToken} : {})
+				},
+				body: formData.toString()
+			})
+			if (!resp.ok) {
+				throw new Error(`Failed to save interpretation settings: ${resp.status} ${resp.statusText}`)
+			}
+			if (window.eventyay?.interpretation) {
+				window.eventyay.interpretation.isEnabled = config.value.interpretation.is_enabled
+				window.eventyay.interpretation.usePluginStreams = config.value.interpretation.use_plugin_streams
+			}
+		}
 		if (store.state.world && patch.live_features) {
 			store.state.world.live_features = patch.live_features
 		}
@@ -332,6 +399,17 @@ async function save() {
 	> .c-scrollbars
 		flex: auto
 		min-height: 0
+	.config-error
+		display: flex
+		flex-direction: column
+		align-items: center
+		justify-content: center
+		padding: 40px 20px
+		gap: 16px
+		.error-message
+			color: $clr-danger
+			font-size: 16px
+			font-weight: 500
 	.config-tabs
 		display: flex
 		border-bottom: 1px solid #e2e8f0

@@ -306,3 +306,52 @@
 .suggestion-heading { color: #666; font-size: 15px; }
 .border-left-warning { border-left: 1px solid var(--status-warning-border); }
 .card-row { display: flex; align-items: center; }
+
+/* Event status page on phones: stack the progress and the components, and put every card's
+   actions below its text instead of next to it. */
+@media (max-width: 767px) {
+    .progress-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .progress-row > [class*="col-xs-"] {
+        width: 100%;
+    }
+
+    .components-row {
+        flex-wrap: wrap;
+        row-gap: 16px;
+        margin-top: 20px;
+    }
+
+    .components-row > div {
+        flex: 0 0 50%;
+    }
+
+    .section-flex-row,
+    .mode-flex-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .card-action-col,
+    .mode-action-col {
+        width: 100%;
+    }
+
+    .alert-custom,
+    .modes-container,
+    .warnings-container {
+        margin-left: 0;
+    }
+
+    .warnings-container [class*="col-xs-"] {
+        width: 100%;
+    }
+
+    .border-left-warning {
+        border-left: 0;
+    }
+}
