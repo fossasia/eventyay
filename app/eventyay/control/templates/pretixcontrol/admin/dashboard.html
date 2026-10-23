@@ -4,12 +4,13 @@
 {% block custom_header %}
     {{ block.super }}
     {% compress css %}
+        <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
         <link rel="stylesheet" href="{% static 'pretixcontrol/css/platform-dashboard.css' %}">
     {% endcompress %}
     <script type="module" src="{% static 'pretixcontrol/js/platform-dashboard.js' %}"></script>
 {% endblock %}
 {% block content %}
-<div class="platform-dashboard">
+<div class="td-dashboard platform-dashboard">
     <header class="platform-header">
         <div><h1>{% trans 'Platform Dashboard' %}</h1><p>{% trans 'Overview of platform activity, system health and key metrics.' %}</p></div>
         <form method="post">{% csrf_token %}
@@ -17,59 +18,65 @@
             <button type="submit" name="action" value="refresh" class="btn btn-default btn-sm"><i class="fa fa-refresh" aria-hidden="true"></i> {% trans 'Refresh data' %}</button>
         </form>
     </header>
-    <section class="platform-card platform-section" aria-labelledby="action-heading">
-        <div class="platform-section-heading"><h2 id="action-heading">{% trans 'Action required' %}</h2><a href="{% url 'eventyay_admin:admin.operations' %}">{% trans 'View all alerts' %} →</a></div>
-        <div class="platform-actions">
+    <section class="td-section" aria-labelledby="action-heading">
+        <div class="td-section-heading"><h2 id="action-heading" class="td-section-title">{% trans 'Action required' %}</h2><a class="td-view-all-link" href="{% url 'eventyay_admin:admin.operations' %}">{% trans 'View all alerts' %} →</a></div>
+        <div class="td-action-grid platform-actions">
             {% for card in action_cards %}
-                <article class="platform-action"><i class="fa fa-{{ card.icon }}" aria-hidden="true"></i>
-                    <div><strong>{{ card.value|default_if_none:'—' }}</strong><p>{{ card.label }}</p>
-                        {% if card.value is None %}<p class="text-muted">{% trans 'Not available' %}</p>{% endif %}
-                        <a href="{{ card.url }}">{{ card.link }} →</a>
+                <article class="td-action-card td-action-info">
+                    <div class="td-action-header">
+                        <span class="td-action-icon"><i class="fa fa-{{ card.icon }}" aria-hidden="true"></i></span>
+                        <span class="td-action-title">{{ card.label }}</span>
                     </div>
+                    <strong class="td-action-count">{{ card.value|default_if_none:'—' }}</strong>
+                    {% if card.value is None %}<p class="td-action-desc">{% trans 'Not available' %}</p>{% endif %}
+                    <a class="td-action-btn" href="{{ card.url }}">{{ card.link }} →</a>
                 </article>
             {% endfor %}
         </div>
     </section>
-    <section aria-label="{% trans 'Key metrics' %}" class="platform-metrics">
+    <section aria-label="{% trans 'Key metrics' %}" class="td-kpi-grid platform-metrics">
         {% for card in metric_cards %}
-            <a class="platform-card platform-metric" href="{{ card.url }}">
-                <i class="fa fa-{{ card.icon }}" aria-hidden="true"></i>
+            <a class="td-kpi-card td-kpi-blue" href="{{ card.url }}">
+                <div class="td-kpi-top">
+                    <span class="td-kpi-icon"><i class="fa fa-{{ card.icon }}" aria-hidden="true"></i></span>
+                    <span class="td-kpi-label">{{ card.label }}</span>
+                </div>
                 {% if card.kind == 'revenue' %}
-                    {% for revenue in card.revenues %}<strong class="platform-number">{{ revenue.total|floatformat:2 }} {{ revenue.event__currency }}</strong>{% empty %}<strong class="platform-number">0</strong>{% endfor %}
-                    <span>{{ card.label }}</span><small>{% trans 'Confirmed payments less completed refunds' %}</small>
+                    {% for revenue in card.revenues %}<strong class="td-kpi-value">{{ revenue.total|floatformat:2 }} {{ revenue.event__currency }}</strong>{% empty %}<strong class="td-kpi-value">0</strong>{% endfor %}
+                    <small class="td-kpi-hint">{% trans 'Confirmed payments less completed refunds' %}</small>
                 {% else %}
-                    <strong class="platform-number">{{ card.value|intcomma }}</strong><span>{{ card.label }}</span>
+                    <strong class="td-kpi-value">{{ card.value|intcomma }}</strong>
                 {% endif %}
             </a>
         {% endfor %}
     </section>
-    <section class="platform-card platform-section">
+    <section class="td-section">
         {% include 'pretixcontrol/admin/activity.html' %}
         <a class="platform-footer-link" href="{% url 'eventyay_admin:admin.analytics' %}?range={{ activity_range }}">{% trans 'View all analytics' %} →</a>
     </section>
     <div class="platform-columns">
-        <section class="platform-card">
-            <h2>{% trans 'System health' %}</h2>
-            <div class="table-responsive"><table class="table"><tbody>
+        <section class="td-section">
+            <h2 class="td-section-title">{% trans 'System health' %}</h2>
+            <div class="table-responsive"><table class="table td-stats-table"><tbody>
                 {% for row in health_rows %}<tr><td>{{ row.label }}</td><td>{% if row.timestamp %}{{ row.value|date:'DATETIME_FORMAT'|default:'—' }}{% else %}{{ row.value|default_if_none:'—' }}{% endif %}</td><td><span class="label label-{{ row.style }}">{{ row.status }}</span></td></tr>{% endfor %}
             </tbody></table></div>
             <p class="text-muted">{% trans 'API status checks backend dependencies. Task failures are recorded by workers; cached indicators may be up to five minutes old.' %}</p>
             <a href="{% url 'eventyay_admin:admin.operations' %}">{% trans 'View system operations' %} →</a>
         </section>
         <div class="platform-stack">
-            <section class="platform-card">
-                <h2>{% trans 'Revenue & Orders by Currency' %}</h2>
-                <div class="table-responsive"><table class="table"><thead><tr>
+            <section class="td-section">
+                <h2 class="td-section-title">{% trans 'Revenue & Orders by Currency' %}</h2>
+                <div class="table-responsive"><table class="table td-stats-table"><thead><tr>
                     <th>{% trans 'Currency' %}</th><th>{% trans 'Gross revenue' %}</th><th>{% trans 'Refunds completed' %}</th><th>{% trans 'Net revenue' %}</th><th>{% trans 'Paid' %}</th><th>{% trans 'Pending' %}</th><th>{% trans 'Cancelled' %}</th><th>{% trans 'Free orders' %}</th>
                 </tr></thead><tbody>
                     {% for row in orders_net_revenue %}<tr><td>{{ row.currency }}</td><td>{{ row.gross|floatformat:2 }}</td><td>{{ row.refunded|floatformat:2 }}</td><td>{{ row.net|floatformat:2 }}</td><td>{{ row.paid_count }}</td><td>{{ row.pending_count }}</td><td>{{ row.cancelled_count }}</td><td>{{ row.free_count }}</td></tr>
                     {% empty %}<tr><td colspan="8">{% trans 'No orders yet.' %}</td></tr>{% endfor %}
                 </tbody></table></div><a href="{% url 'eventyay_admin:admin.orders' %}">{% trans 'View all orders' %} →</a>
             </section>
-            <section class="platform-card">
-                <h2>{% trans 'Recent transactions' %}</h2>
+            <section class="td-section">
+                <h2 class="td-section-title">{% trans 'Recent transactions' %}</h2>
                 {% if orders_detail_unavailable %}<p>{% trans 'Not available' %}</p>{% else %}
-                <div class="table-responsive"><table class="table"><thead><tr><th>{% trans 'Order code' %}</th><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Status' %}</th><th>{% trans 'Total' %}</th></tr></thead><tbody>
+                <div class="table-responsive"><table class="table td-stats-table"><thead><tr><th>{% trans 'Order code' %}</th><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Status' %}</th><th>{% trans 'Total' %}</th></tr></thead><tbody>
                     {% for order in orders_recent_10|slice:':5' %}<tr><td><a href="{% url 'eventyay_admin:admin.orders' %}?query={{ order.code|urlencode }}">{{ order.code }}</a></td><td>{{ order.event.name }}</td><td>{{ order.event.organizer.name }}</td><td>{{ order.get_status_display }}</td><td>{{ order.total|floatformat:2 }} {{ order.event.currency }}</td></tr>
                     {% empty %}<tr><td colspan="5">{% trans 'No transactions yet.' %}</td></tr>{% endfor %}
                 </tbody></table></div>{% endif %}<a href="{% url 'eventyay_admin:admin.orders' %}">{% trans 'View all transactions' %} →</a>
@@ -77,38 +84,38 @@
         </div>
     </div>
     <div class="platform-columns platform-columns-four">
-        <section class="platform-card"><h2>{% trans 'Events overview' %}</h2>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Events overview' %}</h2>
             <dl><dt>{% trans 'Running now' %}</dt><dd>{{ events_running }}</dd><dt>{% trans 'Upcoming events' %}</dt><dd>{{ events_upcoming_count }}</dd><dt>{% trans 'Created in the last 7 days' %}</dt><dd>{{ events_recent_count }}</dd><dt>{% trans 'Events needing setup' %}</dt><dd><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='needs-setup' %}">{{ events_needing_setup_count }}</a></dd></dl>
             <a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
         </section>
-        <section class="platform-card"><h2>{% trans 'Programme overview' %}</h2>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Programme overview' %}</h2>
             <dl>{% for label, value in programme_rows %}<dt>{{ label }}</dt><dd>{{ value|intcomma }}</dd>{% endfor %}</dl>
             <a href="{% url 'eventyay_admin:admin.submissions' %}">{% trans 'View all sessions' %} →</a>
         </section>
-        <section class="platform-card"><h2>{% trans 'Top events by paid orders' %}</h2>
-            <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Top events by paid orders' %}</h2>
+            <table class="table td-stats-table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
                 {% for event in orders_top5_by_event %}<tr><td>{{ event.event__name }}</td><td>{{ event.count }}</td></tr>{% empty %}<tr><td colspan="2">{% trans 'No paid orders yet.' %}</td></tr>{% endfor %}
             </tbody></table><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='top-events' %}">{% trans 'View full report' %} →</a>
         </section>
-        <section class="platform-card"><h2>{% trans 'Payment providers' %}</h2>
-            <table class="table"><thead><tr><th>{% trans 'Provider' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Payment providers' %}</h2>
+            <table class="table td-stats-table"><thead><tr><th>{% trans 'Provider' %}</th><th>{% trans 'Paid orders' %}</th></tr></thead><tbody>
                 {% for provider in orders_top5_by_provider %}<tr><td>{{ provider.provider }}</td><td>{{ provider.count }}</td></tr>{% empty %}<tr><td colspan="2">{% trans 'No payments yet.' %}</td></tr>{% endfor %}
             </tbody></table><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='providers' %}">{% trans 'View all payment providers' %} →</a>
         </section>
     </div>
     <div class="platform-columns platform-columns-three">
-        <section class="platform-card"><h2>{% trans 'Upcoming events' %}</h2>
-            <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Date' %}</th></tr></thead><tbody>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Upcoming events' %}</h2>
+            <table class="table td-stats-table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Date' %}</th></tr></thead><tbody>
                 {% for event in events_upcoming|slice:':5' %}<tr><td><a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">{{ event.name }}</a></td><td>{{ event.organizer.name }}</td><td>{{ event.date_from|date:'DATE_FORMAT' }}</td></tr>{% empty %}<tr><td colspan="3">{% trans 'No upcoming events.' %}</td></tr>{% endfor %}
             </tbody></table><a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
         </section>
-        <section class="platform-card"><h2>{% trans 'Recently created events' %}</h2>
-            <table class="table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Status' %}</th></tr></thead><tbody>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Recently created events' %}</h2>
+            <table class="table td-stats-table"><thead><tr><th>{% trans 'Event' %}</th><th>{% trans 'Organizer' %}</th><th>{% trans 'Status' %}</th></tr></thead><tbody>
                 {% for event in events_recent|slice:':5' %}<tr><td><a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">{{ event.name }}</a></td><td>{{ event.organizer.name }}</td><td>{% if event.live %}{% trans 'Live' %}{% else %}{% trans 'Draft' %}{% endif %}</td></tr>{% empty %}<tr><td colspan="3">{% trans 'No events yet.' %}</td></tr>{% endfor %}
             </tbody></table><a href="{% url 'eventyay_admin:admin.events' %}">{% trans 'View all events' %} →</a>
         </section>
-        <section class="platform-card"><h2>{% trans 'Configuration status' %}</h2>
-            <table class="table"><tbody>
+        <section class="td-section"><h2 class="td-section-title">{% trans 'Configuration status' %}</h2>
+            <table class="table td-stats-table"><tbody>
                 {% for row in configuration_rows %}<tr><th>{{ row.label }}</th><td><span class="label label-{{ row.style }}">{{ row.status }}</span></td></tr>{% endfor %}
             </tbody></table><a href="{% url 'eventyay_admin:admin.global.settings' %}">{% trans 'View configuration' %} →</a>
         </section>

@@ -1,18 +1,18 @@
 {% load i18n %}
-<div class="platform-section-heading">
-  <h2>{% trans 'Activity' %}</h2>
-  <nav class="platform-ranges" aria-label="{% trans 'Activity time range' %}">
+<div class="td-section-heading">
+  <h2 class="td-section-title">{% trans 'Activity' %}</h2>
+  <nav class="td-analytics-global-filter" aria-label="{% trans 'Activity time range' %}">
     {% for key, label in activity_ranges %}
-      <a href="?range={{ key }}" {% if key == activity_range %}aria-current="true"{% endif %}>{{ label }}</a>
+      <a class="td-analytics-scope-btn{% if key == activity_range %} is-active{% endif %}" href="?range={{ key }}" {% if key == activity_range %}aria-current="true"{% endif %}>{{ label }}</a>
     {% endfor %}
   </nav>
 </div>
 <div class="platform-charts">
   {% for chart in activity_charts %}
-    <article class="platform-card platform-chart" id="chart-{{ chart.key }}" data-chart="{{ chart.key }}">
-      <h3>{{ chart.title }}</h3>
+    <article class="td-section platform-chart" id="chart-{{ chart.key }}" data-chart="{{ chart.key }}">
+      <h3 class="td-card-title">{{ chart.title }}</h3>
       {% for series in chart.series %}
-        <p class="platform-number">{% if chart.key == 'revenue' %}{{ series.total|floatformat:2 }}{% else %}{{ series.total|floatformat:0 }}{% endif %} {{ series.currency }}</p>
+        <p class="td-kpi-value">{% if chart.key == 'revenue' %}{{ series.total|floatformat:2 }}{% else %}{{ series.total|floatformat:0 }}{% endif %} {{ series.currency }}</p>
         <svg viewBox="0 0 300 115" role="img" aria-label="{{ chart.title }} {{ series.currency }}">
           <title>{{ chart.title }} {{ series.currency }}: {{ series.total }}</title>
           <path d="M10 10V100H290" class="platform-axis" />
@@ -32,6 +32,6 @@
 </div>
 <dialog id="platform-chart-dialog" aria-labelledby="platform-expanded-title">
   <form method="dialog"><button class="btn btn-default" autofocus>{% trans 'Close' %}</button></form>
-  <h2 id="platform-expanded-title"></h2>
+  <h2 id="platform-expanded-title" class="td-section-title"></h2>
   <div class="platform-chart" data-expanded-chart></div>
 </dialog>
