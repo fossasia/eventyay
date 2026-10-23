@@ -57,7 +57,7 @@ def test_external_link_requires_confirmation(request, client_fixture, parameter)
     assert DESTINATION in page.get_text()
     assert page.select_one('[data-external-link-continue]')['href'] == DESTINATION
     assert page.select_one('[data-external-link-continue]')['rel'] == ['noreferrer', 'noopener']
-    assert page.select_one('[data-external-link-cancel]')['href'] == reverse('eventyay_common:dashboard')
+    assert page.select_one('[data-external-link-cancel]')['href'] == reverse('presale:index')
     assert not page.select('meta[http-equiv="refresh"]')
     assert response['Referrer-Policy'] == 'no-referrer'
     assert 'no-store' in response['Cache-Control']
@@ -140,7 +140,7 @@ def test_two_factor_login_preserves_warning_until_authentication_finishes(client
     assert two_factor.path == reverse('auth.login.2fa')
     warning = urlsplit(parse_qs(two_factor.query)['next'][0])
     assert warning.path == EXTERNAL_LINK
-    assert parse_qs(warning.query) == {'next': [DESTINATION]}
+    assert parse_qs(warning.query) == {'next': [DESTINATION], 'return_url': [reverse('eventyay_common:dashboard')]}
     assert '_auth_user_id' not in client.session
 
     response = client.post(response.url, {'token': '123456'}, follow=True)
@@ -160,7 +160,7 @@ def test_social_login_destination_requires_confirmation(client, oauth_provider, 
     target = oauth_provider.get_login_url.call_args.kwargs['next']
     location = urlsplit(target)
     assert location.path == EXTERNAL_LINK
-    assert parse_qs(location.query) == {'next': [DESTINATION]}
+    assert parse_qs(location.query) == {'next': [DESTINATION], 'return_url': [reverse('eventyay_common:dashboard')]}
     assert 'socialauth_next_url' not in client.session
     response = client.get(target)
     assert response.status_code == 200
@@ -218,7 +218,10 @@ def test_custom_domain_preserves_external_destination(client, event, settings, s
     event.is_public = public
     event.save()
     KnownDomain.objects.create(domainname='tickets.example', organizer=event.organizer, event=event)
-    warning_url = EXTERNAL_LINK + '?' + urlencode({'next': DESTINATION})
+    warning_params = {'next': DESTINATION}
+    if signed:
+        warning_params['return_url'] = reverse('presale:index')
+    warning_url = EXTERNAL_LINK + '?' + urlencode(warning_params)
     response = client.get(
         safelink(DESTINATION) if signed else warning_url,
         HTTP_HOST='tickets.example',
@@ -267,7 +270,7 @@ def test_password_routes_preserve_destination_in_warning(authenticated_client, u
     assert response.status_code == 302
     location = urlsplit(response.url)
     assert location.path == EXTERNAL_LINK
-    assert parse_qs(location.query) == {'next': [DESTINATION]}
+    assert parse_qs(location.query) == {'next': [DESTINATION], 'return_url': [reverse('eventyay_common:dashboard')]}
 
 
 def test_confirmation_has_no_post_redirect_bypass(client):
@@ -301,7 +304,7 @@ def test_secure_request_does_not_silently_downgrade_to_http(client):
     assert response.status_code == 200
     assert response.context['destination'] == destination
     assert safe_redirect_url(response.wsgi_request, destination) == EXTERNAL_LINK + '?' + urlencode(
-        {'next': destination}
+        {'next': destination, 'return_url': reverse('eventyay_common:dashboard')}
     )
 
 
@@ -313,7 +316,7 @@ def test_exported_signed_redirect_uses_shared_validation(rf, referer, destinatio
         request.META['HTTP_REFERER'] = referer
     response = redirect_view(request)
     assert response.status_code == 302
-    assert response.url == safe_redirect_url(request, destination)
+    assert response.url == safe_redirect_url(request, destination, return_url=reverse('presale:index'))
     assert response['X-Robots-Tag'] == 'noindex'
 
 
@@ -452,7 +455,11 @@ def test_social_login_callbacks_keep_destinations_when_completed_out_of_order(
     for target, state in reversed(list(zip(targets, states))):
         response = client.get(reverse('google_callback'), {'state': state, 'code': 'test-authorization-code'})
         assert response.status_code == 302
-        expected = EXTERNAL_LINK + '?' + urlencode({'next': target}) if target == DESTINATION else target
+        expected = (
+            EXTERNAL_LINK + '?' + urlencode({'next': target, 'return_url': reverse('eventyay_common:dashboard')})
+            if target == DESTINATION
+            else target
+        )
         assert response.url == expected
         assert int(client.session['_auth_user_id']) == user.pk
         if target == DESTINATION:

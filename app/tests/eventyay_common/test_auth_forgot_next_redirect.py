@@ -16,7 +16,9 @@ def test_authenticated_external_next_requires_confirmation(authenticated_client,
     response = authenticated_client.get(reverse(url_name), {'next': next_url})
     assert response.status_code == 302
     destination = 'http:' + next_url if next_url.startswith('//') else next_url
-    assert response['Location'] == reverse('eventyay_common:external-link') + '?' + urlencode({'next': destination})
+    assert response['Location'] == reverse('eventyay_common:external-link') + '?' + urlencode(
+        {'next': destination, 'return_url': DASHBOARD}
+    )
 
 
 @pytest.mark.django_db

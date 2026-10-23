@@ -13,8 +13,8 @@
         <a href='{{ destination }}' class='btn btn-primary' rel='noreferrer noopener' data-external-link-continue>
           {% translate 'Continue to External Site' %}
         </a>
-        <a href='{% url "eventyay_common:dashboard" %}' class='btn btn-default' data-external-link-cancel>
-          {% translate 'Cancel / Return to Dashboard' %}
+        <a href='{{ return_url }}' class='btn btn-default' data-external-link-cancel>
+          {% translate 'Cancel / Go back' %}
         </a>
       </div>
     </div>

@@ -1,10 +1,16 @@
-const interstitial = document.querySelector('script[data-external-link-url]').dataset.externalLinkUrl;
-const confirmationPage = window.location.pathname === new URL(interstitial, window.location.origin).pathname;
+const configuration = document.querySelector('script[data-external-link-url]').dataset;
+const interstitial = new URL(configuration.externalLinkUrl, window.location.origin);
+const signedRedirect = configuration.externalLinkRedirectUrl
+    ? new URL(configuration.externalLinkRedirectUrl, window.location.origin).pathname : null;
+const confirmationPage = window.location.pathname === interstitial.pathname;
 const navigationLinks = 'a';
 const xlinkNamespace = 'http://www.w3.org/1999/xlink';
+const protectedLinks = new WeakSet();
 
 function protectLink(link) {
-    if (!link.matches(navigationLinks) || (confirmationPage && link.hasAttribute('data-external-link-continue'))) return;
+    if (!link.matches(navigationLinks) || (confirmationPage && (
+        link.hasAttribute('data-external-link-continue') || link.hasAttribute('data-external-link-cancel')
+    ))) return;
     const useXlink = !link.hasAttribute('href') && link.hasAttributeNS(xlinkNamespace, 'href');
     const href = useXlink ? link.getAttributeNS(xlinkNamespace, 'href') : link.getAttribute('href');
     if (href === null) return;
@@ -18,10 +24,18 @@ function protectLink(link) {
         }
         throw error;
     }
-    if (!['http:', 'https:'].includes(destination.protocol) || destination.origin === window.location.origin) return;
-    const warning = new URL(interstitial, window.location.origin);
-    warning.searchParams.set('next', destination.href);
+    if (!['http:', 'https:'].includes(destination.protocol)) return;
+    const local = destination.origin === window.location.origin;
+    const signed = local && destination.pathname === signedRedirect && destination.searchParams.has('url');
+    const protectedWarning = local && protectedLinks.has(link) && destination.pathname === interstitial.pathname;
+    if (local && !signed && !protectedWarning) return;
+    const warning = signed || protectedWarning ? destination : new URL(interstitial);
+    if (!signed && !protectedWarning) warning.searchParams.set('next', destination.href);
+    warning.searchParams.set('return_url', window.location.href);
+    if (configuration.externalLinkOrigin) warning.searchParams.set('return_origin', configuration.externalLinkOrigin);
     link.removeAttribute('download');
+    protectedLinks.add(link);
+    if (href === warning.href) return;
     if (useXlink) link.setAttributeNS(xlinkNamespace, 'xlink:href', warning.href);
     else link.setAttribute('href', warning.href);
 }

@@ -46,6 +46,7 @@ from eventyay.common.image import (
     get_thumbnail_field_name,
     is_svg_filename,
 )
+from eventyay.common.redirects import safe_redirect_url
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
@@ -567,7 +568,7 @@ class User(
         except SendMailException:
             pass  # Already logged
 
-    def send_password_reset(self, request: HttpRequest, *, sync_send: bool = False):
+    def send_password_reset(self, request: HttpRequest, *, sync_send: bool = False, next_url: str | None = None):
         from eventyay.base.services.mail import mail
 
         subject = _('Password recovery')
@@ -577,6 +578,8 @@ class User(
             'id': self.id,
             'token': security_token,
         }
+        if next_url:
+            params['next'] = safe_redirect_url(request, next_url)
         action_url = request.build_absolute_uri(f'{base_action_url}?{urlencode(params)}')
         logger.info('Action URL for %s to reset password: %s', self.email, action_url)
         context = {'user': self, 'url': action_url}
