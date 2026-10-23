@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django_scopes import scope
 from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
@@ -518,7 +519,11 @@ is_video_provider_enabled_for_organizer_async = sync_to_async(
 
 
 async def create_room(event, data, creator):
-    for module in data.get("modules", []):
+    if "modules" not in data and "module_config" in data:
+        data["modules"] = data["module_config"]
+
+    modules = data.get("modules") or []
+    for module in modules:
         if isinstance(module, dict):
             provider = get_provider_for_module_type(module.get("type"))
             if provider and not await is_video_provider_enabled_for_organizer_async(provider):
@@ -527,7 +532,7 @@ async def create_room(event, data, creator):
                     code="denied",
                 )
 
-    types = {m["type"] for m in data.get("modules", [])}
+    types = {m["type"] for m in modules}
     livestream_types = {
         "livestream.native",
         "livestream.youtube",
@@ -836,27 +841,28 @@ def _config_serializer(event, *args, **kwargs):
 @database_sync_to_async
 @transaction.atomic
 def save_event(event, update_fields, old_data, by_user):
-    event.save(update_fields=update_fields)
-    new = _config_serializer(event).data
+    with scope(event=event):
+        event.save(update_fields=update_fields)
+        new = _config_serializer(event).data
 
-    AuditLog.objects.create(
-        event_id=event.id,
-        user=by_user,
-        type="event.updated",
-        data={
-            "old": old_data,
-            "new": new,
-        },
-    )
-    if update_fields and 'feature_flags' in update_fields:
-        log_event(
-            'video',
-            'video.feature_flag',
-            OUTCOME_SUCCESS,
-            event_id=event.pk,
-            user_id=getattr(by_user, 'pk', None),
+        AuditLog.objects.create(
+            event_id=event.id,
+            user=by_user,
+            type="event.updated",
+            data={
+                "old": old_data,
+                "new": new,
+            },
         )
-    return new
+        if update_fields and 'feature_flags' in update_fields:
+            log_event(
+                'video',
+                'video.feature_flag',
+                OUTCOME_SUCCESS,
+                event_id=event.pk,
+                user_id=getattr(by_user, 'pk', None),
+            )
+        return new
 
 
 @database_sync_to_async

@@ -1,5 +1,6 @@
 import logging
 import secrets
+from zoneinfo import ZoneInfo
 
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
@@ -241,7 +242,7 @@ class EventSelectionView(APIView):
         if current_event:
             current_ev = current_subevent or current_event
             current_ev_start = current_ev.date_admission or current_ev.date_from
-            tz = current_event.timezone
+            tz = ZoneInfo(current_event.settings.timezone)
             if current_ev.date_to and current_ev_start < now() < current_ev.date_to:
                 # The event that is selected is currently running. Good enough.
                 return Response(status=status.HTTP_304_NOT_MODIFIED)
@@ -279,7 +280,7 @@ class EventSelectionView(APIView):
             return self._suggest_event(current_event, last_started_ev)
 
         if not current_event:
-            tz = (upcoming_event or last_started_ev).timezone
+            tz = ZoneInfo((upcoming_event or last_started_ev).settings.timezone)
 
         lse_d = last_started_ev.date_from.astimezone(tz).date()
         upc_d = upcoming_ev.date_from.astimezone(tz).date()

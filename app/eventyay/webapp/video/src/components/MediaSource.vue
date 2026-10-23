@@ -13,9 +13,17 @@
 	VideoCallFrame(v-else-if="call", ref="channelCallFrame", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}-${playerEpoch}`", @close="$emit('close')", @leave="$emit('leave', null)")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
-	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Stream offline') }}
-		.offline-message(v-else) {{ $t('We could not connect to the video conference server, sorry.') }}
+	.iframe-error(v-if="!shouldUseLivestream && !iframeEl && !consentBlockedUrl && (scheduleAwaitingStream || iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
+		bunt-progress-circular(v-if="scheduleAwaitingStream", size="large")
+		.offline-card(v-else-if="iframeOffline")
+			.mdi.mdi-video-off-outline
+			.offline-title {{ $t('Stream offline') }}
+			.offline-subtitle {{ $t('The livestream is currently not broadcasting.') }}
+		.error-card(v-else)
+			.mdi.mdi-alert-circle-outline
+			.error-title {{ $t('Connection Failed') }}
+			.error-subtitle {{ iframeError && iframeError.message ? iframeError.message : $t('We could not connect to the video conference server, sorry.') }}
+			bunt-button.btn-retry(v-if="!background", @click="retryIframe") {{ $t('Retry Connection') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
@@ -204,14 +212,16 @@ const isScheduleDrivenStage = computed(() =>
 const shouldUseLivestream = computed(() => {
 	if (isRoomDisabled.value) return false;
 	if (!props.room || !module.value) return false;
-	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
-
-	if (streamType) {
-		return streamType === STREAM_TYPE_HLS;
+	if (isScheduleDrivenStage.value) {
+		return props.room?.currentStream?.stream_type === STREAM_TYPE_HLS;
 	}
 
 	return module.value.type === 'livestream.native';
 });
+
+const scheduleAwaitingStream = computed(() => (
+	isScheduleDrivenStage.value && props.room?.currentStream === undefined
+));
 
 // When stream schedules are enabled, the backend returns 404 (mapped to null) if
 // no stream is currently active. For iframe-based streams we show a full-size
@@ -227,6 +237,7 @@ const iframeOffline = computed(() => {
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
+	if (isScheduleDriven && !currentStream?.url) return true;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
 	const isVimeo = streamType === STREAM_TYPE_VIMEO || moduleType === 'livestream.vimeo';
 
@@ -1016,6 +1027,11 @@ function onConsentGiven(persistent) {
 	initializeIframe(false, true)
 }
 
+function retryIframe() {
+	iframeError.value = null
+	initializeIframe(false, false)
+}
+
 function isPlaying() {
 	if (props.call) {
 		return janus.value?.roomId;
@@ -1195,7 +1211,7 @@ iframe.iframe-media-source
 	display: flex
 	justify-content: center
 	align-items: center
-	background-color: $clr-blue-grey-200
+	background-color: #1e293b
 	z-index: 1
 	overflow: hidden
 	// Fallbacks prevent the overlay from shrinking to its text when
@@ -1208,13 +1224,33 @@ iframe.iframe-media-source
 		height: 48px
 		pointer-events: none
 		z-index: 101
-	.offline-message
-		font-size: 36px
-		color: $clr-secondary-text-light
+	.offline-card, .error-card
+		display: flex
+		flex-direction: column
+		align-items: center
+		justify-content: center
+		gap: 12px
+		padding: 24px
 		text-align: center
-		padding: 16px
-	&.size-tiny, &.background
-		.offline-message
+		color: #f8fafc
+		.mdi
+			font-size: 48px
+			color: #ef4444
+		.error-title, .offline-title
+			font-size: 18px
+			font-weight: 600
+			margin: 0
+		.error-subtitle, .offline-subtitle
 			font-size: 14px
-			padding: 8px
+			color: #94a3b8
+			max-width: 480px
+			margin: 0
+		.btn-retry
+			background-color: #2185d0
+			color: #ffffff
+			border-radius: 6px
+			margin-top: 8px
+	&.size-tiny, &.background
+		.offline-card, .error-card
+			display: none
 </style>

@@ -4,6 +4,7 @@
 {% load bootstrap3 %}
 {% load rich_text %}
 {% load sendmail_extras %}
+{% load timezone %}
 
 {% block title %}
     {% translate "Mail Editor" %}
@@ -21,7 +22,7 @@
 
     {% if read_only %}
         <div class="alert alert-info">
-            {% blocktranslate trimmed with timestamp=form.instance.sent_at timezone=request.event.timezone %}
+            {% blocktranslate trimmed with timestamp=form.instance.sent_at timezone=request.event.timezone|timezone_display %}
                 This email was sent on {{ timestamp }} ({{ timezone }}).
             {% endblocktranslate %}
         </div>

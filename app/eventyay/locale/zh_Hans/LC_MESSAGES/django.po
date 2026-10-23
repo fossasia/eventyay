@@ -14452,7 +14452,7 @@ msgstr "我的提议"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "演讲者邮件"
 
 #: eventyay/common/templates/common/base.html:189
