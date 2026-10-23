@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Submission, SubmissionStates
+from eventyay.base.models import QueuedMail, Submission, SubmissionStates
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 
 
@@ -35,6 +35,104 @@ def test_can_see_submission(speaker_client, submission):
     response = speaker_client.get(submission.urls.user_base, follow=True)
     assert response.status_code == 200
     assert submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_can_open_submission_when_talks_are_unpublished(speaker_client, submission):
+    event = submission.event
+    event.talks_published = False
+    event.save(update_fields=['talks_published'])
+
+    response = speaker_client.get(submission.urls.user_base, follow=True)
+    assert response.status_code == 200
+    assert submission.title in response.text
+
+    schedule = speaker_client.get(event.urls.schedule, follow=False)
+    assert schedule.status_code == 404
+
+    cfp = speaker_client.get(event.cfp.urls.public, follow=False)
+    assert cfp.status_code == 404
+
+    # When private test mode is enabled, speaker can still access and sees the test mode banner
+    event.settings.private_testmode_tickets = False
+    event.settings.private_testmode_talks = True
+    event.private_testmode = True
+    event.save()
+
+    response = speaker_client.get(submission.urls.user_base, follow=True)
+    assert response.status_code == 200
+    assert (
+        "The talks feature is in test mode, only team member administrators and invited speaker can view this page."
+        in response.text
+    )
+
+    assert speaker_client.get(event.urls.schedule, follow=False).status_code == 404
+    assert speaker_client.get(event.cfp.urls.public, follow=False).status_code == 404
+
+
+@pytest.mark.django_db
+def test_invited_speaker_can_accept_invitation_when_talks_are_unpublished(client, submission, django_user_model):
+    event = submission.event
+    event.talks_published = False
+    event.save(update_fields=['talks_published'])
+
+    user = django_user_model.objects.create_user(
+        email='invitee@speaker.org',
+        password='password123',
+    )
+    client.force_login(user)
+
+    response = client.get(submission.urls.accept_invitation, follow=True)
+    assert response.status_code == 200
+
+    accept_response = client.post(submission.urls.accept_invitation, follow=True)
+    assert accept_response.status_code == 200
+    submission.refresh_from_db()
+    assert user in submission.speakers.all()
+
+
+@pytest.mark.django_db
+def test_testmode_mail_includes_banner(event):
+    event.settings.private_testmode_talks = True
+    event.private_testmode = True
+    event.save()
+
+    mail = QueuedMail.objects.create(
+        event=event,
+        to='speaker@example.org',
+        subject='Proposal accepted',
+        text='Congratulations, your proposal was accepted!',
+    )
+    html = mail.make_html()
+    text = mail.make_text()
+    banner = (
+        'The talks feature is in test mode, only team member administrators and invited speaker can view this page.'
+    )
+    assert banner in html
+    assert banner in text
+
+
+@pytest.mark.django_db
+def test_public_talks_testmode_mail_includes_banner(event):
+    event.settings.talks_testmode = True
+    event.settings.private_testmode_talks = False
+    event.private_testmode = False
+    event.save()
+
+    mail = QueuedMail.objects.create(
+        event=event,
+        to='speaker@example.org',
+        subject='Proposal accepted',
+        text='Congratulations, your proposal was accepted!',
+    )
+    html = mail.make_html()
+    text = mail.make_text()
+    banner = (
+        'Talk pages are currently in test mode. Please do not treat schedules or submissions as final, '
+        'as they may change or be removed without notice.'
+    )
+    assert banner in html
+    assert banner in text
 
 
 @pytest.mark.django_db
@@ -791,15 +889,15 @@ def test_anonymous_invite_acceptance_redirect(client, submission):
 
 
 @pytest.mark.django_db
-def test_authenticated_user_without_permission_gets_403(client, submission, event, django_user_model):
+def test_authenticated_user_without_permission_gets_404(client, submission, event, django_user_model):
     user = django_user_model.objects.create_user(
         email='testuser@example.com',
         password='password123',
     )
     client.force_login(user)
-    # Trying to access the submission edit page should give 403 because they are not a speaker
-    response = client.get(submission.urls.edit, follow=False)
-    assert response.status_code == 403
+    # Trying to access the submission edit page should give 404 because they are not a speaker
+    response = client.get(submission.urls.user_base, follow=True)
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

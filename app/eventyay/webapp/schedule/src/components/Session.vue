@@ -463,7 +463,7 @@ expandClampedSessionText()
 	min-width: 0
 	min-height: 96px
 	margin: 8px 0
-	margin-right: 8px
+	margin-right: 12px
 	overflow: hidden
 	color: rgb(13 15 16)
 	position: relative

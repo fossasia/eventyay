@@ -630,12 +630,11 @@ class Schedule(PretalxModel):
             overlaps = talk.pk in room_overlap_ids
         else:
             overlaps = (
-                TalkSlot.objects.filter(schedule=self, room=talk.room)
-                .filter(
-                    models.Q(start__lt=talk.start, end__gt=talk.start)
-                    | models.Q(start__lt=talk.real_end, end__gt=talk.real_end)
-                    | models.Q(start__gt=talk.start, end__lt=talk.real_end)
-                    | models.Q(start=talk.start, end=talk.real_end)
+                TalkSlot.objects.filter(
+                    schedule=self,
+                    room=talk.room,
+                    start__lt=talk.real_end,
+                    end__gt=talk.start,
                 )
                 .exclude(pk=talk.pk)
                 .exists()
@@ -680,14 +679,13 @@ class Schedule(PretalxModel):
                 overlaps = speaker.pk in speaker_overlaps_by_talk.get(talk.pk, ())
             else:
                 overlaps = (
-                    TalkSlot.objects.filter(schedule=self, submission__speakers__in=[speaker])
-                    .exclude(pk=talk.pk)
-                    .filter(
-                        models.Q(start__lt=talk.start, end__gt=talk.start)
-                        | models.Q(start__lt=talk.real_end, end__gt=talk.real_end)
-                        | models.Q(start__gt=talk.start, end__lt=talk.real_end)
-                        | models.Q(start=talk.start, end=talk.real_end)
+                    TalkSlot.objects.filter(
+                        schedule=self,
+                        submission__speakers__in=[speaker],
+                        start__lt=talk.real_end,
+                        end__gt=talk.start,
                     )
+                    .exclude(pk=talk.pk)
                     .exists()
                 )
             if overlaps:
@@ -787,8 +785,9 @@ class Schedule(PretalxModel):
         """Compute room- and speaker-overlap sets for the given scheduled talks.
 
         Replaces per-talk ``.exists()`` probes in ``get_talk_warnings`` with a single
-        scan over all scheduled slots and the prefetched speakers. Preserves the
-        original query's semantics: strict-inequality overlap plus exact-bounds match.
+        scan over all scheduled slots and the prefetched speakers. Two slots overlap
+        when their open time ranges intersect, including when one sits inside the
+        other. Slots that only touch at an endpoint do not overlap.
 
         If ``subset_pks`` is provided, the ``talks`` argument is expected to contain
         the full scan set (every relevant scheduled slot), while results are only
@@ -802,12 +801,7 @@ class Schedule(PretalxModel):
         """
 
         def is_overlap(a_start, a_end, b_start, b_end):
-            return (
-                (b_start < a_start and b_end > a_start)
-                or (b_start < a_end and b_end > a_end)
-                or (b_start > a_start and b_end < a_end)
-                or (b_start == a_start and b_end == a_end)
-            )
+            return a_start < b_end and b_start < a_end
 
         by_room = defaultdict(list)
         by_speaker = defaultdict(list)

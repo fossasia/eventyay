@@ -80,6 +80,16 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="col-sm-3 control-label">{% trans "Applies to" %}</label>
+        <div class="col-sm-9">
+          {% for target in targets %}
+            <p class="form-control-static">{{ target }}</p>
+          {% empty %}
+            <p class="form-control-static">&mdash;</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
         <label class="col-sm-3 control-label">{% trans "Scope" %}</label>
         <div class="col-sm-9">
           <p class="form-control-static">{{ voucher.get_scope_display }}</p>
