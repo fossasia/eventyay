@@ -292,12 +292,13 @@ def test_session_page_invalid_speaker_stays_on_edit_page(orga_client, event, sub
     edit_url = submission.orga_urls.edit
     response = orga_client.post(
         f"{submission.orga_urls.speakers}?next={edit_url}",
-        data={"email": "not-an-email", "name": "Someone"},
+        data={"email": "not-an-email", "name": ""},
     )
     assert response.status_code == 302
     assert response.url == edit_url
     response = orga_client.get(edit_url)
     assert "Enter a valid email address." in response.text
+    assert "Speaker name: This field is required." in response.text
     with scope(event=event):
         assert not submission.speaker_invitations.filter(email="not-an-email").exists()
 
@@ -323,7 +324,9 @@ def test_session_page_hides_speakers_from_reviewers(review_client, event, submis
 
 
 @pytest.mark.django_db
-def test_invalid_speaker_form_keeps_label_on_selected_session(orga_client, event, speaker, submission, other_submission):
+def test_invalid_speaker_form_keeps_label_on_selected_session(
+    orga_client, event, speaker, submission, other_submission
+):
     response = orga_client.post(
         speaker_url(speaker, event),
         data={**SPEAKER_DATA, "fullname": "", "existing_session_id": other_submission.pk},

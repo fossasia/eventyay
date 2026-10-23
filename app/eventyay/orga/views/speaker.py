@@ -303,8 +303,8 @@ class SpeakerSessionMixin:
     def clean_session_options(self, form):
         add_session = self.request.POST.get('add_session') == 'on'
         session_pks = []
-        for raw_pk in self.request.POST.getlist('existing_session_id'):
-            raw_pk = str(raw_pk).strip()
+        for value in self.request.POST.getlist('existing_session_id'):
+            raw_pk = str(value).strip()
             if raw_pk and raw_pk not in session_pks:
                 session_pks.append(raw_pk)
         if add_session:

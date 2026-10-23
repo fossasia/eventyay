@@ -388,9 +388,10 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         if is_ajax_request(self.request):
             return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
         if next_url := get_next_url(self.request):
-            for errors in form.errors.values():
+            for field, errors in form.errors.items():
+                label = form.fields[field].label if field in form.fields else None
                 for error in errors:
-                    messages.error(self.request, error)
+                    messages.error(self.request, f'{label}: {error}' if label else error)
             return redirect(next_url)
         return super().form_invalid(form)
 
