@@ -16,6 +16,7 @@ from eventyay.base.models import User
 from eventyay.common.image import validate_image
 from eventyay.control.forms import SingleLanguageWidget
 from eventyay.helpers.image_optimize import optimize_uploaded_image
+from eventyay.helpers.timezone import format_timezone_name
 
 
 class UserSettingsForm(forms.ModelForm):
@@ -56,7 +57,7 @@ class UserSettingsForm(forms.ModelForm):
         widget=forms.PasswordInput(),
     )
     timezone = forms.ChoiceField(
-        choices=((a, a) for a in common_timezones),
+        choices=((a, format_timezone_name(a)) for a in common_timezones),
         label=_('Default timezone'),
         help_text=_(
             'Only used for views that are not bound to an event. For all '

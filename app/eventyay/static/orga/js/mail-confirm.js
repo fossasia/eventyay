@@ -41,7 +41,7 @@ const getSendTimeLabel = (form, labels) => {
         minute: "2-digit",
         timeZone: "UTC",
     })
-    return labels.timezone ? `${stamp}, ${labels.timezone}` : stamp
+    return labels.timezone ? `${stamp}, ${labels.timezone.replace(/_/g, " ")}` : stamp
 }
 
 const buildSendSummary = (summary, form) => {
