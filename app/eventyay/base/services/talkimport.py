@@ -1561,8 +1561,14 @@ def resolve_question_options(question, answer_text, option_lookup=None):
     options = []
     for label in labels:
         key = label.strip().casefold()
-        if not key or key not in option_lookup:
+        if not key:
             continue
+        if key not in option_lookup:
+            raise ImportExecutionError(
+                _('Unknown choice "{value}" for custom field "{question}".').format(
+                    value=label.strip(), question=question,
+                )
+            )
         option = option_lookup[key]
         if option is None:
             raise ImportExecutionError(

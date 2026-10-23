@@ -298,15 +298,17 @@ def test_import_submission_records_keep_quoted_speaker_columns(event, orga_user)
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
-@pytest.mark.parametrize('locale,value,rejected', [
-    ('en', ' OTHER ', True),
-    ('en', 'Unique', False),
-    ('de', 'Andere', False),
+@pytest.mark.parametrize('locale,value,error', [
+    ('en', ' OTHER ', 'ambiguous'),
+    ('en', 'Vegn', 'Unknown choice'),
+    ('de', 'Unbekannt', 'Unknown choice'),
+    ('en', 'Unique', None),
+    ('de', 'Andere', None),
 ])
-def test_csv_import_rejects_ambiguous_translated_answers(
-    event, orga_user, submission, variant, locale, value, rejected,
+def test_csv_import_rejects_invalid_translated_answers(
+    event, orga_user, submission, variant, locale, value, error,
 ):
-    """Reject ambiguous rows before saving while allowing unambiguous localized choices."""
+    """Reject unknown or ambiguous choices before saving any changes to a row."""
     with scope(event=event):
         question = TalkQuestion.objects.create(event=event, question='Choice', variant=variant, target='submission')
         first = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
@@ -330,10 +332,10 @@ def test_csv_import_rejects_ambiguous_translated_answers(
     with scope(event=event):
         submission.refresh_from_db()
         answer.refresh_from_db()
-        if rejected:
+        if error:
             assert result['skipped'] == 1
             assert result['updated'] == 0
-            assert 'ambiguous' in str(result['errors'][0]).lower()
+            assert error.lower() in str(result['errors'][0]).lower()
             assert submission.title == original_title
             assert answer.answer == 'Original'
             assert list(answer.options.values_list('pk', flat=True)) == [unique.pk]
@@ -348,24 +350,26 @@ def test_csv_import_rejects_ambiguous_translated_answers(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
-def test_import_answer_rejects_ambiguous_choices_without_cache(event, submission, variant):
-    """Uncached imports must not overwrite an answer when its label is ambiguous."""
+@pytest.mark.parametrize('value,error', [('Other', 'ambiguous'), ('Vegn', 'Unknown choice')])
+def test_import_answer_rejects_invalid_choices_without_cache(event, submission, variant, value, error):
+    """Uncached imports preserve answers when a choice is unknown or ambiguous."""
     with scope(event=event), override('en'):
         question = TalkQuestion.objects.create(event=event, question='Choice', variant=variant, target='submission')
         first = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
         question.options.create(answer={'en': 'Other', 'de': 'Sonstige'}, position=2)
         answer = question.answers.create(submission=submission, answer='Original')
         answer.options.add(first)
-        with pytest.raises(ImportExecutionError, match='[Aa]mbiguous'):
-            _set_question_answer(question.pk, 'Other', submission=submission, event=event)
+        with pytest.raises(ImportExecutionError, match=error):
+            _set_question_answer(question.pk, value, submission=submission, event=event)
         answer.refresh_from_db()
         assert answer.answer == 'Original'
         assert list(answer.options.values_list('pk', flat=True)) == [first.pk]
 
 
 @pytest.mark.django_db
-def test_csv_import_skips_new_ambiguous_row_and_continues(event, orga_user):
-    """A mixed checkbox answer must reject the whole row without creating a session."""
+@pytest.mark.parametrize('invalid_label', ('Other', 'Vegn'))
+def test_csv_import_skips_new_invalid_row_and_continues(event, orga_user, invalid_label):
+    """A checkbox answer containing an invalid label must reject the whole row."""
     with scope(event=event):
         question = TalkQuestion.objects.create(
             event=event, question='Choice', variant='multiple_choice', target='submission',
@@ -374,7 +378,7 @@ def test_csv_import_skips_new_ambiguous_row_and_continues(event, orga_user):
         question.options.create(answer={'en': 'Other', 'de': 'Sonstige'}, position=2)
         unique = question.options.create(answer='Unique', position=3)
     content = export_style_csv([
-        {'Title': 'Rejected session', 'Choice': 'Unique, Other'},
+        {'Title': 'Rejected session', 'Choice': f'Unique, {invalid_label}'},
         {'Title': 'Imported session', 'Choice': 'Unique'},
     ], headers=['Title', 'Choice'])
     cached = CachedFile.objects.create(type='text/csv', filename='choices.csv')
