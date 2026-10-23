@@ -320,3 +320,18 @@ def test_session_page_hides_speakers_from_reviewers(review_client, event, submis
     page = bs4.BeautifulSoup(response.text, "html.parser")
     assert page.select_one("[data-session-speakers]") is None
     assert page.select_one(f"form[action^='{submission.orga_urls.speakers}']") is None
+
+
+@pytest.mark.django_db
+def test_invalid_speaker_form_keeps_label_on_selected_session(orga_client, event, speaker, submission, other_submission):
+    response = orga_client.post(
+        speaker_url(speaker, event),
+        data={**SPEAKER_DATA, "fullname": "", "existing_session_id": other_submission.pk},
+    )
+    assert response.status_code == 200
+    page = bs4.BeautifulSoup(response.text, "html.parser")
+    label = page.select_one("label[for=id_existing_session_id]")
+    select = page.select_one(f"#{label['for']}")
+    assert select is not None
+    assert select["name"] == "existing_session_id"
+    assert select.select_one("option[selected]")["value"] == str(other_submission.pk)
