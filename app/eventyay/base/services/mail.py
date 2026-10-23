@@ -57,6 +57,11 @@ from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
+from eventyay.base.templatetags.rich_text import (
+    MARKDOWN_PLACEHOLDERS,
+    is_tiptap_email_html,
+    markdown_compile_email,
+)
 from eventyay.celery_app import app
 from eventyay.common.mail import get_reply_to_address
 from eventyay.consts import SizeKey
@@ -741,6 +746,9 @@ def render_mail(template, context):
         body = str(template)
         if context:
             string_context = _stringify_mail_context(context)
+            if is_tiptap_email_html(body):
+                for key in MARKDOWN_PLACEHOLDERS & string_context.keys():
+                    string_context[key] = markdown_compile_email(string_context[key])
             body = body.format_map(TolerantDict(string_context))
             body = expand_email_variable_chips(body, string_context)
     else:

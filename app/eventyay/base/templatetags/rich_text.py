@@ -182,6 +182,11 @@ def is_tiptap_email_html(source: str) -> bool:
     return bool(_TIPTAP_BLOCK_START_RE.match(source))
 
 
+# Placeholders whose values are Markdown (``{orders}`` is a bullet list of order
+# links). Legacy bodies compile them as part of the body; editor (Tiptap) HTML
+# bodies must compile the value itself before inserting it.
+MARKDOWN_PLACEHOLDERS = frozenset({'orders'})
+
 _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
     'event',
     'order',
@@ -297,6 +302,8 @@ def build_email_preview_context(event, base_parameters: list[str]):
         sample = placeholder.render_sample(event)
         if is_placeholder_html_sample(sample):
             context_dict[key] = str(sample)
+        elif key in MARKDOWN_PLACEHOLDERS:
+            context_dict[key] = markdown_compile_email(str(sample))
         else:
             context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict

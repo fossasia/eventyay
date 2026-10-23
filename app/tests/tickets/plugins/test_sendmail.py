@@ -19,6 +19,8 @@ from eventyay.base.models import (
     Team,
     User,
 )
+from eventyay.base.services.mail import render_mail
+from eventyay.base.templatetags.rich_text import compile_email_body, email_body_to_editor_html
 from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.plugins.sendmail.forms import MailContentSettingsForm
 
@@ -1847,6 +1849,37 @@ def test_mail_settings_preview_legacy_orders_list(settings_client, event):
     rendered = response.json()['msgs']['en']
     assert '<li>' in rendered
     assert '* ' not in rendered
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_editor_orders_list(settings_client, event):
+    """{orders} still renders as a list once the body was converted to editor HTML."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    body = email_body_to_editor_html('Your orders:\n\n{orders}')
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_resend_all_links', 'mail_text_resend_all_links_0': body},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    assert '<li>' in rendered
+    assert '* ' not in rendered
+
+
+def test_render_mail_compiles_orders_list_in_editor_html():
+    """Sent editor-HTML bodies render the Markdown {orders} value as a list."""
+    orders = '\n* DEMO-ABC12 - https://example.com/a\n\n* DEMO-XYZ34 - https://example.com/b'
+    template = LazyI18nString(email_body_to_editor_html('Your orders:\n\n{orders}'))
+    html = compile_email_body(render_mail(template, {'orders': orders}))
+    assert html.count('<li>') == 2
+    assert '* ' not in html
+    # Legacy Markdown bodies keep compiling the list as part of the body.
+    legacy = compile_email_body(render_mail(LazyI18nString('Your orders:\n\n{orders}'), {'orders': orders}))
+    assert legacy.count('<li>') == 2
 
 
 @pytest.mark.django_db
