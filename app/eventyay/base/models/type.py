@@ -122,12 +122,14 @@ class SubmissionType(OrderedModel, PretalxModel):
 
     @transaction.atomic
     def save(self, *args, **kwargs):
-        """Save type defaults and all inherited draft timings under the event lock."""
+        """Propagate changed type defaults and inherited draft timings under the event lock."""
         duration_changed = False
         if self.pk and (kwargs.get('update_fields') is None or 'default_duration' in kwargs['update_fields']):
             with scope(event=self.event):
-                type(self.event).objects.select_for_update(no_key=True).get(pk=self.event_id)
                 duration_changed = type(self).objects.get(pk=self.pk).default_duration != self.default_duration
+                if duration_changed:
+                    type(self.event).objects.select_for_update(no_key=True).get(pk=self.event_id)
+                    duration_changed = type(self).objects.get(pk=self.pk).default_duration != self.default_duration
         if self.position is None and self.event_id:
             # Get the max position for this event, default to 0 if no types exist
             max_position = self.event.submission_types.aggregate(

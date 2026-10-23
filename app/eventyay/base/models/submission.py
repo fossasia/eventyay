@@ -480,9 +480,9 @@ class Submission(GenerateCode, PretalxModel):
             schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
             submission = type(self).all_objects.select_related('submission_type').get(pk=self.pk)
             duration = submission.get_duration()
-            for slot in schedule.talks.filter(submission=self, start__isnull=False):
-                slot.end = slot.start + dt.timedelta(minutes=duration)
-                slot.save()
+            schedule.talks.filter(submission=self, start__isnull=False).update(
+                end=models.F('start') + dt.timedelta(minutes=duration), updated=now(),
+            )
 
     update_duration.alters_data = True
 
