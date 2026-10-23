@@ -43,6 +43,15 @@
     color: #666;
 }
 
+.venue-map-directions {
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
+.venue-map-directions .fa {
+    margin-right: 5px;
+}
+
 .venue-map #venue {
     margin-top: 0;
     padding-bottom: 10px;

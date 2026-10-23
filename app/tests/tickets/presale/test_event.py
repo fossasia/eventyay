@@ -1574,6 +1574,37 @@ class EventMicrodataTest(EventTestMixin, SoupTest):
         )
 
 
+class EventVenueDirectionsTest(EventTestMixin, SoupTest):
+    def _get_directions_link(self):
+        doc = self.get_doc(f'/{self.orga.slug}/{self.event.slug}/')
+        return doc.select_one('.venue-map-directions a')
+
+    def test_link_uses_coordinates(self):
+        self.event.location = 'DUMMY ARENA'
+        self.event.geo_lat = 18.5204
+        self.event.geo_lon = 73.8567
+        self.event.save()
+        link = self._get_directions_link()
+        assert link['href'] == 'https://www.google.com/maps/dir/?api=1&destination=18.5204%2C73.8567'
+        assert link['target'] == '_blank'
+        assert link['rel'] == ['noopener', 'noreferrer']
+
+    def test_link_falls_back_to_address(self):
+        self.event.location = 'DUMMY ARENA'
+        self.event.geo_lat = None
+        self.event.geo_lon = None
+        self.event.save()
+        link = self._get_directions_link()
+        assert link['href'] == 'https://www.google.com/maps/dir/?api=1&destination=DUMMY+ARENA'
+
+    def test_no_link_without_location(self):
+        self.event.location = None
+        self.event.geo_lat = None
+        self.event.geo_lon = None
+        self.event.save()
+        assert self._get_directions_link() is None
+
+
 class EventSlugBanlistValidatorTest(EventTestMixin, SoupTest):
     @scopes_disabled()
     def test_slug_validation(self):
