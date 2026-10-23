@@ -215,6 +215,7 @@ import moment from 'moment-timezone'
 import api from 'lib/api'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
+import { readApiErrorMessage } from 'lib/apiErrorMessage'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import mixin from './mixin'
@@ -855,11 +856,11 @@ export default defineComponent({
 					})
 					if (!res.ok && res.status !== 404) {
 						logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'delete_failed', status: res.status})
-						const text = await res.text().catch(() => '')
-						console.warn('Failed to delete stream schedule:', scheduleId, text)
+						const errorMessage = await readApiErrorMessage(res, res.statusText || 'Bad Request')
+						console.warn('Failed to delete stream schedule:', scheduleId, errorMessage)
 						remainingDeletions.push(scheduleId)
 						this.deletedScheduleIds = remainingDeletions
-						throw new Error(`Failed to delete stream schedule: ${text || res.statusText}`)
+						throw new Error(`Failed to delete stream schedule: ${errorMessage}`)
 					}
 				} catch (err) {
 					if (!remainingDeletions.includes(scheduleId)) {
@@ -872,6 +873,11 @@ export default defineComponent({
 			this.deletedScheduleIds = []
 
 			if (this.isScheduledMode) {
+				const failSave = async (res, verb, index) => {
+					logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
+					const errorMessage = await readApiErrorMessage(res)
+					throw new Error(`Failed to ${verb} stream schedule ${index + 1}: ${errorMessage}`)
+				}
 				for (let i = 0; i < this.streams.length; i++) {
 					const stream = this.streams[i]
 					const payload = {
@@ -901,11 +907,7 @@ export default defineComponent({
 							body: JSON.stringify(payload),
 							credentials: 'include',
 						})
-						if (!res.ok) {
-							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
-							const text = await res.text()
-							throw new Error(`Failed to update stream schedule ${i + 1}: ${text}`)
-						}
+						if (!res.ok) await failSave(res, 'update', i)
 					} else {
 						const res = await fetch(baseUrl, {
 							method: 'POST',
@@ -913,11 +915,7 @@ export default defineComponent({
 							body: JSON.stringify(payload),
 							credentials: 'include',
 						})
-						if (!res.ok) {
-							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
-							const text = await res.text()
-							throw new Error(`Failed to create stream schedule ${i + 1}: ${text}`)
-						}
+						if (!res.ok) await failSave(res, 'create', i)
 						const saved = await res.json()
 						stream.id = saved.id
 					}

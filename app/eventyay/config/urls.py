@@ -5,6 +5,7 @@ import logging
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -127,9 +128,18 @@ eventyay_common_patterns = [
 page_patterns = [
     path('terms/', pages.SystemPageView.as_view(slug='terms'), name='page.terms'),
     path('privacy/', pages.SystemPageView.as_view(slug='privacy'), name='page.privacy'),
-    path('pricing/', pages.SystemPageView.as_view(slug='pricing'), name='page.pricing'),
     path('support/', pages.SystemPageView.as_view(slug='support'), name='page.support'),
     path('page/<slug:slug>/', pages.ShowPageView.as_view(), name='page'),
+]
+
+# Custom domains do not load plugin root URLs, so send platform pages that a plugin
+# may provide (such as the Business plugin's pricing page) to the main site.
+main_site_page_patterns = [
+    path(
+        'pricing/',
+        RedirectView.as_view(url=f'{settings.SITE_URL.rstrip("/")}/pricing/'),
+        name='page.pricing',
+    ),
 ]
 
 admin_patterns = [

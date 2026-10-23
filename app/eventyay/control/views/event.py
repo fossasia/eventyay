@@ -950,7 +950,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
        Returns ``{ "previews": { "en": "...", "de": "..." } }``.
     """
 
-    permission = ('can_change_orders', 'can_change_event_settings')
+    permission = ('can_change_orders', 'can_change_event_settings', 'can_change_vouchers')
 
     def post(self, request, *args, **kwargs):
         content_type = request.content_type or ''
@@ -974,7 +974,12 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             return HttpResponseBadRequest('locale must be a string')
 
         safe_html = sanitize_email_html(raw_html)
-        preview_html = expand_email_preview_placeholders(safe_html, request.event, locale=locale or None)
+        preview_html = expand_email_preview_placeholders(
+            safe_html,
+            request.event,
+            locale=locale or None,
+            preview_context=request.GET.get('context'),
+        )
         return JsonResponse({'html': preview_html})
 
     def _handle_form(self, request):
@@ -989,7 +994,12 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             if not body:
                 continue
             safe_html = sanitize_email_html(body)
-            previews[locale] = expand_email_preview_placeholders(safe_html, event, locale=locale)
+            previews[locale] = expand_email_preview_placeholders(
+                safe_html,
+                event,
+                locale=locale,
+                preview_context=request.GET.get('context'),
+            )
 
         if not previews:
             body = request.POST.get('body', '')
@@ -997,7 +1007,9 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
                 safe_html = sanitize_email_html(body)
                 event_locales = list(event.settings.locales)
                 previews[event_locales[0] if event_locales else 'en'] = expand_email_preview_placeholders(
-                    safe_html, event
+                    safe_html,
+                    event,
+                    preview_context=request.GET.get('context'),
                 )
 
         return JsonResponse({'previews': previews})

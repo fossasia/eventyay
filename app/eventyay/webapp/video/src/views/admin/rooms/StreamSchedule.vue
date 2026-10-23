@@ -55,6 +55,7 @@ import { helpers } from '@vuelidate/validators';
 import { required, url, normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators';
 import api from 'lib/api';
 import { logOperational } from 'lib/operationalLog';
+import { readApiErrorMessage } from 'lib/apiErrorMessage';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
@@ -407,62 +408,7 @@ export default {
 				}
 
 				if (!response.ok) {
-					const responseClone = response.clone();
-					let errorData = {};
-					try {
-						errorData = await response.json();
-					} catch (e) {
-						try {
-							const text = await responseClone.text();
-							if (text) {
-								try {
-									errorData = JSON.parse(text);
-								} catch (parseError) {
-									errorData = { detail: text };
-								}
-							}
-						} catch (textError) {
-						}
-					}
-
-					let errorMessage = null;
-
-					if (errorData && typeof errorData === 'object') {
-						const errorKeys = [
-							'__all__',
-							'non_field_errors',
-							'detail',
-							'message',
-						];
-						for (const key of errorKeys) {
-							if (errorData[key]) {
-								const val = errorData[key];
-								if (Array.isArray(val) && val[0]) {
-									errorMessage = val[0];
-								} else if (typeof val === 'string') {
-									errorMessage = val;
-								}
-								if (errorMessage) break;
-							}
-						}
-
-						if (!errorMessage && Object.keys(errorData).length > 0) {
-							const firstKey = Object.keys(errorData)[0];
-							const firstValue = errorData[firstKey];
-							if (Array.isArray(firstValue) && firstValue[0]) {
-								errorMessage = firstValue[0];
-							} else if (typeof firstValue === 'string') {
-								errorMessage = firstValue;
-							}
-						}
-					} else if (typeof errorData === 'string') {
-						errorMessage = errorData;
-					}
-
-					if (!errorMessage) {
-						errorMessage = this.$t('Bad Request');
-					}
-
+					const errorMessage = await readApiErrorMessage(response, this.$t('Bad Request'));
 					throw new Error(errorMessage);
 				}
 
