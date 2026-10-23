@@ -401,6 +401,7 @@ def test_orga_release_preserves_non_field_error(orga_client, event):
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_cannot_reuse_schedule_name(orga_client, event):
+    """Show only the version-field error when a release name is reused."""
     with scope(event=event):
         assert Schedule.objects.count() == 1
         event.talks_published = True
@@ -420,6 +421,9 @@ def test_orga_cannot_reuse_schedule_name(orga_client, event):
         data={"version": "Test version 2"},
     )
     assert response.status_code == 200
+    assert response.text.count('This schedule version was used already, please choose a different one.') == 1
+    assert 'You have to provide a new, unique schedule version!' not in response.text
+    assert str(phrases.base.error_saving_changes) not in response.text
     with scope(event=event):
         assert Schedule.objects.count() == 2
 
