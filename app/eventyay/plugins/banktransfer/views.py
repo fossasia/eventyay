@@ -64,12 +64,26 @@ class ActionView(View):
 
     def _accept_ignore_amount(self, trans):
         if trans.amount < Decimal('0.00'):
+            existing_ref = None
+            for r_cand in trans.order.refunds.filter(provider='banktransfer'):
+                try:
+                    if r_cand.info_data.get('trans_id') == trans.pk:
+                        existing_ref = r_cand
+                        break
+                except (ValueError, TypeError, AttributeError):
+                    continue
+            if existing_ref:
+                with transaction.atomic():
+                    trans.state = BankTransaction.STATE_VALID
+                    trans.save()
+                return JsonResponse({'status': 'ok'})
+
             ref = trans.order.refunds.filter(
                 amount=trans.amount * -1,
                 provider='manual',
                 state__in=(
                     OrderRefund.REFUND_STATE_CREATED,
-                    OrderRefund.REFUND_STATE_CREATED,
+                    OrderRefund.REFUND_STATE_TRANSIT,
                 ),
             ).first()
             p = trans.order.payments.filter(
@@ -81,30 +95,32 @@ class ActionView(View):
                 ),
             ).first()
             if ref:
-                ref.done(user=self.request.user)
-                trans.state = BankTransaction.STATE_VALID
-                trans.save()
+                with transaction.atomic():
+                    ref.done(user=self.request.user)
+                    trans.state = BankTransaction.STATE_VALID
+                    trans.save()
                 return JsonResponse(
                     {
                         'status': 'ok',
                     }
                 )
             elif p:
-                p.create_external_refund(
-                    amount=trans.amount * -1,
-                    info=json.dumps(
-                        {
-                            'reference': trans.reference,
-                            'date': trans.date,
-                            'payer': trans.payer,
-                            'iban': trans.iban,
-                            'bic': trans.bic,
-                            'trans_id': trans.pk,
-                        }
-                    ),
-                )
-                trans.state = BankTransaction.STATE_VALID
-                trans.save()
+                with transaction.atomic():
+                    p.create_external_refund(
+                        amount=trans.amount * -1,
+                        info=json.dumps(
+                            {
+                                'reference': trans.reference,
+                                'date': trans.date,
+                                'payer': trans.payer,
+                                'iban': trans.iban,
+                                'bic': trans.bic,
+                                'trans_id': trans.pk,
+                            }
+                        ),
+                    )
+                    trans.state = BankTransaction.STATE_VALID
+                    trans.save()
                 return JsonResponse(
                     {
                         'status': 'ok',

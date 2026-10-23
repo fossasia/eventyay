@@ -478,6 +478,49 @@ def test_retry_refund_external(env, client):
 
 
 @pytest.mark.django_db
+def test_retry_refund_external_idempotent(env, client):
+    job = BankImportJob.objects.create(event=env[0])
+    trans = BankTransaction.objects.create(
+        event=env[0],
+        import_job=job,
+        payer='Foo',
+        state=BankTransaction.STATE_ERROR,
+        amount=-23,
+        date='unknown',
+        order=env[3],
+    )
+    with scopes_disabled():
+        p = env[3].payments.create(
+            amount=23,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+        )
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    env[3].status = Order.STATUS_PAID
+    env[3].save()
+
+    resp1 = client.post(
+        '/control/event/{}/{}/banktransfer/action/'.format(env[0].organizer.slug, env[0].slug),
+        {'action_{}'.format(trans.pk): 'retry'},
+    )
+    assert json.loads(resp1.content.decode('utf-8'))['status'] == 'ok'
+    with scopes_disabled():
+        assert env[3].refunds.count() == 1
+
+    trans.state = BankTransaction.STATE_ERROR
+    trans.save()
+
+    resp2 = client.post(
+        '/control/event/{}/{}/banktransfer/action/'.format(env[0].organizer.slug, env[0].slug),
+        {'action_{}'.format(trans.pk): 'retry'},
+    )
+    assert json.loads(resp2.content.decode('utf-8'))['status'] == 'ok'
+    trans.refresh_from_db()
+    assert trans.state == BankTransaction.STATE_VALID
+    with scopes_disabled():
+        assert env[3].refunds.count() == 1
+
+@pytest.mark.django_db
 def test_retry_refund_complete(env, client):
     job = BankImportJob.objects.create(event=env[0])
     trans = BankTransaction.objects.create(

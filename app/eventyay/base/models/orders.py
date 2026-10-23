@@ -41,7 +41,7 @@ from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_countries.fields import Country
-from django_scopes import ScopedManager, scopes_disabled
+from django_scopes import ScopedManager, scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 from phonenumber_field.modelfields import PhoneNumberField
 from phonenumber_field.phonenumber import PhoneNumber
@@ -2048,6 +2048,7 @@ class OrderPayment(models.Model):
             self.local_id = (self.order.payments.aggregate(m=Max('local_id'))['m'] or 0) + 1
         super().save(*args, **kwargs)
 
+    @transaction.atomic
     def create_external_refund(self, amount=None, execution_date=None, info='{}'):
         """
         This should be called to create an OrderRefund object when a refund has triggered
@@ -2062,28 +2063,56 @@ class OrderPayment(models.Model):
         :type info: str
         :return: OrderRefund
         """
-        r = self.order.refunds.create(
-            state=OrderRefund.REFUND_STATE_EXTERNAL,
-            source=OrderRefund.REFUND_SOURCE_EXTERNAL,
-            amount=amount if amount is not None else self.amount,
-            order=self.order,
-            payment=self,
-            execution_date=execution_date or now(),
-            provider=self.provider,
-            info=info,
-        )
-        self.order.log_action(
-            'eventyay.event.order.refund.created.externally',
-            {
-                'local_id': r.local_id,
-                'provider': r.provider,
-            },
-        )
-
-        if self.order.pending_sum + r.amount == Decimal('0.00'):
-            self.refund.done()
-
-        return r
+        with scope(event=self.order.event):
+            # Serialize refund creation and balance checking per order
+            locked_order = Order.objects.select_for_update().get(pk=self.order.pk)
+            self.order = locked_order
+    
+            # Idempotency check: if info specifies a transaction ID, check for existing refund
+            trans_id = None
+            if info:
+                try:
+                    info_dict = json.loads(info) if isinstance(info, str) else info
+                    trans_id = info_dict.get('trans_id')
+                except (ValueError, TypeError, AttributeError):
+                    pass
+    
+            if trans_id is not None:
+                for existing_refund in self.order.refunds.filter(provider=self.provider):
+                    try:
+                        if existing_refund.info_data.get('trans_id') == trans_id:
+                            return existing_refund
+                    except (ValueError, TypeError, AttributeError):
+                        continue
+    
+            r = self.order.refunds.create(
+                state=OrderRefund.REFUND_STATE_EXTERNAL,
+                source=OrderRefund.REFUND_SOURCE_EXTERNAL,
+                amount=amount if amount is not None else self.amount,
+                order=self.order,
+                payment=self,
+                execution_date=execution_date or now(),
+                provider=self.provider,
+                info=info,
+            )
+            self.order.log_action(
+                'eventyay.event.order.refund.created.externally',
+                {
+                    'local_id': r.local_id,
+                    'provider': r.provider,
+                },
+            )
+    
+            # Include existing external refunds when determining whether this refund settles the remaining overpayment
+            existing_external_refunds = self.order.refunds.filter(state=OrderRefund.REFUND_STATE_EXTERNAL).exclude(pk=r.pk)
+            existing_external_sum = existing_external_refunds.aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
+    
+            if self.order.pending_sum + existing_external_sum + r.amount == Decimal('0.00'):
+                for prior_refund in existing_external_refunds:
+                    prior_refund.done()
+                r.done()
+    
+            return r
 
 
 class OrderRefund(models.Model):
