@@ -5,7 +5,6 @@
     {{ block.super }}
     {% compress css %}
         <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
-        <link rel="stylesheet" href="{% static 'pretixcontrol/css/platform-dashboard.css' %}">
     {% endcompress %}
     <script type="module" src="{% static 'pretixcontrol/js/platform-dashboard.js' %}"></script>
 {% endblock %}
