@@ -80,6 +80,14 @@ class AdminSalesTest(SoupTest):
             sent_to_email='billing@example.com',
         )
 
+    def test_empty_results_span_all_columns(self):
+        for path, columns in (('/admin/sales/', 7), ('/admin/sales/invoices/', 9)):
+            with self.subTest(path=path):
+                response = self.client.get(path, {'query': 'no matching sales record'})
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, f"colspan='{columns}'")
+                self.assertContains(response, 'No results match your filters.')
+
     def test_export_includes_events_without_dates(self):
         self.event.date_from = None
         self.event.tickets_sold = 0
