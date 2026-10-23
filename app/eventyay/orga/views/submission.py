@@ -2,6 +2,7 @@ from django_scopes import scope
 import json
 from collections import Counter
 from dataclasses import replace
+from itertools import islice
 
 from dateutil import rrule
 from django.conf import settings
@@ -72,7 +73,7 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import SessionImportProcessForm
+from eventyay.orga.forms.importers import CSV_SAMPLE_ROW_LIMIT, SessionImportProcessForm, csv_sample_values
 from eventyay.orga.forms.submission import (
     AddSpeakerForm,
     AddSpeakerInlineForm,
@@ -1707,24 +1708,26 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
     def parsed(self):
         return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
 
+    def _parsed_rows(self):
+        if not hasattr(self, '_cached_parsed_rows'):
+            self._cached_parsed_rows = list(islice(self.parsed, CSV_SAMPLE_ROW_LIMIT)) if self.parsed else []
+        return self._cached_parsed_rows
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['headers'] = self.parsed.fieldnames if self.parsed else []
+        headers = list(self.parsed.fieldnames or []) if self.parsed else []
+        kwargs['headers'] = headers
         kwargs['event'] = self.request.event
         kwargs['initial'] = self.request.event.settings.submission_import_settings
+        kwargs['sample_values'] = csv_sample_values(self._parsed_rows(), headers)
         return kwargs
 
     @context
     def preview_rows(self):
         if not self.parsed:
             return []
-        rows = []
         headers = self.parsed.fieldnames or []
-        for i, row in enumerate(self.parsed):
-            if i >= 5:
-                break
-            rows.append([row.get(h, '') for h in headers])
-        return rows
+        return [[row.get(header, '') for header in headers] for row in self._parsed_rows()[:5]]
 
     @context
     def headers(self):
