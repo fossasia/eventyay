@@ -1,0 +1,19 @@
+{% load i18n %}
+{% comment %}
+  Social/profile links of one speaker. Expects `social_links`, a list of
+  SpeakerSocialLink objects.
+{% endcomment %}
+{% if social_links %}
+  <div class="submission-detail speaker-social-links">
+    <strong class="submission-detail-label">{% translate 'Social links' %}</strong>
+    <ul class="submission-detail-value">
+      {% for link in social_links %}
+        <li>
+          {% if link.spec.icon_class %}<i class="fa {{ link.spec.icon_class }}" aria-hidden="true"></i>{% endif %}
+          {{ link.spec.label }}:
+          <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.url }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}

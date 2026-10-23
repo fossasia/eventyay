@@ -1,13 +1,9 @@
 {% load i18n %}
+{% load phone_format %}
 {% load rich_text %}
 
 {% if answer.question.variant == "file" %}
-    <i class="fa fa-file-o"></i>
-    {% if answer.answer_file %}
-        <a href="{{ answer.answer_file.url }}">{{ answer.answer_file }}</a>
-    {% else %}
-        {% translate "No file provided" %}
-    {% endif %}
+    {% include "common/includes/answer_file.html" with answer=answer %}
 {% elif answer.question.variant == "boolean" %}
     {{ answer.boolean_answer|yesno }}
 {% elif answer.question.variant == "video" or answer.question.variant == "url" %}
@@ -16,6 +12,14 @@
     {% else %}
         {% translate "No response" %}
     {% endif %}
+{% elif answer.question.variant == "country" %}
+    {{ answer.answer_string }}
+{% elif answer.question.variant == "date" %}
+    {% if answer.answer_date %}{{ answer.answer_date|date:"DATE_FORMAT" }}{% else %}{{ answer.answer }}{% endif %}
+{% elif answer.question.variant == "datetime" %}
+    {% if answer.answer_datetime %}{{ answer.answer_datetime|date:"DATE_FORMAT" }}, {{ answer.answer_datetime|time:"TIME_FORMAT" }}{% else %}{{ answer.answer }}{% endif %}
+{% elif answer.question.variant == "tel" %}
+    {{ answer.answer|phone_format }}
 {% elif answer %}
     {{ answer.answer|rich_text }}
 {% else %}

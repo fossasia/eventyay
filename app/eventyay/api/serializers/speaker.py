@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, validate_image
-
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions
@@ -22,8 +20,10 @@ from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.auth import User
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.question import TalkQuestionTarget
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, validate_image
 from eventyay.common.social_links import serialize_social_link
-from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
+from eventyay.common.text.rich_text import is_empty_rich_text
+from eventyay.talk_rules.orga import is_reviewer_only_for_event
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -50,9 +50,13 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             self.fields.pop('avatar_url')
         if is_public_view and not self.event.cfp.public_biography:
             self.fields.pop('biography', None)
-        if not self.event.cfp.request_job_title or (is_public_view and not self.event.cfp.is_field_public('job_title')):
+        if not self.event.cfp.request_job_title or (
+            is_public_view and not self.event.cfp.is_field_public('job_title')
+        ):
             self.fields.pop('job_title', None)
-        if not self.event.cfp.request_organization or (is_public_view and not self.event.cfp.is_field_public('organization')):
+        if not self.event.cfp.request_organization or (
+            is_public_view and not self.event.cfp.is_field_public('organization')
+        ):
             self.fields.pop('organization', None)
         if is_public_view and not self.event.cfp.is_field_public('avatar_source'):
             self.fields.pop('avatar_source', None)
@@ -66,11 +70,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
-        if (
-            self.event
-            and request
-            and request.user.has_perm('base.orga_list_speakerprofile', self.event)
-        ):
+        if self.event and request and request.user.is_authenticated:
             from eventyay.talk_rules.orga import (
                 can_view_speaker_emails,
                 can_view_speaker_names,
@@ -95,6 +95,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 data.pop('organization', None)
                 data.pop('avatar_url', None)
                 data.pop('social_links', None)
+                data.pop('avatar_source', None)
+                data.pop('avatar_license', None)
             elif hide_emails:
                 data.pop('email', None)
         return data
@@ -158,6 +160,17 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             self._handle_availabilities(profile, availabilities_data, field='person')
         return profile
 
+    def validate_biography(self, value):
+        """Validate biography, rejecting empty content when required and
+        normalizing optional empty values to empty string.
+        """
+        if is_empty_rich_text(value):
+            if self.event and self.event.cfp.require_biography:
+                from django.utils.translation import gettext_lazy as _
+                raise exceptions.ValidationError(_('This field is required.'))
+            return ''
+        return value
+
     class Meta:
         model = SpeakerProfile
         fields = (
@@ -207,7 +220,7 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.event:
-            for field in ('avatar', 'availabilities'):
+            for field in ('avatar', 'availabilities', 'biography'):
                 if field not in self.fields:
                     continue
                 if not getattr(self.event.cfp, f'request_{field}'):

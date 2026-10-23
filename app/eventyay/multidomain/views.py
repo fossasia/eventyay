@@ -17,6 +17,7 @@ from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from django.utils.timezone import now
 from django.utils.translation import gettext as _, pgettext
+from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import View
 from django.views.static import serve as static_serve
@@ -27,6 +28,7 @@ from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.base.settings import get_video_provider_visibility
 from eventyay.common.gzip import gzip_if_accepted
 from eventyay.common.language import get_ui_language_options
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
@@ -162,6 +164,13 @@ class VideoSPAView(View):
                 'hasOrganiserPermissions': can_manage,
                 'publicVideoUrl': f'/{event.organizer.slug}/{event.slug}/video',
                 'homeUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
+                'plugins': event.get_plugins() if hasattr(event, 'get_plugins') else [],
+                'interpretationUrl': safe_reverse('plugins:interpretation:dashboard', organizer=event.organizer.slug, event=event.slug),
+                'interpretation': {
+                    'isEnabled': bool(event.settings.get('interpretation_is_enabled', default=True, as_type=bool)),
+                    'usePluginStreams': bool(event.settings.get('interpretation_use_plugin_streams', default=False, as_type=bool)),
+                },
+                'csrfToken': get_token(request),
                 'ticketUrl': safe_reverse('control:event.index', organizer=event.organizer.slug, event=event.slug) if has_ticket_access else None,
                 'talkUrl': safe_reverse('orga:event.dashboard', organizer=event.organizer.slug, event=event.slug) if has_talk_access else None,
                 'videoUrl': f'/video/event/{event.organizer.slug}/{event.slug}/',
@@ -193,6 +202,7 @@ class VideoSPAView(View):
                 'theme': build_video_theme_for_event(event),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
+                'video_providers': get_video_provider_visibility(),
                 'schedule': None,
                 'scheduleMeta': {
                     'version': schedule_version or '',

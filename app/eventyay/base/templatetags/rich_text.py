@@ -11,6 +11,7 @@ import markdown
 from bleach import DEFAULT_CALLBACKS
 # TODO: Remove bleach import
 from bleach.linkifier import build_email_re, build_url_re
+from bs4 import BeautifulSoup
 from django import template
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -191,7 +192,47 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
-def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
+# Query value the bulk-voucher form adds to the shared preview URL.
+VOUCHER_EMAIL_PREVIEW_CONTEXT = 'voucher'
+
+_VOUCHER_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'voucher_list', 'name')
+
+
+def _preview_placeholder_context(html_body: str) -> list[str]:
+    """Base preview context, plus voucher placeholders when the body uses them.
+
+    Voucher placeholders are added only for bodies that reference them so the
+    voucher ``{url}`` sample does not replace the order status ``{url}``.
+    A body that contains only ``{url}`` stays on the order context. Bulk-voucher
+    previews pass ``preview_context`` instead of widening this check.
+    """
+    parameters = list(_PREVIEW_PLACEHOLDER_CONTEXT)
+    if re.search(
+        r'\{voucher_(?:list|url)\}|data-variable=["\']voucher_(?:list|url)["\']',
+        html_body or '',
+    ):
+        parameters.extend(['voucher_list', 'name'])
+    return parameters
+
+
+def _preview_parameters(html_body: str, preview_context: str | None) -> list[str]:
+    """Placeholder groups for one preview request.
+
+    ``voucher`` is the bulk-voucher form. It always includes ``voucher_list``,
+    so ``{url}`` samples the event shop the same way delivery does.
+    """
+    if preview_context == VOUCHER_EMAIL_PREVIEW_CONTEXT:
+        return list(_VOUCHER_PREVIEW_PARAMETERS)
+    return _preview_placeholder_context(html_body)
+
+
+def expand_email_preview_placeholders(
+    html_body: str,
+    event,
+    *,
+    locale: str | None = None,
+    preview_context: str | None = None,
+) -> str:
     """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview."""
     from eventyay.base.i18n import language
     from eventyay.base.services.mail import expand_email_variable_chips
@@ -201,7 +242,7 @@ def expand_email_preview_placeholders(html_body: str, event, *, locale: str | No
         resolved_locale = event.settings.locale
 
     with language(resolved_locale, event.settings.region):
-        context_dict = build_email_preview_context(event, list(_PREVIEW_PLACEHOLDER_CONTEXT))
+        context_dict = build_email_preview_context(event, _preview_parameters(html_body, preview_context))
         expanded = html_body.format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
@@ -356,6 +397,35 @@ def rich_text_snippet(text: str):
     if not rendered:
         return rendered
     return mark_safe(_unwrap_single_paragraph(str(rendered)))
+
+
+def _link_remote_images(html_body: str) -> str:
+    """Replace images that are not embedded in the email with links, so viewing it loads nothing."""
+    soup = BeautifulSoup(html_body, 'html.parser')
+    for img in soup.find_all('img'):
+        src = img.get('src', '').strip()
+        # Browsers ignore whitespace and control characters in URLs, so check the source without them.
+        if re.sub(r'[\x00-\x20]', '', src).lower().startswith('data:image/'):
+            continue
+        if src:
+            link = soup.new_tag('a', href=src, target='_blank', rel='noopener noreferrer')
+            link.string = img.get('alt') or src
+            img.replace_with(link)
+        else:
+            img.replace_with(img.get('alt', ''))
+    return str(soup)
+
+
+@register.filter
+def rich_text_email(text: str):
+    """Render a stored email body the way the HTML email shows it to the recipient.
+
+    Images that are not embedded in the email are shown as links instead, so opening
+    the email history does not contact the image host.
+    """
+    if not text:
+        return ''
+    return mark_safe(_link_remote_images(compile_email_body(text)))
 
 
 @register.filter

@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
+from django.db.models import F
 from django.forms import ValidationError
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import redirect
@@ -640,8 +641,8 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         if access_code:
             submission.access_code = access_code
             submission.save()
-            access_code.redeemed += 1
-            access_code.save()
+            access_code.redeemed = F('redeemed') + 1
+            access_code.save(update_fields=['redeemed'])
 
         request.submission = submission
 
@@ -849,7 +850,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         submission = getattr(request, 'submission', None)
         if not draft and additional_speaker and submission:
             try:
-                submission.send_invite(to=[additional_speaker], _from=request.user)
+                submission.send_invite(to=additional_speaker, _from=request.user)
+            except ValidationError as exception:
+                messages.warning(request, exception.message if hasattr(exception, 'message') else str(exception))
             except SendMailException as exception:
                 logger.warning('Failed to send co-speaker invite email: %s', exception)
                 messages.warning(request, phrases.cfp.submission_email_fail)

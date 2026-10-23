@@ -5,7 +5,7 @@ import urllib
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db import transaction
+from django.db import models, transaction
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
@@ -22,6 +22,7 @@ from django.views.generic import (
     View,
 )
 from django_context_decorator import context
+from django_scopes import scope
 
 from eventyay.base.models import (
     Resource,
@@ -34,7 +35,6 @@ from eventyay.base.models import (
 )
 from eventyay.cfp.forms.submissions import SubmissionInvitationForm
 from eventyay.cfp.views.event import LoggedInEventPageMixin
-from eventyay.common.exceptions import SendMailException
 from eventyay.common.forms.fields import SizeFileInput
 from eventyay.common.image import gravatar_csp
 from eventyay.common.middleware.event import get_login_redirect
@@ -195,31 +195,29 @@ class SubmissionsWithdrawView(LoggedInEventPageMixin, SubmissionViewMixin, Detai
     def post(self, request, *args, **kwargs):
         obj = self.get_object()
         if self.request.user.has_perm('base.withdraw_submission', obj):
-            if obj.state == SubmissionStates.ACCEPTED:
+            if obj.state == SubmissionStates.ACCEPTED and hasattr(obj.event, 'send_orga_mail'):
                 with override(obj.event.locale):
-                    obj.event.send_orga_mail(
-                        str(
-                            _(
-                                textwrap.dedent(
-                                    """
-                        Hi,
+                    template = _(
+                        textwrap.dedent(
+                            """
+                Hi,
 
-                        this is your content system at {event_dashboard}.
-                        Your accepted talk “{title}” by {speakers} was just withdrawn by {user}.
-                        You can find details at {url}.
+                this is your content system at {event_dashboard}.
+                Your accepted talk “{title}” by {speakers} was just withdrawn by {user}.
+                You can find details at {url}.
 
-                        Best regards,
-                        eventyay
-                        """
-                                )
-                            )
-                        ).format(
-                            title=obj.title,
-                            speakers=obj.display_speaker_names,
-                            user=request.user.get_display_name(),
-                            event_dashboard=request.event.orga_urls.base.full(),
-                            url=obj.orga_urls.edit.full(),
+                Best regards,
+                eventyay
+                """
                         )
+                    )
+                    obj.event.send_orga_mail(
+                        template,
+                        title=obj.title,
+                        speakers=obj.display_speaker_names,
+                        user=request.user.get_display_name(),
+                        event_dashboard=request.event.orga_urls.base.full(),
+                        url=obj.orga_urls.edit.full(),
                     )
             obj.withdraw(person=request.user)
             messages.success(self.request, phrases.cfp.submission_withdrawn)
@@ -316,9 +314,15 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     @cached_property
     def pending_invitations(self):
         speaker_ids = self.object.speakers.values_list('pk', flat=True)
+        speaker_emails = [
+            e.strip().lower()
+            for e in self.object.speakers.values_list('email', flat=True)
+            if e and e.strip()
+        ]
         return (
             self.object.speaker_invitations.filter(status=SpeakerInvitationStates.PENDING)
             .exclude(user_id__in=speaker_ids)
+            .exclude(email__in=speaker_emails)
             .select_related('user')
         )
 
@@ -471,23 +475,32 @@ class SubmissionInviteView(LoggedInEventPageMixin, SubmissionViewMixin, FormView
                 messages.warning(self.request, phrases.cfp.invite_invalid_email)
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_invite_co_speakers'] = self.submission.can_invite_co_speakers
+        return context
+
     def form_valid(self, form):
-        invitations = form.save()
+        try:
+            invitation = form.save()
+        except ValidationError as e:
+            messages.error(self.request, e.message if hasattr(e, 'message') else str(e))
+            return redirect(self.submission.urls.user_base)
+
         self.submission.log_action('eventyay.submission.speakers.invite', person=self.request.user)
-        for invitation in invitations:
-            if invitation.mail_state == SpeakerInvitationMailStates.SENT:
-                messages.success(
-                    self.request,
-                    _('Invitation sent to {email}.').format(email=invitation.email),
-                )
-            else:
-                messages.error(
-                    self.request,
-                    _(
-                        'The invitation email to {email} could not be sent. '
-                        'You can resend it from the list of pending invitations.'
-                    ).format(email=invitation.email),
-                )
+        if invitation and invitation.mail_state == SpeakerInvitationMailStates.SENT:
+            messages.success(
+                self.request,
+                _('Invitation sent to {email}.').format(email=invitation.email),
+            )
+        elif invitation:
+            messages.error(
+                self.request,
+                _(
+                    'The invitation email to {email} could not be sent. '
+                    'You can resend it from the list of pending invitations.'
+                ).format(email=invitation.email),
+            )
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -505,16 +518,29 @@ class SubmissionInviteResendView(LoggedInEventPageMixin, SubmissionViewMixin, Vi
             SpeakerInvitation, submission=self.submission, pk=self.kwargs['pk']
         )
         if not invitation.can_resend:
-            messages.warning(request, _('This invitation cannot be resent.'))
-        elif invitation.resend(requestor=request.user):
-            messages.success(
-                request,
-                _('Invitation sent to {email}.').format(email=invitation.email),
-            )
+            if invitation.resend_count >= invitation.MAX_RESENDS:
+                messages.warning(
+                    request,
+                    phrases.cfp.invite_resend_limit_reached.format(count=invitation.MAX_RESENDS),
+                )
+            else:
+                messages.warning(request, _('This invitation cannot be resent.'))
+            return redirect(self.submission.urls.user_base)
+
+        try:
+            delivered = invitation.resend(requestor=request.user)
+        except ValidationError as e:
+            messages.error(request, e.message)
         else:
-            messages.error(
-                request, _('The invitation email could not be sent. Please try again.')
-            )
+            if delivered:
+                messages.success(
+                    request,
+                    _('Invitation sent to {email}.').format(email=invitation.email),
+                )
+            else:
+                messages.error(
+                    request, _('The invitation email could not be sent. Please try again.')
+                )
         return redirect(self.submission.urls.user_base)
 
 
@@ -525,16 +551,18 @@ class SubmissionInviteRevokeView(LoggedInEventPageMixin, SubmissionViewMixin, Vi
         return self.get_object()
 
     def post(self, request, *args, **kwargs):
-        invitation = get_object_or_404(
-            SpeakerInvitation,
-            submission=self.submission,
-            pk=self.kwargs['pk'],
-            status=SpeakerInvitationStates.PENDING,
-        )
-        email = invitation.email
-        if not invitation.revoke(person=request.user, orga=False):
-            messages.warning(request, _('This invitation cannot be revoked.'))
-            return redirect(self.submission.urls.user_base)
+        with scope(event=self.request.event), transaction.atomic():
+            locked_submission = type(self.submission).all_objects.select_for_update().get(pk=self.submission.pk)
+            invitation = get_object_or_404(
+                SpeakerInvitation.objects.select_for_update(),
+                submission=locked_submission,
+                pk=self.kwargs['pk'],
+                status=SpeakerInvitationStates.PENDING,
+            )
+            email = invitation.email
+            if not invitation.revoke(person=request.user, orga=False):
+                messages.warning(request, _('This invitation cannot be revoked.'))
+                return redirect(self.submission.urls.user_base)
         messages.success(
             request,
             _('The invitation to {email} was revoked.').format(email=email),
@@ -546,6 +574,24 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
     template_name = 'cfp/event/invitation.html'
     context_object_name = 'submission'
 
+    def has_permission(self):
+        try:
+            submission = Submission.objects.get(code__iexact=self.kwargs.get('code'))
+            token = self.kwargs.get('invitation')
+            if token and submission.invitation_token and submission.invitation_token.lower() == token.lower():
+                if self.request.user.is_authenticated:
+                    user_invites = submission.speaker_invitations.filter(
+                        models.Q(email__iexact=self.request.user.email) | models.Q(user=self.request.user)
+                    )
+                    if user_invites.exists() and not user_invites.filter(
+                        status=SpeakerInvitationStates.PENDING
+                    ).exists():
+                        return False
+                return True
+        except (Submission.DoesNotExist, KeyError):
+            pass
+        return super().has_permission()
+
     def get_object(self, queryset=None):
         try:
             return Submission.objects.get(code__iexact=self.kwargs['code'])
@@ -555,36 +601,98 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_anonymous:
             return get_login_redirect(request)
-            
+
         try:
             submission = Submission.objects.get(code__iexact=kwargs['code'])
-            if not submission.invitation_token or submission.invitation_token.lower() != kwargs['invitation'].lower():
+            token = kwargs.get('invitation') or self.kwargs.get('invitation')
+            if token and (
+                not submission.invitation_token or submission.invitation_token.lower() != token.lower()
+            ):
                 messages.error(request, _('This invitation link is invalid or has expired.'))
+                return redirect(request.event.urls.user)
+            user_invites = submission.speaker_invitations.filter(
+                models.Q(email__iexact=request.user.email) | models.Q(user=request.user)
+            )
+            if user_invites.exists() and not user_invites.filter(status=SpeakerInvitationStates.PENDING).exists():
+                messages.error(request, _('This invitation has been revoked.'))
                 return redirect(request.event.urls.user)
         except Submission.DoesNotExist:
             messages.error(request, _('This invitation link is invalid.'))
             return redirect(request.event.urls.user)
-            
+
         return super().dispatch(request, *args, **kwargs)
+
+    def has_seat(self, submission):
+        """Whether the user can join without exceeding MAX_CO_SPEAKERS.
+
+        Speakers and invited users already count toward the limit.
+        """
+        user = self.request.user
+        if submission.speakers.filter(pk=user.pk).exists():
+            return True
+        if submission.speaker_invitations.filter(models.Q(email__iexact=user.email) | models.Q(user=user)).exists():
+            return True
+        return submission.co_speaker_count < submission.MAX_CO_SPEAKERS
+
+    @context
+    @cached_property
+    def deny_reason(self):
+        submission = self.get_object()
+        if not self.request.user.has_perm('base.add_speaker_submission', submission):
+            return 'permission'
+        if not self.has_seat(submission):
+            return 'limit'
+        return None
 
     @context
     @cached_property
     def can_accept_invite(self):
-        return self.request.user.has_perm('base.add_speaker_submission', self.get_object())
+        return self.deny_reason is None
 
     def post(self, request, *args, **kwargs):
-        if not self.can_accept_invite:
+        submission = self.get_object()
+        if self.deny_reason == 'permission':
             messages.error(self.request, _('You cannot accept this invitation.'))
             return redirect(self.request.event.urls.user)
-        submission = self.get_object()
-        submission.speakers.add(self.request.user)
-        submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
-        submission.save()
-        for invitation in submission.speaker_invitations.filter(
-            status=SpeakerInvitationStates.PENDING,
-            email__iexact=self.request.user.email,
-        ):
-            invitation.accept(user=self.request.user)
+
+        with scope(event=self.request.event), transaction.atomic():
+            locked_submission = type(submission).all_objects.select_for_update().get(pk=submission.pk)
+            token = kwargs.get('invitation') or self.kwargs.get('invitation')
+            if token and (
+                not locked_submission.invitation_token
+                or locked_submission.invitation_token.lower() != token.lower()
+            ):
+                messages.error(self.request, _('This invitation link is invalid or has expired.'))
+                return redirect(self.request.event.urls.user)
+
+            matching_invitations = list(
+                locked_submission.speaker_invitations.select_for_update().filter(
+                    models.Q(email__iexact=self.request.user.email) | models.Q(user=self.request.user)
+                )
+            )
+            if matching_invitations:
+                pending_invitations = [i for i in matching_invitations if i.status == SpeakerInvitationStates.PENDING]
+                if not pending_invitations:
+                    messages.error(self.request, _('This invitation has been revoked.'))
+                    return redirect(self.request.event.urls.user)
+            else:
+                pending_invitations = []
+
+            if not self.has_seat(locked_submission):
+                messages.error(
+                    self.request,
+                    _('This proposal has already reached the maximum of {count} co-speakers.').format(
+                        count=locked_submission.MAX_CO_SPEAKERS
+                    ),
+                )
+                return redirect(self.request.event.urls.user)
+
+            locked_submission.speakers.add(self.request.user)
+            locked_submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
+            locked_submission.save()
+            for invitation in pending_invitations:
+                invitation.accept(user=self.request.user)
+
         messages.success(self.request, phrases.cfp.invite_accepted)
         return redirect(
             'cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug

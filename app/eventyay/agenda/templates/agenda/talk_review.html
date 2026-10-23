@@ -5,7 +5,7 @@
 {% load rich_text %}
 
 {% load presale_locale %}
-{% block title %}{{ submission.title|event_localize }} ::{% endblock title %}
+{% block title %}{{ submission.title|event_localize }} -{% endblock title %}
 
 {% block agenda_content %}
 <div class="talk-review">
@@ -26,7 +26,7 @@
             {% endblocktranslate %}
         </div>
         {% endif %}
-        {% if request.event|get_feature_flag:'use_tracks' and submission.track %}
+        {% if submission.track %}
         <div class="col-auto">
             <span class="text-muted">{% translate 'Track' %}:</span>
             {{ submission.track.name|event_localize }}

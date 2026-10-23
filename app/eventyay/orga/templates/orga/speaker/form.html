@@ -10,6 +10,7 @@
     {% if form.biography %}
         <script src="{% static "vendored/marked.min.js" %}" defer></script> {# do not compress #}
         <script defer src="{% static "vendored/purify.min.js" %}"></script>
+        <script type="module" src="{% static 'common/js/richTextRequired.js' %}"></script>
     {% endif %}
     <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
     {% if social_media_formset %}
@@ -17,6 +18,9 @@
         <script defer src="{% static "js/jquery.formset.js" %}"></script>
         <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
         <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
+    {% endif %}
+    {% if 'no_email' in form.fields %}
+        <script type="module" src="{% static 'orga/js/speaker_create.js' %}"></script>
     {% endif %}
 {% endblock scripts %}
 
@@ -77,7 +81,7 @@
             </ul>
         </span>
     </div>
-    <form method="post" enctype="multipart/form-data">
+    <form id="speaker-create-form" method="post" enctype="multipart/form-data" data-richtext-form-error="{% translate 'We had trouble saving your input – Please see below for details.' %}">
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 

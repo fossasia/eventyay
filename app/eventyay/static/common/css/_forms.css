@@ -450,6 +450,115 @@ input[type="number"]:not(.show-spinner) {
   }
 }
 
+/* File question answers: inline image preview instead of an upload path link. */
+.answer-file-preview {
+  display: inline-block;
+  vertical-align: top;
+  max-width: 180px;
+
+  img {
+    max-width: 100%;
+    max-height: 180px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: var(--shadow-light);
+  }
+}
+
+/* Custom field answers and speaker details, shared by the organiser
+   Content, Speakers and Reviews tabs. Every item is a label above its value. */
+.submission-detail + .submission-detail {
+  margin-top: 0.75rem;
+}
+
+.submission-detail-label {
+  display: block;
+}
+
+.submission-detail-value {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+
+  /* Rich text values arrive wrapped in paragraphs, whose margins would push
+     them away from their label. */
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+ul.submission-detail-value {
+  padding-left: 0;
+  list-style: none;
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+}
+
+ul.speaker-other-submissions {
+  li + li {
+    margin-top: 0.5rem;
+  }
+
+  .badge {
+    margin-left: 0.25rem;
+  }
+}
+
+.speaker-detail-card .speaker-details {
+  margin-bottom: 1rem;
+}
+
+.speaker-avatar-preview {
+  width: 100px;
+  height: auto;
+}
+
+/* Phone number questions: the country code sits next to the number instead
+   of on a line of its own. */
+.nameparts-form-group {
+  display: flex;
+  gap: 0.5rem;
+
+  > select {
+    flex: 0 0 16rem;
+    max-width: 45%;
+  }
+
+  > input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.answer-file-input {
+  .answer-file-input-preview {
+    width: fit-content;
+  }
+
+  .answer-file-input-preview img {
+    max-height: 180px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .answer-file-input-current {
+    margin-bottom: 0.25rem;
+  }
+
+  .answer-file-input-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--color-text-muted);
+  }
+}
+
 .input-group {
   position: relative;
   display: flex;

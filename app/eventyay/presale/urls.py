@@ -74,8 +74,8 @@ frame_wrapped_urls = [
         eventyay.presale.views.event.EventIndex.as_view(),
         name='event.index',
     ),
-    path(
-        'waitinglist',
+    re_path(
+        r'^waitinglist/?$',
         eventyay.presale.views.waiting.WaitingView.as_view(),
         name='event.waitinglist',
     ),
@@ -92,10 +92,11 @@ event_patterns = [
     # mode. This is required to prevent all clickjacking and CSRF attacks that would otherwise be possible.
     # First, we define the normal version. The docstring of get_or_create_cart_id() has more information on this.
     path('', include(frame_wrapped_urls)),
-    # Second, the widget version
+    # Second, legacy /w/<ns>/ (old embeds) and preferred /widget/<ns>/ (nginx /widgets?/ keeps ACAO).
     re_path(r'w/(?P<cart_namespace>[a-zA-Z0-9]{16})/', include(frame_wrapped_urls)),
     # Third, a fake version that is defined like the first (and never gets called), but makes reversing URLs easier
     re_path(r'(?P<cart_namespace>[_]{0})', include(frame_wrapped_urls)),
+    re_path(r'widget/(?P<cart_namespace>[a-zA-Z0-9]{16})/', include(frame_wrapped_urls)),
     # CartAdd goes extra since it also gets a csrf_exempt decorator in one of the cases
     re_path(
         r'^cart/add$',
@@ -109,6 +110,11 @@ event_patterns = [
     ),
     re_path(
         r'w/(?P<cart_namespace>[a-zA-Z0-9]{16})/cart/add',
+        csrf_exempt(eventyay.presale.views.cart.CartAdd.as_view()),
+        name='event.cart.add',
+    ),
+    re_path(
+        r'widget/(?P<cart_namespace>[a-zA-Z0-9]{16})/cart/add',
         csrf_exempt(eventyay.presale.views.cart.CartAdd.as_view()),
         name='event.cart.add',
     ),

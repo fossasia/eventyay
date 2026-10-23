@@ -44,6 +44,7 @@ from eventyay.common.views.mixins import (
     EventPermissionRequired,
     OrderActionMixin,
     PermissionRequired,
+    Sortable,
 )
 from eventyay.orga.forms import CfPForm, SubmissionTypeForm, TalkQuestionForm, TrackForm
 from eventyay.orga.forms.cfp import (
@@ -296,9 +297,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'availabilities': str(_('Availability')),
             'additional_speaker': str(_('Additional Speaker')),
             'fullname': str(_('Full name')),
-            'avatar': str(_('Profile picture')),
-            'avatar_source': str(_('Profile Picture Source')),
-            'avatar_license': str(_('Profile Picture License')),
+            'avatar': str(_('Speaker photo')),
+            'avatar_source': str(_('Speaker photo source')),
+            'avatar_license': str(_('Speaker photo license')),
         }
 
         try:
@@ -754,8 +755,15 @@ class CfPQuestionRemind(EventPermissionRequired, FormView):
         missing = []
         submissions = submissions.filter(speakers__in=[person])
         for question in questions:
+            track_ids = {track.pk for track in question.tracks.all()}
+            relevant_submissions = [
+                submission for submission in submissions
+                if not track_ids or not submission.track_id or submission.track_id in track_ids
+            ]
+            if not relevant_submissions:
+                continue
             if question.target == TalkQuestionTarget.SUBMISSION:
-                for submission in submissions:
+                for submission in relevant_submissions:
                     answer = question.answers.filter(submission=submission).first()
                     if not answer or not answer.is_answered:
                         missing.append(question)
@@ -776,7 +784,7 @@ class CfPQuestionRemind(EventPermissionRequired, FormView):
     def form_valid(self, form):
         submissions = form.get_submissions()
         people = self.request.event.submitters.filter(submissions__in=submissions)
-        questions = form.cleaned_data['questions'] or form.get_question_queryset()
+        questions = (form.cleaned_data['questions'] or form.get_question_queryset()).prefetch_related('tracks')
         data = {
             'url': self.request.event.urls.user_submissions.full(),
         }
@@ -796,13 +804,26 @@ class CfPQuestionRemind(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.outbox
 
 
-class SubmissionTypeView(OrderActionMixin, OrgaCRUDView):
+class SubmissionTypeView(Sortable, OrderActionMixin, OrgaCRUDView):
     model = SubmissionType
     form_class = SubmissionTypeForm
     template_namespace = 'orga/cfp'
+    sortable_fields = ('name', 'proposals', 'default_duration')
+    secondary_sort = {
+        '': ('position',),
+        'name': ('position',),
+        'proposals': ('position',),
+        'default_duration': ('position',),
+    }
 
     def get_queryset(self):
-        return self.request.event.submission_types.all()
+        qs = self.request.event.submission_types.all().annotate(
+            proposals=Count(
+                'submissions',
+                filter=~Q(submissions__state__in=('deleted', 'draft')),
+            )
+        )
+        return self.sort_queryset(qs)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -854,13 +875,26 @@ class SubmissionTypeDefault(PermissionRequired, View):
         return redirect(request.event.cfp.urls.types)
 
 
-class TrackView(OrderActionMixin, OrgaCRUDView):
+class TrackView(Sortable, OrderActionMixin, OrgaCRUDView):
     model = Track
     form_class = TrackForm
     template_namespace = 'orga/cfp'
+    sortable_fields = ('name', 'color', 'proposals')
+    secondary_sort = {
+        '': ('position',),
+        'name': ('position',),
+        'color': ('position',),
+        'proposals': ('position',),
+    }
 
     def get_queryset(self):
-        return self.request.event.tracks.all()
+        qs = self.request.event.tracks.all().annotate(
+            proposals=Count(
+                'submissions',
+                filter=~Q(submissions__state__in=('deleted', 'draft')),
+            )
+        )
+        return self.sort_queryset(qs)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_view'}
