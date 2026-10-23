@@ -387,6 +387,11 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     def form_invalid(self, form):
         if is_ajax_request(self.request):
             return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+        if next_url := get_next_url(self.request):
+            for errors in form.errors.values():
+                for error in errors:
+                    messages.error(self.request, error)
+            return redirect(next_url)
         return super().form_invalid(form)
 
     def get_form_kwargs(self):
@@ -543,9 +548,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @cached_property
     def add_speaker_form(self):
         if self.object and self.action == 'edit':
-            return AddSpeakerInlineForm(
-                event=self.request.event, require_name=True, include_biography=True, submission=self.object
-            )
+            return AddSpeakerInlineForm(event=self.request.event, require_name=True, submission=self.object)
 
     @context
     @cached_property

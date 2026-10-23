@@ -2,6 +2,7 @@ import bs4
 import pytest
 from django_scopes import scope
 
+from eventyay.base.cache import ObjectRelatedCache
 from eventyay.base.models import SpeakerInvitation
 
 
@@ -34,7 +35,7 @@ def test_existing_speaker_page_offers_session_options(orga_client, event, speake
 def test_existing_speaker_can_be_linked_to_existing_session(orga_client, event, speaker, submission, other_submission):
     response = orga_client.post(
         speaker_url(speaker, event),
-        data={**SPEAKER_DATA, "link_existing_session": "on", "existing_session_id": other_submission.pk},
+        data={**SPEAKER_DATA, "existing_session_id": other_submission.pk},
         follow=True,
     )
     assert response.status_code == 200
@@ -99,7 +100,7 @@ def test_existing_speaker_can_get_a_new_session(orga_client, event, speaker, sub
 def test_existing_speaker_cannot_link_a_session_twice(orga_client, event, speaker, submission):
     response = orga_client.post(
         speaker_url(speaker, event),
-        data={**SPEAKER_DATA, "link_existing_session": "on", "existing_session_id": submission.pk},
+        data={**SPEAKER_DATA, "existing_session_id": submission.pk},
     )
     assert response.status_code == 200
     assert "The selected session does not exist." in response.text
@@ -152,7 +153,7 @@ def test_speaker_linked_from_speaker_page_shows_on_session_page(
 ):
     orga_client.post(
         speaker_url(speaker, event),
-        data={**SPEAKER_DATA, "link_existing_session": "on", "existing_session_id": other_submission.pk},
+        data={**SPEAKER_DATA, "existing_session_id": other_submission.pk},
     )
     response = orga_client.get(other_submission.orga_urls.edit)
     section = bs4.BeautifulSoup(response.text, "html.parser").select_one("[data-session-speakers]")
@@ -234,3 +235,88 @@ def test_session_page_revokes_pending_invitation(orga_client, event, submission)
     assert response.url.startswith(edit_url)
     with scope(event=event):
         assert not submission.speaker_invitations.filter(pk=invitation.pk, status="pending").exists()
+
+
+@pytest.mark.django_db
+def test_speaker_page_session_option_labels(orga_client, event, speaker, submission, other_submission):
+    for url in (speaker_url(speaker, event), event.orga_urls.new_speaker):
+        response = orga_client.get(url)
+        page = bs4.BeautifulSoup(response.text, "html.parser")
+        assert page.select_one("label[for=id_add_session]").get_text(strip=True) == (
+            "Create a new session for this speaker"
+        )
+        assert page.select_one("label[for=id_existing_session_id]").get_text(strip=True) == (
+            "Link an existing session instead"
+        )
+
+
+@pytest.mark.django_db
+def test_linking_session_from_speaker_page_rebuilds_schedule_export(
+    mocker, orga_client, event, speaker, submission, other_submission
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        unchanged = {"fullname": speaker.fullname, "email": speaker.email, "biography": profile.biography}
+    cache_set = mocker.spy(ObjectRelatedCache, "set")
+    response = orga_client.post(
+        speaker_url(speaker, event),
+        data={**unchanged, "existing_session_id": other_submission.pk},
+    )
+    assert response.status_code == 302
+    assert any(call.args[1:3] == ("rebuild_schedule_export", True) for call in cache_set.call_args_list)
+
+
+@pytest.mark.django_db
+def test_linking_several_sessions_uses_plural_message(
+    orga_client, event, speaker, submission, other_submission, rejected_submission
+):
+    response = orga_client.post(
+        speaker_url(speaker, event),
+        data={**SPEAKER_DATA, "existing_session_id": [other_submission.pk, rejected_submission.pk]},
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert "The speaker has been added to the 2 selected sessions." in response.text
+
+
+@pytest.mark.django_db
+def test_session_page_add_speaker_form_has_no_biography(orga_client, event, submission):
+    response = orga_client.get(submission.orga_urls.edit)
+    section = bs4.BeautifulSoup(response.text, "html.parser").select_one("[data-session-speakers]")
+    assert section.select_one("[name=email]") is not None
+    assert section.select_one("[name=biography]") is None
+
+
+@pytest.mark.django_db
+def test_session_page_invalid_speaker_stays_on_edit_page(orga_client, event, submission):
+    edit_url = submission.orga_urls.edit
+    response = orga_client.post(
+        f"{submission.orga_urls.speakers}?next={edit_url}",
+        data={"email": "not-an-email", "name": "Someone"},
+    )
+    assert response.status_code == 302
+    assert response.url == edit_url
+    response = orga_client.get(edit_url)
+    assert "Enter a valid email address." in response.text
+    with scope(event=event):
+        assert not submission.speaker_invitations.filter(email="not-an-email").exists()
+
+
+@pytest.mark.django_db
+def test_session_page_hides_speakers_when_team_hides_speaker_names(orga_client, orga_user, event, submission):
+    with scope(event=event):
+        team = orga_user.teams.first()
+        team.force_hide_speaker_names = True
+        team.save()
+    response = orga_client.get(submission.orga_urls.edit)
+    assert response.status_code == 200
+    page = bs4.BeautifulSoup(response.text, "html.parser")
+    assert page.select_one("[data-session-speakers]") is None
+
+
+@pytest.mark.django_db
+def test_session_page_hides_speakers_from_reviewers(review_client, event, submission):
+    response = review_client.get(submission.orga_urls.edit, follow=True)
+    page = bs4.BeautifulSoup(response.text, "html.parser")
+    assert page.select_one("[data-session-speakers]") is None
+    assert page.select_one(f"form[action^='{submission.orga_urls.speakers}']") is None

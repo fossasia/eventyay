@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 from urllib.parse import urlencode
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
 from django_scopes import scope
@@ -306,12 +307,10 @@ class SpeakerSessionMixin:
             raw_pk = str(raw_pk).strip()
             if raw_pk and raw_pk not in session_pks:
                 session_pks.append(raw_pk)
-        link_requested = self.request.POST.get('link_existing_session') == 'on'
         if add_session:
             session_pks = []
-            link_requested = False
 
-        if (add_session or session_pks or link_requested) and not self.can_link_sessions:
+        if (add_session or session_pks) and not self.can_link_sessions:
             form.add_error(None, forms.ValidationError(_('You do not have permission to change sessions.')))
             return None
 
@@ -320,10 +319,7 @@ class SpeakerSessionMixin:
             return None
 
         existing_sessions = []
-        if session_pks or link_requested:
-            if not session_pks:
-                form.add_error(None, forms.ValidationError(_('Please select an existing session to link.')))
-                return None
+        if session_pks:
             try:
                 requested_ids = [int(pk) for pk in session_pks]
             except (TypeError, ValueError):
@@ -348,6 +344,8 @@ class SpeakerSessionMixin:
             session.speakers.add(user)
             session.log_action('eventyay.submission.speakers.add', person=self.request.user, orga=True)
             clear_schedule_caches(self.request.event, submission=session)
+        if sessions:
+            self.request.event.cache.set('rebuild_schedule_export', True, None)
         return sessions
 
 
@@ -424,7 +422,14 @@ class SpeakerCreate(
             if add_session:
                 messages.success(self.request, _('Speaker and session created successfully.'))
             elif existing_sessions:
-                messages.success(self.request, _('Speaker added and linked to existing session successfully.'))
+                messages.success(
+                    self.request,
+                    ngettext(
+                        'Speaker added and linked to existing session successfully.',
+                        'Speaker added and linked to {count} existing sessions successfully.',
+                        len(existing_sessions),
+                    ).format(count=len(existing_sessions)),
+                )
             else:
                 messages.success(self.request, _('Speaker created successfully.'))
 
@@ -552,7 +557,14 @@ class SpeakerDetail(SpeakerSessionMixin, SpeakerSocialLinksMixin, SpeakerViewMix
         if add_session:
             messages.success(self.request, _('The new session has been created for this speaker.'))
         elif sessions:
-            messages.success(self.request, _('The speaker has been added to the selected session.'))
+            messages.success(
+                self.request,
+                ngettext(
+                    'The speaker has been added to the selected session.',
+                    'The speaker has been added to the {count} selected sessions.',
+                    len(sessions),
+                ).format(count=len(sessions)),
+            )
         else:
             messages.success(self.request, phrases.base.saved)
         return result

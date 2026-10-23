@@ -887,7 +887,6 @@ def test_orga_can_create_speaker_and_link_existing_session(orga_client, event, s
             "fullname": "Linked Speaker",
             "email": "linked.speaker@example.org",
             "biography": "New biography text",
-            "link_existing_session": "on",
             "existing_session_id": submission.pk,
         },
         follow=True,
@@ -900,25 +899,6 @@ def test_orga_can_create_speaker_and_link_existing_session(orga_client, event, s
         assert profile is not None
         submission.refresh_from_db()
         assert profile.user in submission.speakers.all()
-
-
-@pytest.mark.django_db
-def test_orga_link_flag_without_session_does_not_create_speaker(orga_client, event):
-    response = orga_client.post(
-        event.orga_urls.new_speaker,
-        data={
-            "fullname": "Conflict Speaker",
-            "email": "conflict@example.org",
-            "biography": "New biography text",
-            "link_existing_session": "on",
-        },
-    )
-    assert response.status_code == 200
-    assert "Please select an existing session to link." in response.text
-    with scope(event=event):
-        assert not SpeakerProfile.objects.filter(
-            event=event, user__email="conflict@example.org"
-        ).exists()
 
 
 @pytest.mark.django_db
