@@ -1,6 +1,6 @@
 .sales-filters {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 8px 12px;
     margin-bottom: 16px;
@@ -25,7 +25,7 @@
 }
 
 .sales-filters .sales-search {
-    flex: 1 1 180px;
+    flex: 1 1 120px;
 }
 
 .sales-search .form-control {
@@ -33,12 +33,18 @@
 }
 
 .sales-filter-actions {
+    flex-shrink: 0;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 991px) {
+    .sales-filters,
+    .sales-filter-actions {
+        flex-wrap: wrap;
+    }
+
     .sales-filters .form-group {
         flex: 1 1 100%;
     }
