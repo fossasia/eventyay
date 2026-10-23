@@ -395,3 +395,25 @@ def test_csv_import_skips_new_invalid_row_and_continues(event, orga_user, invali
         assert not Submission.objects.filter(title='Rejected session').exists()
         answer = question.answers.get(submission__title='Imported session')
         assert list(answer.options.values_list('pk', flat=True)) == [unique.pk]
+
+
+@pytest.mark.django_db
+def test_import_answer_keeps_generated_choice_creation(event, submission):
+    """Import-generated fields still create and cache new choices after validation changes."""
+    with scope(event=event), override('en'):
+        question = TalkQuestion.objects.create(
+            event=event, question='Imported choice', variant='multiple_choice',
+            target='submission', import_key='csv-choice',
+        )
+        existing = question.options.create(answer='Existing')
+        option_lookup = {'existing': existing}
+        created_options = []
+        for _ in range(2):
+            _set_question_answer(
+                question.pk, 'Existing, New', question_cache={question.pk: (question, option_lookup)},
+                submission=submission, event=event, created_options=created_options,
+            )
+        answer = question.answers.get(submission=submission)
+        assert {str(option.answer) for option in answer.options.all()} == {'Existing', 'New'}
+        assert question.options.count() == 2
+        assert created_options == [(option_lookup, 'new')]
