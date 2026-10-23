@@ -51,7 +51,7 @@ def test_list_hides_deleted_unless_filtered(orga_client, event, submission):
         state_choices = dict(SubmissionFilterForm(event=event).fields['state'].choices)
         choices = list(state_choices)
     assert SubmissionStates.DELETED in choices and SubmissionStates.DRAFT not in choices
-    assert state_choices[SubmissionStates.REJECTED] == 'not accepted'
+    assert str(state_choices[SubmissionStates.REJECTED]) == 'Not accepted'
 
     for query, visible in [
         ('', {submission}),
