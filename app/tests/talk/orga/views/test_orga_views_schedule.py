@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Schedule
+from eventyay.base.models import Room, Schedule
 
 
 @pytest.mark.django_db
@@ -774,3 +774,118 @@ def test_room_list_view_survives_missing_linked_room_column(
         r for r in response.context["room_list"] if r.pk == room.pk
     )
     assert listed_room.has_linked_shifts is False
+
+
+@pytest.mark.django_db
+def test_room_list_sorting(orga_client, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        r1 = Room.objects.create(event=event, name="Beta Room", capacity=100, position=2)
+        r2 = Room.objects.create(event=event, name="Alpha Room", capacity=250, position=1)
+        r3 = Room.objects.create(event=event, name="Gamma Room", capacity=50, position=3)
+
+    # Default sort (no ?sort) preserves position order and enables reordering
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is True
+    assert "dragsort-button" in response.text
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+    # Sort by name ascending (a-z) disables manual reordering and shows caret-up
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    assert "Reset to manual order" in response.text
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+    assert "fa-caret-up" in response.text
+    assert "text-primary" in response.text
+
+    # Reordering via POST while field sort is active must be rejected
+    reorder_res = orga_client.post(f"{url}?sort=name", {"order": f"{r1.pk},{r2.pk},{r3.pk}"})
+    assert reorder_res.status_code == 400
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r3.pk, r1.pk, r2.pk]
+    assert "fa-caret-down" in response.text
+
+    # Sort by capacity ascending
+    response = orga_client.get(f"{url}?sort=capacity")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r3.pk, r1.pk, r2.pk]
+
+    # Sort by capacity descending (high to low)
+    response = orga_client.get(f"{url}?sort=-capacity")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+
+@pytest.mark.django_db
+def test_room_list_sorting_multilingual(orga_client, orga_user, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        event.locales = ["en", "de"]
+        event.settings.locales = ["en", "de"]
+        event.save()
+        # r1 is Beta in English, Alpha in German
+        r1 = Room.objects.create(event=event, name={"en": "Beta Room", "de": "Alpha Raum"}, position=1)
+        # r2 is Alpha in English, Beta in German
+        r2 = Room.objects.create(event=event, name={"en": "Alpha Room", "de": "Beta Raum"}, position=2)
+        # r3 has only English, tests fallback in German
+        r3 = Room.objects.create(event=event, name={"en": "Gamma Room"}, position=3)
+
+    # In English: "Alpha Room" (r2) < "Beta Room" (r1) < "Gamma Room" (r3)
+    orga_user.locale = "en"
+    orga_user.save()
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+    # In German: "Alpha Raum" (r1) < "Beta Raum" (r2) < "Gamma Room" (r3 fallback)
+    orga_user.locale = "de"
+    orga_user.save()
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r1.pk, r2.pk, r3.pk]
+
+
+@pytest.mark.django_db
+def test_room_list_sorting_malformed_brace_text(orga_client, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        # Create rooms with malformed brace-prefixed strings and plain strings
+        r1 = Room.objects.create(event=event, name="{Room", position=1)
+        r2 = Room.objects.create(event=event, name="Alpha Room", position=2)
+        r3 = Room.objects.create(event=event, name="{Room}", position=3)
+        r4 = Room.objects.create(event=event, name={"en": "Beta Room"}, position=4)
+        r5 = Room.objects.create(event=event, name='{"en": invalid}', position=5)
+
+    # Must sort safely without raising database JSON syntax errors
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert set(pks) == {r1.pk, r2.pk, r3.pk, r4.pk, r5.pk}
+    assert pks.index(r2.pk) < pks.index(r4.pk)
+
