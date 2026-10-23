@@ -1,3 +1,5 @@
+import json
+import re
 from collections import OrderedDict
 from dataclasses import dataclass
 
@@ -202,6 +204,113 @@ def get_social_link_value(url: str, network: str) -> str:
     if normalized.lower().startswith(prefix.lower()):
         return normalized[len(prefix) :]
     return url
+
+
+def resolve_social_network(name: str) -> str | None:
+    key = re.sub(r'[\s-]+', '_', (name or '').strip().lower()).strip('_')
+    if key in SOCIAL_LINK_SPECS:
+        return key
+    needle = (name or '').strip().casefold()
+    if not needle:
+        return None
+    for spec in SOCIAL_LINK_SPECS.values():
+        if str(spec.label).casefold() == needle:
+            return spec.key
+    return None
+
+
+def infer_social_network(url: str) -> str | None:
+    normalized = normalize_url_scheme(url or '').lower()
+    if not normalized:
+        return None
+    for key, spec in SOCIAL_LINK_SPECS.items():
+        if key == 'website':
+            continue
+        prefix = spec.prefix.lower()
+        if prefix and normalized.startswith(prefix):
+            return key
+    if normalized.startswith(('http://', 'https://')):
+        return 'website'
+    return None
+
+
+def format_social_links_for_csv(links) -> str:
+    pairs: list[tuple[str, str]] = []
+    for link in links:
+        network = getattr(link, 'network', None)
+        url = getattr(link, 'url', None)
+        if not network or not url:
+            continue
+        pairs.append((str(network), str(url)))
+    if not pairs:
+        return ''
+    if any(';' in url for _, url in pairs):
+        return json.dumps([{'network': network, 'url': url} for network, url in pairs])
+    return '; '.join(f'{network}: {url}' for network, url in pairs)
+
+
+def parse_social_links_from_csv(text: str) -> list[tuple[str, str]]:
+    raw = (text or '').strip()
+    if not raw:
+        return []
+    parsed = _parse_social_links_json(raw)
+    if parsed is not None:
+        return parsed
+    pairs: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for chunk in re.split(r'[;\n]+', raw):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        network = None
+        url = chunk
+        if ':' in chunk:
+            label, remainder = chunk.split(':', 1)
+            resolved = resolve_social_network(label)
+            if resolved and remainder.strip():
+                network = resolved
+                url = remainder.strip()
+        if not network:
+            network = infer_social_network(chunk)
+        if not network:
+            continue
+        try:
+            normalized_url = build_social_link_url(network, url)
+        except ValidationError:
+            continue
+        if not normalized_url:
+            continue
+        identity = (network, normalized_url)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        pairs.append(identity)
+    return pairs
+
+
+def _parse_social_links_json(raw: str) -> list[tuple[str, str]] | None:
+    if not raw.startswith(('[', '{')):
+        return None
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return None
+    items = data if isinstance(data, list) else [data]
+    pairs: list[tuple[str, str]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        network = resolve_social_network(str(item.get('key') or item.get('network') or ''))
+        url = str(item.get('url') or '').strip()
+        if not network or not url:
+            continue
+        try:
+            normalized_url = build_social_link_url(network, url)
+        except ValidationError:
+            continue
+        if normalized_url:
+            pairs.append((network, normalized_url))
+    return pairs
 
 
 def serialize_social_link(link) -> dict:
