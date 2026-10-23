@@ -24,6 +24,11 @@ from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.orders import OrderPosition
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.mail import expand_email_variable_chips, mail
+from eventyay.base.services.teams import (
+    TEAM_INVITATION_MAIL_TEMPLATES,
+    get_team_invitation_mail_template,
+    preview_team_invitation_mail,
+)
 from eventyay.base.templatetags.rich_text import (
     build_email_preview_context,
     compile_email_body,
@@ -568,6 +573,21 @@ class MailTemplatesView(EventPermissionRequiredMixin, TemplateView):
             event=self.request.event
         ).select_related('event__organizer')
         context['system_templates'] = self.get_system_templates()
+        context['team_templates'] = [
+            {
+                'label': template['name'],
+                'subject': str(template['subject']),
+                'view_url': reverse(
+                    'control:event.mail.templates.team',
+                    kwargs={
+                        'organizer': self.request.event.organizer.slug,
+                        'event': self.request.event.slug,
+                        'template_key': template['key'],
+                    },
+                ),
+            }
+            for template in TEAM_INVITATION_MAIL_TEMPLATES
+        ]
         context['can_manage_custom_templates'] = self.request.user.has_event_permission(
             self.request.organizer,
             self.request.event,
@@ -641,6 +661,36 @@ class MailSystemTemplateUpdateView(EventSettingsViewMixin, EventSettingsFormView
                 },
             )
         )
+
+
+class TeamInvitationMailTemplateView(EventPermissionRequiredMixin, TemplateView):
+    """Read-only view of an automated team invitation email, with an example preview."""
+
+    template_name = 'pretixplugins/sendmail/mail_template_team_detail.html'
+    permission = 'can_change_orders'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        template = get_team_invitation_mail_template(self.kwargs.get('template_key'))
+        if template is None:
+            raise Http404(_('Unknown email template.'))
+        event = self.request.event
+        preview_subject, preview_text = preview_team_invitation_mail(
+            template,
+            event_name=str(event.name),
+            organizer_name=str(event.organizer.name),
+        )
+        context.update(
+            {
+                'template_label': template['name'],
+                'template_trigger': template['trigger'],
+                'template_subject': str(template['subject']),
+                'template_text': str(template['text']),
+                'preview_subject': preview_subject,
+                'preview_text': preview_text,
+            }
+        )
+        return context
 
 
 class TicketMailTemplateMixin:

@@ -1,0 +1,36 @@
+{% extends 'eventyay_common/auth/base.html' %}
+{% load i18n %}
+{% block content %}
+  <div class="form-signin">
+    <h3>{% translate 'Team invitation' %}</h3>
+    {% if invite.state == 'accepted' %}
+      <p>
+        {% blocktranslate trimmed with team=team.name %}
+          This invitation to join the “{{ team }}” team has already been accepted.
+        {% endblocktranslate %}
+      </p>
+    {% else %}
+      {% if invite.state == 'declined' %}
+        <p>
+          {% blocktranslate trimmed with team=team.name %}
+            This invitation to join the “{{ team }}” team has been declined.
+          {% endblocktranslate %}
+        </p>
+      {% else %}
+        <p>
+          {% blocktranslate trimmed with team=team.name event=event_name %}
+            This invitation to join the “{{ team }}” team for “{{ event }}” has expired.
+          {% endblocktranslate %}
+        </p>
+      {% endif %}
+      <p>
+        {% blocktranslate trimmed with organizer=team.organizer.name %}
+          If you still want to join the team, please contact {{ organizer }} and ask them to send you a new invitation.
+        {% endblocktranslate %}
+      </p>
+    {% endif %}
+    <div class="form-group buttons">
+      <a href="{% url 'eventyay_common:dashboard' %}" class="btn btn-default">{% translate 'Go to dashboard' %}</a>
+    </div>
+  </div>
+{% endblock %}

@@ -5,14 +5,18 @@
 {% load turnstile_tags %}
 {% block content %}
 	<form class="form-signin" action="" method="post">
-        <h3>{% translate "Accept an invitation" %}</h3>
+        <h3>{% translate "Create your account" %}</h3>
         <p>
-            {% url 'auth.login' as loginurl %}
-            {% blocktrans trimmed with login_href='href="'|add:loginurl|add:'"'|safe %}
-                If you already have an account on this site with a different email address, you can
-                <a {{ login_href }}>log in</a> first and then click this link again to accept the
-                invitation with your existing account.
-            {% endblocktrans %}
+            {% blocktranslate trimmed with team=team.name event=event_name %}
+                You have been invited to join the eventyay platform and become a team member of the
+                “{{ team }}” team for “{{ event }}”.
+            {% endblocktranslate %}
+        </p>
+        <p class="text-muted">
+            {% blocktranslate trimmed with expires=invite.expires|date:'SHORT_DATETIME_FORMAT' %}
+                Create an account for the invited email address first. Creating an account does not accept
+                the invitation; you can accept or decline it afterwards. The invitation is valid until {{ expires }}.
+            {% endblocktranslate %}
         </p>
 		{% bootstrap_form_errors form type='all' layout='inline' %}
 		{% csrf_token %}

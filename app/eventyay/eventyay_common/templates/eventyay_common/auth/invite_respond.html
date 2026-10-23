@@ -1,0 +1,26 @@
+{% extends 'eventyay_common/auth/base.html' %}
+{% load i18n %}
+{% block content %}
+  <form class="form-signin" action="" method="post">
+    {% csrf_token %}
+    <h3>{% translate 'Team invitation' %}</h3>
+    <p>
+      {% blocktranslate trimmed with team=team.name event=event_name organizer=team.organizer.name %}
+        You have been invited to join the “{{ team }}” team for “{{ event }}”, organized by {{ organizer }}.
+      {% endblocktranslate %}
+    </p>
+    <p class="text-muted">
+      {% blocktranslate trimmed with expires=invite.expires|date:'SHORT_DATETIME_FORMAT' %}
+        You will only become a member of the team after you accept. This invitation is valid until {{ expires }}.
+      {% endblocktranslate %}
+    </p>
+    <div class="form-group buttons">
+      <button type="submit" name="action" value="decline" class="btn btn-default">
+        {% translate 'Decline invitation' %}
+      </button>
+      <button type="submit" name="action" value="accept" class="btn btn-primary">
+        {% translate 'Accept invitation' %}
+      </button>
+    </div>
+  </form>
+{% endblock %}

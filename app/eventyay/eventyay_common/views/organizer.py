@@ -4,21 +4,20 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, ManyToManyField
+from django.db.models import Count, ManyToManyField, Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView
 from django_scopes import scopes_disabled
 
-from eventyay.base.auth import get_auth_backends
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
-from eventyay.base.services.mail import SendMailException, mail
-from eventyay.base.services.teams import check_full_admin_limit, get_team_invitation_url, send_team_invitation_email
+from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
     OrganizerCreationPermissionMixin,
@@ -26,7 +25,6 @@ from eventyay.control.permissions import (
 )
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
-from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
 from ..video.traits_sync import sync_video_traits_for_team
@@ -257,9 +255,21 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                     self.request.organizer.teams.annotate(
                         memcount=Count('members', distinct=True),
                         eventcount=Count('limit_events', distinct=True),
-                        invcount=Count('invites', distinct=True),
+                        invcount=Count(
+                            'invites',
+                            filter=Q(
+                                invites__state=TeamInvite.State.PENDING,
+                                invites__expires__gt=now(),
+                            ),
+                            distinct=True,
+                        ),
                     )
-                    .prefetch_related('members', 'invites', 'tokens', 'limit_events')
+                    .prefetch_related(
+                        'members',
+                        Prefetch('invites', queryset=TeamInvite.objects.order_by('pk')),
+                        'tokens',
+                        'limit_events',
+                    )
                     .order_by('name')
                 )
         return self._team_queryset
@@ -530,89 +540,43 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             messages.error(self.request, _('Invalid invite selected.'))
             return self._redirect_to_team_members_panel(team.pk)
 
-        self._send_invite(invite)
-        team.log_action(
-            'eventyay.team.invite.resent',
-            user=self.request.user,
-            data={'email': invite.email},
-        )
-        messages.success(self.request, _('The invite has been resent.'))
+        was_open = invite.is_open
+        try:
+            resend_team_invite(
+                invite,
+                locale=self.request.LANGUAGE_CODE,
+                log_kwargs={'user': self.request.user},
+            )
+        except TeamInviteError as e:
+            messages.error(self.request, str(e))
+            return self._redirect_to_team_members_panel(team.pk)
+        if was_open:
+            messages.success(self.request, _('The invite has been resent.'))
+        else:
+            messages.success(self.request, _('A new invitation has been sent. It is valid for 48 hours.'))
         return self._redirect_to_team_permissions(team.pk)
 
-    def _check_full_admin_limit(self, team, user=None, email=None):
-        decision = check_full_admin_limit(team, email=email, user=user)
-        if not decision.allowed:
-            messages.error(self.request, decision.message)
-            return False
-        return True
-
     def _handle_add_member_or_invite(self, team, invite_form, post):
-        """Handle adding a member or creating an invite."""
+        """Invite someone to the team; they become a member once they accept."""
         try:
-            user = User.objects.get(email__iexact=invite_form.cleaned_data['user'])
-        except User.DoesNotExist:
-            return self._handle_create_invite(team, invite_form)
-
-        if team.members.filter(pk=user.pk).exists():
-            messages.error(
-                self.request,
-                _('This user already has permissions for this team.'),
-            )
-            return self._render_members_error(team.pk, invite_form)
-
-        if not self._check_full_admin_limit(team, user=user):
-            return self._render_members_error(team.pk, invite_form)
-
-        team.members.add(user)
-
-        team.log_action(
-            'eventyay.team.member.added',
-            user=self.request.user,
-            data={'email': user.email, 'user': user.pk},
-        )
-        sync_video_traits_for_team(team, members=[user])
-
-        transaction.on_commit(
-            lambda: send_team_invitation_email(
-                user=user,
-                organizer_name=self.request.organizer.name,
-                team_name=team.name,
-                url=get_team_invitation_url(team),
+            invite = invite_to_team(
+                team,
+                invite_form.cleaned_data['user'],
+                invited_by=self.request.user,
                 locale=self.request.LANGUAGE_CODE,
-                is_registered_user=True,
+                log_kwargs={'user': self.request.user},
             )
-        )
+        except TeamInviteError as e:
+            messages.error(self.request, str(e))
+            return self._render_members_error(team.pk, invite_form)
 
-        messages.success(self.request, _('The new member has been added to the team.'))
-        return self._redirect_to_team_members_panel(team.pk)
-
-    def _handle_create_invite(self, team, invite_form):
-        """Handle creating an invite for a user that doesn't exist yet."""
-        if team.invites.filter(email__iexact=invite_form.cleaned_data['user']).exists():
-            messages.error(
+        if invite.user_id:
+            messages.success(
                 self.request,
-                _('This user already has been invited for this team.'),
+                _('The invitation has been sent. The user will join the team once they accept it.'),
             )
-            return self._render_members_error(team.pk, invite_form)
-
-        if 'native' not in get_auth_backends():
-            messages.error(
-                self.request,
-                _('Users need to have a eventyay account before they can be invited.'),
-            )
-            return self._render_members_error(team.pk, invite_form)
-
-        if not self._check_full_admin_limit(team, email=invite_form.cleaned_data['user']):
-            return self._render_members_error(team.pk, invite_form)
-
-        invite = team.invites.create(email=invite_form.cleaned_data['user'])
-        transaction.on_commit(lambda: self._send_invite(invite))
-        team.log_action(
-            'eventyay.team.invite.created',
-            user=self.request.user,
-            data={'email': invite_form.cleaned_data['user']},
-        )
-        messages.success(self.request, _('The new member has been invited to the team.'))
+        else:
+            messages.success(self.request, _('The new member has been invited to the team.'))
         return self._redirect_to_team_members_panel(team.pk)
 
     def _handle_team_tokens(self):
@@ -673,29 +637,6 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             ).format(token.token),
         )
         return self._redirect_to_team_permissions(team.pk)
-
-    def _send_invite(self, instance):
-        try:
-            mail(
-                instance.email,
-                _('eventyay account invitation'),
-                'pretixcontrol/email/invitation.txt',
-                {
-                    'user': self.request.user,
-                    'organizer': self.request.organizer.name,
-                    'team': instance.team.name,
-                    'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),
-                },
-                event=None,
-                locale=self.request.LANGUAGE_CODE,
-            )
-        except SendMailException as e:
-            logger.warning(
-                "Failed to send invitation email to %s for team '%s': %s",
-                instance.email,
-                instance.team.name,
-                str(e),
-            )
 
     def _can_delete_team(self, team: Team) -> bool:
         return (

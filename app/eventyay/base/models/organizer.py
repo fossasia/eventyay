@@ -1,7 +1,7 @@
 import json
 import logging
 import string
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -40,16 +40,8 @@ from .auth import User
 
 logger = logging.getLogger(__name__)
 
-TEAM_INVITE_SUBJECT = _('You have been invited to an organizer team')
-TEAM_INVITE_TEXT = _(
-    """Hi!
-You have been invited to the {name} event organizer team - Please click here to accept:
-
-{invitation_link}
-
-See you there,
-The {organizer} team"""
-)
+TEAM_INVITE_VALIDITY = timedelta(hours=48)
+TEAM_INVITE_REMINDER_AFTER = timedelta(hours=24)
 
 
 class TeamPermissionError(PermissionDenied):
@@ -667,10 +659,27 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         delete = '{self.organizer.orga_urls.base}team/{self.pk}/delete/'
 
 
+def default_team_invite_expiry():
+    return now() + TEAM_INVITE_VALIDITY
+
+
+class TeamInviteQuerySet(models.QuerySet):
+    def open(self):
+        """Invites that are still pending and have not expired yet."""
+        return self.filter(state=TeamInvite.State.PENDING, expires__gt=now())
+
+
+class TeamInviteManager(models.Manager.from_queryset(TeamInviteQuerySet)):
+    """Hides accepted invites; the invitee is a team member from then on."""
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(state=TeamInvite.State.ACCEPTED)
+
+
 class TeamInvite(models.Model):
     """
-    A TeamInvite represents someone who has been invited to a team but hasn't accept the invitation
-    yet.
+    A TeamInvite represents someone who has been invited to a team. Team membership is only
+    granted once the invitee accepts the invitation.
 
     :param team: The team the person is invited to
     :type team: Team
@@ -678,11 +687,46 @@ class TeamInvite(models.Model):
     :type email: str
     :param token: The secret required to redeem the invite
     :type token: str
+    :param user: The account the invite is bound to, set when the invitee already has an account
+        or registers through the invitation link
+    :type user: User
+    :param state: Whether the invite is pending, accepted, declined or expired
+    :type state: str
+    :param expires: After this point in time, the invite can no longer be accepted
+    :type expires: datetime
     """
+
+    class State(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        ACCEPTED = 'accepted', _('Accepted')
+        DECLINED = 'declined', _('Declined')
+        EXPIRED = 'expired', _('Expired')
 
     team = models.ForeignKey(Team, related_name='invites', on_delete=models.CASCADE)
     email = models.EmailField(null=True, blank=True)
     token = models.CharField(default=generate_invite_token, max_length=64, null=True, blank=True)
+    user = models.ForeignKey(
+        User,
+        related_name='team_invites',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    invited_by = models.ForeignKey(
+        User,
+        related_name='+',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    state = models.CharField(max_length=16, choices=State.choices, default=State.PENDING)
+    created = models.DateTimeField(default=now)
+    expires = models.DateTimeField(default=default_team_invite_expiry)
+    reminder_sent = models.DateTimeField(null=True, blank=True)
+    responded = models.DateTimeField(null=True, blank=True)
+
+    objects = TeamInviteManager()
+    all_objects = models.Manager.from_queryset(TeamInviteQuerySet)()
 
     def __str__(self) -> str:
         return _("Invite to team '{team}' for '{email}'").format(team=str(self.team), email=self.email)
@@ -693,29 +737,30 @@ class TeamInvite(models.Model):
 
     @cached_property
     def invitation_url(self):
-        return build_absolute_uri('orga:invitation.view', kwargs={'code': self.token})
+        return build_absolute_uri('eventyay_common:auth.invite', kwargs={'token': self.token})
+
+    @property
+    def is_expired(self) -> bool:
+        if self.state == self.State.EXPIRED:
+            return True
+        return self.state == self.State.PENDING and self.expires <= now()
+
+    @property
+    def is_open(self) -> bool:
+        return self.state == self.State.PENDING and self.expires > now()
+
+    @property
+    def display_state(self) -> str:
+        return self.State.EXPIRED if self.is_expired else self.state
+
+    @property
+    def display_state_label(self) -> str:
+        return self.State(self.display_state).label
 
     def send(self):
-        from django.utils.translation import get_language
+        from eventyay.base.services.teams import send_team_invite
 
-        from eventyay.base.models.mail import QueuedMail
-
-        invitation_link = self.invitation_url
-        invitation_text = str(TEAM_INVITE_TEXT).format(
-            name=str(self.team.name),
-            invitation_link=invitation_link,
-            organizer=str(self.team.organizer.name),
-        )
-        invitation_subject = TEAM_INVITE_SUBJECT
-
-        mail = QueuedMail.objects.create(
-            to=self.email,
-            subject=str(invitation_subject),
-            text=str(invitation_text),
-            locale=get_language(),
-        )
-        mail.send()
-        return mail
+        return send_team_invite(self)
 
     send.alters_data = True
 

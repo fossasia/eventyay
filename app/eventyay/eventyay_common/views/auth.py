@@ -44,6 +44,14 @@ from eventyay.base.forms.auth import (
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
+from eventyay.base.services.teams import (
+    TeamInviteError,
+    accept_team_invite,
+    decline_team_invite,
+    get_team_invitation_url,
+    get_team_invite_event_name,
+    invite_belongs_to,
+)
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
@@ -180,17 +188,47 @@ def logout(request):
 
 
 
+def _invite_registration_form(request, invite):
+    form = RegistrationForm(
+        data=request.POST if request.method == 'POST' else None,
+        initial={'email': invite.email},
+        request=request,
+    )
+    form.fields['email'].disabled = True
+    return form
+
+
+def _respond_to_invite(request, invite):
+    action = request.POST.get('action')
+    try:
+        if action == 'accept':
+            accept_team_invite(invite, request.user)
+        elif action == 'decline':
+            decline_team_invite(invite, request.user)
+        else:
+            messages.error(request, _('Please accept or decline the invitation.'))
+            return redirect(request.path)
+    except TeamInviteError as e:
+        messages.error(request, str(e))
+        return redirect('eventyay_common:dashboard')
+
+    if action == 'accept':
+        messages.success(request, _('You are now part of the team "{}".').format(invite.team.name))
+        if invite.team.teamshifts_role:
+            return redirect(get_team_invitation_url(invite.team))
+        return redirect('eventyay_common:dashboard')
+    messages.info(request, _('You have declined the invitation to join the team "{}".').format(invite.team.name))
+    return redirect('eventyay_common:dashboard')
+
+
 def invite(request: HttpRequest, token):
     """
-    Registration form in case of an invite
+    Show a team invitation and let its recipient accept or decline it.
+
+    People without an account register first; registering does not accept the invitation.
     """
-    ctx = {}
-
-    if 'native' not in get_auth_backends():
-        raise PermissionDenied('Invites are disabled')
-
     try:
-        inv = TeamInvite.objects.get(token=token)
+        inv = TeamInvite.all_objects.select_related('team__organizer', 'user').get(token=token)
     except TeamInvite.DoesNotExist:
         messages.error(
             request,
@@ -201,6 +239,14 @@ def invite(request: HttpRequest, token):
         )
         return redirect('auth.login')
 
+    ctx = {
+        'invite': inv,
+        'team': inv.team,
+        'event_name': get_team_invite_event_name(inv.team),
+    }
+    if inv.state in (TeamInvite.State.ACCEPTED, TeamInvite.State.DECLINED) or inv.is_expired:
+        return render(request, 'eventyay_common/auth/invite_closed.html', ctx, status=410)
+
     if request.user.is_authenticated:
         if inv.team.members.filter(pk=request.user.pk).exists():
             messages.error(
@@ -210,26 +256,23 @@ def invite(request: HttpRequest, token):
                 ),
             )
             return redirect('eventyay_common:dashboard')
-        else:
-            with transaction.atomic():
-                inv.team.members.add(request.user)
-                inv.team.log_action(
-                    'eventyay.team.member.joined',
-                    data={
-                        'email': request.user.email,
-                        'invite_email': inv.email,
-                        'user': request.user.pk,
-                    },
-                )
-                inv.delete()
-            messages.success(request, _('You are now part of the team "{}".').format(inv.team.name))
-            return redirect('eventyay_common:dashboard')
+        if not invite_belongs_to(inv, request.user):
+            ctx['logout_url'] = f'{reverse("eventyay_common:auth.logout")}?next={quote(request.path)}'
+            return render(request, 'eventyay_common/auth/invite_wrong_account.html', ctx, status=403)
+        if request.method == 'POST':
+            return _respond_to_invite(request, inv)
+        return render(request, 'eventyay_common/auth/invite_respond.html', ctx)
 
+    if inv.user_id or User.objects.filter(email__iexact=inv.email).exists():
+        return redirect(f'{reverse("auth.login")}?next={quote(request.path)}')
+
+    if 'native' not in get_auth_backends():
+        raise PermissionDenied('Invites are disabled')
+
+    form = _invite_registration_form(request, inv)
     if request.method == 'POST':
-        form = RegistrationForm(data=request.POST, request=request)
         with transaction.atomic():
-            valid = form.is_valid()
-            if valid:
+            if form.is_valid():
                 user = User.objects.create_user(
                     form.cleaned_data['email'],
                     form.cleaned_data['password'],
@@ -247,27 +290,18 @@ def invite(request: HttpRequest, token):
                 request.session['eventyay_auth_long_session'] = (
                     settings.EVENTYAY_LONG_SESSIONS and form.cleaned_data.get('keep_logged_in', False)
                 )
-
-                inv.team.members.add(request.user)
-                inv.team.log_action(
-                    'eventyay.team.member.joined',
-                    data={
-                        'email': user.email,
-                        'invite_email': inv.email,
-                        'user': user.pk,
-                    },
-                )
-                inv.delete()
+                inv.user = user
+                inv.save(update_fields=['user'])
                 messages.success(
                     request,
-                    _('Welcome to eventyay! You are now part of the team "{}".').format(inv.team.name),
+                    _('Welcome to eventyay! Please accept or decline your invitation to the team "{}".').format(
+                        inv.team.name
+                    ),
                 )
-                return redirect('eventyay_common:dashboard')
-    else:
-        form = RegistrationForm(initial={'email': inv.email})
+                return redirect(request.path)
     ctx['form'] = form
     ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
-    pw_errors = form.errors.get('password', []) if hasattr(form, 'errors') else []
+    pw_errors = form.errors.get('password', []) if form.is_bound else []
     ctx['show_password_requirement_help'] = not any(str(e) == str(PASSWORD_COMPLEXITY_ERROR) for e in pw_errors)
     return render(request, 'eventyay_common/auth/invite.html', ctx)
 

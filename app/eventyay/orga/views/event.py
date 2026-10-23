@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from csp.decorators import csp_update
 from django.contrib import messages
-from django.contrib.auth import login
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.forms.models import inlineformset_factory
@@ -16,7 +15,7 @@ from django.views.generic import FormView, ListView, TemplateView, UpdateView, V
 from django_context_decorator import context
 
 from eventyay.agenda.views.utils import get_schedule_exporters
-from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory, TeamInvite, User
+from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory
 from eventyay.base.models.base import CachedFile
 from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.common.text.phrases import phrases
@@ -28,11 +27,11 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
+    FeedbackSettingsForm,
     MailSettingsForm,
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
     ReviewSettingsForm,
-    FeedbackSettingsForm,
     ScheduleHtmlExportForm,
     WidgetGenerationForm,
     WidgetSettingsForm,
@@ -42,7 +41,6 @@ from eventyay.orga.forms.importers import CSVImportForm
 from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
-from eventyay.person.forms import UserForm
 from eventyay.submission.tasks import recalculate_all_review_scores
 
 from .speaker import SpeakerImportProcessView
@@ -324,47 +322,11 @@ class EventMailSettings(EventSettingsPermission, ActionFromUrl, FormView):
         return super().form_valid(form)
 
 
-class InvitationView(FormView):
-    template_name = 'orga/invitation.html'
-    form_class = UserForm
+class InvitationView(View):
+    """Legacy talk invitation links now open the unified team invitation page."""
 
-    @context
-    @cached_property
-    def invitation(self):
-        return get_object_or_404(TeamInvite, token__iexact=self.kwargs.get('code'))
-
-    @context
-    def password_reset_link(self):
-        return reverse('orga:auth.reset')
-
-    def post(self, *args, **kwargs):
-        if not self.request.user.is_anonymous:
-            self.accept_invite(self.request.user)
-            return redirect(reverse('eventyay_common:dashboard'))
-        return super().post(*args, **kwargs)
-
-    def form_valid(self, form):
-        form.save()
-        user = User.objects.filter(pk=form.cleaned_data.get('user_id')).first()
-        if not user:
-            messages.error(
-                self.request,
-                _('There was a problem with your authentication. Please contact the organizer for further help.'),
-            )
-            return redirect(self.request.event.urls.base)
-
-        self.accept_invite(user)
-        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(reverse('eventyay_common:dashboard'))
-
-    @transaction.atomic()
-    def accept_invite(self, user):
-        invite = self.invitation
-        invite.team.members.add(user)
-        invite.team.save()
-        invite.team.organizer.log_action('eventyay.invite.orga.accept', person=user, orga=True)
-        messages.info(self.request, _('You are now part of the team!'))
-        invite.delete()
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('eventyay_common:auth.invite', kwargs={'token': self.kwargs.get('code')}))
 
 
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):

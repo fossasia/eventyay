@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import Event, Organizer, Team, User
-from eventyay.base.services.teams import get_team_invitation_url, send_team_invitation_email
+from eventyay.base.services.teams import get_team_invitation_url, send_team_invite
 from eventyay.helpers.urls import build_absolute_uri
 
 
@@ -122,37 +122,13 @@ def test_get_team_invitation_url_standard_team_no_pk(organizer):
 
 
 @pytest.mark.django_db
-def test_send_team_invitation_email(organizer, user):
+def test_send_team_invite_links_to_invitation_page(organizer, user):
     djmail.outbox = []
-    team = Team.objects.create(organizer=organizer, name='Test Team', teamshifts_role='')
-    url = get_team_invitation_url(team)
-    success = send_team_invitation_email(
-        user=user,
-        organizer_name=organizer.name,
-        team_name=team.name,
-        url=url,
-        locale='en',
-        is_registered_user=True,
-    )
-    assert success is True
-    assert len(djmail.outbox) == 1
-    assert url in djmail.outbox[0].body
-
-
-@pytest.mark.django_db
-def test_send_team_invitation_email_teamshifts_team(organizer, user, teamshifts_installed):
-    djmail.outbox = []
-    _create_event(organizer, 'conf')
     team = Team.objects.create(organizer=organizer, name='Shifts Team', teamshifts_role='coordinator', all_events=True)
-    url = get_team_invitation_url(team)
-    success = send_team_invitation_email(
-        user=user,
-        organizer_name=organizer.name,
-        team_name=team.name,
-        url=url,
-        locale='en',
-        is_registered_user=True,
-    )
-    assert success is True
+    invite = team.invites.create(email=user.email, user=user)
+
+    assert send_team_invite(invite) is True
+
     assert len(djmail.outbox) == 1
-    assert '/teamshifts/event/test-org/conf/' in djmail.outbox[0].body
+    assert djmail.outbox[0].subject == 'Invitation to join the “Shifts Team” team for “Test Org”'
+    assert invite.invitation_url in djmail.outbox[0].body

@@ -712,4 +712,7 @@ form.mail-templates-info-dialog__card {
   }
 }
 
-
+.mail-template-readonly {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

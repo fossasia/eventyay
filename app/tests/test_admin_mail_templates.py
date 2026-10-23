@@ -56,12 +56,14 @@ def test_every_template_key_is_listed_once():
 
 
 @pytest.mark.django_db
-def test_organiser_invitation_covers_new_and_registered_users():
+def test_team_invitation_templates_cover_new_and_registered_users_and_reminders():
     templates = {template['key']: template for template in get_platform_mail_templates()}
-    _, invitation = templates['organiser-invitation']['load']()
-    _, added = templates['organiser-added-to-team']['load']()
-    assert 'You have been invited to the following event team' in invitation
-    assert 'You have been added to the following event team' in added
+    _, invitation = templates['team-invitation']['load']()
+    _, new_account = templates['team-invitation-new-account']['load']()
+    _, reminder = templates['team-invitation-reminder']['load']()
+    assert 'accept or decline the invitation' in invitation
+    assert 'Creating an account does not automatically accept the team invitation' in new_account
+    assert 'is still pending' in reminder
 
 
 def test_text_to_editor_html_keeps_paragraphs_and_placeholders():
@@ -320,8 +322,8 @@ def test_template_preview_replaces_every_placeholder_with_demo_data(admin_client
 
 @pytest.mark.django_db
 def test_template_preview_uses_template_specific_demo_data(admin_client):
-    _, body = next(t for t in get_platform_mail_templates() if t['key'] == 'event-team-invitation')['load']()
-    html = _preview(admin_client, body, 'event-team-invitation')
+    _, body = next(t for t in get_platform_mail_templates() if t['key'] == 'team-invitation')['load']()
+    html = _preview(admin_client, body, 'team-invitation')
     assert 'Program committee' in html
     assert 'FOSSASIA' in html
 
