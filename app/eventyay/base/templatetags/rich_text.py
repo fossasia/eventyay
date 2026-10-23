@@ -192,8 +192,19 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
-def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
-    """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview."""
+def expand_email_preview_placeholders(
+    html_body: str,
+    event,
+    *,
+    locale: str | None = None,
+    base_parameters: list[str] | None = None,
+) -> str:
+    """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview.
+
+    ``base_parameters`` selects which placeholders get sample values (e.g. a system
+    template's context such as ``payment`` or ``comment``); it defaults to a generic
+    order/attendee context.
+    """
     from eventyay.base.i18n import language
     from eventyay.base.services.mail import expand_email_variable_chips
 
@@ -201,8 +212,10 @@ def expand_email_preview_placeholders(html_body: str, event, *, locale: str | No
     if resolved_locale not in event.settings.locales:
         resolved_locale = event.settings.locale
 
+    if base_parameters is None:
+        base_parameters = _PREVIEW_PLACEHOLDER_CONTEXT
     with language(resolved_locale, event.settings.region):
-        context_dict = build_email_preview_context(event, list(_PREVIEW_PLACEHOLDER_CONTEXT))
+        context_dict = build_email_preview_context(event, list(base_parameters))
         expanded = html_body.format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
@@ -221,6 +234,21 @@ def compile_email_body(source: str) -> str:
         from eventyay.common.sanitizers import sanitize_email_html
         return sanitize_email_html(source)
     return markdown_compile_email(source)
+
+
+def email_body_to_editor_html(source: str) -> str:
+    """Convert a stored email body to HTML the Tiptap email editor can load.
+
+    Unlike ``compile_email_body``, single newlines in legacy plain-text/Markdown
+    bodies become ``<br>``: the editor collapses bare newlines to spaces, so
+    opening and saving a legacy template would otherwise join its lines.
+    """
+    if not source:
+        return source
+    source = str(source)
+    if is_tiptap_email_html(source):
+        return compile_email_body(source)
+    return markdown_compile_email(source, preserve_line_breaks=True)
 
 
 def email_allowed_attributes(tag: str, name: str, value: str) -> bool:
@@ -275,22 +303,20 @@ def build_email_preview_context(event, base_parameters: list[str]):
 
 
 # TODO: Implement nh3 equivalent
-def markdown_compile_email(source):
+def markdown_compile_email(source, *, preserve_line_breaks=False):
     linker = bleach.Linker(
         url_re=URL_RE,
         email_re=EMAIL_RE,
         callbacks=DEFAULT_CALLBACKS + [abslink_callback],
         parse_email=True,
     )
+    extensions = ['markdown.extensions.sane_lists']
+    if preserve_line_breaks:
+        # nl2br stays off by default for backwards-compatibility of sent emails.
+        extensions.append('markdown.extensions.nl2br')
     return linker.linkify(
         bleach.clean(
-            markdown.markdown(
-                source,
-                extensions=[
-                    'markdown.extensions.sane_lists',
-                    #  'markdown.extensions.nl2br' # disabled for backwards-compatibility
-                ],
-            ),
+            markdown.markdown(source, extensions=extensions),
             tags=EMAIL_ALLOWED_TAGS,
             attributes=email_allowed_attributes,
             protocols=EMAIL_ALLOWED_PROTOCOLS,

@@ -3,6 +3,8 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from django.utils.safestring import mark_safe
+
 from eventyay.base.email import (
     SimpleFunctionalMailTextPlaceholder,
     download_tickets_button_label,
@@ -14,6 +16,7 @@ from eventyay.base.email import (
 )
 from eventyay.base.templatetags.rich_text import (
     build_email_preview_context,
+    expand_email_preview_placeholders,
     is_placeholder_html_sample,
     markdown_compile_email,
 )
@@ -268,22 +271,23 @@ def test_expand_email_variable_chips_leaves_unknown_keys():
     assert expand_email_variable_chips(body, {'order_qr': '{order_qr}'}) == body
 
 
-def test_is_placeholder_html_sample_detects_qr_and_button():
-    assert is_placeholder_html_sample('<img src="data:image/png;base64,abc" alt="QR">')
-    assert is_placeholder_html_sample('<a href="https://example.com" class="button">Download</a>')
-    assert is_placeholder_html_sample('<p><strong>Ada</strong></p><img src="data:image/png;base64,abc">')
-    assert is_placeholder_html_sample('<strong>Ada</strong><br><img src="data:image/png;base64,abc">')
+def test_is_placeholder_html_sample_trusts_only_safe_strings():
+    # Samples are trusted HTML only when explicitly marked safe (QR, buttons).
+    assert is_placeholder_html_sample(mark_safe('<img src="data:image/png;base64,abc" alt="QR">'))
+    assert is_placeholder_html_sample(mark_safe('<a href="https://example.com" class="button">Download</a>'))
+    assert is_placeholder_html_sample(
+        mark_safe('<strong>Ada</strong><br><img src="data:image/png;base64,abc">')
+    )
+    # Plain strings are untrusted, even when they look like HTML (e.g. an event name).
+    assert not is_placeholder_html_sample('<img src="data:image/png;base64,abc" alt="QR">')
+    assert not is_placeholder_html_sample('<a href="https://example.com" class="button">Download</a>')
     assert not is_placeholder_html_sample('F8VVL')
     assert not is_placeholder_html_sample('https://example.com/order')
 
 
 def test_expand_email_preview_placeholders_keeps_qr_and_button_html():
-    from unittest.mock import MagicMock, patch
-
-    from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders
-
-    qr_sample = render_qr_code_img('secret', alt='Ticket QR code')
-    button_sample = '<a href="https://example.com" class="button">Download tickets (PDF)</a>'
+    qr_sample = mark_safe(render_qr_code_img('secret', alt='Ticket QR code'))
+    button_sample = mark_safe('<a href="https://example.com" class="button">Download tickets (PDF)</a>')
     placeholders = {
         'code': SimpleFunctionalMailTextPlaceholder('code', ['order'], lambda order: order.code, 'F8VVL'),
         'order_qr': SimpleFunctionalMailTextPlaceholder(
@@ -306,7 +310,10 @@ def test_expand_email_preview_placeholders_keeps_qr_and_button_html():
         '<p>{download_tickets_pdf}</p>'
     )
 
-    with patch('eventyay.base.email.get_available_placeholders', return_value=placeholders):
+    with (
+        patch('eventyay.base.email.get_available_placeholders', return_value=placeholders),
+        patch('eventyay.mail.context.get_available_placeholders', return_value={}),
+    ):
         preview = expand_email_preview_placeholders(body, event, locale='en')
 
     assert '{order_qr}' not in preview
@@ -380,8 +387,8 @@ def test_get_combined_ticket_output_identifier_falls_back_to_first_enabled():
 
 def test_build_email_preview_context_keeps_html_samples():
     event = MagicMock()
-    qr_sample = render_qr_code_img('secret', alt='Ticket QR code')
-    button_sample = '<a href="https://example.com" class="button">Download tickets (PDF)</a>'
+    qr_sample = mark_safe(render_qr_code_img('secret', alt='Ticket QR code'))
+    button_sample = mark_safe('<a href="https://example.com" class="button">Download tickets (PDF)</a>')
     placeholders = {
         'code': SimpleFunctionalMailTextPlaceholder('code', ['order'], lambda order: order.code, 'F8VVL'),
         'ticket_qr': SimpleFunctionalMailTextPlaceholder(
@@ -395,9 +402,9 @@ def test_build_email_preview_context_keeps_html_samples():
         ),
     }
 
-    with patch(
-        'eventyay.base.email.get_available_placeholders',
-        return_value=placeholders,
+    with (
+        patch('eventyay.base.email.get_available_placeholders', return_value=placeholders),
+        patch('eventyay.mail.context.get_available_placeholders', return_value={}),
     ):
         ctx = build_email_preview_context(event, ['event', 'order'])
 

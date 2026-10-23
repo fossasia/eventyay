@@ -1,4 +1,5 @@
 import datetime
+import json
 
 import pytest
 from django.core import mail as djmail
@@ -7,6 +8,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
+from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models import (
     Checkin,
     Event,
@@ -17,6 +19,8 @@ from eventyay.base.models import (
     Team,
     User,
 )
+from eventyay.common.forms.widgets import I18nEmailEditorWidget
+from eventyay.plugins.sendmail.forms import MailContentSettingsForm
 
 
 @pytest.fixture
@@ -1700,11 +1704,6 @@ def settings_client(client, event):
 @pytest.mark.django_db
 def test_system_mail_template_form_uses_email_editor(event):
     """Issue #6585: system ticket templates use the shared Tiptap email editor."""
-    import json
-
-    from eventyay.common.forms.widgets import I18nEmailEditorWidget
-    from eventyay.plugins.sendmail.forms import MailContentSettingsForm
-
     form = MailContentSettingsForm(obj=event, template_key='order_placed')
 
     # All body fields (contact + separate attendee text) use the rich editor.
@@ -1732,21 +1731,19 @@ def test_system_mail_template_form_uses_email_editor(event):
 @pytest.mark.django_db
 def test_system_mail_template_initial_converted_to_html(event):
     """Legacy plain-text/Markdown bodies open in the editor as HTML, intact."""
-    from eventyay.base.i18n import LazyI18nString
-
     with scopes_disabled():
         event.settings.set(
             'mail_text_order_placed',
-            LazyI18nString('Hello,\n\nyour order {code} is placed.'),
+            LazyI18nString('Hello,\n\nyour order {code}\nis placed.'),
         )
-
-    from eventyay.plugins.sendmail.forms import MailContentSettingsForm
 
     form = MailContentSettingsForm(obj=event, template_key='order_placed')
     initial = str(form.initial['mail_text_order_placed'])
-    # Converted to HTML the editor can load, with the placeholder token intact.
-    assert '<p>' in initial
-    assert '{code}' in initial
+    # Converted to HTML the editor can load: blank lines split paragraphs, single
+    # newlines become <br> (the editor would otherwise join the lines), and the
+    # placeholder token is intact.
+    assert '<p>Hello,</p>' in initial
+    assert '<p>your order {code}<br>\nis placed.</p>' in initial
 
 
 @pytest.mark.django_db
@@ -1783,8 +1780,7 @@ def test_system_mail_template_save_persists_html(settings_client, event):
     with scopes_disabled():
         event.settings.flush()
         saved = str(event.settings.get('mail_text_order_changed'))
-    assert '<strong>' in saved
-    assert '{code}' in saved
+    assert saved == html_body
 
 
 @pytest.mark.django_db
@@ -1809,9 +1805,48 @@ def test_mail_settings_preview_expands_tiptap_html(settings_client, event):
     rendered = data['msgs']['en']
     # Rich formatting is preserved in the preview.
     assert '<strong>placed</strong>' in rendered
-    # The placeholder is resolved to a sample value: no raw token or chip remains.
+    # The placeholder is resolved to its sample value: no raw token or chip remains.
+    assert 'F8VVL' in rendered
     assert '{code}' not in rendered
     assert 'data-variable' not in rendered
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_tiptap_uses_template_placeholders(settings_client, event):
+    """Template-specific placeholders (here {comment}) get sample values in the preview."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    body = '<p>Denied: <span data-variable="comment" class="tiptap-placeholder-chip">{comment}</span></p>'
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_order_denied', 'mail_text_order_denied_0': body},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    assert 'An individual text with a reason can be inserted here.' in rendered
+    assert '{comment}' not in rendered
+    assert 'data-variable' not in rendered
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_legacy_orders_list(settings_client, event):
+    """The Markdown {orders} sample still renders as a list in legacy previews."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_resend_all_links', 'mail_text_resend_all_links_0': 'Your orders:\n\n{orders}'},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    assert '<li>' in rendered
+    assert '* ' not in rendered
 
 
 @pytest.mark.django_db
@@ -1842,8 +1877,6 @@ def test_mail_settings_preview_tiptap_invalid_template_returns_400(settings_clie
 def test_mail_settings_preview_escapes_html_in_samples(settings_client, event):
     """An event name containing HTML is escaped in the preview (no XSS), while the
     QR sample (explicitly marked safe) still renders as an image."""
-    from eventyay.base.i18n import LazyI18nString
-
     with scopes_disabled():
         event.name = LazyI18nString('<img src=x onerror=alert(1)>')
         event.save()

@@ -17,7 +17,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.templatetags.rich_text import compile_email_body
+from eventyay.base.templatetags.rich_text import email_body_to_editor_html
 from eventyay.mail.context import get_available_placeholders as get_talk_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
@@ -930,7 +930,7 @@ class MailContentSettingsForm(SettingsForm):
         """Convert a stored email body to HTML the Tiptap editor can load.
 
         Legacy templates are stored as plain text / Markdown; converting them
-        with ``compile_email_body`` keeps their text, line breaks and
+        with ``email_body_to_editor_html`` keeps their text, line breaks and
         ``{placeholder}`` tokens intact in the editor. Bodies that are already
         Tiptap HTML are sanitized and returned unchanged (no double conversion).
         """
@@ -939,14 +939,12 @@ class MailContentSettingsForm(SettingsForm):
         if isinstance(value, LazyI18nString):
             data = value.data
             if isinstance(data, dict):
-                return LazyI18nString(
-                    {locale: compile_email_body(text) if text else text for locale, text in data.items()}
-                )
+                return LazyI18nString({locale: email_body_to_editor_html(text) for locale, text in data.items()})
             if isinstance(data, str):
-                return LazyI18nString(compile_email_body(data) if data else data)
+                return LazyI18nString(email_body_to_editor_html(data))
             return value
         if isinstance(value, str):
-            return compile_email_body(value)
+            return email_body_to_editor_html(value)
         return value
 
     def _upgrade_to_email_editor(self, fn, base_parameters):
@@ -955,7 +953,8 @@ class MailContentSettingsForm(SettingsForm):
         The placeholder menu is scoped to the placeholders available for this
         field (``base_parameters``), matching the Compose email editor.
         """
-        placeholder_names = sorted(get_available_placeholders(self.event, base_parameters).keys())
+        # Copy: get_available_placeholders appends to the list it is given.
+        placeholder_names = sorted(get_available_placeholders(self.event, list(base_parameters)).keys())
         old_field = self.fields[fn]
         field = I18nEmailBodyFormField(
             label=old_field.label,

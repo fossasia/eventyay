@@ -850,7 +850,9 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
             sample = p.render_sample(self.request.event)
             s = str(sample).strip()
 
-            if is_placeholder_html_sample(sample):
+            # Markdown list samples (e.g. {orders}) stay raw so markdown_compile_email
+            # renders the list; its output is bleach-cleaned either way.
+            if s.startswith('*') or is_placeholder_html_sample(sample):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
                 ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
@@ -903,7 +905,10 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                             safe_html = sanitize_email_html(v)
                             try:
                                 msgs[locale] = expand_email_preview_placeholders(
-                                    safe_html, self.request.event, locale=locale
+                                    safe_html,
+                                    self.request.event,
+                                    locale=locale,
+                                    base_parameters=MailSettingsForm.base_context[preview_product],
                                 )
                             except TEMPLATE_FORMAT_ERRORS:
                                 return self._invalid_template_response()
