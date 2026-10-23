@@ -109,6 +109,15 @@ def test_service_without_a_category_can_still_be_edited(admin_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('url', ['ftp://example.org/privacy', 'javascript:alert(1)', 'not a url'])
+def test_service_privacy_policy_must_be_an_http_url(url):
+    form = ThirdPartyServiceForm(data=_service_data(privacy_policy_url=url))
+
+    assert not form.is_valid()
+    assert 'privacy_policy_url' in form.errors
+
+
+@pytest.mark.django_db
 def test_classified_service_cannot_lose_its_category(admin_client, service):
     """Blanking the category would drop the service from the banner, so visitors could never allow it."""
     response = admin_client.post(

@@ -104,7 +104,8 @@ class ThirdPartyService(models.Model):
     privacy_policy_url = models.CharField(
         max_length=500,
         blank=True,
-        validators=[URLValidator()],
+        # The default URLValidator also accepts ftp:// and ftps://.
+        validators=[URLValidator(schemes=['http', 'https'])],
         verbose_name=_('Privacy policy URL'),
     )
     cookie_names = models.TextField(
