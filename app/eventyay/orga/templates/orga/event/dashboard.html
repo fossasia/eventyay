@@ -23,6 +23,7 @@
         {% endcompress %}
         <script type="module" src="{% static "orga/js/stats.js" %}"></script>
     {% endif %}
+    <script type="module" src="{% static 'orga/js/timeline.js' %}"></script>
     {% compress js %}
         <script defer src="{% static "orga/js/internal-note.js" %}"></script>
     {% endcompress %}
@@ -69,6 +70,20 @@
                 </a>
                 {% endif %}
                 
+                {% if can_change_settings %}
+                <a href="{{ request.event.orga_urls.cfp }}" class="td-quick-btn">
+                    <span class="fa fa-bullhorn" aria-hidden="true"></span>
+                    {% trans "CfP" %}
+                </a>
+                {% endif %}
+
+                {% if can_list_speaker %}
+                <a href="{{ request.event.orga_urls.new_speaker }}" class="td-quick-btn">
+                    <span class="fa fa-user-plus" aria-hidden="true"></span>
+                    {% trans "Add new speaker" %}
+                </a>
+                {% endif %}
+
                 {% if can_view_submission_stats or can_review %}
                 <a href="{{ request.event.orga_urls.reviews }}" class="td-quick-btn">
                     <span class="fa fa-eye" aria-hidden="true"></span>

@@ -3,8 +3,9 @@ import datetime as dt
 import pytest
 from django.urls import reverse
 from django.utils.timezone import now
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
+from eventyay.base.models import Team, User
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.submission import Submission, SubmissionStates
 
@@ -211,4 +212,41 @@ def test_dashboard_without_session_event_boundary(event, other_event, orga_clien
     assert response.status_code == 200
     speaker_readiness = response.context_data['speaker_readiness']
     assert speaker_readiness['without_session'] == 1
+
+
+@pytest.mark.django_db
+def test_teams_link_requires_organizer_settings(orga_client, orga_user, event):
+    teams_url = event.organizer.orga_urls.teams
+    with scopes_disabled():
+        event_settings_user = User.objects.create_user(
+            password='eventsettings',
+            email='event-settings@orga.org',
+            fullname='Event Settings',
+        )
+        team = Team.objects.create(
+            organizer=event.organizer,
+            name='Event settings only',
+            can_change_event_settings=True,
+            can_change_submissions=True,
+            can_change_organizer_settings=False,
+        )
+        team.limit_events.add(event)
+        team.members.add(event_settings_user)
+
+    orga_client.force_login(event_settings_user)
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    assert response.context_data['can_view_teams'] is False
+    timeline_urls = [
+        link.get('url')
+        for step in response.context_data['timeline']
+        for link in step.get('links', [])
+    ]
+    assert teams_url not in timeline_urls
+
+    orga_client.force_login(orga_user)
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    assert response.context_data['can_view_teams'] is True
+    assert teams_url in response.content.decode()
 
