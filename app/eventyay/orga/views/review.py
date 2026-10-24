@@ -459,8 +459,11 @@ class ReviewViewMixin:
     @context
     @cached_property
     def submission(self):
+        # Deleted sessions stay readable; writing reviews is still blocked by can_be_reviewed.
         return get_object_or_404(
-            self.request.event.submissions.prefetch_related('speakers', 'resources'),
+            self.request.event.submissions(manager='all_objects')
+            .exclude(state=SubmissionStates.DRAFT)
+            .prefetch_related('speakers', 'resources'),
             code__iexact=self.kwargs['code'],
         )
 

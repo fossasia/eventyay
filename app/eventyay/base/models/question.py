@@ -31,6 +31,19 @@ def answer_file_path(instance, filename):
     return path_with_hash(filename, base_path=f'{instance.question.event.slug}/question_uploads/')
 
 
+def _as_pk_lookup(value):
+    """Normalize a filter argument into a value usable with a ``pk__in`` lookup.
+
+    A :class:`~django.db.models.QuerySet` is passed through unchanged so the ORM can
+    turn it into an efficient subquery. Any other iterable (list, tuple, set,
+    generator, ``dict_values``, …) is reduced to a list of primary keys, accepting
+    either model instances or raw primary keys as items.
+    """
+    if isinstance(value, models.QuerySet):
+        return value
+    return [getattr(item, 'pk', item) for item in value]
+
+
 class TalkQuestionManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().exclude(active=False).exclude(target=TalkQuestionTarget.REVIEWER)
@@ -338,29 +351,37 @@ class TalkQuestion(OrderedModel, PretalxModel):
     def get_order_queryset(event):
         return event.questions(manager='all_objects').all()
 
-    def missing_answers(self, filter_speakers: list = False, filter_talks: list = False) -> int:
-        """Returns how many answers are still missing or this question.
+    def missing_answers(self, filter_speakers=None, filter_talks=None) -> int:
+        """Returns how many answers are still missing for this question.
 
-        This method only supports submission questions and speaker questions.
-        For missing reviews, please use the get_missing_reviews method.
-
-        :param filter_speakers: Apply only to these speakers.
-        :param filter_talks: Apply only to these talks.
+        :param filter_speakers: Apply only to these speakers (queryset or iterable).
+        :param filter_talks: Apply only to these talks (queryset or iterable).
         """
-        from eventyay.base.models import Submission, User
+        from eventyay.base.models import SubmissionStates, User
 
-        answers = self.answers.all()
-        filter_talks = filter_talks or Submission.objects.none()
-        filter_speakers = filter_speakers or User.objects.none()
-        if filter_speakers or filter_talks:
-            answers = answers.filter(models.Q(person__in=filter_speakers) | models.Q(submission__in=filter_talks))
-        answer_count = answers.count()
         if self.target == TalkQuestionTarget.SUBMISSION:
-            submissions = filter_talks or self.event.submissions.all()
-            return max(submissions.count() - answer_count, 0)
+            if filter_talks is None:
+                submissions = self.event.submissions.all()
+            else:
+                submissions = self.event.submissions.filter(pk__in=_as_pk_lookup(filter_talks))
+            if self.tracks.exists():
+                submissions = submissions.filter(track__in=self.tracks.all())
+            if self.submission_types.exists():
+                submissions = submissions.filter(submission_type__in=self.submission_types.all())
+            answered = self.answers.filter(submission__in=submissions).values('submission').distinct().count()
+            return max(submissions.count() - answered, 0)
+
         if self.target == TalkQuestionTarget.SPEAKER:
-            users = filter_speakers or User.objects.filter(submissions__event_id=self.event.pk)
-            return max(users.count() - answer_count, 0)
+            speaker_filter = models.Q(
+                submissions__event_id=self.event_id,
+                submissions__state__in=SubmissionStates.valid_submission_states,
+            )
+            if filter_speakers is not None:
+                speaker_filter &= models.Q(pk__in=_as_pk_lookup(filter_speakers))
+            speakers = User.objects.filter(speaker_filter).distinct()
+            answered = self.answers.filter(person__in=speakers).values('person').distinct().count()
+            return max(speakers.count() - answered, 0)
+
         return 0
 
 

@@ -1037,6 +1037,7 @@ class Schedule(PretalxModel):
             talks = talks.filter(updated__gte=filter_updated)
         if submission_codes is not None:
             talks = talks.filter(submission__code__in=submission_codes)
+        talks = talks.exclude(submission__state=SubmissionStates.DELETED)
         talks = talks.select_related(
             'submission',
             'room',

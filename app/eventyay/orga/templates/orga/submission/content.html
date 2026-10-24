@@ -305,7 +305,7 @@
         <div class="submit-group panel">
             <span></span>
             <span>
-                {% if can_edit_submission %}
+                {% if can_edit_submission and not submission.is_deleted %}
                     <a class="btn btn-info btn-lg" href="{{ submission.orga_urls.edit }}">
                         <i class="fa fa-edit"></i>
                         {% translate "Edit" %}

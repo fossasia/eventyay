@@ -2,7 +2,7 @@ import copy
 import json
 from collections import Counter
 from dataclasses import replace
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from dateutil import rrule
 from django.conf import settings
@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.models import Count as DbCount, F, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Lower, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils import feedgenerator
@@ -105,7 +105,16 @@ from eventyay.talk_rules.tracks import apply_track_limit, user_has_track_limits
 
 
 class SubmissionViewMixin(PermissionRequired):
+    # Deleted sessions are hidden from organiser views by default. Read-only views
+    # and state changes (which can restore a deleted session) opt in explicitly.
+    include_deleted = False
+
     def get_queryset(self):
+        return self.get_submission_queryset()
+
+    def get_submission_queryset(self):
+        if self.include_deleted:
+            return Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
         return Submission.objects.filter(event=self.request.event)
 
     def get_object(self):
@@ -147,9 +156,16 @@ class ReviewerSubmissionFilter:
         if self.is_only_reviewer:
             return get_reviewer_tracks(self.request.event, self.request.user)
 
-    def get_queryset(self, for_review=False):
+    def get_queryset(self, for_review=False, include_deleted=None):
+        if include_deleted is None:
+            include_deleted = getattr(self, 'include_deleted', False)
+        submissions = (
+            self.request.event.submissions(manager='all_objects').exclude(state=SubmissionStates.DRAFT)
+            if include_deleted
+            else self.request.event.submissions.all()
+        )
         queryset = (
-            self.request.event.submissions.all()
+            submissions
             .select_related('submission_type', 'event', 'track')
             .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(display_name_sort_key(), 'pk')))
         )
@@ -166,6 +182,7 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
     form_class = SubmissionStateChangeForm
     permission_required = 'base.state_change_submission'
     template_name = 'orga/submission/state_change.html'
+    include_deleted = True
     TARGETS = {
         'submit': SubmissionStates.SUBMITTED,
         'accept': SubmissionStates.ACCEPTED,
@@ -247,8 +264,29 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
         if self.object.state == SubmissionStates.DELETED and (not url or self.object.code in url):
             return self.request.event.orga_urls.submissions
         elif url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            if self._is_emptied_state_list(url):
+                return self.request.event.orga_urls.submissions
             return url
         return self.request.event.orga_urls.submissions
+
+    def _is_emptied_state_list(self, url):
+        """Whether ``url`` is the session list filtered by state, with nothing left to show.
+
+        When a state change moves the last session out of the filtered list (for
+        example the last deleted or submitted one), organisers go back to the full
+        list instead of an empty view.
+        """
+        parsed = urlparse(url)
+        if parsed.path != self.request.event.orga_urls.submissions:
+            return False
+        query = QueryDict(parsed.query)
+        if not query.getlist('state'):
+            return False
+        form = SubmissionFilterForm(data=query, event=self.request.event)
+        if not form.is_valid():
+            return False
+        submissions = Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
+        return not form.filter_queryset(submissions).exists()
 
     @context
     def next(self):
@@ -309,6 +347,13 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     template_name = 'orga/submission/speakers.html'
     permission_required = 'base.orga_list_speakerprofile'
     form_class = AddSpeakerInlineForm
+    include_deleted = True
+
+    def dispatch(self, request, *args, **kwargs):
+        # Speakers of a deleted session can be viewed, but not changed or invited.
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and self.object.is_deleted:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     @context
     @cached_property
@@ -740,6 +785,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 class SubmissionContentView(SubmissionContent):
     template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
+    include_deleted = True
 
     @context
     @cached_property
@@ -829,9 +875,9 @@ class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, Li
     def _get_base_queryset(self, for_review=False):
         # If somebody has *only* reviewer permissions for this event, they can only
         # see the proposals they can review.
-        qs = super().get_queryset(for_review=for_review).order_by('-id')
+        qs = super().get_queryset(for_review=for_review, include_deleted=True).order_by('-id')
         if not self.filter_form.is_valid():
-            return qs
+            return qs.exclude(state=SubmissionStates.DELETED)
         return self.filter_form.filter_queryset(qs)
 
     def get_queryset(self):
@@ -966,13 +1012,14 @@ class FeedbackList(SubmissionViewMixin, PaginationMixin, ListView):
     context_object_name = 'feedback'
     paginate_by = 25
     permission_required = 'base.view_feedback_submission'
+    include_deleted = True
 
     def get_queryset(self):
         return self.submission.feedback.all().order_by('pk')
 
     def get_object(self):
         return get_object_or_404(
-            Submission.objects.filter(event=self.request.event),
+            self.get_submission_queryset(),
             code__iexact=self.kwargs.get('code'),
         )
 
@@ -1048,6 +1095,7 @@ class SubmissionVideoLink(SubmissionViewMixin, View):
 
 class ApplyPending(SubmissionViewMixin, View):
     permission_required = 'base.state_change_submission'
+    include_deleted = True
 
     def post(self, request, *args, **kwargs):
         submission = self.object
@@ -1088,12 +1136,13 @@ class SubmissionHistory(SubmissionViewMixin, ListView):
     permission_required = 'base.orga_update_submission'
     paginate_by = 200
     context_object_name = 'log_entries'
+    include_deleted = True
 
     @context
     @cached_property
     def submission(self):
         return get_object_or_404(
-            Submission.objects.filter(event=self.request.event),
+            self.get_submission_queryset(),
             code__iexact=self.kwargs.get('code'),
         )
 
@@ -1605,6 +1654,7 @@ class CommentList(SubmissionViewMixin, FormView):
     permission_required = 'base.view_submissioncomment'
     write_permission_required = 'base.add_submissioncomment'
     form_class = SubmissionCommentForm
+    include_deleted = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
