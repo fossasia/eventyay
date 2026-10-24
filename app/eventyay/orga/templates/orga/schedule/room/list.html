@@ -20,10 +20,17 @@
 
 {% block list_content %}
     {% if not can_reorder %}
-        <div class="alert alert-info">
-            {% translate "Manual drag-and-drop reordering is disabled while custom sorting is active." %}
-            <a href="{% querystring sort=None %}" class="alert-link">{% translate "Reset to manual order" %}</a>
-        </div>
+<div class="alert alert-info">
+  <div class="sorting-notice-wrapper">
+    <div>
+      {% translate "Manual drag-and-drop reordering is disabled while custom sorting is active." %}
+    </div>
+    <div class="sorting-notice-action">
+      <a href="{% querystring sort=None %}" class="alert-link">{% translate "Reset to manual order" %}</a>
+    </div>
+  </div>
+</div>
+
     {% endif %}
     <div class="table-responsive-sm">
         <table class="table table-sm table-flip table-sticky">
