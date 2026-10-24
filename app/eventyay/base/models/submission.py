@@ -2,6 +2,7 @@ import copy
 import datetime as dt
 import json
 import statistics
+from contextlib import suppress
 from itertools import repeat
 
 from django.conf import settings
@@ -458,6 +459,16 @@ class Submission(GenerateCode, PretalxModel):
             tags.append({'id': tag.id, 'tag': tag.tag, 'color': tag.color})
         return tags
 
+    def refresh_for_update(self, changed_fields):
+        """Lock and reload a bound submission while retaining only this edit's changed fields."""
+        changes = {
+            field.attname: getattr(self, field.attname)
+            for field in self._meta.concrete_fields if field.name in changed_fields
+        }
+        self.refresh_from_db(from_queryset=type(self).all_objects.select_for_update())
+        for name, value in changes.items():
+            setattr(self, name, value)
+
     def update_duration(self):
         """Apply the submission's duration to its currently scheduled.
 
@@ -465,9 +476,16 @@ class Submission(GenerateCode, PretalxModel):
 
         Should be called whenever the duration changes.
         """
-        for slot in self.event.wip_schedule.talks.filter(submission=self, start__isnull=False):
-            slot.end = slot.start + dt.timedelta(minutes=self.get_duration())
-            slot.save()
+        with scope(event=self.event), transaction.atomic():
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
+            with suppress(AttributeError):
+                del self.event.wip_schedule
+            schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
+            submission = type(self).all_objects.select_related('submission_type').get(pk=self.pk)
+            duration = submission.get_duration()
+            schedule.talks.filter(submission=self, start__isnull=False).update(
+                end=models.F('start') + dt.timedelta(minutes=duration), updated=now(),
+            )
 
     update_duration.alters_data = True
 

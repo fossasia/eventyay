@@ -688,7 +688,7 @@ class SubmissionTypeForm(NameRequiredMixin, ReadOnlyFlag, I18nHelpText, I18nMode
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-        if instance.pk and 'duration' in self.changed_data:
+        if instance.pk and 'default_duration' in self.changed_data:
             instance.update_duration()
         return instance
 

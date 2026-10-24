@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions, serializers
@@ -123,7 +124,11 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     duration = serializers.IntegerField(
         source='get_duration',
         required=False,
-        help_text='Defaults to the submission type’s duration',
+        help_text='Effective duration. Legacy writes are supported; use duration_override to preserve inheritance.',
+    )
+    duration_override = serializers.IntegerField(
+        source='duration', required=False, allow_null=True, min_value=0,
+        help_text='Explicit duration in minutes, or null to inherit the submission type’s duration.',
     )
 
     # These fields are SerializerMethodFields rather than direct querysets in order
@@ -261,7 +266,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         image = validated_data.pop('image', None)
         validated_data['event'] = self.event
         if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
+            validated_data.setdefault('duration', validated_data.pop('get_duration'))
         if not validated_data.get('content_locale'):
             validated_data['content_locale'] = self.event.locale
 
@@ -275,17 +280,31 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             submission.process_image('image', generate_thumbnail=True)
         return submission
 
+    @transaction.atomic
     def update(self, instance, validated_data):
+        """Keep submission edits and their derived draft slots consistent."""
         if not self.event:
             raise serializers.ValidationError('Event is required for submissions.')
+        if 'get_duration' in validated_data:
+            validated_data.setdefault('duration', validated_data.pop('get_duration'))
+        validated_data = {
+            key: value for key, value in validated_data.items()
+            if key in ('tags', 'image') or value != getattr(instance, key)
+        }
+        with scope(event=self.event):
+            if {'duration', 'submission_type', 'slot_count'}.intersection(validated_data):
+                type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
+            instance.refresh_from_db(from_queryset=Submission.all_objects.select_for_update())
         tags_provided = 'tags' in validated_data
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
         validated_data['event'] = self.event
-        duration_changed = False
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-            duration_changed = validated_data['duration'] != instance.duration
+        duration_changed = 'duration' in validated_data and validated_data['duration'] != instance.duration
+        duration_changed = duration_changed or (
+            'submission_type' in validated_data
+            and validated_data['submission_type'].pk != instance.submission_type_id
+            and validated_data.get('duration', instance.duration) is None
+        )
         slot_count_changed = (
             'slot_count' in validated_data
             and validated_data['slot_count'] != instance.slot_count
@@ -323,6 +342,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'abstract',
             'description',
             'duration',
+            'duration_override',
             'slot_count',
             'content_locale',
             'do_not_record',

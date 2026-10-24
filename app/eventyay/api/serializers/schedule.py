@@ -1,3 +1,7 @@
+from datetime import timedelta
+
+from django.db import transaction
+from django_scopes import scope
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import serializers
@@ -75,6 +79,29 @@ class ScheduleReleaseSerializer(PretalxSerializer):
 class TalkSlotSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     submission = SlugRelatedField(slug_field='code', read_only=True)
     end = DateTimeField(source='local_end')
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """Coordinate slot edits with release/reset and reject stale draft targets."""
+        event = instance.event
+        with scope(event=event):
+            type(event).objects.select_for_update(no_key=True).get(pk=event.pk)
+            try:
+                instance = TalkSlot.objects.select_related('schedule', 'submission__submission_type').get(
+                    pk=instance.pk,
+                )
+            except TalkSlot.DoesNotExist as exc:
+                raise ValidationError('The draft schedule changed. Reload it before editing this slot.') from exc
+            if instance.schedule.version:
+                raise ValidationError('Released schedule slots cannot be edited. Reload the draft schedule.')
+            if 'local_end' in validated_data:
+                validated_data['end'] = validated_data.pop('local_end')
+            if 'start' in validated_data and instance.submission_id:
+                start = validated_data['start']
+                validated_data['end'] = (
+                    start + timedelta(minutes=instance.submission.get_duration()) if start else None
+                )
+            return super().update(instance, validated_data)
 
     class Meta:
         model = TalkSlot
