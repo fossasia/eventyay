@@ -5,6 +5,7 @@
 {% load eventsignal %}
 {% load eventurl %}
 {% load rich_text %}
+{% load timezone %}
 <!DOCTYPE html>
 <html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
 	<head>
@@ -414,7 +415,7 @@
                     <footer>
                         {% if request.timezone %}
                             <span class="fa fa-globe"></span>
-                            {% blocktrans trimmed with tz=request.timezone %}
+                            {% blocktrans trimmed with tz=request.timezone|timezone_display %}
                                 Times displayed in {{ tz }}
                             {% endblocktrans %} &middot;
                         {% endif %}

@@ -17,6 +17,7 @@ from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import PretalxModel
+from eventyay.common.text.rich_text import rich_text_to_plain_text
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import get_base_url
 from eventyay.talk_rules.agenda import can_view_wip_schedule, is_agenda_submission_visible, is_agenda_visible
@@ -233,7 +234,7 @@ class TalkSlot(PretalxModel):
 
         vevent.add('dtstart').value = self.local_start
         vevent.add('dtend').value = self.local_end
-        vevent.add('description').value = self.submission.abstract or ''
+        vevent.add('description').value = rich_text_to_plain_text(self.submission.abstract)
         vevent.add('url').value = self.submission.urls.public.full()
 
     def full_ical(self):

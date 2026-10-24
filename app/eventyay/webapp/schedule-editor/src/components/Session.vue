@@ -2,28 +2,32 @@
 .c-linear-schedule-session(:style="style", @pointerdown.stop="onPointerDown", :class="classes")
 	.time-box
 		.start(:class="{'has-ampm': startTime?.ampm}", v-if="startTime")
-			.time {{ startTime.time }}
-			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-		.duration {{ durationPretty }}
+			.clock
+				.time {{ startTime.time }}
+				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+			.duration(v-if="durationPretty") {{ durationPretty }}
+		.duration(v-else-if="durationPretty") {{ durationPretty }}
 	.info
-		.title-row(style="display: flex; justify-content: space-between; align-items: flex-start;")
-			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+		.session-type(v-if="sessionType", :title="sessionType") {{ sessionType }}
 		.speakers(v-if="hasSpeakersWithNames", :class="{'speakers-clamped': isShortSession}") {{ speakerNames }}
 		.pending-line(v-if="session.state === 'pending'")
 			i.fa.fa-exclamation-circle
 			span {{ $t('Pending proposal state') }}
 		.bottom-info(v-if="!isBreak && (session.track || session.do_not_record)")
-			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
+			.track(v-if="session.track", :title="getLocalizedString(session.track.name)") {{ getLocalizedString(session.track.name) }}
 			.do_not_record.no-print(v-if="session.do_not_record", :title="$t('This session will not be recorded.')", :aria-label="$t('This session will not be recorded.')")
 				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
 					g(transform="translate(-9.3465481,-5.441411)")
-						rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
-						path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
-						path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
-	.warning.no-print(v-if="warnings?.length")
+						rect.camera-body(width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+						path.camera-lens(d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+						path.camera-slash(d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
+	.warning.no-print(v-if="warnings?.length", tabindex="0", :aria-label="warningTooltipText(warnings)")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
-			i.fa.fa-exclamation-triangle
+			i.fa.fa-exclamation-triangle(aria-hidden="true")
+		.warning-tooltip(role="tooltip")
+			p(v-for="warning of warnings") {{ warning.message }}
 	button.unschedule-btn.no-print(v-if="showUnschedule", type="button", @pointerdown.stop, @pointerup.stop, @click.stop="onUnschedule", :aria-label="$t('Remove from schedule')", :title="$t('Remove from schedule')")
 		i.fa.fa-times(aria-hidden="true")
 </template>
@@ -32,7 +36,7 @@
 import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import { translate } from '~/lib/i18n'
-import { getLocalizedString } from '~/utils'
+import { getLocalizedString, warningTooltipText } from '~/utils'
 import { resolveMode, resolveSessionKind } from '~/teamshifts-adapter'
 
 interface Speaker {
@@ -61,6 +65,8 @@ interface Session {
   abstract?: string
   room?: string | number
   do_not_record?: boolean
+  session_type?: string | Record<string, string>
+  submission_type?: string | Record<string, string>
   [key: string]: string | number | boolean | Record<string, string> | Speaker[] | Track | Moment | null | undefined
 }
 
@@ -89,6 +95,14 @@ const emit = defineEmits<{
 const mode = resolveMode()
 const isBreak = computed(() => resolveSessionKind(mode, props.session) === 'break')
 const showUnschedule = computed(() => Boolean(props.allowUnschedule && !isBreak.value && !props.isDragClone && props.session.code))
+
+const sessionType = computed<string>(() => {
+  if (isBreak.value) return ''
+  const st = props.session.session_type || props.session.submission_type
+  if (!st) return ''
+  if (typeof st === 'string') return st
+  return getLocalizedString(st) || ''
+})
 
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
@@ -180,7 +194,11 @@ function onPointerDown(event: PointerEvent): void {
   if (!event.isPrimary || event.button !== 0) return
   const el = event.target as HTMLElement
   if (el && el.releasePointerCapture) {
-    try { el.releasePointerCapture(event.pointerId) } catch (_) {}
+    try {
+      el.releasePointerCapture(event.pointerId)
+    } catch {
+      // ignore pointer capture release failure
+    }
   }
   emit('startDragging', { session: props.session, event })
 }
@@ -193,6 +211,7 @@ function onUnschedule(): void {
 <style lang="stylus">
 sessionTextClamp(lines)
 	min-width: 0
+	min-height: 0
 	display: -webkit-box
 	-webkit-line-clamp: lines
 	line-clamp: lines
@@ -230,7 +249,7 @@ sessionTextExpand()
 	&.clone
 		z-index: 200
 	&.dragging
-		filter: opacity(0.3)
+		opacity: 0.3
 		cursor: inherit
 	&.isbreak
 		background-color: $clr-grey-200
@@ -253,8 +272,6 @@ sessionTextExpand()
 			background-color: var(--track-color)
 			.start
 				color: $clr-primary-text-dark
-			.duration
-				color: $clr-secondary-text-dark
 		.info
 			border: 1px solid $clr-dividers-light
 			border-left: none
@@ -284,25 +301,54 @@ sessionTextExpand()
 		.info
 			border-style: dashed dashed dashed none
 	.time-box
-		width: 69px
+		width: 64px
+		flex-shrink: 0
 		box-sizing: border-box
-		padding: 12px 16px 8px 12px
+		padding: 10px 4px 6px 4px
 		border-radius: 6px 0 0 6px
 		display: flex
 		flex-direction: column
 		align-items: center
+		&:not(:has(.start))
+			justify-content: center
 		.start
-			font-size: 16px
-			font-weight: 600
-			margin-bottom: 8px
+			color: $clr-primary-text-dark
 			display: flex
 			flex-direction: column
-			align-items: flex-end
+			align-items: center
+			text-align: center
+			width: 100%
 			&.has-ampm
 				align-self: stretch
+			.clock
+				display: flex
+				flex-direction: column
+				align-items: center
+				max-width: 100%
+			.time
+				font-size: 14px
+				font-weight: 700
+				line-height: 1.2
+				white-space: nowrap
+				font-variant-numeric: tabular-nums
 			.ampm
 				font-weight: 400
-				font-size: 13px
+				font-size: 10px
+				margin-top: 1px
+				opacity: 0.85
+				text-transform: uppercase
+				white-space: nowrap
+			.duration
+				font-weight: 400
+				font-size: 11px
+				color: rgba(255, 255, 255, 0.7)
+				margin-top: 4px
+				white-space: nowrap
+		> .duration
+			font-weight: 500
+			font-size: 13px
+			color: $clr-primary-text-dark
+			white-space: nowrap
 	.info
 		flex: auto
 		display: flex
@@ -313,6 +359,18 @@ sessionTextExpand()
 			font-weight: 500
 			&.title-clamped
 				sessionTextClamp(2)
+		.session-type
+			font-size: 11px
+			font-weight: 600
+			text-transform: uppercase
+			letter-spacing: 0.04em
+			color: $clr-secondary-text-light
+			margin-bottom: 2px
+			display: block
+			min-width: 0
+			max-width: 100%
+			line-height: 1.2
+			ellipsis()
 		.speakers
 			color: $clr-secondary-text-light
 			&.speakers-clamped
@@ -321,18 +379,28 @@ sessionTextExpand()
 			flex: auto
 			display: flex
 			align-items: flex-end
-			gap: 4px
+			gap: 6px
 			min-width: 0
 			.track
-				flex: 1
+				flex: 1 1 auto
 				min-width: 0
 				color: var(--track-color)
+				font-size: 11px
+				line-height: 1.2
 				ellipsis()
-			.do_not_record
-				flex: none
-				display: flex
-				align-items: center
-				line-height: 0
+		.do_not_record
+			flex: none
+			display: flex
+			align-items: center
+			line-height: 0
+			.camera-body, .camera-lens
+				fill: #000000
+				stroke: none
+			.camera-slash
+				fill: none
+				stroke: #b23e65
+				stroke-width: 12
+				stroke-linecap: round
 	.pending-line
 		color: $clr-warning
 		.fa
@@ -341,12 +409,46 @@ sessionTextExpand()
 		position: absolute
 		top: 0
 		right: 0
+		z-index: 3
 		padding: 4px
 		margin: 4px
 		color: #b23e65
 		font-size: 16px
-		.warning-icon span
-			padding-right: 4px
+		outline: none
+		&:focus-visible
+			outline: 2px solid var(--color-primary)
+			outline-offset: 1px
+			border-radius: 4px
+		.warning-icon
+			display: flex
+			align-items: center
+			span
+				padding-right: 4px
+		.warning-tooltip
+			display: none
+			position: absolute
+			top: calc(100% + 4px)
+			right: 0
+			width: max-content
+			max-width: 240px
+			padding: 8px 10px
+			background-color: #1e293b
+			color: #fff
+			font-size: 12px
+			font-weight: 500
+			line-height: 1.35
+			text-align: left
+			white-space: normal
+			border-radius: 6px
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18)
+			pointer-events: none
+			p
+				margin: 0
+				& + p
+					margin-top: 4px
+		&:hover .warning-tooltip,
+		&:focus-visible .warning-tooltip
+			display: block
 	&:has(.unschedule-btn)
 		.info
 			padding-right: 26px
@@ -378,20 +480,76 @@ sessionTextExpand()
 			outline: 2px solid var(--color-primary)
 			outline-offset: 1px
 
+	&.short-session
+		overflow: hidden
+		.info
+			overflow: hidden
+			min-height: 0
 	@media (hover: hover) and (pointer: fine)
 		&:hover:not(.dragging, .clone)
+			overflow: visible
+			z-index: 12
 			.title.title-clamped, .speakers.speakers-clamped
 				sessionTextExpand()
+	&:focus-within:not(.dragging, .clone)
+		overflow: visible
+		z-index: 12
+
+html[dir="rtl"],
+html.rtl
+	.c-linear-schedule-session
+		.time-box
+			border-radius: 0 6px 6px 0
+		&.isbreak
+			.time-box
+				border-radius: 0 6px 6px 0
+		&.istalk
+			.info
+				border-left: 1px solid $clr-dividers-light
+				border-right: none
+				border-radius: 6px 0 0 6px
+			&:hover .info
+				border-left: 1px solid var(--track-color)
+				border-right: none
+		&.pending, &.unconfirmed
+			.info
+				border-left: 1px solid $clr-dividers-light
+				border-right: none
+				border-radius: 6px 0 0 6px
+			&:hover .info
+				border-left: 1px solid var(--track-color)
+				border-right: none
+		&.pending .info
+			border-style: dashed none dashed dashed
+		&.is-drop-target .info
+			border-style: dashed none dashed dashed
+		.warning
+			right: auto
+			left: 0
+			.warning-tooltip
+				right: auto
+				left: 0
+		&:has(.unschedule-btn)
+			.info
+				padding-right: 8px
+				padding-left: 26px
+			.warning
+				right: auto
+				left: 28px
+		.unschedule-btn
+			right: auto
+			left: 4px
 
 @media print
-	.c-linear-schedule-session .unschedule-btn
-		display: none !important
+	.c-linear-schedule-session .unschedule-btn,
+	.c-linear-schedule-session .warning-tooltip
+		display: none
 	.c-linear-schedule-session.isbreak
-		border: 2px solid $clr-grey-300 !important
+		border: 2px solid $clr-grey-300
 	.c-linear-schedule-session.istalk .time-box
-		border: 2px solid var(--track-color) !important
+		border: 2px solid var(--track-color)
 	.c-linear-schedule-session.istalk .info
-		border-right: 2px solid var(--track-color) !important
-		border-top: 2px solid var(--track-color) !important
-		border-bottom: 2px solid var(--track-color) !important
+		border-right: 2px solid var(--track-color)
+		border-top: 2px solid var(--track-color)
+		border-bottom: 2px solid var(--track-color)
 </style>
