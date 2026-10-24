@@ -59,6 +59,18 @@ from eventyay.helpers.i18n import i18ncomp
 PAYMENT_PROVIDERS = []
 
 
+def searchable_product_select():
+    # Product lists can be long, so let organizers type to filter them (see common/js/searchable-select.js).
+    return forms.Select(
+        attrs={
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search'),
+            'data-empty-text': _('No results'),
+            'data-all-label': _('All products'),
+        }
+    )
+
+
 def get_all_payment_providers():
     global PAYMENT_PROVIDERS
 
@@ -358,6 +370,7 @@ class EventOrderFilterForm(OrderFilterForm):
     product = forms.ChoiceField(
         label=_('Products'),
         required=False,
+        widget=searchable_product_select(),
     )
     subevent = forms.ModelChoiceField(
         label=pgettext_lazy('subevent', 'Date'),
@@ -1441,6 +1454,7 @@ class CheckInFilterForm(FilterForm):
         queryset=Product.objects.none(),
         required=False,
         empty_label=_('All products'),
+        widget=searchable_product_select(),
     )
 
     def __init__(self, *args, **kwargs):
@@ -1686,7 +1700,7 @@ class VoucherFilterForm(FilterForm):
         required=False,
         empty_label=pgettext_lazy('subevent', 'All dates'),
     )
-    productvar = forms.ChoiceField(label=_('Product'), required=False)
+    productvar = forms.ChoiceField(label=_('Product'), required=False, widget=searchable_product_select())
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
