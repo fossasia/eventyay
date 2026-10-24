@@ -426,16 +426,13 @@
                         </div>
                     </div>
                 {% endif %}
-                {% if ev.location or venue_directions_url %}
+                {% if ev.location %}
                     <div class="venue-map-details{% if not venue_map_location %} venue-map-details-only{% endif %}">
-                        {% if ev.location %}
-                            <h3 class="venue-map-heading">{% trans "Address" %}</h3>
-                            <p>{{ ev.location|event_localize|linebreaksbr }}</p>
-                            {% if not venue_map_location %}
-                                <p class="venue-map-unavailable">{% trans "Map location is currently unavailable for this address." %}</p>
-                            {% endif %}
+                        <h3 class="venue-map-heading">{% trans "Address" %}</h3>
+                        <p>{{ ev.location|event_localize|linebreaksbr }}</p>
+                        {% if not venue_map_location %}
+                            <p class="venue-map-unavailable">{% trans "Map location is currently unavailable for this address." %}</p>
                         {% endif %}
-                        {% include 'pretixpresale/event/fragment_venue_directions.html' %}
                     </div>
                 {% endif %}
             </div>
