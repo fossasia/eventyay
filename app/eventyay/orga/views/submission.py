@@ -1,7 +1,8 @@
-from django_scopes import scope
+import copy
 import json
 from collections import Counter
 from dataclasses import replace
+from urllib.parse import urlencode
 
 from dateutil import rrule
 from django.conf import settings
@@ -21,7 +22,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import urlencode
+from django_scopes import scope
 
 from eventyay.base.models import (
     Feedback,
@@ -1114,9 +1115,19 @@ class SubmissionHistory(SubmissionViewMixin, ListView):
         return self.request.event
 
 
-class SubmissionFeed(PermissionRequired, Feed):
+class SubmissionFeed(EventPermissionRequired, ReviewerSubmissionFilter, Feed):
     permission_required = 'base.orga_list_submission'
     feed_type = feedgenerator.Atom1Feed
+
+    def __call__(self, request, *args, **kwargs):
+        # Django calls this shared Feed instance directly instead of going
+        # through dispatch(), so the permission mixin never runs on its own.
+        # Run the whole request on a copy to keep the shared instance stateless.
+        feed = copy.copy(self)
+        feed.request = request
+        if not feed.has_permission():
+            return feed.handle_no_permission()
+        return super(SubmissionFeed, feed).__call__(request, *args, **kwargs)
 
     def get_object(self, request, *args, **kwargs):
         return request.event
@@ -1137,13 +1148,18 @@ class SubmissionFeed(PermissionRequired, Feed):
         return _('Updates to the {name} schedule.').format(name=obj.name)
 
     def items(self, obj):
-        return obj.submissions.order_by('-pk')
+        # Same reviewer and track limits as the submissions list.
+        return self.get_queryset().order_by('-pk')
 
     def item_title(self, item):
         return _('New {event} proposal: {title}').format(event=item.event.name, title=item.title)
 
     def item_link(self, item):
         return item.orga_urls.base.full()
+
+    def item_description(self, item):
+        # Feed falls back to str(item), which includes the proposal state.
+        return None
 
     def item_pubdate(self, item):
         return item.created
