@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.core.files import File
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -16,6 +16,8 @@ from eventyay.api.serializers.order import (
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import Quota, Seat
 from eventyay.base.models.orders import CartPosition
+from eventyay.base.services.cart import error_messages
+from eventyay.base.services.pricing import get_price
 
 
 class CartPositionSerializer(I18nAwareModelSerializer):
@@ -185,4 +187,25 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             raise ValidationError(
                 {'attendee_name': ['Do not specify attendee_name if you specified attendee_name_parts.']}
             )
+        product = data.get('product')
+        if product and product.free_price and data.get('price') is not None:
+            try:
+                get_price(
+                    product,
+                    data.get('variation'),
+                    custom_price=data['price'],
+                    subevent=data.get('subevent'),
+                    custom_price_is_net=not data.get('includes_tax', True),
+                )
+            except ValueError as e:
+                code, *args = e.args
+                if code == 'price_too_high':
+                    message = gettext(error_messages['price_too_high'])
+                elif code in ('price_too_low', 'price_too_high_max') and len(args) >= 3:
+                    message = gettext(error_messages[code]) % {'min': args[0], 'max': args[1], 'currency': args[2]}
+                elif code == 'price_too_low':
+                    message = gettext(error_messages['price_too_low_min_only']) % ' '.join(args)
+                else:
+                    raise
+                raise ValidationError({'price': [message]})
         return data
