@@ -90,7 +90,8 @@
         {% include "pretixcontrol/pagination.html" %}
     {% endif %}
     {% if not is_paginated or page_obj.number == 1 %}
-        <form action="" method="post" class="form-inline">
+    {% if request.organizer.gift_card_issuer_acceptance.all %}
+    <form action="" method="post" class="form-inline">
             {% csrf_token %}
             <fieldset>
                 <legend>{% trans "Accepted gift cards of other organizers" %}</legend>
@@ -128,5 +129,6 @@
                 </ul>
             </fieldset>
         </form>
+    {% endif %}
     {% endif %}
 {% endblock %}
