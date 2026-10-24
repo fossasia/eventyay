@@ -618,13 +618,13 @@ class Order(LockModel, LoggedModel):
             self.positions.all()
             .annotate(has_checkin=Exists(Checkin.objects.filter(position_id=OuterRef('pk'))))
             .select_related('product')
-            .prefetch_related('issued_gift_cards')
+            .prefetch_related('issued_gift_cards__transactions')
         )
 
         def is_position_cancelable(op):
             if not op.product.allow_cancel or op.has_checkin:
                 return False
-            if any(gc.value != op.price for gc in op.issued_gift_cards.all()):
+            if any(gc.value != gc.issued_value for gc in op.issued_gift_cards.all()):
                 return False
             return True
 
@@ -741,7 +741,7 @@ class Order(LockModel, LoggedModel):
                 has_checkin=Exists(Checkin.objects.filter(position_id=OuterRef('pk'))),
             )
             .select_related('product')
-            .prefetch_related('issued_gift_cards')
+            .prefetch_related('issued_gift_cards__transactions')
         )
         cancelable = all([op.product.allow_cancel and not op.has_checkin for op in positions])
         if not cancelable or not positions:

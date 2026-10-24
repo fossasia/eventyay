@@ -82,6 +82,17 @@ class GiftCard(LoggedModel):
     def value(self):
         return self.transactions.aggregate(s=Sum('value'))['s'] or Decimal('0.00')
 
+    @property
+    def issued_value(self):
+        """Original credit, independent of subsequent redemption or cancellation."""
+        initial = self.transactions.first()
+        if initial is not None:
+            return initial.value
+        if self.issued_in_id:
+            position = self.issued_in
+            return position.price_before_voucher if position.price_before_voucher is not None else position.price
+        return Decimal('0.00')
+
     def accepted_by(self, organizer):
         return (
             self.issuer == organizer

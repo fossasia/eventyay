@@ -169,7 +169,10 @@ def reactivate_order(order: Order, force: bool = False, user: User = None, auth=
     if order.status != Order.STATUS_CANCELED:
         raise OrderError('The order was not canceled.')
 
-    with order.event.lock() as now_dt:
+    with transaction.atomic(), order.event.lock() as now_dt:
+        current_status = Order.objects.select_for_update().values_list('status', flat=True).get(pk=order.pk)
+        if current_status != Order.STATUS_CANCELED:
+            raise OrderError('The order was not canceled.')
         is_available = force or order._is_still_available(now_dt, count_waitinglist=False, check_voucher_usage=True)
         if is_available is True:
             if order.payment_refund_sum >= order.total:
@@ -197,8 +200,7 @@ def reactivate_order(order: Order, force: bool = False, user: User = None, auth=
 
                     for gc in position.issued_gift_cards.all():
                         gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                        gc.transactions.create(value=position.price, order=order)
-                        break
+                        gc.transactions.create(value=gc.issued_value, order=order)
         else:
             raise OrderError(is_available)
 
@@ -470,7 +472,7 @@ def _cancel_order(
         for position in order.positions.all():
             for gc in position.issued_gift_cards.all():
                 gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                if gc.value < position.price:
+                if gc.value < gc.issued_value:
                     raise OrderError(
                         _(
                             'This order can not be canceled since the gift card {card} purchased in '
@@ -478,7 +480,7 @@ def _cancel_order(
                         ).format(card=gc.secret)
                     )
                 else:
-                    gc.transactions.create(value=-position.price, order=order)
+                    gc.transactions.create(value=-gc.issued_value, order=order)
 
         if cancellation_fee:
             with order.event.lock():
@@ -2183,17 +2185,16 @@ class OrderChangeManager:
                 op.fee.canceled = True
                 op.fee.save(update_fields=['canceled'])
             elif isinstance(op, self.CancelOperation):
-                for gc in op.position.issued_gift_cards.all():
-                    gc = GiftCard.objects.select_for_update().get(pk=gc.pk)
-                    if gc.value < op.position.price:
-                        raise OrderError(
-                            _(
-                                'A position can not be canceled since the gift card {card} purchased in this order has '
-                                'already been redeemed.'
-                            ).format(card=gc.secret)
-                        )
-                    else:
-                        gc.transactions.create(value=-op.position.price, order=self.order)
+                for position in [op.position] + list(op.position.addons.filter(canceled=False)):
+                    for card in position.issued_gift_cards.select_for_update():
+                        if card.value < card.issued_value:
+                            raise OrderError(
+                                _(
+                                    'A position can not be canceled since the gift card {card} purchased in this order has '
+                                    'already been redeemed.'
+                                ).format(card=card.secret)
+                            )
+                        card.transactions.create(value=-card.issued_value, order=self.order)
 
                 for opa in op.position.addons.filter(canceled=False):
                     self.order.log_action(
@@ -2246,6 +2247,10 @@ class OrderChangeManager:
                 op.position.save(update_fields=['canceled', 'secret'])
             elif isinstance(op, self.ReinstateOperation):
                 for pos_to_check in [op.position] + list(op.position.addons.filter(canceled=True)):
+                    was_canceled = OrderPosition.all.select_for_update().get(pk=pos_to_check.pk).canceled
+                    if was_canceled:
+                        for card in pos_to_check.issued_gift_cards.select_for_update():
+                            card.transactions.create(value=card.issued_value, order=self.order)
                     if pos_to_check.voucher_id:
                         v = Voucher.objects.select_for_update().get(pk=pos_to_check.voucher_id)
                         if v.redeemed >= v.max_usages:
@@ -2568,6 +2573,7 @@ class OrderChangeManager:
             return None
 
     def commit(self, check_quotas=True):
+        """Apply queued order changes and gift-card issuance in one transaction."""
         if self._committed:
             # an order change can only be committed once
             raise OrderError(error_messages['internal'])
@@ -2596,8 +2602,9 @@ class OrderChangeManager:
             self._reissue_invoice()
             self._clear_tickets_cache()
             self.order.touch()
-        self._check_paid_price_change()
-        self._check_paid_to_free()
+            self._check_paid_price_change()
+            self._check_paid_to_free()
+            signal_listener_issue_giftcards(self.order.event, self.order)
 
         if self.notify:
             notify_user_changed_order(
@@ -3109,25 +3116,31 @@ def change_payment_provider(
 @receiver(order_changed, dispatch_uid='eventyaybase_order_changed_giftcards')
 @transaction.atomic()
 def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
+    """Serialize paid-order issuance while preserving existing cards and recorded credit."""
+    # Serialize signals and recheck persisted status before issuing any credit.
+    order = Order.objects.select_for_update().get(pk=order.pk)
     if order.status != Order.STATUS_PAID:
         return
     any_giftcards = False
     for p in order.positions.all():
         if p.product.issue_giftcard:
-            issued = Decimal('0.00')
-            for gc in p.issued_gift_cards.all():
-                issued += gc.transactions.first().value
-            if p.price - issued > 0:
+            # Issued cards retain their recorded credit, including legacy discounted cards.
+            if p.issued_gift_cards.exists():
+                continue
+            face_value = p.price_before_voucher if p.price_before_voucher is not None else p.price
+            if face_value > 0:
                 gc = sender.organizer.issued_gift_cards.create(
                     currency=sender.currency,
                     issued_in=p,
                     testmode=order.testmode,
                     expires=sender.organizer.default_gift_card_expiry,
                 )
-                gc.transactions.create(value=p.price - issued, order=order)
+                gc.transactions.create(value=face_value, order=order)
                 any_giftcards = True
                 p.secret = gc.secret
                 p.save(update_fields=['secret'])
 
     if any_giftcards:
-        tickets.invalidate_cache.apply_async(kwargs={'event': sender.pk, 'order': order.pk})
+        transaction.on_commit(
+            lambda: tickets.invalidate_cache.apply_async(kwargs={'event': sender.pk, 'order': order.pk})
+        )
