@@ -653,6 +653,11 @@ def get_admin_navigation(request):
 
     platform_data_children = [
         {
+            'label': _('Sales Overview'),
+            'url': reverse('eventyay_admin:admin.sales'),
+            'active': url.url_name.startswith('admin.sales'),
+        },
+        {
             'label': _('Events'),
             'url': reverse('eventyay_admin:admin.events'),
             'active': 'events' in url.url_name,

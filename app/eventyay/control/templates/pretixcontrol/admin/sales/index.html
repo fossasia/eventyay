@@ -1,0 +1,86 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n money static urlreplace %}
+{% block title %}{% translate 'Sales Overview' %}{% endblock %}
+{% block custom_header %}
+  {{ block.super }}
+  <link rel='stylesheet' href='{% static "pretixcontrol/css/admin-sales.css" %}'>
+{% endblock %}
+{% block content %}
+  <h1>{% translate 'Sales Overview' %}</h1>
+  <ul class='nav nav-tabs'>
+    <li{% if not invoices %} class='active'{% endif %}><a href='{% url "eventyay_admin:admin.sales" %}'{% if not invoices %} aria-current='page'{% endif %}>{% translate 'Event Performance' %}</a></li>
+    <li{% if invoices %} class='active'{% endif %}><a href='{% url "eventyay_admin:admin.sales.invoices" %}'{% if invoices %} aria-current='page'{% endif %}>{% translate 'Invoices to Organizers' %}</a></li>
+  </ul>
+  {% if invoices %}
+    <p class='help-block'>{% translate 'Amounts are the platform fees after discounts. Status updates record administrative decisions; they do not initiate charges or refunds. Recipient addresses are recorded when invoice emails are queued.' %}</p>
+  {% else %}
+    <p class='help-block'>{% translate 'Tickets sold counts admission tickets on paid orders. Revenue is the gross total of currently paid orders, including fees. Each event is reported in its own currency.' %}</p>
+  {% endif %}
+  <form method='get' class='sales-filters'>
+    <div class='form-group sales-search'>
+      <label for='sales-query'>{% translate 'Search' %}</label>
+      <input class='form-control' id='sales-query' name='query' value='{{ query }}' type='search'>
+    </div>
+    <div class='form-group'>
+      <label for='sales-status'>{% translate 'Status' %}</label>
+      <select class='form-control' id='sales-status' name='status'>
+        <option value=''>{% translate 'All statuses' %}</option>
+        {% for value, label in statuses %}<option value='{{ value }}'{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class='form-group'>
+      <label for='sales-ordering'>{% translate 'Sort by' %}</label>
+      <select class='form-control' id='sales-ordering' name='ordering'>
+        {% for key, label in columns %}
+          <option value='{{ key }}'{% if ordering == key %} selected{% endif %}>{{ label }} ↑</option>
+          {% with descending='-'|add:key %}<option value='{{ descending }}'{% if ordering == descending %} selected{% endif %}>{{ label }} ↓</option>{% endwith %}
+        {% endfor %}
+      </select>
+    </div>
+    <div class='sales-filter-actions'>
+      <button class='btn btn-primary' type='submit'>{% translate 'Apply filters' %}</button>
+      <a class='btn btn-default' href='{{ request.path }}'>{% translate 'Reset' %}</a>
+      <button class='btn btn-default' type='submit' name='export' value='csv'><span class='fa fa-download' aria-hidden='true'></span> {% translate 'Export CSV' %}</button>
+    </div>
+  </form>
+  <div class='table-responsive' tabindex='0' role='region' aria-label='{% translate "Sales results" %}'>
+    <table class='table table-striped'>
+      <thead><tr>{% for key, label in columns %}<th scope='col'>{{ label }}</th>{% endfor %}{% if invoices %}<th scope='col'>{% translate 'Action' %}</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% if invoices %}
+              <td>#{{ row.pk }}</td>
+              <td><a href='{% url "eventyay_common:event.index" organizer=row.organizer.slug event=row.event.slug %}'>{{ row.event.name }}</a><br><small>{{ row.organizer.name }}</small></td>
+              <td>{{ row.created_at|date:'SHORT_DATE_FORMAT' }}</td>
+              <td>{{ row.due_date|date:'SHORT_DATE_FORMAT' }}</td>
+              <td>{{ row.final_ticket_fee|money:row.currency }}</td>
+              <td>{{ row.currency }}</td>
+              <td>{{ row.sent_to_email|default:_('Not recorded') }}</td>
+              <td>
+                <form method='post' action='{% url "eventyay_admin:admin.sales.status" pk=row.pk %}'>
+                  {% csrf_token %}
+                  <input type='hidden' name='next' value='{{ request.get_full_path }}'>
+                  <input type='hidden' name='previous_status' value='{{ row.status }}'>
+                  <select class='form-control' name='status' id='invoice-status-{{ row.pk }}' aria-label='{% blocktranslate with number=row.pk %}Status for invoice {{ number }}{% endblocktranslate %}'>
+                    {% for value, label in statuses %}<option value='{{ value }}'{% if row.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                  </select>
+                  <button class='btn btn-default btn-sm' type='submit'>{% translate 'Update status' %}</button>
+                </form>
+              </td>
+              <td><a class='btn btn-default btn-sm' href='{% url "eventyay_admin:admin.sales.payment" pk=row.pk %}'>{% translate 'See Payment' %}</a></td>
+            {% else %}
+              <td><a href='{% url "eventyay_common:event.index" organizer=row.organizer.slug event=row.slug %}'>{{ row.name }}</a></td>
+              <td>{{ row.organizer.name }}</td><td>{{ row.tickets_sold }}</td><td>{{ row.revenue|money:row.currency }}</td><td>{{ row.currency }}</td>
+              <td>{{ row.date_from|date:'SHORT_DATE_FORMAT' }}</td>
+              <td>{% for value, label in statuses %}{% if row.sales_status == value %}{{ label }}{% endif %}{% endfor %}</td>
+            {% endif %}
+          </tr>
+        {% empty %}
+          <tr><td colspan='{% if invoices %}9{% else %}7{% endif %}'>{% translate 'No results match your filters.' %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'pretixcontrol/pagination.html' %}
+{% endblock %}

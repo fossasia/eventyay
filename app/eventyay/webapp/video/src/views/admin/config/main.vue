@@ -354,7 +354,7 @@ async function save() {
 			formData.append('interpretation_event_settings_save', '1')
 			if (config.value.interpretation.is_enabled) formData.append('interpretation-interpretation_is_enabled', 'on')
 			if (config.value.interpretation.use_plugin_streams) formData.append('interpretation-interpretation_use_plugin_streams', 'on')
-			
+
 			const resp = await fetch(window.eventyay.interpretationUrl, {
 				method: 'POST',
 				credentials: 'same-origin',
