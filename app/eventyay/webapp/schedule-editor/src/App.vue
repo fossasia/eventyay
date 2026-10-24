@@ -307,7 +307,7 @@ import GridSchedule from '~/components/GridSchedule.vue'
 import TalkSession from '~/components/Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
 import ConfirmDialog from '~/teamshifts-adapter/ConfirmDialog.vue'
-import api from '~/api'
+import api, { HTTPError } from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
@@ -442,6 +442,7 @@ const confirmDialogBusy = ref(false)
 const confirmDialogError = ref('')
 let confirmDialogResolve: ((value: boolean) => void) | null = null
 let confirmDialogAction: (() => Promise<void>) | null = null
+let confirmDialogForbiddenMessage = ''
 
 const breakConfirmDialogEl = ref<HTMLDialogElement | null>(null)
 const breakConfirmTitle = ref('')
@@ -527,13 +528,14 @@ function onBreakDialogBackdrop(event: MouseEvent) {
   if (event.target === breakConfirmDialogEl.value) cancelBreakDelete()
 }
 
-function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: string; confirmClass?: string; onConfirm?: () => Promise<void> }): Promise<boolean> {
+function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: string; confirmClass?: string; forbiddenMessage?: string; onConfirm?: () => Promise<void> }): Promise<boolean> {
   confirmDialogTitle.value = opts.title
   confirmDialogLead.value = opts.lead
   confirmDialogLabel.value = opts.confirmLabel
   confirmDialogClass.value = opts.confirmClass || 'btn-primary'
   confirmDialogBusy.value = false
   confirmDialogError.value = ''
+  confirmDialogForbiddenMessage = opts.forbiddenMessage || ''
   confirmDialogAction = opts.onConfirm || null
   return new Promise((resolve) => {
     confirmDialogResolve = resolve
@@ -542,6 +544,7 @@ function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: st
 }
 
 async function onConfirmDialogConfirm() {
+  if (confirmDialogBusy.value) return
   if (confirmDialogAction) {
     confirmDialogBusy.value = true
     confirmDialogError.value = ''
@@ -549,13 +552,14 @@ async function onConfirmDialogConfirm() {
       await confirmDialogAction()
       confirmDialogRef.value?.close()
       confirmDialogResolve?.(true)
-    } catch (error) {
-      confirmDialogError.value = (error as Error).message || $t('An error occurred. Please try again.')
-      confirmDialogResolve?.(false)
-    } finally {
-      confirmDialogBusy.value = false
       confirmDialogResolve = null
       confirmDialogAction = null
+    } catch (error) {
+      confirmDialogError.value = error instanceof HTTPError && error.status === 403 && confirmDialogForbiddenMessage
+        ? confirmDialogForbiddenMessage
+        : $t('An error occurred. Please try again.')
+    } finally {
+      confirmDialogBusy.value = false
     }
   } else {
     confirmDialogRef.value?.close()
@@ -1365,14 +1369,17 @@ async function editorSave(): Promise<void> {
     } catch {
       // fetchSchedule already records schedule.fetch via api.http
     }
-  } catch {
-    editorSessionError.value = $t('Failed to save. Please try again.')
+  } catch (error) {
+    editorSessionError.value = (mode === 'shifts' || mode === 'public-shifts') && error instanceof HTTPError && error.status === 403
+      ? $t('You do not have permission to save this shift. Check your access and role permissions.')
+      : $t('Failed to save. Please try again.')
   } finally {
     editorSessionWaiting.value = false
   }
 }
 
 function editorCancel(): void {
+  if (editorSessionWaiting.value) return
   editorSession.value = null
   editorSessionError.value = ''
 }
@@ -1404,6 +1411,7 @@ async function deleteShiftById(id: number): Promise<boolean> {
   return showConfirmDialog({
     title: $t('Delete shift'),
     lead: $t('Are you sure you want to delete this shift? This action cannot be undone.'),
+    forbiddenMessage: $t('You do not have permission to delete this shift. Check that you can manage all of its roles.'),
     confirmLabel: $t('Delete'),
     confirmClass: 'btn-danger',
     onConfirm: async () => {
@@ -1411,7 +1419,11 @@ async function deleteShiftById(id: number): Promise<boolean> {
       if (schedule.value) {
         schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
       }
-      await fetchAdditionalScheduleData()
+      try {
+        await fetchAdditionalScheduleData()
+      } catch (error) {
+        console.warn('Shift deleted, but schedule details could not be refreshed', { shiftId: id, error })
+      }
     },
   })
 }

@@ -13,7 +13,7 @@
     "lint:tsc": "tsc --noEmit",
     "i18n:extract": "node ../i18n/extract.mjs extract --domain schedule-editor",
     "test:i18n": "node --test \"../i18n/*.test.js\"",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test \"tests/*.test.js\"",
     "analyze": "ANALYZE=true npm run build",
     "prepublishOnly": "npm run build"
   },
