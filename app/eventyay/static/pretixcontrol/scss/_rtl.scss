@@ -171,3 +171,25 @@ html.rtl {
     }
   }
 }
+
+@media (max-width: 767px) {
+  html.rtl {
+    .sidebar {
+      left: auto;
+      right: 0;
+      transform: translateX(100%);
+    }
+
+    body.sidebar-minimized .sidebar {
+      transform: translateX(100%);
+    }
+
+    body:not(.sidebar-minimized) .sidebar {
+      transform: translateX(0);
+    }
+
+    #page-wrapper {
+      margin-right: 0 !important;
+    }
+  }
+}
