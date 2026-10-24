@@ -1180,7 +1180,7 @@ dependencies = [
 [[package]]
 name = "eventyay-business"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#799519f956dd1b4fb6f2fef40cb98deaeb558863" }
+source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#75f7b44a7881d92e3d99d1910a3cb9fee8844620" }
 
 [[package]]
 name = "eventyay-hubspot"
@@ -1194,7 +1194,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#e3d746f341f15f5b5be550a23f49ea7c52f5f088" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#2c55d7c39939d3844c1ba8b8b4265007ede9a7a3" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1227,7 +1227,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#e4ffdf51643ba74b0ce96d9186ea76ae891ff861" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#070f5f39114e442e921cce29f77b32c113a96947" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1708,7 +1708,7 @@ test = [
 [[package]]
 name = "eventyay-veditor"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#ad9f36e9d40f32bfe6186df4eef02fae4e545e5a" }
+source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#37223a0fe578d54d928ed80a4e53bb4f5139c515" }
 
 [[package]]
 name = "execnet"
@@ -1722,7 +1722,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#29f5d66b59678deb6d04bcd5c5fb17d903a84688" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#f8102316e867db9fca5fd37119659ed9aff9ccf7" }
 
 [[package]]
 name = "faker"
