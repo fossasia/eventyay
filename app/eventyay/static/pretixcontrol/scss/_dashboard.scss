@@ -252,9 +252,10 @@
 }
 
 @media print {
-  // The base templates leave the navbar and the sidebar out of every printout, so the
-  // content does not keep their space. main.scss sets the top padding of #wrapper after
-  // it imports this file, so the reset also names body to take precedence.
+  // The navbar (common/css/_navbar.css) and the sidebar (hidden-print in the base templates)
+  // are left out of every printout, so the content does not keep their space. main.scss sets
+  // the top padding of #wrapper after it imports this file, so the reset also names body to
+  // take precedence.
   body #wrapper {
     padding-top: 0;
   }

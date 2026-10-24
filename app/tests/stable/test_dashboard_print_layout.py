@@ -1,4 +1,8 @@
+import re
+from pathlib import Path
+
 import pytest
+from django.contrib.staticfiles import finders
 from django.test import override_settings
 from django.urls import reverse
 
@@ -44,3 +48,12 @@ def test_talk_pages_leave_the_sidebar_out_of_the_printout(organizer_client):
 
     assert response.status_code == 200
     assert 'class="nav flex-column sidebar d-print-none"' in response.content.decode()
+
+
+def test_navbar_is_left_out_of_the_printout():
+    """The navbar is fixed, so a printout would repeat it on every page, over the content."""
+    css = Path(finders.find('common/css/_navbar.css')).read_text()
+
+    print_rules = re.search(r'@media print\s*\{(.*?)\n\}', css, flags=re.S)
+    assert print_rules
+    assert re.search(r'nav\.navbar\.navbar-inverse\s*\{\s*display:\s*none;', print_rules.group(1))
