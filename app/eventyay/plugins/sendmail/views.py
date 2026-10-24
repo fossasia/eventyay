@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 
 import nh3
 from django.conf import settings
@@ -26,6 +27,7 @@ from eventyay.base.models.orders import OrderPosition
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.mail import expand_email_variable_chips, mail
 from eventyay.base.templatetags.rich_text import (
+    TEAM_EMAIL_PREVIEW_CONTEXT,
     build_email_preview_context,
     compile_email_body,
 )
@@ -1274,6 +1276,11 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
         ctx['draft_id'] = getattr(self, 'draft_id', self.request.POST.get('draft_id', None))
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['is_draft'] = bool(ctx['draft_id'])
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
+        )
+        ctx['email_preview_url'] = f'{preview_url}?{urlencode({"context": TEAM_EMAIL_PREVIEW_CONTEXT})}'
         return ctx
 
     def post(self, request, *args, **kwargs):

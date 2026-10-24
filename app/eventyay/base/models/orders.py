@@ -1178,7 +1178,10 @@ class Order(LockModel, LoggedModel):
 
             try:
                 email_content = render_mail(template, context)
-                subject = escape_stray_braces(str(subject)).format_map(TolerantDict(_stringify_mail_context(context)))
+                # mail() formats the subject itself, so only the logged copy is rendered here.
+                logged_subject = escape_stray_braces(str(subject)).format_map(
+                    TolerantDict(_stringify_mail_context(context))
+                )
                 mail(
                     recipient,
                     subject,
@@ -1203,7 +1206,7 @@ class Order(LockModel, LoggedModel):
                     user=user,
                     auth=auth,
                     data={
-                        'subject': subject,
+                        'subject': logged_subject,
                         'message': email_content,
                         'position': position.positionid if position else None,
                         'recipient': recipient,

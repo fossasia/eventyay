@@ -5,7 +5,7 @@ from django.core.validators import BaseValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.strings import LazyI18nString
 
-from eventyay.helpers.placeholders import find_placeholders
+from eventyay.helpers.placeholders import find_malformed_placeholders, find_placeholders
 
 
 class PlaceholderValidator(BaseValidator):
@@ -29,6 +29,16 @@ class PlaceholderValidator(BaseValidator):
             return
 
         if self.literal_braces:
+            malformed = find_malformed_placeholders(value, {p[1:-1] for p in self.limit_value})
+            if malformed:
+                raise ValidationError(
+                    _(
+                        'Invalid placeholder syntax: %(value)s. Write placeholders without spaces inside the '
+                        'braces, for example {event_name}. To show braces as text, write {{ and }}.'
+                    ),
+                    code='invalid_placeholder_syntax',
+                    params={'value': ', '.join(malformed)},
+                )
             data_placeholders = find_placeholders(value)
         else:
             # Parse like str.format_map does, so escaped braces such as {{literal}} stay literal text.

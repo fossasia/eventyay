@@ -8,7 +8,7 @@ from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Order, Team
 from eventyay.control.forms.orders import OrderMailForm
-from eventyay.helpers.placeholders import escape_stray_braces, find_placeholders
+from eventyay.helpers.placeholders import escape_stray_braces, find_malformed_placeholders, find_placeholders
 from eventyay.plugins.sendmail.forms import TeamMailForm
 
 # The subject and message from the #6251 review recording.
@@ -58,7 +58,7 @@ def event_url(event, path):
     [
         (REVIEW_SUBJECT, REVIEW_SUBJECT),
         ('TEST {} {event_name}', 'TEST {} Test Event'),
-        ('Volunteer briefing for {event_name', 'Volunteer briefing for {event_name'),
+        ('Volunteer briefing {draft', 'Volunteer briefing {draft'),
         ('See you there :}', 'See you there :}'),
         ('{{literal}} {event_name}', '{literal} Test Event'),
         ('{event.name} {0} }{', '{event.name} {0} }{'),
@@ -79,12 +79,26 @@ def test_find_placeholders_ignores_literal_braces():
     ]
 
 
+def test_find_malformed_placeholders_flags_only_known_names():
+    template = (
+        'Briefing {event_name for { event_name } and {event_name!x} {event_name:>5d} {join\\_online\\_event '
+        '{draft {} { } {{ event_name }} {event_name} {note: x}'
+    )
+    assert find_malformed_placeholders(template, {'event_name', 'join_online_event'}) == [
+        '{event_name',
+        '{ event_name }',
+        '{event_name!x}',
+        '{event_name:>5d}',
+        '{join\\_online\\_event',
+    ]
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     ('subject', 'message'),
     [
         (REVIEW_SUBJECT, REVIEW_MESSAGE),
-        ('Volunteer briefing for {event_name', 'See you there :}'),
+        ('Volunteer briefing {draft', 'See you there :}'),
         ('Briefing {{internal}} for {event_name}', 'Use {{name}} literally, {name}'),
     ],
 )
@@ -94,6 +108,30 @@ def test_team_mail_form_accepts_braces_as_text(event, subject, message):
         form.is_valid()
     assert 'subject' not in form.errors
     assert 'message' not in form.errors
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'subject',
+    ['Volunteer briefing for {event_name', 'Briefing for { event_name }', 'Briefing for {event_name!x}'],
+)
+def test_team_mail_form_rejects_mistyped_placeholder(event, subject):
+    with scope(event=event):
+        form = TeamMailForm(event=event, data={'subject_0': subject, 'message_0': 'Hi'})
+        assert not form.is_valid()
+    assert 'Invalid placeholder syntax' in str(form.errors['subject'])
+    assert 'write {{ and }}' in str(form.errors['subject'])
+
+
+@pytest.mark.django_db
+def test_order_mail_form_rejects_mistyped_placeholder(event, order):
+    with scope(event=event):
+        form = OrderMailForm(
+            order=order,
+            data={'subject': 'Your order { code }', 'message': 'Hi', 'sendto': order.email},
+        )
+        assert not form.is_valid()
+    assert 'Invalid placeholder syntax: { code }' in str(form.errors['subject'])
 
 
 @pytest.mark.django_db
@@ -117,16 +155,26 @@ def test_order_mail_form_accepts_braces_as_text(event, order):
 
 
 @pytest.mark.django_db
-def test_order_send_mail_keeps_braces_in_sent_email(mail_client, event, order):
+@pytest.mark.parametrize(
+    ('subject', 'sent_subject'),
+    [
+        (REVIEW_SUBJECT, REVIEW_SUBJECT),
+        ('Re: {{event_name}} {code}', 'Re: {event_name} BRACE'),
+    ],
+)
+def test_order_send_mail_keeps_braces_in_sent_email(mail_client, event, order, subject, sent_subject):
     djmail.outbox = []
     response = mail_client.post(
         event_url(event, f'orders/{order.code}/sendmail'),
-        {'subject': REVIEW_SUBJECT, 'message': 'Order {code}. See you there :}', 'sendto': order.email},
+        {'subject': subject, 'message': 'Order {code}. See you there :}', 'sendto': order.email},
         secure=True,
     )
     assert response.status_code == 302
     assert len(djmail.outbox) == 1
-    assert djmail.outbox[0].subject == REVIEW_SUBJECT
+    assert djmail.outbox[0].subject == sent_subject
+    with scope(event=event):
+        log_entry = order.all_logentries().get(action_type='eventyay.event.order.email.custom_sent')
+    assert log_entry.parsed_data['subject'] == sent_subject
     assert f'Order {order.code}. See you there :}}' in djmail.outbox[0].body
 
 
@@ -145,7 +193,7 @@ def test_order_mail_preview_renders_braces_as_text(mail_client, event, order):
 @pytest.mark.django_db
 @pytest.mark.parametrize('payload_format', ['form', 'json'])
 def test_editor_email_preview_renders_braces_as_text(mail_client, event, payload_format):
-    url = event_url(event, 'editor/email-preview')
+    url = event_url(event, 'editor/email-preview?context=team')
     body = '<p>TEST {} {event_name} {all_submissions_url} See you there :}</p>'
     if payload_format == 'json':
         response = mail_client.post(
@@ -186,3 +234,21 @@ def test_team_mail_ajax_preview_returns_field_errors(mail_client, event):
     )
     assert response.status_code == 400
     assert 'Invalid placeholder(s): {evnt_name}' in response.json()['errors']['Subject'][0]
+
+
+@pytest.mark.django_db
+def test_editor_email_preview_has_no_user_outside_team_composer(mail_client, event):
+    response = mail_client.post(
+        event_url(event, 'editor/email-preview'), {'body_en': '<p>{event_name} {all_submissions_url}</p>'}, secure=True
+    )
+    assert response.status_code == 200
+    html = response.json()['previews']['en']
+    assert '{all_submissions_url}' in html
+    assert '/me/submissions/' not in html
+
+
+@pytest.mark.django_db
+def test_team_composer_requests_team_preview_context(mail_client, event):
+    response = mail_client.get(event_url(event, 'mails/compose/teams/'), secure=True)
+    assert response.status_code == 200
+    assert 'editor/email-preview?context=team' in response.content.decode()

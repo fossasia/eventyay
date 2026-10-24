@@ -188,7 +188,6 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
     'order',
     'position',
     'position_or_address',
-    'user',
     'team',
     'invoice_address',
 )
@@ -198,6 +197,12 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 VOUCHER_EMAIL_PREVIEW_CONTEXT = 'voucher'
 
 _VOUCHER_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'voucher_list', 'name')
+
+# Query value the team composer adds to the shared preview URL. Team mails are sent with these
+# parameters, so {name}, {email} and {all_submissions_url} preview as the receiving team member.
+TEAM_EMAIL_PREVIEW_CONTEXT = 'team'
+
+_TEAM_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'user', 'team')
 
 
 def _preview_placeholder_context(html_body: str) -> list[str]:
@@ -222,9 +227,12 @@ def _preview_parameters(html_body: str, preview_context: str | None) -> list[str
 
     ``voucher`` is the bulk-voucher form. It always includes ``voucher_list``,
     so ``{url}`` samples the event shop the same way delivery does.
+    ``team`` is the team composer, the only editor whose mails carry a ``user``.
     """
     if preview_context == VOUCHER_EMAIL_PREVIEW_CONTEXT:
         return list(_VOUCHER_PREVIEW_PARAMETERS)
+    if preview_context == TEAM_EMAIL_PREVIEW_CONTEXT:
+        return list(_TEAM_PREVIEW_PARAMETERS)
     return _preview_placeholder_context(html_body)
 
 
