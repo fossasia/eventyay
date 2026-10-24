@@ -11,7 +11,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from lxml import etree
 
-from eventyay.base.models.page import Page
+from eventyay.base.models.page import SYSTEM_PAGE_SLUGS, Page
 from eventyay.common.forms.fields import I18nRichTextFormField
 from eventyay.common.sanitizers import sanitize_page_rich_text
 
@@ -60,7 +60,7 @@ class PageSettingsForm(forms.ModelForm):
     }
 
     def clean_slug(self):
-        slug = (self.cleaned_data.get('slug') or '').strip()
+        slug = (self.cleaned_data.get('slug') or '').strip().lower()
 
         if not slug:
             title = self.cleaned_data.get('title')
@@ -71,12 +71,18 @@ class PageSettingsForm(forms.ModelForm):
                 title_values = [str(title)]
 
             if title_values:
-                slug = slugify(title_values[0])[:150]
+                slug = slugify(title_values[0])[:150].lower()
 
         if not slug:
             raise forms.ValidationError(
                 _('This field is required.'),
                 code='required',
+            )
+
+        if slug in SYSTEM_PAGE_SLUGS:
+            raise forms.ValidationError(
+                _('This slug is reserved for system pages.'),
+                code='reserved_slug',
             )
 
         slug_conflict = Page.objects.filter(slug__iexact=slug)

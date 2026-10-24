@@ -11,7 +11,12 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from eventyay.base.models.page import Page
+from eventyay.base.models.page import (
+    SYSTEM_PAGE_SLUGS,
+    Page,
+    get_page_by_slug,
+    is_content_empty,
+)
 from eventyay.base.services.turnstile import (
     TURNSTILE_ERROR_MESSAGE,
     TURNSTILE_FAILED_MESSAGE,
@@ -86,7 +91,20 @@ class SignupView(_SignupView):
 
     @cached_property
     def confirmation_pages(self) -> tuple[Page, ...]:
-        return tuple(Page.objects.filter(confirmation_required=True))
+        resolved = []
+        seen_slugs = set()
+        for p in Page.objects.filter(confirmation_required=True).order_by('-id'):
+            slug = (p.slug or '').strip().lower()
+            if not slug or slug in seen_slugs:
+                continue
+            seen_slugs.add(slug)
+            if slug in SYSTEM_PAGE_SLUGS:
+                canonical = get_page_by_slug(slug)
+                if canonical and not is_content_empty(canonical.text):
+                    resolved.append(canonical)
+            elif not is_content_empty(p.text):
+                resolved.append(p)
+        return tuple(resolved)
 
     def form_valid(self, form):
         has_required_pages = bool(self.confirmation_pages)

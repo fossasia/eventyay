@@ -16,8 +16,10 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.forms import SettingsForm
+from eventyay.base.models.page import validate_footer_url
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import I18nRichTextFormField
+
 
 DEFAULT_PAGE_LOCALE = 'en'
 
@@ -36,10 +38,14 @@ ALL_PAGE_I18N_KEYS = (
     'startpage_header_text',
     'startpage_hero_title',
     'startpage_hero_text',
-    'startpage_feature_1_title', 'startpage_feature_1_text',
-    'startpage_feature_2_title', 'startpage_feature_2_text',
-    'startpage_feature_3_title', 'startpage_feature_3_text',
-    'startpage_feature_4_title', 'startpage_feature_4_text',
+    'startpage_feature_1_title',
+    'startpage_feature_1_text',
+    'startpage_feature_2_title',
+    'startpage_feature_2_text',
+    'startpage_feature_3_title',
+    'startpage_feature_3_text',
+    'startpage_feature_4_title',
+    'startpage_feature_4_text',
     'footer_page_terms_text',
     'footer_page_privacy_text',
     'footer_page_support_text',
@@ -81,10 +87,11 @@ class PageContentSettingsForm(SettingsForm):
     page_content_fields = ()
 
     def __init__(self, *args, **kwargs):
-        self.obj = GlobalSettingsObject()
-        self._apply_setting_defaults()
+        """Initialize the settings form and configure active page locales."""
+        self.obj = kwargs.pop('obj', None) or GlobalSettingsObject()
         self._page_locales = self._resolve_page_locales(args, kwargs)
         super().__init__(*args, obj=self.obj, **kwargs)
+        self._apply_setting_defaults()
         self._build_dynamic_fields()
         self._add_page_locales_field()
         self._restrict_locales()
@@ -100,6 +107,7 @@ class PageContentSettingsForm(SettingsForm):
     # -- locale handling -------------------------------------------------------
 
     def _resolve_page_locales(self, args, kwargs):
+        """Resolve the list of active language codes from settings, content, and submitted form data."""
         valid = {code for code, _name in settings.LANGUAGES}
         raw = self.obj.settings.get('page_locales')
         if isinstance(raw, str):
@@ -125,6 +133,7 @@ class PageContentSettingsForm(SettingsForm):
 
     @staticmethod
     def _locale_dict(raw):
+        """Extract a mapping of language code to content string from raw i18n data."""
         if isinstance(raw, LazyI18nString):
             raw = raw.data
         if isinstance(raw, str):
@@ -136,6 +145,7 @@ class PageContentSettingsForm(SettingsForm):
 
     @staticmethod
     def _submitted_locales(args, kwargs):
+        """Extract submitted language codes from form input data."""
         data = kwargs.get('data')
         if data is None and args:
             data = args[0]
@@ -149,6 +159,7 @@ class PageContentSettingsForm(SettingsForm):
         return [str(value).strip()] if value else []
 
     def _add_page_locales_field(self):
+        """Attach the hidden multiple-choice field tracking active page locales."""
         self.fields['page_locales'] = forms.MultipleChoiceField(
             choices=settings.LANGUAGES,
             required=False,
@@ -157,24 +168,24 @@ class PageContentSettingsForm(SettingsForm):
         self.initial['page_locales'] = self._page_locales
 
     def _restrict_locales(self):
+        """Restrict i18n form field widgets to the active page locales."""
         for field in self.fields.values():
             if isinstance(field, I18nFormField):
                 field.widget.enabled_locales = self._page_locales
 
     @property
     def page_locale_choices(self):
+        """Return choices of currently active page locales for template display."""
         names = dict(settings.LANGUAGES)
         return [(code, str(names.get(code, code))) for code in self._page_locales]
 
     @property
     def available_locale_choices(self):
-        return [
-            (code, str(name))
-            for code, name in settings.LANGUAGES
-            if code not in self._page_locales
-        ]
+        """Return language choices that are not yet active for the page."""
+        return [(code, str(name)) for code, name in settings.LANGUAGES if code not in self._page_locales]
 
     def save(self):
+        """Save form fields and persist updated page locales to settings."""
         self.cleaned_data.pop('locales', None)
         page_locales = self.cleaned_data.get('page_locales') or [DEFAULT_PAGE_LOCALE]
         self.cleaned_data['page_locales'] = page_locales
@@ -182,6 +193,8 @@ class PageContentSettingsForm(SettingsForm):
 
 
 class StartPageContentForm(PageContentSettingsForm):
+    """Editor for start page header, hero, and feature box settings."""
+
     auto_fields = ['startpage_header_image']
     page_content_fields = (
         'startpage_header_text',
@@ -219,7 +232,10 @@ class StartPageContentForm(PageContentSettingsForm):
         label=_('Hero text'),
         widget=I18nTextarea,
         help_text=_('e.g. {sample}').format(
-            sample='The comprehensive platform for all your event needs. Ticketing, Call for Speakers, Scheduling, Check-in, and more.'
+            sample=(
+                'The comprehensive platform for all your event needs. '
+                'Ticketing, Call for Speakers, Scheduling, Check-in, and more.'
+            )
         ),
     )
 
@@ -262,7 +278,9 @@ class StartPageContentForm(PageContentSettingsForm):
         required=False,
         label=_('Feature 3 text'),
         widget=I18nTextarea,
-        help_text=_('e.g. {sample}').format(sample='Create interactive schedules and allow attendees to plan their visit.'),
+        help_text=_('e.g. {sample}').format(
+            sample='Create interactive schedules and allow attendees to plan their visit.'
+        ),
     )
     startpage_feature_4_title = I18nFormField(
         required=False,
@@ -274,11 +292,15 @@ class StartPageContentForm(PageContentSettingsForm):
         required=False,
         label=_('Feature 4 text'),
         widget=I18nTextarea,
-        help_text=_('e.g. {sample}').format(sample='Built on open source technology. Fully customizable and transparent.'),
+        help_text=_('e.g. {sample}').format(
+            sample='Built on open source technology. Fully customizable and transparent.'
+        ),
     )
 
 
 class FooterContentForm(PageContentSettingsForm):
+    """Editor for footer settings, including additional text, link, and core footer links."""
+
     page_content_fields = ('footer_text', 'footer_link')
 
     footer_text = I18nFormField(
@@ -295,17 +317,29 @@ class FooterContentForm(PageContentSettingsForm):
     )
 
     footer_link_events_enabled = forms.BooleanField(required=False, label=_('Show "Events" footer link'))
-    footer_link_events_url = forms.CharField(required=False, label=_('"Events" link URL'))
+    footer_link_events_url = forms.CharField(
+        required=False, label=_('"Events" link URL'), validators=[validate_footer_url]
+    )
     footer_link_terms_enabled = forms.BooleanField(required=False, label=_('Show "Terms" footer link'))
-    footer_link_terms_url = forms.CharField(required=False, label=_('"Terms" link URL'))
+    footer_link_terms_url = forms.CharField(
+        required=False, label=_('"Terms" link URL'), validators=[validate_footer_url]
+    )
     footer_link_privacy_enabled = forms.BooleanField(required=False, label=_('Show "Privacy" footer link'))
-    footer_link_privacy_url = forms.CharField(required=False, label=_('"Privacy" link URL'))
+    footer_link_privacy_url = forms.CharField(
+        required=False, label=_('"Privacy" link URL'), validators=[validate_footer_url]
+    )
     footer_link_pricing_enabled = forms.BooleanField(required=False, label=_('Show "Pricing" footer link'))
-    footer_link_pricing_url = forms.CharField(required=False, label=_('"Pricing" link URL'))
+    footer_link_pricing_url = forms.CharField(
+        required=False, label=_('"Pricing" link URL'), validators=[validate_footer_url]
+    )
     footer_link_documentation_enabled = forms.BooleanField(required=False, label=_('Show "Documentation" footer link'))
-    footer_link_documentation_url = forms.CharField(required=False, label=_('"Documentation" link URL'))
+    footer_link_documentation_url = forms.CharField(
+        required=False, label=_('"Documentation" link URL'), validators=[validate_footer_url]
+    )
     footer_link_support_enabled = forms.BooleanField(required=False, label=_('Show "Support" footer link'))
-    footer_link_support_url = forms.CharField(required=False, label=_('"Support" link URL'))
+    footer_link_support_url = forms.CharField(
+        required=False, label=_('"Support" link URL'), validators=[validate_footer_url]
+    )
 
     footer_link_groups = (
         ('events', _('Events')),
@@ -317,12 +351,44 @@ class FooterContentForm(PageContentSettingsForm):
     )
 
     def _apply_setting_defaults(self):
+        """Populate default values for unset footer link settings into initial data without persisting."""
         for key, value in FOOTER_LINK_DEFAULTS.items():
             if self.obj.settings.get(key) is None:
-                self.obj.settings.set(key, value)
+                self.initial.setdefault(key, value)
+
+    def clean(self):
+        """Validate footer URLs and additional footer link against malformed syntax."""
+        cleaned_data = super().clean()
+        for key, _label in self.footer_link_groups:
+            field_name = f'footer_link_{key}_url'
+            url_val = cleaned_data.get(field_name)
+            if url_val:
+                try:
+                    validate_footer_url(url_val)
+                except forms.ValidationError as e:
+                    self.add_error(field_name, e)
+
+        footer_link = cleaned_data.get('footer_link')
+        if footer_link:
+            if isinstance(footer_link, LazyI18nString):
+                links = footer_link.data if isinstance(footer_link.data, dict) else {'': str(footer_link)}
+            elif isinstance(footer_link, dict):
+                links = footer_link
+            else:
+                links = {'': str(footer_link)}
+            for val in links.values():
+                if val:
+                    try:
+                        validate_footer_url(val)
+                    except forms.ValidationError as e:
+                        self.add_error('footer_link', e)
+                        break
+        return cleaned_data
 
 
 class GlobalBannerContentForm(PageContentSettingsForm):
+    """Editor for the sitewide global alert message banner."""
+
     page_content_fields = ('banner_message', 'banner_message_detail')
 
     banner_message_enabled = forms.BooleanField(
@@ -340,6 +406,7 @@ class GlobalBannerContentForm(PageContentSettingsForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """Configure widget row heights for banner messages."""
         super().__init__(*args, **kwargs)
         self.fields['banner_message'].widget.attrs['rows'] = '2'
         self.fields['banner_message_detail'].widget.attrs['rows'] = '3'
@@ -349,6 +416,7 @@ class DefaultPageContentForm(PageContentSettingsForm):
     """Editor for a single default page (Terms, Privacy, Support, Documentation)."""
 
     def __init__(self, *args, slug=None, **kwargs):
+        """Initialize default page form for the specified slug."""
         if slug not in DEFAULT_PAGE_SLUGS:
             raise ValueError(f'Unknown default page slug: {slug!r}')
         self.slug = slug
@@ -356,37 +424,53 @@ class DefaultPageContentForm(PageContentSettingsForm):
 
     @property
     def page_content_fields(self):
+        """Return settings keys holding i18n content for this page."""
         if self.slug in CONTENT_PAGE_SLUGS:
             return (f'footer_page_{self.slug}_text',)
         return ()
 
     @property
     def has_content(self):
+        """Return True if this default page slug manages editable text content."""
         return self.slug in CONTENT_PAGE_SLUGS
 
     def _apply_setting_defaults(self):
+        """Populate default enabled and URL settings into initial data without persisting."""
         enabled_key = f'footer_link_{self.slug}_enabled'
         url_key = f'footer_link_{self.slug}_url'
         if self.obj.settings.get(enabled_key) is None:
-            self.obj.settings.set(enabled_key, FOOTER_LINK_DEFAULTS.get(enabled_key, True))
+            self.initial.setdefault(enabled_key, FOOTER_LINK_DEFAULTS.get(enabled_key, True))
         if self.obj.settings.get(url_key) is None:
-            self.obj.settings.set(url_key, FOOTER_LINK_DEFAULTS.get(url_key, f'/{self.slug}'))
+            self.initial.setdefault(url_key, FOOTER_LINK_DEFAULTS.get(url_key, f'/{self.slug}'))
 
     def _build_dynamic_fields(self):
+        """Construct form fields for the default page."""
         slug = self.slug
         enabled_key = f'footer_link_{slug}_enabled'
         url_key = f'footer_link_{slug}_url'
         gs = self.obj.settings
 
+        help_text = (
+            _(
+                'When disabled, or when pointing to a built-in page with no configured content, '
+                'this link is hidden from the footer and the page returns a 404 Not Found error.'
+            )
+            if self.has_content
+            else _('When disabled, this link is hidden from the footer.')
+        )
+        label = _('Active / Enable page') if self.has_content else _('Show in footer')
         self.fields[enabled_key] = forms.BooleanField(
             required=False,
-            label=_('Show in footer'),
+            label=label,
+            help_text=help_text,
         )
+
         self.initial[enabled_key] = gs.get(enabled_key, as_type=bool, default=True)
 
         self.fields[url_key] = forms.CharField(
             required=False,
             label=_('Link URL'),
+            validators=[validate_footer_url],
         )
         self.initial[url_key] = gs.get(url_key, default=FOOTER_LINK_DEFAULTS.get(url_key, f'/{slug}'))
 
@@ -397,3 +481,15 @@ class DefaultPageContentForm(PageContentSettingsForm):
                 label=_('Page content'),
             )
             self.initial[content_key] = gs.get(content_key, as_type=LazyI18nString)
+
+    def clean(self):
+        """Validate dynamic page footer URL against malformed syntax."""
+        cleaned_data = super().clean()
+        url_key = f'footer_link_{self.slug}_url'
+        url_val = cleaned_data.get(url_key)
+        if url_val:
+            try:
+                validate_footer_url(url_val)
+            except forms.ValidationError as e:
+                self.add_error(url_key, e)
+        return cleaned_data
