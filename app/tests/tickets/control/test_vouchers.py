@@ -597,6 +597,24 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         assert len([m for m in djmail.outbox if 'ABCDE' in m.body]) == 1
         assert len([m for m in djmail.outbox if 'DEFGH' in m.body]) == 1
 
+    def test_create_bulk_send_preserves_comment(self):
+        self._create_bulk_vouchers(
+            {
+                'codes': 'COMM1\nCOMM2',
+                'itemvar': '%d' % self.shirt.pk,
+                'comment': 'Reserved for VIP',
+                'send': 'on',
+                'send_subject': 'Your voucher',
+                'send_message': 'Voucher list: {voucher_list}',
+                'send_recipients': 'vip1@example.com\nvip2@example.com',
+            }
+        )
+        with scopes_disabled():
+            v1 = self.event.vouchers.get(code='COMM1')
+            v2 = self.event.vouchers.get(code='COMM2')
+        assert v1.comment.startswith('Reserved for VIP\n\nThe voucher has been sent to ')
+        assert v2.comment.startswith('Reserved for VIP\n\nThe voucher has been sent to ')
+
     def test_create_bulk_send_csv(self):
         self._create_bulk_vouchers(
             {
