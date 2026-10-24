@@ -59,6 +59,7 @@ from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.system_questions import product_has_system_questions
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import order_gracefully_delete
+from eventyay.helpers.placeholders import escape_stray_braces
 
 from ...helpers.countries import CachedCountries, FastCountryField
 from .base import LockModel, LoggedModel
@@ -1177,7 +1178,10 @@ class Order(LockModel, LoggedModel):
 
             try:
                 email_content = render_mail(template, context)
-                subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
+                # mail() formats the subject itself, so only the logged copy is rendered here.
+                logged_subject = escape_stray_braces(str(subject)).format_map(
+                    TolerantDict(_stringify_mail_context(context))
+                )
                 mail(
                     recipient,
                     subject,
@@ -1202,7 +1206,7 @@ class Order(LockModel, LoggedModel):
                     user=user,
                     auth=auth,
                     data={
-                        'subject': subject,
+                        'subject': logged_subject,
                         'message': email_content,
                         'position': position.positionid if position else None,
                         'recipient': recipient,
