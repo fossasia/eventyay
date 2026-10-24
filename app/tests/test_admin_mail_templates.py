@@ -1,11 +1,16 @@
+import functools
 import json
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
 
 from eventyay.base.models import User
 from eventyay.base.models.auth import StaffSession
+from eventyay.base.models.global_plugin_config import GlobalPluginConfig
 from eventyay.base.models.mail import MailTemplateRoles
+from eventyay.control.signals import platform_mail_templates
 from eventyay.control.views.admin_messages import (
     PLACEHOLDER_PATTERN,
     get_platform_mail_templates,
@@ -23,6 +28,7 @@ def admin_client(client, db):
     return client
 
 
+@pytest.mark.django_db
 def test_every_template_has_content():
     for template in get_platform_mail_templates():
         subject, body = template['load']()
@@ -30,6 +36,7 @@ def test_every_template_has_content():
         assert body.strip(), template['key']
 
 
+@pytest.mark.django_db
 def test_templates_without_content_are_not_listed():
     names = {str(template['name']) for template in get_platform_mail_templates()}
     for name in (
@@ -42,11 +49,13 @@ def test_templates_without_content_are_not_listed():
         assert name not in names
 
 
+@pytest.mark.django_db
 def test_every_template_key_is_listed_once():
     keys = [template['key'] for template in get_platform_mail_templates()]
     assert len(keys) == len(set(keys))
 
 
+@pytest.mark.django_db
 def test_organiser_invitation_covers_new_and_registered_users():
     templates = {template['key']: template for template in get_platform_mail_templates()}
     _, invitation = templates['organiser-invitation']['load']()
@@ -69,8 +78,151 @@ def test_template_list_links_every_template(admin_client):
     assert response.status_code == 200
     content = response.content.decode()
     for template in get_platform_mail_templates():
-        url = reverse('eventyay_admin:admin.messages.template_detail', kwargs={'role': template['key']})
+        url = template.get('url') or reverse(
+            'eventyay_admin:admin.messages.template_detail', kwargs={'role': template['key']}
+        )
         assert url in content
+
+
+@pytest.mark.django_db
+def test_plugin_template_links_to_customization_page(admin_client):
+    def plugin_templates(sender, **kwargs):
+        return {
+            'key': 'plugin-billing-notice',
+            'name': 'Plugin billing notice',
+            'category': 'Business',
+            'trigger': 'Invoice issued',
+            'load': lambda: ('Invoice {number}', 'Invoice {number} is ready.'),
+            'url': '/admin/plugin/billing-template/',
+        }
+
+    platform_mail_templates.connect(
+        plugin_templates,
+        dispatch_uid='test_plugin_template_links_to_customization_page',
+    )
+    try:
+        response = admin_client.get(reverse('eventyay_admin:admin.messages.templates'))
+    finally:
+        platform_mail_templates.disconnect(dispatch_uid='test_plugin_template_links_to_customization_page')
+
+    assert response.status_code == 200
+    assert 'Plugin billing notice' in response.content.decode()
+    assert 'Business' in response.content.decode()
+    assert "href='/admin/plugin/billing-template/'" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_plugin_template_registry_isolates_invalid_receivers(admin_client):
+    def broken_receiver(sender, **kwargs):
+        raise RuntimeError('broken plugin')
+
+    def invalid_templates(sender, **kwargs):
+        return [
+            {'key': 'missing-load', 'name': 'Missing load'},
+            {'key': 'account-registration', 'name': 'Duplicate', 'load': lambda: ('Subject', 'Body')},
+            {
+                'key': 'unsafe-url',
+                'name': 'Unsafe URL',
+                'load': lambda: ('Subject', 'Body'),
+                'url': 'javascript:alert(1)',
+            },
+            {
+                'key': 'invalid-preview',
+                'name': 'Invalid preview',
+                'load': lambda: ('Subject', 'Body'),
+                'preview': {1: 'not a string key'},
+            },
+            {'key': 'has/slash', 'name': 'Slash key', 'load': lambda: ('Subject', 'Body')},
+        ]
+
+    platform_mail_templates.connect(broken_receiver, dispatch_uid='test_broken_mail_template_receiver')
+    platform_mail_templates.connect(invalid_templates, dispatch_uid='test_invalid_mail_templates')
+    try:
+        templates = get_platform_mail_templates()
+        response = admin_client.get(reverse('eventyay_admin:admin.messages.templates'))
+    finally:
+        platform_mail_templates.disconnect(dispatch_uid='test_broken_mail_template_receiver')
+        platform_mail_templates.disconnect(dispatch_uid='test_invalid_mail_templates')
+
+    keys = [template['key'] for template in templates]
+    assert 'missing-load' not in keys
+    assert 'invalid-preview' not in keys
+    assert 'has/slash' not in keys
+    assert keys.count('account-registration') == 1
+    unsafe_template = next(template for template in templates if template['key'] == 'unsafe-url')
+    assert 'url' not in unsafe_template
+    assert response.status_code == 200
+    assert 'javascript:alert(1)' not in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_disabled_plugin_templates_are_not_listed():
+    receiver_called = False
+
+    def disabled_plugin_templates(sender, **kwargs):
+        nonlocal receiver_called
+        receiver_called = True
+        return {
+            'key': 'disabled-plugin-template',
+            'name': 'Disabled plugin template',
+            'load': lambda: ('Subject', 'Body'),
+        }
+
+    platform_mail_templates.connect(
+        disabled_plugin_templates,
+        dispatch_uid='test_disabled_plugin_mail_templates',
+    )
+    plugin_app = SimpleNamespace(name='example.disabled_plugin')
+    try:
+        with (
+            patch(
+                'eventyay.control.views.admin_messages.apps.get_containing_app_config',
+                return_value=plugin_app,
+            ),
+            patch.object(
+                GlobalPluginConfig,
+                'get_disabled_modules',
+                return_value=frozenset({'example.disabled_plugin'}),
+            ),
+        ):
+            keys = {template['key'] for template in get_platform_mail_templates()}
+    finally:
+        platform_mail_templates.disconnect(dispatch_uid='test_disabled_plugin_mail_templates')
+
+    assert 'disabled-plugin-template' not in keys
+    assert receiver_called is False
+
+
+def _partial_plugin_templates(prefix, sender, **kwargs):
+    return {'key': f'{prefix}-template', 'name': 'Partial template', 'load': lambda: ('Subject', 'Body')}
+
+
+@pytest.mark.django_db
+def test_disabled_plugin_partial_receivers_are_not_listed():
+    receiver = functools.partial(_partial_plugin_templates, 'partial')
+    platform_mail_templates.connect(receiver, weak=False, dispatch_uid='test_partial_plugin_mail_templates')
+    plugin_app = SimpleNamespace(name='example.disabled_plugin')
+
+    def containing_app(module):
+        return plugin_app if module == __name__ else None
+
+    try:
+        with (
+            patch(
+                'eventyay.control.views.admin_messages.apps.get_containing_app_config',
+                side_effect=containing_app,
+            ),
+            patch.object(
+                GlobalPluginConfig,
+                'get_disabled_modules',
+                return_value=frozenset({'example.disabled_plugin'}),
+            ),
+        ):
+            keys = {template['key'] for template in get_platform_mail_templates()}
+    finally:
+        platform_mail_templates.disconnect(dispatch_uid='test_partial_plugin_mail_templates')
+
+    assert 'partial-template' not in keys
 
 
 @pytest.mark.django_db

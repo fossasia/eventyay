@@ -1,7 +1,8 @@
-from django_scopes import scope
+import copy
 import json
 from collections import Counter
 from dataclasses import replace
+from urllib.parse import urlencode
 
 from dateutil import rrule
 from django.conf import settings
@@ -9,8 +10,8 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Count as DbCount, Q
-from django.db.models.functions import TruncDate
+from django.db.models import Count as DbCount, F, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Lower, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -21,7 +22,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from urllib.parse import urlencode
+from django_scopes import scope
 
 from eventyay.base.models import (
     Feedback,
@@ -37,7 +38,9 @@ from eventyay.base.models import (
     Tag,
     User,
 )
+from eventyay.base.models.auth import display_name_sort_key
 from eventyay.base.models.base import CachedFile
+from eventyay.base.models.submission import SpeakerRole
 from eventyay.common.views.helpers import is_ajax_request
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.services.etherpad import (
@@ -148,7 +151,7 @@ class ReviewerSubmissionFilter:
         queryset = (
             self.request.event.submissions.all()
             .select_related('submission_type', 'event', 'track')
-            .prefetch_related('speakers')
+            .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(display_name_sort_key(), 'pk')))
         )
         if self.is_only_reviewer:
             queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
@@ -846,6 +849,45 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
     def show_submission_types(self):
         return self.request.event.submission_types.all().count() > 1
 
+    @cached_property
+    def can_view_speakers(self) -> bool:
+        # Same check the template uses to show the Speakers column, so admin mode counts.
+        return has_event_perm(
+            'base.orga_list_speakerprofile',
+            self.request.user,
+            self.request,
+            self.request.event,
+        )
+
+    @context
+    def current_sort(self) -> str:
+        sort_key = self.request.GET.get('sort')
+        if not sort_key or sort_key == 'default':
+            return self.default_sort_field
+        if sort_key.lstrip('-') == 'speakers' and not self.can_view_speakers:
+            return self.default_sort_field
+        return sort_key
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        if sort_key.lstrip('-') != 'speakers' or not self.can_view_speakers:
+            return super().sort_queryset(qs)
+        # Sort by the first speaker shown in the Speakers column, so a session with
+        # several speakers has exactly one, predictable position. Sessions without
+        # speakers go last in both directions.
+        first_speaker = (
+            SpeakerRole.objects.filter(submission=OuterRef('pk'))
+            .annotate(name=display_name_sort_key('user__'))
+            .order_by('name', 'user__pk')
+            .values('name')[:1]
+        )
+        qs = qs.annotate(speaker_sort=Subquery(first_speaker))
+        if sort_key.startswith('-'):
+            order = F('speaker_sort').desc(nulls_last=True)
+        else:
+            order = F('speaker_sort').asc(nulls_last=True)
+        return qs.order_by(order, Lower('title'), 'pk')
+
     @context
     @cached_property
     def pending_changes(self):
@@ -1073,9 +1115,19 @@ class SubmissionHistory(SubmissionViewMixin, ListView):
         return self.request.event
 
 
-class SubmissionFeed(PermissionRequired, Feed):
+class SubmissionFeed(EventPermissionRequired, ReviewerSubmissionFilter, Feed):
     permission_required = 'base.orga_list_submission'
     feed_type = feedgenerator.Atom1Feed
+
+    def __call__(self, request, *args, **kwargs):
+        # Django calls this shared Feed instance directly instead of going
+        # through dispatch(), so the permission mixin never runs on its own.
+        # Run the whole request on a copy to keep the shared instance stateless.
+        feed = copy.copy(self)
+        feed.request = request
+        if not feed.has_permission():
+            return feed.handle_no_permission()
+        return super(SubmissionFeed, feed).__call__(request, *args, **kwargs)
 
     def get_object(self, request, *args, **kwargs):
         return request.event
@@ -1096,13 +1148,18 @@ class SubmissionFeed(PermissionRequired, Feed):
         return _('Updates to the {name} schedule.').format(name=obj.name)
 
     def items(self, obj):
-        return obj.submissions.order_by('-pk')
+        # Same reviewer and track limits as the submissions list.
+        return self.get_queryset().order_by('-pk')
 
     def item_title(self, item):
         return _('New {event} proposal: {title}').format(event=item.event.name, title=item.title)
 
     def item_link(self, item):
         return item.orga_urls.base.full()
+
+    def item_description(self, item):
+        # Feed falls back to str(item), which includes the proposal state.
+        return None
 
     def item_pubdate(self, item):
         return item.created

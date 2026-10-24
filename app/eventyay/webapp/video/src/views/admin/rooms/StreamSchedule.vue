@@ -16,7 +16,7 @@
 				.info
 					.title {{ schedule.title || $t('Untitled Stream') }}
 					.url {{ schedule.url }}
-					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezone }})
+					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezoneLabel }})
 					.type {{ schedule.stream_type }}
 				.actions
 					bunt-icon-button(@click="editSchedule(schedule)") pencil
@@ -33,15 +33,15 @@
 					bunt-input(name="title", v-model="formData.title", :label="$t('Title (optional)')", :placeholder="$t('e.g., Day 1 Stream, Keynotes')")
 					bunt-input(name="url", v-model="formData.url", :label="$t('Stream URL')", :validation="v$.formData.url", required, :placeholder="$t('https://youtube.com/watch?v=...')")
 					.datetime-field
-						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezone }})
+						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezoneLabel }})
 						input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
 						.error-message(v-if="v$.formData.start_time.$error") {{ $t('Start time is required') }}
 					.datetime-field
-						label.datetime-label {{ $t('End Time') }} ({{ eventTimezone }})
+						label.datetime-label {{ $t('End Time') }} ({{ eventTimezoneLabel }})
 						input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
 						.error-message(v-if="v$.formData.end_time.$error") {{ $t('End time is required') }}
 					.timezone-hint
-						i {{ $t('All times in') }} {{ eventTimezone }}
+						i {{ $t('All times in') }} {{ eventTimezoneLabel }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", :label="$t('Stream Type')", :options="streamTypeOptions", option-value="id", option-label="label", :validation="v$.formData.stream_type")
 					.form-error(v-if="saveError")
 						| {{ saveError }}
@@ -55,6 +55,7 @@ import { helpers } from '@vuelidate/validators';
 import { required, url, normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators';
 import api from 'lib/api';
 import { logOperational } from 'lib/operationalLog';
+import { readApiErrorMessage } from 'lib/apiErrorMessage';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
@@ -120,6 +121,9 @@ export default {
 		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC';
+		},
+		eventTimezoneLabel() {
+			return this.eventTimezone.replace(/_/g, ' ');
 		},
 		plainStartTime: {
 			get() {
@@ -407,62 +411,7 @@ export default {
 				}
 
 				if (!response.ok) {
-					const responseClone = response.clone();
-					let errorData = {};
-					try {
-						errorData = await response.json();
-					} catch (e) {
-						try {
-							const text = await responseClone.text();
-							if (text) {
-								try {
-									errorData = JSON.parse(text);
-								} catch (parseError) {
-									errorData = { detail: text };
-								}
-							}
-						} catch (textError) {
-						}
-					}
-
-					let errorMessage = null;
-
-					if (errorData && typeof errorData === 'object') {
-						const errorKeys = [
-							'__all__',
-							'non_field_errors',
-							'detail',
-							'message',
-						];
-						for (const key of errorKeys) {
-							if (errorData[key]) {
-								const val = errorData[key];
-								if (Array.isArray(val) && val[0]) {
-									errorMessage = val[0];
-								} else if (typeof val === 'string') {
-									errorMessage = val;
-								}
-								if (errorMessage) break;
-							}
-						}
-
-						if (!errorMessage && Object.keys(errorData).length > 0) {
-							const firstKey = Object.keys(errorData)[0];
-							const firstValue = errorData[firstKey];
-							if (Array.isArray(firstValue) && firstValue[0]) {
-								errorMessage = firstValue[0];
-							} else if (typeof firstValue === 'string') {
-								errorMessage = firstValue;
-							}
-						}
-					} else if (typeof errorData === 'string') {
-						errorMessage = errorData;
-					}
-
-					if (!errorMessage) {
-						errorMessage = this.$t('Bad Request');
-					}
-
+					const errorMessage = await readApiErrorMessage(response, this.$t('Bad Request'));
 					throw new Error(errorMessage);
 				}
 

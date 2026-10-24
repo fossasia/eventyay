@@ -197,18 +197,53 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
+# Query value the bulk-voucher form adds to the shared preview URL.
+VOUCHER_EMAIL_PREVIEW_CONTEXT = 'voucher'
+
+_VOUCHER_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'voucher_list', 'name')
+
+
+def _preview_placeholder_context(html_body: str) -> list[str]:
+    """Base preview context, plus voucher placeholders when the body uses them.
+
+    Voucher placeholders are added only for bodies that reference them so the
+    voucher ``{url}`` sample does not replace the order status ``{url}``.
+    A body that contains only ``{url}`` stays on the order context. Bulk-voucher
+    previews pass ``preview_context`` instead of widening this check.
+    """
+    parameters = list(_PREVIEW_PLACEHOLDER_CONTEXT)
+    if re.search(
+        r'\{voucher_(?:list|url)\}|data-variable=["\']voucher_(?:list|url)["\']',
+        html_body or '',
+    ):
+        parameters.extend(['voucher_list', 'name'])
+    return parameters
+
+
+def _preview_parameters(html_body: str, preview_context: str | None) -> list[str]:
+    """Placeholder groups for one preview request.
+
+    ``voucher`` is the bulk-voucher form. It always includes ``voucher_list``,
+    so ``{url}`` samples the event shop the same way delivery does.
+    """
+    if preview_context == VOUCHER_EMAIL_PREVIEW_CONTEXT:
+        return list(_VOUCHER_PREVIEW_PARAMETERS)
+    return _preview_placeholder_context(html_body)
+
+
 def expand_email_preview_placeholders(
     html_body: str,
     event,
     *,
     locale: str | None = None,
+    preview_context: str | None = None,
     base_parameters: list[str] | None = None,
 ) -> str:
     """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview.
 
     ``base_parameters`` selects which placeholders get sample values (e.g. a system
-    template's context such as ``payment`` or ``comment``); it defaults to a generic
-    order/attendee context.
+    template's context such as ``payment`` or ``comment``); without it the context
+    is derived from ``html_body`` and ``preview_context``.
     """
     from eventyay.base.i18n import language
     from eventyay.base.services.mail import expand_email_variable_chips
@@ -218,7 +253,7 @@ def expand_email_preview_placeholders(
         resolved_locale = event.settings.locale
 
     if base_parameters is None:
-        base_parameters = _PREVIEW_PLACEHOLDER_CONTEXT
+        base_parameters = _preview_parameters(html_body, preview_context)
     with language(resolved_locale, event.settings.region):
         context_dict = build_email_preview_context(event, list(base_parameters))
         expanded = html_body.format_map(context_dict)

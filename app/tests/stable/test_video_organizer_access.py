@@ -400,6 +400,7 @@ async def test_announcements_disabled_guard():
 
 
 @pytest.mark.asyncio
+@pytest.mark.django_db
 async def test_config_get_and_patch_granular_permissions():
     from unittest.mock import AsyncMock, MagicMock, patch
     from eventyay.core.permissions import Permission

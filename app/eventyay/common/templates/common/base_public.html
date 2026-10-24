@@ -10,6 +10,7 @@
 {% load eventurl %}
 {% load nav_tags %}
 {% load thumb %}
+{% load timezone %}
 {% load rich_text %}
 
 {% with current_event=request.event|default:None %}
@@ -148,7 +149,7 @@
                             {% endblocktranslate %}
                         {% elif tickets_private_testmode and talks_private_testmode %}
                             {% blocktranslate trimmed %}
-                                Tickets and talk pages are in private test mode. Only event team members and system administrators can see them.
+                                Tickets and talk pages are in private test mode. Only event team members, system administrators and invited speakers can view this page.
                             {% endblocktranslate %}
                         {% elif tickets_private_testmode %}
                             {% blocktranslate trimmed %}
@@ -156,7 +157,7 @@
                             {% endblocktranslate %}
                         {% else %}
                             {% blocktranslate trimmed %}
-                                Talk pages are in private test mode. Only event team members and system administrators can see them.
+                                The talks feature is in test mode, only team member administrators and invited speaker can view this page.
                             {% endblocktranslate %}
                         {% endif %}
                     </div>
@@ -212,7 +213,7 @@
                                                 {% timezone tz_name %}
                                                     <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                         {% if current_event.settings.show_times %}
-                                                            {{ current_event.date_from|date:"l, j F, Y" }} {{ current_event.date_from|date:"TIME_FORMAT" }} ({{ tz_name }})
+                                                            {{ current_event.date_from|date:"l, j F, Y" }} {{ current_event.date_from|date:"TIME_FORMAT" }} ({{ tz_name|timezone_display }})
                                                         {% else %}
                                                             {{ current_event.date_from|date:"l, j F, Y" }}
                                                         {% endif %}
@@ -220,7 +221,7 @@
                                                     {% if current_event.settings.show_date_to and current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
                                                         <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                             {% if current_event.settings.show_times %}
-                                                                {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }} {{ current_event.date_to|date:"TIME_FORMAT" }} ({{ tz_name }})
+                                                                {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }} {{ current_event.date_to|date:"TIME_FORMAT" }} ({{ tz_name|timezone_display }})
                                                             {% else %}
                                                                 {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }}
                                                             {% endif %}
