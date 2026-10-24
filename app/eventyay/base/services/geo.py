@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import math
+from urllib.parse import urlencode
 
 import requests
 from django.conf import settings as django_settings
@@ -14,6 +15,7 @@ from eventyay.common.utils.language import localize_event_text
 logger = logging.getLogger(__name__)
 
 NULL_ISLAND_EPSILON = 1e-6
+GOOGLE_MAPS_DIRECTIONS_URL = 'https://www.google.com/maps/dir/'
 
 
 def clean_address_query(address: str) -> str:
@@ -253,6 +255,22 @@ def resolve_venue_map_coordinates(venue, *, allow_remote_geocoding: bool = True)
         return None
 
     return _coordinates_from_geocode_results(results)
+
+
+def build_venue_directions_url(coordinates: dict[str, float] | None, address: str | None) -> str | None:
+    """Return a Google Maps directions URL with the venue as destination.
+
+    Coordinates are preferred; the address text is used when no coordinates are known.
+    No origin is set, so Google Maps starts from the visitor's current location.
+    Returns None when there is neither.
+    """
+    if coordinates:
+        destination = f'{coordinates["lat"]},{coordinates["lon"]}'
+    elif address and address.strip():
+        destination = clean_address_query(address)
+    else:
+        return None
+    return f'{GOOGLE_MAPS_DIRECTIONS_URL}?{urlencode({"api": "1", "destination": destination})}'
 
 
 def _geocode_with_opencage(query: str, api_key: str) -> list[dict]:
