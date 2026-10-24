@@ -329,5 +329,8 @@ msgstr ""
 msgid "min"
 msgstr ""
 
+msgid "{{assigned}}/{{capacity}} filled"
+msgstr ""
+
 msgid "{{ext}} Document"
 msgstr ""
