@@ -13,12 +13,14 @@ from eventyay.api.serializers.order import (
     AnswerSerializer,
     InlineSeatSerializer,
 )
-from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import Quota, Seat
 from eventyay.base.models.orders import CartPosition
+from eventyay.base.settings import GlobalSettingsObject
 
 
 class CartPositionSerializer(I18nAwareModelSerializer):
+    """Serializer for representing CartPosition instances with nested answers and seat details."""
+
     answers = AnswerSerializer(many=True)
     seat = InlineSeatSerializer()
 
@@ -45,11 +47,13 @@ class CartPositionSerializer(I18nAwareModelSerializer):
 
 
 class CartPositionCreateSerializer(I18nAwareModelSerializer):
+    """Serializer for validating and creating new CartPosition instances."""
+
     answers = AnswerCreateSerializer(many=True, required=False)
     expires = serializers.DateTimeField(required=False)
     attendee_name = serializers.CharField(required=False, allow_null=True)
     seat = serializers.CharField(required=False, allow_null=True)
-    sales_channel = serializers.CharField(required=False, default='sales_channel')
+    sales_channel = serializers.CharField(required=False, default='web')
 
     class Meta:
         model = CartPosition
@@ -70,11 +74,12 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
         )
 
     def create(self, validated_data):
-        answers_data = validated_data.pop('answers')
+        """Create a cart position within an event lock, allocating quotas, seats, and optional answers."""
+        answers_data = validated_data.pop('answers', [])
         if not validated_data.get('cart_id'):
-            cid = '{}@api'.format(get_random_string(48))
+            cid = f'{get_random_string(48)}@api'
             while CartPosition.objects.filter(cart_id=cid).exists():
-                cid = '{}@api'.format(get_random_string(48))
+                cid = f'{get_random_string(48)}@api'
             validated_data['cart_id'] = cid
 
         if not validated_data.get('expires'):
@@ -90,7 +95,9 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             )
             if len(new_quotas) == 0:
                 raise ValidationError(
-                    gettext_lazy('The product "{}" is not assigned to a quota.').format(str(validated_data.get('product')))
+                    gettext_lazy('The product "{}" is not assigned to a quota.').format(
+                        str(validated_data.get('product'))
+                    )
                 )
             for quota in new_quotas:
                 avail = quota.availability()
@@ -137,7 +144,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             cp = CartPosition.objects.create(event=self.context['event'], **validated_data)
 
         for answ_data in answers_data:
-            options = answ_data.pop('options')
+            options = answ_data.pop('options', [])
             if isinstance(answ_data['answer'], File):
                 an = answ_data.pop('answer')
                 answ = cp.answers.create(**answ_data, answer='')
@@ -146,15 +153,18 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
                 answ.save()
             else:
                 answ = cp.answers.create(**answ_data)
-                answ.options.add(*options)
+                if options:
+                    answ.options.add(*options)
         return cp
 
     def validate_cart_id(self, cid):
+        """Ensure cart_id ends in @api or is empty."""
         if cid and not cid.endswith('@api'):
             raise ValidationError('Cart ID should end in @api or be empty.')
         return cid
 
     def validate_product(self, product):
+        """Ensure product belongs to the current event and is active."""
         if product.event != self.context['event']:
             raise ValidationError('The specified product does not belong to this event.')
         if not product.active:
@@ -162,6 +172,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
         return product
 
     def validate_subevent(self, subevent):
+        """Validate subevent presence based on whether event has subevents."""
         if self.context['event'].has_subevents:
             if not subevent:
                 raise ValidationError('You need to set a subevent.')
@@ -172,6 +183,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
         return subevent
 
     def validate(self, data):
+        """Validate cross-field requirements including variations and attendee names."""
         if data.get('product'):
             if data.get('product').has_variations:
                 if not data.get('variation'):

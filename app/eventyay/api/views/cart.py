@@ -12,6 +12,8 @@ from eventyay.base.models import CartPosition
 
 
 class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
+    """Viewset for listing, creating, and removing cart positions scoped to the current event and API carts."""
+
     serializer_class = CartPositionSerializer
     queryset = CartPosition.objects.none()
     filter_backends = (OrderingFilter,)
@@ -22,6 +24,7 @@ class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
     write_permission = 'can_change_orders'
 
     def get_queryset(self):
+        """Retrieve cart positions for the current event ending in @api."""
         return (
             CartPosition.objects.filter(event=self.request.event, cart_id__endswith='@api')
             .select_related('seat')
@@ -29,11 +32,13 @@ class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
         )
 
     def get_serializer_context(self):
+        """Include the current event in serializer context."""
         ctx = super().get_serializer_context()
         ctx['event'] = self.request.event
         return ctx
 
     def create(self, request, *args, **kwargs):
+        """Validate, persist atomically, and return the newly created cart position."""
         serializer = CartPositionCreateSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
@@ -45,4 +50,5 @@ class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
+        """Save the cart position serializer."""
         serializer.save()
