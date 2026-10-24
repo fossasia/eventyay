@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
+from eventyay.base.middleware import _parse_csp
 from eventyay.base.models import QueuedMail, Submission, SubmissionStates
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 
@@ -600,6 +601,18 @@ def test_cannot_edit_submission_type_after_acceptance(
     with scope(event=submission.event):
         submission.refresh_from_db()
         assert submission.submission_type != new_type
+
+
+@pytest.mark.django_db
+def test_profile_page_allows_gravatar_in_csp(speaker_client, event):
+    response = speaker_client.get(event.urls.user, follow=True)
+
+    assert response.status_code == 200
+    csp = _parse_csp(response['Content-Security-Policy'])
+    assert 'IMG_SRC' not in csp
+    assert 'CONNECT_SRC' not in csp
+    assert 'https://www.gravatar.com' in csp['img-src']
+    assert 'https://www.gravatar.com' in csp['connect-src']
 
 
 @pytest.mark.django_db
