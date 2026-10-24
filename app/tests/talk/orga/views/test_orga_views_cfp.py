@@ -1,22 +1,31 @@
 import datetime as dt
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 
 import pytest
+from django.apps import apps
+from django.conf import settings
 from django.core import mail as djmail
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import OperationalError, connection, connections, transaction
+from django.http import QueryDict
+from django.test import TransactionTestCase
 from django_scopes import scope
 
-from eventyay.base.models import Answer, Event, Submission, SubmissionType, Track
-from eventyay.base.models import QueuedMail
+from eventyay.base.models import Answer, Event, QueuedMail, Submission, SubmissionType, Track
 from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.orga.forms.cfp import TalkQuestionForm
+
 
 _FORM_OPEN = re.compile(r"<form(?:\s|>)", re.I)
 _FORM_CLOSE = re.compile(r"</form\s*>", re.I)
 
 
 def _max_form_nesting(html: str) -> int:
+    """Return the greatest number of nested form elements in the rendered page."""
     events = [(match.start(), 1) for match in _FORM_OPEN.finditer(html)]
     events += [(match.start(), -1) for match in _FORM_CLOSE.finditer(html)]
     depth = max_depth = 0
@@ -927,6 +936,7 @@ def test_question_reminders_include_trackless_submissions(
 
 @pytest.mark.django_db
 def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, event):
+    """Identify the session video field as available only to organisers."""
     response = orga_client.get(event.cfp.urls.questions, follow=True)
     assert response.status_code == 200
     content = response.text
@@ -938,6 +948,266 @@ def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, even
         "This field can only be edited by organizers. "
         "It is not displayed on the proposal form."
     ) in content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('mode', ('translated-append', 'translated-replace', 'plain-append'))
+def test_upload_question_options_preserves_translations_and_answers(
+    orga_client, event, submission, speaker, variant, mode
+):
+    """Import options through the organiser form without losing existing answers."""
+    multilingual = mode != 'plain-append'
+    event.locale_array = 'en,de' if multilingual else 'en'
+    event.save()
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Meal preference',
+            variant=variant,
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        existing = question.options.create(
+            answer={'en': 'Vegetarian', 'de': 'Vegetarisch'} if multilingual else {'en': 'Vegetarian'}, position=5
+        )
+        retained = question.options.create(
+            answer={'en': 'Kosher', 'de': 'Koscher'} if multilingual else {'en': 'Kosher'}, position=12
+        )
+        retained.refresh_from_db()
+        answer = Answer.objects.create(question=question, submission=submission, person=speaker)
+        answer.options.add(existing)
+        uploaded = [
+            {'de': 'Vegetarisch', 'en': 'Vegetarian'},
+            {'en': 'Vegan', 'de': 'Vegan'},
+        ]
+        if mode != 'translated-replace':
+            uploaded.extend(
+                [
+                    {'de': 'Vegan', 'en': 'Vegan'},
+                    {'en': 'Halal', 'de': 'Halal'},
+                    {'en': 'Vegetarian', 'de': 'Vegetarisch'},
+                ]
+            )
+        content = json.dumps(uploaded) if multilingual else 'Vegan\nVegan\nVegetarian\nHalal\nVegan'
+        data = {
+            'target': 'submission',
+            'question_0': 'Meal preference',
+            'variant': variant,
+            'question_required': QuestionRequired.OPTIONAL,
+            'form-TOTAL_FORMS': 2,
+            'form-INITIAL_FORMS': 2,
+            'form-0-id': existing.pk,
+            'form-0-position': existing.position,
+            'form-0-answer_0': 'Vegetarian',
+            'form-1-id': retained.pk,
+            'form-1-position': retained.position,
+            'form-1-answer_0': 'Kosher',
+        }
+        if multilingual:
+            german_index = [code for code, _ in settings.LANGUAGES].index('de')
+            data.update(
+                {
+                    f'question_{german_index}': '',
+                    f'form-0-answer_{german_index}': 'Vegetarisch',
+                    f'form-1-answer_{german_index}': 'Koscher',
+                }
+            )
+        if mode == 'translated-replace':
+            data['options_replace'] = 'on'
+        for _ in range(2 if mode != 'translated-replace' else 1):
+            data['options'] = SimpleUploadedFile('options.json', content.encode())
+            response = orga_client.post(question.urls.edit, data)
+            assert response.status_code == 302, response.context_data['form'].errors
+            if mode != 'translated-replace':
+                assert question.options.count() == 4
+                assert list(question.options.order_by('position').values_list('position', flat=True)) == [5, 12, 13, 14]
+                assert question.options.filter(pk=retained.pk).exists()
+                assert list(answer.options.values_list('pk', flat=True)) == [existing.pk]
+            else:
+                assert question.options.count() == 2
+                assert not question.answers.exists()
+            if multilingual:
+                assert {tuple(sorted(option.answer.data.items())) for option in question.options.all()} == {
+                    tuple(sorted(option.items()))
+                    for option in (uploaded if mode == 'translated-replace' else uploaded + [retained.answer.data])
+                }
+            else:
+                assert {str(option.answer) for option in question.options.all()} == {
+                    'Vegetarian',
+                    'Kosher',
+                    'Vegan',
+                    'Halal',
+                }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+def test_upload_translated_options_with_matching_default_labels(orga_client, event, variant):
+    """Keep choices distinct when only their non-default translations differ."""
+    event.locale_array = 'en,de'
+    event.save()
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Choose a label',
+            variant=variant,
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        existing = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        german_index = [code for code, _ in settings.LANGUAGES].index('de')
+        translated = {'en': 'Other', 'de': 'Sonstige'}
+        response = orga_client.post(
+            question.urls.edit,
+            {
+                'target': 'submission',
+                'question_0': 'Choose a label',
+                'variant': variant,
+                'question_required': QuestionRequired.OPTIONAL,
+                'form-TOTAL_FORMS': 1,
+                'form-INITIAL_FORMS': 1,
+                'form-0-id': existing.pk,
+                'form-0-position': existing.position,
+                'form-0-answer_0': 'Other',
+                f'form-0-answer_{german_index}': 'Andere',
+                'options': SimpleUploadedFile('options.json', json.dumps([translated]).encode()),
+            },
+        )
+        assert response.status_code == 302
+        assert question.options.count() == 2
+        existing.refresh_from_db()
+        assert existing.answer.data == {'en': 'Other', 'de': 'Andere'}
+        assert question.options.exclude(pk=existing.pk).get().answer.data == translated
+
+
+class TestConcurrentQuestionOptionUploads(TransactionTestCase):
+    """Exercise PostgreSQL request locking with cleanup for the legacy tables."""
+
+    available_apps = [app.name for app in apps.get_app_configs()]
+
+    @pytest.fixture(autouse=True)
+    def bind_fixtures(self, client, mocker, request):
+        """Provide the existing organiser fixtures to the Django transaction test."""
+        mocker.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync')
+        self.client = client
+        self.fixture_request = request
+
+    @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
+    def test_append_requests_wait_for_question_save(self):
+        """A competing upload waits for the question update before reading its choices."""
+        event = self.fixture_request.getfixturevalue('event')
+        self.user = self.fixture_request.getfixturevalue('orga_user')
+        self.client.force_login(self.user)
+        event.locale_array = 'en,de'
+        event.save()
+        with scope(event=event):
+            question = Question.objects.create(
+                event=event,
+                question='Meal preference',
+                variant='choices',
+                target='submission',
+                question_required=QuestionRequired.OPTIONAL,
+            )
+            existing = question.options.create(answer={'en': 'Vegetarian', 'de': 'Vegetarisch'}, position=9)
+            german_index = [code for code, _ in settings.LANGUAGES].index('de')
+            data = {
+                'target': 'submission',
+                'question_0': 'Meal preference',
+                'variant': 'choices',
+                'question_required': QuestionRequired.OPTIONAL,
+                'form-TOTAL_FORMS': 1,
+                'form-INITIAL_FORMS': 1,
+                'form-0-id': existing.pk,
+                'form-0-position': 9,
+                'form-0-answer_0': 'Vegetarian',
+                f'form-0-answer_{german_index}': 'Vegetarisch',
+            }
+            content = json.dumps([{'en': 'Vegan', 'de': 'Vegan'}]).encode()
+
+            def competing_upload():
+                """Submit a competing request on its own database connection."""
+                try:
+                    client = self.client.__class__()
+                    client.force_login(self.user)
+                    with connections['default'].cursor() as cursor:
+                        cursor.execute("SET lock_timeout = '500ms'")
+                    try:
+                        return client.post(
+                            question.urls.edit,
+                            {
+                                **data,
+                                'options': SimpleUploadedFile('options.json', content),
+                            },
+                        ).status_code
+                    except OperationalError as error:
+                        return error.__cause__.sqlstate
+                finally:
+                    connections.close_all()
+
+            with transaction.atomic():
+                response = self.client.post(
+                    question.urls.edit,
+                    {
+                        **data,
+                        'options': SimpleUploadedFile('options.json', content),
+                    },
+                )
+                assert response.status_code == 302
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    assert executor.submit(competing_upload).result(timeout=30) == '55P03'
+
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                assert executor.submit(competing_upload).result(timeout=30) == 302
+            assert question.options.count() == 2
+            assert question.options.filter(pk=existing.pk).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('existing_value', ('Vegan', {'en': 'Vegan'}, {'en': 'Vegan', 'de': ''}))
+@pytest.mark.parametrize('uploaded_value', ({'en': 'Vegan'}, {'en': 'Vegan', 'de': ''}))
+def test_upload_options_matches_stored_translation_format(
+    event, submission, speaker, variant, existing_value, uploaded_value
+):
+    """Reuse choices when empty translations or legacy strings differ only in storage format."""
+    event.locale_array = 'en,de'
+    event.save()
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Meal preference',
+            variant=variant,
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        existing = question.options.create(answer=existing_value, position=7)
+        answer = Answer.objects.create(question=question, submission=submission, person=speaker)
+        answer.options.add(existing)
+        original_value = question.options.get().answer.data
+        data = QueryDict(mutable=True)
+        data.update(
+            {
+                'target': 'submission',
+                'variant': variant,
+                'question_0': 'Meal preference',
+                'question_required': QuestionRequired.OPTIONAL,
+            }
+        )
+        for _ in range(2):
+            form = TalkQuestionForm(
+                event=event,
+                instance=question,
+                data=data,
+                files={'options': SimpleUploadedFile('options.json', json.dumps([uploaded_value]).encode())},
+            )
+            assert form.is_valid(), form.errors
+            assert form.save() == question
+            option = question.options.get()
+            assert option.pk == existing.pk
+            assert option.position == 7
+            assert option.answer.data == original_value
+            assert list(answer.options.values_list('pk', flat=True)) == [existing.pk]
 
 
 @pytest.mark.django_db
