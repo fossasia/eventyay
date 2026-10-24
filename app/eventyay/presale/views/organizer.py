@@ -172,7 +172,8 @@ class EventListMixin:
             datetime_from = next_ev.date_from
 
         if datetime_from:
-            tz = ZoneInfo(next_ev.settings.timezone)
+            tz_name = next_ev.settings.timezone or settings.TIME_ZONE
+            tz = ZoneInfo(tz_name)
             self.year = datetime_from.astimezone(tz).year
             self.month = datetime_from.astimezone(tz).month
         else:
@@ -328,7 +329,7 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         for event in ctx['events']:
-            event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
+            event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda e=event: e.settings.timezone))
             if event.has_subevents:
                 event.daterange = daterange(
                     event.min_from.astimezone(event.tzname),
@@ -361,8 +362,9 @@ def add_events_for_days(request, baseqs, before, after, ebd, timezones):
     if hasattr(request, 'organizer'):
         qs = filter_qs_by_attr(qs, request)
     for event in qs:
-        timezones.add(event.settings.timezones)
-        tz = ZoneInfo(event.settings.timezone)
+        tz_name = event.settings.timezone or settings.TIME_ZONE
+        timezones.add(tz_name)
+        tz = ZoneInfo(tz_name)
         datetime_from = event.date_from.astimezone(tz)
         date_from = datetime_from.date()
         if event.settings.show_date_to and event.date_to:
@@ -450,8 +452,9 @@ def add_subevents_for_days(qs, before, after, ebd, timezones, event=None, cart_n
             if hide:
                 continue
 
-        timezones.add(s.timezones)
-        tz = ZoneInfo(s.timezone)
+        tz_name = s.timezone or settings.TIME_ZONE
+        timezones.add(tz_name)
+        tz = ZoneInfo(tz_name)
         datetime_from = se.date_from.astimezone(tz)
         date_from = datetime_from.date()
         if name is None:
