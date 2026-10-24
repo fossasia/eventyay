@@ -3631,3 +3631,25 @@ h4.od-subchart {
     margin-left: 44px
   }
 }
+.sorting-notice-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.sorting-notice-action {
+  margin-top: 8px;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .sorting-notice-wrapper {
+    flex-direction: row;
+    align-items: center;
+  }
+  .sorting-notice-action {
+    margin-top: 0;
+    margin-left: 16px;
+  }
+}
