@@ -35,8 +35,14 @@
     </dialog>
     {% if not can_reorder %}
         <div class="alert alert-info">
-            {% translate "Manual drag-and-drop reordering is disabled while custom sorting is active." %}
-            <a href="{% querystring sort=None %}" class="alert-link">{% translate "Reset to manual order" %}</a>
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center flex-grow-1">
+                <div>
+                    {% translate 'Manual drag-and-drop reordering is disabled while custom sorting is active.' %}
+                </div>
+                <div class="mt-2 mt-sm-0 ml-sm-3 nowrap mw-100">
+                    <a href="{% querystring sort=None %}" class="alert-link">{% translate 'Reset to manual order' %}</a>
+                </div>
+            </div>
         </div>
     {% endif %}
     <div class="table-responsive-sm">

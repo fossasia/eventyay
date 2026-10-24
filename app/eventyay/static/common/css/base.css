@@ -1005,8 +1005,24 @@ pl-0 {
 .font-weight-bold {
   font-weight: bold !important;
 }
-.nowrap {
+.nowrap,
+.text-nowrap {
   white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .flex-sm-row {
+    flex-direction: row !important;
+  }
+  .align-items-sm-center {
+    align-items: center !important;
+  }
+  .mt-sm-0 {
+    margin-top: 0 !important;
+  }
+  .ml-sm-3 {
+    margin-left: 1rem !important;
+  }
 }
 
 .text-success {
