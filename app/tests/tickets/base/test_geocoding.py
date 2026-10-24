@@ -333,3 +333,21 @@ class TestResolveVenueMapCoordinates:
 
         assert resolved is None
         geocode_mock.assert_not_called()
+
+
+class TestBuildVenueDirectionsUrl:
+    def test_uses_coordinates(self):
+        url = geocoding.build_venue_directions_url(BANGKOK_COORDS, BANGKOK_ADDRESS)
+        assert url == 'https://www.google.com/maps/dir/?api=1&destination=13.6989%2C100.5858'
+
+    def test_falls_back_to_address(self):
+        url = geocoding.build_venue_directions_url(None, 'Main Hall\nPune, India')
+        assert url == 'https://www.google.com/maps/dir/?api=1&destination=Main+Hall%2C+Pune%2C+India'
+
+    def test_escapes_special_characters_in_address(self):
+        url = geocoding.build_venue_directions_url(None, 'Hall A & B #2')
+        assert url == 'https://www.google.com/maps/dir/?api=1&destination=Hall+A+%26+B+%232'
+
+    @pytest.mark.parametrize('address', [None, '', '   '])
+    def test_returns_none_without_destination(self, address):
+        assert geocoding.build_venue_directions_url(None, address) is None

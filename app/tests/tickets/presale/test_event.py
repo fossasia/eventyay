@@ -24,6 +24,7 @@ from eventyay.base.models import (
     User,
     WaitingListEntry,
 )
+from eventyay.base.meetup import provision_meetup_event
 from eventyay.base.models.product import SubEventProduct as SubEventItem, SubEventProductVariation as SubEventItemVariation
 from tests.tickets.base import SoupTest
 from tests.tickets.testdummy.signals import FoobarSalesChannel
@@ -1572,6 +1573,49 @@ class EventMicrodataTest(EventTestMixin, SoupTest):
             md['startDate'],
             msg='Date From not present',
         )
+
+
+class EventVenueDirectionsTest(EventTestMixin, SoupTest):
+    def _get_directions_link(self):
+        doc = self.get_doc(f'/{self.orga.slug}/{self.event.slug}/')
+        return doc.select_one('.venue-map-directions a')
+
+    def test_link_uses_coordinates(self):
+        self.event.location = 'DUMMY ARENA'
+        self.event.geo_lat = 18.5204
+        self.event.geo_lon = 73.8567
+        self.event.save()
+        link = self._get_directions_link()
+        assert link['href'] == 'https://www.google.com/maps/dir/?api=1&destination=18.5204%2C73.8567'
+        assert link['target'] == '_blank'
+        assert link['rel'] == ['noopener', 'noreferrer']
+
+    def test_link_falls_back_to_address(self):
+        self.event.location = 'DUMMY ARENA'
+        self.event.geo_lat = None
+        self.event.geo_lon = None
+        self.event.save()
+        link = self._get_directions_link()
+        assert link['href'] == 'https://www.google.com/maps/dir/?api=1&destination=DUMMY+ARENA'
+
+    def test_no_link_without_location(self):
+        self.event.location = None
+        self.event.geo_lat = None
+        self.event.geo_lon = None
+        self.event.save()
+        assert self._get_directions_link() is None
+
+    def test_meetup_page_shows_link(self):
+        with scopes_disabled():
+            provision_meetup_event(self.event)
+        self.event.location = 'DUMMY ARENA'
+        self.event.geo_lat = 18.5204
+        self.event.geo_lon = 73.8567
+        self.event.save()
+        doc = self.get_doc(f'/{self.orga.slug}/{self.event.slug}/')
+        assert doc.select_one('.page-presale-meetup-index') is not None
+        link = doc.select_one('.meetup-registered-section .venue-map-directions a')
+        assert link['href'] == 'https://www.google.com/maps/dir/?api=1&destination=18.5204%2C73.8567'
 
 
 class EventSlugBanlistValidatorTest(EventTestMixin, SoupTest):
