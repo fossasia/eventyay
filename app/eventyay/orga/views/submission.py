@@ -62,7 +62,7 @@ from eventyay.common.session_video import (
 )
 from eventyay.common.video_embed import parse_video_urls
 from eventyay.common.text.phrases import phrases
-from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
+from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView, get_next_url
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
@@ -264,10 +264,11 @@ class SubmissionSpeakersDelete(SubmissionViewMixin, View):
 
         if submission in speaker.submissions.all():
             submission.remove_speaker(speaker, user=request.user)
+            request.event.cache.set('rebuild_schedule_export', True, None)
             messages.success(request, _('The speaker has been removed from the proposal.'))
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
-        return redirect(submission.orga_urls.speakers)
+        return redirect(get_next_url(request) or submission.orga_urls.speakers)
 
 
 class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
@@ -389,6 +390,12 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     def form_invalid(self, form):
         if is_ajax_request(self.request):
             return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+        if next_url := get_next_url(self.request):
+            for field, errors in form.errors.items():
+                label = form.fields[field].label if field in form.fields else None
+                for error in errors:
+                    messages.error(self.request, f'{label}: {error}' if label else error)
+            return redirect(next_url)
         return super().form_invalid(form)
 
     def get_form_kwargs(self):
@@ -399,7 +406,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return kwargs
 
     def get_success_url(self):
-        return self.object.orga_urls.speakers
+        return get_next_url(self.request) or self.object.orga_urls.speakers
 
 
 class SubmissionSpeakerResendInvitation(SubmissionSpeakers):
@@ -479,7 +486,7 @@ class SubmissionSpeakerRevokeInvitation(SubmissionSpeakers):
             )
 
         messages.success(request, message)
-        return redirect(self.object.orga_urls.speakers)
+        return redirect(self.get_success_url())
 
 
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
@@ -540,6 +547,37 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 include_biography=True,
                 draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
+
+    @context
+    @cached_property
+    def add_speaker_form(self):
+        if self.object and self.action == 'edit':
+            return AddSpeakerInlineForm(event=self.request.event, require_name=True, submission=self.object)
+
+    @context
+    @cached_property
+    def session_speakers(self):
+        if not self.add_speaker_form:
+            return []
+        invitations = {
+            invitation.user_id: invitation
+            for invitation in self.object.speaker_invitations.filter(
+                status=SpeakerInvitationStates.PENDING, user__isnull=False
+            )
+        }
+        return [
+            {'user': speaker, 'invitation': invitations.get(speaker.pk)} for speaker in self.object.speakers.all()
+        ]
+
+    @context
+    @cached_property
+    def pending_invitations(self):
+        if not self.add_speaker_form:
+            return []
+        speaker_ids = self.object.speakers.values_list('pk', flat=True)
+        return self.object.speaker_invitations.filter(status=SpeakerInvitationStates.PENDING).exclude(
+            user_id__in=speaker_ids
+        )
 
     @cached_property
     def _questions_form(self):
