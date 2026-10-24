@@ -16,7 +16,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from django.forms import inlineformset_factory
 from django.http import (
     Http404,
@@ -950,7 +950,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
        Returns ``{ "previews": { "en": "...", "de": "..." } }``.
     """
 
-    permission = ('can_change_orders', 'can_change_event_settings')
+    permission = ('can_change_orders', 'can_change_event_settings', 'can_change_vouchers')
 
     def post(self, request, *args, **kwargs):
         content_type = request.content_type or ''
@@ -974,7 +974,12 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             return HttpResponseBadRequest('locale must be a string')
 
         safe_html = sanitize_email_html(raw_html)
-        preview_html = expand_email_preview_placeholders(safe_html, request.event, locale=locale or None)
+        preview_html = expand_email_preview_placeholders(
+            safe_html,
+            request.event,
+            locale=locale or None,
+            preview_context=request.GET.get('context'),
+        )
         return JsonResponse({'html': preview_html})
 
     def _handle_form(self, request):
@@ -989,7 +994,12 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             if not body:
                 continue
             safe_html = sanitize_email_html(body)
-            previews[locale] = expand_email_preview_placeholders(safe_html, event, locale=locale)
+            previews[locale] = expand_email_preview_placeholders(
+                safe_html,
+                event,
+                locale=locale,
+                preview_context=request.GET.get('context'),
+            )
 
         if not previews:
             body = request.POST.get('body', '')
@@ -997,7 +1007,9 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
                 safe_html = sanitize_email_html(body)
                 event_locales = list(event.settings.locales)
                 previews[event_locales[0] if event_locales else 'en'] = expand_email_preview_placeholders(
-                    safe_html, event
+                    safe_html,
+                    event,
+                    preview_context=request.GET.get('context'),
                 )
 
         return JsonResponse({'previews': previews})
@@ -1309,6 +1321,23 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
             if self.request.GET.get('object'):
                 qs = qs.filter(object_id=self.request.GET.get('object'))
 
+        query = self.request.GET.get('q', '').strip()
+        if query:
+            search_filter = (
+                Q(action_type__icontains=query)
+                | Q(user__fullname__icontains=query)
+                | Q(user__email__icontains=query)
+                | Q(device__name__icontains=query)
+                | Q(api_token__name__icontains=query)
+                | Q(oauth_application__name__icontains=query)
+            )
+            if self.request.user.has_active_staff_session(
+                self.request.session.session_key
+            ):
+                search_filter |= Q(data__icontains=query)
+
+            qs = qs.filter(search_filter)
+
         return qs
 
     def get(self, request, *args, **kwargs):
@@ -1361,6 +1390,10 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
+        params = self.request.GET.copy()
+        params.pop('q', None)
+        params.pop('page', None)
+        ctx['clear_search_query'] = params.urlencode()
         ctx['userlist'] = self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
         ctx['devicelist'] = (
             self.request.event.logentry_set.order_by('device__name').distinct().values('device__id', 'device__name')

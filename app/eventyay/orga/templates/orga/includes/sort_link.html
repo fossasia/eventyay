@@ -1,0 +1,6 @@
+{% comment %}
+  One sort caret for a table header. Expects `key` (the sort value), `icon`
+  ('down' or 'up'), `label` (translated text) and `current_sort` from the view.
+  Changing the sort always goes back to the first page.
+{% endcomment %}
+<a href="{% querystring sort=key page=None %}" class="sort-link{% if current_sort == key %} sort-active{% endif %}"{% if current_sort == key %} aria-current="true"{% endif %} title="{{ label }}" aria-label="{{ label }}"><i class="fa fa-caret-{{ icon }}" aria-hidden="true"></i></a>

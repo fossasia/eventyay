@@ -35,6 +35,7 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.control.forms import MultipleLanguagesWidget, SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.control.forms.global_settings import StripeKeyValidator
 from eventyay.helpers.image_optimize import optimize_uploaded_image
+from eventyay.helpers.timezone import format_timezone_name
 from eventyay.multidomain.models import KnownDomain
 
 logger = logging.getLogger(__name__)
@@ -42,8 +43,8 @@ logger = logging.getLogger(__name__)
 
 class EventCommonSettingsForm(SettingsForm):
     timezone = forms.ChoiceField(
-        choices=((a, a) for a in common_timezones),
-        label=_('Event timezone'),
+        choices=((a, format_timezone_name(a)) for a in common_timezones),
+        label=_('Region'),
     )
 
 
@@ -78,13 +79,15 @@ class EventCommonSettingsForm(SettingsForm):
         'banner_text_bottom',
         'menu_label_tickets',
         'menu_label_join_video',
-        'meta_noindex',
         'show_date_to',
         'show_times',
     ]
 
     def clean(self):
         data = super().clean()
+        locales = data.get('locales') or []
+        if locales:
+            data['locale'] = locales[0]
         if data.get('contact_form_enabled') and not data.get('contact_mail'):
             self.add_error(
                 'contact_mail',
@@ -140,7 +143,6 @@ class EventCommonSettingsForm(SettingsForm):
                 self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
 
         if is_meetup_event(self.event):
-            self.cleaned_data.pop('meta_noindex', None)
             if 'privacy_type' in self.cleaned_data:
                 is_priv = self.cleaned_data['privacy_type'] == PRIVACY_PRIVATE
                 set_meetup_privacy(self.event, is_private=is_priv)
@@ -311,14 +313,16 @@ class EventCommonSettingsForm(SettingsForm):
                 self.fields[fname].widget = MultipleLanguagesWidget(
                     choices=self.fields[fname].choices, attrs=getattr(old_widget, 'attrs', None)
                 )
+        if 'locales' in self.fields:
+            ordered_locales = self._selected_locale_order()
+            self.fields['locales'].widget.attrs['data-ordered-default'] = 'true'
+            self.fields['locales'].widget.attrs['data-default-locale-input'] = f'id_{self.add_prefix("locale")}'
+            self.fields['locales'].widget.attrs['data-selected-order'] = ','.join(ordered_locales)
+        if 'locale' in self.fields:
+            self.fields['locale'].widget = forms.HiddenInput()
+            self.fields['locale'].label = ''
         if self.event and 'content_locales' in self.fields:
             self.fields['content_locales'].initial = self.event.content_locales
-        if is_meetup_event(self.event):
-            self.fields.pop('meta_noindex', None)
-            self.initial.pop('meta_noindex', None)
-        elif 'meta_noindex' in self.fields:
-            self.fields['meta_noindex'].label = _('Ask search engines not to index the event pages')
-
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.ClearableFileInput):
                 field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
@@ -335,6 +339,31 @@ class EventCommonSettingsForm(SettingsForm):
                     self.fields['contact_mail'].initial = self.event.email
 
 
+
+
+    def _selected_locale_order(self):
+        """Locale badge order for the widget.
+
+        A bound form must keep the submitted order so a validation error does
+        not snap the selector back to the previously saved languages.
+        """
+        if self.is_bound:
+            key = self.add_prefix('locales')
+            if hasattr(self.data, 'getlist'):
+                submitted = [code for code in self.data.getlist(key) if code]
+                if submitted:
+                    return submitted
+            raw = self.data.get(key) if self.data is not None else None
+            if isinstance(raw, (list, tuple)):
+                return [code for code in raw if code]
+            if isinstance(raw, str):
+                return [code for code in raw.split(',') if code]
+            return []
+
+        ordered_locales = self.initial.get('locales') or []
+        if isinstance(ordered_locales, str):
+            return [code for code in ordered_locales.split(',') if code]
+        return list(ordered_locales)
 
 
 class EventUpdateForm(I18nModelForm):
@@ -360,13 +389,6 @@ class EventUpdateForm(I18nModelForm):
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
-
-        if 'is_public' in self.fields:
-            if is_meetup_event(self.instance):
-                self.fields.pop('is_public', None)
-            else:
-                self.fields['is_public'].label = _('Show in search results and lists')
-                self.fields['is_public'].help_text = _('If selected, this event will show up publicly on the list of events for your organizer account and in platform search results.')
 
         if self.domain_field_enabled:
             self.fields['domain'] = forms.CharField(
@@ -424,7 +446,6 @@ class EventUpdateForm(I18nModelForm):
             'date_from',
             'date_to',
             'date_admission',
-            'is_public',
             'location',
             'geo_lat',
             'geo_lon',
@@ -568,7 +589,7 @@ class EventCloneForm(I18nModelForm):
             self.fields['slug'].widget.organizer = self.organizer
             self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
-        self.fields['timezone'].choices = ((a, a) for a in common_timezones)
+        self.fields['timezone'].choices = ((a, format_timezone_name(a)) for a in common_timezones)
 
         locale_choices = get_language_choices_native_with_ui_name()
         self.fields['locale'].choices = [(code, label) for code, label in locale_choices if code in self.locales]
