@@ -13,6 +13,7 @@
 <script type="text/javascript" src="{% static 'eventyay-common/js/move-event-email-elements.js' %}"></script>
 <script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
+<script type="module" src="{% static 'eventyay-common/js/ui/region-timezone-display.js' %}"></script>
 {{ sform.media }}
 {% if is_meetup_event %}
 <script type="module" src="{% static 'eventyay-common/js/ui/meetup-video-fields.js' %}"></script>
@@ -37,7 +38,7 @@
             {% if form.domain %} {# Conditionally show if domain field is added to form #}
             {% bootstrap_field form.domain layout="control" %}
             {% endif %}
-            {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=form.date_from date_to_form=form.date_to timezone_form=sform.timezone %}
+            {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=form.date_from date_to_form=form.date_to timezone_form=sform.timezone show_timezone_display=True %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
             <div class="form-group">
@@ -217,7 +218,7 @@
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
-            {% bootstrap_field sform.locale layout="control" %}
+            {{ sform.locale }}
             {% bootstrap_field sform.region layout="control" %}
         </fieldset>
         <fieldset>
@@ -260,13 +261,6 @@
             {% bootstrap_field sform.show_date_to layout="control" %}
             {% bootstrap_field sform.show_times layout="control" %}
         </fieldset>
-        {% if not is_meetup_event %}
-        <fieldset>
-            <legend>{% trans "Publication" %}</legend>
-            {% bootstrap_field form.is_public layout="control" %}
-            {% bootstrap_field sform.meta_noindex layout="control" %}
-        </fieldset>
-        {% endif %}
         <fieldset id="email-settings-tab">
             <legend>{% trans "Email" %}</legend>
             <h4 class="settings-sub-heading">{% trans "General" %}</h4>

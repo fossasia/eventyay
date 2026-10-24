@@ -7,7 +7,7 @@ import pytest
 from django.core import mail as djmail
 from django_scopes import scope
 
-from eventyay.base.models import Answer, Event, Track
+from eventyay.base.models import Answer, Event, Submission, SubmissionType, Track
 from eventyay.base.models import QueuedMail
 from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
@@ -938,4 +938,202 @@ def test_orga_cfp_forms_shows_session_videos_as_organizer_only(orga_client, even
         "This field can only be edited by organizers. "
         "It is not displayed on the proposal form."
     ) in content
+
+
+@pytest.mark.django_db
+def test_track_list_sorting(orga_client, event):
+    url = event.cfp.urls.tracks
+    with scope(event=event):
+        t1 = Track.objects.create(event=event, name="Beta Track", color="#111111", position=2)
+        t2 = Track.objects.create(event=event, name="Alpha Track", color="#ffffff", position=1)
+        t3 = Track.objects.create(event=event, name="Gamma Track", color="#000000", position=3)
+        sub_type = event.submission_types.first()
+        Submission.objects.create(event=event, title="Sub 1", track=t3, submission_type=sub_type)
+        Submission.objects.create(event=event, title="Sub 2", track=t3, submission_type=sub_type)
+        Submission.objects.create(event=event, title="Sub 3", track=t1, submission_type=sub_type)
+        Submission.all_objects.create(
+            event=event, title="Sub Draft", track=t2, submission_type=sub_type, state="draft"
+        )
+        Submission.all_objects.create(
+            event=event, title="Sub Deleted", track=t2, submission_type=sub_type, state="deleted"
+        )
+
+    # Default sort (no ?sort) preserves position order and enables reordering
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is True
+    assert "dragsort-button" in response.text
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+
+    # Sort by name ascending (a-z) disables reordering and shows caret-up
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    assert "Reset to manual order" in response.text
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+    assert "fa-caret-up" in response.text
+    assert "text-primary" in response.text
+
+    # Reordering via POST while field sort is active must be rejected
+    reorder_res = orga_client.post(f"{url}?sort=name", {"order": f"{t1.pk},{t2.pk},{t3.pk}"})
+    assert reorder_res.status_code == 400
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t3.pk, t1.pk, t2.pk]
+    assert "fa-caret-down" in response.text
+
+    # Sort by color ascending
+    response = orga_client.get(f"{url}?sort=color")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t3.pk, t1.pk, t2.pk]
+    assert "fa-caret-up" in response.text
+    assert "text-primary" in response.text
+
+    # Sort by color descending
+    response = orga_client.get(f"{url}?sort=-color")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+    assert "fa-caret-down" in response.text
+
+    # Sort by proposals descending (high to low)
+    response = orga_client.get(f"{url}?sort=-proposals")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t3.pk, t1.pk, t2.pk]
+
+    # Sort by proposals ascending (low to high)
+    response = orga_client.get(f"{url}?sort=proposals")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk, t3.pk]
+
+
+@pytest.mark.django_db
+def test_track_list_sorting_multilingual(orga_client, orga_user, event):
+    url = event.cfp.urls.tracks
+    with scope(event=event):
+        event.locales = ["en", "de"]
+        event.settings.locales = ["en", "de"]
+        event.save()
+        # t1 is Beta in English, Alpha in German
+        t1 = Track.objects.create(
+            event=event, name={"en": "Beta Track", "de": "Alpha Schiene"}, color="#111111", position=1
+        )
+        # t2 is Alpha in English, Beta in German
+        t2 = Track.objects.create(
+            event=event, name={"en": "Alpha Track", "de": "Beta Schiene"}, color="#222222", position=2
+        )
+
+    # In English: "Alpha Track" (t2) < "Beta Track" (t1)
+    orga_user.locale = "en"
+    orga_user.save()
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t2.pk, t1.pk]
+
+    # In German: "Alpha Schiene" (t1) < "Beta Schiene" (t2)
+    orga_user.locale = "de"
+    orga_user.save()
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [t.pk for t in response.context["track_list"]]
+    assert pks == [t1.pk, t2.pk]
+
+
+@pytest.mark.django_db
+def test_submission_type_list_sorting(orga_client, event):
+    url = event.cfp.urls.types
+    with scope(event=event):
+        default_type = event.cfp.default_type
+        default_type.position = 0
+        default_type.save()
+        st1 = SubmissionType.objects.create(event=event, name="Workshop", default_duration=120, position=2)
+        st2 = SubmissionType.objects.create(event=event, name="Keynote", default_duration=60, position=1)
+        st3 = SubmissionType.objects.create(event=event, name="Lightning Talk", default_duration=15, position=3)
+        # Create proposals
+        Submission.objects.create(event=event, title="Sub A", submission_type=st3)
+        Submission.objects.create(event=event, title="Sub B", submission_type=st3)
+        Submission.objects.create(event=event, title="Sub C", submission_type=st1)
+        Submission.all_objects.create(
+            event=event, title="Sub Draft 2", submission_type=st2, state="draft"
+        )
+        Submission.all_objects.create(
+            event=event, title="Sub Deleted 2", submission_type=st2, state="deleted"
+        )
+
+    # Default sort (no ?sort) preserves position order and enables reordering
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is True
+    assert "dragsort-button" in response.text
+    pks = [st.pk for st in response.context["submissiontype_list"]]
+    assert pks == [default_type.pk, st2.pk, st1.pk, st3.pk]
+
+    # Sort by name ascending (a-z) disables reordering and shows caret-up
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    assert "Reset to manual order" in response.text
+    names = [st.name for st in response.context["submissiontype_list"]]
+    assert names == sorted(names, key=str)
+    assert "fa-caret-up" in response.text
+    assert "text-primary" in response.text
+
+    # Reordering via POST while field sort is active must be rejected
+    reorder_res = orga_client.post(f"{url}?sort=name", {"order": f"{st1.pk},{st2.pk},{st3.pk}"})
+    assert reorder_res.status_code == 400
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    names = [st.name for st in response.context["submissiontype_list"]]
+    assert names == sorted(names, key=str, reverse=True)
+    assert "fa-caret-down" in response.text
+
+    # Sort by default_duration descending (high to low)
+    response = orga_client.get(f"{url}?sort=-default_duration")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    durations = [st.default_duration for st in response.context["submissiontype_list"]]
+    assert durations == sorted(durations, reverse=True)
+
+    # Sort by default_duration ascending (low to high)
+    response = orga_client.get(f"{url}?sort=default_duration")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    durations = [st.default_duration for st in response.context["submissiontype_list"]]
+    assert durations == sorted(durations)
+
+    # Sort by proposals descending (high to low)
+    response = orga_client.get(f"{url}?sort=-proposals")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    proposals = [st.proposals for st in response.context["submissiontype_list"]]
+    assert proposals == sorted(proposals, reverse=True)
+
+    # Sort by proposals ascending (low to high)
+    response = orga_client.get(f"{url}?sort=proposals")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    proposals = [st.proposals for st in response.context["submissiontype_list"]]
+    assert proposals == sorted(proposals)
+
 
