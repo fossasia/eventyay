@@ -1394,7 +1394,12 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
         params.pop('q', None)
         params.pop('page', None)
         ctx['clear_search_query'] = params.urlencode()
-        ctx['userlist'] = self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
+        # String ids, so the template can compare them with request.GET['user'].
+        ctx['userlist'] = [
+            {'user__id': str(row['user__id']), 'user__email': row['user__email']}
+            for row in self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
+            if row['user__id']
+        ]
         ctx['devicelist'] = (
             self.request.event.logentry_set.order_by('device__name').distinct().values('device__id', 'device__name')
         )
