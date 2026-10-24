@@ -34,10 +34,10 @@
         </div>
     </dialog>
     {% if not can_reorder %}
-        <div class="alert alert-info">
+        <div class="alert alert-info"><span>
             {% translate "Manual drag-and-drop reordering is disabled while custom sorting is active." %}
-            <a href="{% querystring sort=None %}" class="alert-link">{% translate "Reset to manual order" %}</a>
-        </div>
+            <a href="{% querystring sort=None %}" class="alert-link">{% translate "Reset to default order" %}</a>
+        </span></div>
     {% endif %}
     <div class="table-responsive-sm">
         <table class="table table-sm table-flip table-sticky">

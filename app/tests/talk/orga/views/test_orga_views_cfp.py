@@ -971,7 +971,7 @@ def test_track_list_sorting(orga_client, event):
     assert response.status_code == 200
     assert response.context["can_reorder"] is False
     assert "dragsort-button" not in response.text
-    assert "Reset to manual order" in response.text
+    assert "Reset to default order" in response.text
     pks = [t.pk for t in response.context["track_list"]]
     assert pks == [t2.pk, t1.pk, t3.pk]
     assert "fa-caret-up" in response.text
@@ -1089,7 +1089,7 @@ def test_submission_type_list_sorting(orga_client, event):
     assert response.status_code == 200
     assert response.context["can_reorder"] is False
     assert "dragsort-button" not in response.text
-    assert "Reset to manual order" in response.text
+    assert "Reset to default order" in response.text
     names = [st.name for st in response.context["submissiontype_list"]]
     assert names == sorted(names, key=str)
     assert "fa-caret-up" in response.text
