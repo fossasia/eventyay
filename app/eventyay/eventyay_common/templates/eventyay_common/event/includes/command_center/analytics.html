@@ -1,0 +1,51 @@
+{% load i18n %}
+<section class="cc-section" aria-labelledby="cc-analytics-title">
+  <div class="cc-section-header">
+    <h2 id="cc-analytics-title" class="cc-section-title">
+      <span class="fa fa-line-chart text-primary" aria-hidden="true"></span>
+      {% trans 'Analytics overview' %}
+    </h2>
+    {% if analytics_overview.stats_url %}
+      <a href="{{ analytics_overview.stats_url }}" class="cc-component-btn">
+        <span>{% trans 'View full analytics' %}</span>
+        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="cc-analytics-grid">
+    {% if can_view_orders %}
+      <div class="cc-analytics-card">
+        <div class="cc-analytics-title">{% trans 'Orders (Paid)' %}</div>
+        <div class="cc-analytics-val">{{ analytics_overview.order_count }}</div>
+        <div class="text-muted cc-analytics-subtext">{% trans 'Completed purchases' %}</div>
+      </div>
+
+      <div class="cc-analytics-card">
+        <div class="cc-analytics-title">{% trans 'Total Gross Revenue' %}</div>
+        <div class="cc-analytics-val">{{ analytics_overview.currency }} {{ analytics_overview.revenue_total|floatformat:2 }}</div>
+        <div class="text-muted cc-analytics-subtext">{% trans 'Cumulative sales' %}</div>
+      </div>
+    {% endif %}
+
+    {% if has_talk_access and analytics_overview.proposal_stats %}
+      <div class="cc-analytics-card">
+        <div class="cc-analytics-title">{% trans 'Submissions Breakdown' %}</div>
+        <div class="cc-analytics-stat-row">
+          <div class="cc-analytics-stat-item">
+            <div class="cc-analytics-stat-val is-confirmed">{{ analytics_overview.proposal_stats.confirmed|default:0 }}</div>
+            <div class="cc-analytics-stat-lbl">{% trans 'Confirmed' %}</div>
+          </div>
+          <div class="cc-analytics-stat-item">
+            <div class="cc-analytics-stat-val is-accepted">{{ analytics_overview.proposal_stats.accepted|default:0 }}</div>
+            <div class="cc-analytics-stat-lbl">{% trans 'Accepted' %}</div>
+          </div>
+          <div class="cc-analytics-stat-item">
+            <div class="cc-analytics-stat-val">{{ analytics_overview.proposal_stats.submitted|default:0 }}</div>
+            <div class="cc-analytics-stat-lbl">{% trans 'Total' %}</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>

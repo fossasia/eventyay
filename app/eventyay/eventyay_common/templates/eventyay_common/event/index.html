@@ -4,105 +4,91 @@
 {% load bootstrap3 %}
 {% load static %}
 {% load eventsignal %}
+
+{% block custom_header %}
+    <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/common_dashboard.css' %}" />
+{% endblock %}
+
 {% block title %}{{ request.event.name }}{% endblock %}
+
 {% block content %}
-    {% if is_meetup_event %}
-        {% trans "Meetup" as date_range %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_range|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_component_link="eventyay_common/event/component_link.html" header_title_extra=header_extra %}
-        {% endwith %}
-    {% elif request.event.has_subevents %}
-        {% trans "Event series" as date_range %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_range|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_component_link="eventyay_common/event/component_link.html" header_title_extra=header_extra %}
-        {% endwith %}
-    {% else %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:request.event.get_date_range_display|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_component_link="eventyay_common/event/component_link.html" header_title_extra=header_extra %}
-        {% endwith %}
-    {% endif %}
-
-    {% eventsignal request.event "eventyay.control.signals.event_dashboard_top" request=request %}
-    {% if actions|length > 0 %}
-        <div class="panel panel-danger">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    {% trans "Your attention is required to resolve the following issues" %}
-                </h3>
-            </div>
-            <ul class="list-group">
-                {% for action in actions %}
-                    <li class="list-group-item logentry">
-                        <p>
-                            {% url 'control:event.requiredaction.discard' event=request.event.slug organizer=request.event.organizer.slug id=action.id as discard_url %}
-                            <form method="post" action="{{ discard_url }}" class="pull-right flip">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-default btn-xs">
-                                    {% trans "Hide message" %}
-                                </button>
-                            </form>
-                            <small><span
-                                    class="fa fa-clock-o"></span> {{ action.datetime|date:"SHORT_DATETIME_FORMAT" }}
-                            </small>
-                        </p>
-                        {{ action.display|safe }}
-                    </li>
-                {% endfor %}
-            </ul>
-            <div class="panel-footer">
-                <a href='{% url "control:event.requiredactions" event=request.event.slug organizer=request.event.organizer.slug %}'>
-                    {% trans "Show more" %}
-                </a>
-            </div>
-        </div>
-    {% endif %}
-
     {% if request.event.has_subevents %}
-        <form class="form-inline helper-display-inline" action="" method="get">
+        <form class="form-inline helper-display-inline cc-subevent-form" action="" method="get">
             {% include "pretixcontrol/event/fragment_subevent_choice_simple.html" %}
         </form>
     {% endif %}
-    <br>
-    {% include "eventyay_common/event/fragment_dashboard.html" %}
-    <div class="dashboard">
-        {% for w in widgets %}
-            <div class="widget-container widget-{{ w.display_size|default:"small" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
-                {% if w.permission_dialog_id %}
-                    <button type="button" aria-haspopup="dialog" aria-controls="{{ w.permission_dialog_id }}" aria-label="{% trans 'Open permission details' %}" data-dialog-target="#{{ w.permission_dialog_id }}" data-toggle="dialog" class="widget">
-                        {% if w.lazy %}
-                            <span class="fa fa-cog fa-4x"></span>
-                            <span class="sr-only">{% trans "Open permission details" %}</span>
+
+    <div class="cc-dashboard">
+        <!-- 1. Header & Status Badges -->
+        {% include "eventyay_common/event/includes/command_center/header.html" %}
+
+        {% eventsignal request.event 'eventyay.control.signals.event_dashboard_top' request=request %}
+
+        <!-- 2. Event Workflow Timeline -->
+        {% include "eventyay_common/event/includes/command_center/workflow.html" %}
+
+        <!-- 3. Action Required -->
+        {% include "eventyay_common/event/includes/command_center/action_required.html" %}
+
+        <!-- 4. At A Glance KPIs -->
+        {% include "eventyay_common/event/includes/command_center/at_a_glance.html" %}
+
+        <!-- 5. Component Dashboards -->
+        {% include "eventyay_common/event/includes/command_center/component_cards.html" %}
+
+        <!-- 6 & 7. Milestones & Organiser/Teams -->
+        {% include "eventyay_common/event/includes/command_center/milestones_and_teams.html" %}
+
+        <!-- 8. Analytics Overview -->
+        {% include "eventyay_common/event/includes/command_center/analytics.html" %}
+
+        <!-- 9. Recent Activity -->
+        {% include "eventyay_common/event/includes/command_center/activity.html" %}
+
+        {% if widgets %}
+            <div class="dashboard cc-legacy-widgets">
+                {% for w in widgets %}
+                    <div class="widget-container widget-{{ w.display_size|default:"small" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
+                        {% if w.permission_dialog_id %}
+                            <button type="button" aria-haspopup="dialog" aria-controls="{{ w.permission_dialog_id }}" aria-label="{% trans 'Open permission details' %}" data-dialog-target="#{{ w.permission_dialog_id }}" data-toggle="dialog" class="widget">
+                                {% if w.lazy %}
+                                    <span class="fa fa-cog fa-4x"></span>
+                                    <span class="sr-only">{% trans "Open permission details" %}</span>
+                                {% else %}
+                                    {{ w.content|safe }}
+                                {% endif %}
+                            </button>
+                        {% elif w.url %}
+                            <a href="{{ w.url }}" class="widget">
+                                {% if w.lazy %}
+                                    <span class="fa fa-cog fa-4x"></span>
+                                {% else %}
+                                    {{ w.content|safe }}
+                                {% endif %}
+                            </a>
+                        {% elif w.link %}
+                            <a href="{{ w.link }}" class="widget">
+                                {% if w.lazy %}
+                                    <span class="fa fa-cog fa-4x"></span>
+                                {% else %}
+                                    {{ w.content|safe }}
+                                {% endif %}
+                            </a>
                         {% else %}
-                            {{ w.content|safe }}
-                        {% endif %}
-                    </button>
-                {% elif w.url %}{# backwards compatibility #}
-                    <a href="{{ w.url }}" class="widget">
-                        {% if w.lazy %}
-                            <span class="fa fa-cog fa-4x"></span>
-                        {% else %}
-                            {{ w.content|safe }}
-                        {% endif %}
-                    </a>
-                {% elif w.link %}
-                    <a href="{{ w.link }}" class="widget">
-                        {% if w.lazy %}
-                            <span class="fa fa-cog fa-4x"></span>
-                        {% else %}
-                            {{ w.content|safe }}
-                        {% endif %}
-                    </a>
-                {% else %}
-                    <div class="widget">
-                        {% if w.lazy %}
-                            <span class="fa fa-cog fa-4x"></span>
-                        {% else %}
-                            {{ w.content|safe }}
+                            <div class="widget">
+                                {% if w.lazy %}
+                                    <span class="fa fa-cog fa-4x"></span>
+                                {% else %}
+                                    {{ w.content|safe }}
+                                {% endif %}
+                            </div>
                         {% endif %}
                     </div>
-                {% endif %}
+                {% endfor %}
             </div>
-        {% endfor %}
+        {% endif %}
     </div>
+
     {% include 'eventyay_common/includes/event_settings_permission_dialog.html' with dialog_title_id='event-settings-perm-event-index' %}
+    <script type="module" src="{% static 'eventyay-common/js/command-center.js' %}"></script>
 {% endblock %}
