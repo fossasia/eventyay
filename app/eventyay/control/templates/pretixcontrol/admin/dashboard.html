@@ -13,7 +13,7 @@
     <header class="platform-header">
         <div><h1>{% trans 'Platform Dashboard' %}</h1><p>{% trans 'Overview of platform activity, system health and key metrics.' %}</p></div>
         <form method="post">{% csrf_token %}
-            <span>{% trans 'Last updated' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</span>
+            <span>{% trans 'Rendered at' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</span>
             <button type="submit" name="action" value="refresh" class="btn btn-default btn-sm"><i class="fa fa-refresh" aria-hidden="true"></i> {% trans 'Refresh data' %}</button>
         </form>
     </header>

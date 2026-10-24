@@ -4,16 +4,33 @@ from unittest.mock import patch
 
 import pytest
 from bs4 import BeautifulSoup
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 from redis.exceptions import RedisError
 
-from eventyay.base.models import Event, Order, OrderPayment, Organizer, Product, Room, StreamSchedule, SystemLog, User
-from eventyay.control.forms.server_management import VideoStreamScheduleForm
-from eventyay.control.platform_dashboard import activity_context, dashboard_cards, setup_events
+from eventyay.base.models import (
+    Event,
+    JitsiServer,
+    Order,
+    OrderPayment,
+    Organizer,
+    Product,
+    Room,
+    StreamSchedule,
+    SystemLog,
+    User,
+)
+from eventyay.control.forms.server_management import VideoStreamingSelectionForm, VideoStreamScheduleForm
+from eventyay.control.platform_dashboard import (
+    ACTIVITY_RANGES,
+    activity_context,
+    cached_dashboard_context,
+    dashboard_cards,
+    setup_events,
+)
 
 
 @pytest.fixture
@@ -112,6 +129,13 @@ def test_dashboard_and_analytics_require_admin_session(client):
     client.force_login(user)
     for path in ('admin.dashboard', 'admin.analytics', 'admin.operations', 'video_admin:settings'):
         assert client.get(reverse(f'eventyay_admin:{path}')).status_code == 403
+    for metric in ('orders', 'revenue', 'users', 'events', 'top-events', 'providers', 'needs-setup', 'missing-payment'):
+        url = reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': metric})
+        assert client.get(url).status_code == 403
+    for action in ('save', 'delete'):
+        assert client.post(reverse('eventyay_admin:video_admin:settings'), {
+            'stream_action': action,
+        }).status_code == 403
     user.is_staff = True
     user.save(update_fields=['is_staff'])
     assert client.get(reverse('eventyay_admin:admin.analytics')).status_code == 302
@@ -189,6 +213,10 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
             assert result.status_code == 302
             assert result.url == url
             clear.assert_called_once()
+            keys = clear.call_args.args[0]
+            assert {'admin_dashboard_common', 'admin_dashboard_operations', 'admin_dashboard_counts',
+                    'admin_dashboard_health'} <= set(keys)
+            assert all(f'admin_dashboard_activity_{period}' in keys for period in ACTIVITY_RANGES)
 
 
 @pytest.mark.django_db
@@ -222,7 +250,7 @@ def test_dashboard_reports_measured_health(dashboard_admin, settings, mocker, ap
         failure_counter.side_effect = RedisError('Failure store unavailable')
     else:
         failure_counter.return_value = failed_tasks
-    mocker.patch('eventyay.control.views.admin.healthcheck', return_value=HttpResponse(status=200 if api_ok else 503))
+    mocker.patch('eventyay.control.views.admin.check_dependencies', return_value=None if api_ok else 'db_unavailable')
     response = dashboard_admin.get(reverse('eventyay_admin:admin.dashboard'))
     assert response.status_code == 200
     rows = {str(row['label']): row for row in response.context['health_rows']}
@@ -263,7 +291,7 @@ def test_dashboard_distinguishes_idle_and_unavailable_workers(dashboard_admin, s
     mocker.patch('eventyay.control.views.admin.app.control.inspect').return_value.active.return_value = workers
     mocker.patch('eventyay.control.views.admin.cache.get_or_set', side_effect=lambda key, default, timeout: default())
     mocker.patch('eventyay.control.views.admin.task_failure_count', return_value=0)
-    mocker.patch('eventyay.control.views.admin.healthcheck', return_value=HttpResponse(status=200))
+    mocker.patch('eventyay.control.views.admin.check_dependencies', return_value=None)
     response = dashboard_admin.get(reverse('eventyay_admin:admin.dashboard'))
     assert response.status_code == 200
     assert response.context['celery_depth'] == expected
@@ -388,7 +416,7 @@ def test_analytics_formats_money_and_counts(dashboard_admin, metric):
 
 
 @pytest.mark.django_db
-def test_setup_events_without_an_active_scope():
+def test_setup_events_without_an_active_scope(dashboard_admin):
     """Build and evaluate the platform setup report outside any event scope."""
     organizer = Organizer.objects.create(name='Setup report', slug='setup-report')
     events = {}
@@ -401,6 +429,12 @@ def test_setup_events_without_an_active_scope():
             if kind == 'configured':
                 event.settings.set('payment_manual__enabled', True)
     assert set(setup_events().values_list('pk', flat=True)) == {events['empty'].pk, events['paid'].pk}
+    dashboard = dashboard_admin.get(reverse('eventyay_admin:admin.dashboard'))
+    card = dashboard.context['action_cards'][3]
+    assert card['value'] == 1
+    report = dashboard_admin.get(card['url'])
+    assert report.status_code == 200
+    assert report.context['report_rows'] == [['paid', 'Setup report']]
 
 
 @pytest.mark.django_db
@@ -461,3 +495,112 @@ def test_stream_clean_validates_times_without_a_room(mocker, minutes):
     else:
         stream.clean()
     base_clean.assert_called_once_with(stream)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('route, cold_budget', (('admin.dashboard', 65), ('admin.operations', 75)))
+def test_admin_page_query_budgets(dashboard_admin, settings, django_assert_max_num_queries, route, cold_budget):
+    """Keep cold loads bounded and reuse cached aggregates on subsequent requests."""
+    settings.HAS_CELERY = False
+    settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+    cache.clear()
+    url = reverse(f'eventyay_admin:{route}')
+    with django_assert_max_num_queries(cold_budget):
+        assert dashboard_admin.get(url).status_code == 200
+    with patch('eventyay.control.views.admin.AdminContextMixin.get_common_context', side_effect=AssertionError), \
+            patch('eventyay.control.views.admin.AdminDashboard.get_dashboard_counts', side_effect=AssertionError), \
+            patch('eventyay.control.views.admin.AdminOperations.get_operations_context', side_effect=AssertionError), \
+            patch('eventyay.control.platform_dashboard.activity_context', side_effect=AssertionError):
+        with django_assert_max_num_queries(17):
+            assert dashboard_admin.get(url).status_code == 200
+    cache.clear()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('route', ('admin.dashboard', 'admin.analytics'))
+def test_admin_all_time_activity_is_cached(dashboard_admin, settings, mocker, route):
+    """Exercise all-time charts through both views and invalidate them on Refresh."""
+    settings.HAS_CELERY = False
+    settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+    cache.clear()
+    aggregate = mocker.patch('eventyay.control.platform_dashboard.activity_context', wraps=activity_context)
+    url = reverse(f'eventyay_admin:{route}') + '?range=all'
+    for _ in range(2):
+        response = dashboard_admin.get(url)
+        assert response.status_code == 200
+        assert response.context['activity_range'] == 'all'
+        assert len(response.context['activity_charts']) == 4
+        assert 'Rendered at' in response.content.decode()
+    assert aggregate.call_count == 1
+    dashboard_admin.post(reverse('eventyay_admin:admin.dashboard'), {'action': 'refresh'})
+    assert dashboard_admin.get(url).status_code == 200
+    assert aggregate.call_count == 2
+    cache.clear()
+
+
+@pytest.mark.django_db
+def test_admin_pages_only_build_their_own_context(dashboard_admin, settings, mocker):
+    """Do not load operations detail on the dashboard or dashboard charts on operations."""
+    settings.HAS_CELERY = False
+    server = JitsiServer.objects.create(url='https://jitsi.example.test', active=True)
+    with patch('eventyay.control.views.admin.AdminOperations.get_operations_context', side_effect=AssertionError):
+        assert dashboard_admin.get(reverse('eventyay_admin:admin.dashboard')).status_code == 200
+    with patch('eventyay.control.views.admin.AdminDashboard.get_dashboard_counts', side_effect=AssertionError), \
+            patch('eventyay.control.views.admin.check_dependencies', side_effect=AssertionError), \
+            patch('eventyay.control.platform_dashboard.activity_context', side_effect=AssertionError):
+        response = dashboard_admin.get(reverse('eventyay_admin:admin.operations'))
+    assert response.status_code == 200
+    assert 'activity_charts' not in response.context_data
+    assert 'metric_cards' not in response.context_data
+    assert 'periodic_tasks' in response.context_data
+    assert server.url in response.content.decode()
+    assert len(response.context_data['video_server_rows']) == 1
+
+
+@pytest.mark.django_db
+def test_streaming_event_selector_only_renders_selected_event(django_assert_max_num_queries):
+    """Use paginated autocomplete instead of rendering every platform event option."""
+    organizer = Organizer.objects.create(name='Event search', slug='event-search')
+    events = [Event.objects.create(
+        organizer=organizer, name='Same name', slug=f'event-{index}', date_from=now(),
+    ) for index in range(25)]
+    with django_assert_max_num_queries(0):
+        html = str(VideoStreamingSelectionForm()['event'])
+    assert 'data-model-select2="event"' in html
+    assert 'Same name' not in html
+    form = VideoStreamingSelectionForm({'event': events[0].pk})
+    assert form.is_valid(), form.errors
+    html = str(form['event'])
+    assert html.count('<option') == 1
+    assert 'Same name (event-search)' in html
+
+
+@pytest.mark.django_db
+def test_dashboard_caches_dependency_checks(dashboard_admin, settings, mocker):
+    """Cache silent dashboard readiness probes for 60 seconds and refresh explicitly."""
+    settings.HAS_CELERY = False
+    settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+    cache.clear()
+
+
+    probe = mocker.patch('eventyay.control.views.admin.check_dependencies', return_value='db_unavailable')
+    cached = mocker.spy(cache, 'get_or_set')
+    url = reverse('eventyay_admin:admin.dashboard')
+    for _ in range(2):
+        response = dashboard_admin.get(url)
+        assert response.status_code == 200
+        assert response.context['api_health_ok'] is False
+    probe.assert_called_once_with()
+    assert any(call.args[0] == 'admin_dashboard_health' and call.args[2] == 60 for call in cached.call_args_list)
+    dashboard_admin.post(url, {'action': 'refresh'})
+    assert dashboard_admin.get(url).status_code == 200
+    assert probe.call_count == 2
+    cache.clear()
+
+
+def test_dashboard_cache_failure_loads_uncached_data(mocker):
+    """An unavailable cache must not make the newly cached admin pages fail."""
+    mocker.patch('eventyay.control.platform_dashboard.cache.get_or_set', side_effect=RedisError('Unavailable'))
+    load = mocker.Mock(return_value={'count': 3})
+    assert cached_dashboard_context('admin_dashboard_counts', load) == {'count': 3}
+    load.assert_called_once_with()

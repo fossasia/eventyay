@@ -3,6 +3,7 @@
 from datetime import UTC, timedelta
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Count, Min, Q, Sum
 from django.db.models.functions import TruncDay, TruncHour, TruncMonth
@@ -10,6 +11,7 @@ from django.urls import reverse
 from django.utils.timezone import localtime, now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
+from redis.exceptions import RedisError
 
 from eventyay.base.models import Event, Order, OrderPayment, Product, User
 from eventyay.base.models.event import Event_SettingsStore
@@ -18,8 +20,8 @@ from eventyay.base.models.event import Event_SettingsStore
 ACTIVITY_RANGES = {'24h': 1, '7d': 7, '30d': 30, '90d': 90, 'all': None}
 
 
-def setup_events():
-    """Select events without tickets or without a paid-ticket payment method."""
+def events_missing_payment():
+    """Select events with paid products but no enabled paid payment provider."""
     with scopes_disabled():
         paid = Product.objects.filter(default_price__gt=0).values('event_id')
         enabled = Event_SettingsStore.objects.filter(
@@ -28,8 +30,14 @@ def setup_events():
             'payment_free__enabled', 'payment_boxoffice__enabled',
             'payment_offsetting__enabled', 'payment_giftcard__enabled',
         ]).values('object_id')
+        return Event.objects.filter(pk__in=paid).exclude(pk__in=enabled)
+
+
+def setup_events():
+    """Select events without tickets or without a paid-ticket payment method."""
+    with scopes_disabled():
         return Event.objects.filter(
-            Q(products__isnull=True) | (Q(pk__in=paid) & ~Q(pk__in=enabled))
+            Q(products__isnull=True) | Q(pk__in=events_missing_payment())
         ).distinct()
 
 
@@ -51,10 +59,11 @@ def report_context(metric: str, page):
                 'provider',
             ).annotate(count=Count('order_id', distinct=True)).order_by('-count', 'provider')
         else:
-            title = _('Events needing setup')
+            title = _('Events missing payment setup') if metric == 'missing-payment' else _('Events needing setup')
             headers = (_('Event'), _('Organizer'))
             fields = ('name', 'organizer__name')
-            rows = setup_events().values(*fields, 'pk').order_by('pk')
+            events = events_missing_payment() if metric == 'missing-payment' else setup_events()
+            rows = events.values(*fields, 'pk').order_by('pk')
         pagination = Paginator(rows, 25).get_page(page)
         report_rows = [[row[field] for field in fields] for row in pagination.object_list]
     return {'report_title': title, 'report_headers': headers, 'report_rows': report_rows, 'report_page': pagination}
@@ -145,6 +154,22 @@ def activity_context(selected_range='30d'):
     }
 
 
+def cached_dashboard_context(key, load, timeout=300):
+    """Cache measured data without making a Redis outage break the admin pages."""
+    try:
+        return cache.get_or_set(key, load, timeout)
+    except RedisError:
+        return load()
+
+
+def cached_activity_context(selected_range='30d'):
+    """Reuse activity aggregates for five minutes, with one key per supported range."""
+    selected_range = selected_range if selected_range in ACTIVITY_RANGES else '30d'
+    return cached_dashboard_context(
+        f'admin_dashboard_activity_{selected_range}', lambda: activity_context(selected_range), 300,
+    )
+
+
 def dashboard_cards(ctx):
     """Map measured dashboard values to summaries and existing detail pages."""
     routes = {
@@ -209,7 +234,7 @@ def dashboard_cards(ctx):
             'value': ctx.get('events_missing_payment_count', 0),
             'label': _('Events missing payment setup'),
             'icon': 'calendar',
-            'url': routes['operations'] + '#admin-events-heading',
+            'url': reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': 'missing-payment'}),
             'link': _('View events'),
         },
         {

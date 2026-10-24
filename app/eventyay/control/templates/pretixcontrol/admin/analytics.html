@@ -26,7 +26,7 @@
         </nav>
       </section>
     {% else %}
-      <p>{% trans 'Last updated' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</p>
+      <p>{% trans 'Rendered at' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</p>
       <p><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='top-events' %}">{% trans 'Events by paid orders' %}</a> · <a href="{% url 'eventyay_admin:admin.analytics.metric' metric='providers' %}">{% trans 'Payment providers' %}</a></p>
       <section class="td-section">{% include 'pretixcontrol/admin/activity.html' %}</section>
     {% endif %}

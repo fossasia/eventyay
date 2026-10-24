@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models import Q
 from django.forms import inlineformset_factory
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_scopes import scope, scopes_disabled
@@ -26,18 +27,35 @@ from eventyay.base.models.event import (
 )
 from eventyay.base.services.jitsi import normalize_server_url
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+from eventyay.control.forms.widgets import Select2
+
+
+class StreamingEventChoiceField(forms.ModelChoiceField):
+    """Disambiguate selected events from organizers using the same event name."""
+
+    def label_from_instance(self, obj):
+        """Include the organizer slug in the selected event label."""
+        return f'{obj.name} ({obj.organizer.slug})'
 
 
 class VideoStreamingSelectionForm(forms.Form):
     """Select the event and optional stream managed by a platform administrator."""
-    event = forms.ModelChoiceField(queryset=Event.objects.none(), required=False, label=_('Event'))
+    event = StreamingEventChoiceField(
+        queryset=Event.objects.none(), required=False, label=_('Event'),
+        widget=Select2(attrs={
+            'data-model-select2': 'event',
+            'data-select2-url': reverse_lazy('control:events.typeahead'),
+            'data-placeholder': _('Search events…'),
+        }),
+    )
     stream = forms.IntegerField(required=False, min_value=1, max_value=2**63 - 1, widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
-        """Offer all events to the protected platform settings view."""
+        """Validate any selected event while rendering only the selected option."""
         super().__init__(*args, **kwargs)
         with scopes_disabled():
             self.fields['event'].queryset = Event.objects.select_related('organizer').order_by('pk')
+        self.fields['event'].widget.choices = self.fields['event'].choices
 
 
 class VideoStreamScheduleForm(forms.ModelForm):

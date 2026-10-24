@@ -65,35 +65,49 @@ from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.cfp import CfP
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.vouchers import InvoiceVoucher, generate_code
-from eventyay.base.models.product import Product
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm, VoucherFilterForm
 from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
-from eventyay.control.platform_dashboard import activity_context, dashboard_cards, report_context, setup_events
-from eventyay.base.views.health import healthcheck
+from eventyay.control.platform_dashboard import (
+    cached_activity_context,
+    cached_dashboard_context,
+    dashboard_cards,
+    events_missing_payment,
+    report_context,
+    setup_events,
+)
+from eventyay.base.views.health import check_dependencies
 from eventyay.control.signals import (
     platform_fee_voucher_copied,
     platform_fee_voucher_forms,
     platform_fee_voucher_targets,
 )
-from eventyay.control.video.admin_dashboard import get_video_server_dashboard_rows
+from eventyay.control.video.admin_dashboard import VIDEO_SERVER_CONFIGS, get_video_server_dashboard_rows
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
 
 logger = logging.getLogger(__name__)
 
 
-class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
-    """Show a compact platform overview with links to operational detail pages."""
-    template_name = 'pretixcontrol/admin/dashboard.html'
+class AdminContextMixin:
+    """Share cached metrics and refresh handling between admin overview pages."""
     success_url = 'eventyay_admin:admin.dashboard'
 
     def post(self, request, *args, **kwargs):
         """Refresh cached indicators and stay on the originating operations page."""
         if request.POST.get('action') == 'refresh' or 'refresh' in request.POST:
             cache.delete_many([
+                'admin_dashboard_common',
+                'admin_dashboard_operations',
+                'admin_dashboard_counts',
+                'admin_dashboard_health',
+                'admin_dashboard_activity_24h',
+                'admin_dashboard_activity_7d',
+                'admin_dashboard_activity_30d',
+                'admin_dashboard_activity_90d',
+                'admin_dashboard_activity_all',
                 'admin_dashboard_events_pending_setup',
                 'admin_dashboard_orders_top5',
                 'admin_dashboard_email_stats',
@@ -105,70 +119,23 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
         return redirect(self.success_url)
 
     def get_context_data(self, **kwargs) -> dict:
-        """Collect platform metrics, health checks and compact dashboard summaries."""
+        """Load shared context once without building either page-specific section."""
         ctx = super().get_context_data(**kwargs)
+        ctx.update(cached_dashboard_context('admin_dashboard_common', self.get_common_context))
+        return ctx
+
+    def get_common_context(self) -> dict:
+        """Collect only metrics and summaries displayed on both admin pages."""
+        ctx = {}
         n = now()
-        email_stats = None
 
-        # User KPIs
-        user_stats = User.objects.aggregate(
-            total=Count('id'),
-            new_24h=Count('id', filter=Q(date_joined__gte=n - timedelta(hours=24))),
-            new_7d=Count('id', filter=Q(date_joined__gte=n - timedelta(days=7))),
-            new_30d=Count('id', filter=Q(date_joined__gte=n - timedelta(days=30))),
-            banned=Count('id', filter=Q(moderation_state=User.ModerationState.BANNED)),
-            is_spam=Count('id', filter=Q(is_spam=True)),
-            recently_active=Count('id', filter=Q(last_login__gte=n - timedelta(days=30), last_login__isnull=False)),
-            deleted=Count('id', filter=Q(deleted=True) | Q(email__endswith='@disabled.eventyay.com')),
-            staff=Count('id', filter=Q(is_staff=True) | Q(is_administrator=True)),
-        )
-        users_verified = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
-
-        ctx['users_total'] = user_stats['total']
-        ctx['users_verified'] = users_verified
-        ctx['users_unverified'] = user_stats['total'] - users_verified
-        ctx['users_new_24h'] = user_stats['new_24h']
-        ctx['users_new_7d'] = user_stats['new_7d']
-        ctx['users_new_30d'] = user_stats['new_30d']
-        ctx['users_banned'] = user_stats['banned']
-        ctx['users_is_spam'] = user_stats['is_spam']
-        ctx['users_staff'] = user_stats['staff']
-        ctx['users_recently_active'] = user_stats['recently_active']
-        ctx['users_deleted'] = user_stats['deleted']
+        ctx['users_total'] = User.objects.count()
 
         # Organizer KPIs
         ctx['organizers_total'] = Organizer.objects.count()
 
         with scopes_disabled():
-            # Event KPIs
-            event_kpis = Event.objects.aggregate(
-                total=Count('id'),
-                live=Count('id', filter=Q(live=True)),
-                series=Count('id', filter=Q(has_subevents=True)),
-                featured=Count('id', filter=Q(startpage_featured=True)),
-            )
-            ctx['events_total'] = event_kpis['total']
-            ctx['events_live'] = event_kpis['live']
-            ctx['events_draft'] = event_kpis['total'] - event_kpis['live']
-            ctx['events_past'] = (
-                Event.objects.filter(has_subevents=False)
-                .filter(
-                    Q(Q(date_to__isnull=True) & Q(date_from__lt=n))
-                    | Q(Q(date_to__isnull=False) & Q(date_to__lt=n))
-                )
-                .count()
-            )
-            ctx['events_series'] = event_kpis['series']
-            ctx['events_featured'] = event_kpis['featured']
-            ctx['events_meetup'] = (
-                Event_SettingsStore.objects.filter(
-                    key='event_type',
-                    value__in=['"meetup"', 'meetup'],
-                )
-                .values('object_id')
-                .distinct()
-                .count()
-            )
+            ctx['events_total'] = Event.objects.count()
 
             # Event activity
             ctx['events_running'] = (
@@ -186,77 +153,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .select_related('organizer')
                 .order_by('-pk')[:10]
             )
-
-            def _get_events_pending_setup():
-                events_with_payment = Event_SettingsStore.objects.filter(
-                    key__startswith='payment_',
-                    key__endswith='__enabled',
-                    value='True',
-                ).exclude(
-                    key__in=[
-                        'payment_free__enabled',
-                        'payment_boxoffice__enabled',
-                        'payment_offsetting__enabled',
-                        'payment_giftcard__enabled',
-                    ]
-                ).values_list('object_id', flat=True)
-
-                events_with_paid_products = Product.objects.filter(
-                    default_price__gt=0
-                ).values_list('event_id', flat=True)
-
-                events_no_products = Event.objects.filter(products__isnull=True)
-                events_missing_payment = Event.objects.filter(id__in=events_with_paid_products).exclude(
-                    id__in=events_with_payment
-                )
-
-                events_pending_setup = (events_no_products | events_missing_payment).distinct()
-
-                candidates = list(
-                    events_pending_setup.select_related('organizer')
-                    .prefetch_related('products')
-                    .order_by('-pk')[:20]
-                )
-
-                candidate_ids = [str(c.pk) for c in candidates]
-                payment_enabled_event_ids = set(
-                    Event_SettingsStore.objects.filter(
-                        object_id__in=candidate_ids,
-                        key__startswith='payment_',
-                        key__endswith='__enabled',
-                        value='True',
-                    ).exclude(
-                        key__in=[
-                            'payment_free__enabled',
-                            'payment_boxoffice__enabled',
-                            'payment_offsetting__enabled',
-                            'payment_giftcard__enabled',
-                        ]
-                    ).values_list('object_id', flat=True)
-                )
-                res = []
-                for event in candidates:
-                    products = list(event.products.all())
-                    has_products = bool(products)
-                    has_paid_products = any(p.default_price > 0 for p in products)
-                    has_payment_provider = str(event.pk) in payment_enabled_event_ids
-                    if not has_products or (has_paid_products and not has_payment_provider):
-                        event.has_products = has_products
-                        res.append(event)
-                        if len(res) == 5:
-                            break
-                return res
-
-            ctx['events_pending_setup_list'] = cache.get_or_set(
-                'admin_dashboard_events_pending_setup',
-                _get_events_pending_setup,
-                300
-            )
-
-            # CfP stats
-            ctx['events_cfp_open_count'] = CfP.objects.filter(
-                Q(deadline__isnull=True) | Q(deadline__gte=n) | Q(event__submission_types__deadline__gte=n)
-            ).distinct().count()
 
             # Order KPIs
             ctx['orders_total'] = Order.objects.count()
@@ -324,11 +220,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 reverse=True
             )
 
-            # Schedule stats
-            ctx['events_with_schedule_count'] = (
-                Event.objects.filter(schedules__published__isnull=False).distinct().count()
-            )
-
             # Programme KPIs
             submission_kpis = Submission.objects.aggregate(
                 total=Count('id'),
@@ -347,12 +238,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             ctx['sessions_accepted'] = submission_kpis['accepted']
             ctx['sessions_rejected'] = submission_kpis['rejected']
             ctx['sessions_confirmed'] = submission_kpis['confirmed']
-
-            ctx['sessions_recent_submissions'] = list(
-                Submission.objects.filter(state=SubmissionStates.SUBMITTED)
-                .select_related('event', 'event__organizer')
-                .order_by('-pk')[:8]
-            )
 
             speaker_kpis = Submission.speakers.through.objects.aggregate(
                 total=Count(
@@ -465,23 +350,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                         logger.exception('AdminDashboard: failed to get Celery queue depth')
                         celery_depth_unavailable = True
 
-                periodic_tasks = list(
-                    PeriodicTask.objects.filter(enabled=True)
-                    .order_by('name')[:20]
-                )
-                local_timezone = ZoneInfo(settings.TIME_ZONE)
-                for task in periodic_tasks:
-                    if task.last_run_at is None:
-                        task.formatted_last_run_at = '-'
-                    else:
-                        task.formatted_last_run_at = date_format(
-                            localtime(task.last_run_at, local_timezone), format='M. d, Y, g:i a'
-                        )
-                    task.display_name = task.name.replace('_', ' ').capitalize()
-
-                scheduled_tasks_run_24h = PeriodicTask.objects.filter(
-                    last_run_at__gte=n - timedelta(hours=24)
-                ).count()
                 payments_failed_24h = OrderPayment.objects.filter(
                     state=OrderPayment.PAYMENT_STATE_FAILED,
                     created__gte=n - timedelta(hours=24)
@@ -497,8 +365,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 ctx['celery_depth'] = celery_depth
                 ctx['celery_depth_unavailable'] = celery_depth_unavailable
                 ctx['celery_enabled'] = celery_enabled
-                ctx['periodic_tasks'] = periodic_tasks
-                ctx['scheduled_tasks_run_24h'] = scheduled_tasks_run_24h
                 ctx['payments_failed_24h'] = payments_failed_24h
                 ctx['refunds_pending_count'] = refunds_pending_count
                 ctx['active_devices_count'] = active_devices_count
@@ -506,6 +372,220 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             except (DatabaseError, RedisError):
                 logger.exception('AdminDashboard: failed to load platform health section')
                 ctx['platform_health_unavailable'] = True
+
+            # Configuration Status
+            try:
+                smtp_ok = not (
+                    not getattr(settings, 'EMAIL_HOST', None)
+                    or getattr(settings, 'EMAIL_BACKEND', '') == 'django.core.mail.backends.dummy.EmailBackend'
+                )
+
+                sso_ok = None
+                if apps.is_installed('allauth.socialaccount'):
+                    try:
+                        sso_ok = SocialApp.objects.exists() or bool(getattr(settings, 'SOCIALACCOUNT_PROVIDERS', None))
+                    except DatabaseError:
+                        logger.warning("SocialApp table not available for SSO config status check.")
+                        sso_ok = False
+
+                ctx['config_smtp_ok'] = smtp_ok
+                ctx['config_sso_ok'] = sso_ok
+                ctx['config_status_unavailable'] = False
+            except (DatabaseError, RedisError):
+                logger.exception('AdminDashboard: failed to load config status section')
+                ctx['config_status_unavailable'] = True
+
+            # API & Integration Status
+            try:
+                api_stats = cache.get_or_set(
+                    'admin_dashboard_api_stats',
+                    lambda: {
+                        'active_oauth_apps': OAuthApplication.objects.filter(active=True).count(),
+                        'active_tokens': (
+                            TeamAPIToken.objects.filter(active=True).count()
+                            + OAuthAccessToken.objects.filter(expires__gt=n).count()
+                        ),
+                        'active_webhooks': WebHook.objects.filter(enabled=True).count(),
+                        'webhook_calls_24h': WebHookCall.objects.filter(datetime__gte=n - timedelta(hours=24)).count(),
+                        'webhook_failed_24h': WebHookCall.objects.filter(datetime__gte=n - timedelta(hours=24), success=False).count(),
+                        'webhook_success_24h': WebHookCall.objects.filter(datetime__gte=n - timedelta(hours=24), success=True).count(),
+                    },
+                    300
+                )
+                ctx['active_oauth_apps'] = api_stats['active_oauth_apps']
+                ctx['active_tokens'] = api_stats['active_tokens']
+                ctx['active_webhooks_count'] = api_stats['active_webhooks']
+                ctx['webhook_calls_24h'] = api_stats['webhook_calls_24h']
+                ctx['webhook_failed_24h'] = api_stats['webhook_failed_24h']
+                total_wh = api_stats['webhook_calls_24h']
+                success_wh = api_stats['webhook_success_24h']
+                ctx['webhook_success_rate'] = (
+                    round((success_wh / total_wh) * 100, 1) if total_wh > 0 else None
+                )
+                ctx['api_version'] = __version__
+                ctx['api_status_unavailable'] = False
+            except (DatabaseError, RedisError):
+                logger.exception('AdminDashboard: failed to load API status section')
+                ctx['api_status_unavailable'] = True
+
+        return ctx
+
+
+class AdminDashboard(AdminContextMixin, AdministratorPermissionRequiredMixin, TemplateView):
+    """Show a compact platform overview without operations-only detail queries."""
+    template_name = 'pretixcontrol/admin/dashboard.html'
+    success_url = 'eventyay_admin:admin.dashboard'
+
+    def get_dashboard_counts(self):
+        """Collect dashboard-only counts and the latest scheduled-task run."""
+        n = now()
+        try:
+            failed_tasks = task_failure_count()
+        except RedisError:
+            logger.exception('Unable to read platform task failures')
+            failed_tasks = None
+        with scopes_disabled():
+            return {
+                'tasks_failed_24h': failed_tasks,
+                'config_video_ok': any(
+                    config.model.objects.filter(active=True).exists() for config in VIDEO_SERVER_CONFIGS.values()
+                ),
+                'events_missing_payment_count': events_missing_payment().count(),
+                'events_upcoming_count': Event.objects.filter(has_subevents=False, date_from__gt=n).count(),
+                'events_recent_count': Event.objects.filter(created__gte=n - timedelta(days=7)).count(),
+                'events_needing_setup_count': setup_events().count(),
+                'last_scheduled_run': PeriodicTask.objects.filter(last_run_at__isnull=False).order_by(
+                    '-last_run_at').values_list('last_run_at', flat=True).first(),
+            }
+
+    def get_context_data(self, **kwargs):
+        """Add cached dashboard activity and indicators, then build display cards."""
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(cached_dashboard_context('admin_dashboard_counts', self.get_dashboard_counts))
+        ctx['api_health_ok'] = cached_dashboard_context(
+            'admin_dashboard_health', lambda: check_dependencies() is None, 60,
+        )
+        ctx.update(cached_activity_context(self.request.GET.get('range', '30d')))
+        ctx['last_updated'] = now()
+        dashboard_cards(ctx)
+        return ctx
+
+
+class AdminOperations(AdminContextMixin, AdministratorPermissionRequiredMixin, TemplateView):
+    """Retain detailed platform tables without loading dashboard-only aggregates."""
+    template_name = 'pretixcontrol/admin/operations.html'
+    success_url = 'eventyay_admin:admin.operations'
+
+    def get_context_data(self, **kwargs):
+        """Add the detailed tables used only by System operations."""
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(cached_dashboard_context('admin_dashboard_operations', self.get_operations_context))
+        return ctx
+
+    def get_operations_context(self):
+        """Build operations-only user, event, SSO and scheduled-task detail."""
+        ctx = {}
+        n = now()
+        with scopes_disabled():
+            ctx['video_server_rows'] = get_video_server_dashboard_rows()
+            # User KPIs
+            user_stats = User.objects.aggregate(
+                total=Count('id'),
+                new_24h=Count('id', filter=Q(date_joined__gte=n - timedelta(hours=24))),
+                new_7d=Count('id', filter=Q(date_joined__gte=n - timedelta(days=7))),
+                new_30d=Count('id', filter=Q(date_joined__gte=n - timedelta(days=30))),
+                banned=Count('id', filter=Q(moderation_state=User.ModerationState.BANNED)),
+                is_spam=Count('id', filter=Q(is_spam=True)),
+                recently_active=Count('id', filter=Q(last_login__gte=n - timedelta(days=30), last_login__isnull=False)),
+                deleted=Count('id', filter=Q(deleted=True) | Q(email__endswith='@disabled.eventyay.com')),
+                staff=Count('id', filter=Q(is_staff=True) | Q(is_administrator=True)),
+            )
+            users_verified = (
+                EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
+            )
+
+            ctx['users_total'] = user_stats['total']
+            ctx['users_verified'] = users_verified
+            ctx['users_unverified'] = user_stats['total'] - users_verified
+            ctx['users_new_24h'] = user_stats['new_24h']
+            ctx['users_new_7d'] = user_stats['new_7d']
+            ctx['users_new_30d'] = user_stats['new_30d']
+            ctx['users_banned'] = user_stats['banned']
+            ctx['users_is_spam'] = user_stats['is_spam']
+            ctx['users_staff'] = user_stats['staff']
+            ctx['users_recently_active'] = user_stats['recently_active']
+            ctx['users_deleted'] = user_stats['deleted']
+
+            # Event KPIs
+            event_kpis = Event.objects.aggregate(
+                total=Count('id'),
+                live=Count('id', filter=Q(live=True)),
+                series=Count('id', filter=Q(has_subevents=True)),
+                featured=Count('id', filter=Q(startpage_featured=True)),
+            )
+            ctx['events_total'] = event_kpis['total']
+            ctx['events_live'] = event_kpis['live']
+            ctx['events_draft'] = event_kpis['total'] - event_kpis['live']
+            ctx['events_past'] = (
+                Event.objects.filter(has_subevents=False)
+                .filter(
+                    Q(Q(date_to__isnull=True) & Q(date_from__lt=n))
+                    | Q(Q(date_to__isnull=False) & Q(date_to__lt=n))
+                )
+                .count()
+            )
+            ctx['events_series'] = event_kpis['series']
+            ctx['events_featured'] = event_kpis['featured']
+            ctx['events_meetup'] = (
+                Event_SettingsStore.objects.filter(
+                    key='event_type',
+                    value__in=['"meetup"', 'meetup'],
+                )
+                .values('object_id')
+                .distinct()
+                .count()
+            )
+
+            candidates = list(
+                setup_events().select_related('organizer').prefetch_related('products').order_by('-pk')[:5]
+            )
+            for event in candidates:
+                event.has_products = bool(event.products.all())
+            ctx['events_pending_setup_list'] = candidates
+            ctx['events_cfp_open_count'] = CfP.objects.filter(
+                Q(deadline__isnull=True) | Q(deadline__gte=n) | Q(event__submission_types__deadline__gte=n)
+            ).distinct().count()
+
+            # Schedule stats
+            ctx['events_with_schedule_count'] = (
+                Event.objects.filter(schedules__published__isnull=False).distinct().count()
+            )
+
+            ctx['sessions_recent_submissions'] = list(
+                Submission.objects.filter(state=SubmissionStates.SUBMITTED)
+                .select_related('event', 'event__organizer')
+                .order_by('-pk')[:8]
+            )
+
+            periodic_tasks = list(
+                PeriodicTask.objects.filter(enabled=True)
+                .order_by('name')[:20]
+            )
+            local_timezone = ZoneInfo(settings.TIME_ZONE)
+            for task in periodic_tasks:
+                if task.last_run_at is None:
+                    task.formatted_last_run_at = '-'
+                else:
+                    task.formatted_last_run_at = date_format(
+                        localtime(task.last_run_at, local_timezone), format='M. d, Y, g:i a'
+                    )
+                task.display_name = task.name.replace('_', ' ').capitalize()
+
+            scheduled_tasks_run_24h = PeriodicTask.objects.filter(
+                last_run_at__gte=n - timedelta(hours=24)
+            ).count()
+            ctx['periodic_tasks'] = periodic_tasks
+            ctx['scheduled_tasks_run_24h'] = scheduled_tasks_run_24h
 
             # SSO and Authentication
             try:
@@ -588,95 +668,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 ctx['sso_section_enabled'] = True
                 ctx['sso_unavailable'] = True
 
-            # Configuration Status
-            try:
-                smtp_ok = not (
-                    not getattr(settings, 'EMAIL_HOST', None)
-                    or getattr(settings, 'EMAIL_BACKEND', '') == 'django.core.mail.backends.dummy.EmailBackend'
-                )
-
-                sso_ok = None
-                if apps.is_installed('allauth.socialaccount'):
-                    try:
-                        sso_ok = SocialApp.objects.exists() or bool(getattr(settings, 'SOCIALACCOUNT_PROVIDERS', None))
-                    except DatabaseError:
-                        logger.warning("SocialApp table not available for SSO config status check.")
-                        sso_ok = False
-
-                ctx['config_smtp_ok'] = smtp_ok
-                ctx['config_sso_ok'] = sso_ok
-                ctx['config_status_unavailable'] = False
-            except (DatabaseError, RedisError):
-                logger.exception('AdminDashboard: failed to load config status section')
-                ctx['config_status_unavailable'] = True
-
-            # API & Integration Status
-            try:
-                api_stats = cache.get_or_set(
-                    'admin_dashboard_api_stats',
-                    lambda: {
-                        'active_oauth_apps': OAuthApplication.objects.filter(active=True).count(),
-                        'active_tokens': (
-                            TeamAPIToken.objects.filter(active=True).count()
-                            + OAuthAccessToken.objects.filter(expires__gt=n).count()
-                        ),
-                        'active_webhooks': WebHook.objects.filter(enabled=True).count(),
-                        'webhook_calls_24h': WebHookCall.objects.filter(datetime__gte=n - timedelta(hours=24)).count(),
-                        'webhook_failed_24h': WebHookCall.objects.filter(datetime__gte=n - timedelta(hours=24), success=False).count(),
-                        'webhook_success_24h': WebHookCall.objects.filter(datetime__gte=n - timedelta(hours=24), success=True).count(),
-                    },
-                    300
-                )
-                ctx['active_oauth_apps'] = api_stats['active_oauth_apps']
-                ctx['active_tokens'] = api_stats['active_tokens']
-                ctx['active_webhooks_count'] = api_stats['active_webhooks']
-                ctx['webhook_calls_24h'] = api_stats['webhook_calls_24h']
-                ctx['webhook_failed_24h'] = api_stats['webhook_failed_24h']
-                total_wh = api_stats['webhook_calls_24h']
-                success_wh = api_stats['webhook_success_24h']
-                ctx['webhook_success_rate'] = (
-                    round((success_wh / total_wh) * 100, 1) if total_wh > 0 else None
-                )
-                ctx['api_version'] = __version__
-                ctx['api_status_unavailable'] = False
-            except (DatabaseError, RedisError):
-                logger.exception('AdminDashboard: failed to load API status section')
-                ctx['api_status_unavailable'] = True
-
-        ctx['video_server_rows'] = get_video_server_dashboard_rows()
-
-        with scopes_disabled():
-            paid_events = Product.objects.filter(default_price__gt=0).values('event_id')
-            enabled_payments = Event_SettingsStore.objects.filter(
-                key__startswith='payment_', key__endswith='__enabled', value='True',
-            ).exclude(key__in=[
-                'payment_free__enabled', 'payment_boxoffice__enabled',
-                'payment_offsetting__enabled', 'payment_giftcard__enabled',
-            ]).values('object_id')
-            ctx['events_missing_payment_count'] = Event.objects.filter(pk__in=paid_events).exclude(
-                pk__in=enabled_payments).count()
-            ctx['events_upcoming_count'] = Event.objects.filter(has_subevents=False, date_from__gt=n).count()
-            ctx['events_recent_count'] = Event.objects.filter(created__gte=n - timedelta(days=7)).count()
-            ctx['events_needing_setup_count'] = setup_events().count()
-        ctx['last_scheduled_run'] = PeriodicTask.objects.filter(last_run_at__isnull=False).order_by(
-            '-last_run_at').values_list('last_run_at', flat=True).first()
-        ctx['config_video_ok'] = any(row['active'] for row in ctx['video_server_rows'])
-        try:
-            ctx['tasks_failed_24h'] = task_failure_count()
-        except RedisError:
-            logger.exception('Unable to read platform task failures')
-            ctx['tasks_failed_24h'] = None
-        ctx['api_health_ok'] = healthcheck(self.request).status_code == 200
-        ctx.update(activity_context(self.request.GET.get('range', '30d')))
-        dashboard_cards(ctx)
-
         return ctx
-
-
-class AdminOperations(AdminDashboard):
-    """Retain detailed platform tables outside the compact dashboard."""
-    template_name = 'pretixcontrol/admin/operations.html'
-    success_url = 'eventyay_admin:admin.operations'
 
 
 class AdminAnalytics(AdministratorPermissionRequiredMixin, TemplateView):
@@ -687,10 +679,11 @@ class AdminAnalytics(AdministratorPermissionRequiredMixin, TemplateView):
         """Expose aggregate series only to an authenticated administrator session."""
         ctx = super().get_context_data(**kwargs)
         metric = self.kwargs.get('metric')
-        if metric in ('top-events', 'providers', 'needs-setup'):
+        if metric in ('top-events', 'providers', 'needs-setup', 'missing-payment'):
             ctx.update(report_context(metric, self.request.GET.get('page')))
             return ctx
-        ctx.update(activity_context(self.request.GET.get('range', '30d')))
+        ctx.update(cached_activity_context(self.request.GET.get('range', '30d')))
+        ctx['last_updated'] = now()
         if metric:
             ctx['activity_charts'] = [chart for chart in ctx['activity_charts'] if chart['key'] == metric]
             if not ctx['activity_charts']:

@@ -2,9 +2,10 @@
 Tests for health and status endpoints.
 """
 import pytest
-
 from django.db import DatabaseError
 from django.urls import reverse
+
+from eventyay.base.views.health import check_dependencies
 
 
 @pytest.mark.django_db
@@ -50,3 +51,10 @@ class TestHealthcheck:
         response = client.get(reverse('healthcheck'))
         assert response.status_code == 503
         assert response.content == b'Cache not available.'
+
+    def test_dependency_probe_does_not_log_health_alerts(self, mocker):
+        """Dashboard probes return failure details without emitting endpoint alerts."""
+        mocker.patch('eventyay.base.models.User.objects.exists', side_effect=DatabaseError('Unavailable'))
+        alert = mocker.patch('eventyay.base.views.health.logger.error')
+        assert check_dependencies() == 'db_unavailable'
+        alert.assert_not_called()
