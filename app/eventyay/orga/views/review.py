@@ -626,9 +626,15 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
         return super().form_valid(form)
 
     def post(self, request, *args, **kwargs):
+        """Handle review saves, abstentions, and temporary skips."""
         action = self.request.POST.get('review_submit') or 'save'
         if action == 'abstain':
-            Review.objects.get_or_create(user=self.request.user, submission=self.submission)
+            if self.read_only:
+                return self.handle_no_permission()
+            with transaction.atomic():
+                review, _created = Review.objects.get_or_create(user=self.request.user, submission=self.submission)
+                review.scores.clear()
+                review.save(update_fields=['score'])
             return redirect(self.get_success_url())
         if action == 'skip_for_now':
             key = f'{self.request.event.slug}_ignored_reviews'

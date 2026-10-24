@@ -7,6 +7,59 @@ from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, Submi
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("existing_review", (False, True))
+@pytest.mark.parametrize("clear_form_fields", (False, True))
+def test_abstain_clears_review_scores(
+    review_client, review_user, submission, existing_review, clear_form_fields
+):
+    """Abstaining removes prior scores regardless of the submitted form values."""
+    with scope(event=submission.event):
+        submission.event.review_settings.update(score_mandatory=False, text_mandatory=False)
+        submission.event.save(update_fields=["review_settings"])
+        category = submission.event.score_categories.filter(active=True, is_independent=False).first()
+        score = category.scores.get(value=1)
+
+    data = {f"score_{category.pk}": str(score.pk), "text": "Original review", "review_submit": "save"}
+    if existing_review:
+        assert review_client.post(submission.orga_urls.reviews, data).status_code == 302
+        with scope(event=submission.event):
+            assert submission.reviews.get(user=review_user).score == 1
+
+    if clear_form_fields:
+        data.update({f"score_{category.pk}": "", "text": ""})
+    data["review_submit"] = "abstain"
+    assert review_client.post(submission.orga_urls.reviews, data).status_code == 302
+    with scope(event=submission.event):
+        review = submission.reviews.get(user=review_user)
+        assert review.score is None
+        assert not review.scores.exists()
+        assert submission.mean_score is None
+        assert review.text == ("Original review" if existing_review else None)
+
+    data.update({f"score_{category.pk}": str(score.pk), "text": "New review", "review_submit": "save"})
+    assert review_client.post(submission.orga_urls.reviews, data).status_code == 302
+    with scope(event=submission.event):
+        assert submission.reviews.get(user=review_user).score == 1
+        assert submission.reviews.count() == 1
+
+
+@pytest.mark.django_db
+def test_abstain_cannot_change_a_read_only_review(review_client, review):
+    """A crafted Abstain request cannot clear a review after reviewing closes."""
+    with scope(event=review.event):
+        review.submission.state = SubmissionStates.ACCEPTED
+        review.submission.save(update_fields=["state"])
+        previous_score = review.score
+        previous_scores = set(review.scores.values_list("pk", flat=True))
+    response = review_client.post(review.urls.base, {"review_submit": "abstain"})
+    assert response.status_code == 404
+    with scope(event=review.event):
+        review.refresh_from_db()
+        assert review.score == previous_score
+        assert set(review.scores.values_list("pk", flat=True)) == previous_scores
+
+
 @pytest.mark.parametrize("assigned", (True, False))
 @pytest.mark.django_db
 def test_reviewer_can_add_review(review_client, review_user, submission, assigned):
