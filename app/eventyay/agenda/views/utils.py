@@ -10,9 +10,9 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import ObjectDoesNotExist
 from django.core import signing
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count, Q
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
@@ -20,7 +20,8 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
-from django.utils.translation import activate, get_language, gettext_lazy as _
+from django.utils.translation import activate, get_language
+from django.utils.translation import gettext_lazy as _
 from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
@@ -28,16 +29,17 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.base.models import SpeakerProfile, SubmissionStates, TalkSlot, User
 from eventyay.base.models.auth import list_avatar_urls, needs_avatar_thumbnails
 from eventyay.base.models.submission import SubmissionFavourite
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.stale_cache import (
     bump_schedule_cache_version_on_commit,
     get_schedule_cache_version,
 )
-from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.social_links import serialize_social_link
 from eventyay.common.text.path import safe_filename
 from eventyay.common.views.helpers import build_login_url_with_next
+from eventyay.person.services import build_public_speaker_role
 from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.schedule.exporters import FavedICalExporter, filter_featured_public_talk_slots
 from eventyay.talk_rules.agenda import (
@@ -45,14 +47,15 @@ from eventyay.talk_rules.agenda import (
     can_view_public_schedule_sessions,
     can_view_schedule,
     has_public_featured_speakers,
+    is_submission_visible_via_accepted,
     is_submission_visible_via_featured,
     pending_public_submission_codes_for_speaker,
-    submission_belongs_to_public_featured_speaker,
     public_speakers_list_available,
     require_wip_schedule_access,
+    schedule_exposes_slot_times,
     speaker_may_show_pending_sessions,
+    submission_belongs_to_public_featured_speaker,
 )
-from eventyay.person.services import build_public_speaker_role
 from eventyay.talk_rules.submission import (
     are_featured_exports_available,
     are_featured_speakers_visible,
@@ -68,6 +71,9 @@ from eventyay.talk_rules.submission import (
 JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0026'}
 
 CACHE_TTL = 600
+# Public pages can hit the unreleased schedule before the first release.
+# The version in the key drops the entry when schedule data changes.
+PUBLIC_WIP_SCHEDULE_CACHE_TTL = 60
 FEATURED_SESSIONS_PAGE_SIZE = 48
 FEATURED_SESSIONS_SORTS = ('title', 'title_desc', 'popularity')
 
@@ -562,7 +568,7 @@ def merge_featured_speakers_into_schedule_data(event, schedule_data, featured_pr
         for speaker in schedule_speakers
         if isinstance(speaker, dict) and speaker.get('code')
     }
-    
+
     for profile in featured_profiles:
         if not profile.user_id:
             continue
@@ -865,8 +871,15 @@ def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = Fa
         return '{}'
 
     featured = include_public_featured_speaker_metadata(request.user, event)
+    settings_part = schedule_widget_featured_cache_key_part(event)
+    slots_public = schedule_exposes_slot_times(
+        request.user,
+        event,
+        schedule,
+        preview=wip_preview,
+    )
     if schedule.version:
-        cache_key = f'eagenda:enriched:{schedule.pk}:{int(featured)}'
+        cache_key = f'eagenda:enriched:{schedule.pk}:{int(featured)}:{settings_part}:slots={int(slots_public)}'
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
@@ -876,6 +889,7 @@ def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = Fa
         all_talks=wip_preview or not schedule.version,
         enrich=True,
         include_featured_speaker_metadata=featured,
+        include_scheduled_slots=slots_public,
         respect_public_visibility=not wip_preview,
     )
 
@@ -932,13 +946,16 @@ def build_schedule_json(
     include_text: bool = False,
     on_date=None,
     view_timezone: str | None = None,
+    include_scheduled_slots: bool | None = None,
+    respect_public_visibility: bool = True,
 ) -> str:
     """Build schedule JSON for inline embedding on schedule pages.
 
     The interactive schedule embeds one compact day (no abstracts, descriptions,
     biographies, exporter URLs, or full-size avatars). List view asks for session
     text because those pages render abstracts. Released schedules are cached for
-    5 minutes keyed on schedule PK; WIP is never cached.
+    5 minutes keyed on schedule PK. The public unreleased schedule is cached
+    briefly and keyed on the schedule cache version. Organiser previews are not.
     """
     if schedule is None:
         schedule = request.event.current_schedule
@@ -947,21 +964,35 @@ def build_schedule_json(
 
     featured = include_public_featured_speaker_metadata(request.user, request.event)
     settings_part = schedule_widget_featured_cache_key_part(request.event)
+    if include_scheduled_slots is None:
+        include_scheduled_slots = schedule_exposes_slot_times(request.user, request.event, schedule)
     language = get_language() or ''
-    if schedule.version:
+    cache_public_wip = respect_public_visibility and not schedule.version
+    if schedule.version or cache_public_wip:
+        version_part = ''
+        if cache_public_wip:
+            version_part = f':ver={get_schedule_cache_version(schedule.event_id)}'
         cache_key = (
             f'eagenda:schedule:{schedule.pk}:{int(featured)}:{settings_part}:'
             f'compact={int(compact)}:text={int(include_text)}:'
+            f'slots={int(include_scheduled_slots)}:'
+            f'pub={int(respect_public_visibility)}:'
             f'date={on_date or ""}:tz={view_timezone or ""}:{language}'
+            f'{version_part}'
         )
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
 
     build_kwargs = {
-        'all_talks': not bool(schedule.version),
+        # An unreleased schedule has no version. Organiser previews still need
+        # every grid entry. Public responses use the public slot filter so
+        # unpublished breaks and other private placements stay off the page.
+        'all_talks': not bool(schedule.version) and not respect_public_visibility,
         'enrich': False,
         'include_featured_speaker_metadata': featured,
+        'include_scheduled_slots': include_scheduled_slots,
+        'respect_public_visibility': respect_public_visibility,
     }
     if compact:
         build_kwargs.update(
@@ -974,6 +1005,8 @@ def build_schedule_json(
 
     if schedule.version:
         cache.set(cache_key, result, CACHE_TTL)
+    elif cache_public_wip:
+        cache.set(cache_key, result, PUBLIC_WIP_SCHEDULE_CACHE_TTL)
     return result
 
 
@@ -1307,6 +1340,7 @@ def build_pre_agenda_featured_talk_schedule_json(event, user, submission_code):
     if not submission or not (
         is_submission_visible_via_featured(user, submission)
         or submission_belongs_to_public_featured_speaker(user, submission)
+        or is_submission_visible_via_accepted(user, submission)
     ):
         return '{}'
 
@@ -1641,6 +1675,11 @@ def clear_schedule_caches(event, submission=None, speaker=None):
                 keys.append(f'eagenda:schedule:{schedule_pk}:{featured}')
                 keys.append(f'eagenda:schedule:{schedule_pk}:{featured}:{settings_part}')
                 keys.append(f'eagenda:enriched:{schedule_pk}:{featured}')
+                keys.append(f'eagenda:enriched:{schedule_pk}:{featured}:{settings_part}')
+                for slots_public in (0, 1):
+                    keys.append(
+                        f'eagenda:enriched:{schedule_pk}:{featured}:{settings_part}:slots={slots_public}'
+                    )
                 if submission:
                     keys.append(f'eagenda:talk:{schedule_pk}:{submission.code}:{featured}')
                 keys.extend(

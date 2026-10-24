@@ -508,7 +508,10 @@ class Submission(GenerateCode, PretalxModel):
             old_state = self.state
             self.state = new_state
             self.pending_state = None
-            update_fields = ['state', 'pending_state']
+            # State changes must move ``updated`` so schedule polling
+            # (``filter_updated``) can see a newly accepted session.
+            self.updated = now()
+            update_fields = ['state', 'pending_state', 'updated']
             if new_state in SubmissionStates.terminal_states:
                 self.is_featured = False
                 update_fields.append('is_featured')
@@ -1322,10 +1325,19 @@ def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
     if not event_id:
         return
 
+    should_bump = False
     with scope(event=instance.event):
-        if not TalkSlot.objects.filter(
+        on_released_schedule = TalkSlot.objects.filter(
             submission_id=instance.pk,
             schedule__version__isnull=False,
-        ).exists():
-            return
-    bump_schedule_cache_version_on_commit(event_id)
+        ).exists()
+        if on_released_schedule:
+            should_bump = True
+        elif instance.event.get_feature_flag('show_accepted_publicly'):
+            # Public coming-soon pages read unscheduled accepted sessions.
+            # A state change also drops a session that just left an accepted state.
+            update_fields = kwargs.get('update_fields')
+            state_changed = update_fields is not None and 'state' in update_fields
+            should_bump = instance.state in SubmissionStates.accepted_states or state_changed
+    if should_bump:
+        bump_schedule_cache_version_on_commit(event_id)
