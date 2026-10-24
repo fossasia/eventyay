@@ -106,6 +106,35 @@ body.auth-page nav.navbar .navbar-header > .navbar-brand {
     margin: 20px auto 20px;
 }
 
+.external-link-warning {
+    max-width: 640px;
+    margin: 24px auto;
+
+    h1 {
+        font-size: 26px;
+    }
+}
+
+.external-link-destination {
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+    direction: ltr;
+    padding: 12px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: $border-radius-base;
+}
+
+.external-link-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .btn {
+        white-space: normal;
+    }
+}
+
 .impersonate-warning {
 	background-color: #ffe761;
 	background-image: -webkit-linear-gradient(-45deg, rgba(0, 0, 0, .04) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, .04) 50%, rgba(0, 0, 0, .04) 75%, transparent 75%, transparent);
