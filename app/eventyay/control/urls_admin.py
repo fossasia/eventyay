@@ -19,6 +19,9 @@ app_name = 'eventyay_admin'
 
 urlpatterns = [
     url(r'^$', admin.AdminDashboard.as_view(), name='admin.dashboard'),
+    path('operations/', admin.AdminOperations.as_view(), name='admin.operations'),
+    path('analytics/', admin.AdminAnalytics.as_view(), name='admin.analytics'),
+    path('analytics/<slug:metric>/', admin.AdminAnalytics.as_view(), name='admin.analytics.metric'),
     url(r'^organizers/$', admin.OrganizerList.as_view(), name='admin.organizers'),
     url(r'^events/$', admin.AdminEventList.as_view(), name='admin.events'),
     path('events/startpage-toggle/', admin.AdminEventStartpageToggle.as_view(), name='admin.events.startpage.toggle'),

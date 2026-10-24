@@ -1,0 +1,47 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n static compress %}
+{% block title %}{% trans 'Platform analytics' %}{% endblock %}
+{% block custom_header %}
+  {{ block.super }}
+  {% compress css %}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
+  {% endcompress %}
+  <script type="module" src="{% static 'pretixcontrol/js/platform-dashboard.js' %}"></script>
+{% endblock %}
+{% block content %}
+  <main class="td-dashboard platform-dashboard">
+    <h1>{% trans 'Platform analytics' %}</h1>
+    <p><a href="{% url 'eventyay_admin:admin.dashboard' %}">← {% trans 'Platform Dashboard' %}</a></p>
+    {% if report_title %}
+      <section class="td-section">
+        <h2 class="td-section-title">{{ report_title }}</h2>
+        <div class="table-responsive"><table class="table td-stats-table">
+          <thead><tr>{% for header in report_headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>
+          <tbody>{% for row in report_rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% empty %}<tr><td>{% trans 'No records found.' %}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        <nav aria-label="{% trans 'Report pages' %}">
+          {% if report_page.has_previous %}<a href="?page={{ report_page.previous_page_number }}">{% trans 'Previous' %}</a>{% endif %}
+          {{ report_page.number }} / {{ report_page.paginator.num_pages }}
+          {% if report_page.has_next %}<a href="?page={{ report_page.next_page_number }}">{% trans 'Next' %}</a>{% endif %}
+        </nav>
+      </section>
+    {% else %}
+      <p>{% trans 'Rendered at' %}: {{ last_updated|date:'DATETIME_FORMAT' }}</p>
+      <p><a href="{% url 'eventyay_admin:admin.analytics.metric' metric='top-events' %}">{% trans 'Events by paid orders' %}</a> · <a href="{% url 'eventyay_admin:admin.analytics.metric' metric='providers' %}">{% trans 'Payment providers' %}</a></p>
+      <section class="td-section">{% include 'pretixcontrol/admin/activity.html' %}</section>
+    {% endif %}
+    {% for chart in activity_charts %}
+      <section class="td-section">
+        <h2 class="td-section-title">{{ chart.title }}</h2>
+        {% for series in chart.series %}
+          <details>
+            <summary>{% trans 'View data' %} {{ series.currency }}</summary>
+            <table class="table td-stats-table"><thead><tr><th>{% trans 'Date' %}</th><th>{% trans 'Total' %} {{ series.currency }}</th></tr></thead>
+              <tbody>{% for date, value in series.rows %}<tr><td>{{ date|date:'d M Y H:i' }}</td><td>{% if series.currency %}{{ value|floatformat:2 }}{% else %}{{ value }}{% endif %}</td></tr>{% endfor %}</tbody>
+            </table>
+          </details>
+        {% endfor %}
+      </section>
+    {% endfor %}
+  </main>
+{% endblock %}
