@@ -1,0 +1,20 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Remove third-party service" %}{% endblock %}
+{% block content %}
+    <h1>{% trans "Remove third-party service" %}</h1>
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <p>{% blocktrans trimmed with name=object.title %}
+            Are you sure you want to remove <strong>{{ name }}</strong> from the third-party services?
+            It will no longer be listed in the consent banner, and content that waits for consent to it
+            is shown without asking.
+        {% endblocktrans %}</p>
+        <div class="form-group submit-group">
+            <a href="{% url 'eventyay_admin:admin.global.privacy' %}" class="btn btn-default btn-cancel">
+                {% trans "Cancel" %}
+            </a>
+            <button type="submit" class="btn btn-danger btn-save">{% trans "Remove" %}</button>
+        </div>
+    </form>
+{% endblock %}
