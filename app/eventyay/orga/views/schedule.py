@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import DatabaseError, transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
@@ -128,22 +129,29 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
         return kwargs
 
     @context
+    @cached_property
+    def draft_schedule(self):
+        """Read the release preview without creating a missing draft schedule."""
+        with scope(event=self.request.event):
+            return self.request.event.schedules.filter(version__isnull=True).first()
+
+    @context
     def warnings(self):
-        return self.request.event.wip_schedule.warnings
+        """Return warnings only when an existing draft is available."""
+        return self.draft_schedule.warnings if self.draft_schedule else {}
 
     @context
     def changes(self):
-        return self.request.event.wip_schedule.changes
+        """Return preview changes without creating a missing draft."""
+        return self.draft_schedule.changes if self.draft_schedule else {}
 
     @context
     def notifications(self):
-        return len(self.request.event.wip_schedule.generate_notifications(save=False))
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('You have to provide a new, unique schedule version!'))
-        return super().form_invalid(form)
+        """Count notifications for an existing draft only."""
+        return len(self.draft_schedule.generate_notifications(save=False)) if self.draft_schedule else 0
 
     def form_valid(self, form):
+        """Release a valid draft and report a competing release as a form error."""
         private_talks = self.request.event.private_testmode and self.request.event.settings.get(
             'private_testmode_talks', False, as_type=bool
         )
@@ -153,12 +161,16 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
                 _('Talks must be published or in private test mode to release a schedule.'),
             )
             return self.render_to_response(self.get_context_data(form=form), status=400)
-        self.request.event.release_schedule(
-            form.cleaned_data['version'],
-            user=self.request.user,
-            notify_speakers=form.cleaned_data['notify_speakers'],
-            comment=form.cleaned_data['comment'],
-        )
+        try:
+            self.request.event.release_schedule(
+                form.cleaned_data['version'],
+                user=self.request.user,
+                notify_speakers=form.cleaned_data['notify_speakers'],
+                comment=form.cleaned_data['comment'],
+            )
+        except ValidationError as exc:
+            form.add_error('version', exc)
+            return self.form_invalid(form)
         messages.success(self.request, _('Nice, your schedule has been released!'))
         return redirect(self.request.event.orga_urls.schedule)
 
