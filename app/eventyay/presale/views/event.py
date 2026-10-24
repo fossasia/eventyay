@@ -64,7 +64,11 @@ from eventyay.base.models.product import (
     SubEventProduct,
     SubEventProductVariation,
 )
-from eventyay.base.services.geo import resolve_venue_map_coordinates
+from eventyay.base.services.geo import (
+    build_venue_directions_url,
+    get_localized_location,
+    resolve_venue_map_coordinates,
+)
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
 from eventyay.helpers.compat import date_fromisocalendar
@@ -817,6 +821,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['venue_map_location'] = resolve_venue_map_coordinates(
             context['ev'],
             allow_remote_geocoding=False,
+        )
+        context['venue_directions_url'] = build_venue_directions_url(
+            context['venue_map_location'],
+            get_localized_location(context['ev'].location),
         )
         context['subevent'] = self.subevent
         context['cart'] = self.get_cart()
