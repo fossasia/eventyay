@@ -1,15 +1,18 @@
+import copy
 import http
 import json
 import logging
 from collections import defaultdict
+from urllib.parse import urlencode
 
 from csp.decorators import csp_update
+from django.conf import settings
 from django.contrib import messages
 from django.db import models, transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -20,6 +23,7 @@ from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
 from eventyay.base.models import (
+    BUILTIN_FIELD_KEYS,
     AnswerOption,
     Availability,
     CfP,
@@ -31,11 +35,15 @@ from eventyay.base.models import (
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
+    TalkQuestionVariant,
     Track,
+    normalize_field_order,
 )
-from eventyay.cfp.flow import CfPFlow
+from eventyay.cfp.flow import FIELD_STEP_MAP, CfPFlow, get_field_default
 from eventyay.common.forms import I18nFormSet
 from eventyay.common.language import get_language_choices_native_with_ui_name
+from eventyay.common.sanitizers import sanitize_rich_text
+from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import I18nStrJSONEncoder
 from eventyay.common.views.generic import OrgaCRUDView
@@ -50,29 +58,13 @@ from eventyay.orga.forms import CfPForm, SubmissionTypeForm, TalkQuestionForm, T
 from eventyay.orga.forms.cfp import (
     AccessCodeSendForm,
     AnswerOptionForm,
+    CfPBuiltinFieldSettingsForm,
     CfPGeneralSettingsForm,
     CfPSettingsForm,
     QuestionFilterForm,
     ReminderFilterForm,
     SubmitterAccessCodeForm,
-    CfPGeneralSettingsForm,
 )
-from eventyay.base.models import (
-    AnswerOption,
-    BUILTIN_FIELD_KEYS,
-    CfP,
-    normalize_field_order,
-    TalkQuestion,
-    TalkQuestionRequired,
-    TalkQuestionTarget,
-    TalkQuestionVariant,
-    SubmissionType,
-    SubmitterAccessCode,
-    Track,
-    SpeakerProfile,
-    Availability,
-)
-from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 from eventyay.talk_rules.submission import questions_for_user
 
 
@@ -278,29 +270,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'social_links': social_links_count,
         }
 
-        question_texts = {
-            'title': str(_('Proposal title')),
-            'submission_type': str(_('Session type')),
-            'track': str(_('Track')),
-            'content_locale': str(_('Language')),
-            'abstract': str(_('Abstract')),
-            'description': str(_('Description')),
-            'notes': str(_('Notes')),
-            'slot_count': str(_('Slot Count')),
-            'do_not_record': str(_('Don’t record this session.')),
-            'image': str(_('Session image')),
-            'slides': str(_('Slides')),
-            'duration': str(_('Duration')),
-            'biography': str(_('Biography')),
-            'job_title': str(_('What is your official job title?')),
-            'organization': str(_('What organization or company do you represent?')),
-            'availabilities': str(_('Availability')),
-            'additional_speaker': str(_('Additional Speaker')),
-            'fullname': str(_('Full name')),
-            'avatar': str(_('Speaker photo')),
-            'avatar_source': str(_('Speaker photo source')),
-            'avatar_license': str(_('Speaker photo license')),
-        }
+        field_labels = {}
+        field_help_texts = {}
+        for key in FIELD_STEP_MAP:
+            field_labels[key] = get_field_default(key, 'label', self.request.LANGUAGE_CODE)
+            field_help_texts[key] = get_field_default(key, 'help_text', self.request.LANGUAGE_CODE)
 
         try:
             if event.cfp_flow:
@@ -308,13 +282,36 @@ class CfPForms(EventPermissionRequired, TemplateView):
                 if isinstance(config, dict) and 'steps' in config:
                     for step_data in config['steps'].values():
                         if isinstance(step_data, dict) and 'fields' in step_data:
-                            for field_key, field_data in step_data['fields'].items():
-                                if isinstance(field_data, dict) and 'label' in field_data:
-                                    question_texts[field_key] = str(field_data['label'])
-        except Exception as e:
+                            fields_data = step_data['fields']
+                            items = fields_data if isinstance(fields_data, list) else fields_data.values()
+                            for field_data in items:
+                                if isinstance(field_data, dict) and 'key' in field_data:
+                                    f_key = field_data['key']
+                                    if 'label' in field_data and field_data['label']:
+                                        lbl = field_data['label']
+                                        if hasattr(lbl, 'localize'):
+                                            val = lbl.localize(self.request.LANGUAGE_CODE)
+                                        elif isinstance(lbl, dict):
+                                            val = lbl.get(self.request.LANGUAGE_CODE)
+                                        else:
+                                            val = str(lbl)
+                                        if val:
+                                            field_labels[f_key] = val
+                                    if 'help_text' in field_data and field_data['help_text'] is not None:
+                                        ht = field_data['help_text']
+                                        if hasattr(ht, 'localize'):
+                                            val = ht.localize(self.request.LANGUAGE_CODE)
+                                        elif isinstance(ht, dict):
+                                            val = ht.get(self.request.LANGUAGE_CODE)
+                                        else:
+                                            val = str(ht)
+                                        if val is not None:
+                                            field_help_texts[f_key] = sanitize_rich_text(str(val))
+        except (KeyError, AttributeError, TypeError, ValueError, json.JSONDecodeError) as e:
             logger.warning('Failed to parse cfp_flow config for event %s: %s', event.id, e)
 
-        context['question_texts'] = question_texts
+        context['field_labels'] = field_labels
+        context['field_help_texts'] = field_help_texts
 
         return context
 
@@ -1025,3 +1022,115 @@ class CfPFlowEditor(EventPermissionRequired, TemplateView):
             logger.debug('Saving new CfP flow configuration: %s', data)
             flow.save_config(data)
         return JsonResponse({'success': True})
+
+
+class CfPBuiltinFieldSettings(EventPermissionRequired, FormView):
+    template_name = 'orga/cfp/builtin_field_settings.html'
+    permission_required = 'base.update_event'
+
+    def dispatch(self, request, *args, **kwargs):
+        field_key = self.kwargs.get('field')
+        if field_key not in FIELD_STEP_MAP:
+            raise Http404(_('The requested field does not exist.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_class(self):
+        return CfPBuiltinFieldSettingsForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        kwargs['field_key'] = self.kwargs.get('field')
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        field_key = self.kwargs['field']
+        event = self.request.event
+        active_lang = self.request.GET.get('lang') or self.request.LANGUAGE_CODE
+        if not event.locales or active_lang not in event.locales:
+            active_lang = event.locales[0] if event.locales else 'en'
+
+        default_label = get_field_default(field_key, 'label', active_lang)
+        context['field_key'] = field_key
+        context['field_label'] = default_label or field_key.replace('_', ' ').capitalize()
+        context['page_title'] = _('Field settings: {field}').format(field=context['field_label'])
+        context['active_lang'] = active_lang
+        context['locales'] = [
+            (loc, dict(settings.LANGUAGES).get(loc, loc))
+            for loc in (event.locales or ['en'])
+        ]
+        context['back_url'] = reverse(
+            'orga:cfp.questions.view',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('action') == 'reset':
+            return self.reset_to_default(request)
+        return super().post(request, *args, **kwargs)
+
+    def reset_to_default(self, request):
+        field_key = self.kwargs['field']
+        step_id = FIELD_STEP_MAP[field_key]
+        event = request.event
+        flow = CfPFlow(event)
+
+        config = copy.deepcopy(event.cfp.settings.get('flow') or {})
+        if isinstance(config, str):
+            config = json.loads(config)
+        if not isinstance(config, dict):
+            config = {}
+        steps = config.setdefault('steps', {})
+        step_data = steps.setdefault(step_id, {})
+        fields_list = step_data.setdefault('fields', [])
+        if isinstance(fields_list, dict):
+            converted = []
+            for k, val in fields_list.items():
+                if isinstance(val, dict):
+                    entry = copy.deepcopy(val)
+                    entry.setdefault('key', k)
+                    converted.append(entry)
+                else:
+                    converted.append({'key': k})
+            fields_list = converted
+            step_data['fields'] = fields_list
+
+        field_entry = next((f for f in fields_list if isinstance(f, dict) and f.get('key') == field_key), None)
+        if field_entry:
+            field_entry.pop('label', None)
+            field_entry.pop('help_text', None)
+
+        flow.save_config(config)
+
+        self.request.event.cfp.log_action(
+            'eventyay.cfp.update',
+            person=request.user,
+            orga=True,
+            data={'field': field_key, 'action': 'reset'},
+        )
+
+        messages.success(request, _('Reset to default values.'))
+        return redirect(request.path)
+
+    def form_valid(self, form):
+        form.save()
+        self.request.event.cfp.log_action(
+            'eventyay.cfp.update',
+            person=self.request.user,
+            orga=True,
+            data={'field': self.kwargs['field']},
+        )
+        messages.success(self.request, phrases.base.saved)
+        event = self.request.event
+        active_lang = (
+            self.request.POST.get('active_lang')
+            or self.request.GET.get('lang')
+            or self.request.LANGUAGE_CODE
+        )
+        if not event.locales or active_lang not in event.locales:
+            active_lang = event.locales[0] if event.locales else 'en'
+        query_string = urlencode({'lang': active_lang})
+        return redirect(f'{self.request.path}?{query_string}')
+

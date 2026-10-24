@@ -1,0 +1,48 @@
+{% extends 'orga/base.html' %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load static %}
+
+{% block extra_title %}{{ page_title }} :: {% endblock extra_title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'orga/css/cfp.css' %}">
+{% endblock stylesheets %}
+
+{% block content %}
+  {% include 'common/includes/header_nav.html' with header_title=page_title %}
+
+  <form method="post" class="form-horizontal cfp-builtin-field-settings-form">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+
+    <input type="hidden" name="active_lang" id="active_lang" value="{{ active_lang }}">
+
+    <fieldset>
+      <legend>{% translate 'Settings' %}</legend>
+      {% bootstrap_field form.label layout='control' %}
+      {% bootstrap_field form.help_text layout='control' %}
+      {% if form.enable_gravatar %}
+        {% bootstrap_field form.enable_gravatar layout='control' %}
+      {% endif %}
+    </fieldset>
+
+    <div class="submit-group panel">
+      <span>
+        <a href="{{ back_url }}" class="btn btn-default">
+          {% translate 'Back to forms' %}
+        </a>
+      </span>
+      <div class="cfp-field-settings-actions">
+        <button type="submit" name="action" value="reset" form="cfp-field-reset-form" class="btn btn-outline-info">
+          <i class="fa fa-undo"></i> {% translate 'Reset to default' %}
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-check"></i> {{ phrases.base.save }}
+        </button>
+      </div>
+    </div>
+  </form>
+  <form method="post" id="cfp-field-reset-form">{% csrf_token %}</form>
+{% endblock content %}

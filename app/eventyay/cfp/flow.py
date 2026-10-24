@@ -18,7 +18,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import Promise, cached_property
-from django.utils.translation import gettext
+from django.utils.translation import gettext, override
 from django.utils.translation import gettext_lazy as _
 from django.views.generic.base import TemplateResponseMixin
 from i18nfield.strings import LazyI18nString
@@ -33,6 +33,7 @@ from eventyay.base.models import (
 from eventyay.cfp.signals import cfp_steps
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
+from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.common.social_links import get_social_link_value
 from eventyay.common.text.phrases import phrases
 from eventyay.person.forms import (
@@ -49,6 +50,139 @@ from eventyay.submission.forms import InfoForm
 
 
 logger = logging.getLogger(__name__)
+
+
+FIELD_STEP_MAP = {
+    # Session fields (InfoStep)
+    'title': 'info',
+    'submission_type': 'info',
+    'abstract': 'info',
+    'description': 'info',
+    'notes': 'info',
+    'track': 'info',
+    'duration': 'info',
+    'slot_count': 'info',
+    'content_locale': 'info',
+    'image': 'info',
+    'slides': 'info',
+    'do_not_record': 'info',
+    # Speaker fields (ProfileStep)
+    'fullname': 'profile',
+    'biography': 'profile',
+    'job_title': 'profile',
+    'organization': 'profile',
+    'avatar': 'profile',
+    'avatar_source': 'profile',
+    'avatar_license': 'profile',
+    'availabilities': 'profile',
+    'additional_speaker': 'profile',
+    'social_links': 'profile',
+}
+
+FIELD_DEFAULTS = {
+    'title': {
+        'label': _('Proposal title'),
+        'help_text': '',
+    },
+    'submission_type': {
+        'label': _('Session type'),
+        'help_text': '',
+    },
+    'abstract': {
+        'label': _('Abstract'),
+        'help_text': phrases.base.use_markdown,
+    },
+    'description': {
+        'label': _('Description'),
+        'help_text': phrases.base.use_markdown,
+    },
+    'notes': {
+        'label': _('Notes'),
+        'help_text': _('These notes are meant for the organiser and won’t be made public.'),
+    },
+    'track': {
+        'label': _('Track'),
+        'help_text': '',
+    },
+    'duration': {
+        'label': _('Duration'),
+        'help_text': _('The duration in minutes.'),
+    },
+    'slot_count': {
+        'label': _('Slot Count'),
+        'help_text': _('How many times this session will take place.'),
+    },
+    'content_locale': {
+        'label': _('Language'),
+        'help_text': '',
+    },
+    'image': {
+        'label': _('Session image'),
+        'help_text': _('Use this if you want an illustration to go with your proposal.'),
+    },
+    'slides': {
+        'label': _('Slides'),
+        'help_text': '',
+    },
+    'do_not_record': {
+        'label': _('Don’t record this session.'),
+        'help_text': '',
+    },
+    'fullname': {
+        'label': _('Full name'),
+        'help_text': '',
+    },
+    'biography': {
+        'label': _('Biography'),
+        'help_text': phrases.base.use_markdown,
+    },
+    'job_title': {
+        'label': _('Job title/role'),
+        'help_text': _('What is your official job title?'),
+    },
+    'organization': {
+        'label': _('Organization'),
+        'help_text': _('What organization or company do you represent?'),
+    },
+    'avatar': {
+        'label': _('Speaker photo'),
+        'help_text': '',
+    },
+    'avatar_source': {
+        'label': _('Speaker photo source'),
+        'help_text': _('Please enter the name of the author or source of image and a link if applicable.'),
+    },
+    'avatar_license': {
+        'label': _('Speaker photo license'),
+        'help_text': _('Please enter the name of the license of the photo and link to it if applicable.'),
+    },
+    'availabilities': {
+        'label': _('Availability'),
+        'help_text': '',
+    },
+    'additional_speaker': {
+        'label': _('Additional Speaker'),
+        'help_text': _(
+            'If you have a co-speaker, please add their email address here, and we will invite them '
+            'to create an account. If you have more than one co-speaker, you can add more speakers '
+            'after finishing the proposal process.'
+        ),
+    },
+    'social_links': {
+        'label': _('Social Media'),
+        'help_text': '',
+    },
+}
+
+
+def get_field_default(field_key: str, attr: str, locale: str) -> str:
+    defaults = FIELD_DEFAULTS.get(field_key, {})
+    val = defaults.get(attr, '')
+    if not val:
+        return ''
+    with override(locale):
+        return str(val)
+
 
 
 def i18n_string(data, locales):
@@ -71,9 +205,7 @@ def i18n_string(data, locales):
             # which indicates a failed gettext lookup that was cached as a fallback.
             if not stored or stored == english:
                 with language(locale):
-                    translation = gettext(english)
-                    if translation != english:
-                        data[locale] = translation
+                    data[locale] = gettext(english)
     return LazyI18nString(data)
 
 
@@ -368,7 +500,7 @@ class FormFlowStep(TemplateFlowStep):
                     'charset': field_file.charset,
                 })
                 new_uploads.append(field_file)
-            
+
             if new_entries:
                 if field.endswith('_files'):
                     current = existing.get(field, [])
@@ -382,23 +514,23 @@ class FormFlowStep(TemplateFlowStep):
                             self.file_storage.delete(old_entry['tmp_name'])
                         except Exception:
                             pass
-                    
+
                     existing[field] = new_entries if len(new_entries) > 1 else new_entries[0]
                     if hasattr(form, 'initial'):
                         form.initial[field] = SimpleNamespace(
                             name=new_entries[0]['name'],
                             url=self.file_storage.url(new_entries[0]['tmp_name'])
                         )
-            
+
             if new_uploads:
                 form.files.setlist(field, new_uploads)
             else:
                 del form.files[field]
-                
+
             # ALWAYS invalidate the bound field cache so the widget re-renders correctly.
             if hasattr(form, '_bound_fields_cache'):
                 form._bound_fields_cache.pop(field, None)
-                
+
         self.cfp_session['files'][self.identifier] = existing
 
     def post(self, request):
@@ -500,7 +632,7 @@ class FormFlowStep(TemplateFlowStep):
                             file_entries.append(entry)
                             break
                     continue
-                
+
                 tmp_filename = self.file_storage.save(field_file.name, field_file)
                 file_entries.append(
                     {
@@ -511,7 +643,7 @@ class FormFlowStep(TemplateFlowStep):
                         'charset': field_file.charset,
                     }
                 )
-            
+
             if file_entries:
                 data[field] = file_entries if len(file_entries) > 1 else file_entries[0]
         self.cfp_session['files'][self.identifier] = data
@@ -803,6 +935,43 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['social_media_formset'] = formset
         result['social_link_prefixes'] = social_link_prefixes() if formset is not None else {}
         result['show_social_links'] = formset is not None
+
+        fields_config = self.config.get('fields', [])
+        if isinstance(fields_config, dict):
+            field_data = fields_config.get('social_links', {})
+        else:
+            field_data = next(
+                (f for f in fields_config if isinstance(f, dict) and f.get('key') == 'social_links'),
+                {},
+            )
+
+        social_links_label = None
+        if field_data.get('label'):
+            lbl = field_data['label']
+            social_links_label = (
+                lbl.localize(self.request.LANGUAGE_CODE)
+                if hasattr(lbl, 'localize')
+                else (lbl.get(self.request.LANGUAGE_CODE) if isinstance(lbl, dict) else str(lbl))
+            )
+        if not social_links_label:
+            social_links_label = get_field_default('social_links', 'label', self.request.LANGUAGE_CODE)
+
+        social_links_help_text = None
+        if 'help_text' in field_data and field_data['help_text'] is not None:
+            ht = field_data['help_text']
+            social_links_help_text = (
+                ht.localize(self.request.LANGUAGE_CODE)
+                if hasattr(ht, 'localize')
+                else (ht.get(self.request.LANGUAGE_CODE) if isinstance(ht, dict) else str(ht))
+            )
+        if social_links_help_text is None:
+            social_links_help_text = get_field_default('social_links', 'help_text', self.request.LANGUAGE_CODE)
+
+        if social_links_help_text:
+            social_links_help_text = sanitize_rich_text(str(social_links_help_text))
+
+        result['social_links_label'] = social_links_label
+        result['social_links_help_text'] = social_links_help_text
         return result
 
     def post(self, request):
@@ -1029,7 +1198,9 @@ class CfPFlow:
             for key in ('help_text', 'request', 'required', 'key', 'label'):
                 if key in config_field:
                     field[key] = (
-                        i18n_string(config_field[key], locales) if key in ('help_text', 'label') else config_field[key]
+                        i18n_string(config_field[key], locales)
+                        if key in ('help_text', 'label')
+                        else config_field[key]
                     )
             step_config['fields'].append(field)
         return step_config
