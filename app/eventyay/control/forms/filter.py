@@ -1171,6 +1171,7 @@ class GiftCardFilterForm(FilterForm):
         'issuance': 'issuance',
         'expires': F('expires').asc(nulls_last=True),
         '-expires': F('expires').desc(nulls_first=True),
+        'code': 'secret',
         'secret': 'secret',
         'value': 'cached_value',
     }
@@ -1201,8 +1202,40 @@ class GiftCardFilterForm(FilterForm):
     )
 
     def __init__(self, *args, **kwargs):
-        kwargs.pop('request')
+        request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        self.fields['query'].widget.attrs.update({
+            'placeholder': _('Search by gift card code...'),
+            'class': 'form-control gc-filter-input',
+        })
+        self.fields['state'].choices = [
+            ('', _('Filter by Status')),
+            ('empty', _('Empty (no remaining value)')),
+            ('valid_value', _('Valid and with value')),
+            ('expired_value', _('Expired and with value')),
+            ('expired', _('Expired')),
+        ]
+        self.fields['state'].widget.attrs['class'] = 'form-control gc-filter-select'
+        self.fields['testmode'].choices = [
+            ('', _('Filter by Mode')),
+            ('yes', _('Test mode')),
+            ('no', _('Live')),
+        ]
+        self.fields['testmode'].widget.attrs['class'] = 'form-control gc-filter-select'
+        self.currencies = []
+        if request and hasattr(request, 'organizer'):
+            self.currencies = list(
+                request.organizer.issued_gift_cards.order_by('currency')
+                .values_list('currency', flat=True)
+                .distinct()
+            )
+            if len(self.currencies) > 1:
+                self.fields['currency'] = forms.ChoiceField(
+                    label=_('Currency'),
+                    choices=[('', _('Filter by Currency'))] + [(c, c) for c in self.currencies],
+                    required=False,
+                    widget=forms.Select(attrs={'class': 'form-control gc-filter-select'}),
+                )
 
     def filter_qs(self, qs):
         fdata = self.cleaned_data
@@ -1214,6 +1247,8 @@ class GiftCardFilterForm(FilterForm):
                 | Q(transactions__text__icontains=query)
                 | Q(transactions__order__code__icontains=query)
             )
+        if fdata.get('currency'):
+            qs = qs.filter(currency=fdata.get('currency'))
         if fdata.get('testmode') == 'yes':
             qs = qs.filter(testmode=True)
         elif fdata.get('testmode') == 'no':
