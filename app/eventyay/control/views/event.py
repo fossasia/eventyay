@@ -61,6 +61,7 @@ from eventyay.base.signals import register_ticket_outputs
 from eventyay.base.templatetags.rich_text import (
     expand_email_preview_placeholders,
     is_placeholder_html_sample,
+    is_tiptap_email_html,
     markdown_compile_email,
 )
 from eventyay.control.forms.event import (
@@ -817,6 +818,12 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             return self.get(request)
 
 
+# Exceptions a malformed mail template can raise while interpolating
+# placeholders (str.format_map / attribute / index lookups on sample values).
+# They are turned into a 400 validation response instead of an HTTP 500.
+TEMPLATE_FORMAT_ERRORS = (ValueError, KeyError, IndexError, AttributeError, TypeError)
+
+
 class MailSettingsPreview(EventPermissionRequiredMixin, View):
     permission = 'can_change_event_settings'
 
@@ -840,9 +847,12 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
         url_pattern = re.compile(r'^(https?://|www\.)[^\s]+$')
 
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
-            s = str(p.render_sample(self.request.event)).strip()
+            sample = p.render_sample(self.request.event)
+            s = str(sample).strip()
 
-            if s.startswith('*') or is_placeholder_html_sample(s):
+            # Markdown list samples (e.g. {orders}) stay raw so markdown_compile_email
+            # renders the list; its output is bleach-cleaned either way.
+            if s.startswith('*') or is_placeholder_html_sample(sample):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
                 ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
@@ -852,6 +862,19 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                     html.escape(s),
                 )
         return self.SafeDict(ctx)
+
+    @staticmethod
+    def _invalid_template_response():
+        return JsonResponse(
+            {
+                'error': _(
+                    'Invalid email template! '
+                    'Please check that you don’t have stray { or } somewhere, '
+                    'and that there are no spaces inside the {} blocks.'
+                )
+            },
+            status=400,
+        )
 
     def post(self, request, *args, **kwargs):
         preview_product = request.POST.get('product', '')
@@ -874,21 +897,27 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
             if matched is not None:
                 idx = matched.group('idx')
                 if idx in self.supported_locale:
-                    with language(self.supported_locale[idx], self.request.event.settings.region):
+                    locale = self.supported_locale[idx]
+                    with language(locale, self.request.event.settings.region):
+                        if is_tiptap_email_html(v):
+                            # Bodies edited with the Tiptap email editor are already
+                            # HTML; sanitize, then expand {placeholder} tokens and chips.
+                            safe_html = sanitize_email_html(v)
+                            try:
+                                msgs[locale] = expand_email_preview_placeholders(
+                                    safe_html,
+                                    self.request.event,
+                                    locale=locale,
+                                    base_parameters=MailSettingsForm.base_context[preview_product],
+                                )
+                            except TEMPLATE_FORMAT_ERRORS:
+                                return self._invalid_template_response()
+                            continue
                         try:
                             formatted = v.format_map(self.placeholders(preview_product))
-                        except ValueError:
-                            return JsonResponse(
-                                {
-                                    'error': _(
-                                        'Invalid email template! '
-                                        'Please check that you don’t have stray { or } somewhere, '
-                                        'and that there are no spaces inside the {} blocks.'
-                                    )
-                                },
-                                status=400,
-                            )
-                        msgs[self.supported_locale[idx]] = markdown_compile_email(formatted)
+                        except TEMPLATE_FORMAT_ERRORS:
+                            return self._invalid_template_response()
+                        msgs[locale] = markdown_compile_email(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
 
