@@ -1,6 +1,6 @@
 <template lang="pug">
 .ts-confirm-overlay(v-if="visible", @click="cancel")
-  .ts-confirm-panel(@click.stop="")
+  .ts-confirm-panel(ref="panel", role="dialog", aria-modal="true", :aria-label="title", tabindex="-1", @keydown="onKeydown", @click.stop="")
     .ts-confirm-header
       h3 {{ title }}
       button.modal-close-btn(type="button", :aria-label="$t('Close')", @click="cancel")
@@ -14,9 +14,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { nextTick, onBeforeUnmount, ref } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   title: string
   lead?: string
   confirmLabel?: string
@@ -31,13 +31,42 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
+const panel = ref<HTMLElement | null>(null)
+let previousFocus: HTMLElement | null = null
 
 function show() {
+  if (visible.value) return
+  previousFocus = document.activeElement as HTMLElement | null
   visible.value = true
+  nextTick(() => { if (visible.value) panel.value?.focus() })
 }
 
 function close() {
+  if (!visible.value) return
   visible.value = false
+  previousFocus?.focus()
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    if (!props.busy) cancel()
+  } else if (event.key === 'Tab') {
+    const buttons = panel.value?.querySelectorAll<HTMLElement>('button:not(:disabled)')
+    const first = buttons?.[0]
+    const last = buttons?.[buttons.length - 1]
+    if (!first) {
+      event.preventDefault()
+      panel.value?.focus()
+    } else if (event.shiftKey && (document.activeElement === first || document.activeElement === panel.value)) {
+      event.preventDefault()
+      last?.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 }
 
 function cancel() {
@@ -46,6 +75,7 @@ function cancel() {
 }
 
 defineExpose({ show, close })
+onBeforeUnmount(close)
 </script>
 
 <style lang="stylus">
