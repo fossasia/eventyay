@@ -1,4 +1,5 @@
 import os
+import re
 
 import pytest
 from django.conf import settings
@@ -6,9 +7,10 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
+from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event, Organizer, User
-from eventyay.base.services.mail import mail
+from eventyay.base.services.mail import mail, render_mail
 
 
 @pytest.fixture
@@ -123,3 +125,23 @@ def test_send_mail_with_reply_to_precedence(env):
     mail('dummy@dummy.dummy', 'Test subject', 'mailtest.txt', {}, event, headers={'Reply-To': 'explicit@example.com'})
     assert len(djmail.outbox) == 1
     assert djmail.outbox[0].extra_headers.get('Reply-To') == 'explicit@example.com'
+
+
+@pytest.mark.django_db
+def test_editor_html_mail_keeps_line_breaks_and_plain_text_part(env):
+    djmail.outbox = []
+    event, user, organizer = env
+    payment_info = 'Please transfer the full amount.\n\n    Reference: ABC12\n    IBAN: DE00 1234'
+    template = LazyI18nString('<p>Hello <strong>{name}</strong>,</p><p>{payment_info}</p>')
+    context = {'name': 'Tom & Jerry', 'payment_info': payment_info}
+    mail('dummy@dummy.dummy', 'Subject', template, context, event)
+
+    message = djmail.outbox[0]
+    html = render_mail(template, context)
+    # Multi-line plain-text values keep their line breaks in the HTML part.
+    assert re.search(r'Reference: ABC12<br\s*/?>\s*IBAN: DE00 1234', html)
+    # The text/plain part is rendered from the HTML, without tags.
+    assert not re.search(r'</?(p|br|strong|span)\b', message.body)
+    assert 'Hello **Tom & Jerry**,' in message.body
+    assert 'Reference: ABC12' in message.body
+    assert 'IBAN: DE00 1234' in message.body

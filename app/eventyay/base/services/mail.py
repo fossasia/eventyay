@@ -14,6 +14,7 @@ from urllib.parse import urljoin, urlparse
 
 import datetime
 from zoneinfo import ZoneInfo
+import nh3
 import requests
 from bs4 import BeautifulSoup
 from celery import chain
@@ -27,6 +28,7 @@ from django.core.mail import (
 from django.core.mail.message import SafeMIMEText
 from django.db import transaction
 from django.template import TemplateDoesNotExist
+from django.template.defaultfilters import linebreaksbr
 from django.template.loader import get_template
 from django.utils.timezone import override
 from django.utils.translation import gettext as _
@@ -59,6 +61,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.base.templatetags.rich_text import (
     MARKDOWN_PLACEHOLDERS,
+    email_html_to_plain_text,
     is_tiptap_email_html,
     markdown_compile_email,
 )
@@ -186,6 +189,9 @@ def mail(
                 context.update({'invoice_name': '', 'invoice_company': ''})
         renderer = ClassicMailRenderer(None)
         content_plain = body_plain = render_mail(template, context)
+        if is_tiptap_email_html(content_plain):
+            # Editor bodies are HTML; the text/plain part needs its own rendering.
+            body_plain = email_html_to_plain_text(content_plain)
         subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
         sender = sender or (event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL) or settings.DEFAULT_FROM_EMAIL
         sender_email_raw = sender
@@ -741,14 +747,29 @@ def expand_email_variable_chips(body: str, context: dict[str, str]) -> str:
     return _DATA_VARIABLE_CHIP_RE.sub(replace_chip, body)
 
 
+def _html_mail_context(context: dict[str, str]) -> dict[str, str]:
+    """Adapt placeholder values for insertion into an editor (Tiptap) HTML body.
+
+    Markdown values (``{orders}``) are compiled, and multi-line plain-text values
+    (``{payment_info}``, ``{comment}``) are escaped with their line breaks kept.
+    """
+    result = {}
+    for key, value in context.items():
+        if key in MARKDOWN_PLACEHOLDERS:
+            value = markdown_compile_email(value)
+        elif '\n' in value and not nh3.is_html(value):
+            value = linebreaksbr(value)
+        result[key] = value
+    return result
+
+
 def render_mail(template, context):
     if isinstance(template, LazyI18nString):
         body = str(template)
         if context:
             string_context = _stringify_mail_context(context)
             if is_tiptap_email_html(body):
-                for key in MARKDOWN_PLACEHOLDERS & string_context.keys():
-                    string_context[key] = markdown_compile_email(string_context[key])
+                string_context = _html_mail_context(string_context)
             body = body.format_map(TolerantDict(string_context))
             body = expand_email_variable_chips(body, string_context)
     else:

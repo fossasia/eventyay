@@ -291,6 +291,22 @@ def email_body_to_editor_html(source: str) -> str:
     return markdown_compile_email(source, preserve_line_breaks=True)
 
 
+def email_html_to_plain_text(html_body: str) -> str:
+    """Render the text/plain part for an editor (Tiptap) HTML email body.
+
+    Produces Markdown, like legacy plain-text bodies. Images (QR codes) are
+    dropped because their data URIs are useless in plain text.
+    """
+    return html_to_markdown(
+        compile_email_body(html_body),
+        strip=['img'],
+        bullets='*',
+        escape_underscores=False,
+        escape_asterisks=False,
+        escape_misc=False,
+    ).strip()
+
+
 def email_allowed_attributes(tag: str, name: str, value: str) -> bool:
     """Allowlist email HTML attributes; forbid ``data:`` links on anchors."""
     allowed_for_tag = EMAIL_ALLOWED_ATTRIBUTES.get(tag)

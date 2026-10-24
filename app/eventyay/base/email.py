@@ -613,7 +613,8 @@ def voucher_redemption_urls(event: Event, voucher_list: Sequence[str]) -> str:
         url = f'{build_absolute_uri(event, "presale:event.redeem")}?voucher={quote(code)}'
         safe_url = escape(url)
         links.append(f'<a href="{safe_url}">{safe_url}</a>')
-    return '<br>'.join(links)
+    # Trusted HTML (inputs escaped above): mark explicitly so previews keep it.
+    return mark_safe('<br>'.join(links))
 
 
 def format_voucher_list(voucher_list: Sequence[str]) -> str:
@@ -621,7 +622,8 @@ def format_voucher_list(voucher_list: Sequence[str]) -> str:
     codes = '<br>'.join(escape(code) for code in voucher_list)
     if not codes:
         return ''
-    return f'<span>{codes}</span>'
+    # Trusted HTML (codes escaped above): mark explicitly so previews keep it.
+    return mark_safe(f'<span>{codes}</span>')
 
 
 def download_tickets_button_label(output: str) -> str:
