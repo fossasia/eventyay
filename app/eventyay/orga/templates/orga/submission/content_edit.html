@@ -8,6 +8,13 @@
 {% load static %}
 {% load rules %}
 
+{% block stylesheets %}
+    {% if action == "create" %}
+        <link rel="stylesheet" href="{% static 'orga/css/speaker_create.css' %}">
+        <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+    {% endif %}
+{% endblock stylesheets %}
+
 {% block scripts %}
     {{ block.super }}
     {% compress js %}
@@ -19,6 +26,9 @@
         <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
         <script defer src="{% static "orga/js/etherpad.js" %}"></script>
     {% endcompress %}
+    {% if action == "create" %}
+        <script type="module" src="{% static 'orga/js/submission_create_speaker.js' %}"></script>
+    {% endif %}
 {% endblock scripts %}
 
 {% block submission_content %}
@@ -41,18 +51,10 @@
             {% include "common/forms/errors.html" %}
             {% csrf_token %}
 
-            {{ form.title.as_field_group }}
-
             {% if action == "create" %}
                 {{ form.state.as_field_group }}
-                </fieldset>
-                <fieldset>
-                    <legend id="speaker">{% translate "Speaker" context "noun" %}</legend>
-                    {{ new_speaker_form }}
-                </fieldset>
-                <fieldset>
-                    <legend id="proposal">{% translate "Proposal" %}</legend>
             {% endif %}
+
             {% if form.instance.median_score != None and can_view_all_reviews %}
                 <div class="form-group row">
                     <label class="col-md-3 col-form-label">
@@ -65,74 +67,180 @@
                     </div>
                 </div>
             {% endif %}
-            {{ form.submission_type.as_field_group }}
-            {% if form.track %}{{ form.track.as_field_group }}{% endif %}
-            {% if form.tags %}{{ form.tags.as_field_group }}{% endif %}
-            {% if form.abstract %}{{ form.abstract.as_field_group }}{% endif %}
-            {% if form.description %}{{ form.description.as_field_group }}{% endif %}
-            {% if form.notes %}{{ form.notes.as_field_group }}{% endif %}
-            {{ form.internal_notes.as_field_group }}
-            {% if form.content_locale %}{{ form.content_locale.as_field_group }}{% endif %}
-            {% if form.do_not_record %}{{ form.do_not_record.as_field_group }}{% endif %}
-            {{ form.is_featured.as_field_group }}
-            {{ form.duration.as_field_group }}
-            {% if form.slot_count %}{{ form.slot_count.as_field_group }}{% endif %}
-            {% if form.image %}{{ form.image.as_field_group }}{% endif %}
-            {% if form.slides %}{{ form.slides.as_field_group }}{% endif %}
-            {% if action != "create" and can_edit and session_videos_enabled %}
-                <div class="form-group row {% if session_video_urls_error %}has-error{% endif %}">
-                    <label class="col-md-3 col-form-label" for="session_video_urls">
-                        <span>{% translate "Session videos" %}</span>
-                        <span class="optional">{% translate "Optional" %}</span>
-                    </label>
-                    <div class="col-md-9">
-                        <textarea
-                            class="form-control"
-                            id="session_video_urls"
-                            name="session_video_urls"
-                            rows="3"
-                            autocomplete="off"
-                            placeholder="{% translate "One YouTube, Vimeo, or Wikimedia Commons URL per line" %}"
-                        >{{ session_video_urls_text }}</textarea>
-                        <small class="form-text text-muted">{% translate "YouTube, Vimeo, or Wikimedia Commons URLs, one per line." %}</small>
-                        {% if session_video_urls_error %}
-                            <div class="help-block">{{ session_video_urls_error }}</div>
-                        {% endif %}
+            {% for item in ordered_session_fields %}
+                {% if item == "session_videos" %}
+                    {% if action != "create" and can_edit and session_videos_enabled %}
+                        <div class="form-group row {% if session_video_urls_error %}has-error{% endif %}">
+                            <label class="col-md-3 col-form-label" for="session_video_urls">
+                                <span>{% translate "Session videos" %}</span>
+                                <span class="optional">{% translate "Optional" %}</span>
+                            </label>
+                            <div class="col-md-9">
+                                <textarea
+                                    class="form-control"
+                                    id="session_video_urls"
+                                    name="session_video_urls"
+                                    rows="3"
+                                    autocomplete="off"
+                                    placeholder="{% translate "One YouTube, Vimeo, or Wikimedia Commons URL per line" %}"
+                                >{{ session_video_urls_text }}</textarea>
+                                <small class="form-text text-muted">{% translate "YouTube, Vimeo, or Wikimedia Commons URLs, one per line." %}</small>
+                                {% if session_video_urls_error %}
+                                    <div class="help-block">{{ session_video_urls_error }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% elif item.name == "etherpad_url" %}
+                    {{ item.as_field_group }}
+                    {% if not item.value or action != "create" and request.event.feature_flags.etherpad_auto_generate %}
+                    <div class="row mb-3">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            {% if not item.value %}
+                                <p class="help-block mb-2">{% translate "No Etherpad is configured for this session yet." %}</p>
+                            {% endif %}
+                            {% if action != "create" and request.event.feature_flags.etherpad_auto_generate %}
+                                {% translate "This session already has an Etherpad link. Replace it with a newly generated pad? The existing notes will no longer be linked." as etherpad_replace_confirm %}
+                                <button type="button" class="btn btn-outline-info"
+                                        data-etherpad-generate
+                                        data-url="{{ submission.orga_urls.etherpad_generate }}"
+                                        data-replace-confirm="{{ etherpad_replace_confirm }}"
+                                        data-error-text="{% translate "Could not generate the Etherpad link. Please try again." %}"
+                                        {% if submission.etherpad_url %}data-force="true" data-confirm="{{ etherpad_replace_confirm }}"{% endif %}>
+                                    <i class="fa fa-file-text-o"></i>
+                                    {% if submission.etherpad_url %}{% translate "Regenerate Etherpad link" %}{% else %}{% translate "Auto-generate Etherpad link" %}{% endif %}
+                                </button>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% endif %}
-            {% if form.etherpad_url %}
-                {{ form.etherpad_url.as_field_group }}
-                {% if not form.etherpad_url.value or action != "create" and request.event.feature_flags.etherpad_auto_generate %}
-                <div class="row mb-3">
-                    <div class="col-md-3"></div>
-                    <div class="col-md-9">
-                        {% if not form.etherpad_url.value %}
-                            <p class="help-block mb-2">{% translate "No Etherpad is configured for this session yet." %}</p>
-                        {% endif %}
-                        {% if action != "create" and request.event.feature_flags.etherpad_auto_generate %}
-                            {% translate "This session already has an Etherpad link. Replace it with a newly generated pad? The existing notes will no longer be linked." as etherpad_replace_confirm %}
-                            <button type="button" class="btn btn-outline-info"
-                                    data-etherpad-generate
-                                    data-url="{{ submission.orga_urls.etherpad_generate }}"
-                                    data-replace-confirm="{{ etherpad_replace_confirm }}"
-                                    data-error-text="{% translate "Could not generate the Etherpad link. Please try again." %}"
-                                    {% if submission.etherpad_url %}data-force="true" data-confirm="{{ etherpad_replace_confirm }}"{% endif %}>
-                                <i class="fa fa-file-text-o"></i>
-                                {% if submission.etherpad_url %}{% translate "Regenerate Etherpad link" %}{% else %}{% translate "Auto-generate Etherpad link" %}{% endif %}
-                            </button>
-                        {% endif %}
-                    </div>
-                </div>
+                    {% endif %}
+                {% else %}
+                    {{ item.as_field_group }}
                 {% endif %}
-            {% endif %}
+            {% endfor %}
             {% if action != "create" %}
                 {% include "cfp/includes/submission_resources_form.html" %}
             {% endif %}
-            {% if questions_form and questions_form.fields %}
-                <div><legend id="custom">{{ phrases.cfp.custom_fields }}</legend></div>
-                {{ questions_form }}
+
+            {# ── Speaker section (create only) ─────────────────────────── #}
+            {% if action == "create" %}
+                <div class="speaker-create-block">
+                    <div class="speaker-create-block__header">
+                        <legend id="speaker">{% translate "Speaker" context "noun" %}</legend>
+                    </div>
+
+                    {# Link existing speaker #}
+                    <div id="existing_speaker_section" class="form-group row session-link-section">
+                        <label class="col-md-3 col-form-label" for="id_existing_speaker_id">
+                            {% translate "Link existing speaker" %}
+                            <span class="optional">{% translate "Optional" %}</span>
+                        </label>
+                        <div class="col-md-9">
+                            <div data-speaker-links>
+                                {% if selected_existing_speaker_ids %}
+                                    {% for selected_id in selected_existing_speaker_ids %}
+                                        <div class="row mb-2" data-speaker-link-row>
+                                            <div class="col-md-11">
+                                                <select {% if forloop.first %}id="id_existing_speaker_id"{% endif %}
+                                                        name="existing_speaker_id"
+                                                        class="form-control"
+                                                        aria-label="{% translate 'Link existing speaker' %}">
+                                                    <option value="">{% translate "— do not link a speaker —" %}</option>
+                                                    {% for profile in existing_speakers %}
+                                                        <option value="{{ profile.pk }}"
+                                                            {% if selected_id == profile.pk|stringformat:"s" %}selected{% endif %}>
+                                                            {{ profile.user.get_display_name }}
+                                                            {% if show_existing_speaker_emails and profile.user.email %}({{ profile.user.email }}){% endif %}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <button type="button" class="btn btn-danger btn-sm" data-remove-speaker-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                                    <i class="fa fa-minus" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="row mb-2" data-speaker-link-row>
+                                        <div class="col-md-11">
+                                            <select id="id_existing_speaker_id" name="existing_speaker_id"
+                                                    class="form-control"
+                                                    aria-label="{% translate 'Link existing speaker' %}">
+                                                <option value="">{% translate "— do not link a speaker —" %}</option>
+                                                {% for profile in existing_speakers %}
+                                                    <option value="{{ profile.pk }}">
+                                                        {{ profile.user.get_display_name }}
+                                                        {% if show_existing_speaker_emails and profile.user.email %}({{ profile.user.email }}){% endif %}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <button type="button" class="btn btn-danger btn-sm" data-remove-speaker-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                                <i class="fa fa-minus" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <p class="mt-2 mb-0">
+                                <button type="button" class="btn btn-sm btn-info" id="link-another-speaker">
+                                    <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Link another speaker" %}
+                                </button>
+                            </p>
+                        </div>
+                        <template id="speaker-link-row-template">
+                            <div class="row mb-2" data-speaker-link-row>
+                                <div class="col-md-11">
+                                    <select name="existing_speaker_id" class="form-control" aria-label="{% translate 'Link existing speaker' %}">
+                                        <option value="">{% translate "— do not link a speaker —" %}</option>
+                                        {% for profile in existing_speakers %}
+                                            <option value="{{ profile.pk }}">
+                                                {{ profile.user.get_display_name }}
+                                                {% if show_existing_speaker_emails and profile.user.email %}({{ profile.user.email }}){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm" data-remove-speaker-link title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                        <i class="fa fa-minus" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    {# Add new speaker toggle #}
+                    <div class="form-group row">
+                        <label class="col-md-3 col-form-label" for="id_add_new_speaker">
+                            {% translate "Add new speaker" %}
+                        </label>
+                        <div class="col-md-9 d-flex align-items-center">
+                            <label class="toggle-switch mb-0">
+                                <input type="checkbox" id="id_add_new_speaker" name="add_new_speaker"
+                                       aria-label="{% translate 'Enable creating a new speaker' %}"
+                                       {% if request.POST.add_new_speaker %}checked{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="ml-2 text-muted">
+                                {% translate "Turn on to create a new speaker. Linking an existing speaker is turned off while this is on." %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {# New speaker form (hidden until toggle is on) #}
+                    <div id="new_speaker_section" class="d-none">
+                        {% for field in ordered_speaker_fields %}
+                            {{ field.as_field_group }}
+                        {% endfor %}
+                    </div>
+                </div>
             {% endif %}
+            {# ── End speaker section ───────────────────────────────────── #}
 
             {% if not form.read_only %}
                 <div class="submit-group panel">
