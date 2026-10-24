@@ -554,7 +554,7 @@ def render_qr_code_img(payload: str, *, alt: str, size: int = 160) -> str:
     buffer = io.BytesIO()
     image.save(buffer, format='PNG')
     data_uri = f'data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode("ascii")}'
-    return (
+    return mark_safe(
         f'<img src="{data_uri}" alt="{escape(alt)}" '
         f'width="{int(size)}" height="{int(size)}">'
     )
@@ -586,7 +586,7 @@ def render_order_qr_html(order) -> str:
                 continue
             label = position.attendee_name or str(position.product.name)
             parts.append(f'<strong>{escape(label)}</strong><br>{render_ticket_qr_html(position)}')
-    return '<br>'.join(parts)
+    return mark_safe('<br>'.join(parts))
 
 
 def get_combined_ticket_output_identifier(event: Event) -> str:
@@ -646,7 +646,7 @@ def render_download_tickets_pdf_button(event: Event, order) -> str:
         },
     )
     label = escape(download_tickets_button_label(output))
-    return f'<a href="{escape(url)}" class="button">{label}</a>'
+    return mark_safe(f'<a href="{escape(url)}" class="button">{label}</a>')
 
 
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_mail_placeholders')
@@ -657,14 +657,13 @@ def base_placeholders(sender: Event, **kwargs):
     )
     def render_video_join_link(event: Event, order) -> str:
         url = build_join_video_url(event, order)
-        return f'<a href="{url}" class="button">{_("Join online event")}</a>'
+        return mark_safe(f'<a href="{escape(url)}" class="button">{escape(_("Join online event"))}</a>')
 
     def sample_ticket_qr(event=None):
-        # Trusted HTML sample: mark explicitly so previews pass it through unescaped.
-        return mark_safe(render_qr_code_img(
+        return render_qr_code_img(
             '{"event":"DEMO","ticket":"sample-secret","lead":"ABCDEF"}',
             alt=str(_('Ticket QR code')),
-        ))
+        )
 
     def sample_download_pdf(event):
         # Trusted HTML sample: mark explicitly so previews pass it through unescaped.

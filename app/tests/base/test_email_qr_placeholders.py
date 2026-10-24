@@ -236,7 +236,7 @@ def test_expand_email_variable_chips_without_braces():
     from i18nfield.strings import LazyI18nString
 
     qr = render_qr_code_img('secret', alt='Ticket QR code')
-    button = '<a href="https://example.com" class="button">Download tickets (PDF)</a>'
+    button = mark_safe('<a href="https://example.com" class="button">Download tickets (PDF)</a>')
     body = (
         '<p>Order QR: <span class="tiptap-placeholder-chip" data-variable="order_qr">order_qr</span></p>'
         '<p>Ticket QR: <span data-variable="ticket_qr">ticket_qr</span></p>'

@@ -30,6 +30,8 @@ from django.db import transaction
 from django.template import TemplateDoesNotExist
 from django.template.defaultfilters import linebreaksbr
 from django.template.loader import get_template
+from django.utils.html import escape
+from django.utils.safestring import SafeString
 from django.utils.timezone import override
 from django.utils.translation import gettext as _
 from django.utils.translation import pgettext
@@ -750,15 +752,16 @@ def expand_email_variable_chips(body: str, context: dict[str, str]) -> str:
 def _html_mail_context(context: dict[str, str]) -> dict[str, str]:
     """Adapt placeholder values for insertion into an editor (Tiptap) HTML body.
 
-    Markdown values (``{orders}``) are compiled, and multi-line plain-text values
-    (``{payment_info}``, ``{comment}``) are escaped with their line breaks kept.
+    Markdown values (``{orders}``) are compiled and HTML explicitly marked safe
+    (QR codes, buttons) is kept. Everything else is escaped so values such as an
+    attendee name render as text, with line breaks kept (``{payment_info}``).
     """
     result = {}
     for key, value in context.items():
         if key in MARKDOWN_PLACEHOLDERS:
             value = markdown_compile_email(value)
-        elif '\n' in value and not nh3.is_html(value):
-            value = linebreaksbr(value)
+        elif not (isinstance(value, SafeString) and nh3.is_html(value)):
+            value = linebreaksbr(escape(value))
         result[key] = value
     return result
 

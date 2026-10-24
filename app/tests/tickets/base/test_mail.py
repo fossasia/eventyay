@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core import mail as djmail
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django.utils.safestring import mark_safe
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
@@ -145,3 +146,12 @@ def test_editor_html_mail_keeps_line_breaks_and_plain_text_part(env):
     assert 'Hello **Tom & Jerry**,' in message.body
     assert 'Reference: ABC12' in message.body
     assert 'IBAN: DE00 1234' in message.body
+
+
+def test_editor_html_mail_escapes_untrusted_values():
+    template = LazyI18nString('<p>{name}</p><p>{ticket_qr}</p>')
+    qr = mark_safe('<img src="data:image/png;base64,AA" alt="QR">')
+    html = render_mail(template, {'name': '<strong>Admin</strong> & Co', 'ticket_qr': qr})
+    # Values render as text unless they are explicitly trusted HTML.
+    assert '<p>&lt;strong&gt;Admin&lt;/strong&gt; &amp; Co</p>' in html
+    assert qr in html
