@@ -102,7 +102,7 @@
 .event-table th {
   background: #f7f7f7;
   font-weight: 600;
-  color: #555;
+  color: var(--color-grey-dark);
   white-space: nowrap;
 }
 
@@ -165,7 +165,7 @@
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 4px;
-  color: #333;
+  color: var(--color-text);
 }
 
 .dashboard-panels .list-group-item:hover .list-group-item-heading {

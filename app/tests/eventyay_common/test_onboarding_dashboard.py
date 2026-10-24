@@ -179,6 +179,24 @@ def test_quick_action_icons_never_render_untoned(organizer_client, event):
         assert 'background:' in declarations, f'the {tone} icon tone renders unstyled'
 
 
+def test_talks_dashboard_text_uses_global_colours():
+    """The Talks dashboard takes its text colours from the global stylesheet (#6280).
+
+    ``stats.js`` moves the analytics filter menu to ``<body>``, outside
+    ``.td-dashboard``, so the menu rules must use the global variables directly.
+    """
+    css = Path(finders.find('eventyay-common/css/common_dashboard.css')).read_text()
+
+    tokens = _declarations_for(css, '.td-dashboard')
+    assert re.search(r'--td-text:\s*var\(--color-text\)', tokens)
+    assert re.search(r'--td-muted:\s*var\(--color-text-muted\)', tokens)
+
+    menu_head = _declarations_for(css, '.td-analytics-multi-menu-head')
+    assert re.search(r'(?<![-\w])color:\s*var\(--color-text-muted\)', menu_head)
+    menu_option = _declarations_for(css, '.td-analytics-multi-option')
+    assert re.search(r'(?<![-\w])color:\s*var\(--color-text\)', menu_option)
+
+
 @pytest.mark.django_db
 def test_orders_empty_state(new_user_client):
     response = new_user_client.get(reverse('eventyay_common:orders'))
