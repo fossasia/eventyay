@@ -37,12 +37,14 @@ def vouchers_send(
                 locale=event.settings.locale,
             )
             logs = []
+            sent_text = gettext('The voucher has been sent to {recipient}.').format(recipient=r['email'])
             for v in voucher_list:
                 if r.get('tag') and r.get('tag') != v.tag:
                     v.tag = r.get('tag')
                 if v.comment:
-                    v.comment += '\n\n'
-                v.comment = gettext('The voucher has been sent to {recipient}.').format(recipient=r['email'])
+                    v.comment = f'{v.comment}\n\n{sent_text}'
+                else:
+                    v.comment = sent_text
                 logs.append(
                     v.log_action(
                         'eventyay.voucher.sent',
