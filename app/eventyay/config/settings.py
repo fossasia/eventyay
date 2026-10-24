@@ -767,6 +767,14 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'ha': {
+        'name': _('Hausa'),
+        'natural_name': 'Hausa',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'id': {
         'name': _('Indonesian'),
         'natural_name': 'Bahasa Indonesia',
@@ -1065,7 +1073,7 @@ EXTRA_LANG_INFO = {
         'public_code': info.get('public_code', code),
     }
     for code, info in _LANGUAGES_CONFIG.items()
-    if info.get('public_code') or code in ['de-formal', 'nl-informal', 'fr', 'lv', 'pt-pt', 'sw']
+    if info.get('public_code') or code in ['de-formal', 'nl-informal', 'fr', 'ha', 'lv', 'pt-pt', 'sw']
 }
 
 django.conf.locale.LANG_INFO.update(EXTRA_LANG_INFO)
