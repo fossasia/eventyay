@@ -2,8 +2,6 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
-from eventyay.base.models import User
-
 STATIC_HEADINGS = [
     'Notifications',
     'Email Address',
@@ -15,11 +13,8 @@ STATIC_HEADINGS = [
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('heading', STATIC_HEADINGS)
-def test_account_general_static_headings_are_not_labels(client, heading):
-    user = User.objects.create_user(email='account_labels@example.com', password='password123')
-    client.force_login(user)
-
-    response = client.get(reverse('eventyay_common:account.general'))
+def test_account_general_static_headings_are_not_labels(authenticated_client, heading):
+    response = authenticated_client.get(reverse('eventyay_common:account.general'))
     assert response.status_code == 200
     doc = BeautifulSoup(response.content, 'lxml')
 
