@@ -15,7 +15,7 @@ export function autoWrapPasswordFields(root = document) {
         
         // Create wrapper
         const wrapper = document.createElement('div');
-        wrapper.className = 'password-input-wrapper';
+        wrapper.className = 'password-input-wrapper password-toggle-initialized';
         
         // Wrap input
         input.parentNode.insertBefore(wrapper, input);
