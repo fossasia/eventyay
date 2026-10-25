@@ -1,40 +1,52 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% block inner %}
-    <h1>{% trans "Gates" %}</h1>
-    <p>
-        {% trans "The list below shows gates that you can use to group check-in devices." %}
-    </p>
-    <a href="{% url "eventyay_common:organizer.gates.add" organizer=request.organizer.slug %}" class="btn btn-default">
-        <span class="fa fa-plus"></span>
-        {% trans "Create a new gate" %}
-    </a>
-    {%if gates %}
-        <table class="table table-condensed table-hover">
+
+{% block inner %} 
+
+
+<h1>{% trans "Gates" %}</h1> <p>
+{% trans "The list below shows gates that you can use to group check-in devices." %} </p>
+
+<a href="{% url "eventyay_common:organizer.gates.add" organizer=request.organizer.slug %}" class="btn btn-default">
+    <span class="fa fa-plus"></span>
+    {% trans "Create a new gate" %}
+</a>
+
+{% if gates %}
+    <table class="table table-condensed table-hover">
         <thead>
-        <tr>
-            <th>{% trans "Gate" %}</th>
-            <th></th>
-        </tr>
+            <tr>
+                <th>{% trans "Gate" %}</th>
+                <th></th>
+            </tr>
         </thead>
         <tbody>
-        {% for g in gates %}
-            <tr>
-                <td><strong>
-                    <a href="{% url "eventyay_common:organizer.gates.edit" organizer=request.organizer.slug gate=g.id %}">
-                        {{ g.name }}
-                    </a>
-                </strong></td>
-                <td class="text-right flip">
-                    <a href="{% url "eventyay_common:organizer.gates.edit" organizer=request.organizer.slug gate=g.id %}"
-                            class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
-                    <a href="{% url "eventyay_common:organizer.gates.delete" organizer=request.organizer.slug gate=g.id %}"
-                            class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
-                </td>
-            </tr>
-        {% endfor %}
+            {% for g in gates %}
+                <tr>
+                    <td>
+                        <strong>
+                            <a href="{% url "eventyay_common:organizer.gates.edit" organizer=request.organizer.slug gate=g.id %}">
+                                {{ g.name }}
+                            </a>
+                        </strong>
+                    </td>
+                    <td class="text-right flip">
+                        <a href="{% url "eventyay_common:organizer.gates.edit" organizer=request.organizer.slug gate=g.id %}"
+                           class="btn btn-default btn-sm">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <a href="{% url "eventyay_common:organizer.gates.delete" organizer=request.organizer.slug gate=g.id %}"
+                           class="btn btn-delete btn-danger btn-sm">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
         </tbody>
     </table>
-    {% endif %}
+{% else %}
+    <p>{% trans "No gates created yet. Create a new gate to view it here." %}</p>
+{% endif %}
 {% endblock %}
+
