@@ -302,11 +302,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2026.10.18"
+version = "2026.10.23"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7e/eb/a2aa1ac3ea30dd3f30ca57f40232138b6b0040719316ecb85daf61167771/certifi-2026.10.18.tar.gz", hash = "sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e", size = 135227, upload-time = "2026-10-18T16:21:07.655Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/11/b524cbd9bbdaca58608e4cf4053fd463417549e1959fa8d3aa18319f9555/certifi-2026.10.23.tar.gz", hash = "sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd", size = 136225, upload-time = "2026-10-23T11:36:16.478Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/ba/95dd616042484f7c83a06974388b37b837732740ee70bc5dc715b5fcd55a/certifi-2026.10.18-py3-none-any.whl", hash = "sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62", size = 134093, upload-time = "2026-10-18T16:21:06.276Z" },
+    { url = "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl", hash = "sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1", size = 135082, upload-time = "2026-10-23T11:36:14.763Z" },
 ]
 
 [[package]]
@@ -3916,7 +3916,7 @@ wheels = [
 
 [[package]]
 name = "wlc"
-version = "3.0.0"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
@@ -3927,9 +3927,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d6/7b/473781abe3ce7d0905c85dd4bf321c6f038a549eeb9c5c38618438ea2ac9/wlc-3.0.0.tar.gz", hash = "sha256:cd7d5a470ce3b4d083d8a21d46550c0078bfcca263a1d28821bfafc20de0ce82", size = 130816, upload-time = "2026-10-08T13:17:10.6Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/98/d102ebb97c4009910605be92c4001975c1ea8e9786e31e26237d866e91ba/wlc-3.1.0.tar.gz", hash = "sha256:f780924f4d6cc5d4da91194e4c33f40a36937edb8b6dd7e5cb7df83f91407047", size = 132528, upload-time = "2026-10-21T10:44:32.01Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/0e/949bd93e7b72885fdc7bf2079ed0bd851e83f3e14742a490595488975935/wlc-3.0.0-py3-none-any.whl", hash = "sha256:17a43435306d749262f79551afb797970c2981af7763c1108d849eef808d06f3", size = 58486, upload-time = "2026-10-08T13:17:09.345Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/a8/aa04f35598be994c7255befc6a9f36d2fcf7aefed0cd7ced9f1a327c03e2/wlc-3.1.0-py3-none-any.whl", hash = "sha256:a0ba9e40b31877dcb75a70c0b146d92f4b768955d7c308e9b09129b76f91d674", size = 51557, upload-time = "2026-10-21T10:44:30.59Z" },
 ]
 
 [[package]]
