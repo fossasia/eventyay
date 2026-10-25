@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Sum
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -80,17 +79,19 @@ class GiftCard(LoggedModel):
 
     @property
     def value(self):
-        return self.transactions.aggregate(s=Sum('value'))['s'] or Decimal('0.00')
+        return sum((entry.value for entry in self.transactions.all()), Decimal('0.00'))
 
     @property
     def issued_value(self):
         """Original credit, independent of subsequent redemption or cancellation."""
-        initial = self.transactions.first()
+        initial = min(self.transactions.all(), key=lambda entry: (entry.datetime, entry.pk), default=None)
         if initial is not None:
             return initial.value
         if self.issued_in_id:
             position = self.issued_in
-            return position.price_before_voucher if position.price_before_voucher is not None else position.price
+            if position.price_before_voucher is not None:
+                return max(position.price, position.price_before_voucher)
+            return position.price
         return Decimal('0.00')
 
     def accepted_by(self, organizer):

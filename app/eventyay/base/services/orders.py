@@ -27,7 +27,7 @@ from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay import consts
 from eventyay.api.models import OAuthApplication
@@ -2246,11 +2246,13 @@ class OrderChangeManager:
                 )
                 op.position.save(update_fields=['canceled', 'secret'])
             elif isinstance(op, self.ReinstateOperation):
-                for pos_to_check in [op.position] + list(op.position.addons.filter(canceled=True)):
+                for pos_to_check in [op.position] + list(OrderPosition.all.filter(addon_to=op.position, canceled=True)):
                     was_canceled = OrderPosition.all.select_for_update().get(pk=pos_to_check.pk).canceled
                     if was_canceled:
                         for card in pos_to_check.issued_gift_cards.select_for_update():
-                            card.transactions.create(value=card.issued_value, order=self.order)
+                            reversal = card.transactions.filter(order=self.order).order_by('-datetime', '-pk').first()
+                            if reversal and reversal.value < 0:
+                                card.transactions.create(value=-reversal.value, order=self.order)
                     if pos_to_check.voucher_id:
                         v = Voucher.objects.select_for_update().get(pk=pos_to_check.voucher_id)
                         if v.redeemed >= v.max_usages:
@@ -2259,7 +2261,7 @@ class OrderChangeManager:
                                     posid=pos_to_check.positionid, code=v.code
                                 )
                             )
-                for opa in op.position.addons.filter(canceled=True):
+                for opa in OrderPosition.all.filter(addon_to=op.position, canceled=True):
                     self.order.log_action(
                         'eventyay.event.order.changed.reinstate',
                         user=self.user,
@@ -3117,30 +3119,31 @@ def change_payment_provider(
 @transaction.atomic()
 def signal_listener_issue_giftcards(sender: Event, order: Order, **kwargs):
     """Serialize paid-order issuance while preserving existing cards and recorded credit."""
-    # Serialize signals and recheck persisted status before issuing any credit.
-    order = Order.objects.select_for_update().get(pk=order.pk)
-    if order.status != Order.STATUS_PAID:
-        return
-    any_giftcards = False
-    for p in order.positions.all():
-        if p.product.issue_giftcard:
-            # Issued cards retain their recorded credit, including legacy discounted cards.
-            if p.issued_gift_cards.exists():
-                continue
-            face_value = p.price_before_voucher if p.price_before_voucher is not None else p.price
-            if face_value > 0:
-                gc = sender.organizer.issued_gift_cards.create(
-                    currency=sender.currency,
-                    issued_in=p,
-                    testmode=order.testmode,
-                    expires=sender.organizer.default_gift_card_expiry,
-                )
-                gc.transactions.create(value=face_value, order=order)
-                any_giftcards = True
-                p.secret = gc.secret
-                p.save(update_fields=['secret'])
+    with scope(event=sender, organizer=sender.organizer):
+        # Serialize signals and recheck persisted status before issuing any credit.
+        order = Order.objects.select_for_update().get(pk=order.pk)
+        if order.status != Order.STATUS_PAID:
+            return
+        any_giftcards = False
+        for p in order.positions.all():
+            if p.product.issue_giftcard:
+                # Issued cards retain their recorded credit, including legacy discounted cards.
+                if p.issued_gift_cards.exists():
+                    continue
+                face_value = max(p.price, p.price_before_voucher) if p.price_before_voucher is not None else p.price
+                if face_value > 0:
+                    gc = sender.organizer.issued_gift_cards.create(
+                        currency=sender.currency,
+                        issued_in=p,
+                        testmode=order.testmode,
+                        expires=sender.organizer.default_gift_card_expiry,
+                    )
+                    gc.transactions.create(value=face_value, order=order)
+                    any_giftcards = True
+                    p.secret = gc.secret
+                    p.save(update_fields=['secret'])
 
-    if any_giftcards:
-        transaction.on_commit(
-            lambda: tickets.invalidate_cache.apply_async(kwargs={'event': sender.pk, 'order': order.pk})
-        )
+        if any_giftcards:
+            transaction.on_commit(
+                lambda: tickets.invalidate_cache.apply_async(kwargs={'event': sender.pk, 'order': order.pk})
+            )

@@ -35,7 +35,7 @@ def gift_order():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('face,paid', [(50, 25), (50, 0), (None, 25), (0, 0)])
+@pytest.mark.parametrize('face,paid', [(50, 25), (50, 0), (None, 25), (0, 0), (50, 60)])
 def test_issuance_uses_original_price_once(gift_order, face, paid):
     """Preserve face value across repeated signals, including missing and zero prices."""
     event, order, position = gift_order
@@ -45,7 +45,7 @@ def test_issuance_uses_original_price_once(gift_order, face, paid):
     for _ in range(2):
         signal_listener_issue_giftcards(event, order)
     cards = list(position.issued_gift_cards.all())
-    expected = Decimal(face if face is not None else paid)
+    expected = Decimal(max(face, paid) if face is not None else paid)
     assert sum(card.value for card in cards) == expected
     assert len(cards) == (1 if expected else 0)
 
@@ -229,3 +229,47 @@ def test_parent_cancellation_accounts_for_giftcard_addon(gift_order, redeemed):
         manager.commit(check_quotas=False)
         assert card.value == 50
         assert position.issued_gift_cards.count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('redeemed', [0, 10])
+def test_legacy_canceled_addon_is_not_credited_again(gift_order, redeemed):
+    event, order, position = gift_order
+    product = Product.objects.create(event=event, name='Parent', default_price=0)
+    parent = OrderPosition.objects.create(order=order, product=product, price=0, canceled=True)
+    OrderPosition.objects.create(order=order, product=product, price=0)
+    position.addon_to = parent
+    position.canceled = True
+    position.save()
+    card = event.organizer.issued_gift_cards.create(currency=event.currency, issued_in=position)
+    card.transactions.create(value=25, order=order)
+    if redeemed:
+        card.transactions.create(value=-redeemed)
+    manager = OrderChangeManager(order)
+    manager.reinstate(parent)
+    manager.commit(check_quotas=False)
+    assert card.value == 25 - redeemed
+    position.refresh_from_db()
+    assert not position.canceled
+
+
+@pytest.mark.django_db
+def test_signal_establishes_event_scope(gift_order):
+    event, order, position = gift_order
+    with scope(event=None, organizer=None):
+        signal_listener_issue_giftcards(event, order)
+    assert position.issued_gift_cards.get().value == 50
+
+
+@pytest.mark.django_db
+def test_prefetched_card_balances_do_not_query(gift_order, django_assert_num_queries):
+    event, order, position = gift_order
+    signal_listener_issue_giftcards(event, order)
+    card = position.issued_gift_cards.get()
+    initial = card.transactions.get()
+    redemption = card.transactions.create(value=-10)
+    card.transactions.filter(pk=redemption.pk).update(datetime=initial.datetime)
+    card = position.issued_gift_cards.prefetch_related('transactions').get()
+    with django_assert_num_queries(0):
+        assert card.issued_value == 50
+        assert card.value == 40
