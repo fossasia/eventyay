@@ -2,7 +2,7 @@ from rest_framework import exceptions
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
-from eventyay.mail.context import get_invalid_placeholders
+from eventyay.mail.context import get_invalid_placeholders, get_malformed_placeholders
 from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
 
 
@@ -45,14 +45,14 @@ class MailTemplateSerializer(PretalxSerializer):
             if role and role != template.role:
                 template = MailTemplate(event=self.event, role=role)
             valid_placeholders = template.valid_placeholders
-        try:
-            fields = get_invalid_placeholders(value, valid_placeholders)
-        except Exception:
+        malformed = get_malformed_placeholders(value, valid_placeholders)
+        if malformed:
             raise exceptions.ValidationError(
-                "Invalid email template! "
-                "Please check that you don’t have stray { or } somewhere, "
-                "and that there are no spaces inside the {} blocks."
+                "Invalid placeholder syntax: " + ", ".join(malformed) + ". "
+                "Write placeholders without spaces inside the braces, for example {event_name}. "
+                "To show braces as text, write {{ and }}."
             )
+        fields = get_invalid_placeholders(value, valid_placeholders)
         if fields:
             fields = ", ".join("{" + field + "}" for field in fields)
             raise exceptions.ValidationError(f"Unknown placeholder! {fields}")

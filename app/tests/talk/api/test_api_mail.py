@@ -170,7 +170,7 @@ def test_orga_can_update_mail_templates(
 
 @pytest.mark.parametrize("field", ("text", "subject"))
 @pytest.mark.parametrize(
-    "value", ("test {invalidplaceholder}", "{invalid placeholder}")
+    "value", ("test {invalidplaceholder}", "{ event_name }", "test {event_name")
 )
 @pytest.mark.django_db
 def test_orga_update_mail_template_invalid_placeholder(

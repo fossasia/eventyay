@@ -53,6 +53,13 @@ def find_placeholders(template: str) -> list[str]:
     return [match.group().replace('\\_', '_') for match in TEMPLATE_TOKEN.finditer(template) if is_placeholder(match)]
 
 
+def find_placeholder_names(template: str) -> list[str]:
+    """Return the names of the ``{placeholder}`` slots ``escape_stray_braces`` keeps."""
+    return [
+        match.group('name').replace('\\_', '_') for match in TEMPLATE_TOKEN.finditer(template) if is_placeholder(match)
+    ]
+
+
 def find_malformed_placeholders(template: str, names) -> list[str]:
     """Return brace groups that look like a mistyped ``{placeholder}`` for one of ``names``.
 

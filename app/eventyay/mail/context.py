@@ -1,5 +1,3 @@
-import string
-
 from django.dispatch import receiver
 from django.template.defaultfilters import date as _date
 from django.utils.timezone import now
@@ -7,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 
 from eventyay.helpers.formats.variants import get_notification_date_format
+from eventyay.helpers.placeholders import find_malformed_placeholders, find_placeholder_names
 from eventyay.schedule.notifications import (
     get_current_notifications,
     get_full_notifications,
@@ -45,10 +44,11 @@ def get_available_placeholders(event, kwargs):
 
 
 def get_used_placeholders(text):
+    # Braces that are not a {placeholder} slot are plain text, see escape_stray_braces().
     if not text:
         return set()
     if isinstance(text, str):
-        return {element[1].replace('\\_', '_') for element in string.Formatter().parse(text) if element[1]}
+        return set(find_placeholder_names(text))
     if getattr(text, 'data', None):
         return get_used_placeholders(text.data)
     if isinstance(text, dict):
@@ -61,6 +61,22 @@ def get_used_placeholders(text):
 
 def get_invalid_placeholders(text, valid_placeholders):
     return get_used_placeholders(text) - set(valid_placeholders)
+
+
+def get_malformed_placeholders(text, valid_placeholders):
+    """Mistyped placeholders such as ``{ event_name }`` that would otherwise be sent as plain text."""
+    if not text:
+        return []
+    if isinstance(text, str):
+        return find_malformed_placeholders(text, set(valid_placeholders))
+    if getattr(text, 'data', None):
+        return get_malformed_placeholders(text.data, valid_placeholders)
+    if isinstance(text, dict):
+        malformed = []
+        for lang in text.values():
+            malformed += get_malformed_placeholders(lang, valid_placeholders)
+        return malformed
+    return []
 
 
 def get_all_reviews(submission):

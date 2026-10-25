@@ -39,12 +39,19 @@ def request_preview(client, event, endpoint, text):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('endpoint', ['talk', 'tickets'])
 @pytest.mark.parametrize('text', ['See you there :}', 'See you there {', '{"talk": "x"}'])
-def test_invalid_template_returns_validation_error(preview_client, event, endpoint, text):
-    response = request_preview(preview_client, event, endpoint, text)
+def test_invalid_template_returns_validation_error(preview_client, event, text):
+    response = request_preview(preview_client, event, 'tickets', text)
     assert response.status_code == 400
     assert 'stray { or }' in response.json()['error']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('text', ['See you there :}', 'See you there {', '{"talk": "x"}'])
+def test_talk_preview_renders_stray_braces_as_text(preview_client, event, text):
+    response = request_preview(preview_client, event, 'talk', text)
+    assert response.status_code == 200
+    assert f'<p>{text}</p>' in response.json()['html']
 
 
 @pytest.mark.django_db
