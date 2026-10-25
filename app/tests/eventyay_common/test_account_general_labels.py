@@ -1,6 +1,5 @@
-import re
-
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from eventyay.base.models import User
@@ -22,7 +21,11 @@ def test_account_general_static_headings_are_not_labels(client, heading):
 
     response = client.get(reverse('eventyay_common:account.general'))
     assert response.status_code == 200
-    html = response.content.decode('utf-8')
+    doc = BeautifulSoup(response.content, 'lxml')
 
-    assert f"<div class='col-md-3 control-label'>{heading}</div>" in html
-    assert not re.search(rf'<label[^>]*>\s*{re.escape(heading)}\s*</label>', html)
+    assert not [label for label in doc.find_all('label') if heading in label.get_text(strip=True)]
+    assert [
+        div
+        for div in doc.find_all('div', class_='col-md-3')
+        if 'control-label' in div.get('class', []) and div.get_text(strip=True) == heading
+    ]
