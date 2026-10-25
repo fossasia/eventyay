@@ -184,7 +184,19 @@ function createSessionVideoRowList({
         clearButton.dataset.sessionVideoBound = 'true'
         clearButton.addEventListener('click', (event) => {
             event.preventDefault()
-            clearAll()
+            const confirmMessage = clearButton.getAttribute('data-confirm')
+            if (!confirmMessage || getValues().length === 0) {
+                clearAll()
+                return
+            }
+            const confirmClear = typeof window.showOrgaConfirmDialog === 'function'
+                ? window.showOrgaConfirmDialog
+                : (message) => Promise.resolve(window.confirm(message))
+            confirmClear(confirmMessage).then((confirmed) => {
+                if (confirmed) {
+                    clearAll()
+                }
+            })
         })
     }
 

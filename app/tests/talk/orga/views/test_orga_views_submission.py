@@ -940,6 +940,7 @@ def test_orga_session_videos_render_as_labeled_links(orga_client, event, submiss
     assert 'data-session-video-formset' in edit.text
     assert 'data-session-video-add' in edit.text
     assert 'data-session-video-clear' in edit.text
+    assert 'data-confirm=' in edit.text
     live_rows = edit.text.split('<template data-session-video-empty-row>', 1)[0]
     assert live_rows.count('name="session_video_urls"') == 3
     assert 'fa-trash' in live_rows
@@ -1077,6 +1078,8 @@ def test_orga_can_set_submission_video_from_list(orga_client, event, submission)
     assert list_response.status_code == 200
     assert "submission-video-btn" in list_response.text
     assert "submission-video-dialog" in list_response.text
+    assert 'id="submission-video-clear"' in list_response.text
+    assert "data-confirm=" in list_response.text
 
     response = orga_client.post(
         submission.orga_urls.video_link,
