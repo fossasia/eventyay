@@ -41,86 +41,6 @@
             {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=form.date_from date_to_form=form.date_to timezone_form=sform.timezone show_timezone_display=True %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
-            <div class="form-group">
-                <label class="col-md-3 control-label">
-                    {% translate "Header links" %}
-                </label>
-                <div class="col-md-9">
-                    <div class="help-block text-muted">
-                        {% blocktranslate trimmed %}
-                        These links will be shown at the top of all your schedule-related pages, e.g.
-                        the schedule itself, speaker pages, session pages, etc.
-                        You could for example link to your home page, your registration page, or your
-                        livestream here.
-                        {% endblocktranslate %}
-                    </div>
-                    {% include "orga/includes/event_links_formset.html" with formset=header_links_formset %}
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-md-3 control-label">
-                    {% translate "Footer links" %}
-                </label>
-                <div class="col-md-9">
-                    <div class="help-block text-muted">
-                        {% blocktranslate trimmed %}
-                        These links will be shown in the footer of all your public pages. You could
-                        for example link your terms of service, imprint, or privacy policy here.
-                        {% endblocktranslate %}
-                    </div>
-                    {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-md-3 control-label" for="{{ sform.contact_form_enabled.id_for_label }}">
-                    <strong>{% translate "Contact Organizer" %}</strong>
-                </label>
-                <div class="col-md-9">
-                    <div class="checkbox">
-                        <label for="{{ sform.contact_form_enabled.id_for_label }}">
-                            {{ sform.contact_form_enabled }}
-                            {{ sform.contact_form_enabled.label }}
-                        </label>
-                    </div>
-                    {% if sform.contact_form_enabled.help_text %}
-                        <div id="{{ sform.contact_form_enabled.auto_id }}_helptext" class="help-block text-muted">
-                            {{ sform.contact_form_enabled.help_text }}
-                        </div>
-                    {% endif %}
-                    {% if sform.contact_form_enabled.errors %}
-                        <div class="help-block text-danger">
-                            {% for error in sform.contact_form_enabled.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <div id="contact-form-email-fields"
-                         class="settings-footer-contact-fields{% if sform.contact_mail.errors %} has-error{% endif %}">
-                        <label class="control-label" for="{{ sform.contact_mail.id_for_label }}">
-                            {% translate "Organizer email address" %}
-                        </label>
-                        <input type="email"
-                               name="{{ sform.contact_mail.html_name }}"
-                               value="{{ sform.contact_mail.value|default:'' }}"
-                               class="form-control"
-                               id="{{ sform.contact_mail.id_for_label }}"
-                               {% if sform.contact_mail.field.disabled %}disabled{% endif %}>
-                        {% if sform.contact_mail.help_text %}
-                            <p class="help-block text-muted">{{ sform.contact_mail.help_text }}</p>
-                        {% endif %}
-                        {% if sform.contact_mail.errors %}
-                            <div class="help-block text-danger">
-                                {% for error in sform.contact_mail.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
             {% comment %}
             <div class="setting-part">
                 <div class="form-group setting-form">
@@ -222,12 +142,90 @@
             {% bootstrap_field sform.region layout="control" %}
         </fieldset>
         <fieldset>
-            <legend>{{ _('Texts') }}</legend>
+            <legend>{% trans 'Menus & Texts' %}</legend>
             {% bootstrap_field sform.frontpage_text layout="control" %}
             {% bootstrap_field sform.banner_text layout="control" %}
             {% bootstrap_field sform.banner_text_bottom layout="control" %}
             {% bootstrap_field sform.menu_label_tickets layout="control" %}
             {% bootstrap_field sform.menu_label_join_video layout="control" %}
+
+            <h3>{% translate 'Menus' %}</h3>
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {% translate "Header links" %}
+                </label>
+                <div class="col-md-9">
+                    <div class="help-block text-muted">
+                        {% blocktranslate trimmed %}
+                        These links will be shown in the header menu of all your public pages.
+                        {% endblocktranslate %}
+                    </div>
+                    {% include "orga/includes/event_links_formset.html" with formset=header_links_formset %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {% translate "Footer links" %}
+                </label>
+                <div class="col-md-9">
+                    <div class="help-block text-muted">
+                        {% blocktranslate trimmed %}
+                        These links will be shown in the footer of all your public pages.
+                        {% endblocktranslate %}
+                    </div>
+                    {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label" for="{{ sform.contact_form_enabled.id_for_label }}">
+                    <strong>{% translate "Contact Organizer" %}</strong>
+                </label>
+                <div class="col-md-9">
+                    <div class="checkbox">
+                        <label for="{{ sform.contact_form_enabled.id_for_label }}">
+                            {{ sform.contact_form_enabled }}
+                            {{ sform.contact_form_enabled.label }}
+                        </label>
+                    </div>
+                    {% if sform.contact_form_enabled.help_text %}
+                        <div id="{{ sform.contact_form_enabled.auto_id }}_helptext" class="help-block text-muted">
+                            {{ sform.contact_form_enabled.help_text }}
+                        </div>
+                    {% endif %}
+                    {% if sform.contact_form_enabled.errors %}
+                        <div class="help-block text-danger">
+                            {% for error in sform.contact_form_enabled.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div id="contact-form-email-fields"
+                         class="settings-footer-contact-fields{% if sform.contact_mail.errors %} has-error{% endif %}">
+                        <label class="control-label" for="{{ sform.contact_mail.id_for_label }}">
+                            {% translate "Organizer email address" %}
+                        </label>
+                        <input type="email"
+                               name="{{ sform.contact_mail.html_name }}"
+                               value="{{ sform.contact_mail.value|default:'' }}"
+                               class="form-control"
+                               id="{{ sform.contact_mail.id_for_label }}"
+                               {% if sform.contact_mail.field.disabled %}disabled{% endif %}>
+                        {% if sform.contact_mail.help_text %}
+                            <p class="help-block text-muted">{{ sform.contact_mail.help_text }}</p>
+                        {% endif %}
+                        {% if sform.contact_mail.errors %}
+                            <div class="help-block text-danger">
+                                {% for error in sform.contact_mail.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </fieldset>
         <fieldset>
             <legend>{{ _('Design') }}</legend>
