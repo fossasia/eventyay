@@ -2,7 +2,6 @@
 const BASE_PATH_ID = 'base_path';
 const ORGANIZER_NAME_ID = 'organizer_name';
 const EVENT_SLUG_ID = 'event_slug';
-const EVENT_PK_ID = 'event_pk';
 const SHOW_ORGANIZER_AREA_ID = 'show_organizer_area';
 
 $(function () {
@@ -40,7 +39,7 @@ $(function () {
         </div>
         <div class="options">
           <a href="${basePath}/common/orders/" target="_self" class="btn btn-outline-success">
-            <i class="fa fa-shopping-cart"></i> ${window.gettext('My Orders')}
+            <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
           </a>
         </div>
       </div>`,
@@ -59,7 +58,6 @@ $(function () {
   const basePathDefinition = document.getElementById(BASE_PATH_ID);
   const orgNameDefinition = document.getElementById(ORGANIZER_NAME_ID);
   const eventSlugDefinition = document.getElementById(EVENT_SLUG_ID);
-  const eventPkDefinition = document.getElementById(EVENT_PK_ID);
   const showOrganizerAreaDefinition = document.getElementById(SHOW_ORGANIZER_AREA_ID);
   let basePath = '';
   if (basePathDefinition) {
@@ -80,12 +78,6 @@ $(function () {
     eventSlug = JSON.parse(eventSlugDefinition.textContent);
   } else {
     console.warn(`JSON element to define ${EVENT_SLUG_ID} is missing!`)
-  }
-  let eventPk = '';
-  if (eventPkDefinition) {
-    eventPk = JSON.parse(eventPkDefinition.textContent);
-  } else {
-    console.warn(`JSON element to define ${EVENT_PK_ID} is missing!`)
   }
   let showOrganizerArea = false;
   if (showOrganizerAreaDefinition) {
@@ -117,7 +109,6 @@ $(function () {
 
   const profilePath = '/common/account/';
   const orderPath = '/common/orders/';
-  const ticketPath = eventPk !== '' ? `${orderPath}?event=${encodeURIComponent(eventPk)}` : orderPath;
   const dashboardPath = '/common/';
 
   const blocks = [
@@ -137,11 +128,6 @@ $(function () {
           <a href="${basePath}${orderPath}" target="_self" class="btn btn-outline-success">
               <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
           </a>
-      </div>
-      <div class="profile-menu">
-          <a href="${basePath}${ticketPath}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-ticket"></i> ${window.gettext('My tickets')}
-          </a>
       </div>`
   ];
 
@@ -160,7 +146,7 @@ $(function () {
       </div>
       <div class="profile-menu">
           <a href="${basePath}/${organizerName}/${eventSlug}/me/mails/" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-envelope"></i> ${window.gettext('Speaker Emails')}
+              <i class="fa fa-envelope"></i> ${window.gettext('Speaker emails')}
           </a>
       </div>`
     );

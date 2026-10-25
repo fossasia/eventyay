@@ -13,8 +13,9 @@
 	VideoCallFrame(v-else-if="call", ref="channelCallFrame", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}-${playerEpoch}`", @close="$emit('close')", @leave="$emit('leave', null)")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
-	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-card(v-if="iframeOffline")
+	.iframe-error(v-if="!shouldUseLivestream && !iframeEl && !consentBlockedUrl && (scheduleAwaitingStream || iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
+		bunt-progress-circular(v-if="scheduleAwaitingStream", size="large")
+		.offline-card(v-else-if="iframeOffline")
 			.mdi.mdi-video-off-outline
 			.offline-title {{ $t('Stream offline') }}
 			.offline-subtitle {{ $t('The livestream is currently not broadcasting.') }}
@@ -211,14 +212,16 @@ const isScheduleDrivenStage = computed(() =>
 const shouldUseLivestream = computed(() => {
 	if (isRoomDisabled.value) return false;
 	if (!props.room || !module.value) return false;
-	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
-
-	if (streamType) {
-		return streamType === STREAM_TYPE_HLS;
+	if (isScheduleDrivenStage.value) {
+		return props.room?.currentStream?.stream_type === STREAM_TYPE_HLS;
 	}
 
 	return module.value.type === 'livestream.native';
 });
+
+const scheduleAwaitingStream = computed(() => (
+	isScheduleDrivenStage.value && props.room?.currentStream === undefined
+));
 
 // When stream schedules are enabled, the backend returns 404 (mapped to null) if
 // no stream is currently active. For iframe-based streams we show a full-size
@@ -234,6 +237,7 @@ const iframeOffline = computed(() => {
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
+	if (isScheduleDriven && !currentStream?.url) return true;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
 	const isVimeo = streamType === STREAM_TYPE_VIMEO || moduleType === 'livestream.vimeo';
 
