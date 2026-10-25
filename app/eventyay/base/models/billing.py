@@ -57,6 +57,7 @@ class BillingInvoice(LoggedModel):
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.CharField(max_length=50)
 
+    last_retry_datetime = models.DateTimeField(null=True, blank=True)
     last_reminder_datetime = models.DateTimeField(null=True, blank=True)
     next_reminder_datetime = models.DateTimeField(null=True, blank=True)
     reminder_schedule = ArrayField(
@@ -77,7 +78,7 @@ class BillingInvoice(LoggedModel):
 
     @property
     def due_date(self):
-        return self.created_at + relativedelta(months=1)
+        return self.created_at + relativedelta(months=1) if self.created_at else None
 
 
 class BillingInvoiceEmail(models.Model):

@@ -1,12 +1,15 @@
+import binascii
 import csv
 import datetime
 from decimal import Decimal
 from io import BytesIO, StringIO
+from smtplib import SMTPException
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from celery.exceptions import Retry
 from django.core.exceptions import ValidationError
+from django.core.mail import BadHeaderError
 from django.db import DatabaseError, connection
 from django.test import Client, RequestFactory, override_settings
 from django.utils.timezone import now
@@ -184,7 +187,7 @@ class AdminSalesTest(SoupTest):
         url = f'/admin/sales/invoices/{self.invoice.pk}/status/'
         self.assertEqual(self.client.get(url).status_code, 405)
         self.assertEqual(self.client.post(url, {'status': 'invalid'}).status_code, 400)
-        self.assertEqual(self.client.post(url, {'status': 'p', 'previous_status': 'wrong'}).status_code, 409)
+        self.assertEqual(self.client.post(url, {'status': 'p', 'previous_status': 'wrong'}).status_code, 302)
         response = self.client.post(url, {'status': 'p', 'previous_status': 'n'})
         self.assertEqual(response.status_code, 302)
         self.invoice.refresh_from_db()
@@ -195,7 +198,7 @@ class AdminSalesTest(SoupTest):
         log = LogEntry.objects.get(action_type='eventyay.billing.invoice.status_changed')
         self.assertEqual(log.user, self.admin)
         self.assertEqual(log.parsed_data, {'old_status': 'n', 'new_status': 'p'})
-        self.assertEqual(self.client.post(url, {'status': 'r', 'previous_status': 'n'}).status_code, 409)
+        self.assertEqual(self.client.post(url, {'status': 'r', 'previous_status': 'n'}).status_code, 302)
 
     def test_payment_fallback_and_missing_invoice(self):
         response = self.client.get(f'/admin/sales/invoices/{self.invoice.pk}/payment/')
@@ -321,7 +324,12 @@ class AdminSalesTest(SoupTest):
 
     @scopes_disabled()
     def test_failed_billing_email_does_not_block_later_outbox_entries(self):
-        for index, error in enumerate((SendMailException('bad recipient', already_logged=True), Retry('later'))):
+        errors = (
+            SendMailException('bad recipient', already_logged=True), Retry('later'),
+            SMTPException('transport'), TimeoutError('timeout'), ConnectionResetError('reset'),
+            BadHeaderError('header'), binascii.Error('encoding'),
+        )
+        for index, error in enumerate(errors):
             with self.subTest(error=type(error).__name__):
                 failed = BillingInvoiceEmail.objects.create(
                     invoice=self.invoice,
@@ -445,3 +453,57 @@ class AdminSalesTest(SoupTest):
         with patch('eventyay.eventyay_common.tasks.process_auto_billing_charge_stripe') as charge:
             process_auto_billing_charge()
         charge.assert_not_called()
+
+    def test_unsaved_invoice_has_no_due_date(self):
+        self.assertIsNone(BillingInvoice().due_date)
+
+    @scopes_disabled()
+    def test_manual_unpaid_status_clears_payment_date(self):
+        for status in ('n', 'e', 'c', 'f', 's', 'g', 'r'):
+            with self.subTest(status=status):
+                paid_at = now()
+                self.invoice.status = 'p'
+                self.invoice.paid_datetime = paid_at
+                self.invoice.save()
+                response = self.client.post(
+                    f'/admin/sales/invoices/{self.invoice.pk}/status/',
+                    {'status': status, 'previous_status': 'p'},
+                )
+                self.assertEqual(response.status_code, 302)
+                self.invoice.refresh_from_db()
+                self.assertEqual(self.invoice.paid_datetime, paid_at if status in ('g', 'r') else None)
+
+    @scopes_disabled()
+    def test_stale_status_returns_to_overview_with_warning(self):
+        response = self.client.post(
+            f'/admin/sales/invoices/{self.invoice.pk}/status/',
+            {'status': 'p', 'previous_status': 'wrong'}, follow=True,
+        )
+        self.assertContains(response, 'Please review its current status')
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, 'n')
+        self.assertFalse(LogEntry.objects.filter(action_type='eventyay.billing.invoice.status_changed').exists())
+
+    @scopes_disabled()
+    def test_exhausted_billing_email_is_not_retried(self):
+        BillingInvoiceEmail.objects.create(
+            invoice=self.invoice, delivery_key='exhausted', recipient='bad@example.com',
+            subject='Invoice', body='Invoice', pdf_base64='cGRm', pdf_filename='invoice.pdf',
+            failed_attempts=5, last_attempt_at=now() - datetime.timedelta(days=1),
+        )
+        with patch('eventyay.base.services.mail.mail_send_task.run') as send:
+            process_scheduled_emails.__wrapped__(sender=None)
+        send.assert_not_called()
+
+    @scopes_disabled()
+    def test_payment_retry_is_independent_of_reminders_and_runs_once(self):
+        self.invoice.reminder_schedule = [1]
+        self.invoice.last_reminder_datetime = now()
+        self.invoice.stripe_payment_intent_id = 'pi_retry'
+        self.invoice.save()
+        with patch('eventyay.eventyay_common.tasks.retry_payment') as retry:
+            retry_failed_payment()
+            retry_failed_payment()
+        retry.assert_called_once_with(payment_intent_id='pi_retry', organizer_id=self.organizer.pk)
+        self.invoice.refresh_from_db()
+        self.assertIsNotNone(self.invoice.last_retry_datetime)

@@ -185,12 +185,16 @@ class InvoiceStatusUpdate(AdministratorPermissionRequiredMixin, View):
         with transaction.atomic(), scope(event=invoice.event, organizer=invoice.organizer):
             invoice = BillingInvoice.objects.select_for_update().get(pk=pk)
             if request.POST.get('previous_status') != invoice.status:
-                return HttpResponse(_('The invoice changed. Reload the page and try again.'), status=409)
+                messages.warning(request, _('The invoice changed. Please review its current status and try again.'))
+                return redirect('eventyay_admin:admin.sales.invoices')
             if status != invoice.status:
                 previous_status = invoice.status
                 invoice.status = status
                 invoice.updated_by = request.user.email[:50]
-                invoice.paid_datetime = now() if status == BillingInvoice.STATUS_PAID else invoice.paid_datetime
+                if status == BillingInvoice.STATUS_PAID:
+                    invoice.paid_datetime = now()
+                elif status not in (BillingInvoice.STATUS_REFUNDING, BillingInvoice.STATUS_REFUNDED):
+                    invoice.paid_datetime = None
                 invoice.reminder_enabled = False
                 invoice.automatic_payment_enabled = False
                 invoice.save(

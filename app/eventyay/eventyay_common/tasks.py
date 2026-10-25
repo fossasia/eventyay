@@ -505,13 +505,17 @@ def retry_failed_payment(self):
             if reminder_date is None:
                 continue
             if (
-                not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
+                not invoice.last_retry_datetime or invoice.last_retry_datetime < reminder_date
             ) and reminder_date <= today:
                 with transaction.atomic():
                     current_invoice = BillingInvoice.objects.select_for_update().get(pk=invoice.pk)
                     if (
                         current_invoice.status != BillingInvoice.STATUS_PENDING
                         or not current_invoice.automatic_payment_enabled
+                        or (
+                            current_invoice.last_retry_datetime
+                            and current_invoice.last_retry_datetime >= reminder_date
+                        )
                         or current_invoice.stripe_payment_intent_id != invoice.stripe_payment_intent_id
                     ):
                         break
@@ -519,6 +523,8 @@ def retry_failed_payment(self):
                         payment_intent_id=current_invoice.stripe_payment_intent_id,
                         organizer_id=current_invoice.organizer_id,
                     )
+                    current_invoice.last_retry_datetime = today
+                    current_invoice.save(update_fields=['last_retry_datetime'])
                     logger.info('Payment is retried for event %s', current_invoice.event.name)
 
                 break

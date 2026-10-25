@@ -1,7 +1,9 @@
+import binascii
 import logging
 import uuid
 from datetime import timedelta
 from functools import wraps
+from smtplib import SMTPException
 from typing import Any, Callable
 
 import django.dispatch
@@ -9,6 +11,7 @@ from celery.exceptions import Retry
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
+from django.core.mail import BadHeaderError
 from django.db import transaction
 from django.db.models import Q
 from django.dispatch import receiver
@@ -18,8 +21,9 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import BillingInvoice, BillingInvoiceEmail, Event
 from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
-from eventyay.base.signals import resolve_app_for_module, check_plugin_active
+from eventyay.base.signals import check_plugin_active, resolve_app_for_module
 from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE
+
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +286,7 @@ def process_scheduled_emails(sender, **kwargs):
         with transaction.atomic():
             candidate = (
                 BillingInvoiceEmail.objects
-                .filter(sent_at__isnull=True)
+                .filter(sent_at__isnull=True, failed_attempts__lt=5)
                 .filter(Q(last_attempt_at__isnull=True) | Q(last_attempt_at__lte=now() - timedelta(minutes=15)))
                 .exclude(pk__in=processed_billing_mail_ids)
                 .order_by('pk')
@@ -304,7 +308,7 @@ def process_scheduled_emails(sender, **kwargs):
                     continue
             billing_mail = (
                 BillingInvoiceEmail.objects.select_for_update(skip_locked=True)
-                .filter(pk=candidate['pk'], sent_at__isnull=True)
+                .filter(pk=candidate['pk'], sent_at__isnull=True, failed_attempts__lt=5)
                 .filter(Q(last_attempt_at__isnull=True) | Q(last_attempt_at__lte=now() - timedelta(minutes=15)))
                 .first()
             )
@@ -323,7 +327,9 @@ def process_scheduled_emails(sender, **kwargs):
                     attach_file_base64=billing_mail.pdf_base64,
                     attach_file_name=billing_mail.pdf_filename,
                 )
-            except (BillingMailSendException, Retry):
+            except (
+                BillingMailSendException, Retry, SMTPException, OSError, BadHeaderError, binascii.Error, UnicodeError,
+            ):
                 logger.exception('Unable to send billing invoice email %s', billing_mail.pk)
                 billing_mail.failed_attempts += 1
                 billing_mail.last_attempt_at = now()
