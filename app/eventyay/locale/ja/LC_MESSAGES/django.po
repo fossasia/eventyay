@@ -14770,7 +14770,7 @@ msgstr "私の提案"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "登壇者のメールアドレス"
 
 #: eventyay/common/templates/common/base.html:189

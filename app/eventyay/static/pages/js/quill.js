@@ -10241,7 +10241,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          if (fileInput == null) {
 	            fileInput = document.createElement('input');
 	            fileInput.setAttribute('type', 'file');
-	            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon, image/svg+xml');
+	            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/webp, image/bmp, image/x-icon, image/svg+xml');
 	            fileInput.classList.add('ql-image');
 	            fileInput.addEventListener('change', function () {
 	              if (fileInput.files != null && fileInput.files[0] != null) {

@@ -116,6 +116,8 @@ for _p in ('bbb', 'jitsi', 'janus', 'loungemesh', 'zoom'):
     settings_hierarkey.add_default(f'video_provider_{_p}_organizer', True, bool)
     settings_hierarkey.add_default(f'video_provider_{_p}_attendee', True, bool)
 
+settings_hierarkey.add_default('video_max_connections_per_user', 0, int)
+
 SUPPORTED_VIDEO_PROVIDERS = ('bbb', 'jitsi', 'janus', 'loungemesh', 'zoom')
 
 MODULE_TYPE_TO_PROVIDER = {
