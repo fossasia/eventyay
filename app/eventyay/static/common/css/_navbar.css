@@ -239,12 +239,12 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 }
 
 .navbar-top-links.navbar-right {
-  float: inline-end !important;
+  float: inline-end;
   margin-inline-end: 2px;
 }
 
 .navbar-top-links.navbar-left {
-  float: inline-start !important;
+  float: inline-start;
 }
 
 .navbar-top-links li {
