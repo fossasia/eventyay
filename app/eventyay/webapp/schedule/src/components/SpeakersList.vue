@@ -1126,6 +1126,7 @@ export default {
 						font-weight: 500
 						line-height: 1.3
 						height: calc(20px * 1.3)
+						min-height: calc(20px * 1.3)
 						overflow: hidden
 					.speaker-role-caption
 						margin: 3px 0 0
@@ -1133,6 +1134,7 @@ export default {
 						font-size: 14px
 						line-height: 1.3
 						height: calc(14px * 1.3)
+						min-height: calc(14px * 1.3)
 						overflow: hidden
 					.speaker-clamp
 						display: block
