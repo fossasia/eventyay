@@ -13,7 +13,7 @@
                     No gates created yet. Create a new gate to view it here.
                 {% endblocktrans %}
             </p>
-            <a href="{% url "eventyay_common:organizer.gates.add" organizer=request.organizer.slug %}"
+            <a href="{% url 'eventyay_common:organizer.gates.add' organizer=request.organizer.slug %}"
                class="btn btn-primary btn-lg">
                 <span class="fa fa-plus"></span>
                 {% trans "Create a new gate" %}
@@ -21,7 +21,7 @@
         </div>
     {% else %}
         <p>
-            <a href="{% url "eventyay_common:organizer.gates.add" organizer=request.organizer.slug %}" class="btn btn-default">
+            <a href="{% url 'eventyay_common:organizer.gates.add' organizer=request.organizer.slug %}" class="btn btn-default">
                 <span class="fa fa-plus"></span>
                 {% trans "Create a new gate" %}
             </a>
@@ -38,14 +38,14 @@
                 {% for g in gates %}
                     <tr>
                         <td><strong>
-                            <a href="{% url "eventyay_common:organizer.gates.edit" organizer=request.organizer.slug gate=g.id %}">
+                            <a href="{% url 'eventyay_common:organizer.gates.edit' organizer=request.organizer.slug gate=g.id %}">
                                 {{ g.name }}
                             </a>
                         </strong></td>
                         <td class="text-right flip">
-                            <a href="{% url "eventyay_common:organizer.gates.edit" organizer=request.organizer.slug gate=g.id %}"
+                            <a href="{% url 'eventyay_common:organizer.gates.edit' organizer=request.organizer.slug gate=g.id %}"
                                     class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
-                            <a href="{% url "eventyay_common:organizer.gates.delete" organizer=request.organizer.slug gate=g.id %}"
+                            <a href="{% url 'eventyay_common:organizer.gates.delete' organizer=request.organizer.slug gate=g.id %}"
                                     class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
                         </td>
                     </tr>
