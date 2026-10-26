@@ -26,6 +26,7 @@ def test_password_reset_token_is_not_logged(user, caplog):
     finally:
         eventyay_logger.removeHandler(caplog.handler)
 
+    assert len(djmail.outbox) == 1
     assert 'synthetic-reset-token' in djmail.outbox[0].body
     assert 'synthetic-reset-token' not in caplog.text
 
