@@ -498,6 +498,15 @@ body:has(.td-dashboard) #page-content {
   align-items: center;
   gap: 5px
 }
+.td-action-desc.td-action-desc-full {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  overflow-wrap: anywhere
+}
+.td-action-form {
+  margin: auto 0 0
+}
 .td-quick-section {
   display: flex;
   align-items: center;
