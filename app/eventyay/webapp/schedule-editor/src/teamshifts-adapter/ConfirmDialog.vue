@@ -1,22 +1,22 @@
 <template lang="pug">
 .ts-confirm-overlay(v-if="visible", @click="cancel")
-  .ts-confirm-panel(@click.stop="")
+  .ts-confirm-panel(@click.stop="", role="dialog", aria-modal="true", aria-labelledby="confirm-dialog-title")
     .ts-confirm-header
-      h3 {{ title }}
-      button.modal-close-btn(type="button", :aria-label="$t('Close')", @click="cancel")
+      h3#confirm-dialog-title {{ title }}
+      button.modal-close-btn(type="button", :aria-label="$t('Close')", :disabled="busy", @click="cancel")
         i.fa.fa-times(aria-hidden="true")
     p.ts-confirm-lead(v-if="lead") {{ lead }}
     p.ts-confirm-error(v-if="error") {{ error }}
     .ts-confirm-actions
-      button.btn.btn-default(type="button", :disabled="busy", @click="cancel") {{ $t('Cancel') }}
+      button.btn.btn-default(ref="cancelBtnRef", type="button", :disabled="busy", @click="cancel") {{ $t('Cancel') }}
       button.btn(:class="confirmClass || 'btn-primary'", type="button", :disabled="busy", @click="$emit('confirm')")
         | {{ confirmLabel || $t('Confirm') }}
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, nextTick, onBeforeUnmount } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   title: string
   lead?: string
   confirmLabel?: string
@@ -31,19 +31,37 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
+const cancelBtnRef = ref<HTMLButtonElement | null>(null)
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && visible.value && !props.busy) {
+    event.stopPropagation()
+    cancel()
+  }
+}
 
 function show() {
   visible.value = true
+  window.addEventListener('keydown', onKeydown)
+  nextTick(() => {
+    cancelBtnRef.value?.focus()
+  })
 }
 
 function close() {
   visible.value = false
+  window.removeEventListener('keydown', onKeydown)
 }
 
 function cancel() {
+  if (props.busy) return
   close()
   emit('cancel')
 }
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown)
+})
 
 defineExpose({ show, close })
 </script>
