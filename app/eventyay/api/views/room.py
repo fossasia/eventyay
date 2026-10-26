@@ -27,6 +27,7 @@ from eventyay.base.services.room import (
     NEXT_STREAM_HTTP_MAX_AGE,
     get_cached_current_stream_data,
     get_cached_next_stream_data,
+    stream_http_max_age,
 )
 
 
@@ -60,13 +61,16 @@ def stream_http_response(request, data, *, max_age):
             response,
             max_age=max_age,
             public=True,
-            stale_while_revalidate=60,
         )
     return response
 
 
 def current_stream_http_response(request, data):
-    return stream_http_response(request, data, max_age=CURRENT_STREAM_HTTP_MAX_AGE)
+    return stream_http_response(
+        request,
+        data,
+        max_age=stream_http_max_age(data, CURRENT_STREAM_HTTP_MAX_AGE, 'end_time'),
+    )
 
 
 class RoomPagination(pagination.LimitOffsetPagination):
@@ -179,4 +183,8 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     def next_stream(self, request, pk=None, **kwargs):
         room = self.get_object()
         data = get_cached_next_stream_data(room)
-        return stream_http_response(request, data, max_age=NEXT_STREAM_HTTP_MAX_AGE)
+        return stream_http_response(
+            request,
+            data,
+            max_age=stream_http_max_age(data, NEXT_STREAM_HTTP_MAX_AGE, 'start_time'),
+        )
