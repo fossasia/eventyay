@@ -46,8 +46,10 @@ class ServiceUpdate(AdministratorPermissionRequiredMixin, ServiceFormMixin, Upda
     def form_valid(self, form):
         # A plain save() falls back to an INSERT when its UPDATE matches no row,
         # which would bring back a service deleted while this form was open.
+        # The savepoint keeps the failed save from poisoning the outer transaction.
         try:
-            form.instance.save(force_update=True)
+            with transaction.atomic():
+                form.instance.save(force_update=True)
         except ThirdPartyService.NotUpdated:
             messages.error(self.request, _('This service has been deleted in the meantime.'))
             return HttpResponseRedirect(self.get_success_url())

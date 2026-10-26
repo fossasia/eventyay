@@ -1,14 +1,18 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from django import forms
 from django.conf import settings
+from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.test import RequestFactory
 from django.urls import reverse
 from django.utils.timezone import now
 
 from eventyay.base.configurations.default_setting import DEFAULT_SETTINGS
+from eventyay.base.middleware import SecurityMiddleware, _parse_csp
 from eventyay.base.models import User
 from eventyay.base.models.privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from eventyay.base.settings import GlobalSettingsObject
@@ -272,6 +276,51 @@ def test_external_cmp_mode_loads_the_embed_bridge(gs):
 
     assert 'https://cdn.example.org/cmp.js' in html
     assert 'eventyay/js/privacy/consent-external.js' in html
+
+
+@pytest.mark.django_db
+def test_external_cmp_runs_after_the_bridge(gs):
+    """A CMP that reports stored consent straight away must find window.eventyayConsent."""
+    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'https://cdn.example.org/cmp.js')
+
+    html = render_to_string('eventyay/privacy/consent.html')
+
+    # An async script can run before the deferred module; a deferred one runs in order.
+    assert '<script src="https://cdn.example.org/cmp.js" defer></script>' in html
+    assert html.index('consent-external.js') < html.index('https://cdn.example.org/cmp.js')
+
+
+def _script_src(path='/'):
+    request = RequestFactory().get(path)
+    request.resolver_match = SimpleNamespace(view_name='presale:index')
+    response = SecurityMiddleware(lambda r: HttpResponse('ok')).process_response(request, HttpResponse('ok'))
+    return _parse_csp(response['Content-Security-Policy'])['script-src']
+
+
+@pytest.mark.django_db
+def test_csp_allows_the_external_cmp_origin(gs):
+    """Without its origin in script-src the CMP never loads, and embeds never unblock."""
+    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
+    gs.settings.set('privacy_cmp_script_url', 'https://CDN.example.org/cmp/loader.js?v=2')
+
+    assert 'https://cdn.example.org' in _script_src()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('provider', 'url'),
+    [
+        (ConsentProvider.KLARO, 'https://cdn.example.org/cmp.js'),
+        (ConsentProvider.DISABLED, 'https://cdn.example.org/cmp.js'),
+        (ConsentProvider.EXTERNAL, 'http://cdn.example.org/cmp.js'),
+    ],
+)
+def test_csp_does_not_allow_a_cmp_origin_that_is_not_loaded(gs, provider, url):
+    gs.settings.set('privacy_consent_provider', provider)
+    gs.settings.set('privacy_cmp_script_url', url)
+
+    assert not [source for source in _script_src() if 'cdn.example.org' in source]
 
 
 @pytest.mark.django_db

@@ -25,6 +25,7 @@ from eventyay.base.i18n import get_language_without_region
 from eventyay.base.models import GlobalPluginConfig
 from eventyay.base.operational_logging import bind_request_id, log_request_outcome, log_request_start, reset_request_id, sanitize_correlation_id
 from eventyay.base.settings import global_settings_object
+from eventyay.base.templatetags.privacy_consent import external_cmp_script
 from eventyay.common.urls import get_url_origin
 from eventyay.multidomain.urlreverse import (
     get_event_domain,
@@ -377,6 +378,13 @@ class SecurityMiddleware(MiddlewareMixin):
             if settings.DEBUG or settings.VITE_DEV_MODE:
                 for origin in vite_http:
                     h['script-src-elem'].insert(1, origin)
+        # The external CMP is loaded from an admin-configured HTTPS origin; without it
+        # in script-src the CMP never runs and consent-gated embeds never unblock.
+        cmp_origin = get_url_origin(external_cmp_script())
+        if cmp_origin:
+            h['script-src'].append(cmp_origin)
+            if 'script-src-elem' in h:
+                h['script-src-elem'].append(cmp_origin)
         if settings.LOG_CSP:
             base_path = settings.BASE_PATH
             h['report-uri'] = [f'{base_path}/csp_report/']

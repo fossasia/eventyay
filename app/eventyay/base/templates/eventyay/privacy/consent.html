@@ -12,6 +12,7 @@
     <script type="module" src="{% static 'eventyay/js/privacy/consent.js' %}"></script>
 {% elif cmp_script %}
     {# External CMP mode: consent behaviour is managed outside Eventyay. #}
-    <script src="{{ cmp_script }}" async></script>
+    {# Deferred scripts run in document order, so the bridge exists before the CMP can report consent. #}
     <script type="module" src="{% static 'eventyay/js/privacy/consent-external.js' %}"></script>
+    <script src="{{ cmp_script }}" defer></script>
 {% endif %}
