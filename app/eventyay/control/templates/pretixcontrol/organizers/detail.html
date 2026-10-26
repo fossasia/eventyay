@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load static %}
+{% load timezone %}
+{% load event_tags %}
 
 {% block custom_header %}
     {{ block.super }}
@@ -131,7 +133,7 @@
                             {% endif %}
                         {% endif %}
                         {% if e.settings.timezone != request.timezone %}
-                            <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.timezone }}"></span>
+                            <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.timezone|timezone_display }}"></span>
                         {% endif %}
                     </td>
                     <td>

@@ -30,19 +30,19 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
         return []
     nav = [
         {
-            'label': _('My Tickets'),
+            'label': _('My orders'),
             'url': reverse('eventyay_common:orders'),
             'active': 'orders' in url.url_name,
-            'icon': 'ticket',
+            'icon': 'shopping-cart',
         },
         {
-            'label': _('My Sessions'),
+            'label': _('My sessions'),
             'url': reverse('eventyay_common:sessions'),
             'active': 'sessions' in url.url_name,
             'icon': 'sticky-note-o',
         },
         {
-            'label': _('My Events'),
+            'label': _('My events'),
             'url': reverse('eventyay_common:events'),
             'active': 'events' in url.url_name,
             'icon': 'calendar',
@@ -60,13 +60,15 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
                     self.request = request
             show_organizers = _PermChecker(request)._can_create_organizer(request.user)
 
+    organizers_item = None
     if show_organizers:
-        nav.append({
+        organizers_item = {
             'label': _('Organizers'),
             'url': reverse('eventyay_common:organizers'),
             'active': 'organizers' in url.url_name,
             'icon': 'group',
-        })
+        }
+        nav.append(organizers_item)
 
     # Merge plugin-provided navigation items
     plugin_responses = nav_global.send(request, request=request)
@@ -80,6 +82,10 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
 
     # Merge plugin items into default navigation
     merge_in(nav, sorted_plugin_items)
+
+    if organizers_item is not None:
+        nav.remove(organizers_item)
+        nav.append(organizers_item)
 
     return nav
 

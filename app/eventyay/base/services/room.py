@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 import sys
 
@@ -7,7 +8,8 @@ from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.db.transaction import atomic
 from django.dispatch import receiver
-from django.utils.timezone import now
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import is_naive, make_aware, now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
@@ -24,6 +26,7 @@ from eventyay.base.services.stale_cache import invalidate_next_stream_cache
 from eventyay.base.services.stale_cache import (
     NONE_SENTINEL,
     cache_delete,
+    cache_get,
     deserialize_none_sentinel,
     get_stale_cached,
 )
@@ -63,8 +66,76 @@ def invalidate_current_stream_cache(room_id):
     invalidate_next_stream_cache(room_id)
 
 
+def _seconds_until(value):
+    """Seconds until a datetime, or 0 when that moment has passed."""
+    if value is None:
+        return None
+    if isinstance(value, dt.datetime):
+        moment = value
+    else:
+        try:
+            moment = parse_datetime(str(value))
+        except ValueError:
+            return None
+        if moment is None:
+            return None
+    if is_naive(moment):
+        moment = make_aware(moment, dt.timezone.utc)
+    remaining = (moment - now()).total_seconds()
+    if remaining <= 0:
+        return 0
+    return max(1, int(remaining))
+
+
+def stream_http_max_age(data, default, field):
+    """Cap public cache lifetime so a slot change is not served after it ends."""
+    if not isinstance(data, dict):
+        return default
+    remaining = _seconds_until(data.get(field))
+    if remaining is None:
+        return default
+    return min(default, remaining)
+
+
+def current_stream_hot_ttl(room, value):
+    """Expire the current-stream cache when this slot ends or the next one starts."""
+    limit = CURRENT_STREAM_MAX_CACHE_TTL
+    if isinstance(value, dict):
+        remaining = _seconds_until(value.get('end_time'))
+        if remaining is not None:
+            limit = min(limit, remaining)
+    getter = getattr(room, 'get_next_stream', None)
+    upcoming = getter() if callable(getter) else None
+    remaining = _seconds_until(getattr(upcoming, 'start_time', None))
+    if remaining is not None:
+        limit = min(limit, remaining)
+    return max(1, limit)
+
+
+def next_stream_hot_ttl(value):
+    """Expire the next-stream cache when that stream becomes current."""
+    limit = NEXT_STREAM_MAX_CACHE_TTL
+    if isinstance(value, dict):
+        remaining = _seconds_until(value.get('start_time'))
+        if remaining is not None:
+            limit = min(limit, remaining)
+    return max(1, limit)
+
+
 def _deserialize_cached_stream(cached):
     return deserialize_none_sentinel(cached)
+
+
+def _drop_ended_current_stream_cache(room):
+    hot_key = current_stream_cache_key(room.pk)
+    cached = cache_get(hot_key)
+    if cached is None:
+        return
+    data = _deserialize_cached_stream(cached)
+    if not isinstance(data, dict):
+        return
+    if _seconds_until(data.get('end_time')) == 0:
+        cache_delete(hot_key)
 
 
 def _load_current_stream_from_db(room):
@@ -78,6 +149,7 @@ def _load_current_stream_from_db(room):
 
 def get_cached_current_stream_data(room):
     """Return serialized current stream for a room, or None if idle."""
+    _drop_ended_current_stream_cache(room)
     cached = get_stale_cached(
         current_stream_cache_key(room.pk),
         current_stream_stale_cache_key(room.pk),
@@ -85,6 +157,7 @@ def get_cached_current_stream_data(room):
         CURRENT_STREAM_MAX_CACHE_TTL,
         CURRENT_STREAM_STALE_CACHE_TTL,
         log_context=f'current stream room {room.pk}',
+        ttl_for_value=lambda value: current_stream_hot_ttl(room, value),
     )
     return _deserialize_cached_stream(cached)
 
@@ -105,6 +178,7 @@ def get_cached_next_stream_data(room):
         NEXT_STREAM_MAX_CACHE_TTL,
         NEXT_STREAM_STALE_CACHE_TTL,
         log_context=f'next stream room {room.pk}',
+        ttl_for_value=next_stream_hot_ttl,
     )
     return _deserialize_cached_stream(cached)
 
@@ -262,7 +336,7 @@ def clear_stream_schedules_unless_schedule_driven(room):
     if not room.stream_schedules.exists():
         return False
     room.stream_schedules.all().delete()
-    async_to_sync(broadcast_stream_change)(room.pk, None, reload=True)
+    publish_room_stream_schedule(room)
     return True
 
 
@@ -400,22 +474,41 @@ def normalize_after_priority_change(event, room_id, new_priority):
     )
 
 
-async def broadcast_stream_change(room_id, stream_schedule, reload=False):
+def _serialize_stream_schedule(stream_schedule):
     from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 
-    data = None
-    if stream_schedule:
-        serializer = StreamScheduleSerializer(stream_schedule)
-        data = serializer.data
+    if not stream_schedule:
+        return None
+    return StreamScheduleSerializer(stream_schedule).data
 
+
+async def broadcast_stream_change(room_id, stream_schedule, reload=False):
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
         {
-            'type': 'stream.change',
-            'stream': data,
+            'type': 'room.stream.change',
+            'stream': _serialize_stream_schedule(stream_schedule),
             'reload': reload,
         },
     )
+
+
+async def broadcast_upcoming_stream(room_id, stream_schedule):
+    data = _serialize_stream_schedule(stream_schedule)
+    await get_channel_layer().group_send(
+        GROUP_ROOM.format(id=room_id),
+        {
+            'type': 'room.stream.will_change',
+            'stream': data,
+            'starts_at': data.get('start_time') if data else None,
+        },
+    )
+
+
+def publish_room_stream_schedule(room):
+    """Tell connected clients which stream is live and which one is next."""
+    async_to_sync(broadcast_stream_change)(room.pk, room.get_current_stream(), reload=True)
+    async_to_sync(broadcast_upcoming_stream)(room.pk, room.get_next_stream())
 
 
 @receiver(signal=periodic_task)
