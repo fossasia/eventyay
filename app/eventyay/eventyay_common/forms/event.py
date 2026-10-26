@@ -45,8 +45,15 @@ class EventCommonSettingsForm(SettingsForm):
     timezone = forms.ChoiceField(
         choices=((a, format_timezone_name(a)) for a in common_timezones),
         label=_('Region'),
+        widget=forms.Select(
+            attrs={
+                'class': 'form-control',
+                'data-searchable-select': '',
+                'data-search-placeholder': _('Search'),
+                'data-empty-text': _('No results'),
+            }
+        ),
     )
-
 
     auto_fields = [
         'locales',
@@ -327,6 +334,17 @@ class EventCommonSettingsForm(SettingsForm):
             if isinstance(field.widget, forms.ClearableFileInput):
                 field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
                 field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+        for fname in ('timezone', 'region'):
+            if fname in self.fields:
+                self.fields[fname].widget.attrs.update(
+                    {
+                        'class': 'form-control',
+                        'data-searchable-select': '',
+                        'data-search-placeholder': _('Search'),
+                        'data-empty-text': _('No results'),
+                    }
+                )
 
         if not self.is_bound and self.event:
             contact_email = self.event.settings.contact_mail or self.event.email or ''
