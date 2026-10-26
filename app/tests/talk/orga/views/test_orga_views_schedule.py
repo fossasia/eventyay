@@ -7,7 +7,8 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Schedule
+from eventyay.base.models import Room, Schedule
+from eventyay.common.text.phrases import phrases
 
 
 @pytest.mark.django_db
@@ -281,14 +282,17 @@ def test_orga_can_see_schedule_release_view(orga_client, event):
 
 @pytest.mark.django_db
 def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, break_slot):
+    """Keep the release warning visible and allow a breaks-only schedule."""
     with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
         event.wip_schedule.talks.filter(submission__isnull=False).delete()
         assert Schedule.objects.count() == 2
     response = orga_client.get(event.orga_urls.release_schedule, follow=True)
     assert response.status_code == 200
     content = response.content.decode().lower()
     assert 'only breaks' in content
-    assert 'review the issues below before releasing' in content
+    assert 'please review the following before proceeding.' in content
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -328,6 +332,7 @@ def test_orga_cannot_reset_to_wrong_version(orga_client, event):
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_can_release_and_reset_schedule(orga_client, event):
+    """Release a schedule and reset its draft without creating another release."""
     with scope(event=event):
         assert Schedule.objects.count() == 1
         event.talks_published = True
@@ -349,9 +354,54 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    'version', ('wip', 'latest', ' wip ', ' latest ', 'WIP', 'Wip', 'LATEST', 'Latest', ' wIp ', ' LaTeSt '),
+)
+@pytest.mark.parametrize('has_wip', (True, False))
+def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot, version, has_wip):
+    """Reject reserved names without changing schedules, even with no draft."""
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        if not has_wip:
+            draft = event.schedules.get(version__isnull=True)
+            draft.talks.all().delete()
+            draft.delete()
+        schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
+        original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
+        mail_count = event.queued_mails.count()
+
+    response = orga_client.post(event.orga_urls.release_schedule, data={'version': version})
+
+    assert response.status_code == 200
+    assert response.text.count('This schedule version is reserved. Please choose a different name.') == 1
+    assert str(phrases.base.error_saving_changes) not in response.text
+    with scope(event=event):
+        assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
+        slot.refresh_from_db()
+        assert (slot.schedule_id, slot.start, slot.end, slot.room_id) == original_slot
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
+def test_orga_release_preserves_non_field_error(orga_client, event):
+    """Keep the publication error visible without an additional generic banner."""
+    event.talks_published = False
+    event.private_testmode = False
+    event.save(update_fields=['talks_published', 'private_testmode'])
+
+    response = orga_client.post(event.orga_urls.release_schedule, data={'version': '0.2'})
+
+    assert response.status_code == 400
+    assert response.text.count('Talks must be published or in private test mode to release a schedule.') == 1
+    assert str(phrases.base.error_saving_changes) not in response.text
+
+
+@pytest.mark.django_db
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_cannot_reuse_schedule_name(orga_client, event):
+    """Show only the version-field error when a release name is reused."""
     with scope(event=event):
         assert Schedule.objects.count() == 1
         event.talks_published = True
@@ -371,6 +421,9 @@ def test_orga_cannot_reuse_schedule_name(orga_client, event):
         data={"version": "Test version 2"},
     )
     assert response.status_code == 200
+    assert response.text.count('This schedule version was used already, please choose a different one.') == 1
+    assert 'You have to provide a new, unique schedule version!' not in response.text
+    assert str(phrases.base.error_saving_changes) not in response.text
     with scope(event=event):
         assert Schedule.objects.count() == 2
 
@@ -774,3 +827,118 @@ def test_room_list_view_survives_missing_linked_room_column(
         r for r in response.context["room_list"] if r.pk == room.pk
     )
     assert listed_room.has_linked_shifts is False
+
+
+@pytest.mark.django_db
+def test_room_list_sorting(orga_client, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        r1 = Room.objects.create(event=event, name="Beta Room", capacity=100, position=2)
+        r2 = Room.objects.create(event=event, name="Alpha Room", capacity=250, position=1)
+        r3 = Room.objects.create(event=event, name="Gamma Room", capacity=50, position=3)
+
+    # Default sort (no ?sort) preserves position order and enables reordering
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is True
+    assert "dragsort-button" in response.text
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+    # Sort by name ascending (a-z) disables manual reordering and shows caret-up
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    assert "Reset to manual order" in response.text
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+    assert "fa-caret-up" in response.text
+    assert "text-primary" in response.text
+
+    # Reordering via POST while field sort is active must be rejected
+    reorder_res = orga_client.post(f"{url}?sort=name", {"order": f"{r1.pk},{r2.pk},{r3.pk}"})
+    assert reorder_res.status_code == 400
+
+    # Sort by name descending (z-a)
+    response = orga_client.get(f"{url}?sort=-name")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    assert "dragsort-button" not in response.text
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r3.pk, r1.pk, r2.pk]
+    assert "fa-caret-down" in response.text
+
+    # Sort by capacity ascending
+    response = orga_client.get(f"{url}?sort=capacity")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r3.pk, r1.pk, r2.pk]
+
+    # Sort by capacity descending (high to low)
+    response = orga_client.get(f"{url}?sort=-capacity")
+    assert response.status_code == 200
+    assert response.context["can_reorder"] is False
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+
+@pytest.mark.django_db
+def test_room_list_sorting_multilingual(orga_client, orga_user, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        event.locales = ["en", "de"]
+        event.settings.locales = ["en", "de"]
+        event.save()
+        # r1 is Beta in English, Alpha in German
+        r1 = Room.objects.create(event=event, name={"en": "Beta Room", "de": "Alpha Raum"}, position=1)
+        # r2 is Alpha in English, Beta in German
+        r2 = Room.objects.create(event=event, name={"en": "Alpha Room", "de": "Beta Raum"}, position=2)
+        # r3 has only English, tests fallback in German
+        r3 = Room.objects.create(event=event, name={"en": "Gamma Room"}, position=3)
+
+    # In English: "Alpha Room" (r2) < "Beta Room" (r1) < "Gamma Room" (r3)
+    orga_user.locale = "en"
+    orga_user.save()
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r2.pk, r1.pk, r3.pk]
+
+    # In German: "Alpha Raum" (r1) < "Beta Raum" (r2) < "Gamma Room" (r3 fallback)
+    orga_user.locale = "de"
+    orga_user.save()
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert pks == [r1.pk, r2.pk, r3.pk]
+
+
+@pytest.mark.django_db
+def test_room_list_sorting_malformed_brace_text(orga_client, event):
+    url = reverse(
+        "orga:schedule.rooms.list",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
+    with scope(event=event):
+        # Create rooms with malformed brace-prefixed strings and plain strings
+        r1 = Room.objects.create(event=event, name="{Room", position=1)
+        r2 = Room.objects.create(event=event, name="Alpha Room", position=2)
+        r3 = Room.objects.create(event=event, name="{Room}", position=3)
+        r4 = Room.objects.create(event=event, name={"en": "Beta Room"}, position=4)
+        r5 = Room.objects.create(event=event, name='{"en": invalid}', position=5)
+
+    # Must sort safely without raising database JSON syntax errors
+    response = orga_client.get(f"{url}?sort=name")
+    assert response.status_code == 200
+    pks = [r.pk for r in response.context["room_list"]]
+    assert set(pks) == {r1.pk, r2.pk, r3.pk, r4.pk, r5.pk}
+    assert pks.index(r2.pk) < pks.index(r4.pk)
+

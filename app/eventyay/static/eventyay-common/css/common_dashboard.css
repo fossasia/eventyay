@@ -1569,6 +1569,9 @@ body:has(.td-dashboard) #page-content {
 .td-split-layout > :only-child {
   grid-column: 1/-1
 }
+.td-split-layout > * {
+  min-width: 0
+}
 .td-activity-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -1583,7 +1586,7 @@ body:has(.td-dashboard) #page-content {
 }
 @media (max-width:991px) {
   .td-split-layout {
-    grid-template-columns: 1fr
+    grid-template-columns: minmax(0,1fr)
   }
 }
 .td-activity-table th {

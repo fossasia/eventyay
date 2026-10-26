@@ -2,9 +2,11 @@
 .c-linear-schedule-session.is-shift-session(:style="style", @pointerdown.stop="onPointerDown", :class="classes")
 	.time-box
 		.start(:class="{'has-ampm': startTime?.ampm}", v-if="startTime")
-			.time {{ startTime.time }}
-			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-		.duration {{ durationPretty }}
+			.clock
+				.time {{ startTime.time }}
+				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+			.duration(v-if="durationPretty") {{ durationPretty }}
+		.duration(v-else-if="durationPretty") {{ durationPretty }}
 	.info
 		.title-row
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
@@ -20,7 +22,7 @@
 					span.role-name
 						span.role-name-text {{ getLocalizedString(role.name) }}
 						span.role-restricted-tag(v-if="role.is_restricted", :title="$t('Volunteers cannot self-claim this role; requires manual assignment.')") {{ $t('Restricted') }}
-					span.role-badge(:class="getCapacityClass(role)") {{ role.assigned.length }}/{{ role.capacity }} {{ $t('assigned') }}
+					span.role-badge(:class="getCapacityClass(role)") {{ capacityLabel(role) }}
 				.role-assignees
 					ul.role-assignee-list(v-if="role.assigned.length")
 						li.role-assignee(v-for="(user, i) in sortedAssignees(role)", :key="user.id || i")
@@ -44,16 +46,19 @@
 		.shift-manage.mt-2.text-right(v-else-if="caps.canAssignMembers && !isBreak && session.room")
 			button.btn.btn-sm.btn-assign-members(type="button", @pointerdown.stop, @click.stop="$emit('assignMembers', session)") {{ session.roles?.some(r => r.assigned.length < r.capacity) ? $t('Sign Up') : $t('Manage') }}
 
-	.warning.no-print(v-if="warnings?.length")
+	.warning.no-print(v-if="warnings?.length", tabindex="0", :aria-label="warningTooltipText(warnings)")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
-			i.fa.fa-exclamation-triangle
+			i.fa.fa-exclamation-triangle(aria-hidden="true")
+		.warning-tooltip(role="tooltip")
+			p(v-for="warning of warnings") {{ warning.message }}
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
-import { getLocalizedString } from '~/utils'
+import { getLocalizedString, warningTooltipText } from '~/utils'
+import { translate as $t } from '~/lib/i18n'
 import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import type { RoleAssignment } from '~/schemas'
@@ -141,6 +146,9 @@ const getCapacityClass = (role: RoleAssignment) => {
   return 'badge-partial'
 }
 
+const capacityLabel = (role: RoleAssignment) =>
+  $t('{{assigned}}/{{capacity}} filled', { assigned: role.assigned.length, capacity: role.capacity })
+
 const sortedAssignees = (role: RoleAssignment) =>
   [...role.assigned].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }))
 
@@ -221,16 +229,18 @@ const isShortSession = computed<boolean>(() => {
 const durationPretty = computed<string | undefined>(() => {
   const minutes = durationMinutes.value
   if (!minutes) return undefined
+  const minLabel = $t('min')
+  const hourLabel = $t('h')
 
   if (minutes <= 60) {
-    return `${minutes}min`
+    return `${minutes}${minLabel}`
   }
   const hours = Math.floor(minutes / 60)
   const leftoverMinutes = minutes % 60
   if (leftoverMinutes) {
-    return `${hours}h${leftoverMinutes}min`
+    return `${hours}${hourLabel}${leftoverMinutes}${minLabel}`
   }
-  return `${hours}h`
+  return `${hours}${hourLabel}`
 })
 
 function onPointerDown(event: PointerEvent): void {
@@ -249,10 +259,6 @@ function onPointerDown(event: PointerEvent): void {
 
 <style lang="stylus">
 .c-linear-schedule-session.is-shift-session
-	.time-box
-		.start
-			align-items: center
-			text-align: center
 	.title-row
 		display: flex
 		justify-content: space-between
@@ -357,4 +363,7 @@ function onPointerDown(event: PointerEvent): void {
 				border-color: #1a6fb5
 	.ts-inline-form
 		display: inline
+	&.unassigned-preview-pill
+		.card-actions, .roles-list, .shift-manage, .warning
+			display: none
 </style>

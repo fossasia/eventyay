@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
@@ -69,9 +70,15 @@ class ScheduleReleaseSerializer(PretalxSerializer):
         fields = ('version', 'comment')
 
     def validate_version(self, value):
+        """Reject reserved or previously used version names before schedule release."""
+        value = value.strip()
+        if value.lower() in ('wip', 'latest'):
+            raise ValidationError(_('This schedule version is reserved. Please choose a different name.'))
         event = self.context['request'].event
-        if event.schedules.filter(version=value).exists():
-            raise ValidationError(f"A schedule with the version '{value}' already exists for this event.")
+        if event.schedules.filter(version__iexact=value).exists():
+            raise ValidationError(
+                _("A schedule with the version '%(version)s' already exists for this event.") % {'version': value}
+            )
         return value
 
 
