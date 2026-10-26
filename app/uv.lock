@@ -1972,14 +1972,14 @@ wheels = [
 
 [[package]]
 name = "importlib-metadata"
-version = "9.0.1"
+version = "10.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "zipp" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/7e/1e7e8dc30634b93ebb3d58a3dea569ad146e656218d3960ab04f62047b29/importlib_metadata-9.0.1.tar.gz", hash = "sha256:ab830580bc0ef3db61ce8fae716389e5462b67e033018bab6d8f80ef17172f99", size = 59124, upload-time = "2026-08-28T15:30:34.646Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/cf/e10e59881da91198148339df7fc0d07a546d14bffda9df2e953274237ff7/importlib_metadata-10.0.0.tar.gz", hash = "sha256:91f91d04082e49e99df91762a6571ad65a56dabf876b860e668ffa107eaf1a98", size = 66755, upload-time = "2026-10-23T17:04:25.298Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/55/ecca97ae19075f1fac62def77731e7f535e6c1fb8f92ff08160c5e6dade8/importlib_metadata-9.0.1-py3-none-any.whl", hash = "sha256:bba5600596a7e21f3eef53281cf28d6a5195634d2f2b78ff9501a3272c6eaab0", size = 27920, upload-time = "2026-08-28T15:30:33.433Z" },
+    { url = "https://files.pythonhosted.org/packages/12/75/17a894e35a7dc1335a6d353650a007434ee8f276463873a3d02c5ff9928b/importlib_metadata-10.0.0-py3-none-any.whl", hash = "sha256:f67190d5118594547064b8eb474d67df935a3fa6a2e601917bb5f107a95b50d3", size = 31721, upload-time = "2026-10-23T17:04:24.154Z" },
 ]
 
 [[package]]
