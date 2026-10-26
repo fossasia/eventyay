@@ -45,14 +45,6 @@ class EventCommonSettingsForm(SettingsForm):
     timezone = forms.ChoiceField(
         choices=((a, format_timezone_name(a)) for a in common_timezones),
         label=_('Region'),
-        widget=forms.Select(
-            attrs={
-                'class': 'form-control',
-                'data-searchable-select': '',
-                'data-search-placeholder': _('Search'),
-                'data-empty-text': _('No results'),
-            }
-        ),
     )
 
     auto_fields = [
@@ -337,9 +329,12 @@ class EventCommonSettingsForm(SettingsForm):
 
         for fname in ('timezone', 'region'):
             if fname in self.fields:
+                existing_classes = self.fields[fname].widget.attrs.get('class', '').split()
+                if 'form-control' not in existing_classes:
+                    existing_classes.append('form-control')
                 self.fields[fname].widget.attrs.update(
                     {
-                        'class': 'form-control',
+                        'class': ' '.join(existing_classes),
                         'data-searchable-select': '',
                         'data-search-placeholder': _('Search'),
                         'data-empty-text': _('No results'),
