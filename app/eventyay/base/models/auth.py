@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import binascii
 import json
-import logging
 import os
 import time
 import uuid
@@ -113,8 +112,6 @@ if TYPE_CHECKING:
 
 
 # from eventyay.person.signals import delete_user as delete_user_signal
-
-logger = logging.getLogger(__name__)
 
 
 def avatar_path(instance, filename):
@@ -578,7 +575,6 @@ class User(
             'token': security_token,
         }
         action_url = request.build_absolute_uri(f'{base_action_url}?{urlencode(params)}')
-        logger.info('Action URL for %s to reset password: %s', self.email, action_url)
         context = {'user': self, 'url': action_url}
         mail(
             self.email,

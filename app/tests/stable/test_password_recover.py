@@ -1,10 +1,33 @@
 """
 Tests for the password recovery link handling.
 """
-import pytest
 
+import logging
+from unittest import mock
+
+import pytest
 from django.contrib.auth.tokens import default_token_generator
+from django.core import mail as djmail
+from django.test import RequestFactory
 from django.urls import reverse
+
+
+@pytest.mark.django_db
+def test_password_reset_token_is_not_logged(user, caplog):
+    # The eventyay logger does not propagate to root, so attach caplog to it directly.
+    eventyay_logger = logging.getLogger('eventyay')
+    eventyay_logger.addHandler(caplog.handler)
+    try:
+        with (
+            caplog.at_level(logging.DEBUG, logger='eventyay'),
+            mock.patch.object(default_token_generator, 'make_token', return_value='synthetic-reset-token'),
+        ):
+            user.send_password_reset(RequestFactory().get('/'), sync_send=True)
+    finally:
+        eventyay_logger.removeHandler(caplog.handler)
+
+    assert 'synthetic-reset-token' in djmail.outbox[0].body
+    assert 'synthetic-reset-token' not in caplog.text
 
 
 @pytest.mark.django_db
