@@ -2,6 +2,7 @@ import datetime as dt
 
 import pytest
 from django.core import mail as djmail
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -101,27 +102,91 @@ def test_release_acknowledgement_messages_skip_details_shown_elsewhere(break_slo
     assert 'not yet been assigned a track' not in joined
 
 
-@pytest.mark.parametrize("version", ["wip", "latest", None, ""])
+@pytest.mark.parametrize(
+    'version', ('wip', 'latest', 'WIP', 'Wip', 'LATEST', 'Latest', ' wIp ', ' LaTeSt ', None, '', ' \t '),
+)
 @pytest.mark.django_db
-def test_freeze_fail(slot, schedule, version):
+def test_freeze_fail(slot, version):
+    """Reject reserved and empty names with validation errors before changing data."""
     with scope(event=slot.submission.event):
         schedule_count = Schedule.objects.count()
-        with pytest.raises(Exception):  # noqa
-            slot.submission.event.wip_schedule.freeze(
-                version if version is not None else schedule.version
-            )
+        with pytest.raises(ValidationError):
+            slot.submission.event.wip_schedule.freeze(version)
         assert Schedule.objects.count() == schedule_count
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('version', ('Release 1.0', ' Release 1.0 '))
+def test_freeze_preserves_version_case(slot, version):
+    """Strip surrounding whitespace without changing a valid version's spelling."""
+    with scope(event=slot.event):
+        released, _ = slot.event.wip_schedule.freeze(version, notify_speakers=False)
+        released.refresh_from_db()
+        assert released.version == 'Release 1.0'
+
+
+@pytest.mark.django_db
 def test_freeze_fail_repeat(slot, schedule):
+    """Report attempts to freeze an already released schedule as validation errors."""
     with scope(event=slot.submission.event):
         schedule_count = Schedule.objects.count()
         old, _ = slot.submission.event.wip_schedule.freeze("version")
         assert Schedule.objects.count() == schedule_count + 1
-        with pytest.raises(Exception):  # noqa
+        with pytest.raises(ValidationError, match='already versioned'):
             old.freeze("version")
         assert Schedule.objects.count() == schedule_count + 1
+
+
+@pytest.mark.django_db
+def test_freeze_rejects_stale_draft(slot):
+    """Preserve a release when another request still holds the original draft."""
+    event = slot.event
+    with scope(event=event):
+        draft_id = event.wip_schedule.pk
+        first_request = Schedule.objects.get(pk=draft_id)
+        second_request = Schedule.objects.get(pk=draft_id)
+        schedule_count = event.schedules.count()
+        first_request.freeze('first-release', notify_speakers=False)
+        with pytest.raises(ValidationError, match='already versioned'):
+            second_request.freeze('second-release', notify_speakers=False)
+        assert event.schedules.get(pk=draft_id).version == 'first-release'
+        assert event.schedules.count() == schedule_count + 1
+        assert event.schedules.filter(version__isnull=True).count() == 1
+
+
+@pytest.mark.django_db
+def test_freeze_rejects_reset_draft(slot):
+    """Reject a draft deleted by reset without changing the restored schedule."""
+    event = slot.event
+    with scope(event=event):
+        released, draft = event.wip_schedule.freeze('previous-release', notify_speakers=False)
+        released.unfreeze()
+        schedules = list(event.schedules.order_by('pk').values('pk', 'version', 'published'))
+        slots = list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end'))
+        mail_count = event.queued_mails.count()
+        assert not event.schedules.filter(pk=draft.pk).exists()
+        with pytest.raises(ValidationError, match='draft no longer exists'):
+            draft.freeze('new-release')
+        assert list(event.schedules.order_by('pk').values('pk', 'version', 'published')) == schedules
+        assert list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end')) == slots
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('version', ('release', 'RELEASE', ' Release '))
+def test_freeze_rejects_duplicate_version_on_another_draft(slot, version):
+    """Reject logical duplicate names even when requests hold different drafts."""
+    event = slot.event
+    with scope(event=event):
+        first_draft = event.wip_schedule
+        other_draft = Schedule.objects.create(event=event)
+        first_draft.freeze('Release', notify_speakers=False)
+        schedules = list(event.schedules.order_by('pk').values('pk', 'version', 'published'))
+        slots = list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end'))
+        with pytest.raises(ValidationError, match='already exists'):
+            other_draft.freeze(version, notify_speakers=False)
+        assert list(event.schedules.order_by('pk').values('pk', 'version', 'published')) == schedules
+        assert list(TalkSlot.objects.order_by('pk').values('pk', 'schedule_id', 'start', 'end')) == slots
 
 
 @pytest.mark.django_db
