@@ -11,6 +11,7 @@ from xml.etree.ElementTree import tostring as xml_tostring
 
 import qrcode as qr_lib
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.utils import DatabaseError
@@ -342,12 +343,30 @@ class Schedule(PretalxModel):
         :rtype: Schedule
         """
 
-        if name in ('wip', 'latest'):
-            raise Exception(f'Cannot use reserved name "{name}" for schedule version.')
-        if self.version:
-            raise Exception(f'Cannot freeze schedule version: already versioned as "{self.version}".')
-        if not name:
-            raise Exception('Cannot create schedule version without a version name.')
+        if not name or not name.strip():
+            raise ValidationError(_('Cannot create schedule version without a version name.'))
+        name = name.strip()
+        if name.lower() in ('wip', 'latest'):
+            raise ValidationError(_('This schedule version is reserved. Please choose a different name.'))
+
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update().get(pk=self.event_id)
+            try:
+                self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
+            except Schedule.DoesNotExist as exc:
+                raise ValidationError(
+                    _('This schedule draft no longer exists. Please reload and try again.')
+                ) from exc
+            if self.version:
+                raise ValidationError(
+                    _('Cannot freeze schedule version: already versioned as "%(version)s".'),
+                    params={'version': self.version},
+                )
+            if Schedule.objects.filter(event_id=self.event_id, version__iexact=name).exists():
+                raise ValidationError(
+                    _("A schedule with the version '%(version)s' already exists for this event."),
+                    params={'version': name},
+                )
 
         self.version = name
         self.comment = comment
