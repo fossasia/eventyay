@@ -1,6 +1,6 @@
 <template lang="pug">
 .ts-confirm-overlay(v-if="visible", @click="cancel")
-  .ts-confirm-panel(@click.stop="", role="dialog", aria-modal="true", aria-labelledby="confirm-dialog-title")
+  .ts-confirm-panel(ref="panelRef", @click.stop="", role="dialog", aria-modal="true", aria-labelledby="confirm-dialog-title")
     .ts-confirm-header
       h3#confirm-dialog-title {{ title }}
       button.modal-close-btn(type="button", :aria-label="$t('Close')", :disabled="busy", @click="cancel")
@@ -31,18 +31,52 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
+const panelRef = ref<HTMLElement | null>(null)
 const cancelBtnRef = ref<HTMLButtonElement | null>(null)
+let previousActiveElement: HTMLElement | null = null
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && visible.value && !props.busy) {
-    event.stopPropagation()
-    cancel()
+  if (!visible.value) return
+
+  if (event.key === 'Escape') {
+    if (!props.busy) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation?.()
+      cancel()
+    }
+    return
+  }
+
+  if (event.key === 'Tab' && panelRef.value) {
+    const focusableElements = panelRef.value.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+    )
+    if (!focusableElements.length) return
+
+    const first = focusableElements[0]
+    const last = focusableElements[focusableElements.length - 1]
+
+    if (event.shiftKey) {
+      if (document.activeElement === first || !panelRef.value.contains(document.activeElement)) {
+        event.preventDefault()
+        last.focus()
+      }
+    } else {
+      if (document.activeElement === last || !panelRef.value.contains(document.activeElement)) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
   }
 }
 
 function show() {
+  if (typeof document !== 'undefined') {
+    previousActiveElement = document.activeElement as HTMLElement | null
+  }
   visible.value = true
-  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('keydown', onKeydown, true)
   nextTick(() => {
     cancelBtnRef.value?.focus()
   })
@@ -50,7 +84,16 @@ function show() {
 
 function close() {
   visible.value = false
-  window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('keydown', onKeydown, true)
+  if (
+    previousActiveElement &&
+    typeof previousActiveElement.focus === 'function' &&
+    typeof document !== 'undefined' &&
+    document.contains(previousActiveElement)
+  ) {
+    previousActiveElement.focus()
+  }
+  previousActiveElement = null
 }
 
 function cancel() {
@@ -60,10 +103,10 @@ function cancel() {
 }
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('keydown', onKeydown, true)
 })
 
-defineExpose({ show, close })
+defineExpose({ show, close, visible })
 </script>
 
 <style lang="stylus">

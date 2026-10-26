@@ -1870,6 +1870,7 @@ const preventScrollOnDrag = (e: TouchEvent) => {
 }
 
 function onWindowKeydown(event: KeyboardEvent): void {
+  if (confirmDialogRef.value?.visible) return
   if (!editorSession.value) return
   if (event.key === 'Escape') {
     editorCancel()
