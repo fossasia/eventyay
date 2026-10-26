@@ -33,24 +33,42 @@ const initNavSearch = () => {
             response.json().then((data) => {
                 searchWrapper.querySelectorAll("li").forEach((el) => el.remove())
                 data.results.forEach((res) => {
-                    let content = ""
+                    const link = document.createElement("a")
+                    link.href = res.url
+                    const appendText = (className, value, icon) => {
+                        const span = document.createElement("span")
+                        span.className = className
+                        if (icon) {
+                            const iconElement = document.createElement("i")
+                            iconElement.className = `fa fa-fw ${icon}`
+                            span.append(iconElement, " ")
+                        }
+                        if (className === "search-title" && !icon) {
+                            const title = document.createElement("span")
+                            title.textContent = value ?? ""
+                            span.append(title)
+                        } else {
+                            span.append(document.createTextNode(value ?? ""))
+                        }
+                        link.append(span)
+                    }
                     if (res.type === "organiser" || res.type === "user") {
                         const icon = res.type === "organiser" ? "fa-users" : "fa-user"
-                        content = `<span class="search-title"><i class="fa fa-fw ${icon}"></i> ${res.name}</span>`
+                        appendText("search-title", res.name, icon)
                     } else if (res.type === "user.admin") {
-                        content += `<span class="search-title"><span>${res.name}</span></span>
-                            <span class="search-detail"><span class="fa fa-envelope-o fa-fw"></span> ${res.email}</span>`
+                        appendText("search-title", res.name)
+                        appendText("search-detail", res.email, "fa-envelope-o")
                     } else if (res.type === "submission" || res.type === "speaker") {
-                        content = `<span class="search-title"><span>${res.name}</span></span>
-                            <span class="search-detail"><span class="fa fa-calendar fa-fw"></span> ${res.event}</span>`
+                        appendText("search-title", res.name)
+                        appendText("search-detail", res.event, "fa-calendar")
                     } else if (res.type === "event") {
-                        content = `<span class="search-title"><span>${res.name}</span></span>
-                            <span class="search-detail"><span class="fa fa-users fa-fw"></span> ${res.organiser}</span>
-                            <span class="search-detail"><span class="fa fa-calendar fa-fw"></span> ${res.date_range}</span>`
+                        appendText("search-title", res.name)
+                        appendText("search-detail", res.organiser, "fa-users")
+                        appendText("search-detail", res.date_range, "fa-calendar")
                     }
 
                     const li = document.createElement("li")
-                    li.innerHTML = `<a href="${res.url}">${content}</a>`
+                    li.append(link)
                     searchWrapper.querySelector("ul").append(li)
                 }) /* data.results.forEach */
             }) /* response.json().then */
