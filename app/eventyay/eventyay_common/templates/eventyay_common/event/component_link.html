@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="navigation-button">
+<div class="navigation-button hidden-print">
     {% if request.organizer and request.event %}
         {% if not is_meetup and not is_meetup_event %}
             <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
