@@ -2,10 +2,13 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from django.test import RequestFactory
+from django.urls import resolve, reverse
 from django.utils.html import format_html
 
 from eventyay.base.templatetags.eventsignal import visible_text
 from eventyay.common.signals import user_dashboard_links
+from eventyay.control.signals import nav_global
+from eventyay.eventyay_common.navigation import get_global_navigation
 
 
 def link(label, extra=''):
@@ -59,3 +62,29 @@ def test_profile_dropdown_sorts_by_decoded_visible_label():
     )
 
     assert html.index('Me 9') < html.index('Me &lt;3') < html.index('Zebra')
+
+
+def test_profile_dropdown_matches_sidebar_for_shifts_and_exhibitions():
+    # The labels the teamshifts and exhibition plugins send: teamshifts capitalizes
+    # "Shifts" in the sidebar but not in the dropdown, and loads before exhibition.
+    def sidebar_item(label):
+        def receiver(sender, **kwargs):
+            return [{'label': label, 'url': f'/{label}/', 'active': False, 'icon': 'link'}]
+
+        return receiver
+
+    nav_global.connect(sidebar_item('My Shifts'), dispatch_uid='test_sidebar_shifts', weak=False)
+    nav_global.connect(sidebar_item('My exhibitions'), dispatch_uid='test_sidebar_exhibitions', weak=False)
+    try:
+        request = RequestFactory().get('/common/')
+        request.user = AnonymousUser()
+        request.resolver_match = resolve(reverse('eventyay_common:events'))
+        sidebar = [str(item['label']).casefold() for item in get_global_navigation(request)]
+    finally:
+        nav_global.disconnect(dispatch_uid='test_sidebar_shifts')
+        nav_global.disconnect(dispatch_uid='test_sidebar_exhibitions')
+
+    html = render_dropdown(link('My shifts'), link('My exhibitions'))
+
+    assert sidebar.index('my exhibitions') < sidebar.index('my shifts')
+    assert html.index('My exhibitions') < html.index('My shifts')

@@ -5,6 +5,7 @@ from django import template
 from django.utils.safestring import mark_safe
 
 from eventyay.base.models import Event
+from eventyay.control.navigation import global_nav_label_key
 
 register = template.Library()
 
@@ -102,5 +103,5 @@ def sorted_signal(signame: str, request, **kwargs):
     sigmod = importlib.import_module(sigstr[0])
     signal = getattr(sigmod, sigstr[1])
     responses = [response for receiver, response in signal.send(request, **kwargs) if response]
-    responses.sort(key=visible_text)
+    responses.sort(key=lambda response: global_nav_label_key(visible_text(response)))
     return mark_safe(''.join(responses))
