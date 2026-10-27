@@ -2548,6 +2548,21 @@ h2 .user-name-display img {
   .pretalx-schedule {
     height: 100% !important;
   }
+
+  /* The navbar and the sidebar are not printed, so the content uses the whole page. */
+  #page-wrapper {
+    margin-top: 0;
+  }
+
+  #page-content {
+    margin-left: 0;
+    padding: 0;
+  }
+
+  /* Links lead to other organizer pages, their addresses only clutter the printout. */
+  a[href]::after {
+    content: none;
+  }
 }
 
 @media (min-width: 768px) {
