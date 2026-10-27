@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from django import forms
 from django.utils.timezone import now
@@ -75,7 +77,6 @@ def test_invoice_settings_form_country_is_searchable(event_obj):
 
 
 def test_searchable_select_js_placeholder_logic():
-    from pathlib import Path
 
     js_file = Path(__file__).resolve().parents[3] / 'eventyay' / 'static' / 'common' / 'js' / 'searchable-select.js'
     css_file = Path(__file__).resolve().parents[3] / 'eventyay' / 'static' / 'common' / 'css' / 'searchable-select.css'
