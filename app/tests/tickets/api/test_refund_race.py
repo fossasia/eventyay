@@ -1,5 +1,4 @@
 import threading
-import time
 from decimal import Decimal
 from types import SimpleNamespace
 
@@ -40,8 +39,9 @@ def paid_order(event):
 def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_order, monkeypatch):
     """
     Two refund requests for the full payment amount are sent at the same time.
-    A short sleep after ``refunded_amount`` is read keeps both requests in the check-then-create
-    window, which is what happens in a real race. Expected: one request is rejected.
+    The request that has read ``refunded_amount`` waits until the other one has tried to lock the
+    payment, which keeps both in the check-then-create window like in a real race.
+    Expected: one request is rejected.
     """
     team.can_view_orders = True
     team.can_change_orders = True
@@ -62,15 +62,19 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
     start = threading.Barrier(2, timeout=10)
     original = OrderPayment.refunded_amount.fget
 
-    def refunded_amount_slowly(self):
+    # Set once the second request has tried to lock the payment.
+    second_lock_attempt = threading.Event()
+
+    def refunded_amount_waiting(self):
         value = original(self)
-        # Widen the window between "read the refunded amount" and "create the refund". Without a
-        # lock on the payment both requests read 0 here and both create a refund. With the lock the
-        # second request is blocked before this point and sees the first refund instead.
-        time.sleep(1)
+        # Keep the request that read the refunded amount in the check-then-create window until the
+        # other request has tried to lock the payment (bounded wait). Without a lock on the payment
+        # both requests read 0 here and both create a refund. With the lock the second request is
+        # blocked on it, which sets the event, and then sees the first refund once that is committed.
+        second_lock_attempt.wait(timeout=5)
         return value
 
-    monkeypatch.setattr(OrderPayment, 'refunded_amount', property(refunded_amount_slowly))
+    monkeypatch.setattr(OrderPayment, 'refunded_amount', property(refunded_amount_waiting))
 
     # Record every attempt to lock a payment row, to show that both requests reached the lock.
     lock_attempts = []
@@ -79,6 +83,8 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
     def recording_select_for_update(self, *args, **kwargs):
         if self.model is OrderPayment:
             lock_attempts.append(threading.current_thread().name)
+            if len(lock_attempts) >= 2:
+                second_lock_attempt.set()
         return original_select_for_update(self, *args, **kwargs)
 
     monkeypatch.setattr(QuerySet, 'select_for_update', recording_select_for_update)
