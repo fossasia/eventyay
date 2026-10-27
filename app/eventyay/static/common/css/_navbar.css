@@ -556,3 +556,13 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   }
 
 }
+
+/* The navbar is fixed, so a printout would repeat it on every page, over the content.
+   Paper is about as narrow as a phone, so the rule above that shows the navbar as flex
+   applies when printing as well; this uses the same selector to take precedence. */
+@media print {
+  nav.navbar,
+  nav.navbar.navbar-inverse {
+    display: none;
+  }
+}
