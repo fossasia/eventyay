@@ -37,10 +37,13 @@ def _as_pk_lookup(value):
     A :class:`~django.db.models.QuerySet` is passed through unchanged so the ORM can
     turn it into an efficient subquery. Any other iterable (list, tuple, set,
     generator, ``dict_values``, …) is reduced to a list of primary keys, accepting
-    either model instances or raw primary keys as items.
+    either model instances or raw primary keys as items. A single instance or
+    primary key is wrapped in a list.
     """
     if isinstance(value, models.QuerySet):
         return value
+    if isinstance(value, (models.Model, int, str)):
+        return [getattr(value, 'pk', value)]
     return [getattr(item, 'pk', item) for item in value]
 
 
@@ -368,7 +371,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
                 submissions = submissions.filter(track__in=self.tracks.all())
             if self.submission_types.exists():
                 submissions = submissions.filter(submission_type__in=self.submission_types.all())
-            answered = self.answers.filter(submission__in=submissions).values('submission').distinct().count()
+            answered = self.answers.filter(submission__in=submissions).order_by().values('submission').distinct().count()
             return max(submissions.count() - answered, 0)
 
         if self.target == TalkQuestionTarget.SPEAKER:
@@ -376,10 +379,15 @@ class TalkQuestion(OrderedModel, PretalxModel):
                 submissions__event_id=self.event_id,
                 submissions__state__in=SubmissionStates.valid_submission_states,
             )
+            # Kept in the same Q so track and type apply to the same submission.
+            if self.tracks.exists():
+                speaker_filter &= models.Q(submissions__track__in=self.tracks.all())
+            if self.submission_types.exists():
+                speaker_filter &= models.Q(submissions__submission_type__in=self.submission_types.all())
             if filter_speakers is not None:
                 speaker_filter &= models.Q(pk__in=_as_pk_lookup(filter_speakers))
             speakers = User.objects.filter(speaker_filter).distinct()
-            answered = self.answers.filter(person__in=speakers).values('person').distinct().count()
+            answered = self.answers.filter(person__in=speakers).order_by().values('person').distinct().count()
             return max(speakers.count() - answered, 0)
 
         return 0

@@ -101,6 +101,8 @@ def test_question_missing_answers(event, speaker, submission):
         assert sub_q.missing_answers(filter_talks=(s for s in [submission, deleted])) == 1
         assert sub_q.missing_answers(filter_talks=Submission.all_objects.filter(event=event)) == 1
         assert sub_q.missing_answers(filter_talks=[]) == 0
+        assert sub_q.missing_answers(filter_talks=submission) == 1
+        assert sub_q.missing_answers(filter_talks=submission.pk) == 1
         # Several answers for the same talk count once
         Answer.objects.create(question=sub_q, submission=submission, answer='A1')
         Answer.objects.create(question=sub_q, submission=submission, answer='A2')
@@ -117,6 +119,15 @@ def test_question_missing_answers(event, speaker, submission):
         submission.save()
         assert limited_q.missing_answers() == 1
 
+        # Track limits also apply to speaker questions
+        limited_spk_q = TalkQuestion.objects.create(
+            event=event, question='Limited Spk Q?', target=TalkQuestionTarget.SPEAKER
+        )
+        limited_spk_q.tracks.add(event.tracks.create(name='Track B', color='#00ff00'))
+        assert limited_spk_q.missing_answers() == 0
+        limited_spk_q.tracks.add(submission.track)
+        assert limited_spk_q.missing_answers() == 1
+
         spk_q = TalkQuestion.objects.create(event=event, question='Spk Q?', target=TalkQuestionTarget.SPEAKER)
         assert spk_q.missing_answers() == 1
         assert spk_q.missing_answers(filter_speakers=[deleted_speaker]) == 0
@@ -124,6 +135,8 @@ def test_question_missing_answers(event, speaker, submission):
         assert spk_q.missing_answers(filter_speakers=[speaker.pk, deleted_speaker.pk]) == 1
         assert spk_q.missing_answers(filter_speakers=User.objects.filter(pk__in=[speaker.pk, deleted_speaker.pk])) == 1
         assert spk_q.missing_answers(filter_speakers=[]) == 0
+        assert spk_q.missing_answers(filter_speakers=speaker) == 1
+        assert spk_q.missing_answers(filter_speakers=speaker.pk) == 1
         Answer.objects.create(question=spk_q, person=speaker, answer='A1')
         Answer.objects.create(question=spk_q, person=speaker, answer='A2')
         assert spk_q.missing_answers() == 0

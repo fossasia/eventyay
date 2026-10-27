@@ -351,7 +351,8 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
 
     def dispatch(self, request, *args, **kwargs):
         # Speakers of a deleted session can be viewed, but not changed or invited.
-        if request.method not in ('GET', 'HEAD', 'OPTIONS') and self.object.is_deleted:
+        # Permissions are checked first so the deleted state is not exposed.
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and self.has_permission() and self.object.is_deleted:
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
