@@ -111,8 +111,8 @@ const initSearchableSelect = function(select) {
 
   const syncLabel = function() {
     const selected = select.options[select.selectedIndex]
-    value.textContent = selected ? selected.text : ''
-    const isPlaceholder = Boolean(selected && selected.value === '')
+    value.textContent = selected ? (allLabel && selected.value === '' ? allLabel : selected.text) : ''
+    const isPlaceholder = Boolean(selected && selected.value === '' && !allLabel)
     toggle.classList.toggle('has-placeholder', isPlaceholder)
     root.classList.toggle('has-placeholder', isPlaceholder)
     options().forEach(function(option) {
