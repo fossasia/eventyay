@@ -37,6 +37,44 @@
     list-style: none;
 }
 
+.submission-content-view .session-video-urls li + li {
+    margin-top: 0.25rem;
+}
+
+/* The Wikimedia glyph is wider than the YouTube and Vimeo icons, which
+   pushed its label to the right. A fixed icon slot keeps every label on
+   the same line. */
+.submission-content-view .session-video-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.submission-content-view .session-video-icon {
+    flex: 0 0 1.15em;
+    width: 1.15em;
+    display: inline-flex;
+    justify-content: center;
+    line-height: inherit;
+}
+
+.submission-content-view .session-video-icon .fa {
+    margin-right: 0;
+}
+
+.submission-content-view .session-video-icon .fa-wikipedia-w {
+    font-size: 0.78em;
+}
+
+.submission-content-view .session-video-link-body {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.submission-content-view .session-video-link-label {
+    margin-right: 0.25rem;
+}
+
 .submission-content-view .form-group .col-md-9.custom-fields-container {
     display: block;
 }
