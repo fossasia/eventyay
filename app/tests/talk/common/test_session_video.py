@@ -5,6 +5,7 @@ from django_scopes import scope
 from eventyay.base.models import Answer, TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
+    SESSION_VIDEO_URL_LIMIT,
     ensure_session_video_question,
     get_session_video_question,
     get_submission_video_url,
@@ -141,6 +142,12 @@ def test_set_submission_video_url_rejects_invalid(event, submission):
             set_submission_video_url(submission, 'https://example.com/watch')
         assert get_session_video_question(event, create=False) is None
         assert get_submission_video_url(submission) == ''
+
+
+def test_set_submission_video_urls_rejects_more_than_the_row_limit():
+    urls = [f'https://youtu.be/video{index:05d}' for index in range(SESSION_VIDEO_URL_LIMIT + 1)]
+    with pytest.raises(ValueError, match=str(SESSION_VIDEO_URL_LIMIT)):
+        set_submission_video_urls(None, urls)
 
 
 def test_parse_video_urls_splits_lines_and_dedupes():
