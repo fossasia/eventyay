@@ -64,6 +64,7 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
 
     # Set once the second request has tried to lock the payment.
     second_lock_attempt = threading.Event()
+    second_lock_seen = []
 
     def refunded_amount_waiting(self):
         value = original(self)
@@ -71,7 +72,7 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
         # other request has tried to lock the payment (bounded wait). Without a lock on the payment
         # both requests read 0 here and both create a refund. With the lock the second request is
         # blocked on it, which sets the event, and then sees the first refund once that is committed.
-        second_lock_attempt.wait(timeout=5)
+        second_lock_seen.append(second_lock_attempt.wait(timeout=5))
         return value
 
     monkeypatch.setattr(OrderPayment, 'refunded_amount', property(refunded_amount_waiting))
@@ -121,3 +122,7 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
     assert sum(refunds) <= Decimal('100.00'), 'Over-refund: refunded {} of a 100.00 payment'.format(sum(refunds))
     assert sorted(r.status_code for r in results) == [200, 400]
     assert len(lock_attempts) == 2, 'Expected both requests to lock the payment, got {}'.format(lock_attempts)
+    assert second_lock_seen and all(second_lock_seen), (
+        'The second request did not try to lock the payment within the timeout, '
+        'so the two requests did not overlap as intended'
+    )
