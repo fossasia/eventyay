@@ -338,3 +338,24 @@ def test_invalid_speaker_form_keeps_label_on_selected_session(
     assert select is not None
     assert select["name"] == "existing_session_id"
     assert select.select_one("option[selected]")["value"] == str(other_submission.pk)
+
+
+@pytest.mark.django_db
+def test_user_without_session_permission_cannot_link_sessions(
+    review_client, event, speaker, submission, other_submission
+):
+    response = review_client.post(
+        speaker_url(speaker, event),
+        data={**SPEAKER_DATA, "existing_session_id": other_submission.pk},
+    )
+    assert response.status_code in (200, 302, 403, 404)
+    with scope(event=event):
+        assert not other_submission.speakers.filter(pk=speaker.pk).exists()
+
+
+@pytest.mark.django_db
+def test_removing_speaker_clears_schedule_caches(mocker, orga_client, event, speaker, submission):
+    clear_caches = mocker.patch("eventyay.agenda.views.utils.clear_schedule_caches")
+    response = orga_client.post(submission.orga_urls.delete_speaker, data={"id": speaker.pk})
+    assert response.status_code == 302
+    clear_caches.assert_called_once_with(event, speaker=speaker)
