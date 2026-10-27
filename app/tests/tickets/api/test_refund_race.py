@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from rest_framework.test import APIClient
 
-from eventyay.base.models import Order, OrderPayment
+from eventyay.base.models import Order, OrderPayment, OrderRefund
 
 
 @pytest.fixture
@@ -53,11 +53,12 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
         execute_refund=lambda refund: None,
     )
     monkeypatch.setattr(OrderPayment, 'payment_provider', property(lambda self: provider))
-    from eventyay.base.models import OrderRefund
-
     monkeypatch.setattr(OrderRefund, 'payment_provider', property(lambda self: provider))
 
-    barrier = threading.Barrier(2, timeout=2)
+    # Make both requests start at the same moment, so that the first one is not already
+    # finished by the time the second thread has even been scheduled.
+    start = threading.Barrier(2, timeout=10)
+    barrier = threading.Barrier(2, timeout=5)
     original = OrderPayment.refunded_amount.fget
 
     def refunded_amount_then_wait(self):
@@ -65,8 +66,10 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
         try:
             barrier.wait()
         except threading.BrokenBarrierError:
-            # With the payment row locked, the second request cannot reach this point
-            # until the first one is done, so the barrier is never completed.
+            # Expected when the payment row is locked: the second request is blocked on the
+            # lock and cannot reach this point until the first one is done. A timeout is
+            # therefore not a failure by itself; the assertions below are what detect a
+            # missing lock (without it both requests reach the barrier and both refund).
             pass
         return value
 
@@ -81,6 +84,7 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
         try:
             client = APIClient()
             client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+            start.wait()
             results.append(client.post(url, format='json', data={'amount': '100.00', 'mark_canceled': False}))
         finally:
             connection.close()
