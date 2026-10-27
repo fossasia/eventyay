@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 from django.db import connection
+from django.db.models.query import QuerySet
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from rest_framework.test import APIClient
@@ -71,6 +72,17 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
 
     monkeypatch.setattr(OrderPayment, 'refunded_amount', property(refunded_amount_slowly))
 
+    # Record every attempt to lock a payment row, to show that both requests reached the lock.
+    lock_attempts = []
+    original_select_for_update = QuerySet.select_for_update
+
+    def recording_select_for_update(self, *args, **kwargs):
+        if self.model is OrderPayment:
+            lock_attempts.append(threading.current_thread().name)
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', recording_select_for_update)
+
     url = '/api/v1/organizers/{}/events/{}/orders/{}/payments/1/refund/'.format(
         organizer.slug, event.slug, paid_order.pk
     )
@@ -102,3 +114,4 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
 
     assert sum(refunds) <= Decimal('100.00'), 'Over-refund: refunded {} of a 100.00 payment'.format(sum(refunds))
     assert sorted(r.status_code for r in results) == [200, 400]
+    assert len(lock_attempts) == 2, 'Expected both requests to lock the payment, got {}'.format(lock_attempts)
