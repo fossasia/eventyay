@@ -525,7 +525,7 @@ def check_stream_schedule_changes(sender, **kwargs):
     # Keep the last broadcast marker stable across periodic runs to avoid repeated rebroadcasts.
     cache_timeout = None
 
-    rooms = Room.objects.filter(deleted=False, stream_schedules__isnull=False).select_related('event').distinct()
+    rooms = Room.objects.filter(deleted=False, stream_schedules__isnull=False).select_related('event__organizer').distinct()
 
     for room in rooms:
         current_stream = room.get_current_stream()
@@ -542,3 +542,5 @@ def check_stream_schedule_changes(sender, **kwargs):
         if marker != last_broadcast_id:
             cache.set(cache_key, marker, cache_timeout)
             async_to_sync(broadcast_stream_change)(room.pk, current_stream, reload=current_stream_id is None)
+            # The upcoming stream is filtered by the same entitlement, so refresh it too.
+            async_to_sync(broadcast_upcoming_stream)(room.pk, room.get_next_stream())
