@@ -18,6 +18,9 @@
         <script defer src="{% static "orga/js/submission_form.js" %}"></script>
         <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
         <script defer src="{% static "orga/js/etherpad.js" %}"></script>
+        {% if session_videos_enabled %}
+            <script defer src="{% static 'orga/js/submission_video.js' %}"></script>
+        {% endif %}
     {% endcompress %}
 {% endblock scripts %}
 
@@ -81,20 +84,38 @@
             {% if form.slides %}{{ form.slides.as_field_group }}{% endif %}
             {% if action != "create" and can_edit and session_videos_enabled %}
                 <div class="form-group row {% if session_video_urls_error %}has-error{% endif %}">
-                    <label class="col-md-3 col-form-label" for="session_video_urls">
+                    <label class="col-md-3 col-form-label">
                         <span>{% translate "Session videos" %}</span>
                         <span class="optional">{% translate "Optional" %}</span>
                     </label>
                     <div class="col-md-9">
-                        <textarea
-                            class="form-control"
-                            id="session_video_urls"
-                            name="session_video_urls"
-                            rows="3"
-                            autocomplete="off"
-                            placeholder="{% translate "One YouTube, Vimeo, or Wikimedia Commons URL per line" %}"
-                        >{{ session_video_urls_text }}</textarea>
-                        <small class="form-text text-muted">{% translate "YouTube, Vimeo, or Wikimedia Commons URLs, one per line." %}</small>
+                        <div
+                            class="session-video-link-formset"
+                            data-session-video-formset
+                            data-max-rows="{{ session_video_url_limit }}"
+                        >
+                            <div data-session-video-rows>
+                                {% for url in session_video_url_rows %}
+                                    {% include "orga/submission/session_video_url_row.html" with value=url %}
+                                {% endfor %}
+                            </div>
+                            <template data-session-video-empty-row>
+                                {% include "orga/submission/session_video_url_row.html" %}
+                            </template>
+                            <p class="mt-2 mb-0">
+                                <button type="button" class="btn btn-sm btn-info" data-session-video-add>
+                                    <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add video link" %}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger ml-2" data-session-video-clear data-confirm="{% translate 'Remove all session video links from this form?' %}">
+                                    {% translate "Remove all" %}
+                                </button>
+                            </p>
+                        </div>
+                        <small class="form-text text-muted">
+                            {% blocktranslate with limit=session_video_url_limit trimmed %}
+                                YouTube, Vimeo, or Wikimedia Commons URL. Up to {{ limit }} links.
+                            {% endblocktranslate %}
+                        </small>
                         {% if session_video_urls_error %}
                             <div class="help-block">{{ session_video_urls_error }}</div>
                         {% endif %}
