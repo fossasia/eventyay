@@ -253,3 +253,20 @@ class OrganizerTest(SoupTest):
         self.orga1.settings.flush()
         assert self.orga1.settings.primary_color == '#33c33c'
         assert called
+
+    def test_gates_empty_state_hides_table(self):
+        url = reverse('eventyay_common:organizer.gates', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
+        self.assertEqual(len(doc.select('.table')), 0)
+        self.assertNotIn('<th>Gate</th>', doc.decode())
+        self.assertEqual(len(doc.select('.empty-collection')), 1)
+        self.assertIn('No gates created yet. Create a new gate to view it here.', doc.decode())
+        self.assertIn('Create a new gate', doc.select_one('.empty-collection a').get_text())
+
+    def test_gates_list_shows_table_when_gates_exist(self):
+        with scopes_disabled():
+            self.orga1.gates.create(name='Main Entrance')
+        url = reverse('eventyay_common:organizer.gates', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
+        self.assertEqual(len(doc.select('.table')), 1)
+        self.assertIn('Main Entrance', doc.decode())

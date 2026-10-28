@@ -241,17 +241,18 @@
             aria-labelledby="submission-video-dialog-title"
             data-url-label="{% translate 'YouTube, Vimeo, or Wikimedia Commons URL' %}"
             data-remove-label="{% translate 'Remove' %}"
+            data-max-rows="{{ session_video_url_limit }}"
         >
             <form method="dialog" id="submission-video-form">
                 <h3 id="submission-video-dialog-title">{% translate "Session videos" %}</h3>
                 <p class="text-muted" id="submission-video-session-title"></p>
                 <div id="submission-video-url-list" class="submission-video-url-list"></div>
                 <button type="button" class="btn btn-sm btn-outline-primary" id="submission-video-add">
-                    {% translate "Add another video" %}
+                    <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add another video" %}
                 </button>
                 <p class="text-danger small d-none" id="submission-video-error" role="alert"></p>
                 <div class="submission-video-dialog-actions">
-                    <button type="button" class="btn btn-outline-danger" id="submission-video-clear">
+                    <button type="button" class="btn btn-outline-danger" id="submission-video-clear" data-confirm="{% translate 'Remove all session video links? This will save immediately.' %}">
                         {% translate "Remove all" %}
                     </button>
                     <button type="submit" class="btn btn-default" value="cancel" formmethod="dialog">

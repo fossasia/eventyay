@@ -346,7 +346,7 @@ export default {
 			return getAssignedList(role)
 		},
 		capacityLabel (role) {
-			return this.$t('{{assigned}}/{{capacity}} needed', { assigned: getAssignedList(role).length, capacity: role.capacity })
+			return this.$t('{{assigned}}/{{capacity}} filled', { assigned: getAssignedList(role).length, capacity: role.capacity })
 		},
 		roleName (role) {
 			return getLocalizedString(role.name)

@@ -10,6 +10,7 @@
 {% endblock %}
 {% block custom_header %}
     {{ block.super }}
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
 {% endblock %}
 {% block content %}
     {% blocktrans with name=checkinlist.name asvar header_title_var %}Check-in list: {{ name }}{% endblocktrans %}

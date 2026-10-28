@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import Room, Schedule
+from eventyay.common.text.phrases import phrases
 
 
 @pytest.mark.django_db
@@ -281,14 +282,17 @@ def test_orga_can_see_schedule_release_view(orga_client, event):
 
 @pytest.mark.django_db
 def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, break_slot):
+    """Keep the release warning visible and allow a breaks-only schedule."""
     with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
         event.wip_schedule.talks.filter(submission__isnull=False).delete()
         assert Schedule.objects.count() == 2
     response = orga_client.get(event.orga_urls.release_schedule, follow=True)
     assert response.status_code == 200
     content = response.content.decode().lower()
     assert 'only breaks' in content
-    assert 'review the issues below before releasing' in content
+    assert 'please review the following before proceeding.' in content
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -328,6 +332,7 @@ def test_orga_cannot_reset_to_wrong_version(orga_client, event):
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_can_release_and_reset_schedule(orga_client, event):
+    """Release a schedule and reset its draft without creating another release."""
     with scope(event=event):
         assert Schedule.objects.count() == 1
         event.talks_published = True
@@ -349,9 +354,54 @@ def test_orga_can_release_and_reset_schedule(orga_client, event):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    'version', ('wip', 'latest', ' wip ', ' latest ', 'WIP', 'Wip', 'LATEST', 'Latest', ' wIp ', ' LaTeSt '),
+)
+@pytest.mark.parametrize('has_wip', (True, False))
+def test_orga_cannot_release_reserved_schedule_version(orga_client, event, slot, version, has_wip):
+    """Reject reserved names without changing schedules, even with no draft."""
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        if not has_wip:
+            draft = event.schedules.get(version__isnull=True)
+            draft.talks.all().delete()
+            draft.delete()
+        schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
+        original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
+        mail_count = event.queued_mails.count()
+
+    response = orga_client.post(event.orga_urls.release_schedule, data={'version': version})
+
+    assert response.status_code == 200
+    assert response.text.count('This schedule version is reserved. Please choose a different name.') == 1
+    assert str(phrases.base.error_saving_changes) not in response.text
+    with scope(event=event):
+        assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
+        slot.refresh_from_db()
+        assert (slot.schedule_id, slot.start, slot.end, slot.room_id) == original_slot
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
+def test_orga_release_preserves_non_field_error(orga_client, event):
+    """Keep the publication error visible without an additional generic banner."""
+    event.talks_published = False
+    event.private_testmode = False
+    event.save(update_fields=['talks_published', 'private_testmode'])
+
+    response = orga_client.post(event.orga_urls.release_schedule, data={'version': '0.2'})
+
+    assert response.status_code == 400
+    assert response.text.count('Talks must be published or in private test mode to release a schedule.') == 1
+    assert str(phrases.base.error_saving_changes) not in response.text
+
+
+@pytest.mark.django_db
 @pytest.mark.usefixtures("accepted_submission")
 @pytest.mark.usefixtures("room")
 def test_orga_cannot_reuse_schedule_name(orga_client, event):
+    """Show only the version-field error when a release name is reused."""
     with scope(event=event):
         assert Schedule.objects.count() == 1
         event.talks_published = True
@@ -371,6 +421,9 @@ def test_orga_cannot_reuse_schedule_name(orga_client, event):
         data={"version": "Test version 2"},
     )
     assert response.status_code == 200
+    assert response.text.count('This schedule version was used already, please choose a different one.') == 1
+    assert 'You have to provide a new, unique schedule version!' not in response.text
+    assert str(phrases.base.error_saving_changes) not in response.text
     with scope(event=event):
         assert Schedule.objects.count() == 2
 
