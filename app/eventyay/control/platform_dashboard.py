@@ -1,5 +1,6 @@
 """Presentation and activity aggregates for the administrator dashboard."""
 
+import logging
 from datetime import UTC, timedelta
 from decimal import Decimal
 
@@ -10,6 +11,7 @@ from django.db.models.functions import TruncDay, TruncHour, TruncMonth
 from django.urls import reverse
 from django.utils.timezone import localtime, now
 from django.utils.translation import gettext_lazy as _
+from django_redis.exceptions import ConnectionInterrupted
 from django_scopes import scopes_disabled
 from redis.exceptions import RedisError
 
@@ -18,6 +20,7 @@ from eventyay.base.models.event import Event_SettingsStore
 
 
 ACTIVITY_RANGES = {'24h': 1, '7d': 7, '30d': 30, '90d': 90, 'all': None}
+logger = logging.getLogger(__name__)
 
 
 def events_missing_payment():
@@ -158,7 +161,8 @@ def cached_dashboard_context(key, load, timeout=300):
     """Cache measured data without making a Redis outage break the admin pages."""
     try:
         return cache.get_or_set(key, load, timeout)
-    except RedisError:
+    except (RedisError, ConnectionInterrupted, OSError):
+        logger.warning('Dashboard cache unavailable for %s; loading uncached data.', key)
         return load()
 
 
@@ -196,13 +200,14 @@ def dashboard_cards(ctx):
         ('attendees_total', _('Attendees'), 'attendees', 'users'),
     ]
     ctx['metric_cards'] = [
-        {'value': ctx[key], 'label': label, 'url': routes[route], 'icon': icon} for key, label, route, icon in metrics
+        {'value': ctx.get(key, 0), 'label': label, 'url': routes[route], 'icon': icon}
+        for key, label, route, icon in metrics
     ]
     ctx['metric_cards'].insert(
         4,
         {
             'kind': 'revenue',
-            'revenues': ctx['orders_revenue'],
+            'revenues': ctx.get('orders_revenue', []),
             'label': _('Revenue'),
             'icon': 'money',
             'url': reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': 'revenue'}),
@@ -210,21 +215,21 @@ def dashboard_cards(ctx):
     )
     ctx['action_cards'] = [
         {
-            'value': ctx.get('email_unsent_count'),
+            'value': ctx.get('email_unsent_count', 0),
             'label': _('Unsent emails'),
             'icon': 'envelope-o',
             'url': routes['operations'] + '#admin-email-config-heading',
             'link': _('View emails'),
         },
         {
-            'value': ctx.get('tasks_failed_24h'),
+            'value': ctx.get('tasks_failed_24h', 0),
             'label': _('Failed tasks (last 24 hours)'),
             'icon': 'exclamation-triangle',
             'url': routes['task_management'],
             'link': _('View tasks'),
         },
         {
-            'value': ctx.get('refunds_pending_count'),
+            'value': ctx.get('refunds_pending_count', 0),
             'label': _('Refunds pending'),
             'icon': 'undo',
             'url': routes['orders'],
@@ -238,7 +243,7 @@ def dashboard_cards(ctx):
             'link': _('View events'),
         },
         {
-            'value': ctx.get('active_tokens'),
+            'value': ctx.get('active_tokens', 0),
             'label': _('Active API tokens'),
             'icon': 'key',
             'url': routes['operations'] + '#admin-api-heading',
@@ -246,39 +251,42 @@ def dashboard_cards(ctx):
         },
     ]
     ctx['programme_rows'] = [
-        (_('Total proposals'), ctx['sessions_total_submitted']),
-        (_('Accepted'), ctx['sessions_accepted']),
-        (_('Confirmed'), ctx['sessions_confirmed']),
-        (_('Pending'), ctx['sessions_submitted']),
-        (_('Rejected'), ctx['sessions_rejected']),
-        (_('Total speakers'), ctx['speakers_total']),
-        (_('Confirmed speakers'), ctx['speakers_confirmed']),
-        (_('Unconfirmed speakers'), ctx['speakers_unconfirmed']),
+        (_('Total proposals'), ctx.get('sessions_total_submitted', 0)),
+        (_('Accepted'), ctx.get('sessions_accepted', 0)),
+        (_('Confirmed'), ctx.get('sessions_confirmed', 0)),
+        (_('Pending'), ctx.get('sessions_submitted', 0)),
+        (_('Rejected'), ctx.get('sessions_rejected', 0)),
+        (_('Total speakers'), ctx.get('speakers_total', 0)),
+        (_('Confirmed speakers'), ctx.get('speakers_confirmed', 0)),
+        (_('Unconfirmed speakers'), ctx.get('speakers_unconfirmed', 0)),
     ]
     health = [
-        (_('Celery tasks active'), ctx.get('celery_depth'), False),
-        (_('Failed tasks (last 24 hours)'), ctx.get('tasks_failed_24h'), True),
-        (_('Failed payments (last 24 hours)'), ctx.get('payments_failed_24h'), True),
-        (_('Failed webhooks (last 24 hours)'), ctx.get('webhook_failed_24h'), True),
-        (_('Unsent emails'), ctx.get('email_unsent_count'), True),
-        (_('Active check-in devices'), ctx.get('active_devices_count'), False),
+        ('celery_depth', _('Celery tasks active'), ctx.get('celery_depth'), False),
+        ('tasks_failed_24h', _('Failed tasks (last 24 hours)'), ctx.get('tasks_failed_24h'), True),
+        ('payments_failed_24h', _('Failed payments (last 24 hours)'), ctx.get('payments_failed_24h'), True),
+        ('webhook_failed_24h', _('Failed webhooks (last 24 hours)'), ctx.get('webhook_failed_24h'), True),
+        ('email_unsent_count', _('Unsent emails'), ctx.get('email_unsent_count'), True),
+        ('active_devices_count', _('Active check-in devices'), ctx.get('active_devices_count'), False),
     ]
     ctx['health_rows'] = [
         {
+            'key': key,
             'label': label,
             'value': value,
             'status': _('Warning') if value is None or (failure and value) else _('OK'),
             'style': 'warning' if value is None or (failure and value) else 'success',
         }
-        for label, value, failure in health
+        for key, label, value, failure in health
     ]
     for row in ctx['health_rows']:
         if row['value'] is None:
             row['status'] = _('Not available')
-    if ctx.get('platform_health_unavailable') or ctx.get('celery_depth_unavailable'):
-        ctx['health_rows'][0].update(status=_('Error'), style='danger')
-    if ctx.get('email_unsent_count'):
-        ctx['health_rows'][4].update(status=_('Error'), style='danger')
+        if row['key'] == 'celery_depth' and (
+            ctx.get('platform_health_unavailable') or ctx.get('celery_depth_unavailable')
+        ):
+            row.update(status=_('Error'), style='danger')
+        if row['key'] == 'email_unsent_count' and row['value']:
+            row.update(status=_('Error'), style='danger')
     ctx['health_rows'].extend([
         {
             'label': _('Scheduled tasks last run'),

@@ -17,7 +17,7 @@
         <h2 class="td-section-title">{{ report_title }}</h2>
         <div class="table-responsive"><table class="table td-stats-table">
           <thead><tr>{% for header in report_headers %}<th>{{ header }}</th>{% endfor %}</tr></thead>
-          <tbody>{% for row in report_rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% empty %}<tr><td>{% trans 'No records found.' %}</td></tr>{% endfor %}</tbody>
+          <tbody>{% for row in report_rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ report_headers|length }}">{% trans 'No records found.' %}</td></tr>{% endfor %}</tbody>
         </table></div>
         <nav aria-label="{% trans 'Report pages' %}">
           {% if report_page.has_previous %}<a href="?page={{ report_page.previous_page_number }}">{% trans 'Previous' %}</a>{% endif %}

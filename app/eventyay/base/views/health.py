@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core import cache
 from django.db import DatabaseError
 from django.http import HttpResponse
+from redis import Redis
 from redis.exceptions import RedisError
 
 from eventyay.base.models import User
@@ -37,10 +38,11 @@ def check_dependencies() -> str | None:
     except Exception:
         return 'cache_unavailable'
 
-    if (settings.CELERY_BROKER_URL or '').startswith('redis') and settings.HAS_REDIS:
+    if (settings.CELERY_BROKER_URL or '').startswith('redis'):
         try:
-            django_redis.get_redis_connection('redis').ping()
-        except Exception:
+            with Redis.from_url(settings.CELERY_BROKER_URL, socket_connect_timeout=2, socket_timeout=2) as broker:
+                broker.ping()
+        except RedisError:
             return 'queue_unavailable'
     return None
 

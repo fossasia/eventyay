@@ -8,6 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.timezone import now
+from django_redis.exceptions import ConnectionInterrupted
 from django_scopes import scope
 from redis.exceptions import RedisError
 
@@ -598,9 +599,58 @@ def test_dashboard_caches_dependency_checks(dashboard_admin, settings, mocker):
     cache.clear()
 
 
-def test_dashboard_cache_failure_loads_uncached_data(mocker):
+@pytest.mark.parametrize('error', (
+    RedisError('Unavailable'), ConnectionError('Unavailable'), TimeoutError('Unavailable'),
+    OSError('Unavailable'), ConnectionInterrupted(None),
+))
+def test_dashboard_cache_failure_loads_uncached_data(mocker, error):
     """An unavailable cache must not make the newly cached admin pages fail."""
-    mocker.patch('eventyay.control.platform_dashboard.cache.get_or_set', side_effect=RedisError('Unavailable'))
+    mocker.patch('eventyay.control.platform_dashboard.cache.get_or_set', side_effect=error)
+    warning = mocker.patch('eventyay.control.platform_dashboard.logger.warning')
     load = mocker.Mock(return_value={'count': 3})
     assert cached_dashboard_context('admin_dashboard_counts', load) == {'count': 3}
     load.assert_called_once_with()
+    warning.assert_called_once()
+
+
+def test_dashboard_cache_does_not_hide_calculation_errors(mocker):
+    """Calculation bugs must still surface rather than being treated as cache outages."""
+    mocker.patch('eventyay.control.platform_dashboard.cache.get_or_set', side_effect=ValueError('Invalid metric'))
+    load = mocker.Mock()
+    with pytest.raises(ValueError, match='Invalid metric'):
+        cached_dashboard_context('admin_dashboard_counts', load)
+    load.assert_not_called()
+
+
+def test_dashboard_cards_accept_missing_metrics():
+    """Missing count or revenue context must not crash card construction."""
+    ctx = {}
+    dashboard_cards(ctx)
+    assert all(card['value'] == 0 for card in ctx['metric_cards'] if card.get('kind') != 'revenue')
+    assert next(card for card in ctx['metric_cards'] if card.get('kind') == 'revenue')['revenues'] == []
+    assert all(value == 0 for label, value in ctx['programme_rows'])
+    assert all(card['value'] == 0 for card in ctx['action_cards'])
+    assert str(ctx['health_rows'][0]['status']) == 'Not available'
+
+
+def test_dashboard_health_errors_use_metric_keys():
+    """Queue and email errors must not mark unrelated health indicators as failed."""
+    ctx = {'celery_depth': 0, 'celery_depth_unavailable': True, 'email_unsent_count': 2, 'active_devices_count': 3}
+    dashboard_cards(ctx)
+    rows = {row['key']: row for row in ctx['health_rows'] if 'key' in row}
+    assert str(rows['celery_depth']['status']) == 'Error'
+    assert str(rows['email_unsent_count']['status']) == 'Error'
+    assert str(rows['active_devices_count']['status']) == 'OK'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('metric', ('top-events', 'providers'))
+def test_empty_analytics_report_spans_all_columns(dashboard_admin, metric):
+    """The empty-report message must span every header in its table."""
+    url = reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': metric})
+    response = dashboard_admin.get(url)
+    assert response.status_code == 200
+    assert response.context['report_rows'] == []
+    cell = BeautifulSoup(response.content, 'html.parser').select_one('.platform-dashboard table tbody td')
+    assert cell.get_text(strip=True) == 'No records found.'
+    assert cell['colspan'] == str(len(response.context['report_headers']))
