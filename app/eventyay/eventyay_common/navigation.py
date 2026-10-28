@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Event
-from eventyay.control.navigation import merge_in
+from eventyay.control.navigation import global_nav_label_key, merge_in
 from eventyay.control.signals import nav_event_common, nav_global, nav_organizer
 
 
@@ -78,7 +78,9 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
             plugin_nav_items.extend(response)
 
     # Sort navigation items, prioritizing non-parent items and alphabetically
-    sorted_plugin_items = sorted(plugin_nav_items, key=lambda r: (1 if r.get('parent') else 0, r['label']))
+    sorted_plugin_items = sorted(
+        plugin_nav_items, key=lambda r: (1 if r.get('parent') else 0, global_nav_label_key(r['label']))
+    )
 
     # Merge plugin items into default navigation
     merge_in(nav, sorted_plugin_items)
