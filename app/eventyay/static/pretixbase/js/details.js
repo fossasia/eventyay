@@ -17,7 +17,7 @@ setup_collapsible_details = function (el) {
         });
     };
 
-    el.find("details summary, details summary a[data-toggle=variations]").click(function (e) {
+    el.find("details:not(.dropdown) summary, details:not(.dropdown) summary a[data-toggle=variations]").click(function (e) {
         if (this.tagName !== "A" && $(e.target).closest("a").length > 0) {
             return true;
         }
@@ -49,6 +49,10 @@ setup_collapsible_details = function (el) {
         e.preventDefault();
         return false;
     }).keyup(function (event) {
+        var $details = $(this).closest("details");
+        if ($details.hasClass("dropdown")) {
+            return;
+        }
         if (32 == event.keyCode || (13 == event.keyCode && !isOpera)) {
             // Space or Enter is pressed — trigger the `click` event on the `summary` element
             // Opera already seems to trigger the `click` event when Enter is pressed
@@ -58,8 +62,11 @@ setup_collapsible_details = function (el) {
     });
 
     $('details').each(function () {
-        var $details = $(this),
-            $detailsSummary = $('summary', $details).first(),
+        var $details = $(this);
+        if ($details.hasClass("dropdown")) {
+            return;
+        }
+        var $detailsSummary = $('summary', $details).first(),
             $detailsNotSummary = $details.children(':not(summary)');
         $detailsSummary.attr({
             'role': 'button',
@@ -67,9 +74,6 @@ setup_collapsible_details = function (el) {
         }).prop('tabIndex', 0).bind('selectstart dragstart mousedown', function () {
             return false;
         });
-        if ($details.hasClass("dropdown")) {
-            return;
-        }
         $details.prop('open', typeof $details.attr('open') == 'string');
         if (!$details.prop('open')) {
             if ($details.find(".has-error, .alert-danger").length) {
