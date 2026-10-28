@@ -26,7 +26,7 @@ from eventyay.features.live.modules.loungemesh import LoungeMeshModule
 
 
 @pytest.fixture
-def test_setup():
+def test_setup(allow_all_entitlements):
     with scopes_disabled():
         organizer = Organizer.objects.create(name="LoungeMesh Org", slug="lm-org")
         event = Event.objects.create(
