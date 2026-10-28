@@ -63,6 +63,7 @@ def room_action(
     def wrapper(func):
         @functools.wraps(func)
         async def wrapped(self, body, *args):
+            """Execute room action after checking permissions and video entitlements."""
             if "room" in body:
                 self.room = self.consumer.room_cache.get(body["room"])
                 if self.room:

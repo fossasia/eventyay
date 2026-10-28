@@ -1,3 +1,4 @@
+import datetime as dt
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -5,6 +6,8 @@ import pytest
 from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
 from django.dispatch import Signal
+from django.test.utils import override_settings
+from django.utils.timezone import now
 
 from eventyay.api.auth.api_auth import RoomPermissions
 from eventyay.base import entitlements
@@ -120,3 +123,78 @@ def test_cached_youtube_payload_is_filtered_after_plan_change(video_policy, vide
     video_policy[0].add('video.youtube')
     assert filter_stream_by_entitlement(video_event, stream) is None
     assert filter_stream_by_entitlement(video_event, {'stream_type': 'hls'}) == {'stream_type': 'hls'}
+
+
+@override_settings(
+    CACHES={
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'video-entitlements-cache-test',
+        }
+    }
+)
+def test_get_cached_stream_data_filters_youtube_on_entitlement_denial(video_policy, video_event):
+    from django.core.cache import cache
+
+    from eventyay.base.services import room as room_service
+
+    cache.clear()
+    stamp = now()
+    yt_stream = SimpleNamespace(
+        pk=9,
+        room_id=42,
+        title='YT Live',
+        url='https://youtube.com/watch?v=123',
+        start_time=stamp,
+        end_time=stamp + dt.timedelta(hours=1),
+        stream_type='youtube',
+        config={},
+        created_at=stamp,
+        updated_at=stamp,
+    )
+    hls_stream = SimpleNamespace(
+        pk=10,
+        room_id=43,
+        title='HLS Live',
+        url='https://example.com/live.m3u8',
+        start_time=stamp,
+        end_time=stamp + dt.timedelta(hours=1),
+        stream_type='hls',
+        config={},
+        created_at=stamp,
+        updated_at=stamp,
+    )
+
+    yt_room = SimpleNamespace(
+        pk=42,
+        event=video_event,
+        get_current_stream=lambda: yt_stream,
+        get_next_stream=lambda: yt_stream,
+    )
+    hls_room = SimpleNamespace(
+        pk=43,
+        event=video_event,
+        get_current_stream=lambda: hls_stream,
+        get_next_stream=lambda: hls_stream,
+    )
+
+    # Initial call populates the cache while video.youtube is allowed
+    assert room_service.get_cached_current_stream_data(yt_room)['stream_type'] == 'youtube'
+    assert room_service.get_cached_next_stream_data(yt_room)['stream_type'] == 'youtube'
+    assert room_service.get_cached_current_stream_data(hls_room)['stream_type'] == 'hls'
+    assert room_service.get_cached_next_stream_data(hls_room)['stream_type'] == 'hls'
+
+    # Prevent subsequent DB lookups to ensure values are served from cache
+    yt_room.get_current_stream = lambda: (_ for _ in ()).throw(AssertionError('db query should not be called'))
+    yt_room.get_next_stream = lambda: (_ for _ in ()).throw(AssertionError('db query should not be called'))
+
+    # Deny video.youtube for the organizer
+    video_policy[0].add('video.youtube')
+
+    # Cached YouTube stream should be filtered out to None
+    assert room_service.get_cached_current_stream_data(yt_room) is None
+    assert room_service.get_cached_next_stream_data(yt_room) is None
+
+    # Cached HLS stream should remain intact
+    assert room_service.get_cached_current_stream_data(hls_room)['stream_type'] == 'hls'
+    assert room_service.get_cached_next_stream_data(hls_room)['stream_type'] == 'hls'

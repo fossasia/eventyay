@@ -301,6 +301,7 @@ def count_chat_participants(channel_id):
 
 
 def get_room_config(room, permissions, *, current_stream=_UNSET):
+    """Build room configuration dictionary filtered by module entitlements."""
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
@@ -439,6 +440,7 @@ def get_event_config_for_user(event, user):
 @database_sync_to_async
 @transaction.atomic()
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
+    """Create a room instance after verifying video module entitlements."""
     require_video_entitlements(data['event'], data.get('module_config'))
     if "sorting_priority" not in data:
         data["sorting_priority"] = (

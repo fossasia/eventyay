@@ -27,6 +27,7 @@ def check_video_entitlements(event, module_config) -> EntitlementDecision:
 
 
 def require_video_entitlements(event, module_config) -> None:
+    """Raise ValidationError if video capabilities are denied by the organizer's plan."""
     decision = check_video_entitlements(event, module_config)
     if not decision.allowed:
         raise ValidationError(

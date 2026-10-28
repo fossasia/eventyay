@@ -72,6 +72,7 @@ def extract_room_features(room) -> dict:
 @method_decorator(csrf_exempt, name="dispatch")
 class LoungeMeshTokenExchangeView(View):
     def post(self, request, *args, **kwargs):
+        """Exchange LoungeMesh authorization token after checking video entitlement."""
         try:
             body = json.loads(request.body.decode("utf-8") or "{}")
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -164,6 +165,7 @@ class LoungeMeshTokenExchangeView(View):
 @method_decorator(csrf_exempt, name="dispatch")
 class LoungeMeshTokenRefreshView(View):
     def post(self, request, *args, **kwargs):
+        """Refresh LoungeMesh token after checking video entitlement."""
         try:
             body = json.loads(request.body.decode("utf-8") or "{}")
         except (json.JSONDecodeError, UnicodeDecodeError):

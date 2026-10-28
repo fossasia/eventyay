@@ -61,3 +61,64 @@ def test_other_organizer_plan_cannot_block_event_api(token_client, organizer, ev
     signal.connect(deny_other_organizer, weak=False)
     url = f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/categories/'
     assert token_client.get(url).status_code == 200
+
+
+@pytest.mark.django_db
+def test_organizer_endpoints_enforce_api_read_for_tokens(token_client, organizer, api_policy):
+    denied, _ = api_policy
+    list_url = '/api/v1/organizers/'
+    detail_url = f'/api/v1/organizers/{organizer.slug}/'
+
+    assert token_client.get(list_url).status_code == 200
+    assert token_client.get(detail_url).status_code == 200
+
+    denied.add('api.read')
+    assert token_client.get(list_url).status_code == 403
+    assert token_client.get(detail_url).status_code == 403
+
+    denied.clear()
+    assert token_client.get(list_url).status_code == 200
+    assert token_client.get(detail_url).status_code == 200
+
+
+@pytest.mark.django_db
+def test_organizer_endpoints_unaffected_for_browser_sessions(user_client, organizer, api_policy):
+    api_policy[0].add('api.read')
+    assert user_client.get('/api/v1/organizers/').status_code == 200
+    assert user_client.get(f'/api/v1/organizers/{organizer.slug}/').status_code == 200
+
+
+@pytest.mark.django_db
+def test_organizer_list_filters_denied_organizer_for_user_token(client, user, organizer, api_policy):
+    from eventyay.base.models import Organizer
+
+    other_orga = Organizer.objects.create(name='Other Orga', slug='other-orga')
+    team = organizer.teams.create(name='Team 1', can_change_organizer_settings=True)
+    team.members.add(user)
+    team2 = other_orga.teams.create(name='Team 2', can_change_organizer_settings=True)
+    team2.members.add(user)
+
+    token = user.api_tokens.create(name='User Token')
+    client.credentials(HTTP_AUTHORIZATION=f'Token {token.token}')
+
+    res = client.get('/api/v1/organizers/')
+    assert res.status_code == 200
+    slugs = {item['slug'] for item in res.data['results']}
+    assert organizer.slug in slugs
+    assert other_orga.slug in slugs
+
+    # Deny api.read for other_orga only
+    signal = entitlements.entitlement_check
+
+    def selective_policy(sender, capability, **kwargs):
+        if sender.pk == other_orga.pk and capability == 'api.read':
+            return False
+        return True
+
+    signal.connect(selective_policy, weak=False)
+
+    res = client.get('/api/v1/organizers/')
+    assert res.status_code == 200
+    slugs = {item['slug'] for item in res.data['results']}
+    assert organizer.slug in slugs
+    assert other_orga.slug not in slugs

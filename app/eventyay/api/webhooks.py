@@ -263,6 +263,7 @@ def register_default_webhook_events(sender, **kwargs):
 
 @app.task(base=TransactionAwareTask, max_retries=9, default_retry_delay=900, acks_late=True)
 def notify_webhooks(logentry_ids: list):
+    """Queue webhook deliveries for eligible log entries subject to plan entitlements."""
     if not isinstance(logentry_ids, list):
         logentry_ids = [logentry_ids]
     qs = LogEntry.all.select_related('event', 'event__organizer').filter(id__in=logentry_ids)
@@ -301,6 +302,7 @@ def notify_webhooks(logentry_ids: list):
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
+    """Deliver or retry a webhook call after verifying current plan entitlements."""
     # 9 retries with 2**(2*x) timing is roughly 72 hours
     with scopes_disabled():
         webhook = WebHook.objects.get(id=webhook_id)

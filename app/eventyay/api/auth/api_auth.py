@@ -68,6 +68,7 @@ class NoPermission(permissions.BasePermission):
 
 class ApiAccessRequiredPermission(permissions.BasePermission):
     def has_permission(self, request, view):
+        """Check event API permission and commercial API plan entitlement."""
         if isinstance(request.user, AnonymousUser):
             return False
         if not request.event.has_permission_implicit(
@@ -106,6 +107,7 @@ class UserDeletePermissions(permissions.BasePermission):
 
 class RoomPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
+        """Validate room creation permissions and video provider entitlements."""
         if request.method == "POST":
             traits = request.auth.get("traits")
             module_config = request.data.get("module_config")
@@ -139,6 +141,7 @@ class RoomPermissions(permissions.BasePermission):
             return True
 
     def has_object_permission(self, request, view, obj: Room):
+        """Validate room modification permissions and video provider entitlements."""
         permission = None
         traits = request.auth.get("traits")
         module_config = request.data.get("module_config")

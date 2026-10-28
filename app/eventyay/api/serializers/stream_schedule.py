@@ -29,6 +29,7 @@ class StreamScheduleSerializer(PretalxSerializer):
         read_only_fields = ('room', 'created_at', 'updated_at')
 
     def validate(self, data):
+        """Validate stream schedule data and ensure YouTube streaming is entitled."""
         data = super().validate(data)
         room = self._get_room()
         stream_type = data.get('stream_type', self.instance.stream_type if self.instance else 'youtube')

@@ -23,6 +23,7 @@ from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from eventyay.api.auth.permission import _TOKEN_AUTH_TYPES
 from eventyay.api.models import OAuthAccessToken
 from eventyay.api.serializers.organizer import (
     DeviceSerializer,
@@ -41,6 +42,7 @@ from eventyay.api.serializers.organizer import (
     TeamMemberSerializer,
     TeamSerializer,
 )
+from eventyay.base.entitlements import check_entitlement
 from eventyay.base.models import (
     Device,
     GiftCard,
@@ -91,6 +93,7 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('name', 'slug')
 
     def get_queryset(self):
+        """Return organizers accessible to the caller, filtered by API read entitlement."""
         follower_subquery = Exists(
             OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user)
         ) if self.request.user.is_authenticated else None
@@ -108,6 +111,13 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
             qs = Organizer.objects.filter(pk=self.request.auth.organizer_id)
         else:
             qs = Organizer.objects.filter(pk=self.request.auth.team.organizer_id)
+
+        if isinstance(self.request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
+            allowed_ids = [
+                org.pk for org in qs
+                if check_entitlement(org, 'api.read').allowed
+            ]
+            qs = qs.filter(pk__in=allowed_ids)
 
         qs = qs.annotate(_follower_count=Count('followers', distinct=True))
         if follower_subquery is not None:

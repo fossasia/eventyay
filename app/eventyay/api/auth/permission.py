@@ -2,7 +2,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from eventyay.api.models import OAuthAccessToken
 from eventyay.base.entitlements import check_entitlement
-from eventyay.base.models import Device, Event, User
+from eventyay.base.models import Device, Event, Organizer, User
 from eventyay.base.models.auth import SuperuserPermissionSet
 from eventyay.base.models.auth_token import UserApiToken
 from eventyay.base.models.organizer import TeamAPIToken
@@ -102,6 +102,7 @@ class EventPermission(BasePermission):
         return True
 
     def has_permission(self, request, view):
+        """Check token scope and commercial API entitlements for the request."""
         required_permission = self._get_required_permission(request, view)
         allow_public_read = getattr(view, 'allow_public_read', False)
 
@@ -157,10 +158,31 @@ class EventPermission(BasePermission):
         # Commercial API access applies to integrations, not the browser UI or public reads.
         if isinstance(request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
             organizer = getattr(request, 'organizer', None)
+            if organizer is None:
+                if isinstance(request.auth, Device):
+                    organizer = getattr(request.auth, 'organizer', None)
+                elif isinstance(request.auth, TeamAPIToken):
+                    organizer = getattr(getattr(request.auth, 'team', None), 'organizer', None)
             if organizer is not None:
                 capability = 'api.read' if request.method in SAFE_METHODS else 'api.write'
                 return check_entitlement(
                     organizer, capability, event=getattr(request, 'event', None)
+                ).allowed
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        """Check commercial API entitlements against the resolved target object."""
+        if isinstance(request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
+            organizer = (
+                obj
+                if isinstance(obj, Organizer)
+                else getattr(obj, 'organizer', None)
+                or getattr(getattr(obj, 'event', None), 'organizer', None)
+            )
+            if organizer is not None:
+                capability = 'api.read' if request.method in SAFE_METHODS else 'api.write'
+                return check_entitlement(
+                    organizer, capability, event=getattr(request, 'event', getattr(obj, 'event', None))
                 ).allowed
         return True
 

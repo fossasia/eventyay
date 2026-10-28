@@ -476,6 +476,7 @@ def normalize_after_priority_change(event, room_id, new_priority):
 
 
 def _serialize_stream_schedule(stream_schedule):
+    """Serialize stream schedule data and filter by organizer video entitlement."""
     from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 
     if not stream_schedule:
@@ -486,6 +487,7 @@ def _serialize_stream_schedule(stream_schedule):
 
 
 async def broadcast_stream_change(room_id, stream_schedule, reload=False):
+    """Broadcast stream changes across the room channel group."""
     stream = await database_sync_to_async(_serialize_stream_schedule)(stream_schedule) if stream_schedule else None
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
@@ -498,6 +500,7 @@ async def broadcast_stream_change(room_id, stream_schedule, reload=False):
 
 
 async def broadcast_upcoming_stream(room_id, stream_schedule):
+    """Broadcast upcoming stream schedule changes across the room channel group."""
     data = await database_sync_to_async(_serialize_stream_schedule)(stream_schedule) if stream_schedule else None
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),

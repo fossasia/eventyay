@@ -665,6 +665,7 @@ class RoomModule(BaseModule):
         ]
     )
     async def config_patch(self, body):
+        """Handle live room configuration patch after validating module entitlements."""
         if 'module_config' in body:
             decision = await database_sync_to_async(check_video_entitlements)(
                 self.consumer.event, body['module_config']
