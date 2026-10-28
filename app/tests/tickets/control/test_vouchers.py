@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
+from eventyay.control.forms.vouchers import VoucherBulkForm
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 from eventyay.base.models import (
@@ -898,6 +899,42 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_create_voucher_valid_values(self):
         self._create_voucher({'value': '50.00', 'price_mode': 'percent', 'budget': '100.00'}, expected_failure=False)
+
+
+class VoucherBulkCodeValidationTest(TestCase):
+    def test_bulk_codes_validation(self):
+        """Validate normalized codes independently of the prefix option."""
+        organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
+        event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
+        for codes, prefix, error, expected in [
+            ('ABCDE\nABCDE', False, 'Voucher codes must be unique.', None),
+            ('ABCDE\nabcde', False, 'Voucher codes must be unique.', None),
+            (' ABCDE \nABCDE', False, 'Voucher codes must be unique.', None),
+            ('ABCDE\nTAGABCDE', True, 'Voucher codes must be unique.', None),
+            ('ABCDE\nFGHIJ', False, None, ['ABCDE', 'FGHIJ']),
+            ('ABCDE\nFGHIJ', True, None, ['TAGABCDE', 'TAGFGHIJ']),
+            ('A' * 255, False, None, ['A' * 255]),
+            ('A' * 252, True, None, ['TAG' + 'A' * 252]),
+            ('A' * 256, False, 'Voucher codes cannot be longer than 255 characters.', None),
+            ('A' * 253, True, 'Voucher codes cannot be longer than 255 characters.', None),
+        ]:
+            with self.subTest(codes=codes, prefix=prefix), scope(event=event, organizer=organizer):
+                form = VoucherBulkForm(
+                    instance=Voucher(event=event),
+                    data={
+                        'codes': codes,
+                        'max_usages': 1,
+                        'price_mode': 'none',
+                        'tag': 'TAG',
+                        'use_tag_as_prefix': prefix,
+                    },
+                )
+                assert form.is_valid() is (error is None), form.errors
+                if error:
+                    assert form.errors['codes'] == [error]
+                else:
+                    assert form.cleaned_data['codes'] == expected
+                assert not event.vouchers.exists()
 
 
 class InvoiceVoucherFormTest(TestCase):
