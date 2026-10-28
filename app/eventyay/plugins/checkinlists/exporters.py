@@ -20,6 +20,7 @@ from django.db.models.functions import Coalesce, NullIf
 from django.template.defaultfilters import truncatechars, truncatechars_html
 from django.urls import reverse
 from django.utils.formats import date_format
+from django.utils.html import conditional_escape
 from django.utils.timezone import is_aware, make_aware
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, pgettext
@@ -136,6 +137,7 @@ class CheckInListMixin(BaseExporter):
                             ('email', _('E-mail')),
                             ('phone', _('Phone number')),
                             ('company', _('Company')),
+                            ('job_title', _('Job title')),
                             ('voucher', _('Voucher code')),
                             ('order_date', _('Order date')),
                             ('requires_attention', _('Requires special attention')),
@@ -146,7 +148,7 @@ class CheckInListMixin(BaseExporter):
                         ],
                         initial=[
                             'order_code', 'attendee_name', 'product', 'price',
-                            'auto_checked_in', 'status', 'email', 'phone', 'company', 'voucher',
+                            'auto_checked_in', 'status', 'email', 'phone', 'company', 'job_title', 'voucher',
                             'order_date', 'requires_attention', 'comment', 'seat', 'address',
                             'timestamp'
                         ],
@@ -376,6 +378,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             'email': 0.2,
             'phone': 0.15,
             'company': 0.15,
+            'job_title': 0.15,
             'voucher': 0.1,
             'order_date': 0.15,
             'comment': 0.2,
@@ -397,6 +400,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             'email': _('E-mail'),
             'phone': _('Phone'),
             'company': _('Company'),
+            'job_title': _('Job title'),
             'voucher': _('Voucher'),
             'order_date': _('Order date'),
             'comment': _('Comment'),
@@ -560,6 +564,9 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                     row.append(Paragraph(str(op.order.phone) if op.order.phone else '', rowstyle))
                 elif c == 'company':
                     row.append(Paragraph(op.company or iac, rowstyle))
+                elif c == 'job_title':
+                    job_title = op.job_title or (op.addon_to.job_title if op.addon_to else '')
+                    row.append(Paragraph(conditional_escape(job_title), rowstyle))
                 elif c == 'voucher':
                     row.append(Paragraph(op.voucher.code if op.voucher else '', rowstyle))
                 elif c == 'order_date':
@@ -737,6 +744,8 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
 
         if 'company' in columns:
             row.append(op.company or ia.company)
+        if 'job_title' in columns:
+            row.append(op.job_title or (op.addon_to.job_title if op.addon_to else ''))
         if 'voucher' in columns:
             row.append(op.voucher.code if op.voucher else '')
         if 'order_date' in columns:
@@ -827,6 +836,8 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
 
         if 'company' in columns:
             headers.append(_('Company'))
+        if 'job_title' in columns:
+            headers.append(_('Job title'))
         if 'voucher' in columns:
             headers.append(_('Voucher code'))
         if 'order_date' in columns:
