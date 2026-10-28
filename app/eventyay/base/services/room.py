@@ -31,6 +31,7 @@ from eventyay.base.services.stale_cache import (
     get_stale_cached,
 )
 from eventyay.base.services.user import get_public_users
+from eventyay.base.services.video_entitlements import check_video_entitlements, filter_stream_by_entitlement
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
 
@@ -159,7 +160,7 @@ def get_cached_current_stream_data(room):
         log_context=f'current stream room {room.pk}',
         ttl_for_value=lambda value: current_stream_hot_ttl(room, value),
     )
-    return _deserialize_cached_stream(cached)
+    return filter_stream_by_entitlement(room.event, _deserialize_cached_stream(cached))
 
 
 def _load_next_stream_from_db(room):
@@ -180,7 +181,7 @@ def get_cached_next_stream_data(room):
         log_context=f'next stream room {room.pk}',
         ttl_for_value=next_stream_hot_ttl,
     )
-    return _deserialize_cached_stream(cached)
+    return filter_stream_by_entitlement(room.event, _deserialize_cached_stream(cached))
 
 
 def serialize_current_stream(current):
@@ -475,26 +476,32 @@ def normalize_after_priority_change(event, room_id, new_priority):
 
 
 def _serialize_stream_schedule(stream_schedule):
+    """Serialize stream schedule data and filter by organizer video entitlement."""
     from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 
     if not stream_schedule:
         return None
-    return StreamScheduleSerializer(stream_schedule).data
+    return filter_stream_by_entitlement(
+        stream_schedule.room.event, StreamScheduleSerializer(stream_schedule).data
+    )
 
 
 async def broadcast_stream_change(room_id, stream_schedule, reload=False):
+    """Broadcast stream changes across the room channel group."""
+    stream = await database_sync_to_async(_serialize_stream_schedule)(stream_schedule) if stream_schedule else None
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
         {
             'type': 'room.stream.change',
-            'stream': _serialize_stream_schedule(stream_schedule),
+            'stream': stream,
             'reload': reload,
         },
     )
 
 
 async def broadcast_upcoming_stream(room_id, stream_schedule):
-    data = _serialize_stream_schedule(stream_schedule)
+    """Broadcast upcoming stream schedule changes across the room channel group."""
+    data = await database_sync_to_async(_serialize_stream_schedule)(stream_schedule) if stream_schedule else None
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
         {
@@ -518,7 +525,7 @@ def check_stream_schedule_changes(sender, **kwargs):
     # Keep the last broadcast marker stable across periodic runs to avoid repeated rebroadcasts.
     cache_timeout = None
 
-    rooms = Room.objects.filter(deleted=False, stream_schedules__isnull=False).select_related('event').distinct()
+    rooms = Room.objects.filter(deleted=False, stream_schedules__isnull=False).select_related('event__organizer').distinct()
 
     for room in rooms:
         current_stream = room.get_current_stream()
@@ -526,7 +533,14 @@ def check_stream_schedule_changes(sender, **kwargs):
         last_broadcast_id = cache.get(cache_key)
 
         current_stream_id = current_stream.pk if current_stream else None
+        # Include the YouTube entitlement so a plan change re-broadcasts the same active stream.
+        marker = (
+            current_stream_id,
+            check_video_entitlements(room.event, [{'type': 'livestream.youtube'}]).allowed,
+        )
 
-        if current_stream_id != last_broadcast_id:
-            cache.set(cache_key, current_stream_id, cache_timeout)
+        if marker != last_broadcast_id:
+            cache.set(cache_key, marker, cache_timeout)
             async_to_sync(broadcast_stream_change)(room.pk, current_stream, reload=current_stream_id is None)
+            # The upcoming stream is filtered by the same entitlement, so refresh it too.
+            async_to_sync(broadcast_upcoming_stream)(room.pk, room.get_next_stream())

@@ -12,6 +12,16 @@ from eventyay.control.signals import (
 )
 
 
+def global_nav_label_key(label) -> str:
+    """
+    Sort key for plugin entries in the global sidebar and the profile dropdown.
+
+    Both menus list the same plugin pages, so they must order them the same way
+    even when a plugin capitalizes the label differently in each signal.
+    """
+    return str(label).casefold()
+
+
 def _vouchers_nav_active(url) -> bool:
     return 'event.vouchers' in url.url_name or 'event.voucher' in url.url_name
 
@@ -513,7 +523,7 @@ def get_global_navigation(request):
         nav,
         sorted(
             sum((list(a[1]) for a in nav_global.send(request, request=request)), []),
-            key=lambda r: (1 if r.get('parent') else 0, r['label']),
+            key=lambda r: (1 if r.get('parent') else 0, global_nav_label_key(r['label'])),
         ),
     )
     return nav
