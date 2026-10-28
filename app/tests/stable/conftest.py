@@ -5,10 +5,20 @@ Provides test users, organizers, events, and authenticated clients.
 import pytest
 from datetime import timedelta
 
+from eventyay.base import entitlements
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 User = get_user_model()
+
+
+@pytest.fixture
+def allow_all_entitlements(monkeypatch):
+    """Ignore installed plan plugins so tests do not depend on the organizer's plan."""
+    from django.dispatch import Signal
+
+    monkeypatch.setattr(entitlements, 'entitlement_check', Signal())
 
 
 @pytest.fixture

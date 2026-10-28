@@ -20,6 +20,7 @@ from rest_framework import (
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -93,7 +94,7 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('name', 'slug')
 
     def get_queryset(self):
-        """Return organizers accessible to the caller, filtered by API read entitlement."""
+        """Return organizers accessible to the caller, filtered by the method's API entitlement."""
         follower_subquery = Exists(
             OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user)
         ) if self.request.user.is_authenticated else None
@@ -113,9 +114,10 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
             qs = Organizer.objects.filter(pk=self.request.auth.team.organizer_id)
 
         if isinstance(self.request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
+            capability = 'api.read' if self.request.method in SAFE_METHODS else 'api.write'
             allowed_ids = [
                 org.pk for org in qs
-                if check_entitlement(org, 'api.read').allowed
+                if check_entitlement(org, capability).allowed
             ]
             qs = qs.filter(pk__in=allowed_ids)
 
