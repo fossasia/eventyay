@@ -7,6 +7,7 @@ import pytest
 from django.core import mail as djmail
 from django_scopes import scope
 
+from eventyay.base.middleware import _parse_csp
 from eventyay.base.models import Answer, Event, Submission, SubmissionType, Track
 from eventyay.base.models import QueuedMail
 from eventyay.base.models import TalkQuestion as Question
@@ -66,6 +67,15 @@ def test_edit_cfp_timezones(orga_client, event):
     assert response.status_code == 200
     assert "2018-03-05T18:39" in response.rendered_content
     assert "2018-03-05T17:39" not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_cfp_flow_editor_uses_valid_csp_directive(orga_client, event):
+    response = orga_client.get(event.cfp.urls.editor)
+
+    assert response.status_code == 200
+    assert 'SCRIPT_SRC' not in response['Content-Security-Policy']
+    assert "'unsafe-eval'" in _parse_csp(response['Content-Security-Policy'])['script-src']
 
 
 @pytest.mark.django_db
