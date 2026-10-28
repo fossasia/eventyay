@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import pytest
 from django.core import mail as djmail
 from django.test import TestCase
 from django.utils.timezone import now
@@ -20,6 +21,42 @@ from eventyay.base.services.waitinglist import (
     process_waitinglist,
 )
 from tests.testutils.scope import classscope
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('quota_size', [None, 0, 1])
+@pytest.mark.parametrize('with_variation', [False, True])
+def test_send_voucher_quota_capacity(quota_size, with_variation, monkeypatch):
+    """Unlimited capacity permits vouchers while exhausted quotas still reject them."""
+    organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
+    event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
+    with scope(event=event, organizer=organizer):
+        product = Item.objects.create(event=event, name='Ticket', default_price=23)
+        quota = Quota.objects.create(event=event, name='Tickets', size=quota_size)
+        if with_variation:
+            variation = ItemVariation.objects.create(product=product, value='Standard')
+            quota.variations.add(variation)
+        else:
+            variation = None
+            quota.products.add(product)
+        entry = WaitingListEntry.objects.create(
+            event=event, product=product, variation=variation, email='waiting@example.com'
+        )
+        sent = []
+        monkeypatch.setattr('eventyay.base.models.waitinglist.mail', lambda *args, **kwargs: sent.append(args[0]))
+        if quota_size == 0:
+            with pytest.raises(WaitingListException):
+                entry.send_voucher()
+            entry.refresh_from_db()
+            assert entry.voucher_id is None
+            assert not sent
+        else:
+            entry.send_voucher()
+            entry.refresh_from_db()
+            assert entry.voucher.product == product
+            assert entry.voucher.variation == variation
+            assert entry.voucher.block_quota
+            assert sent == [entry.email]
 
 
 class WaitingListTestCase(TestCase):
