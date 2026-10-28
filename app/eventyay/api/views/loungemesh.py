@@ -3,11 +3,12 @@ import logging
 from datetime import timedelta
 
 from django.http import JsonResponse
+from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.loungemesh import (
     DEFAULT_FEATURES,
     get_loungemesh_server,
@@ -16,8 +17,9 @@ from eventyay.base.services.loungemesh import (
     verify_loungemesh_token,
     verify_server_api_secret,
 )
-from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
+from eventyay.base.services.video_entitlements import check_video_entitlements
 from eventyay.base.settings import is_video_provider_enabled_for_attendee
+
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +91,8 @@ class LoungeMeshTokenExchangeView(View):
             return JsonResponse({"error": "invalid_or_expired_token"}, status=403)
 
         event = token_obj.event
+        if not check_video_entitlements(event, [{'type': 'call.loungemesh'}]).allowed:
+            return JsonResponse({'error': 'entitlement_denied'}, status=403)
         if not is_video_provider_enabled_for_attendee("loungemesh"):
             log_loungemesh_callback(OUTCOME_FAILURE, 'feature_disabled', event=event)
             return JsonResponse(
@@ -179,6 +183,8 @@ class LoungeMeshTokenRefreshView(View):
             return JsonResponse({"error": "invalid_or_expired_token"}, status=403)
 
         event = token_obj.event
+        if not check_video_entitlements(event, [{'type': 'call.loungemesh'}]).allowed:
+            return JsonResponse({'error': 'entitlement_denied'}, status=403)
         if not is_video_provider_enabled_for_attendee("loungemesh"):
             log_loungemesh_callback(OUTCOME_FAILURE, 'feature_disabled', event=event)
             return JsonResponse(

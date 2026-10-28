@@ -1,9 +1,12 @@
 import functools
 from typing import List, Union
 
-from eventyay.core.permissions import Permission
-from eventyay.base.services.event import get_room
+from channels.db import database_sync_to_async
+
 from eventyay.base.services.chat import get_channel
+from eventyay.base.services.event import get_room
+from eventyay.base.services.video_entitlements import check_video_entitlements
+from eventyay.core.permissions import Permission
 from eventyay.features.live.exceptions import ConsumerException
 
 
@@ -122,6 +125,16 @@ def room_action(
                 ):
                     raise ConsumerException("protocol.denied", "Permission denied.")
             try:
+                if module_required is not None:
+                    decision = await database_sync_to_async(check_video_entitlements)(
+                        self.consumer.event,
+                        [m for m in self.room.module_config if m.get('type') in reqs],
+                    )
+                    if not decision.allowed:
+                        raise ConsumerException(
+                            'room.entitlement_denied',
+                            decision.message or 'Your plan does not include this video feature.',
+                        )
                 return await func(self, body, *args)
             finally:
                 del self.room

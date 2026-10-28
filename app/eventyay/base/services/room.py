@@ -31,6 +31,7 @@ from eventyay.base.services.stale_cache import (
     get_stale_cached,
 )
 from eventyay.base.services.user import get_public_users
+from eventyay.base.services.video_entitlements import filter_stream_by_entitlement
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
 
@@ -159,7 +160,7 @@ def get_cached_current_stream_data(room):
         log_context=f'current stream room {room.pk}',
         ttl_for_value=lambda value: current_stream_hot_ttl(room, value),
     )
-    return _deserialize_cached_stream(cached)
+    return filter_stream_by_entitlement(room.event, _deserialize_cached_stream(cached))
 
 
 def _load_next_stream_from_db(room):
@@ -180,7 +181,7 @@ def get_cached_next_stream_data(room):
         log_context=f'next stream room {room.pk}',
         ttl_for_value=next_stream_hot_ttl,
     )
-    return _deserialize_cached_stream(cached)
+    return filter_stream_by_entitlement(room.event, _deserialize_cached_stream(cached))
 
 
 def serialize_current_stream(current):
@@ -479,22 +480,25 @@ def _serialize_stream_schedule(stream_schedule):
 
     if not stream_schedule:
         return None
-    return StreamScheduleSerializer(stream_schedule).data
+    return filter_stream_by_entitlement(
+        stream_schedule.room.event, StreamScheduleSerializer(stream_schedule).data
+    )
 
 
 async def broadcast_stream_change(room_id, stream_schedule, reload=False):
+    stream = await database_sync_to_async(_serialize_stream_schedule)(stream_schedule) if stream_schedule else None
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
         {
             'type': 'room.stream.change',
-            'stream': _serialize_stream_schedule(stream_schedule),
+            'stream': stream,
             'reload': reload,
         },
     )
 
 
 async def broadcast_upcoming_stream(room_id, stream_schedule):
-    data = _serialize_stream_schedule(stream_schedule)
+    data = await database_sync_to_async(_serialize_stream_schedule)(stream_schedule) if stream_schedule else None
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
         {

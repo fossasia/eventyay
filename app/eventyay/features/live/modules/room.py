@@ -50,6 +50,7 @@ from eventyay.base.settings import (
     is_video_provider_enabled_for_organizer,
 )
 from eventyay.core.permissions import Permission
+from eventyay.base.services.video_entitlements import check_video_entitlements
 from eventyay.core.utils.redis import aredis
 from eventyay.features.live.channels import (
     GROUP_EVENT,
@@ -664,6 +665,16 @@ class RoomModule(BaseModule):
         ]
     )
     async def config_patch(self, body):
+        if 'module_config' in body:
+            decision = await database_sync_to_async(check_video_entitlements)(
+                self.consumer.event, body['module_config']
+            )
+            if not decision.allowed:
+                await self.consumer.send_error(
+                    code='config.entitlement_denied',
+                    message=decision.message or 'Your plan does not include this video feature.',
+                )
+                return
         newly_added_server_modules = newly_added_server_backed_room_modules(
             self.room.module_config,
             body.get("module_config"),

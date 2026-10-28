@@ -1,6 +1,7 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from eventyay.api.models import OAuthAccessToken
+from eventyay.base.entitlements import check_entitlement
 from eventyay.base.models import Device, Event, User
 from eventyay.base.models.auth import SuperuserPermissionSet
 from eventyay.base.models.auth_token import UserApiToken
@@ -10,6 +11,7 @@ from eventyay.helpers.security import (
     SessionReauthRequired,
     assert_session_valid,
 )
+
 
 _TOKEN_AUTH_TYPES = (Device, TeamAPIToken, UserApiToken)
 
@@ -152,12 +154,20 @@ class EventPermission(BasePermission):
         if isinstance(request.auth, OAuthAccessToken) and hasattr(request, 'organizer'):
             if not request.auth.organizers.filter(pk=request.organizer.pk).exists():
                 return False
+        # Commercial API access applies to integrations, not the browser UI or public reads.
+        if isinstance(request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
+            organizer = getattr(request, 'organizer', None)
+            if organizer is not None:
+                capability = 'api.read' if request.method in SAFE_METHODS else 'api.write'
+                return check_entitlement(
+                    organizer, capability, event=getattr(request, 'event', None)
+                ).allowed
         return True
 
 
 class EventCRUDPermission(EventPermission):
     def has_permission(self, request, view):
-        if not super(EventCRUDPermission, self).has_permission(request, view):
+        if not super().has_permission(request, view):
             return False
         elif view.action == 'create' and 'can_create_events' not in request.orgapermset:
             return False

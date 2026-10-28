@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import authentication, exceptions, permissions
 from rest_framework.authentication import get_authorization_header
 
+from eventyay.base.entitlements import check_entitlement
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room
 from eventyay.base.services.room_creation_gate import (
@@ -12,6 +13,7 @@ from eventyay.base.services.room_creation_gate import (
     newly_added_provider_modules,
     newly_added_server_backed_room_modules,
 )
+from eventyay.base.services.video_entitlements import check_video_entitlements
 from eventyay.base.settings import get_provider_for_module_type, is_video_provider_enabled_for_organizer
 from eventyay.core.permissions import Permission
 
@@ -68,10 +70,13 @@ class ApiAccessRequiredPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         if isinstance(request.user, AnonymousUser):
             return False
-        return request.event.has_permission_implicit(
+        if not request.event.has_permission_implicit(
             traits=request.auth.get("traits"),
             permissions=[Permission.EVENT_API],
-        )
+        ):
+            return False
+        capability = 'api.read' if request.method in permissions.SAFE_METHODS else 'api.write'
+        return check_entitlement(request.event.organizer, capability, event=request.event).allowed
 
 
 class EventPermissions(permissions.BasePermission):
@@ -104,6 +109,8 @@ class RoomPermissions(permissions.BasePermission):
         if request.method == "POST":
             traits = request.auth.get("traits")
             module_config = request.data.get("module_config")
+            if not check_video_entitlements(request.event, module_config).allowed:
+                return False
             if not is_module_config_enabled_for_creation(module_config):
                 return False
             # Server-backed modules need the development admin gate in addition to
@@ -135,6 +142,8 @@ class RoomPermissions(permissions.BasePermission):
         permission = None
         traits = request.auth.get("traits")
         module_config = request.data.get("module_config")
+        if request.method in ('PATCH', 'PUT') and not check_video_entitlements(request.event, module_config).allowed:
+            return False
         newly_added_server_modules = newly_added_server_backed_room_modules(
             obj.module_config,
             module_config,
