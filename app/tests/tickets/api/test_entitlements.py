@@ -122,3 +122,22 @@ def test_organizer_list_filters_denied_organizer_for_user_token(client, user, or
     slugs = {item['slug'] for item in res.data['results']}
     assert organizer.slug in slugs
     assert other_orga.slug not in slugs
+
+
+@pytest.mark.django_db
+def test_object_permission_uses_request_organizer_for_users(organizer, event, api_policy):
+    from types import SimpleNamespace
+
+    from eventyay.api.auth.permission import EventPermission
+    from eventyay.base.models import Organizer, TeamAPIToken, User
+
+    denied, calls = api_policy
+    denied.add('api.read')
+    other = Organizer.objects.create(name='Other', slug='other')
+    member = User(email='member@example.org')
+    member.event = event
+    event.organizer = other
+    request = SimpleNamespace(method='GET', auth=TeamAPIToken(), organizer=organizer)
+
+    assert not EventPermission().has_object_permission(request, None, member)
+    assert calls[-1][0] is organizer

@@ -31,7 +31,7 @@ from eventyay.base.services.stale_cache import (
     get_stale_cached,
 )
 from eventyay.base.services.user import get_public_users
-from eventyay.base.services.video_entitlements import filter_stream_by_entitlement
+from eventyay.base.services.video_entitlements import check_video_entitlements, filter_stream_by_entitlement
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
 
@@ -533,7 +533,12 @@ def check_stream_schedule_changes(sender, **kwargs):
         last_broadcast_id = cache.get(cache_key)
 
         current_stream_id = current_stream.pk if current_stream else None
+        # Include the YouTube entitlement so a plan change re-broadcasts the same active stream.
+        marker = (
+            current_stream_id,
+            check_video_entitlements(room.event, [{'type': 'livestream.youtube'}]).allowed,
+        )
 
-        if current_stream_id != last_broadcast_id:
-            cache.set(cache_key, current_stream_id, cache_timeout)
+        if marker != last_broadcast_id:
+            cache.set(cache_key, marker, cache_timeout)
             async_to_sync(broadcast_stream_change)(room.pk, current_stream, reload=current_stream_id is None)

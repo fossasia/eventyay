@@ -173,12 +173,13 @@ class EventPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         """Check commercial API entitlements against the resolved target object."""
         if isinstance(request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
-            organizer = (
-                obj
-                if isinstance(obj, Organizer)
-                else getattr(obj, 'organizer', None)
-                or getattr(getattr(obj, 'event', None), 'organizer', None)
-            )
+            if isinstance(obj, Organizer):
+                organizer = obj
+            elif isinstance(obj, User):
+                # User.event is the user's video event, not the target of this request.
+                organizer = getattr(request, 'organizer', None)
+            else:
+                organizer = getattr(obj, 'organizer', None) or getattr(getattr(obj, 'event', None), 'organizer', None)
             if organizer is not None:
                 capability = 'api.read' if request.method in SAFE_METHODS else 'api.write'
                 return check_entitlement(

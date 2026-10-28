@@ -76,7 +76,10 @@ def test_check_stream_schedule_changes_runs_for_a_scheduled_room():
     room = mock.Mock(pk=4242)
     room.get_current_stream.return_value = None
 
-    with mock.patch.object(room_service, 'Room') as room_model:
+    with (
+        mock.patch.object(room_service, 'Room') as room_model,
+        mock.patch.object(room_service, 'check_video_entitlements', return_value=mock.Mock(allowed=True)),
+    ):
         queryset = room_model.objects.filter.return_value.select_related.return_value.distinct
         queryset.return_value = [room]
 
