@@ -50,8 +50,9 @@ as web when investigating different behavior between requests and tasks.
 
 `deployment/docker-compose.yml`, `app/Dockerfile.prod`, and
 `app/entrypoint.prod.sh` describe production. Production builds use the lockfile;
-the Dockerfile also has a dev/staging branch-retargeting path. Inspect its build
-arguments before assuming a container contains the latest plugin branch.
+the Dockerfile retargets plugin sources only for `BUILD_MODE=dev`. Staging
+uses the non-dev branch with locked production sources. Inspect build arguments
+before assuming a container contains the latest plugin branch.
 
 `.github/workflows/update-plugin-pins.yml` and
 `.github/workflows/plugin-dispatch-receiver.yml` maintain integration updates.
@@ -62,8 +63,10 @@ core lock update after plugin changes merge.
 ## Verification
 
 From `app/`, activate `.venv` and run `pytest tests/<affected-area>` with test
-configuration and a disposable PostgreSQL database. `.github/workflows/tests.yml`
-is the authority for core CI service settings and flags. Do not reuse a production
+configuration and a disposable PostgreSQL database. `.github/workflows/video-backend-ci.yml`
+is the authority for app backend CI service settings and flags on `dev`; its
+`pytest-integration` job provides PostgreSQL and Redis. The older `tests.yml`
+workflow targets legacy branches and the absent `src/` layout. Do not reuse a production
 database for tests or migrations.
 
 Plugin CI clones core `dev`, installs the plugin into core's environment, and
