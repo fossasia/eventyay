@@ -13,7 +13,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 from eventyay.api.serializers.schedule import TalkSlotOrgaSerializer
 from eventyay.api.serializers.submission import SubmissionSerializer
-from eventyay.base.models import Schedule, Submission, SubmissionStates, TalkSlot
+from eventyay.base.models import Schedule, Submission, SubmissionStates, SubmissionType, TalkSlot
 from eventyay.cfp.views.user import SubmissionsEditView
 from eventyay.orga.forms.cfp import SubmissionTypeForm
 from eventyay.orga.forms.submission import SubmissionForm
@@ -73,12 +73,13 @@ def test_review_type_default_save_propagates_atomically(event, accepted_submissi
         slot.save()
         if fail_slot:
             mocker.patch.object(Submission, 'update_duration', side_effect=IntegrityError('Propagation failed'))
-        submission_type.default_duration = old_duration + 15
         if save_form:
             form = SubmissionTypeForm(event=event, instance=submission_type, data={
                 'name_0': str(submission_type.name), 'default_duration': old_duration + 15,
             })
             assert form.is_valid(), form.errors
+        else:
+            submission_type.default_duration = old_duration + 15
         if fail_slot:
             with pytest.raises(IntegrityError, match='Propagation failed'):
                 if save_form:
@@ -93,6 +94,63 @@ def test_review_type_default_save_propagates_atomically(event, accepted_submissi
         slot.refresh_from_db()
         expected = old_duration if fail_slot else old_duration + 15
         assert submission_type.default_duration == expected
+        assert slot.end == slot.start + dt.timedelta(minutes=expected)
+
+
+@pytest.mark.django_db
+def test_type_rename_preserves_concurrent_duration(event, accepted_submission, mocker):
+    """A stale name-only form must retain the newer default and inherited slot length."""
+    with scope(event=event):
+        submission_type = accepted_submission.submission_type
+        old_duration = submission_type.default_duration
+        slot = accepted_submission.slots.get(schedule=event.wip_schedule)
+        slot.start = now()
+        slot.end = slot.start + dt.timedelta(minutes=old_duration)
+        slot.save()
+        form = SubmissionTypeForm(event=event, instance=submission_type, data={
+            'name_0': 'Renamed session type', 'default_duration': old_duration,
+        })
+        assert form.is_valid(), form.errors
+        current_type = event.submission_types.get(pk=submission_type.pk)
+        current_type.default_duration = old_duration + 15
+        current_type.save(update_fields=['default_duration'])
+        propagate = mocker.spy(SubmissionType, 'update_duration')
+        with CaptureQueriesContext(connection) as queries:
+            form.save()
+        propagate.assert_not_called()
+        assert not any('FOR NO KEY UPDATE' in query['sql'] for query in queries)
+        submission_type.refresh_from_db()
+        slot.refresh_from_db()
+        assert str(submission_type.name) == 'Renamed session type'
+        assert submission_type.default_duration == old_duration + 15
+        assert slot.end == slot.start + dt.timedelta(minutes=old_duration + 15)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('override', (None, 45))
+def test_type_form_resizes_inherited_draft_once(event, accepted_submission, mocker, override):
+    """A type edit propagates once, including draft proposals but preserving overrides."""
+    with scope(event=event):
+        submission_type = accepted_submission.submission_type
+        old_duration = submission_type.default_duration
+        accepted_submission.state = SubmissionStates.DRAFT
+        accepted_submission.duration = override
+        accepted_submission.save(update_fields=['state', 'duration'])
+        slot = accepted_submission.slots.get(schedule=event.wip_schedule)
+        slot.start = now()
+        slot.end = slot.start + dt.timedelta(minutes=accepted_submission.get_duration())
+        slot.save()
+        form = SubmissionTypeForm(event=event, instance=submission_type, data={
+            'name_0': str(submission_type.name), 'default_duration': old_duration + 15,
+        })
+        assert form.is_valid(), form.errors
+        propagate = mocker.spy(SubmissionType, 'update_duration')
+        refresh = mocker.spy(Submission, 'update_duration')
+        form.save()
+        assert propagate.call_count == 1
+        assert refresh.call_count == (1 if override is None else 0)
+        slot.refresh_from_db()
+        expected = old_duration + 15 if override is None else override
         assert slot.end == slot.start + dt.timedelta(minutes=expected)
 
 

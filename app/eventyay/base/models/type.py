@@ -12,6 +12,7 @@ from eventyay.talk_rules.event import can_change_event_settings
 from eventyay.talk_rules.submission import is_cfp_open, orga_can_change_submissions
 
 from .mixins import OrderedModel, PretalxModel
+from .submission import Submission
 
 
 def pleasing_number(number):
@@ -115,8 +116,9 @@ class SubmissionType(OrderedModel, PretalxModel):
         Runs only for submissions that do not override their default
         duration. Should be called whenever ``duration`` changes.
         """
-        for submission in self.submissions.filter(duration__isnull=True):
-            submission.update_duration()
+        with scope(event=self.event):
+            for submission in Submission.all_objects.filter(submission_type=self, duration__isnull=True):
+                submission.update_duration()
 
     update_duration.alters_data = True
 
