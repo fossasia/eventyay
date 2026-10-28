@@ -49,8 +49,7 @@ setup_collapsible_details = function (el) {
         e.preventDefault();
         return false;
     }).keyup(function (event) {
-        var $details = $(this).closest("details");
-        if ($details.hasClass("dropdown")) {
+        if (this.closest("details").classList.contains("dropdown")) {
             return;
         }
         if (32 == event.keyCode || (13 == event.keyCode && !isOpera)) {
@@ -62,11 +61,11 @@ setup_collapsible_details = function (el) {
     });
 
     $('details').each(function () {
-        var $details = $(this);
-        if ($details.hasClass("dropdown")) {
+        if (this.classList.contains("dropdown")) {
             return;
         }
-        var $detailsSummary = $('summary', $details).first(),
+        var $details = $(this),
+            $detailsSummary = $('summary', $details).first(),
             $detailsNotSummary = $details.children(':not(summary)');
         $detailsSummary.attr({
             'role': 'button',
