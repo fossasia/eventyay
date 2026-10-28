@@ -28,7 +28,7 @@ class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
         return (
             CartPosition.objects.filter(event=self.request.event, cart_id__endswith='@api')
             .select_related('seat')
-            .prefetch_related('answers')
+            .prefetch_related('answers', 'answers__options')
         )
 
     def get_serializer_context(self):

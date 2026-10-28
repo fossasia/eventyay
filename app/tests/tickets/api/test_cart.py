@@ -6,8 +6,10 @@ from unittest import mock
 import pytest
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
+from eventyay.api.serializers.cart import CartPositionCreateSerializer
+from eventyay.api.views.cart import CartPositionViewSet
 from eventyay.base.models import Question, SeatingPlan
 from eventyay.base.models.orders import CartPosition
 
@@ -850,7 +852,7 @@ def test_cartpos_create_omitted_answers(token_client, organizer, event, item, qu
         data=res,
     )
     assert resp.status_code == 201
-    with scopes_disabled():
+    with scope(organizer=organizer):
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.product == item
     assert cp.answers.count() == 0
@@ -868,8 +870,57 @@ def test_cartpos_create_text_answer_without_options(token_client, organizer, eve
         data=res,
     )
     assert resp.status_code == 201
-    with scopes_disabled():
+    with scope(organizer=organizer):
         cp = CartPosition.objects.get(pk=resp.data['id'])
         answ = cp.answers.first()
     assert answ.question == question
     assert answ.answer == 'Custom Answer'
+
+
+@pytest.mark.django_db
+def test_cartpos_create_serializer_choice_answer_without_answer(event, item, quota, question):
+    """Test that serializer create handles choice-question answers omitting answer field."""
+    question.type = Question.TYPE_CHOICE
+    question.save()
+    opt = question.options.first()
+    serializer = CartPositionCreateSerializer(context={'event': event})
+    validated_data = {
+        'product': item,
+        'price': Decimal('23.00'),
+        'answers': [{'question': question, 'options': [opt]}],
+    }
+    with scope(organizer=event.organizer):
+        cp = serializer.create(validated_data)
+        answ = cp.answers.first()
+    assert answ.question == question
+    assert answ.answer == ''
+    assert answ.options.first() == opt
+
+
+@pytest.mark.django_db
+def test_cartpos_create_serializer_text_answer_without_answer(event, item, quota, question):
+    """Test that serializer create handles non-choice answers omitting answer field."""
+    serializer = CartPositionCreateSerializer(context={'event': event})
+    validated_data = {
+        'product': item,
+        'price': Decimal('23.00'),
+        'answers': [{'question': question, 'options': []}],
+    }
+    with scope(organizer=event.organizer):
+        cp = serializer.create(validated_data)
+        answ = cp.answers.first()
+    assert answ.question == question
+    assert answ.answer == ''
+
+
+@pytest.mark.django_db
+def test_cartpos_viewset_queryset_prefetch(event):
+    """Test that CartPositionViewSet.get_queryset prefetches answers and answers__options."""
+    request = mock.MagicMock()
+    request.event = event
+    view = CartPositionViewSet()
+    view.request = request
+    qs = view.get_queryset()
+    assert 'answers' in qs._prefetch_related_lookups
+    assert 'answers__options' in qs._prefetch_related_lookups
+    assert 'seat' in qs.query.select_related

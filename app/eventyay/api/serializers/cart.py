@@ -140,18 +140,19 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             elif seated:
                 raise ValidationError('The specified product requires to choose a seat.')
 
-            validated_data.pop('sales_channel')
+            validated_data.pop('sales_channel', 'web')
             cp = CartPosition.objects.create(event=self.context['event'], **validated_data)
 
         for answ_data in answers_data:
             options = answ_data.pop('options', [])
-            if isinstance(answ_data['answer'], File):
+            if isinstance(answ_data.get('answer'), File):
                 an = answ_data.pop('answer')
                 answ = cp.answers.create(**answ_data, answer='')
                 answ.file.save(an.name, an, save=False)
                 answ.answer = 'file://' + answ.file.name
                 answ.save()
             else:
+                answ_data.setdefault('answer', '')
                 answ = cp.answers.create(**answ_data)
                 if options:
                     answ.options.add(*options)
