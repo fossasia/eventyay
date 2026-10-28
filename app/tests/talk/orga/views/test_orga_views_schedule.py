@@ -853,7 +853,7 @@ def test_room_list_sorting(orga_client, event):
     assert response.status_code == 200
     assert response.context["can_reorder"] is False
     assert "dragsort-button" not in response.text
-    assert "Reset to manual order" in response.text
+    assert "Reset to default order" in response.text
     pks = [r.pk for r in response.context["room_list"]]
     assert pks == [r2.pk, r1.pk, r3.pk]
     assert "fa-caret-up" in response.text
