@@ -1,5 +1,6 @@
 import copy
 import datetime
+from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
 
@@ -852,7 +853,7 @@ def test_cartpos_create_omitted_answers(token_client, organizer, event, item, qu
         data=res,
     )
     assert resp.status_code == 201
-    with scope(organizer=organizer):
+    with scope(organizer=organizer, event=event):
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.product == item
     assert cp.answers.count() == 0
@@ -870,7 +871,7 @@ def test_cartpos_create_text_answer_without_options(token_client, organizer, eve
         data=res,
     )
     assert resp.status_code == 201
-    with scope(organizer=organizer):
+    with scope(organizer=organizer, event=event):
         cp = CartPosition.objects.get(pk=resp.data['id'])
         answ = cp.answers.first()
     assert answ.question == question
@@ -889,7 +890,7 @@ def test_cartpos_create_serializer_choice_answer_without_answer(event, item, quo
         'price': Decimal('23.00'),
         'answers': [{'question': question, 'options': [opt]}],
     }
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         cp = serializer.create(validated_data)
         answ = cp.answers.first()
     assert answ.question == question
@@ -906,7 +907,7 @@ def test_cartpos_create_serializer_text_answer_without_answer(event, item, quota
         'price': Decimal('23.00'),
         'answers': [{'question': question, 'options': []}],
     }
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         cp = serializer.create(validated_data)
         answ = cp.answers.first()
     assert answ.question == question
@@ -914,13 +915,37 @@ def test_cartpos_create_serializer_text_answer_without_answer(event, item, quota
 
 
 @pytest.mark.django_db
-def test_cartpos_viewset_queryset_prefetch(event):
-    """Test that CartPositionViewSet.get_queryset prefetches answers and answers__options."""
+def test_cartpos_viewset_queryset_prefetch(event, item, question, django_assert_num_queries):
+    """Test that CartPositionViewSet.get_queryset prefetches answers and answers__options without N+1 queries."""
+    question.type = Question.TYPE_CHOICE
+    question.save()
+    opt = question.options.first()
+
+    with scope(organizer=event.organizer, event=event):
+        for i in range(2):
+            cp = CartPosition.objects.create(
+                event=event,
+                product=item,
+                price=Decimal('23.00'),
+                expires=now() + timedelta(minutes=30),
+                cart_id=f'test{i}@api',
+            )
+            ans = cp.answers.create(question=question, answer='Opt')
+            ans.options.add(opt)
+
     request = mock.MagicMock()
     request.event = event
     view = CartPositionViewSet()
     view.request = request
-    qs = view.get_queryset()
-    assert 'answers' in qs._prefetch_related_lookups
-    assert 'answers__options' in qs._prefetch_related_lookups
-    assert 'seat' in qs.query.select_related
+
+    with scope(organizer=event.organizer, event=event):
+        qs = view.get_queryset()
+        assert 'answers' in qs._prefetch_related_lookups
+        assert 'answers__options' in qs._prefetch_related_lookups
+        assert 'seat' in qs.query.select_related
+
+        # Iterating positions, answers, and options executes a bounded number of queries (3 total)
+        # without additional N+1 queries for each position's answer options.
+        with django_assert_num_queries(3):
+            data = [[list(ans.options.all()) for ans in cp.answers.all()] for cp in qs]
+            assert len(data) >= 2
