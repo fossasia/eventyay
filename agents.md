@@ -68,12 +68,15 @@ Before submitting changes:
 | Context file | Purpose |
 |---|---|
 | `.agents/context/architecture.md` | Context: Architecture and project structure |
+| `.agents/context/plugin-ecosystem.md` | Core, Business, and Stripe ownership and end-to-end contracts |
+| `.agents/context/development-and-delivery.md` | Local setup, plugin installation, testing, and delivery |
 
 ## Skills Index (`.agents/skills/`)
 
 | Skill directory/file | Purpose |
 |---|---|
 | `.agents/skills/repo-navigation/SKILL.md` | Repository layout and where to find code |
+| `.agents/skills/plugin-integration/SKILL.md` | Cross-repository contracts, integration testing, and PR handoff |
 | `.agents/skills/django-create-model/SKILL.md` | Steps for creating or modifying a Django model |
 | `.agents/skills/django-create-api-endpoint/SKILL.md` | Steps for adding a new Django REST Framework API endpoint |
 | `.agents/skills/django-add-form/SKILL.md` | Steps for creating or modifying Django forms and adding validation |
