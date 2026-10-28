@@ -236,7 +236,7 @@ class InfoForm(
         if image and 'image' in self.files:
             try:
                 result = optimize_uploaded_image(image, 'image', None)
-                base_name, _ = os.path.splitext(image.name)
+                base_name = os.path.splitext(image.name)[0]
                 image = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),

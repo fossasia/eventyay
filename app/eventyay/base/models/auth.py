@@ -581,7 +581,9 @@ class User(
         if next_url:
             params['next'] = safe_redirect_url(request, next_url)
         action_url = request.build_absolute_uri(f'{base_action_url}?{urlencode(params)}')
-        logger.info('Action URL for %s to reset password: %s', self.email, action_url)
+        if settings.DEBUG:
+            # The link is a credential, so only print it for local development.
+            logger.info('Action URL for %s to reset password: %s', self.email, action_url)
         context = {'user': self, 'url': action_url}
         mail(
             self.email,
