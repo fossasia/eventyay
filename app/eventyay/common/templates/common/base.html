@@ -111,7 +111,7 @@
                     <div class="header-row-right">
                         {% if request.event and request.event.locales|length > 1 and not is_html_export %}
                             {% if request.event.locales|length > 3 %}
-                                <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
+                                <details id="locale-dropdown-label" class="dropdown locales">
                                     <summary>
                                         {% for l, name in request.event.named_locales %}
                                             {% if l|lower == request.LANGUAGE_CODE|lower %}{{ name }}{% endif %}
@@ -122,7 +122,7 @@
                                         {% for l, name in request.event.named_locales %}
                                             {% cfp_locale_switch_url l as locale_switch_url %}
                                             <a href="{{ locale_switch_url }}"
-                                               class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}" role="menuitem">{{ name }}</a>
+                                               class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}">{{ name }}</a>
                                         {% endfor %}
                                     </div>
                                 </details>
@@ -140,22 +140,22 @@
                         {% endif %}
                         {% block header_right %}{% endblock header_right %}
                         {% if request.event and request.user.is_authenticated and not is_html_export %}
-                            <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
+                            <details id="user-dropdown-label" class="dropdown">
                                 {% is_event_organiser request.user request request.event as can_see_orga_area %}
                                 <summary>
                                     {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
                                 </summary>
                                 <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                                    <a href="{% url 'presale:index' %}" class="dropdown-item" role="menuitem">
+                                    <a href="{% url 'presale:index' %}" class="dropdown-item">
                                         <i class="fa fa-home mr-2 mb-1"></i>
                                         {% translate "Home" %}
                                     </a>
-                                    <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-item" role="menuitem">
+                                    <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-item">
                                         <i class="fa fa-dashboard mr-2 mb-1"></i>
                                         {% translate "Dashboard" %}
                                     </a>
                                     <hr>
-                                    <a href="{% url 'eventyay_common:orders' %}" class="dropdown-item" role="menuitem">
+                                    <a href="{% url 'eventyay_common:orders' %}" class="dropdown-item">
                                         <i class="fa fa-shopping-cart mr-2 mb-1"></i>
                                         {% translate "My orders" %}
                                     </a>
@@ -163,15 +163,15 @@
                                         {% user_has_submissions request.event as has_cfp_submissions %}
                                         {% if has_cfp_submissions %}
                                             <hr>
-                                            <a href="{% url 'cfp:event.user.submissions' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem">
+                                            <a href="{% url 'cfp:event.user.submissions' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item">
                                                 <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
                                                 {% translate "My proposals" %}
                                             </a>
-                                            <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem">
+                                            <a href="{{ request.event.urls.user }}" class="dropdown-item">
                                                 <i class="fa fa-address-card-o mr-2 mb-1"></i>
                                                 {% translate "Speaker profile" %}
                                             </a>
-                                            <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem">
+                                            <a href="{{ request.event.urls.user_mails }}" class="dropdown-item">
                                                 <i class="fa fa-envelope mr-2 mb-1"></i>
                                                 {% translate "Speaker emails" %}
                                             </a>
@@ -179,13 +179,13 @@
                                     {% endif %}
                                     {% eventsignal request.event "eventyay.common.signals.user_menu_items" request=request icon_class="mr-2 mb-1" %}
                                     <hr>
-                                    <a href="{% url 'eventyay_common:account.general' %}" class="dropdown-item" role="menuitem">
+                                    <a href="{% url 'eventyay_common:account.general' %}" class="dropdown-item">
                                         <i class="fa fa-user mr-2 mb-1"></i>
                                         {% translate "Account" %}
                                     </a>
                                     {% if can_see_orga_area %}
                                         <hr>
-                                        <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem">
+                                        <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item">
                                             <i class="fa fa-gears mr-2 mb-1"></i>
                                             {% translate "Organizer area" %}
                                         </a>
@@ -193,7 +193,7 @@
                                     <hr>
                                     <form action="{% url 'common:auth.logout' %}" method="post">
                                         {% csrf_token %}
-                                        <button class="dropdown-item" role="menuitem" type="submit">
+                                        <button class="dropdown-item" type="submit">
                                             <i class="fa fa-sign-out mr-2 mb-1 ml-1"></i>
                                             {% translate "Logout" %}
                                         </button>
