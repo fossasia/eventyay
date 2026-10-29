@@ -9,8 +9,10 @@ from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.paginator import InvalidPage, Paginator
 from django.db import transaction
-from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django.db.models import Count, Max, OuterRef, Q, Subquery, TextField
+from django.db.models.functions import Cast
 from django_scopes import scope
 from eventyay.timezones import common_timezones
 from rest_framework import serializers
@@ -877,10 +879,48 @@ def save_event(event, update_fields, old_data, by_user):
 
 
 @database_sync_to_async
-def get_audit_log(event):
-    return [
-        a.serialize_public()
-        for a in AuditLog.objects.filter(
-            event_id=event.id,
-        ).prefetch_related("user")
-    ]
+def get_audit_log(event, page=1, page_size=50, search="", order="desc"):
+    with scope(event=event):
+        qs = AuditLog.objects.filter(event_id=event.id).prefetch_related("user")
+
+        if search:
+            qs = qs.annotate(
+                data_text=Cast("data", TextField()),
+                user_id_text=Cast("user_id", TextField()),
+            ).filter(
+                Q(type__icontains=search)
+                | Q(user__profile__display_name__icontains=search)
+                | Q(user_id_text__icontains=search)
+                | Q(data_text__icontains=search)
+            )
+
+        order_field = "-timestamp" if order == "desc" else "timestamp"
+        secondary_field = "-id" if order == "desc" else "id"
+        qs = qs.order_by(order_field, secondary_field)
+
+        try:
+            page_size = max(1, min(int(page_size), 200))
+        except (ValueError, TypeError):
+            page_size = 50
+
+        try:
+            page = max(1, int(page))
+        except (ValueError, TypeError):
+            page = 1
+
+        paginator = Paginator(qs, page_size)
+        try:
+            p = paginator.page(page)
+            results = [a.serialize_public() for a in p.object_list]
+        except InvalidPage:
+            results = []
+            p = None
+
+        return {
+            "results": results,
+            "total": paginator.count,
+            "page": page,
+            "total_pages": paginator.num_pages,
+            "page_size": page_size,
+            "isLastPage": not p.has_next() if p else True,
+        }
