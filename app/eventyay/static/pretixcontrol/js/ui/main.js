@@ -668,6 +668,9 @@ var form_handlers = function (el) {
                 }
                 return $ret;
             },
+            templateSelection: function (res) {
+                return res.text;
+            },
         }).on("select2:select", function () {
             // Allow continuing to select
             if ($s.prop("multiple")) {
@@ -716,6 +719,9 @@ var form_handlers = function (el) {
                     ).append(" ").append(res.date_range)
                 );
                 return $ret;
+            },
+            templateSelection: function (res) {
+                return res.name || res.text;
             },
         }).on("select2:select", function () {
             // Allow continuing to select
