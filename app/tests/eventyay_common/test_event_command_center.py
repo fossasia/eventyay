@@ -1,5 +1,6 @@
 """Tests for Unified Event Command Center (Issue #5092)."""
 from datetime import timedelta
+from decimal import Decimal
 
 import pytest
 from django.test import override_settings
@@ -7,7 +8,16 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Order, RequiredAction, Submission, SubmissionStates, Team, User
+from eventyay.base.models import (
+    Order,
+    OrderPosition,
+    Product,
+    RequiredAction,
+    Submission,
+    SubmissionStates,
+    Team,
+    User,
+)
 
 
 @pytest.fixture
@@ -460,5 +470,64 @@ def test_command_center_top_navigation_shortcuts(organizer_client, event, organi
     assert reverse('orga:event.dashboard', kwargs={'organizer': organizer.slug, 'event': event.slug}) in content
 
 
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_excludes_canceled_order_positions(organizer_client, event, command_center_url):
+    """Canceled positions are excluded from attendees_ordered, attendees_paid, and revenue_sum."""
+    with scopes_disabled():
+        product = Product.objects.create(
+            event=event,
+            name='Standard Ticket',
+            default_price=Decimal('50.00'),
+            admission=True,
+        )
+        paid_order = Order.objects.create(
+            code='PAID1',
+            event=event,
+            email='paid@example.com',
+            status=Order.STATUS_PAID,
+            datetime=now(),
+            expires=now() + timedelta(days=1),
+            total=Decimal('100.00'),
+        )
+        # Active position (counted)
+        OrderPosition.objects.create(
+            order=paid_order,
+            product=product,
+            price=Decimal('50.00'),
+            canceled=False,
+        )
+        # Canceled position (must NOT be counted)
+        OrderPosition.objects.create(
+            order=paid_order,
+            product=product,
+            price=Decimal('50.00'),
+            canceled=True,
+        )
+        # Pending order requiring approval
+        Order.objects.create(
+            code='PEND1',
+            event=event,
+            email='pending@example.com',
+            status=Order.STATUS_PENDING,
+            require_approval=True,
+            datetime=now(),
+            expires=now() + timedelta(days=1),
+            total=Decimal('50.00'),
+        )
 
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+
+    shared_metrics = response.context['at_a_glance']
+    assert shared_metrics['attendees_ordered'] == 1
+    assert shared_metrics['attendees_paid'] == 1
+    assert shared_metrics['revenue_sum'] == Decimal('50.00')
+
+    component_cards = {c['id']: c for c in response.context['component_cards']}
+    tickets_metrics = {m['label']: m['value'] for m in component_cards['tickets']['metrics']}
+    assert tickets_metrics['Ordered attendees'] == 1
+    assert tickets_metrics['Paid attendees'] == 1
+    assert tickets_metrics['Awaiting approval'] == 1
+    assert '50.00' in tickets_metrics['Revenue']
 

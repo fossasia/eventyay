@@ -536,7 +536,13 @@ class EventIndexView(TemplateView):
             },
         ]
 
-    def _get_action_required(self, event: Event, permissions: Dict[str, Any], subevent=None) -> List[Dict[str, Any]]:
+    def _get_action_required(
+        self,
+        event: Event,
+        permissions: Dict[str, Any],
+        subevent=None,
+        shared_order_metrics: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """Collect cross-event actionable alert cards."""
         actions = []
         if permissions.get('can_change_orders') or permissions.get('can_view_orders'):
@@ -587,7 +593,10 @@ class EventIndexView(TemplateView):
             if subevent:
                 order_qs = order_qs.filter(all_positions__subevent=subevent).distinct()
 
-            pending_approvals = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count()
+            if shared_order_metrics is not None:
+                pending_approvals = shared_order_metrics['pending_approvals']
+            else:
+                pending_approvals = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count()
             if pending_approvals > 0:
                 try:
                     approval_url = (
@@ -746,22 +755,48 @@ class EventIndexView(TemplateView):
             return {
                 'paid_orders_count': 0,
                 'revenue_sum': Decimal('0.00'),
+                'attendees_ordered': 0,
+                'attendees_paid': 0,
+                'pending_approvals': 0,
             }
 
-        paid_positions = OrderPosition.objects.filter(
+        positions = OrderPosition.objects.filter(
             order__event=event,
-            order__status=Order.STATUS_PAID,
+            canceled=False,
         )
         if subevent:
-            paid_positions = paid_positions.filter(subevent=subevent)
+            positions = positions.filter(subevent=subevent)
 
-        metrics = paid_positions.aggregate(
-            rev_sum=Sum('price'),
-            order_count=Count('order_id', distinct=True),
+        metrics = positions.aggregate(
+            rev_sum=Sum('price', filter=Q(order__status=Order.STATUS_PAID)),
+            order_count=Count('order_id', distinct=True, filter=Q(order__status=Order.STATUS_PAID)),
+            attendees_ordered=Count(
+                'id',
+                filter=Q(
+                    product__admission=True,
+                    order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
+                ),
+            ),
+            attendees_paid=Count(
+                'id',
+                filter=Q(
+                    product__admission=True,
+                    order__status=Order.STATUS_PAID,
+                ),
+            ),
         )
+
+        order_qs = event.orders.all()
+        if subevent:
+            order_qs = order_qs.filter(all_positions__subevent=subevent).distinct()
+        pending_approvals = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count()
+
         return {
             'paid_orders_count': metrics['order_count'] or 0,
             'revenue_sum': metrics['rev_sum'] or Decimal('0.00'),
+            'attendees_ordered': metrics['attendees_ordered'] or 0,
+            'attendees_paid': metrics['attendees_paid'] or 0,
+            'pending_approvals': pending_approvals,
         }
 
     def _get_shared_submission_metrics(
@@ -813,24 +848,28 @@ class EventIndexView(TemplateView):
         has_talk = permissions.get('has_talk_access', False)
 
         if can_view_orders:
-            opqs = OrderPosition.objects.filter(
-                order__event=event,
-                product__admission=True,
-            )
-            if subevent:
-                opqs = opqs.filter(subevent=subevent)
-            attendees_ordered = opqs.filter(
-                order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)
-            ).count()
-            attendees_paid = opqs.filter(
-                order__status=Order.STATUS_PAID
-            ).count()
             if shared_order_metrics is not None:
+                attendees_ordered = shared_order_metrics['attendees_ordered']
+                attendees_paid = shared_order_metrics['attendees_paid']
                 revenue_sum = shared_order_metrics['revenue_sum']
             else:
+                opqs = OrderPosition.objects.filter(
+                    order__event=event,
+                    product__admission=True,
+                    canceled=False,
+                )
+                if subevent:
+                    opqs = opqs.filter(subevent=subevent)
+                attendees_ordered = opqs.filter(
+                    order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)
+                ).count()
+                attendees_paid = opqs.filter(
+                    order__status=Order.STATUS_PAID
+                ).count()
                 rev_qs = OrderPosition.objects.filter(
                     order__event=event,
-                    order__status=Order.STATUS_PAID
+                    order__status=Order.STATUS_PAID,
+                    canceled=False,
                 )
                 if subevent:
                     rev_qs = rev_qs.filter(subevent=subevent)
@@ -888,26 +927,40 @@ class EventIndexView(TemplateView):
         # 1. Tickets Card
         if permissions.get('has_ticket_access'):
             shop_status = event.ticket_component_presale_status
-            opqs = OrderPosition.objects.filter(order__event=event, product__admission=True)
-            if subevent:
-                opqs = opqs.filter(subevent=subevent)
-            ordered_c = opqs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)).count() if permissions.get('can_view_orders') else 0
-            paid_c = opqs.filter(order__status=Order.STATUS_PAID).count() if permissions.get('can_view_orders') else 0
-
-            order_qs = event.orders.all()
-            if subevent:
-                order_qs = order_qs.filter(all_positions__subevent=subevent).distinct()
-            pending_appr = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count() if permissions.get('can_view_orders') else 0
-
             if permissions.get('can_view_orders'):
                 if shared_order_metrics is not None:
+                    ordered_c = shared_order_metrics['attendees_ordered']
+                    paid_c = shared_order_metrics['attendees_paid']
+                    pending_appr = shared_order_metrics['pending_approvals']
                     rev_sum = shared_order_metrics['revenue_sum']
                 else:
-                    rev_qs = OrderPosition.objects.filter(order__event=event, order__status=Order.STATUS_PAID)
+                    opqs = OrderPosition.objects.filter(
+                        order__event=event,
+                        product__admission=True,
+                        canceled=False,
+                    )
+                    if subevent:
+                        opqs = opqs.filter(subevent=subevent)
+                    ordered_c = opqs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING)).count()
+                    paid_c = opqs.filter(order__status=Order.STATUS_PAID).count()
+
+                    order_qs = event.orders.all()
+                    if subevent:
+                        order_qs = order_qs.filter(all_positions__subevent=subevent).distinct()
+                    pending_appr = order_qs.filter(status=Order.STATUS_PENDING, require_approval=True).count()
+
+                    rev_qs = OrderPosition.objects.filter(
+                        order__event=event,
+                        order__status=Order.STATUS_PAID,
+                        canceled=False,
+                    )
                     if subevent:
                         rev_qs = rev_qs.filter(subevent=subevent)
                     rev_sum = rev_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
             else:
+                ordered_c = 0
+                paid_c = 0
+                pending_appr = 0
                 rev_sum = Decimal('0.00')
 
             try:
@@ -1272,7 +1325,12 @@ class EventIndexView(TemplateView):
             )
             header_data = self._get_header_data(request.event, request)
             workflow_timeline = self._get_workflow_timeline(request.event, permissions)
-            action_required = self._get_action_required(request.event, permissions, subevent=subevent)
+            action_required = self._get_action_required(
+                request.event,
+                permissions,
+                subevent=subevent,
+                shared_order_metrics=shared_order_metrics,
+            )
             at_a_glance = self._get_at_a_glance_kpis(
                 request.event,
                 permissions,
