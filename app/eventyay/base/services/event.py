@@ -837,7 +837,7 @@ def _config_serializer(event, *args, **kwargs):
             },
             "pretalx": cfg.get("pretalx", {}),
             "video_player": cfg.get("video_player"),
-            "timezone": event.timezone,
+            "timezone": getattr(getattr(event, "settings", None), "timezone", getattr(event, "timezone", "UTC")),
             "trait_grants": event.trait_grants,
             "connection_limit": cfg.get("connection_limit", 0),
             "onsite_traits": cfg.get("onsite_traits", []),
