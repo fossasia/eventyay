@@ -47,11 +47,11 @@ Core currently calls `check_entitlement` for these capabilities:
 
 | Capability | Where core enforces it |
 |---|---|
-| `video.youtube`, `video.jitsi`, `video.loungemesh` | `base/services/video_entitlements.py` (room config, stream schedules, stream data, loungemesh token exchange) |
-| `api.read`, `api.write` | `api/auth/permission.py`, `api/auth/api_auth.py`, `api/views/organizer.py`; only `Device`, `TeamAPIToken`, `UserApiToken` and OAuth credentials, not browser sessions |
-| `api.webhooks` | `api/webhooks.py` before webhook notifications are queued and sent |
-| `email.bulk.monthly` | `plugins/sendmail/views.py`, `orga/views/mails.py` |
-| `organizer.full_admins` | `base/services/teams.py` |
+| `video.youtube`, `video.jitsi`, `video.loungemesh` | `app/eventyay/base/services/video_entitlements.py` (room config, stream schedules, stream data, loungemesh token exchange) |
+| `api.read`, `api.write` | `app/eventyay/api/auth/permission.py`, `app/eventyay/api/auth/api_auth.py`, `app/eventyay/api/views/organizer.py`; applies to `Device`, `TeamAPIToken`, `UserApiToken` and OAuth credentials, and to event bearer-token requests (`ApiAccessRequiredPermission`); browser sessions are not gated |
+| `api.webhooks` | `app/eventyay/api/webhooks.py` before webhook notifications are queued and sent |
+| `email.bulk.monthly` | `app/eventyay/plugins/sendmail/views.py`, `app/eventyay/orga/views/mails.py` |
+| `organizer.full_admins` | `app/eventyay/base/services/teams.py` |
 
 Check-in devices authenticate as `Device`, so redeeming a check-in needs
 `api.write`. Capability labels, defaults and the Beta marking live in Business
