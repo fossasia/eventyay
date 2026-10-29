@@ -54,13 +54,14 @@ from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SubmissionError
 from eventyay.common.forms.fields import SizeFileInput
 from eventyay.common.session_video import (
+    SESSION_VIDEO_URL_LIMIT,
     get_submission_video_url,
     prefetch_submission_video_urls,
     session_videos_enabled as event_session_videos_enabled,
     set_submission_video_urls,
     video_urls_from_prefetched_submission,
 )
-from eventyay.common.video_embed import parse_video_urls
+from eventyay.common.video_embed import describe_video_link, parse_video_urls
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -570,11 +571,13 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     @cached_property
     def session_videos_enabled(self):
+        """Return whether session video links are enabled for the current event."""
         return event_session_videos_enabled(self.request.event)
 
     @context
     @cached_property
     def session_video_urls(self):
+        """Return the list of stored video URLs for the current submission."""
         if not event_session_videos_enabled(self.request.event):
             return []
         submission = self.get_object()
@@ -585,25 +588,47 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
     @context
     @cached_property
-    def session_video_urls_text(self):
-        if self.request.method == 'POST' and 'session_video_urls' in self.request.POST:
-            return self.request.POST['session_video_urls']
-        return '\n'.join(self.session_video_urls)
+    def session_video_links(self):
+        """Return described video link dictionaries with labels and icons."""
+        return [describe_video_link(url) for url in self.session_video_urls]
+
+    @context
+    @cached_property
+    def session_video_url_rows(self):
+        """Return video URL rows for editing from POST data or stored URLs."""
+        if self.request.method == 'POST':
+            return self._posted_session_video_urls()
+        return list(self.session_video_urls)
+
+    @context
+    def session_video_url_limit(self):
+        """Return the maximum number of session video links allowed."""
+        return SESSION_VIDEO_URL_LIMIT
 
     @context
     @property
     def session_video_urls_error(self):
+        """Return any error message from saving session video URLs."""
         return getattr(self, '_session_video_urls_error', None)
 
+    def _posted_session_video_urls(self):
+        """Extract non-empty video URLs line-by-line from submitted form values."""
+        urls = []
+        for value in self.request.POST.getlist('session_video_urls'):
+            for line in str(value).splitlines():
+                raw = line.strip()
+                if raw:
+                    urls.append(raw)
+        return urls
+
     def _save_session_video_urls(self, submission):
+        """Validate and save submitted video URLs to the submission."""
         if not event_session_videos_enabled(self.request.event):
             return True
         if not self.request.user.has_perm('base.orga_update_submission', self.request.event):
             return True
-        raw = self.request.POST.get('session_video_urls', '')
-        urls = [line.strip() for line in raw.splitlines() if line.strip()]
         try:
-            set_submission_video_urls(submission, urls)
+            set_submission_video_urls(submission, self._posted_session_video_urls())
         except ValueError as exc:
             self._session_video_urls_error = str(exc)
             return False
@@ -958,6 +983,7 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
                 track.pk: track.color
                 for track in self.request.event.tracks.all()
             }
+        ctx['session_video_url_limit'] = SESSION_VIDEO_URL_LIMIT
         return ctx
 
 

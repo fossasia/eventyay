@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-admin-rooms
 	.ui-page-header
-		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h2 {{ $t('Rooms & Stages') }}
 		.actions
 			VideoProviderDropdown(
