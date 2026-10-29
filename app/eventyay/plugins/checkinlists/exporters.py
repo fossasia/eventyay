@@ -57,6 +57,7 @@ TRUNCATE_STEP_LENGTH = 50
 class CheckInListMixin(BaseExporter):
     @property
     def _fields(self):
+        """Return configurable form fields shared by check-in list exporters."""
         name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
         d = OrderedDict(
             [
@@ -335,6 +336,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
         return pagesizes.landscape(pagesizes.A4)
 
     def get_story(self, doc, form_data):
+        """Build the ReportLab flowable story for the check-in list PDF."""
         if 'list' not in form_data or not form_data['list']:
             # Return empty story instead of None
             return [Paragraph("No check-in list selected.", self.get_style())]
@@ -658,6 +660,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
         *,
         checkin=None,
     ):
+        """Build a single CSV/XLSX export row for an order position."""
         columns = form_data.get('columns')
         if not columns:
             columns = [c[0] for c in self._fields['columns'].choices]
@@ -784,6 +787,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
         return row
 
     def iterate_list(self, form_data):
+        """Yield header and attendee rows for the check-in list export."""
         cl = self.event.checkin_lists.get(pk=form_data['list'])
 
         questions = list(Question.objects.filter(event=self.event, id__in=form_data['questions']))

@@ -436,6 +436,7 @@ def test_order_export_positions_renders_subevent_dates_in_event_timezone(env):
 
 @pytest.mark.django_db
 def test_order_export_orders_include_name_parts_from_position(env):
+    """OrderListExporter.iterate_orders includes attendee name parts and job title."""
     event, user, order, ticket = env
     event.settings.set('name_scheme', 'given_family')
     position = order.positions.first()

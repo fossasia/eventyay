@@ -291,6 +291,7 @@ class OrderListExporter(MultiSheetListExporter):
         return qs
 
     def iterate_orders(self, form_data: dict):
+        """Yield header and order rows for the Orders export sheet."""
         p_date = (
             OrderPayment.objects.filter(
                 order=OuterRef('pk'),

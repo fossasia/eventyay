@@ -12,6 +12,7 @@ from eventyay.plugins.checkinlists.exporters import CSVCheckinList, PDFCheckinLi
 
 
 def create_paid_order(event, code: str) -> Order:
+    """Create a paid test order for the given event."""
     now = timezone.now()
     return Order.objects.create(
         event=event,
@@ -27,6 +28,7 @@ def create_paid_order(event, code: str) -> Order:
 
 @pytest.mark.django_db
 def test_order_list_export_orders_includes_job_title(event):
+    """OrderListExporter.iterate_orders exports direct and add-on parent job titles."""
     with scope(organizer=event.organizer, event=event), translation.override('en'):
         ticket = Product.objects.create(
             event=event, name='Conference Pass', default_price=Decimal('25.00'), admission=True
@@ -81,6 +83,7 @@ def test_order_list_export_orders_includes_job_title(event):
 
 @pytest.mark.django_db
 def test_csv_checkin_list_exports_job_title_and_respects_column_selection(event):
+    """CSVCheckinList exports direct and inherited job titles when selected."""
     with scope(organizer=event.organizer, event=event), translation.override('en'):
         checkin_list = event.checkin_lists.create(name='Main Entrance', all_products=True)
         ticket = Product.objects.create(
@@ -140,17 +143,21 @@ def test_csv_checkin_list_exports_job_title_and_respects_column_selection(event)
 
 @pytest.mark.django_db
 def test_pdf_checkin_list_exports_escaped_job_title(event):
+    """PDFCheckinList escapes job titles and falls back to add-on parent positions."""
     with scope(organizer=event.organizer, event=event), translation.override('en'):
         checkin_list = event.checkin_lists.create(name='Stage Door', all_products=True)
         ticket = Product.objects.create(
             event=event, name='Speaker Ticket', default_price=Decimal('25.00'), admission=True
+        )
+        addon = Product.objects.create(
+            event=event, name='Speaker Dinner', default_price=Decimal('0.00'), admission=False
         )
         order = create_paid_order(event, 'PDF01')
         InvoiceAddress.objects.create(
             order=order,
             name_parts={'full_name': 'Margaret Hamilton', '_scheme': 'full'},
         )
-        OrderPosition.objects.create(
+        base_position = OrderPosition.objects.create(
             order=order,
             positionid=1,
             product=ticket,
@@ -158,6 +165,13 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
             attendee_name_parts={'full_name': 'Margaret Hamilton', '_scheme': 'full'},
             company='MIT Lab',
             job_title='R&D <Director>',
+        )
+        OrderPosition.objects.create(
+            order=order,
+            positionid=2,
+            product=addon,
+            addon_to=base_position,
+            price=Decimal('0.00'),
         )
 
         exporter = PDFCheckinList(event)
@@ -171,12 +185,12 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
         story = exporter.get_story(SimpleNamespace(width=500), form_data)
         table = story[-1]
         header_texts = [getattr(cell, 'text', cell) for cell in table._cellvalues[0]]
-        row_texts = [getattr(cell, 'text', cell) for cell in table._cellvalues[1]]
+        row_texts = [[getattr(cell, 'text', cell) for cell in row] for row in table._cellvalues[1:]]
 
         _, content_type, pdf_bytes = exporter.render(form_data)
 
     assert 'Job title' in header_texts
     job_col = header_texts.index('Job title')
-    assert row_texts[job_col] == 'R&amp;D &lt;Director&gt;'
+    assert [row[job_col] for row in row_texts] == ['R&amp;D &lt;Director&gt;', 'R&amp;D &lt;Director&gt;']
     assert content_type == 'application/pdf'
     assert pdf_bytes.startswith(b'%PDF-')
