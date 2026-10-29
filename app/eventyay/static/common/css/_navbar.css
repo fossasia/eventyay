@@ -570,3 +570,22 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     display: none;
   }
 }
+
+/* Keep both menus inside the viewport when the navbar actions sit on the left. */
+html.rtl nav.navbar #profile-dropdown > .dropdown-content,
+html.rtl nav.navbar #language-dropdown > .dropdown-content {
+  right: auto;
+  left: 0;
+}
+
+html.rtl nav.navbar #profile-dropdown > .dropdown-content::before,
+html.rtl nav.navbar #language-dropdown > .dropdown-content::before {
+  right: auto;
+  left: 9px;
+}
+
+html.rtl nav.navbar #profile-dropdown > .dropdown-content::after,
+html.rtl nav.navbar #language-dropdown > .dropdown-content::after {
+  right: auto;
+  left: 10px;
+}
