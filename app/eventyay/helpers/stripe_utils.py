@@ -288,6 +288,8 @@ def create_payment_intent(
     @param invoice_id: A string representing the invoice ID.
     @return: A dictionary containing the payment intent information.
     """
+    if not invoice_id:
+        raise ValidationError('A billing invoice ID is required.')
     stripe.api_key = get_stripe_secret_key()
     payment_intent = stripe.PaymentIntent.create(
         amount=int(amount * 100),
@@ -296,6 +298,7 @@ def create_payment_intent(
         payment_method=payment_method_id,
         automatic_payment_methods={'enabled': True, 'allow_redirects': 'never'},
         metadata=metadata,
+        idempotency_key=f'auto-billing-invoice-{invoice_id}',
     )
     billing_invoice_updated = BillingInvoice.objects.filter(id=invoice_id).update(
         stripe_payment_intent_id=payment_intent.id

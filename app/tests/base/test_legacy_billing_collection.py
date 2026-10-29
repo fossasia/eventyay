@@ -64,16 +64,28 @@ def test_monthly_billing_skips_externally_managed_organizer():
 
 def test_legacy_auto_charge_skips_externally_managed_organizer():
     organizer = MagicMock(slug="managed-organizer")
-    invoice = MagicMock(organizer=organizer, final_ticket_fee=10)
+    invoice = MagicMock(
+        pk=1,
+        organizer=organizer,
+        final_ticket_fee=10,
+        status=tasks.BillingInvoice.STATUS_PENDING,
+        automatic_payment_enabled=True,
+        stripe_payment_intent_id=None,
+    )
     with patch(
         "eventyay.eventyay_common.tasks.BillingInvoice.objects.filter",
         return_value=[invoice],
+    ), patch(
+        "eventyay.eventyay_common.tasks.BillingInvoice.objects.select_for_update"
+    ) as select_for_update, patch(
+        "eventyay.eventyay_common.tasks.transaction.atomic"
     ), patch(
         "eventyay.eventyay_common.tasks.is_legacy_billing_collection_disabled",
         return_value=True,
     ) as disabled, patch(
         "eventyay.eventyay_common.tasks.process_auto_billing_charge_stripe"
     ) as charge:
+        select_for_update.return_value.get.return_value = invoice
         tasks.process_auto_billing_charge.run()
 
     disabled.assert_called_once_with(organizer)
