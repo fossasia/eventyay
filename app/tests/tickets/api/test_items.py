@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from unittest import mock
 
@@ -7,8 +7,8 @@ import pytest
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
-import datetime
-UTC = datetime.timezone.utc
+
+UTC = timezone.utc
 
 from eventyay.base.models import (
     CartPosition,
@@ -935,6 +935,78 @@ def test_item_create_with_bundle_multilevel_forbidden(token_client, organizer, e
 
 
 @pytest.mark.django_db
+def test_item_create_with_bundle_boolean_count(token_client, organizer, event, category, item):
+    """Test that boolean values for bundle count are rejected with an integer validation error."""
+    resp = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/products/',
+        {
+            'category': category.pk,
+            'name': {'en': 'Boolean Count Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': item.pk,
+                    'count': True,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert resp.content.decode() == '{"bundles":{"0":{"count":["A valid integer is required."]}}}'
+
+
+@pytest.mark.django_db
+def test_item_create_with_bundle_normalizes_omitted_count(token_client, organizer, event, category, item):
+    """Test that omitting count in inline bundles normalizes count to 1 in the created product bundle."""
+    resp = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/products/',
+        {
+            'category': category.pk,
+            'name': {'en': 'Omitted Count Normalized Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': item.pk,
+                    'designated_price': '0.00',
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+    assert resp.data['bundles'][0]['count'] == 1
+
+
+@pytest.mark.django_db
+def test_item_create_bundle_cross_event_tenant_isolation(token_client, organizer, event, category, item2):
+    """Test that multi-level bundle check is strictly scoped to the event and rejects foreign items."""
+    resp = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/products/',
+        {
+            'category': category.pk,
+            'name': {'en': 'Cross Event Bundle'},
+            'active': True,
+            'default_price': '25.00',
+            'bundles': [
+                {
+                    'bundled_product': item2.pk,
+                    'count': 1,
+                }
+            ],
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert (
+        resp.content.decode()
+        == '{"bundles":["The bundled product must belong to the same event as the product."]}'
+    )
+
+
+@pytest.mark.django_db
 def test_item_create_with_bundle_duplicate_forbidden(token_client, organizer, event, item, category, taxrule):
     """Test creating a product with duplicate inline bundles of the same product."""
     with scopes_disabled():
@@ -1110,6 +1182,22 @@ def test_product_bundle_clean_count_validation():
     assert 'The count cannot be empty.' in str(excinfo.value)
 
     with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count(True)
+    assert 'The count must be an integer.' in str(excinfo.value)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count(False)
+    assert 'The count must be an integer.' in str(excinfo.value)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count('abc')
+    assert 'The count must be an integer.' in str(excinfo.value)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
+        ItemBundle.clean_count(1.5)
+    assert 'The count must be an integer.' in str(excinfo.value)
+
+    with pytest.raises(DjangoValidationError) as excinfo:
         ItemBundle.clean_count(0)
     assert 'The count needs to be greater than zero.' in str(excinfo.value)
 
@@ -1205,7 +1293,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
     assert resp.status_code == 400
     assert (
         resp.content.decode()
-        == '{"non_field_errors":["Updating add-ons, bundles, or variations via PATCH/PUT is not supported. Please use '
+        == '{"bundles":["Updating add-ons, bundles, or variations via PATCH/PUT is not supported. Please use '
         'the dedicated nested endpoint."]}'
     )
 

@@ -25,6 +25,7 @@ from eventyay.base.models import (
 from eventyay.base.models.product import default_product_available_until
 from eventyay.consts import SizeKey
 
+
 _VARIATION_SERIALIZER_FIELDS = (
     'id',
     'value',
@@ -265,53 +266,62 @@ class ProductSerializer(I18nAwareModelSerializer):
         Ensures that bundled products belong to the same event, required variations are provided,
         multi-level bundling is prevented via batched query inspection, positive count is enforced,
         and duplicate bundled product/variation combinations within the payload are rejected.
+        Inline bundle mutation via PATCH/PUT on existing products is disallowed.
 
         :param value: List of bundle data dictionaries.
         :return: Validated list of bundle data dictionaries.
-        :raises ValidationError: If any bundle constraint is violated.
+        :raises ValidationError: If updating bundles on an existing instance or if any constraint is violated.
         """
-        if not self.instance:
-            seen_bundles = set()
-            bundled_product_ids = [
-                b_data['bundled_product'].pk
-                for b_data in value
-                if b_data.get('bundled_product') and hasattr(b_data['bundled_product'], 'pk')
-            ]
-            products_with_bundles = (
-                set(
-                    ProductBundle.objects.filter(base_product_id__in=bundled_product_ids).values_list(
-                        'base_product_id', flat=True
-                    )
+        if self.instance:
+            raise ValidationError(
+                _(
+                    'Updating add-ons, bundles, or variations via PATCH/PUT is not supported. Please use the '
+                    'dedicated nested endpoint.'
                 )
-                if bundled_product_ids
-                else set()
             )
 
-            for b_data in value:
-                bundled_product = b_data.get('bundled_product')
-                bundled_variation = b_data.get('bundled_variation')
-                count = b_data.get('count')
-                if count is None and 'count' not in b_data:
-                    count = 1
+        seen_bundles = set()
+        bundled_product_ids = [
+            b_data['bundled_product'].pk
+            for b_data in value
+            if b_data.get('bundled_product') and hasattr(b_data['bundled_product'], 'pk')
+        ]
+        products_with_bundles = (
+            set(
+                ProductBundle.objects.filter(
+                    base_product_id__in=bundled_product_ids,
+                    base_product__event=self.context['event'],
+                ).values_list('base_product_id', flat=True)
+            )
+            if bundled_product_ids
+            else set()
+        )
 
-                ProductBundle.clean_productvar(
-                    self.context['event'],
-                    bundled_product,
-                    bundled_variation,
+        for b_data in value:
+            bundled_product = b_data.get('bundled_product')
+            bundled_variation = b_data.get('bundled_variation')
+            if 'count' not in b_data:
+                b_data['count'] = 1
+            count = b_data.get('count')
+
+            ProductBundle.clean_productvar(
+                self.context['event'],
+                bundled_product,
+                bundled_variation,
+            )
+            ProductBundle.clean_count(count)
+
+            if bundled_product:
+                if bundled_product.pk in products_with_bundles:
+                    raise ValidationError(_('The bundled product must not have bundles on its own.'))
+
+                bundle_key = (
+                    bundled_product.pk,
+                    bundled_variation.pk if bundled_variation else None,
                 )
-                ProductBundle.clean_count(count)
-
-                if bundled_product:
-                    if bundled_product.pk in products_with_bundles:
-                        raise ValidationError(_('The bundled product must not have bundles on its own.'))
-
-                    bundle_key = (
-                        bundled_product.pk,
-                        bundled_variation.pk if bundled_variation else None,
-                    )
-                    if bundle_key in seen_bundles:
-                        raise ValidationError(_('The product already contains this bundled product.'))
-                    seen_bundles.add(bundle_key)
+                if bundle_key in seen_bundles:
+                    raise ValidationError(_('The product already contains this bundled product.'))
+                seen_bundles.add(bundle_key)
         return value
 
     def validate_addons(self, value):

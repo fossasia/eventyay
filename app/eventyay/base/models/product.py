@@ -1242,10 +1242,12 @@ class ProductBundle(models.Model):
         Validate that the bundle count is a positive integer.
 
         :param count: The bundle count to validate.
-        :raises ValidationError: If count is None, zero, or negative.
+        :raises ValidationError: If count is None, not an int, a boolean, zero, or negative.
         """
         if count is None:
             raise ValidationError(_('The count cannot be empty.'))
+        if isinstance(count, bool) or not isinstance(count, int):
+            raise ValidationError(_('The count must be an integer.'))
         if count <= 0:
             raise ValidationError(_('The count needs to be greater than zero.'))
 
