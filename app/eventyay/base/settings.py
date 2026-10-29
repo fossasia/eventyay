@@ -172,6 +172,10 @@ def get_provider_for_module_type(module_type: str):
 
 
 def is_room_visible_for_attendee(room) -> bool:
+    """Check if room video modules are enabled and commercially entitled."""
+    # Entitlement signals import models, which import this settings module.
+    from eventyay.base.services.video_entitlements import check_video_entitlements
+
     modules = getattr(room, 'module_config', None) or []
     if not isinstance(modules, list):
         return True
@@ -181,7 +185,7 @@ def is_room_visible_for_attendee(room) -> bool:
         provider = get_provider_for_module_type(module.get('type'))
         if provider and not is_video_provider_enabled_for_attendee(provider):
             return False
-    return True
+    return check_video_entitlements(room.event, modules).allowed
 
 
 def i18n_uns(v):
