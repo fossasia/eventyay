@@ -34,15 +34,22 @@
         </span>
       </div>
     </div>
-    <div class="cc-url-box" title="{% trans 'Public event URL' %}">
-      <span class="fa fa-link text-muted" aria-hidden="true"></span>
-      <a href="{{ header_data.public_url }}" target="_blank" rel="noopener noreferrer" class="cc-url-text" id="cc-public-url-link">
-        {{ header_data.public_url }}
-      </a>
-      <button type="button" class="cc-copy-btn" id="cc-copy-url-btn" data-url="{{ header_data.public_url }}" data-copied-text="{% trans 'Copied!' %}" aria-label="{% trans 'Copy public URL' %}">
-        <span class="fa fa-clone" aria-hidden="true"></span>
-        <span id="cc-copy-btn-text">{% trans 'Copy' %}</span>
-      </button>
+    <div class="cc-header-actions">
+      <nav id="event-nav" class="cc-top-nav header-nav" aria-label="{% trans 'Event navigation' %}">
+        {% include 'eventyay_common/event/component_link.html' %}
+      </nav>
+      {% if header_data.public_url %}
+        <div class="cc-url-box" title="{% trans 'Public event URL' %}">
+          <span class="fa fa-link text-muted" aria-hidden="true"></span>
+          <a href="{{ header_data.public_url }}" target="_blank" rel="noopener noreferrer" class="cc-url-text" id="cc-public-url-link">
+            {{ header_data.public_url }}
+          </a>
+          <button type="button" class="cc-copy-btn" id="cc-copy-url-btn" data-url="{{ header_data.public_url }}" data-copied-text="{% trans 'Copied!' %}" aria-label="{% trans 'Copy public URL' %}">
+            <span class="fa fa-clone" aria-hidden="true"></span>
+            <span id="cc-copy-btn-text">{% trans 'Copy' %}</span>
+          </button>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>

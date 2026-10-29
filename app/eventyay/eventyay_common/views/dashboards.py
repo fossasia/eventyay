@@ -1245,18 +1245,27 @@ class EventIndexView(TemplateView):
 
         # Collect widgets
         widgets = self._collect_dashboard_widgets(subevent)
-
-        # Filter log entries
-        qs = (
-            request.event.logentry_set.all()
-            .select_related('user', 'content_type', 'api_token', 'oauth_application', 'device')
-            .order_by('-datetime')
-        )
-        qs = self._filter_log_entries(qs, permissions)
         can_view_orders = permissions['can_view_orders']
+
+        is_talk_created = (
+            request.event.settings.create_for == EventCreatedFor.BOTH.value
+            or request.event.settings.talk_schedule_public is not None
+        )
 
         # Wrap event queries with scope
         with scope(event=request.event):
+            qs = (
+                request.event.logentry_set.all()
+                .select_related('user', 'content_type', 'api_token', 'oauth_application', 'device')
+                .order_by('-datetime')
+            )
+            qs = self._filter_log_entries(qs, permissions)
+            actions = (
+                list(request.event.requiredaction_set.filter(done=False)[:5])
+                if permissions['can_change_orders']
+                else []
+            )
+
             shared_order_metrics = self._get_shared_order_metrics(request.event, subevent, can_view_orders)
             shared_submission_metrics = self._get_shared_submission_metrics(
                 request.event, permissions.get('has_talk_access', False)
@@ -1297,15 +1306,14 @@ class EventIndexView(TemplateView):
                 'widgets': widgets,
                 'logs': qs[:5],
                 'subevent': subevent,
-                'actions': (
-                    request.event.requiredaction_set.filter(done=False)[:5] if permissions['can_change_orders'] else []
-                ),
+                'actions': actions,
                 'comment_form': CommentForm(
                     initial={'comment': request.event.comment},
                     readonly=not permissions['can_change_event_settings'],
                 ),
                 'has_ticket_access': access['has_ticket_access'],
                 'has_talk_access': access['has_talk_access'],
+                'is_talk_event_created': is_talk_created,
                 'has_video_access': access['has_video_access'],
                 'is_video_enabled': is_video_enabled(request.event),
                 'can_change_event_settings': permissions['can_change_event_settings'],

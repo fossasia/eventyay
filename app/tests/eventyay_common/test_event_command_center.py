@@ -431,4 +431,34 @@ def test_command_center_required_action_merged_and_discardable(organizer_client,
     assert req_action.done is True
 
 
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_top_navigation_shortcuts(organizer_client, event, organizer, team, command_center_url):
+    """The header includes top-level action buttons (Home, Tickets, Talks) for quick navigation."""
+    team.can_change_submissions = True
+    team.save()
+
+    event.settings.set('create_for', 'both')
+    event.settings.set('talk_schedule_public', True)
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    content = response.content.decode()
+
+    # Verify top navigation container and button classes
+    assert 'cc-top-nav' in content
+    assert 'navigation-button' in content
+    assert 'header-nav' in content
+
+    # Verify Home link
+    assert reverse('eventyay_common:event.index', kwargs={'organizer': organizer.slug, 'event': event.slug}) in content
+
+    # Verify Tickets shortcut button
+    assert reverse('control:event.index', kwargs={'organizer': organizer.slug, 'event': event.slug}) in content
+
+    # Verify Talks shortcut button
+    assert reverse('orga:event.dashboard', kwargs={'organizer': organizer.slug, 'event': event.slug}) in content
+
+
+
 
