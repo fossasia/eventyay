@@ -43,6 +43,20 @@ Usage reports require a stable idempotency key. Business supplies policy and
 usage persistence; core callers should use the shared API instead of importing
 Business models.
 
+Core currently calls `check_entitlement` for these capabilities:
+
+| Capability | Where core enforces it |
+|---|---|
+| `video.youtube`, `video.jitsi`, `video.loungemesh` | `base/services/video_entitlements.py` (room config, stream schedules, stream data, loungemesh token exchange) |
+| `api.read`, `api.write` | `api/auth/permission.py`, `api/auth/api_auth.py`, `api/views/organizer.py`; only `Device`, `TeamAPIToken`, `UserApiToken` and OAuth credentials, not browser sessions |
+| `api.webhooks` | `api/webhooks.py` before webhook notifications are queued and sent |
+| `email.bulk.monthly` | `plugins/sendmail/views.py`, `orga/views/mails.py` |
+| `organizer.full_admins` | `base/services/teams.py` |
+
+Check-in devices authenticate as `Device`, so redeeming a check-in needs
+`api.write`. Capability labels, defaults and the Beta marking live in Business
+(`eventyay_business/capabilities.py`); update them when adding a core caller.
+
 `app/eventyay/base/platform_fees.py` defines `PlatformFeePolicy` and its resolver.
 No provider returns a zero policy; multiple providers raise a specific error.
 Business resolves country/currency overrides, then tier fee entitlements, then
