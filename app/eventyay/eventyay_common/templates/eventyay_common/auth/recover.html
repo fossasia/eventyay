@@ -4,7 +4,13 @@
 {% load i18n %}
 {% block content %}
 	<form class="form-signin" action="" method="post">
-        <h3>{% translate "Set new password" %}</h3>
+        {% if onboarding %}
+            <h3>{% translate "Welcome to Eventyay" %}</h3>
+            <p>{% blocktrans with organizer=onboarding.organizer.name %}Your request for the organiser “{{ organizer }}” has been approved.{% endblocktrans %}</p>
+            <p>{% translate "Set a password for your new Eventyay account below. We'll sign you in and take you straight to your organiser dashboard, where you can create your first event." %}</p>
+        {% else %}
+            <h3>{% translate "Set new password" %}</h3>
+        {% endif %}
         {% csrf_token %}
         {% bootstrap_form_errors form type='all' layout='inline' %}
         {% bootstrap_field form.password %}
@@ -12,7 +18,11 @@
 		<div class="form-group buttons">
 
             <button type="submit" class="btn btn-primary">
-                {% translate "Save" %}
+                {% if onboarding %}
+                    {% translate "Set password and continue" %}
+                {% else %}
+                    {% translate "Save" %}
+                {% endif %}
             </button>
 		</div>
 	</form>

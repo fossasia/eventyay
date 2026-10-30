@@ -68,6 +68,12 @@ from .organizer import (
     TeamInvite,
 )
 from .organizer_follower import OrganizerFollower
+from .organizer_request import (
+    OrganizerRequest,
+    OrganizerRequestAnswer,
+    OrganizerRequestFieldSetting,
+    OrganizerRequestQuestion,
+)
 from .poll import Poll, PollOption, PollVote
 from .privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from .product import (
