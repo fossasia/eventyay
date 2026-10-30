@@ -448,7 +448,7 @@ class EventDeleteTalkData(PermissionRequired, ActionConfirmMixin, TemplateView):
         ) + '#danger-zone-tab'
         return redirect(url)
 
-@method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
+@method_decorator(csp_update({'script-src': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):
     form_class = WidgetSettingsForm
     template_name = 'orga/settings/widget.html'
