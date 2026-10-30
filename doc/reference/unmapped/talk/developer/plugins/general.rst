@@ -12,8 +12,12 @@ specific plugin but might come in handy for all sorts of plugin.
 Core
 ----
 
+.. automodule:: eventyay.base.signals
+   :no-index:
+   :members: periodic_task
+
 .. automodule:: eventyay.common.signals
-   :members: periodic_task, register_locales, auth_html, register_data_exporters, register_my_data_exporters
+   :members: register_locales, auth_html, register_data_exporters, register_my_data_exporters
 
 .. automodule:: eventyay.submission.signals
    :members: submission_state_change

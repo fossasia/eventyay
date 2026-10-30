@@ -5,10 +5,9 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.agenda.tasks import export_schedule_html
+from eventyay.base.models import CachedFile, Event
+from eventyay.base.signals import periodic_task
 from eventyay.celery_app import app
-from eventyay.base.models import CachedFile
-from eventyay.common.signals import periodic_task
-from eventyay.base.models import Event
 
 
 @app.task(name='eventyay.event.periodic_event_services')

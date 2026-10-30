@@ -626,11 +626,15 @@ copy to, the ``source`` keyword argument will contain the product to **copy from
 
 periodic_task = django.dispatch.Signal()
 """
-This is a regular django signal (no pretix event signal) that we send out every
-time the periodic task cronjob runs. This interval is not sharply defined, it can
-be everything between a minute and a day. The actions you perform should be
-idempotent, i.e. it should not make a difference if this is sent out more often
-than expected.
+Sent whenever the periodic task runner executes (Celery beat or ``runperiodic``).
+
+This is a regular Django signal, not an ``EventPluginSignal``. The interval is
+not sharply defined; it can be anything between a minute and a day. Receivers
+must be idempotent, so extra sends do not change the result.
+
+This is the canonical periodic-task signal. Import it from
+``eventyay.base.signals``. ``eventyay.common.signals.periodic_task`` is a
+deprecated alias of this same object.
 """
 
 register_global_settings = django.dispatch.Signal()
