@@ -291,6 +291,7 @@ class OrderListExporter(MultiSheetListExporter):
         return qs
 
     def iterate_orders(self, form_data: dict):
+        """Yield header and order rows for the Orders export sheet."""
         p_date = (
             OrderPayment.objects.filter(
                 order=OuterRef('pk'),
@@ -388,6 +389,7 @@ class OrderListExporter(MultiSheetListExporter):
             _('Order date'),
             _('Order time'),
             _('Company'),
+            _('Job Title'),
             _('Name'),
         ]
 
@@ -515,6 +517,10 @@ class OrderListExporter(MultiSheetListExporter):
                         invoice_address.company if invoice_address else None,
                         primary_position.company if primary_position else None,
                         primary_position.addon_to.company if primary_position and primary_position.addon_to else None,
+                    ),
+                    self._first_filled(
+                        primary_position.job_title if primary_position else None,
+                        primary_position.addon_to.job_title if primary_position and primary_position.addon_to else None,
                     ),
                     self._first_filled(
                         invoice_address.name if invoice_address else None,
