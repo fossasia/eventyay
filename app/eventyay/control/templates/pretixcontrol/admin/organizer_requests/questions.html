@@ -1,0 +1,119 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n static %}
+{% block title %}{% trans 'Organiser forms' %}{% endblock %}
+{% block custom_header %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
+  <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+  <link rel="stylesheet" href="{% static 'control/css/organizer-form-fields.css' %}">
+{% endblock %}
+{% block video_admin_content %}
+  <div class="organiser-form-fields">
+    <h1>{% trans 'Organiser forms' %}</h1>
+    <p>
+      {% trans 'These questions appear on the public organiser request form. Turn a question off to hide it, and choose whether an answer is required. Drag a question to a new place, then save. Name, email, organiser name, and short form stay on the form because approving a request uses them.' %}
+    </p>
+    <form
+      method="post"
+      action="{% url 'eventyay_admin:admin.organizer_forms.request.toggle' %}"
+      id="organizer-request-feature-toggle"
+      class="well form-inline organizer-request-feature-toggle"
+      data-enable-confirm="{% trans 'Are you sure you want to enable public organiser requests?' %}"
+      data-disable-confirm="{% trans 'Are you sure you want to disable public organiser requests?' %}"
+      data-confirm-title="{% trans 'Confirm public organiser request setting' %}"
+      data-confirm-label="{% trans 'Confirm' %}"
+    >
+      {% csrf_token %}
+      <label for="organizer-request-enabled">{% trans 'Enable public organiser requests' %}</label>
+      <label class="toggle-switch">
+        <input
+          type="checkbox"
+          name="enabled"
+          id="organizer-request-enabled"
+          data-saved-state="{{ organizer_request_enabled|yesno:'true,false' }}"
+          {% if organizer_request_enabled %}checked{% endif %}
+          aria-label="{% trans 'Enable public organiser requests' %}"
+        >
+        <span class="toggle-slider"></span>
+      </label>
+      <button type="submit" class="btn btn-primary" disabled>{% trans 'Confirm' %}</button>
+    </form>
+    {% if organizer_request_enabled %}
+      <div class="table-responsive">
+        <table class="table table-sm cfp-option-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="text-center">{% trans 'Active' %}</th>
+              <th class="text-center">{% trans 'Required' %}</th>
+              <th class="text-right">{% trans 'Settings' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in field_rows %}
+              <tr data-sort-id="{{ row.sort_id }}" {% if row.toggle_url %}data-organiser-field data-url="{{ row.toggle_url }}"{% endif %}>
+                <th>
+                  {% if row.is_custom %}
+                    <a href="{{ row.edit_url }}">{{ row.label }}</a>
+                  {% else %}
+                    <div class="font-weight-bold">{{ row.label }}</div>
+                    {% if row.help_text %}
+                      <div class="small text-muted font-weight-normal">{{ row.help_text }}</div>
+                    {% endif %}
+                  {% endif %}
+                </th>
+                <td class="text-center">
+                  {% if row.locked %}
+                    <label class="toggle-switch always-on">
+                      <input type="checkbox" checked disabled aria-label="{% blocktrans with label=row.label %}{{ label }} stays on the form{% endblocktrans %}">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  {% else %}
+                    <label class="toggle-switch">
+                      <input type="checkbox" {% if row.active %}checked{% endif %} aria-label="{% blocktrans with label=row.label %}Active toggle for {{ label }}{% endblocktrans %}">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <div class="required-status-wrapper" data-current="{{ row.required_state }}">
+                    <select class="required-status-dropdown" data-current="{{ row.required_state }}" aria-label="{% blocktrans with label=row.label %}Required status for {{ label }}{% endblocktrans %}" {% if row.locked or not row.active %}disabled{% endif %}>
+                      <option value="optional" {% if not row.required %}selected{% endif %}>{% trans 'Optional' %}</option>
+                      <option value="required" {% if row.required %}selected{% endif %}>{% trans 'Required' %}</option>
+                    </select>
+                  </div>
+                </td>
+                <td class="text-right">
+                  <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" aria-label="{% blocktrans with label=row.label %}Move {{ label }}{% endblocktrans %}">
+                    <i class="fa fa-arrows" aria-hidden="true"></i>
+                  </button>
+                  {% if row.edit_url %}
+                    <a href="{{ row.edit_url }}" class="btn btn-sm btn-info" aria-label="{% trans 'Edit question' %}">
+                      <i class="fa fa-edit" aria-hidden="true"></i>
+                    </a>
+                    <a href="{{ row.delete_url }}" class="btn btn-sm btn-danger" aria-label="{% trans 'Delete question' %}">
+                      <i class="fa fa-trash" aria-hidden="true"></i>
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-right">
+        <a href="{% url 'eventyay_admin:admin.organizer_forms.add' %}" class="btn btn-success">
+          <i class="fa fa-plus" aria-hidden="true"></i> {% trans 'New custom field' %}
+        </a>
+      </p>
+      <form method="post" action="{% url 'eventyay_admin:admin.organizer_forms.order' %}" id="organiser-form-order">
+        {% csrf_token %}
+        <input type="hidden" name="order" id="organiser-form-order-value" value="{{ field_order }}">
+        <div class="form-group submit-group">
+          <button type="submit" class="btn btn-primary btn-save">{% trans 'Save' %}</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+  <script type="module" src="{% static 'control/js/organizer-form-fields.js' %}"></script>
+{% endblock %}
