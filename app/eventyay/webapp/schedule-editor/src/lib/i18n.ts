@@ -1,12 +1,12 @@
 import i18next from 'i18next'
 import moment from 'moment-timezone'
-import {createVueGettextRuntime} from '../../../i18n/vue-runtime.js'
+import {createVueI18nRuntime} from '../../../i18n/vue-runtime.js'
 import {toDjangoLanguage} from '../../../i18n/index.js'
 
-const runtime = createVueGettextRuntime({
+const runtime = createVueI18nRuntime({
 	domain: 'schedule-editor',
 	i18next,
-	localeLoaders: import.meta.glob('../../../locale/*/LC_MESSAGES/schedule-editor.po'),
+	localeLoaders: import.meta.glob('../../../locales/*.json'),
 	assignWindowTranslate: true,
 })
 const momentLocaleModules = import.meta.glob('../../node_modules/moment/dist/locale/*.js')

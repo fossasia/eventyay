@@ -315,30 +315,30 @@
 		.participants-drawer(v-if="showParticipantsDrawer")
 			.participants-header
 				.header-text
-					h2 Participants
-					span {{ participantCount }} in room
+					h2 {{ $t('Participants') }}
+					span {{ participantCount }} {{ $t('in room') }}
 				.participants-header-actions
-					button.end-meeting-button(v-if="canModerateParticipants", type="button", title="End meeting for all", :disabled="endingMeeting", @click="sendEndMeeting")
+					button.end-meeting-button(v-if="canModerateParticipants", type="button", :title="$t('End meeting for all')", :disabled="endingMeeting", @click="sendEndMeeting")
 						.mdi.mdi-phone-hangup
-						span End
-					button.drawer-close(type="button", title="Close participants", @click="showParticipantsDrawer = false")
+						span {{ $t('End') }}
+					button.drawer-close(type="button", :title="$t('Close participants')", @click="showParticipantsDrawer = false")
 						.mdi.mdi-close
 			.waiting-room-section(v-if="canModerateParticipants && pendingAdmissionCount")
 				.waiting-room-heading
-					span Waiting room
+					span {{ $t('Waiting room') }}
 					span {{ pendingAdmissionCount }}
 				.waiting-room-list
 					.waiting-room-row(v-for="pendingUser in pendingAdmissions", :key="pendingUser.id")
 						.waiting-room-user
 							.mdi.mdi-account-clock-outline
-							span {{ pendingUser.display_name || 'Participant' }}
+							span {{ pendingUser.display_name || $t('Participant') }}
 						.waiting-room-actions
 							button.waiting-room-action.admit(type="button", :disabled="isAdmissionActionPending(pendingUser)", @click="admitPendingUser(pendingUser)")
 								.mdi.mdi-check
-								span Admit
+								span {{ $t('Admit') }}
 							button.waiting-room-action.deny(type="button", :disabled="isAdmissionActionPending(pendingUser)", @click="denyPendingUser(pendingUser)")
 								.mdi.mdi-close
-								span Deny
+								span {{ $t('Deny') }}
 			.participants-list
 				.participant-row(
 					v-for="participant in participantRows",
@@ -349,36 +349,36 @@
 					.participant-main
 						.participant-name
 							span.name {{ participant.label }}
-							span.self-label(v-if="participant.local") You
+							span.self-label(v-if="participant.local") {{ $t('You') }}
 						.participant-status(v-if="participant.statuses.length")
 							span.status-item(v-for="status in participant.statuses", :key="status.key")
 								.mdi(:class="status.icon")
 								span {{ status.label }}
 					.participant-media
-						.mdi(:class="participant.cameraOn ? 'mdi-video' : 'mdi-video-off off'", :title="participant.cameraOn ? 'Camera on' : 'Camera off'")
-						.mdi(:class="participant.micOn ? 'mdi-microphone' : 'mdi-microphone-off muted'", :title="participant.micOn ? 'Microphone on' : 'Muted'")
+						.mdi(:class="participant.cameraOn ? 'mdi-video' : 'mdi-video-off off'", :title="participant.cameraOn ? $t('Camera on') : $t('Camera off')")
+						.mdi(:class="participant.micOn ? 'mdi-microphone' : 'mdi-microphone-off muted'", :title="participant.micOn ? $t('Microphone on') : $t('Muted')")
 					.participant-actions(v-if="canModerateParticipants && !participant.local")
-						button.participant-action-button(type="button", title="Participant actions", :aria-expanded="openParticipantMenu === participant.key ? 'true' : 'false'", @click.stop="toggleParticipantMenu(participant.key)")
+						button.participant-action-button(type="button", :title="$t('Participant actions')", :aria-expanded="openParticipantMenu === participant.key ? 'true' : 'false'", @click.stop="toggleParticipantMenu(participant.key)")
 							.mdi.mdi-dots-vertical
 						.participant-action-menu(v-if="openParticipantMenu === participant.key")
 							button(type="button", :disabled="!participant.audioFeedId || !participant.micOn || isModeratorActionPending(participant, 'mute_participant')", @click="sendModeratorAction(participant, 'mute_participant')")
 								.mdi.mdi-microphone-off
-								span Mute
+								span {{ $t('Mute') }}
 							button(type="button", :disabled="!participant.videoFeedId || !participant.cameraOn || isModeratorActionPending(participant, 'stop_participant_video')", @click="sendModeratorAction(participant, 'stop_participant_video')")
 								.mdi.mdi-video-off
-								span Stop Video
+								span {{ $t('Stop Video') }}
 							button(type="button", :disabled="!participant.screenShareFeedId || isModeratorActionPending(participant, 'disable_screenshare')", @click="sendModeratorAction(participant, 'disable_screenshare')")
 								.mdi.mdi-monitor-off
-								span Disable screenshare
+								span {{ $t('Disable screenshare') }}
 							button(type="button", v-if="participant.handRaised", :disabled="isRaiseHandActionPending(participant)", @click="lowerParticipantHand(participant)")
 								.mdi.mdi-hand-back-right-off
-								span Lower hand
+								span {{ $t('Lower hand') }}
 							button.danger(type="button", :disabled="isModeratorActionPending(participant, 'remove_participant')", @click="sendModeratorAction(participant, 'remove_participant')")
 								.mdi.mdi-account-remove
-								span Remove
+								span {{ $t('Remove') }}
 			.raised-hands-section(v-if="raisedHandQueue.length")
 				.raised-hands-heading
-					span Raised hands
+					span {{ $t('Raised hands') }}
 					span {{ raisedHandQueue.length }}
 				.raised-hands-list
 					.raised-hand-row(v-for="hand in raisedHandQueue", :key="hand.user")
@@ -387,7 +387,7 @@
 							span {{ hand.label }}
 						button.raised-hand-action(v-if="canModerateParticipants && !hand.local", type="button", :disabled="isRaiseHandUserPending(hand.user)", @click="lowerHandByUser(hand.user)")
 							.mdi.mdi-hand-back-right-off
-							span Lower
+							span {{ $t('Lower') }}
 
 
 

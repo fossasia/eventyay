@@ -40,7 +40,7 @@ const GETTEXT_DIR_ALIASES = {
 }
 
 export function resolveLocaleLoader(localeLoaders, language) {
-	if (!language) return null
+	if (!language || !localeLoaders) return null
 	const django = toDjangoLanguage(language)
 	const gettextLocale = toGettextLocale(django)
 	const [base] = django.split('-')
@@ -53,9 +53,11 @@ export function resolveLocaleLoader(localeLoaders, language) {
 	])
 	if (base) candidates.add(base)
 
+	const loaderEntries = Object.entries(localeLoaders)
 	for (const candidate of candidates) {
-		const needle = `/locale/${candidate}/LC_MESSAGES/`
-		const match = Object.entries(localeLoaders).find(([path]) => path.includes(needle))
+		const jsonNeedle = `/${candidate}.json`
+		const poNeedle = `/locale/${candidate}/LC_MESSAGES/`
+		const match = loaderEntries.find(([path]) => path.endsWith(jsonNeedle) || path.includes(poNeedle))
 		if (match) return match[1]
 	}
 	return null

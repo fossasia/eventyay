@@ -1,6 +1,5 @@
 import path from 'path'
 import vue from '@vitejs/plugin-vue'
-import {createGettextPlugin} from '../i18n/vite-plugin.js'
 import {stableChunkBase} from '../stable-chunk-name.js'
 import BuntpapierStylus from 'buntpapier/stylus.js'
 
@@ -23,7 +22,7 @@ export default {
 	},
 	base: process.env.BASE_URL || '/',
 	plugins: [
-		createGettextPlugin('schedule-editor'), vue()
+		vue()
 	],
 	css: {
 		preprocessorMaxWorkers: 0,
@@ -82,7 +81,7 @@ export default {
 	  fs: {
 		allow: [
 			path.resolve(dirname),
-			path.resolve(dirname, '../../locale'),
+			path.resolve(dirname, '../locales'),
 			path.resolve(dirname, '../i18n'),
 		]
 	  }

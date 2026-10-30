@@ -159,6 +159,7 @@ import ListPagination from './ListPagination.vue'
 import MarkdownContent from './MarkdownContent.vue'
 import DetailBackNav from './DetailBackNav.vue'
 import DetailTopActions from './DetailTopActions.vue'
+import { getLanguageNativeLabel } from '../../../i18n/index.js'
 
 export default {
 	name: 'TalkDetail',
@@ -259,17 +260,7 @@ export default {
 		sessionLanguageLabel () {
 			const code = this.resolvedTalk?.content_locale
 			if (!code || typeof code !== 'string') return ''
-			const tag = code.replace(/_/g, '-')
-			try {
-				return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(tag) || code
-			} catch {
-				try {
-					const primary = tag.split('-')[0] || tag
-					return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(primary) || code
-				} catch {
-					return code
-				}
-			}
+			return getLanguageNativeLabel(code) || code
 		},
 		inlineStarrersLimit() {
 			return 15

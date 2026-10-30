@@ -29,8 +29,8 @@ export function localizeWithI18n(i18n, value, track = () => {}) {
 	return Object.values(value)[0] || ''
 }
 
-export function createGettextRuntime({
-	domain,
+export function createI18nRuntime({
+	domain = 'webapp',
 	i18next: i18n,
 	localeLoaders,
 	debug = false,
@@ -40,8 +40,7 @@ export function createGettextRuntime({
 	extraPlugins = [],
 	extraInitOptions = {},
 }) {
-	if (!domain) throw new Error('createGettextRuntime requires a gettext domain')
-	if (!i18n) throw new Error('createGettextRuntime requires an i18next instance')
+	if (!i18n) throw new Error('createI18nRuntime requires an i18next instance')
 
 	const loadEnglishCatalog = createEnglishCatalogLoader(localeLoaders)
 	const translate = createTranslate(i18n, track)
@@ -54,7 +53,7 @@ export function createGettextRuntime({
 	async function readCatalog(language) {
 		const catalog = await loadCatalogForLanguage(localeLoaders, language, loadEnglishCatalog)
 		if (warnOnMissing && !isEnglishLocale(language) && !(await loadRawCatalog(localeLoaders, language))) {
-			console.warn('Missing %s.po catalog for "%s", falling back to English', domain, language)
+			console.warn('Missing %s catalog for "%s", falling back to English', domain, language)
 		}
 		return catalog
 	}
@@ -71,7 +70,12 @@ export function createGettextRuntime({
 		const lng = toDjangoLanguage(language) || 'en'
 		try {
 			if (!isEnglishLocale(lng) && !i18n.hasResourceBundle(lng, 'translation')) {
-				i18n.addResourceBundle(lng, 'translation', await readCatalog(lng), true, true)
+				const catalog = await readCatalog(lng)
+				i18n.addResourceBundle(lng, 'translation', catalog, true, true)
+				const formatted = i18n.services?.languageUtils?.formatLanguageCode?.(lng)
+				if (formatted && formatted !== lng) {
+					i18n.addResourceBundle(formatted, 'translation', catalog, true, true)
+				}
 			}
 			await i18n.changeLanguage(isEnglishLocale(lng) ? 'en' : lng)
 		} catch (error) {
@@ -89,10 +93,10 @@ export function createGettextRuntime({
 		try {
 			english = await loadEnglishCatalog()
 		} catch (error) {
-			console.error('Failed to load %s English catalog', domain, error)
+			console.error('Failed to load English catalog', error)
 		}
 		if (warnOnMissing && Object.keys(localeLoaders || {}).length === 0) {
-			console.warn('No %s.po locale loaders were bundled', domain)
+			console.warn('No %s locale loaders were bundled', domain)
 		}
 		if (!i18n.isInitialized) {
 			await i18n.init({
@@ -138,3 +142,5 @@ export function createGettextRuntime({
 		readCatalog,
 	}
 }
+
+export const createGettextRuntime = createI18nRuntime
