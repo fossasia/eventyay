@@ -1,4 +1,5 @@
 import json
+import logging
 from contextlib import suppress
 
 from django.db import IntegrityError, models, transaction
@@ -7,10 +8,12 @@ from django.utils.functional import cached_property
 from django_scopes import ScopedManager, scopes_disabled
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
-from eventyay.helpers.json import CustomJSONEncoder
 from eventyay.base.operational_logging import emit_logged_action
+from eventyay.helpers.json import CustomJSONEncoder
+
 
 SENSITIVE_KEYS = ['password', 'secret', 'api_key']
+logger = logging.getLogger(__name__)
 
 
 class TimestampedModel(models.Model):
@@ -203,7 +206,16 @@ class FileCleanupMixin:
 
             def enqueue_cleanup(jobs=cleanup_jobs):
                 for job in jobs:
-                    task_cleanup_file.apply_async(kwargs=job, countdown=10)
+                    try:
+                        task_cleanup_file.apply_async(kwargs=job, countdown=10)
+                    except Exception:
+                        logger.warning(
+                            'Failed to enqueue cleanup task for path %s on model %s (pk=%s)',
+                            job.get('path'),
+                            job.get('model'),
+                            job.get('pk'),
+                            exc_info=True,
+                        )
 
             transaction.on_commit(enqueue_cleanup)
         return result
