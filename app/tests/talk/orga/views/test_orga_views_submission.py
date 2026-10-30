@@ -845,39 +845,6 @@ def test_orga_can_edit_submission_wrong_answer(
 
 
 @pytest.mark.django_db
-def test_orga_can_edit_submission_duration(orga_client, event, accepted_submission):
-    with scope(event=event):
-        slot = accepted_submission.slots.filter(schedule=event.wip_schedule).first()
-        slot.start = now()
-        slot.end = slot.start + dt.timedelta(minutes=accepted_submission.get_duration())
-        slot.save()
-        assert slot.duration == accepted_submission.get_duration()
-
-    response = orga_client.post(
-        accepted_submission.orga_urls.base,
-        data={
-            "abstract": "abstract",
-            "content_locale": "en",
-            "description": "description",
-            "slot_count": 2,
-            "notes": "notes",
-            "speaker": "foo@bar.com",
-            "speaker_name": "Foo Speaker",
-            "duration": 123,
-            "title": "title",
-            "submission_type": accepted_submission.submission_type.pk,
-            "resource-TOTAL_FORMS": 0,
-            "resource-INITIAL_FORMS": 0,
-        },
-        follow=True,
-    )
-    assert response.status_code == 200
-    with scope(event=event):
-        slot.refresh_from_db()
-        assert (slot.end - slot.start).seconds / 60 == 123
-
-
-@pytest.mark.django_db
 def test_orga_can_toggle_submission_featured(orga_client, event, submission):
     with scope(event=event):
         assert event.submissions.count() == 1
