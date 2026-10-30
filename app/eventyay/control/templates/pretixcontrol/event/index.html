@@ -116,6 +116,12 @@
         </div>
     {% endif %}
 
+    {% if at_a_glance %}
+        <div class="td-dashboard pt-0">
+            {% include 'pretixcontrol/event/includes/dashboard_kpi_cards.html' %}
+        </div>
+    {% endif %}
+
     {% if request.event.has_subevents %}
         <form class="form-inline helper-display-inline" action="" method="get">
             {% include "pretixcontrol/event/fragment_subevent_choice_simple.html" %}

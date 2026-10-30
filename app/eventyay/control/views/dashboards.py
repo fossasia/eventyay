@@ -407,6 +407,78 @@ def welcome_wizard_widget(sender, **kwargs):
     return [{'display_size': 'full', 'priority': 2000, 'content': template.render(ctx)}]
 
 
+def get_dashboard_kpi_context(request, subevent, can_view_orders):
+    """Build the "At a glance" KPI data for the tickets dashboard (issue #5088).
+
+    Reuses the same calculations as the dashboard widget receivers so the KPI
+    cards stay consistent with the existing numbers:
+
+    * ordered / paid attendees -> admission ``OrderPosition`` counts by order
+      status (see :func:`base_widgets`).
+    * total revenue -> paid ``Order.total`` (or ``OrderPosition.price`` for a
+      single subevent), matching :func:`base_widgets`.
+    * waiting list -> ``WaitingListEntry`` count (see
+      :func:`waitinglist_widgets`).
+    * checked in -> per check-in list ``inside_count`` / ``position_count``
+      (see :func:`checkin_widget`).
+    * ticket shop status -> :attr:`Event.ticket_component_presale_status`.
+
+    Returns ``None`` when the user may not view orders, so the template can skip
+    the whole section.
+    """
+    event = request.event
+    if not can_view_orders:
+        return None
+
+    if subevent:
+        opqs = OrderPosition.objects.filter(subevent=subevent)
+    else:
+        opqs = OrderPosition.objects
+
+    ordered_attendees = opqs.filter(
+        order__event=event,
+        product__admission=True,
+        order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
+    ).count()
+    paid_attendees = opqs.filter(
+        order__event=event,
+        product__admission=True,
+        order__status=Order.STATUS_PAID,
+    ).count()
+
+    if subevent:
+        total_revenue = opqs.filter(order__event=event, order__status=Order.STATUS_PAID).aggregate(
+            sum=Sum('price')
+        )['sum'] or Decimal('0.00')
+    else:
+        total_revenue = Order.objects.filter(event=event, status=Order.STATUS_PAID).aggregate(sum=Sum('total'))[
+            'sum'
+        ] or Decimal('0.00')
+
+    waiting_list = WaitingListEntry.objects.filter(event=event, subevent=subevent, voucher__isnull=True).count()
+
+    checked_in = 0
+    checkin_total = 0
+    has_checkin_lists = False
+    for cl in event.checkin_lists.filter(subevent=subevent):
+        has_checkin_lists = True
+        checked_in += cl.inside_count
+        checkin_total += cl.position_count
+
+    return {
+        'ticket_shop_status': event.ticket_component_presale_status,
+        'ordered_attendees': ordered_attendees,
+        'paid_attendees': paid_attendees,
+        'total_revenue': total_revenue,
+        'total_revenue_display': formats.localize(round_decimal(total_revenue, event.currency)),
+        'currency': event.currency,
+        'waiting_list': waiting_list,
+        'checked_in': checked_in,
+        'checkin_total': checkin_total,
+        'has_checkin_lists': has_checkin_lists,
+    }
+
+
 def event_index(request, organizer, event):
     subevent = None
     if request.GET.get('subevent', '') != '' and request.event.has_subevents:
@@ -478,6 +550,8 @@ def event_index(request, organizer, event):
 
     if can_view_orders:
         ctx.update(get_statistics_context(request, subevent=subevent))
+
+    ctx['at_a_glance'] = get_dashboard_kpi_context(request, subevent, can_view_orders)
 
     ctx['has_overpaid_orders'] = (
         can_view_orders
