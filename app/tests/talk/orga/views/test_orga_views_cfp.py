@@ -14,6 +14,7 @@ from django.http import QueryDict
 from django.test import TransactionTestCase
 from django_scopes import scope
 
+from eventyay.base.middleware import _parse_csp
 from eventyay.base.models import Answer, Event, QueuedMail, Submission, SubmissionType, Track
 from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
@@ -75,6 +76,15 @@ def test_edit_cfp_timezones(orga_client, event):
     assert response.status_code == 200
     assert "2018-03-05T18:39" in response.rendered_content
     assert "2018-03-05T17:39" not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_cfp_flow_editor_uses_valid_csp_directive(orga_client, event):
+    response = orga_client.get(event.cfp.urls.editor)
+
+    assert response.status_code == 200
+    assert 'SCRIPT_SRC' not in response['Content-Security-Policy']
+    assert "'unsafe-eval'" in _parse_csp(response['Content-Security-Policy'])['script-src']
 
 
 @pytest.mark.django_db
@@ -1241,7 +1251,7 @@ def test_track_list_sorting(orga_client, event):
     assert response.status_code == 200
     assert response.context["can_reorder"] is False
     assert "dragsort-button" not in response.text
-    assert "Reset to manual order" in response.text
+    assert "Reset to default order" in response.text
     pks = [t.pk for t in response.context["track_list"]]
     assert pks == [t2.pk, t1.pk, t3.pk]
     assert "fa-caret-up" in response.text
@@ -1359,7 +1369,7 @@ def test_submission_type_list_sorting(orga_client, event):
     assert response.status_code == 200
     assert response.context["can_reorder"] is False
     assert "dragsort-button" not in response.text
-    assert "Reset to manual order" in response.text
+    assert "Reset to default order" in response.text
     names = [st.name for st in response.context["submissiontype_list"]]
     assert names == sorted(names, key=str)
     assert "fa-caret-up" in response.text

@@ -47,7 +47,6 @@ class EventCommonSettingsForm(SettingsForm):
         label=_('Region'),
     )
 
-
     auto_fields = [
         'locales',
         'locale',
@@ -327,6 +326,20 @@ class EventCommonSettingsForm(SettingsForm):
             if isinstance(field.widget, forms.ClearableFileInput):
                 field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
                 field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+        for fname in ('timezone', 'region'):
+            if fname in self.fields:
+                existing_classes = self.fields[fname].widget.attrs.get('class', '').split()
+                if 'form-control' not in existing_classes:
+                    existing_classes.append('form-control')
+                self.fields[fname].widget.attrs.update(
+                    {
+                        'class': ' '.join(existing_classes),
+                        'data-searchable-select': '',
+                        'data-search-placeholder': _('Search'),
+                        'data-empty-text': _('No results'),
+                    }
+                )
 
         if not self.is_bound and self.event:
             contact_email = self.event.settings.contact_mail or self.event.email or ''

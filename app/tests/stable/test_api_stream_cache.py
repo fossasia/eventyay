@@ -39,7 +39,7 @@ def test_cached_current_stream_avoids_repeat_query():
 
     cache.clear()
     stream = _fake_stream()
-    room = SimpleNamespace(pk=3, get_current_stream=lambda: stream)
+    room = SimpleNamespace(pk=3, event=SimpleNamespace(), get_current_stream=lambda: stream)
 
     data = room_service.get_cached_current_stream_data(room)
     assert data['url'] == 'https://example.com/live.m3u8'
@@ -61,7 +61,7 @@ def test_invalidate_current_stream_cache_forces_lookup():
         lookups.append(1)
         return stream
 
-    room = SimpleNamespace(pk=3, get_current_stream=lookup)
+    room = SimpleNamespace(pk=3, event=SimpleNamespace(), get_current_stream=lookup)
     room_service.get_cached_current_stream_data(room)
     room_service.invalidate_current_stream_cache(3)
     room_service.get_cached_current_stream_data(room)
@@ -97,6 +97,7 @@ def test_ended_current_stream_cache_is_replaced():
     fresh.end_time = now() + dt.timedelta(hours=1)
     room = SimpleNamespace(
         pk=13,
+        event=SimpleNamespace(),
         get_current_stream=lambda: ended,
         get_next_stream=lambda: None,
     )
@@ -225,7 +226,7 @@ def test_stale_current_stream_served_when_db_unavailable():
 
     cache.clear()
     stream = _fake_stream()
-    room = SimpleNamespace(pk=3, get_current_stream=lambda: stream)
+    room = SimpleNamespace(pk=3, event=SimpleNamespace(), get_current_stream=lambda: stream)
     room_service.get_cached_current_stream_data(room)
     cache.delete(room_service.current_stream_cache_key(3))
     room.get_current_stream = lambda: (_ for _ in ()).throw(OperationalError('db unavailable'))
@@ -241,7 +242,7 @@ def test_stale_next_stream_served_when_db_unavailable():
 
     cache.clear()
     stream = _fake_stream()
-    room = SimpleNamespace(pk=4, get_next_stream=lambda: stream)
+    room = SimpleNamespace(pk=4, event=SimpleNamespace(), get_next_stream=lambda: stream)
     room_service.get_cached_next_stream_data(room)
     cache.delete(room_service.next_stream_cache_key(4))
     room.get_next_stream = lambda: (_ for _ in ()).throw(OperationalError('db unavailable'))
