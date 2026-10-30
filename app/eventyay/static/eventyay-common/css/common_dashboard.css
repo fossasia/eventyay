@@ -3071,12 +3071,14 @@ body:has(.od-dashboard) #page-content {
   text-decoration: none;
   color: var(--od-surface)
 }
+
 .od-kpi-grid {
   display: grid;
   grid-template-columns: repeat(6,minmax(0,1fr));
   gap: 12px;
-  align-items: stretch
+  align-items: stretch;
 }
+
 .od-kpi-card {
   background: linear-gradient(180deg,var(--od-heading-bg) 0,var(--od-surface) 48%);
   border: 1px solid var(--od-border);
@@ -3092,7 +3094,8 @@ body:has(.od-dashboard) #page-content {
   min-height: 148px;
   height: 100%;
   box-sizing: border-box;
-  transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease
+  transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+  padding: 0 10px;
 }
 .od-kpi-card:focus,
 .od-kpi-card:hover {
