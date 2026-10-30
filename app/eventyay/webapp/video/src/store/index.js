@@ -12,6 +12,7 @@ import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
 import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
+import { interpretationRouting } from 'lib/interpretation-api'
 import {
 	STREAM_POLL_BASE_DELAY,
 	isPermanentStreamPollError,
@@ -117,23 +118,18 @@ export default new Vuex.Store({
 			}, {})
 		},
 		eventRouting(state) {
-			const organizer = state.world?.organizer_slug
-			const event = state.world?.slug || state.world?.id
-			if (organizer && organizer !== 'default' && event) {
-				return { organizer, event }
-			}
-			if (typeof window !== 'undefined') {
-				const pathParts = window.location.pathname.split('/').filter(Boolean)
-				if (pathParts.length >= 2) {
-					return { organizer: pathParts[0], event: pathParts[1] }
-				}
-			}
-			return { organizer: null, event: null }
+			return interpretationRouting(state)
 		},
-		isInterpretationEnabled() {
-			const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
-			const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
-			return Boolean(hasPlugin && hasValidUrl)
+		isInterpretationEnabled(state) {
+			if (typeof window !== 'undefined') {
+				if (window.eventyay?.interpretation?.isEnabled !== undefined) {
+					return Boolean(window.eventyay.interpretation.isEnabled)
+				}
+				const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
+				const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
+				if (hasPlugin && hasValidUrl) return true
+			}
+			return Boolean(state.world?.interpretation?.isEnabled)
 		},
 	},
 	mutations: {

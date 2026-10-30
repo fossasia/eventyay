@@ -10,7 +10,7 @@
 					i.mdi.mdi-alert-circle-outline(aria-hidden="true")
 					span {{ $t('No translation model configured. Please set up a model first.') }}
 		.header-actions
-			bunt-button.btn-add-entry(@click="addEntry", :disabled="!translationModelSetup")
+			bunt-button.btn-add-entry(@click="addEntry", :disabled="!translationModelSetup || disabled")
 				i.mdi.mdi-plus(aria-hidden="true")
 				span {{ $t('Add another language') }}
 			router-link.btn-settings-link(
@@ -33,6 +33,7 @@
 				button.btn-delete-entry(
 					type="button"
 					:title="$t('Remove Channel')"
+					:disabled="disabled"
 					@click="removeEntry(index)"
 				)
 					i.mdi.mdi-trash-can-outline(aria-hidden="true")
@@ -44,7 +45,7 @@
 						span.required-star *
 					.custom-select-wrapper
 						i.mdi.mdi-earth.select-icon(aria-hidden="true")
-						select.custom-select(v-model="entry.language")
+						select.custom-select(v-model="entry.language", :disabled="disabled")
 							option(value="" disabled) {{ $t('Select language') }}
 							option(v-for="opt in languageOptions" :key="opt.id" :value="opt.id") {{ opt.label }}
 						i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
@@ -58,6 +59,7 @@
 							type="text"
 							v-model="entry.url"
 							:placeholder="$t('YouTube URL/ID or WHEP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
+							:disabled="disabled"
 							@blur="normalizeEntry(entry)"
 							@input="syncLegacyField(entry)"
 						)
@@ -66,6 +68,7 @@
 				bunt-switch(
 					name="use_video",
 					v-model="entry.use_video",
+					:disabled="disabled",
 					:label="$t('Use audio and captions from this interpretation channel')",
 					:hint="$t('If enabled, attendees see both video and audio from this channel. If disabled, attendees hear the audio while watching the main video.')"
 				)
@@ -97,6 +100,10 @@ export default {
 		translationModelSetup: {
 			type: Boolean,
 			default: true,
+		},
+		disabled: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {
@@ -274,6 +281,12 @@ export default {
 				&:hover
 					color: $clr-danger
 					background-color: rgba($clr-danger, 0.08)
+				&:disabled
+					opacity: 0.5
+					cursor: not-allowed
+					&:hover
+						color: $clr-grey-500
+						background-color: transparent
 
 		.entry-fields-grid
 			display: grid

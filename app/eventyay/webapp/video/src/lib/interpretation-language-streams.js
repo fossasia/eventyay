@@ -3,10 +3,17 @@ import { logOperational } from './operationalLog.js'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from './validators.js'
 
 export async function fetchInterpretationLanguageStreams(store, roomId) {
-	const response = await fetch(interpretationApiUrl(store, roomId, 'streams/'), {
+	const url = interpretationApiUrl(store, roomId, 'streams/')
+	if (!url) {
+		throw new Error('Interpretation API route unavailable')
+	}
+	const response = await fetch(url, {
 		headers: await interpretationAuthHeaders(),
 		credentials: 'include',
 	})
+	if (response.status === 404 || response.status === 403) {
+		return { unsupported: true, use_plugin_language_streams: false, language_streams: [] }
+	}
 	const data = await response.json().catch(() => ({}))
 	if (!response.ok) {
 		logOperational({action: 'interpretation.config', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status})
@@ -16,7 +23,11 @@ export async function fetchInterpretationLanguageStreams(store, roomId) {
 }
 
 export async function saveInterpretationLanguageStreams(store, roomId, languageStreams) {
-	const response = await fetch(interpretationApiUrl(store, roomId, 'config/'), {
+	const url = interpretationApiUrl(store, roomId, 'config/')
+	if (!url) {
+		throw new Error('Could not save interpretation language streams: missing routing parameters')
+	}
+	const response = await fetch(url, {
 		method: 'PATCH',
 		headers: await interpretationAuthHeaders(true),
 		credentials: 'include',
@@ -86,7 +97,11 @@ export function defaultLanguageStreamEntry() {
 }
 
 export async function syncInterpretationServices(store, roomId) {
-	const response = await fetch(interpretationApiUrl(store, roomId, 'sync/'), {
+	const url = interpretationApiUrl(store, roomId, 'sync/')
+	if (!url) {
+		throw new Error('Could not sync interpretation services: missing routing parameters')
+	}
+	const response = await fetch(url, {
 		method: 'POST',
 		headers: await interpretationAuthHeaders(),
 		credentials: 'include',

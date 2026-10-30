@@ -12,6 +12,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
+import { interpretationRouting } from 'lib/interpretation-api'
 
 const route = useRoute()
 const store = useStore()
@@ -30,6 +31,12 @@ const hasAccess = computed(() => Boolean(
 
 const iframeUrl = computed(() => {
 	let url = window.eventyay?.interpretationUrl || ''
+	if (!url) {
+		const { organizer, event } = interpretationRouting(store)
+		if (organizer && event) {
+			url = `/video/plugins/${organizer}/${event}/interpretation/`
+		}
+	}
 	if (url) {
 		const queryStr = Object.keys(route.query).map(key => `${key}=${route.query[key]}`).join('&')
 		if (queryStr) {
