@@ -18,7 +18,8 @@ import eventyay.presale.urls
 from eventyay.api.views.stripe import stripe_webhook_view
 from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers, metrics, redirect
 from eventyay.control.views import pages
-from eventyay.eventyay_common.views import auth
+from eventyay.presale.views.organizer import OrganizerIndex
+from eventyay.eventyay_common.views import auth, organizer_request
 from eventyay.eventyay_common.views.custom import ConfirmEmailView, SignupView
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,10 @@ _paypal_webhook_aliases = plugin_webhook_compat_paths('eventyay_paypal', '_paypa
 
 
 base_patterns = [
+    path('invite/', OrganizerIndex.as_view(), {'organizer': 'invite'}, name='invite.organizer'),
+    re_path(r'^invite$', organizer_request.OrganizerRequestCreate.as_view(), name='organizer_request.create'),
+    path('_global/organizer-request/success/', organizer_request.OrganizerRequestSuccess.as_view(), name='organizer_request.success'),
+    path('_global/organizer-request/slug/', organizer_request.slug_available, name='organizer_request.slug'),
     path(
         'download/<id>/',
         cachedfiles.DownloadView.as_view(),
