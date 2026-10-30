@@ -2,8 +2,9 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import pytest
+from django.test import override_settings
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from freezegun import freeze_time
 
 from eventyay.base.models import (
@@ -516,6 +517,44 @@ class CheckinListFormTest(SoupTest):
         self.assertIn('All', doc.select('#page-wrapper table')[0].text)
         with scopes_disabled():
             assert self.event1.checkin_lists.get(name='All', all_products=True)
+
+    @override_settings(SITE_URL='https://testserver')
+    def test_create_copy_preserves_product_and_gate_limits(self):
+        with scope(event=self.event1, organizer=self.orga1):
+            item_other = Item.objects.create(event=self.event1, name='Mascot', default_price=10, admission=False)
+            Item.objects.create(event=self.event1, name='Workshop', default_price=15, admission=True)
+            gate = self.orga1.gates.create(name='North Gate')
+            self.orga1.gates.create(name='South Gate')
+            cl = self.event1.checkin_lists.create(name='North Gate', all_products=False)
+            cl.limit_products.add(self.item_ticket, item_other)
+            cl.gates.add(gate)
+
+        url = '/control/event/%s/%s/checkinlists/add?copy_from=%s' % (
+            self.orga1.slug,
+            self.event1.slug,
+            cl.pk,
+        )
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        copied_products = form_data.get('limit_products')
+        if not isinstance(copied_products, list):
+            copied_products = [copied_products]
+        copied_gates = form_data.get('gates')
+        if not isinstance(copied_gates, list):
+            copied_gates = [copied_gates]
+
+        self.assertEqual(form_data.get('name'), 'North Gate')
+        self.assertNotIn('all_products', form_data)
+        self.assertEqual(set(copied_products), {str(self.item_ticket.pk), str(item_other.pk)})
+        self.assertEqual(set(copied_gates), {str(gate.pk)})
+
+        doc = self.post_doc(url, form_data)
+        assert doc.select('.alert-success')
+        with scope(event=self.event1, organizer=self.orga1):
+            cloned = self.event1.checkin_lists.exclude(pk=cl.pk).get(name='North Gate')
+            assert not cloned.all_products
+            assert set(cloned.limit_products.all()) == {self.item_ticket, item_other}
+            assert set(cloned.gates.all()) == {gate}
 
     def test_update(self):
         with scopes_disabled():
