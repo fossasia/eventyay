@@ -579,8 +579,11 @@ class EventCreateView(TemplateView):
 
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
+            event.live = False
             event.testmode = False
             event.private_testmode = False
+            event.tickets_published = False
+            event.talks_published = False
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
@@ -1558,8 +1561,11 @@ class EventCloneView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             new_event.plugins = old_event.plugins
         new_event.has_subevents = old_event.has_subevents
         new_event.is_video_creation = old_event.is_video_creation
+        new_event.live = False
         new_event.testmode = False
         new_event.private_testmode = False
+        new_event.tickets_published = False
+        new_event.talks_published = False
         
         new_event.timezone = form.cleaned_data['timezone']
         new_event.locale = form.cleaned_data['locale']
