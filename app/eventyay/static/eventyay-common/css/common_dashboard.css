@@ -3479,7 +3479,12 @@ h4.od-subchart {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px
+  gap: 8px;
+  flex-wrap: wrap
+}
+.od-tool-head .od-badge {
+  white-space: nowrap;
+  flex-shrink: 0
 }
 .od-tool-head h3 {
   margin: 0;
