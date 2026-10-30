@@ -806,6 +806,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     if action_type == 'eventyay.team.invite.resent':
         return _('Invite for {user} has been resent.').format(user=data.get('email'))
 
+    if action_type == 'eventyay.team.invite.declined':
+        return _('{user} has declined the invitation to the team.').format(user=data.get('email'))
+
     if action_type == 'eventyay.team.invite.deleted':
         return _('The invite for {user} has been revoked.').format(user=data.get('email'))
 

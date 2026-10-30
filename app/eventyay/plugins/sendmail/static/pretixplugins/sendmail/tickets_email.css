@@ -712,6 +712,11 @@ form.mail-templates-info-dialog__card {
   }
 }
 
+.mail-template-readonly {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 991px) {
   .mail-template-system-form .form-group {
     flex-direction: column;

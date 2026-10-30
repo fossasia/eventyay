@@ -16,6 +16,7 @@ from eventyay.base.services import (  # noqa: F401
     orders,
     shredder,
     talkimport,
+    teams,
     telemetry,
     tickets,
     update_check,
