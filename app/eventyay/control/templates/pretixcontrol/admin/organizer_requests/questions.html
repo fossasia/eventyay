@@ -13,6 +13,31 @@
     <p>
       {% trans 'These questions appear on the public organiser request form. Turn a question off to hide it, and choose whether an answer is required. Drag a question to a new place, then save. Name, email, organiser name, and short form stay on the form because approving a request uses them.' %}
     </p>
+    <form
+      method="post"
+      action="{% url 'eventyay_admin:admin.organizer_forms.request.toggle' %}"
+      id="organizer-request-feature-toggle"
+      class="well form-inline organizer-request-feature-toggle"
+      data-enable-confirm="{% trans 'Are you sure you want to enable public organiser requests?' %}"
+      data-disable-confirm="{% trans 'Are you sure you want to disable public organiser requests?' %}"
+      data-confirm-title="{% trans 'Confirm public organiser request setting' %}"
+      data-confirm-label="{% trans 'Confirm' %}"
+    >
+      {% csrf_token %}
+      <label for="organizer-request-enabled">{% trans 'Enable public organiser requests' %}</label>
+      <label class="toggle-switch">
+        <input
+          type="checkbox"
+          name="enabled"
+          id="organizer-request-enabled"
+          data-saved-state="{{ organizer_request_enabled|yesno:'true,false' }}"
+          {% if organizer_request_enabled %}checked{% endif %}
+          aria-label="{% trans 'Enable public organiser requests' %}"
+        >
+        <span class="toggle-slider"></span>
+      </label>
+      <button type="submit" class="btn btn-primary" disabled>{% trans 'Confirm' %}</button>
+    </form>
     <div class="table-responsive">
       <table class="table table-sm cfp-option-table">
         <thead>

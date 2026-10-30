@@ -10,7 +10,7 @@ from eventyay.base.models import (
     OrganizerRequestFieldSetting,
     OrganizerRequestQuestion,
 )
-from eventyay.base.organizer_request_fields import REQUEST_FIELDS, ensure_request_field_settings, ordered_form_items
+from eventyay.base.organizer_request_fields import REQUEST_FIELDS
 from eventyay.base.services.turnstile import TurnstileValidationMixin
 
 
@@ -79,6 +79,7 @@ class OrganizerRequestForm(TurnstileValidationMixin, OrganizerRequestReviewForm)
             self.fields['events'].widget.attrs['maxlength'] = 10000
         self.fields['slug'].widget.attrs['aria-describedby'] = 'id_slug_helptext slug-preview slug-status'
         self.questions = list(OrganizerRequestQuestion.objects.filter(active=True).order_by('position', 'id'))
+        self.field_settings = list(OrganizerRequestFieldSetting.objects.all())
         self.question_field_names = []
         for question in self.questions:
             name = f'question_{question.pk}'
@@ -87,18 +88,20 @@ class OrganizerRequestForm(TurnstileValidationMixin, OrganizerRequestReviewForm)
         self._apply_field_settings()
 
     def _apply_field_settings(self):
-        ensure_request_field_settings()
         locked = {field['key'] for field in REQUEST_FIELDS if field['locked']}
         known = {field['key'] for field in REQUEST_FIELDS}
-        for row in OrganizerRequestFieldSetting.objects.all():
+        for row in self.field_settings:
             if row.key not in known or row.key in locked or row.key not in self.fields:
                 continue
             if not row.active:
                 self.fields.pop(row.key)
                 continue
             self.fields[row.key].required = row.required
+        items = [('field', setting) for setting in self.field_settings if setting.key in known]
+        items.extend(('question', question) for question in self.questions)
+        items.sort(key=lambda item: (item[1].position, 0 if item[0] == 'field' else 1, item[1].pk))
         ordered = []
-        for kind, obj, _spec in ordered_form_items():
+        for kind, obj in items:
             name = obj.key if kind == 'field' else f'question_{obj.pk}'
             if name in self.fields and name != 'website':
                 ordered.append(name)

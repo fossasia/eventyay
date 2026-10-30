@@ -8,7 +8,8 @@ import pytest
 from django.contrib.auth.tokens import default_token_generator
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
+from django.test.utils import CaptureQueriesContext
 from django.urls import resolve, reverse
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
@@ -23,6 +24,7 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.base.models.auth import StaffSession
+from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.organizer_requests import review_request
 from eventyay.eventyay_common.views.organizer_request import OrganizerRequestCreate
 
@@ -121,11 +123,52 @@ def test_honeypot(data):
 
 def test_rate_limit(client, settings):
     settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+    settings.TRUST_X_FORWARDED_FOR = True
     cache.clear()
     for _ in range(10):
-        assert client.post('/invite', {}).status_code == 200
-    assert client.post('/invite', {}).status_code == 429
+        assert (
+            client.post('/invite', {}, REMOTE_ADDR='198.51.100.1', HTTP_X_FORWARDED_FOR='192.0.2.1').status_code == 200
+        )
+    response = client.post('/invite', {}, REMOTE_ADDR='198.51.100.1', HTTP_X_FORWARDED_FOR='192.0.2.1')
+    assert response.status_code == 429
+    assert response['Retry-After'] == '900'
+    assert client.post('/invite', {}, REMOTE_ADDR='198.51.100.1', HTTP_X_FORWARDED_FOR='192.0.2.2').status_code == 200
     cache.clear()
+
+
+def test_slug_endpoint_rate_limit_and_max_length(client, monkeypatch, settings):
+    settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+    settings.TRUST_X_FORWARDED_FOR = True
+    cache.clear()
+    long_slug = client.get(reverse('organizer_request.slug'), {'slug': 'a' * 51})
+    assert long_slug.status_code == 200
+    assert long_slug.json()['available'] is False
+    assert '50' in long_slug.json()['message']
+    monkeypatch.setattr('eventyay.eventyay_common.views.organizer_request.ORGANIZER_REQUEST_SLUG_RATE_LIMIT', 1)
+    assert (
+        client.get(
+            reverse('organizer_request.slug'), {'slug': 'available'}, HTTP_X_FORWARDED_FOR='192.0.2.1'
+        ).status_code
+        == 200
+    )
+    response = client.get(reverse('organizer_request.slug'), {'slug': 'available'}, HTTP_X_FORWARDED_FOR='192.0.2.1')
+    assert response.status_code == 429
+    assert response['Retry-After'] == '900'
+    assert (
+        client.get(
+            reverse('organizer_request.slug'), {'slug': 'available'}, HTTP_X_FORWARDED_FOR='192.0.2.2'
+        ).status_code
+        == 200
+    )
+    cache.clear()
+
+
+def test_organizer_request_form_loads_settings_once():
+    with CaptureQueriesContext(connection) as queries:
+        OrganizerRequestForm()
+    query_sql = [query['sql'].lower() for query in queries.captured_queries]
+    assert sum('base_organizerrequestfieldsetting' in sql for sql in query_sql) == 1
+    assert sum('base_organizerrequestquestion' in sql for sql in query_sql) == 1
 
 
 def test_approve_new_account(application, admin, mailoutbox, django_capture_on_commit_callbacks):
@@ -392,16 +435,6 @@ def test_slug_race_returns_field_error(data, rf):
     assert 'slug' in response.context_data['form'].errors
 
 
-def test_forwarded_header_does_not_bypass_limit(client, settings):
-    settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
-    settings.TRUST_X_FORWARDED_FOR = True
-    cache.clear()
-    for n in range(10):
-        assert client.post('/invite', {}, HTTP_X_FORWARDED_FOR=f'192.0.2.{n}').status_code == 200
-    assert client.post('/invite', {}, HTTP_X_FORWARDED_FOR='192.0.2.99').status_code == 429
-    cache.clear()
-
-
 def test_staff_notification_excludes_applicant_text(client, data, admin, django_capture_on_commit_callbacks):
     with (
         patch('eventyay.base.services.organizer_requests.mail') as mail,
@@ -461,6 +494,25 @@ def test_admin_manages_organiser_form_questions(client, admin):
     question.refresh_from_db()
     assert question.label == 'Yearly budget'
     assert question.required is False
+
+
+def test_admin_can_disable_public_organizer_requests(client, admin):
+    list_url = reverse('eventyay_admin:admin.organizer_forms')
+    page = client.get(list_url)
+    assert 'Enable public organiser requests' in page.content.decode()
+    assert 'id="organizer-request-enabled"' in page.content.decode()
+    assert 'Confirm' in page.content.decode()
+    response = client.post(reverse('eventyay_admin:admin.organizer_forms.request.toggle'))
+    assert response.status_code == 302
+    assert not organizer_request_enabled()
+    assert client.get('/invite').status_code == 404
+    assert client.get(reverse('organizer_request.success')).status_code == 404
+    assert client.get(reverse('organizer_request.slug'), {'slug': 'available'}).status_code == 404
+    assert client.post(reverse('organizer_request.slug')).status_code == 404
+    response = client.post(reverse('eventyay_admin:admin.organizer_forms.request.toggle'), {'enabled': 'on'})
+    assert response.status_code == 302
+    assert organizer_request_enabled()
+    assert client.get('/invite').status_code == 200
 
 
 def test_default_fields_follow_active_required_and_position(client, admin, data):

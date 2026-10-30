@@ -33,6 +33,11 @@ urlpatterns = [
         name='admin.organizer_forms.field',
     ),
     path(
+        'organizer-forms/toggle/',
+        organizer_request_forms.OrganizerRequestFeatureToggle.as_view(),
+        name='admin.organizer_forms.request.toggle',
+    ),
+    path(
         'organizer-forms/order/',
         organizer_request_forms.OrganizerRequestFormOrder.as_view(),
         name='admin.organizer_forms.order',

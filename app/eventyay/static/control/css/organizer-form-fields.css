@@ -36,6 +36,34 @@
   transform: translateX(20px);
 }
 
+.organiser-form-fields .organizer-request-feature-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle > label {
+  margin: 0;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle .toggle-switch {
+  flex: 0 0 auto;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle button {
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .organiser-form-fields .organizer-request-feature-toggle {
+    flex-wrap: wrap;
+  }
+
+  .organiser-form-fields .organizer-request-feature-toggle button {
+    margin-left: 0;
+  }
+}
+
 .organiser-form-fields tr.dragging th,
 .organiser-form-fields tr.dragging td {
   background: var(--color-grey-lighter);

@@ -13,8 +13,10 @@ from eventyay.base.organizer_request_fields import (
     REQUEST_FIELDS,
     next_form_position,
     organiser_form_rows,
+    organizer_request_enabled,
     save_form_order,
 )
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
 
@@ -25,7 +27,21 @@ class OrganizerRequestQuestionList(AdministratorPermissionRequiredMixin, Templat
         context = super().get_context_data(**kwargs)
         context['field_rows'] = organiser_form_rows()
         context['field_order'] = ','.join(row['sort_id'] for row in context['field_rows'])
+        context['organizer_request_enabled'] = organizer_request_enabled()
         return context
+
+
+class OrganizerRequestFeatureToggle(AdministratorPermissionRequiredMixin, View):
+    def post(self, request):
+        enabled = request.POST.get('enabled') == 'on'
+        GlobalSettingsObject().settings.set('organizer_request_enabled', enabled)
+        messages.success(
+            request,
+            _('The public organiser request form has been {state}.').format(
+                state=_('enabled') if enabled else _('disabled')
+            ),
+        )
+        return redirect('eventyay_admin:admin.organizer_forms')
 
 
 class OrganizerRequestFormOrder(AdministratorPermissionRequiredMixin, View):

@@ -133,7 +133,28 @@ function bindSave(tbody) {
   });
 }
 
+function bindOrganizerRequestFeatureToggle() {
+  const form = document.getElementById('organizer-request-feature-toggle');
+  const toggle = document.getElementById('organizer-request-enabled');
+  const submitButton = form?.querySelector('button[type="submit"]');
+  if (!form || !toggle || !submitButton) {
+    return;
+  }
+
+  const savedState = toggle.dataset.savedState === 'true';
+  const updateForm = () => {
+    const changed = toggle.checked !== savedState;
+    submitButton.disabled = !changed;
+    form.dataset.confirm = toggle.checked ? form.dataset.enableConfirm : form.dataset.disableConfirm;
+    form.dataset.confirmClass = toggle.checked ? 'btn-primary' : 'btn-danger';
+  };
+
+  toggle.addEventListener('change', updateForm);
+  updateForm();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  bindOrganizerRequestFeatureToggle();
   document.querySelectorAll('[data-organiser-field]').forEach(bindRow);
   const tbody = document.querySelector('.organiser-form-fields tbody');
   if (!tbody) {

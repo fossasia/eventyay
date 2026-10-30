@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import OrganizerRequestFieldSetting, OrganizerRequestQuestion
+from eventyay.base.settings import GlobalSettingsObject
 
 
 REQUEST_FIELDS = (
@@ -53,6 +54,10 @@ def ensure_request_field_settings():
     ]
     if missing:
         OrganizerRequestFieldSetting.objects.bulk_create(missing)
+
+
+def organizer_request_enabled() -> bool:
+    return GlobalSettingsObject().settings.get('organizer_request_enabled', as_type=bool, default=True)
 
 
 def ordered_form_items():
