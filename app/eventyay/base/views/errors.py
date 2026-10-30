@@ -13,6 +13,7 @@ from django.views.decorators.csrf import requires_csrf_token
 from sentry_sdk import last_event_id
 
 from eventyay.base.middleware import request_prefers_json_api
+from eventyay.helpers.i18n import get_html_locale
 
 
 def csrf_failure(request, reason=''):
@@ -88,6 +89,7 @@ def server_error(request):
             {
                 'request': request,
                 'sentry_event_id': last_event_id(),
+                'html_locale': get_html_locale(),
             }
         )
     )
