@@ -8,14 +8,18 @@ from django.utils.timezone import now
 from django_scopes import scope
 from PIL import Image
 
-from eventyay.base.models import Answer, Availability, Submission, SubmissionStates
+from eventyay.base.models import (
+    Answer,
+    Availability,
+    SpeakerProfile,
+    Submission,
+    SubmissionStates,
+    User,
+)
+from eventyay.base.models import TalkQuestion as Question
 from eventyay.base.models.log import ActivityLog
-from eventyay.base.models.question import (
-    TalkQuestionRequired as QuestionRequired,
-)
-from eventyay.base.models.question import (
-    TalkQuestionVariant as QuestionVariant,
-)
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
+from eventyay.base.models.question import TalkQuestionVariant as QuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
     SESSION_VIDEO_URL_LIMIT,
@@ -611,6 +615,7 @@ def test_orga_can_create_submission(orga_client, event, known_speaker, orga_user
             "slot_count": 1,
             "notes": "notes",
             "internal_notes": "internal_notes",
+            "add_new_speaker": "on",
             "speaker-email": "foo@bar.com" if not known_speaker else orga_user.email,
             "speaker-name": "Foo Speaker",
             "speaker-locale": "en",
@@ -649,9 +654,7 @@ def test_orga_create_submission_preserves_speaker_after_form_error(orga_client, 
     assert not speaker_form.errors
     assert response.status_code == 200
     assert speaker_form["email"].value() == "foo@bar.com"
-    assert list(speaker_form.fields["email"].widget.choices) == [
-        ("foo@bar.com", "Foo Speaker (foo@bar.com)")
-    ]
+    assert speaker_form["email"].field.widget.input_type == "email"
     with scope(event=event):
         assert event.submissions.count() == 0
 
@@ -667,6 +670,7 @@ def test_orga_create_submission_does_not_save_before_speaker_validation(orga_cli
             "abstract": "abstract",
             "content_locale": "en",
             "description": "description",
+            "add_new_speaker": "on",
             "speaker-name": "Foo Speaker",
             "speaker-locale": "en",
             "state": "submitted",
@@ -682,6 +686,230 @@ def test_orga_create_submission_does_not_save_before_speaker_validation(orga_cli
     assert len(speaker_form.errors["email"]) == 1
     with scope(event=event):
         assert event.submissions.count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_with_no_email_speaker(orga_client, event):
+    """Verify proposal creation with a speaker who has no email address."""
+    with scope(event=event):
+        assert event.submissions.count() == 0
+        type_pk = event.submission_types.first().pk
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "add_new_speaker": "on",
+            "speaker-no_email": "on",
+            "speaker-name": "No Email Speaker",
+            "speaker-biography": "Speaker without email bio",
+            "speaker-locale": "en",
+            "title": "Proposal with No-Email Speaker",
+            "submission_type": type_pk,
+            "state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.submissions.count() == 1
+        sub = event.submissions.first()
+        assert sub.speakers.count() == 1
+        speaker = sub.speakers.first()
+        assert speaker.email is None
+        assert speaker.fullname == "No Email Speaker"
+        assert speaker.event_profile(event).biography == "Speaker without email bio"
+        assert sub.mails.all().count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_reconciles_existing_speaker_custom_answers(
+    orga_client, event
+):
+    """Verify existing speaker custom answers are reconciled in-place without duplicate Answer rows."""
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+        speaker_user = User.objects.create(
+            fullname="Existing Speaker",
+            email="existing@example.com",
+        )
+        SpeakerProfile.objects.create(user=speaker_user, event=event)
+        speaker_q = Question.objects.create(
+            event=event,
+            question="T-shirt size?",
+            variant=QuestionVariant.STRING,
+            target="speaker",
+            active=True,
+        )
+        old_answer = Answer.objects.create(
+            person=speaker_user,
+            question=speaker_q,
+            answer="Medium",
+        )
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "add_new_speaker": "on",
+            "speaker-email": "existing@example.com",
+            "speaker-name": "Existing Speaker",
+            "speaker-locale": "en",
+            "title": "Reconciled Answers Proposal",
+            "submission_type": type_pk,
+            "state": "submitted",
+            f"speaker-question_{speaker_q.pk}": "Large",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert (
+            Answer.objects.filter(person=speaker_user, question=speaker_q).count() == 1
+        )
+        old_answer.refresh_from_db()
+        assert old_answer.answer == "Large"
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_links_multiple_speakers_and_rejects_other_event(
+    orga_client, event, other_event
+):
+    """Verify linking multiple existing speakers and rejecting speaker IDs from another event."""
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+        u1 = User.objects.create(fullname="Speaker One", email="s1@example.com")
+        profile1 = SpeakerProfile.objects.create(user=u1, event=event)
+        u2 = User.objects.create(fullname="Speaker Two", email="s2@example.com")
+        profile2 = SpeakerProfile.objects.create(user=u2, event=event)
+
+    with scope(event=other_event):
+        u_other = User.objects.create(
+            fullname="Other Event Speaker", email="other@example.com"
+        )
+        other_profile = SpeakerProfile.objects.create(user=u_other, event=other_event)
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "existing_speaker_id": [profile1.pk, profile2.pk, other_profile.pk],
+            "title": "Multiple Speakers Proposal",
+            "submission_type": type_pk,
+            "state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.submissions.count() == 1
+        sub = event.submissions.first()
+        speakers = list(sub.speakers.all())
+        assert len(speakers) == 2
+        assert u1 in speakers
+        assert u2 in speakers
+        assert u_other not in speakers
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_rejects_existing_speakers_without_list_permission(
+    orga_client, event, orga_user
+):
+    """Crafted existing_speaker_id values must not link speakers without list permission."""
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+        speaker = User.objects.create(
+            fullname="Hidden Speaker", email="hidden-speaker@example.com"
+        )
+        profile = SpeakerProfile.objects.create(user=speaker, event=event)
+        team = orga_user.teams.filter(can_change_submissions=True).first()
+        team.force_hide_speaker_names = True
+        team.save()
+        assert not orga_user.has_perm("base.orga_list_speakerprofile", event)
+        assert orga_user.has_perm("base.create_submission", event)
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "existing_speaker_id": [profile.pk],
+            "title": "Hidden Speaker Proposal",
+            "submission_type": type_pk,
+            "state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.submissions.count() == 1
+        sub = event.submissions.first()
+        assert speaker not in sub.speakers.all()
+        assert sub.speakers.count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_follows_reordered_cfp_session_fields(
+    orga_client, event
+):
+    """Reordering built-in session fields in CfP settings must change the create form."""
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question="Session theme?",
+            variant=QuestionVariant.STRING,
+            target="submission",
+            active=True,
+        )
+        settings = dict(event.cfp.settings)
+        settings["fields_config"] = {
+            "session": [
+                "abstract",
+                "description",
+                str(question.pk),
+                "title",
+                "submission_type",
+            ]
+        }
+        event.cfp.settings = settings
+        event.cfp.save(update_fields=["settings"])
+
+    response = orga_client.get(event.orga_urls.new_submission)
+    assert response.status_code == 200
+    ordered = response.context["ordered_session_fields"]
+    names = [
+        item if item == "session_videos" else item.name for item in ordered
+    ]
+    assert names.index("abstract") < names.index("description")
+    assert names.index("description") < names.index(f"question_{question.pk}")
+    assert names.index(f"question_{question.pk}") < names.index("title")
+    assert names.index("title") < names.index("submission_type")
+    for organizer_field in ("internal_notes", "is_featured"):
+        if organizer_field in names:
+            assert names.index("submission_type") < names.index(organizer_field)
 
 
 @pytest.mark.django_db
