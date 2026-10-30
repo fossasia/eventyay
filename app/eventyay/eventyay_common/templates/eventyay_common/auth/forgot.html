@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load turnstile_tags %}
 {% block content %}
-	<form class="form-signin" action="" method="post">
+	<form class="form-signin" action="{{ form_action }}" method="post">
         <h3>{% translate "Password recovery" %}</h3>
         {% csrf_token %}
         {% bootstrap_form_errors form type='all' layout='inline' %}

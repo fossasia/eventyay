@@ -284,7 +284,7 @@ class SecurityMiddleware(MiddlewareMixin):
         resp['P3P'] = 'CP="ALL DSP COR CUR ADM TAI OUR IND COM NAV INT"'
         # Set Referrer-Policy for YouTube embed compatibility (fixes Error 153)
         # https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
-        resp['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        resp.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
 
         img_src = []
         external_img_src = get_external_image_csp_sources(request)
