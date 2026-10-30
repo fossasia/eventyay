@@ -25,6 +25,7 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
     notify_speakers = forms.BooleanField(label=_('Notify speakers of changes'), required=False, initial=True)
 
     def __init__(self, *args, event=None, **kwargs):
+        """Initialize release defaults and notification help for the event."""
         super().__init__(*args, **kwargs)
         self.event = event
         self.fields['version'].required = True
@@ -39,7 +40,10 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
             self.fields['version'].initial = guess_schedule_version(self.event)
 
     def clean_version(self):
-        version = self.cleaned_data.get('version')
+        """Reject reserved or previously used version names before schedule release."""
+        version = self.cleaned_data['version'].strip()
+        if version.lower() in ('wip', 'latest'):
+            raise forms.ValidationError(_('This schedule version is reserved. Please choose a different name.'))
         if self.event.schedules.filter(version__iexact=version).exists():
             raise forms.ValidationError(_('This schedule version was used already, please choose a different one.'))
         return version

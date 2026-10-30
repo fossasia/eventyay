@@ -1,0 +1,32 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n %}
+{% block title %}{% trans 'Organiser requests' %}{% endblock %}
+{% block video_admin_content %}
+  <h1>{% trans 'Organiser requests' %}</h1>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead><tr>
+        <th>{% trans 'Organiser' %}</th><th>{% trans 'Email' %}</th>
+        <th>{% trans 'Existing account' %}</th><th>{% trans 'Status' %}</th><th>{% trans 'Requested' %}</th>
+      </tr></thead>
+      <tbody>
+        {% for application in applications %}
+          <tr>
+            <td><a href="{% url 'eventyay_admin:admin.organizer_requests.detail' pk=application.pk %}">{{ application.organizer_name }}</a></td>
+            <td>{{ application.email }}</td><td>{{ application.has_account|yesno }}</td>
+            <td>{{ application.get_status_display }}</td><td>{{ application.created }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">{% trans 'No organiser requests yet.' %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+    <nav aria-label="{% trans 'Pagination' %}">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">{% trans 'Previous' %}</a>{% endif %}
+      <span>{{ page_obj.number }} / {{ paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">{% trans 'Next' %}</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

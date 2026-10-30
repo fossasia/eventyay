@@ -7,6 +7,18 @@ function gettext(msgid) {
 }
 $(function () {
     $(".chart").css("height", "250px");
+    // The charts are drawn for the screen width. While printing, a viewBox lets the print
+    // stylesheet scale them down to the page width instead of cutting them off.
+    window.addEventListener("beforeprint", function () {
+        document.querySelectorAll(".chart svg").forEach(function (svg) {
+            svg.setAttribute("viewBox", "0 0 " + svg.getAttribute("width") + " " + svg.getAttribute("height"));
+        });
+    });
+    window.addEventListener("afterprint", function () {
+        document.querySelectorAll(".chart svg").forEach(function (svg) {
+            svg.removeAttribute("viewBox");
+        });
+    });
     new Morris.Area({
         element: 'obd_chart',
         data: JSON.parse($("#obd-data").html()),

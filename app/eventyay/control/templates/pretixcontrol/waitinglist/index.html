@@ -7,6 +7,7 @@
 {% block title %}{% trans "Waiting list" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}
@@ -111,7 +112,7 @@
                     </select>
                 </div>
                 <div class="input-group advanced-filter-search-query-group">
-                    <select name="product" class="form-control">
+                    <select name="product" class="form-control" data-searchable-select data-search-placeholder="{% trans 'Search' %}" data-empty-text="{% trans 'No results' %}" data-all-label="{% trans 'All products' %}">
                         <option value="">{% trans "All products" %}</option>
                         {% for product in products %}
                             <option value="{{ product.id }}"
