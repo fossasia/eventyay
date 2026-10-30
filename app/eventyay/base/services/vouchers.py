@@ -1,4 +1,8 @@
+from django.db import transaction
+from django.db.models import Case, Q, TextField, Value, When
+from django.db.models.functions import Concat
 from django.utils.translation import gettext
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.email import get_email_context
@@ -16,7 +20,8 @@ def vouchers_send(
     user: int,
     progress=None,
 ) -> None:
-    vouchers = list(Voucher.objects.filter(id__in=vouchers).order_by('id'))
+    with scope(organizer=event.organizer, event=event):
+        vouchers = list(Voucher.objects.filter(event=event, id__in=vouchers).order_by('id'))
     user = User.objects.get(pk=user)
     for ir, r in enumerate(recipients):
         voucher_list = []
@@ -37,12 +42,10 @@ def vouchers_send(
                 locale=event.settings.locale,
             )
             logs = []
+            sent_msg = gettext('The voucher has been sent to {recipient}.').format(recipient=r['email'])
             for v in voucher_list:
                 if r.get('tag') and r.get('tag') != v.tag:
                     v.tag = r.get('tag')
-                if v.comment:
-                    v.comment += '\n\n'
-                v.comment = gettext('The voucher has been sent to {recipient}.').format(recipient=r['email'])
                 logs.append(
                     v.log_action(
                         'eventyay.voucher.sent',
@@ -56,8 +59,24 @@ def vouchers_send(
                         save=False,
                     )
                 )
-            Voucher.objects.bulk_update(voucher_list, fields=['comment', 'tag'], batch_size=500)
-            LogEntry.objects.bulk_create(logs, batch_size=500)
+
+            update_kwargs = {
+                'comment': Case(
+                    When(Q(comment='') | Q(comment__isnull=True), then=Value(sent_msg)),
+                    default=Concat('comment', Value(f'\n\n{sent_msg}'), output_field=TextField()),
+                    output_field=TextField(),
+                ),
+            }
+            if r.get('tag'):
+                update_kwargs['tag'] = r['tag']
+
+            with scope(organizer=event.organizer, event=event), transaction.atomic():
+                if voucher_list:
+                    Voucher.objects.filter(
+                        event=event,
+                        id__in=[v.id for v in voucher_list],
+                    ).update(**update_kwargs)
+                LogEntry.objects.bulk_create(logs, batch_size=500)
 
             if progress and ir % 50 == 0:
                 progress(ir / len(recipients))
