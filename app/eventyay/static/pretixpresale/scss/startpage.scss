@@ -20,10 +20,10 @@ body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
 
 .startpage-sidebar {
   background: #f8f8f8;
-  border-right: 1px solid #e7e7e7;
+  border-inline-end: 1px solid #e7e7e7;
   bottom: 0;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-  left: 0;
+  inset-inline-start: 0;
   overflow-y: auto;
   position: fixed;
   top: var(--navbar-height, 50px);
@@ -33,7 +33,12 @@ body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
   z-index: 1090;
 }
 
-.startpage-sidebar-open .startpage-sidebar {
+html.rtl .startpage-sidebar {
+  transform: translateX(100%);
+}
+
+.startpage-sidebar-open .startpage-sidebar,
+html.rtl .startpage-sidebar-open .startpage-sidebar {
   transform: translateX(0);
 }
 
