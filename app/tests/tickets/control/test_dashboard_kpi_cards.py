@@ -417,6 +417,36 @@ def test_kpi_checkin_counts_unique_positions_across_lists(client, env):
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
+def test_kpi_includes_event_level_checkin_list_for_selected_subevent(client, env):
+    # An event-level check-in list (subevent=None) applies to every date, so
+    # when a date is selected its positions for that date must still be counted.
+    with scopes_disabled():
+        event = env['event']
+        event.has_subevents = True
+        event.save(update_fields=['has_subevents'])
+    with scope(organizer=env['organizer'], event=env['event']):
+        se1 = event.subevents.create(name='Day 1', date_from=now())
+        se2 = event.subevents.create(name='Day 2', date_from=now())
+        for code, se in (('EL1', se1), ('EL2', se2)):
+            o = Order.objects.create(
+                event=event, status=Order.STATUS_PAID, datetime=now(), expires=now(), total=25, code=code
+            )
+            OrderPosition.objects.create(order=o, product=env['product'], price=25, subevent=se)
+        # Event-level list (no subevent) -- applies to all dates.
+        CheckinList.objects.create(event=event, name='All dates', all_products=True, subevent=None)
+
+    client.force_login(env['user_with_perm'])
+    response = client.get(_dashboard_url(env, subevent=se1))
+    kpi = response.context['at_a_glance']
+
+    # The event-level list is included, and its positions are scoped to se1,
+    # so only the single se1 position is counted (not se2's).
+    assert kpi['has_checkin_lists'] is True
+    assert kpi['checkin_total'] == 1
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_kpi_hidden_without_order_permission(client, env):
     client.force_login(env['user_no_perm'])
     response = client.get(_dashboard_url(env))

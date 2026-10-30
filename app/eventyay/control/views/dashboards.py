@@ -464,17 +464,25 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_eve
         # Check-in totals over DISTINCT positions across the relevant lists.
         # Each list restricts to its own subevent/products, so iterating all of
         # the event's lists (when no date is selected) still covers every date.
+        # When a date IS selected, include event-level lists (subevent=None)
+        # too -- they apply to every date, matching the API/device behaviour --
+        # but scope their positions to the selected date.
         checkin_lists = event.checkin_lists.all()
         if subevent:
-            checkin_lists = checkin_lists.filter(subevent=subevent)
+            checkin_lists = checkin_lists.filter(Q(subevent=subevent) | Q(subevent__isnull=True))
 
         position_ids = set()
         inside_ids = set()
         has_checkin_lists = False
         for cl in checkin_lists:
             has_checkin_lists = True
-            position_ids.update(cl.positions.values_list('pk', flat=True))
-            inside_ids.update(cl.positions_inside.values_list('pk', flat=True))
+            positions = cl.positions
+            positions_inside = cl.positions_inside
+            if subevent and cl.subevent_id is None:
+                positions = positions.filter(subevent=subevent)
+                positions_inside = positions_inside.filter(subevent=subevent)
+            position_ids.update(positions.values_list('pk', flat=True))
+            inside_ids.update(positions_inside.values_list('pk', flat=True))
         checkin_total = len(position_ids)
         checked_in = len(inside_ids)
 
