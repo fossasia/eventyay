@@ -3631,3 +3631,41 @@ h4.od-subchart {
     margin-left: 44px
   }
 }
+
+.platform-header { display: flex; align-items: center; justify-content: space-between; gap: var(--td-space-3); flex-wrap: wrap; margin-bottom: var(--td-space-4); }
+.platform-header h1 { margin: 0 0 8px; }
+.platform-header p { color: var(--td-muted); }
+.platform-header form { display: flex; align-items: center; gap: var(--td-space-2); flex-wrap: wrap; }
+.platform-metrics { margin-bottom: var(--td-space-4); }
+.platform-dashboard .td-kpi-value { overflow-wrap: anywhere; }
+.platform-charts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--td-card-gap); }
+.platform-charts > .td-section { margin-bottom: 0; min-width: 0; }
+.platform-chart svg { width: 100%; height: auto; }
+.platform-chart svg text { font-size: 9px; fill: var(--td-muted); }
+.platform-line { fill: none; stroke: var(--td-blue); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.platform-axis { fill: none; stroke: var(--td-border); }
+.platform-chart[data-chart="revenue"] .platform-line { stroke: var(--td-green); }
+.platform-chart[data-chart="users"] .platform-line { stroke: var(--td-orange); }
+.platform-chart[data-chart="events"] .platform-line { stroke: var(--td-purple); }
+.platform-chart-dates, .platform-chart-actions { display: flex; justify-content: space-between; gap: var(--td-space-1); font-size: 12px; }
+.platform-chart-dates { flex-wrap: wrap; }
+.platform-chart .text-muted { font-size: 11px; margin-top: 10px; }
+.platform-chart-actions { align-items: center; border-top: 1px solid var(--td-border); padding-top: 10px; }
+.platform-chart-actions .btn { padding: 0; }
+.platform-columns { display: grid; gap: var(--td-space-3); grid-template-columns: 1fr 2fr; margin-bottom: var(--td-space-4); }
+.platform-columns-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.platform-columns-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.platform-columns .td-section { margin-bottom: 0; min-width: 0; }
+.platform-stack { display: grid; gap: var(--td-space-3); min-width: 0; }
+.platform-dashboard dl { display: grid; grid-template-columns: 1fr auto; gap: 10px; font-size: 13px; }
+.platform-dashboard dt { font-weight: normal; }
+.platform-dashboard dd { margin: 0; }
+.platform-footer-link { display: block; margin-top: 12px; font-size: 13px; }
+#platform-chart-dialog { width: min(900px, 92vw); border: var(--td-card-border); border-radius: var(--td-card-radius); padding: var(--td-space-5); max-height: 90vh; overflow: auto; }
+#platform-chart-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+#platform-chart-dialog form { text-align: right; }
+#platform-chart-dialog svg { width: 100%; max-height: 440px; }
+@media (min-width: 1201px) { .platform-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 1200px) { .platform-charts, .platform-columns-four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .platform-columns, .platform-columns-three { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .platform-charts, .platform-columns-four { grid-template-columns: 1fr; } }
