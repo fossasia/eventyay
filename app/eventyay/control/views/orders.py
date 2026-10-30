@@ -1335,8 +1335,35 @@ class OrderRefundView(OrderView):
             any_success = False
             refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
+                with transaction.atomic():
+                    locked_payments = {
+                        payment.pk: payment
+                        for payment in self.order.payments.select_for_update().filter(
+                            pk__in=[payment.pk for payment in payments]
+                        )
+                    }
+                    for refund in refunds:
+                        if refund.payment:
+                            locked_payment = locked_payments.get(refund.payment_id)
+                            available_amount = Decimal('0.00')
+                            if locked_payment:
+                                available_amount = locked_payment.amount - locked_payment.refunded_amount
+                            if refund.amount > available_amount:
+                                messages.error(
+                                    self.request,
+                                    _(
+                                        'You can not refund more than the amount of a payment that is not yet refunded.'
+                                    ),
+                                )
+                                is_valid = False
+                                break
+
+                    if is_valid:
+                        for refund in refunds:
+                            refund.save()
+
+            if refund_selected == full_refund and is_valid:
                 for r in refunds:
-                    r.save()
                     self.order.log_action(
                         'eventyay.event.order.refund.created',
                         {
