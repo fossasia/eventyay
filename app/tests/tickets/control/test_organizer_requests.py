@@ -505,6 +505,9 @@ def test_admin_can_disable_public_organizer_requests(client, admin):
     response = client.post(reverse('eventyay_admin:admin.organizer_forms.request.toggle'))
     assert response.status_code == 302
     assert not organizer_request_enabled()
+    page = client.get(list_url).content.decode()
+    assert 'organiser-form-order' not in page
+    assert 'New custom field' not in page
     assert client.get('/invite').status_code == 404
     assert client.get(reverse('organizer_request.success')).status_code == 404
     assert client.get(reverse('organizer_request.slug'), {'slug': 'available'}).status_code == 404
