@@ -59,6 +59,11 @@
   white-space: nowrap;
 }
 
+.searchable-select.has-placeholder .searchable-select__value,
+.searchable-select__toggle.has-placeholder .searchable-select__value {
+  color: var(--color-text-muted, #777);
+}
+
 .searchable-select__caret {
   flex: 0 0 auto;
   width: 0;
@@ -105,6 +110,10 @@
 .searchable-select__search:focus {
   outline: none;
   box-shadow: inset 0 -2px 0 var(--color-primary, #2185d0);
+}
+
+.searchable-select__search::placeholder {
+  color: var(--color-text-muted, #777);
 }
 
 .searchable-select__list {
