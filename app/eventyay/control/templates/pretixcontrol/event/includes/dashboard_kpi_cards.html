@@ -9,22 +9,36 @@
   </div>
 
   <div class="td-kpi-grid">
-    <a href="{% url 'control:event.live' organizer=request.event.organizer.slug event=request.event.slug %}"
-       class="td-kpi-card td-status-card td-status-card-{{ at_a_glance.ticket_shop_status.class|default:'off' }}"
-       title="{% trans 'Ticket shop status' %}">
-      <div class="td-kpi-top">
-        <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-shopping-cart"></span></span>
-        <span class="td-kpi-label">{% trans 'Ticket shop status' %}</span>
+    {% if at_a_glance.can_change_event_settings %}
+      <a href="{% url 'control:event.live' organizer=request.event.organizer.slug event=request.event.slug %}"
+         class="td-kpi-card td-status-card td-status-card-{{ at_a_glance.ticket_shop_status.class|default:'off' }}"
+         title="{% trans 'Ticket shop status' %}">
+        <div class="td-kpi-top">
+          <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-shopping-cart"></span></span>
+          <span class="td-kpi-label">{% trans 'Ticket shop status' %}</span>
+        </div>
+        <div class="td-status-card-value">
+          <span class="td-status-dot" aria-hidden="true"></span>
+          {{ at_a_glance.ticket_shop_status.text }}
+        </div>
+        <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
+        <div class="td-kpi-link">{% trans 'Click to change' %} <span aria-hidden="true">></span></div>
+      </a>
+    {% else %}
+      <div class="td-kpi-card td-status-card td-status-card-{{ at_a_glance.ticket_shop_status.class|default:'off' }}"
+           title="{% trans 'Ticket shop status' %}">
+        <div class="td-kpi-top">
+          <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-shopping-cart"></span></span>
+          <span class="td-kpi-label">{% trans 'Ticket shop status' %}</span>
+        </div>
+        <div class="td-status-card-value">
+          <span class="td-status-dot" aria-hidden="true"></span>
+          {{ at_a_glance.ticket_shop_status.text }}
+        </div>
       </div>
-      <div class="td-status-card-value">
-        <span class="td-status-dot" aria-hidden="true"></span>
-        {{ at_a_glance.ticket_shop_status.text }}
-      </div>
-      <div class="td-kpi-hint td-kpi-hint-spacer" aria-hidden="true"></div>
-      <div class="td-kpi-link">{% trans 'Click to change' %} <span aria-hidden="true">></span></div>
-    </a>
+    {% endif %}
 
-    <a href="{% url 'control:event.orders' organizer=request.event.organizer.slug event=request.event.slug %}"
+    <a href="{% url 'control:event.orders' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.subevent_qs }}"
        class="td-kpi-card td-kpi-blue" title="{% trans 'Ordered attendees' %}">
       <div class="td-kpi-top">
         <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-users"></span></span>
@@ -35,7 +49,7 @@
       <div class="td-kpi-link">{% trans 'View orders' %} <span aria-hidden="true">></span></div>
     </a>
 
-    <a href="{% url 'control:event.orders.overview' organizer=request.event.organizer.slug event=request.event.slug %}"
+    <a href="{% url 'control:event.orders.overview' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.subevent_qs }}"
        class="td-kpi-card td-kpi-green" title="{% trans 'Paid attendees' %}">
       <div class="td-kpi-top">
         <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-check-circle"></span></span>
@@ -46,7 +60,7 @@
       <div class="td-kpi-link">{% trans 'View overview' %} <span aria-hidden="true">></span></div>
     </a>
 
-    <a href="{% url 'control:event.orders.overview' organizer=request.event.organizer.slug event=request.event.slug %}"
+    <a href="{% url 'control:event.orders.overview' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.subevent_qs }}"
        class="td-kpi-card td-kpi-green" title="{% trans 'Total revenue' %}">
       <div class="td-kpi-top">
         <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-line-chart"></span></span>
@@ -57,7 +71,7 @@
       <div class="td-kpi-link">{% trans 'View overview' %} <span aria-hidden="true">></span></div>
     </a>
 
-    <a href="{% url 'control:event.orders.waitinglist' organizer=request.event.organizer.slug event=request.event.slug %}"
+    <a href="{% url 'control:event.orders.waitinglist' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.subevent_qs }}"
        class="td-kpi-card td-kpi-muted" title="{% trans 'Waiting list' %}">
       <div class="td-kpi-top">
         <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-hourglass-half"></span></span>
@@ -68,7 +82,7 @@
       <div class="td-kpi-link">{% trans 'View waiting list' %} <span aria-hidden="true">></span></div>
     </a>
 
-    <a href="{% url 'control:event.orders.checkinlists' organizer=request.event.organizer.slug event=request.event.slug %}"
+    <a href="{% url 'control:event.orders.checkinlists' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.subevent_qs }}"
        class="td-kpi-card td-kpi-blue" title="{% trans 'Checked in' %}">
       <div class="td-kpi-top">
         <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-sign-in"></span></span>

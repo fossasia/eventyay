@@ -88,6 +88,27 @@ def _kpi_section(content):
     return match.group(1)
 
 
+def _card_by_label(section, label):
+    """Return the HTML of the single KPI card whose title is ``label``.
+
+    Cards are siblings in the grid, each opening with a ``td-kpi-card`` ``<a>``
+    or ``<div>``. We slice from the card carrying ``title="<label>"`` up to the
+    next card (or the end of the grid), which is robust to nested same-tag
+    children (the status card contains inner ``<div>`` elements). Extracting one
+    card lets tests assert a value or link under the correct KPI rather than
+    anywhere in the section.
+    """
+    # Opening tags of every KPI card, in order.
+    starts = [m.start() for m in re.finditer(r'<(?:a|div)\b[^>]*\btd-kpi-card\b', section)]
+    assert starts, 'no KPI cards found in section'
+    for i, start in enumerate(starts):
+        opening = section[start : section.index('>', start) + 1]
+        if f'title="{label}"' in opening:
+            end = starts[i + 1] if i + 1 < len(starts) else len(section)
+            return section[start:end]
+    raise AssertionError(f'KPI card with title {label!r} not found')
+
+
 def _seed_orders(env):
     """Two paid admission attendees + one pending admission attendee."""
     event = env['event']
@@ -168,8 +189,8 @@ def test_kpi_cards_rendered_with_links_inside_section(client, env):
     assert 'td-kpi-grid' in section
     assert 'At a glance' in section
 
-    # Each KPI card links to its filtered view -- asserted within the section
-    # so an identical URL elsewhere on the page cannot satisfy the check.
+    # Each KPI card links to its own filtered view, asserted on the specific
+    # card so swapping two cards or an identical URL elsewhere cannot pass.
     orders_url = reverse(
         'control:event.orders',
         kwargs={'organizer': env['organizer'].slug, 'event': env['event'].slug},
@@ -186,14 +207,25 @@ def test_kpi_cards_rendered_with_links_inside_section(client, env):
         'control:event.orders.checkinlists',
         kwargs={'organizer': env['organizer'].slug, 'event': env['event'].slug},
     )
-    assert f'href="{orders_url}"' in section
-    assert f'href="{overview_url}"' in section
-    assert f'href="{waitinglist_url}"' in section
-    assert f'href="{checkin_url}"' in section
 
-    # The rendered KPI values reflect the seeded data inside the section.
-    assert re.search(r'td-kpi-value">\s*3\s*<', section)  # ordered attendees
-    assert re.search(r'td-kpi-value">\s*2\s*<', section)  # paid attendees
+    ordered_card = _card_by_label(section, 'Ordered attendees')
+    paid_card = _card_by_label(section, 'Paid attendees')
+    revenue_card = _card_by_label(section, 'Total revenue')
+    waiting_card = _card_by_label(section, 'Waiting list')
+    checkin_card = _card_by_label(section, 'Checked in')
+
+    assert f'href="{orders_url}"' in ordered_card
+    assert f'href="{overview_url}"' in paid_card
+    assert f'href="{overview_url}"' in revenue_card
+    assert f'href="{waitinglist_url}"' in waiting_card
+    assert f'href="{checkin_url}"' in checkin_card
+
+    # Values appear under the correct label: ordered = 3, paid = 2.
+    assert re.search(r'td-kpi-value">\s*3\s*<', ordered_card)
+    assert re.search(r'td-kpi-value">\s*2\s*<', paid_card)
+    # A swapped value must not satisfy the other card.
+    assert not re.search(r'td-kpi-value">\s*2\s*<', ordered_card)
+    assert not re.search(r'td-kpi-value">\s*3\s*<', paid_card)
 
 
 @pytest.mark.django_db
@@ -226,20 +258,26 @@ def test_kpi_checkin_card_empty_state(client, env):
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_kpi_status_card_live(client, env):
-    # A live, published event renders the "live" status card class and text.
+    # A live, published event must render the "live" status card.
+    # ticket_component_presale_status reads the Event.tickets_published FIELD,
+    # so set and save that field (not just a settings key).
     with scopes_disabled():
         event = env['event']
         event.live = True
         event.is_public = True
+        event.tickets_published = True
         event.save()
-        event.settings.set('tickets_published', True)
 
     client.force_login(env['user_with_perm'])
     response = client.get(_dashboard_url(env))
     section = _kpi_section(response.content.decode())
+    # Assert the expected literal class, not the context echoing itself.
     status = response.context['at_a_glance']['ticket_shop_status']
-    assert f'td-status-card-{status["class"]}' in section
-    assert str(status['text']) in section
+    assert status['class'] == 'live'
+    status_card = _card_by_label(section, 'Ticket shop status')
+    assert 'td-status-card-live' in status_card
+    # The live status text is rendered in the card.
+    assert str(status['text']) in status_card
 
 
 @pytest.mark.django_db
@@ -248,20 +286,54 @@ def test_kpi_status_card_off_when_not_live(client, env):
     with scopes_disabled():
         event = env['event']
         event.live = False
+        event.tickets_published = False
         event.save()
 
     client.force_login(env['user_with_perm'])
     response = client.get(_dashboard_url(env))
     section = _kpi_section(response.content.decode())
     assert response.context['at_a_glance']['ticket_shop_status']['class'] == 'off'
-    assert 'td-status-card-off' in section
+    status_card = _card_by_label(section, 'Ticket shop status')
+    assert 'td-status-card-off' in status_card
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_kpi_status_card_link_requires_change_permission(client, env):
+    # A user who can view orders but not change settings must see the status
+    # card without a "Click to change" link (EventLive needs can_change_event_settings).
+    _seed_orders(env)
+    with scopes_disabled():
+        team = Team.objects.create(
+            organizer=env['organizer'],
+            can_view_orders=True,
+            can_change_event_settings=False,
+            all_events=True,
+        )
+        viewer = User.objects.create_user('viewer@example.com', 'dummy')
+        team.members.add(viewer)
+
+    client.force_login(viewer)
+    response = client.get(_dashboard_url(env))
+    assert response.status_code == 200
+    assert response.context['at_a_glance']['can_change_event_settings'] is False
+    section = _kpi_section(response.content.decode())
+    status_card = _card_by_label(section, 'Ticket shop status')
+    live_url = reverse(
+        'control:event.live',
+        kwargs={'organizer': env['organizer'].slug, 'event': env['event'].slug},
+    )
+    # Status is still shown, but not as a link to the (forbidden) live view.
+    assert 'td-status-card' in status_card
+    assert f'href="{live_url}"' not in status_card
+    assert 'Click to change' not in status_card
 
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_kpi_respects_subevent_filter(client, env):
     # Event series: positions attached to a subevent should be counted only
-    # when that subevent is selected.
+    # when that subevent is selected, and KPI links carry the subevent.
     with scopes_disabled():
         event = env['event']
         event.has_subevents = True
@@ -281,6 +353,66 @@ def test_kpi_respects_subevent_filter(client, env):
     resp2 = client.get(_dashboard_url(env, subevent=se2))
     assert resp1.context['at_a_glance']['paid_attendees'] == 1
     assert resp2.context['at_a_glance']['paid_attendees'] == 0
+
+    # Links on the selected-date dashboard carry ?subevent=<id>.
+    section1 = _kpi_section(resp1.content.decode())
+    ordered_card = _card_by_label(section1, 'Ordered attendees')
+    assert f'?subevent={se1.pk}' in ordered_card
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_kpi_counts_all_dates_when_no_subevent_selected(client, env):
+    # For an event series with no date selected, waiting-list entries and
+    # check-in lists that belong to subevents must still be counted.
+    with scopes_disabled():
+        event = env['event']
+        event.has_subevents = True
+        event.save(update_fields=['has_subevents'])
+    with scope(organizer=env['organizer'], event=env['event']):
+        se1 = event.subevents.create(name='Day 1', date_from=now())
+        se2 = event.subevents.create(name='Day 2', date_from=now())
+        # Paid admission positions on each date.
+        for code, se in (('A1', se1), ('A2', se2)):
+            o = Order.objects.create(
+                event=event, status=Order.STATUS_PAID, datetime=now(), expires=now(), total=25, code=code
+            )
+            OrderPosition.objects.create(order=o, product=env['product'], price=25, subevent=se)
+        # Waiting-list entries on each date.
+        WaitingListEntry.objects.create(event=event, product=env['product'], email='w1@example.com', subevent=se1)
+        WaitingListEntry.objects.create(event=event, product=env['product'], email='w2@example.com', subevent=se2)
+        # A per-date check-in list on each date.
+        CheckinList.objects.create(event=event, name='Gate 1', all_products=True, subevent=se1)
+        CheckinList.objects.create(event=event, name='Gate 2', all_products=True, subevent=se2)
+
+    client.force_login(env['user_with_perm'])
+    response = client.get(_dashboard_url(env))  # no subevent selected
+    kpi = response.context['at_a_glance']
+
+    # Both dates are included rather than only null-subevent records.
+    assert kpi['paid_attendees'] == 2
+    assert kpi['waiting_list'] == 2
+    assert kpi['has_checkin_lists'] is True
+    # Each list covers its own date's single paid position -> 2 distinct positions.
+    assert kpi['checkin_total'] == 2
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_kpi_checkin_counts_unique_positions_across_lists(client, env):
+    # A position on two overlapping all-products lists must be counted once.
+    _seed_orders(env)  # 2 paid + 1 pending admission positions
+    with scope(organizer=env['organizer'], event=env['event']):
+        CheckinList.objects.create(event=env['event'], name='List A', all_products=True)
+        CheckinList.objects.create(event=env['event'], name='List B', all_products=True)
+
+    client.force_login(env['user_with_perm'])
+    response = client.get(_dashboard_url(env))
+    kpi = response.context['at_a_glance']
+    # Two lists both cover the same 2 paid positions; distinct count stays 2
+    # (summing per-list would wrongly give 4).
+    assert kpi['checkin_total'] == 2
+    assert kpi['checked_in'] == 0
 
 
 @pytest.mark.django_db

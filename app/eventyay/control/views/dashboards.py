@@ -30,6 +30,7 @@ from django.utils.html import escape
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext, pgettext
+from django_scopes import scope
 
 from eventyay.base.decimal import round_decimal
 from eventyay.base.meetup import is_meetup_event
@@ -407,7 +408,7 @@ def welcome_wizard_widget(sender, **kwargs):
     return [{'display_size': 'full', 'priority': 2000, 'content': template.render(ctx)}]
 
 
-def get_dashboard_kpi_context(request, subevent, can_view_orders):
+def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_event_settings):
     """Build the "At a glance" KPI data for the tickets dashboard (issue #5088).
 
     Reuses the same calculations as the dashboard widget receivers so the KPI
@@ -419,9 +420,15 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders):
       single subevent), matching :func:`base_widgets`.
     * waiting list -> ``WaitingListEntry`` count (see
       :func:`waitinglist_widgets`).
-    * checked in -> per check-in list ``inside_count`` / ``position_count``
-      (see :func:`checkin_widget`).
+    * checked in -> distinct order positions across the relevant check-in
+      lists, so a position on several lists is only counted once.
     * ticket shop status -> :attr:`Event.ticket_component_presale_status`.
+
+    When no ``subevent`` is selected on an event series, counts span all dates
+    (the subevent filter is applied only when a date is chosen). ``checked_in``
+    and ``checkin_total`` are computed over distinct positions with live
+    queries (not the 60s-cached per-list properties) to avoid double counting
+    and stale denominators.
 
     Returns ``None`` when the user may not view orders, so the template can skip
     the whole section.
@@ -430,40 +437,46 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders):
     if not can_view_orders:
         return None
 
-    if subevent:
-        opqs = OrderPosition.objects.filter(subevent=subevent)
-    else:
-        opqs = OrderPosition.objects
+    with scope(event=event):
+        admission_qs = OrderPosition.objects.filter(order__event=event, product__admission=True)
+        if subevent:
+            admission_qs = admission_qs.filter(subevent=subevent)
 
-    ordered_attendees = opqs.filter(
-        order__event=event,
-        product__admission=True,
-        order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
-    ).count()
-    paid_attendees = opqs.filter(
-        order__event=event,
-        product__admission=True,
-        order__status=Order.STATUS_PAID,
-    ).count()
+        ordered_attendees = admission_qs.filter(
+            order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
+        ).count()
+        paid_attendees = admission_qs.filter(order__status=Order.STATUS_PAID).count()
 
-    if subevent:
-        total_revenue = opqs.filter(order__event=event, order__status=Order.STATUS_PAID).aggregate(
-            sum=Sum('price')
-        )['sum'] or Decimal('0.00')
-    else:
-        total_revenue = Order.objects.filter(event=event, status=Order.STATUS_PAID).aggregate(sum=Sum('total'))[
-            'sum'
-        ] or Decimal('0.00')
+        if subevent:
+            total_revenue = OrderPosition.objects.filter(
+                order__event=event, subevent=subevent, order__status=Order.STATUS_PAID
+            ).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+        else:
+            total_revenue = Order.objects.filter(event=event, status=Order.STATUS_PAID).aggregate(
+                sum=Sum('total')
+            )['sum'] or Decimal('0.00')
 
-    waiting_list = WaitingListEntry.objects.filter(event=event, subevent=subevent, voucher__isnull=True).count()
+        waiting_qs = WaitingListEntry.objects.filter(event=event, voucher__isnull=True)
+        if subevent:
+            waiting_qs = waiting_qs.filter(subevent=subevent)
+        waiting_list = waiting_qs.count()
 
-    checked_in = 0
-    checkin_total = 0
-    has_checkin_lists = False
-    for cl in event.checkin_lists.filter(subevent=subevent):
-        has_checkin_lists = True
-        checked_in += cl.inside_count
-        checkin_total += cl.position_count
+        # Check-in totals over DISTINCT positions across the relevant lists.
+        # Each list restricts to its own subevent/products, so iterating all of
+        # the event's lists (when no date is selected) still covers every date.
+        checkin_lists = event.checkin_lists.all()
+        if subevent:
+            checkin_lists = checkin_lists.filter(subevent=subevent)
+
+        position_ids = set()
+        inside_ids = set()
+        has_checkin_lists = False
+        for cl in checkin_lists:
+            has_checkin_lists = True
+            position_ids.update(cl.positions.values_list('pk', flat=True))
+            inside_ids.update(cl.positions_inside.values_list('pk', flat=True))
+        checkin_total = len(position_ids)
+        checked_in = len(inside_ids)
 
     return {
         'ticket_shop_status': event.ticket_component_presale_status,
@@ -476,6 +489,9 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders):
         'checked_in': checked_in,
         'checkin_total': checkin_total,
         'has_checkin_lists': has_checkin_lists,
+        'can_change_event_settings': can_change_event_settings,
+        # Querystring suffix so KPI links stay scoped to the selected date.
+        'subevent_qs': f'?subevent={subevent.pk}' if subevent else '',
     }
 
 
@@ -551,7 +567,9 @@ def event_index(request, organizer, event):
     if can_view_orders:
         ctx.update(get_statistics_context(request, subevent=subevent))
 
-    ctx['at_a_glance'] = get_dashboard_kpi_context(request, subevent, can_view_orders)
+    ctx['at_a_glance'] = get_dashboard_kpi_context(
+        request, subevent, can_view_orders, can_change_event_settings
+    )
 
     ctx['has_overpaid_orders'] = (
         can_view_orders

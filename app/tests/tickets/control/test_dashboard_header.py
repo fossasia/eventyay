@@ -93,13 +93,17 @@ def test_header_preserves_component_link_navigation(client, env):
     assert f'href="{tickets_url}"' in content
     assert 'navigation-button' in content
 
-    # The Tickets entry must carry the "active" class on its anchor.
+    # The Tickets entry must carry the "active" class on its anchor. Tokenize
+    # the class list so a value like "inactive" (which contains "active") does
+    # not satisfy the assertion.
     tickets_anchor = re.search(
         r'<a[^>]*href="' + re.escape(tickets_url) + r'"[^>]*>', content
     )
     assert tickets_anchor is not None, 'Tickets navigation anchor not found'
     anchor_tag = tickets_anchor.group(0)
-    assert 'active' in anchor_tag
+    class_match = re.search(r'class="([^"]*)"', anchor_tag)
+    assert class_match is not None, 'Tickets anchor has no class attribute'
+    assert 'active' in class_match.group(1).split()
 
 
 @pytest.mark.django_db
