@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 
 import nh3
 from django.conf import settings
@@ -9,6 +10,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.html import escape
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -25,6 +27,7 @@ from eventyay.base.models.orders import OrderPosition
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.mail import expand_email_variable_chips, mail
 from eventyay.base.templatetags.rich_text import (
+    TEAM_EMAIL_PREVIEW_CONTEXT,
     build_email_preview_context,
     compile_email_body,
 )
@@ -32,6 +35,7 @@ from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin, event_permission_required
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
 from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
+from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import (
     CopyDraftMixin,
@@ -52,6 +56,17 @@ from .forms import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def preview_validation_error(form) -> JsonResponse:
+    # mail-preview.js inserts these as HTML, and messages can echo user input such as an invalid placeholder.
+    errors = {}
+    for name, field_errors in form.errors.items():
+        field = form.fields.get(name)
+        label = field.label if field and field.label else name
+        errors[str(escape(label))] = [str(escape(error)) for error in field_errors]
+    return JsonResponse({'success': False, 'error': True, 'errors': errors}, status=400)
+
 
 @event_permission_required('can_change_orders')
 def attendees_select2(request, **kwargs):
@@ -219,7 +234,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         return super().form_invalid(form)
 
     def form_valid(self, form):
@@ -300,7 +315,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                     subject = nh3.clean(subject_val.localize(l), tags=set()) if subject_val else ''
                     if not subject.strip():
                         subject = str(_('Example Subject for {event_name}'))
-                    preview_subject = nh3.clean(subject.format_map(context_dict), tags=set())
+                    preview_subject = nh3.clean(escape_stray_braces(subject).format_map(context_dict), tags=set())
                     text_val = form.cleaned_data.get('text')
                     message = text_val.localize(l) if text_val else ''
                     if not str(message).strip():
@@ -312,7 +327,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                             )
                         )
                     message_preview = expand_email_variable_chips(
-                        message.format_map(context_dict), dict(context_dict)
+                        escape_stray_braces(message).format_map(context_dict), dict(context_dict)
                     )
                     preview_text = compile_email_body(message_preview)
 
@@ -949,7 +964,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -992,7 +1007,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                         subject_text = str(_('Example Subject for {event_name}'))
                     try:
                         subject_preview = nh3.clean(
-                            subject_text.format_map(context_dict),
+                            escape_stray_braces(subject_text).format_map(context_dict),
                             tags=set(),
                         )
                     except KeyError as e:
@@ -1004,7 +1019,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                         message_text = str(sample_body)
                     try:
                         message_preview = expand_email_variable_chips(
-                            message_text.format_map(context_dict),
+                            escape_stray_braces(message_text).format_map(context_dict),
                             dict(context_dict),
                         )
                     except KeyError as e:
@@ -1261,6 +1276,11 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
         ctx['draft_id'] = getattr(self, 'draft_id', self.request.POST.get('draft_id', None))
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['is_draft'] = bool(ctx['draft_id'])
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
+        )
+        ctx['email_preview_url'] = f'{preview_url}?{urlencode({"context": TEAM_EMAIL_PREVIEW_CONTEXT})}'
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -1277,7 +1297,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -1341,7 +1361,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                     subject_text = str(_('Example Subject for {event_name}'))
                 try:
                     subject_preview = nh3.clean(
-                        subject_text.format_map(context_dict),
+                        escape_stray_braces(subject_text).format_map(context_dict),
                         tags=set(),
                     )
                 except KeyError as e:
@@ -1359,7 +1379,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                     )
                 try:
                     message_preview = expand_email_variable_chips(
-                        message_text.format_map(context_dict),
+                        escape_stray_braces(message_text).format_map(context_dict),
                         dict(context_dict),
                     )
                 except KeyError as e:
