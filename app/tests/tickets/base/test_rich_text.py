@@ -6,7 +6,9 @@ from eventyay.base.email import get_available_placeholders, get_email_context
 from eventyay.base.models import Event, Organizer
 from eventyay.base.templatetags.rich_text import (
     compile_email_body,
+    email_body_to_editor_html,
     expand_email_preview_placeholders,
+    is_tiptap_email_html,
     markdown_compile_email,
     render_markdown_abslinks,
     rich_text_snippet,
@@ -40,16 +42,25 @@ def test_compile_email_body_preserves_html():
 
 
 def test_compile_email_body_preserves_all_heading_levels():
-    from eventyay.base.templatetags.rich_text import _is_tiptap_email_html
-
     for level in range(1, 7):
         html = f'<h{level}>Heading {level}</h{level}><p>Body</p>'
-        assert _is_tiptap_email_html(html)
+        assert is_tiptap_email_html(html)
         assert compile_email_body(html) == html
 
 
 def test_compile_email_body_compiles_plain_text():
     assert compile_email_body('Hello world') == '<p>Hello world</p>'
+
+
+def test_email_body_to_editor_html_keeps_line_breaks():
+    html = email_body_to_editor_html('Hello,\n\nyour order {code}\nis placed.')
+    # Blank lines still separate paragraphs; single newlines become <br>.
+    assert html == '<p>Hello,</p>\n<p>your order {code}<br>\nis placed.</p>'
+
+
+def test_email_body_to_editor_html_keeps_editor_html():
+    html = '<p>Hello<br>World</p>'
+    assert email_body_to_editor_html(html) == compile_email_body(html)
 
 
 def test_compile_email_body_compiles_legacy_inline_html():
