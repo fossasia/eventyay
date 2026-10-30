@@ -19,7 +19,7 @@ from eventyay.api.views.stripe import stripe_webhook_view
 from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers, metrics, redirect
 from eventyay.control.views import pages
 from eventyay.eventyay_common.views import auth
-from eventyay.eventyay_common.views.custom import ConfirmEmailView, SignupView
+from eventyay.eventyay_common.views.custom import ConfirmEmailView, EmailVerificationSentView, SignupView
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +111,12 @@ base_patterns = [
     # Override django-allauth's signup view at the same URL and name so all
     # account_signup references in the app route to our customized Jinja view.
     path('accounts/signup/', SignupView.as_view(), name='account_signup'),
+    # Override django-allauth's "verification sent" page to show the pending address and a resend action.
+    path(
+        'accounts/confirm-email/',
+        EmailVerificationSentView.as_view(),
+        name='account_email_verification_sent',
+    ),
     path('accounts/', include('allauth.urls')),
     path('login/', auth.login, name='auth.login'),
     path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),

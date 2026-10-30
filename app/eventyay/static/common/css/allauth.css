@@ -246,6 +246,78 @@
   border-top: 1px solid #ecf0f1;
 }
 
+/* Email verification sent page */
+.verification-sent {
+  padding: 2rem 2rem 1.5rem;
+}
+
+.verification-sent-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  background-color: #eaf3fb;
+  color: #2185d0;
+  font-size: 1.5rem;
+}
+
+.verification-sent h1 {
+  margin: 0 0 1rem;
+  color: #222;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.email-confirm-success-container .verification-sent-lead {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.email-confirm-success-container .verification-sent-email {
+  margin-bottom: 1.25rem;
+  color: #222;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.verification-sent-help {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid #e6e9ed;
+  border-radius: 6px;
+  background-color: #f7f9fb;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #555;
+}
+
+.verification-sent-help strong {
+  color: #222;
+}
+
+.verification-sent .additional-links {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.verification-sent-contact {
+  margin: 0 auto 2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.verification-sent-contact a {
+  color: inherit;
+}
+
 /* Button groups */
 .btn-group,
 .action-buttons {

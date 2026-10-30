@@ -1,0 +1,9 @@
+{% extends 'account/email/email_confirmation_message.jinja' %}
+
+{% block intro %}
+  {{ _('Thanks for signing up for %(instance)s! Please confirm that %(email)s is your email address to complete your registration.', instance=INSTANCE_NAME, email=email) }}
+{% endblock intro %}
+
+{% block ignore_notice %}
+  {{ _("If you didn't sign up for %(instance)s, you can safely ignore this email.", instance=INSTANCE_NAME) }}
+{% endblock ignore_notice %}

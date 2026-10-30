@@ -1,4 +1,5 @@
-from urllib.parse import urljoin
+from email.utils import parseaddr
+from urllib.parse import quote, urljoin
 
 from django.apps import apps
 from django.conf import settings
@@ -57,6 +58,16 @@ def static_url(path: str = '') -> str:
 
         return staticfiles_storage.url(path)
     return urljoin(settings.STATIC_URL, path)
+
+
+def contact_mailto() -> str:
+    """Return a ``mailto:`` URL for the site's contact address, or an empty string if none is set.
+
+    ``DEFAULT_FROM_EMAIL`` may include a display name (``Eventyay <info@eventyay.com>``),
+    so only the address part is used, URI-encoded for the ``href``.
+    """
+    address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+    return f'mailto:{quote(address, safe="@")}' if address else ''
 
 
 @pass_context

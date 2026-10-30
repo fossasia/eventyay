@@ -51,10 +51,17 @@ Django-Allauth Templates (allauth/account/):
 
 6. verification_sent.jinja
   - Email verification notice page shown after signup or resend-verification actions
-  - Rendered by django-allauth EmailVerificationSentView via template override
-  - Keeps allauth default verification guidance text
-  - Includes a link back to Eventyay login page (`auth.login`)
+  - Rendered via EmailVerificationSentView (eventyay_common.views.custom.EmailVerificationSentView)
+  - Shows the pending address from allauth's stashed login and offers a "Resend verification email"
+    action (POST to the same URL, rate-limited by allauth)
+  - Includes a link back to Eventyay login page (`auth.login`) and a contact link (contact_mailto(), built from DEFAULT_FROM_EMAIL)
   - Uses boxed, centered layout via shared allauth.css container classes
+
+7. email/base_message.jinja, email/email_confirmation_message.jinja,
+   email/email_confirmation_signup_message.jinja
+  - HTML bodies for the email confirmation mails (picked up because ACCOUNT_TEMPLATE_EXTENSION = 'jinja')
+  - Subject and plain-text alternative still come from allauth's default .txt templates
+  - Inline styles only, so they render consistently in mail clients
 
 Shared Styling:
 ===============
@@ -70,7 +77,8 @@ Configuration:
   * ConfirmEmailView lives in eventyay_common/views/custom.py and is an override of django-allauth to build messages in a safe way: not leak HTML code to translatable strings.
   * PasswordResetFromKeyView and PasswordResetFromKeyDoneView use built-in django-allauth views.
   * SignupView uses built-in django-allauth view with custom template override.
-  * EmailVerificationSentView uses built-in django-allauth view with custom template override.
+  * EmailVerificationSentView lives in eventyay_common/views/custom.py; registered in config/urls.py
+    as `account_email_verification_sent` before including allauth.
   * Root URL override: /accounts/confirm-email/<key>/ is registered with name `account_confirm_email`
     in config/urls.py before including allauth, so allauth-generated links resolve to our view.
 

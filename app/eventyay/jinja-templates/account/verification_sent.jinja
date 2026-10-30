@@ -1,19 +1,62 @@
 {% extends 'account/base.jinja' %}
 
 {% block head_title %}
-  {{ _('Verify Your Email Address') }}
+  {{ _('Verify your email address') }}
 {% endblock head_title %}
 
 {% block content %}
-  <div class='email-confirm-success-container'>
-    <h1>{{ _('Verify Your Email Address') }}</h1>
+  <div class='email-confirm-success-container verification-sent'>
+    <div class='verification-sent-icon' aria-hidden='true'>
+      <i class='fa fa-envelope'></i>
+    </div>
 
-    <p>
-      {{ _('We have sent an email to you for verification. Follow the link provided to finalize the signup process. If you do not see the verification email in your main inbox, check your spam folder. Please contact us if you do not receive the verification email within a few minutes.') }}
-    </p>
+    <h1>{{ _('Verify your email address') }}</h1>
+
+    {% for message in messages %}
+      {% set alert_class = 'alert-danger' if message.level_tag == 'error' else 'alert-success' %}
+      <div class='alert {{ alert_class }}' role='status'>
+        {{ message }}
+      </div>
+    {% endfor %}
+
+    {% if pending_email %}
+      <p class='verification-sent-lead'>
+        {{ _("You're almost ready to get started. We've sent a verification link to") }}
+      </p>
+      <p class='verification-sent-email'>{{ pending_email }}</p>
+    {% else %}
+      <p class='verification-sent-lead'>
+        {{ _("You're almost ready to get started. We've sent you a verification link by email.") }}
+      </p>
+    {% endif %}
+
+    <div class='verification-sent-help'>
+      <strong>{{ _("Didn't receive the email?") }}</strong>
+      <span>{{ _('Check your spam or junk folder, or wait a few minutes before requesting another email.') }}</span>
+    </div>
+
+    {% if pending_email %}
+      <form method='post' action="{{ url_for('account_email_verification_sent') }}">
+        <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+        <button type='submit' class='btn btn-primary'>
+          {{ _('Resend verification email') }}
+        </button>
+      </form>
+    {% endif %}
 
     <p class='additional-links'>
-      <a href='{{ url_for('auth.login') }}'>{{ _('Back to Login') }}</a>
+      <a href="{{ url_for('auth.login') }}">
+        <i class='fa fa-arrow-left' aria-hidden='true'></i>
+        {{ _('Back to login') }}
+      </a>
     </p>
   </div>
+
+  {% set mailto = contact_mailto() %}
+  {% if mailto %}
+    <p class='verification-sent-contact'>
+      {{ _('Still having trouble?') }}
+      <a href='{{ mailto }}'>{{ _('Contact us') }}</a>
+    </p>
+  {% endif %}
 {% endblock content %}
