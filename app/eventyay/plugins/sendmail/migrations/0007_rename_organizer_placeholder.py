@@ -1,0 +1,60 @@
+import re
+
+from django.db import migrations
+from i18nfield.strings import LazyI18nString
+
+
+FIELDS = {'TicketMailTemplate': ('subject', 'text'), 'EmailQueue': ('subject', 'message')}
+
+
+def rename_placeholder(text, old, new):
+    """Rename ``{old}`` to ``{new}`` in a stored email text, including the editor's ``data-variable`` chips."""
+    if not text:
+        return text
+    text = text.replace(f'{{{old}}}', f'{{{new}}}')
+    return re.sub(rf'(data-variable=\\?["\']){re.escape(old)}(\\?["\'])', rf'\g<1>{new}\g<2>', text)
+
+
+def renamed(value, old, new):
+    """The value with the placeholder renamed, or ``None`` when its text does not change."""
+    data = value.data if isinstance(value, LazyI18nString) else value
+    if isinstance(data, dict):
+        new_data = {lang: rename_placeholder(text, old, new) for lang, text in data.items()}
+    elif isinstance(data, str):
+        new_data = rename_placeholder(data, old, new)
+    else:
+        return None
+    return LazyI18nString(new_data) if new_data != data else None
+
+
+def rename(apps, old, new):
+    for model_name, fields in FIELDS.items():
+        model = apps.get_model('sendmail', model_name)
+        for row in model.objects.all().iterator():
+            changed = []
+            for field in fields:
+                value = getattr(row, field)
+                new_value = renamed(value, old, new) if value else None
+                if new_value is not None:
+                    setattr(row, field, new_value)
+                    changed.append(field)
+            if changed:
+                row.save(update_fields=changed)
+
+
+def forwards(apps, schema_editor):
+    rename(apps, 'organizer', 'organizer_name')
+
+
+def backwards(apps, schema_editor):
+    rename(apps, 'organizer_name', 'organizer')
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ('sendmail', '0006_ticketmailtemplate'),
+    ]
+
+    operations = [
+        migrations.RunPython(forwards, reverse_code=backwards),
+    ]
