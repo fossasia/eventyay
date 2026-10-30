@@ -6,8 +6,10 @@ from django.views.generic.base import RedirectView
 from eventyay.control.views import (
     admin,
     admin_messages,
-    global_settings,
     gmail_oauth,
+    global_settings,
+    organizer_request_forms,
+    organizer_requests,
     pages,
     typeahead,
     user,
@@ -18,6 +20,48 @@ from eventyay.control.views import (
 app_name = 'eventyay_admin'
 
 urlpatterns = [
+    path('organizer-requests/', organizer_requests.OrganizerRequestList.as_view(), name='admin.organizer_requests'),
+    path('organizer-requests/<int:pk>/', organizer_requests.OrganizerRequestDetail.as_view(), name='admin.organizer_requests.detail'),
+    path(
+        'organizer-forms/',
+        organizer_request_forms.OrganizerRequestQuestionList.as_view(),
+        name='admin.organizer_forms',
+    ),
+    path(
+        'organizer-forms/fields/<str:key>/',
+        organizer_request_forms.OrganizerRequestFieldUpdate.as_view(),
+        name='admin.organizer_forms.field',
+    ),
+    path(
+        'organizer-forms/toggle/',
+        organizer_request_forms.OrganizerRequestFeatureToggle.as_view(),
+        name='admin.organizer_forms.request.toggle',
+    ),
+    path(
+        'organizer-forms/order/',
+        organizer_request_forms.OrganizerRequestFormOrder.as_view(),
+        name='admin.organizer_forms.order',
+    ),
+    path(
+        'organizer-forms/add/',
+        organizer_request_forms.OrganizerRequestQuestionCreate.as_view(),
+        name='admin.organizer_forms.add',
+    ),
+    path(
+        'organizer-forms/<int:pk>/',
+        organizer_request_forms.OrganizerRequestQuestionEdit.as_view(),
+        name='admin.organizer_forms.edit',
+    ),
+    path(
+        'organizer-forms/<int:pk>/toggle/',
+        organizer_request_forms.OrganizerRequestQuestionToggle.as_view(),
+        name='admin.organizer_forms.toggle',
+    ),
+    path(
+        'organizer-forms/<int:pk>/delete/',
+        organizer_request_forms.OrganizerRequestQuestionDelete.as_view(),
+        name='admin.organizer_forms.delete',
+    ),
     url(r'^$', admin.AdminDashboard.as_view(), name='admin.dashboard'),
     url(r'^organizers/$', admin.OrganizerList.as_view(), name='admin.organizers'),
     url(r'^events/$', admin.AdminEventList.as_view(), name='admin.events'),
