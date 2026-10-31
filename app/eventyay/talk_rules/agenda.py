@@ -1,5 +1,7 @@
 import rules
+from django.db.models import Q
 from django.http import Http404
+from django_scopes import scope
 
 from .orga import can_view_speaker_names
 from .person import is_reviewer
@@ -15,6 +17,51 @@ def is_submission_visible_via_featured(user, submission):
     return bool(submission and submission.is_featured and are_featured_submissions_visible(user, submission.event))
 
 
+def accepted_sessions_publicly_visible(event) -> bool:
+    """Accepted sessions may appear publicly, independent of a released timetable.
+
+    Private talk test mode always wins: anonymous visitors, JSON feeds, and
+    speaker pages must not receive accepted sessions while it is on.
+    Public talk test mode (``talks_testmode``) does not hide them.
+    """
+    if event is None or not hasattr(event, 'get_feature_flag'):
+        event = getattr(event, 'event', None)
+    if event is None or not hasattr(event, 'get_feature_flag'):
+        return False
+    if not event.get_feature_flag('show_accepted_publicly'):
+        return False
+    return not event.private_testmode_talks_enabled
+
+
+def public_talk_visibility_q(event):
+    """Slots a public timetable may include.
+
+    A release sets ``is_visible`` only for confirmed talks. Before that, and
+    after a speaker confirms a session that was already placed, accepted and
+    confirmed sessions with a room and time stay on the public timetable.
+    """
+    # submission.py imports this module before SubmissionStates is defined.
+    from eventyay.base.models.submission import SubmissionStates
+
+    visibility = Q(is_visible=True)
+    if accepted_sessions_publicly_visible(event):
+        visibility |= Q(
+            submission__state__in=SubmissionStates.accepted_states,
+            start__isnull=False,
+            room__isnull=False,
+        )
+    return visibility
+
+
+def is_submission_visible_via_accepted(user, submission):
+    if not submission or not accepted_sessions_publicly_visible(getattr(submission, 'event', None)):
+        return False
+    # submission.py imports this module before SubmissionStates is defined.
+    from eventyay.base.models.submission import SubmissionStates
+
+    return submission.state in SubmissionStates.accepted_states
+
+
 def submission_belongs_to_public_featured_speaker(user, submission):
     """A featured speaker's session may be shown as coming soon before the agenda is public."""
     if not submission:
@@ -24,7 +71,8 @@ def submission_belongs_to_public_featured_speaker(user, submission):
         return False
     if not are_featured_speakers_visible(user, event):
         return False
-    from eventyay.base.models import SubmissionStates
+    # submission.py imports this module before SubmissionStates is defined.
+    from eventyay.base.models.submission import SubmissionStates
 
     if submission.state not in SubmissionStates.accepted_states:
         return False
@@ -74,10 +122,20 @@ def agenda_schedule_for_user(event, user, *, wip_preview=False):
 
 
 def filter_agenda_slots(qs, user, event, *, wip_preview=False):
-    """Apply public ``is_visible`` filtering unless this is a WIP preview page."""
+    """Public slot rows for talk and speaker pages.
+
+    The WIP preview keeps every slot. With this feature off, rows stay on the
+    existing ``is_visible`` rule. With it on, room and time follow the public
+    schedule, and a placed accepted session is included.
+    """
     if wip_preview:
         return qs
-    return qs.filter(is_visible=True)
+    if not accepted_sessions_publicly_visible(event):
+        return qs.filter(is_visible=True)
+    schedule = event.current_schedule or event.wip_schedule
+    if not schedule_exposes_slot_times(user, event, schedule):
+        return qs.none()
+    return qs.filter(public_talk_visibility_q(event))
 
 
 def wip_preview_build_data(user, event, schedule):
@@ -86,7 +144,11 @@ def wip_preview_build_data(user, event, schedule):
 
 
 def can_access_schedule_widget(user, event):
-    return user.has_perm('base.view_widget_schedule', event) or can_view_wip_schedule(user, event)
+    return (
+        user.has_perm('base.view_widget_schedule', event)
+        or can_view_wip_schedule(user, event)
+        or accepted_sessions_publicly_visible(event)
+    )
 
 
 def agenda_speaker_talks(event, user, *, speaker=None, speaker_code=None, wip_preview=False):
@@ -127,6 +189,7 @@ def is_agenda_submission_visible(user, submission):
         is_submission_visible_via_schedule(user, submission)
         or is_submission_visible_via_featured(user, submission)
         or submission_belongs_to_public_featured_speaker(user, submission)
+        or is_submission_visible_via_accepted(user, submission)
     )
 
 
@@ -167,10 +230,29 @@ def speaker_has_public_featured_submissions(user, profile):
     return bool(pending_public_submission_codes_for_speaker(profile.event, user, profile.user.code))
 
 
+@rules.predicate
+def speaker_has_public_accepted_submissions(user, profile):
+    """Speaker profiles stay public when show_accepted_publicly is enabled and they have accepted talks."""
+    if not profile or not profile.user_id:
+        return False
+    event = getattr(profile, 'event', None)
+    if not accepted_sessions_publicly_visible(event):
+        return False
+    # submission.py imports this module before SubmissionStates is defined.
+    from eventyay.base.models.submission import SubmissionStates
+
+    with scope(event=event):
+        return profile.user.submissions.filter(
+            event=event,
+            state__in=SubmissionStates.accepted_states,
+        ).exists()
+
+
 is_speaker_viewable = (
     (is_viewable_profile & can_view_schedule)
     | is_featured_speaker_profile
     | speaker_has_public_featured_submissions
+    | speaker_has_public_accepted_submissions
 )
 
 
@@ -253,14 +335,36 @@ def agenda_speakers_page_reachable(user, event):
 def should_hide_public_speaker_sessions(user, event, *, wip_preview=False):
     if wip_preview:
         return False
-    return not is_agenda_visible(user, event)
+    return not is_agenda_visible(user, event) and not accepted_sessions_publicly_visible(event)
+
+
+def schedule_exposes_slot_times(user, event, schedule, *, preview=False) -> bool:
+    """Whether a schedule response may include room and time assignments.
+
+    Placed sessions keep those details when the timetable is published, and
+    also before the first release while accepted sessions are public. After a
+    release, an unpublished timetable stays coming soon: visitors see pending
+    cards until the schedule is published. The embed widget has its own flag
+    and must not unlock these times on the public schedule. The WIP preview
+    URL passes ``preview=True``. Sessions that were never placed stay pending
+    either way. Private talk test mode hides both.
+    """
+    if preview:
+        return True
+    if schedule is None:
+        return False
+    if is_agenda_visible(user, event):
+        return True
+    if not accepted_sessions_publicly_visible(event):
+        return False
+    # A release exists but the timetable is not published yet.
+    return not bool(event.current_schedule)
 
 
 def pending_public_submission_codes_for_speaker(event, user, speaker_code):
     """Submission codes that may appear as coming-soon for this speaker on public pages."""
-    from django_scopes import scope
-
-    from eventyay.base.models import SubmissionStates
+    # submission.py imports this module before SubmissionStates is defined.
+    from eventyay.base.models.submission import SubmissionStates
 
     profile = _speaker_profile_by_code(event, speaker_code, select_related=('user', 'event'))
     if not profile:
@@ -277,7 +381,7 @@ def pending_public_submission_codes_for_speaker(event, user, speaker_code):
             .select_related('event')
         )
         for submission in submissions:
-            if featured_speaker or is_submission_visible_via_featured(user, submission):
+            if featured_speaker or is_submission_visible_via_accepted(user, submission) or is_submission_visible_via_featured(user, submission):
                 codes.add(submission.code)
     return codes
 
@@ -298,19 +402,35 @@ AGENDA_PAGES_WITHOUT_TALKS_PUBLISHED = frozenset(
         'speaker',
         'talk.detail',
         'talk.starrers',
+        'feedback',
+        'feedback.react',
+        'feedback.public_action',
         'widget.messages',
+    }
+)
+
+PUBLIC_ACCEPTED_SCHEDULE_URLS = frozenset(
+    {
+        'schedule',
+        'schedule-nojs',
+        'talks',
+        'widget.data',
+        'widget.data.legacy',
+        'export.schedule.json',
     }
 )
 
 
 def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kwargs=None):
+    if url_name in PUBLIC_ACCEPTED_SCHEDULE_URLS:
+        return accepted_sessions_publicly_visible(event)
     if url_name not in AGENDA_PAGES_WITHOUT_TALKS_PUBLISHED:
         return False
     if user is None:
         return False
     if url_name == 'speakers':
         return agenda_speakers_page_reachable(user, event)
-    if url_name in ('talk.detail', 'talk.starrers'):
+    if url_name in ('talk.detail', 'talk.starrers', 'feedback', 'feedback.react', 'feedback.public_action'):
         slug = (url_kwargs or {}).get('slug')
         if not slug:
             return False
@@ -318,6 +438,7 @@ def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kw
         return bool(
             is_submission_visible_via_featured(user, submission)
             or submission_belongs_to_public_featured_speaker(user, submission)
+            or is_submission_visible_via_accepted(user, submission)
         )
     if url_name in ('speaker', 'widget.messages'):
         if url_name == 'speaker':

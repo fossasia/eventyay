@@ -22,9 +22,11 @@ from eventyay.presale.style import (
     resolve_font,
 )
 from eventyay.talk_rules.agenda import (
+    accepted_sessions_publicly_visible,
     can_access_schedule_widget,
     can_view_wip_schedule,
     is_widget_visible,
+    schedule_exposes_slot_times,
     wip_preview_build_data,
 )
 from eventyay.agenda.views.utils import build_unavailable_widget_schedule_data
@@ -110,15 +112,16 @@ def parse_schedule_day(value):
         return None, True
 
 
-def schedule_talk_detail(schedule, talk_code, *, preview, include_featured_speaker_metadata):
+def schedule_talk_detail(schedule, talk_code, *, preview, include_featured_speaker_metadata, include_scheduled_slots=True):
     """Full public fields for one session. QR codes are a separate request."""
     data = schedule.build_data(
-        all_talks=not schedule.version,
+        all_talks=not schedule.version and preview,
         enrich=True,
         submission_codes={talk_code},
         include_featured_speaker_metadata=include_featured_speaker_metadata,
         include_qrcodes=False,
         respect_public_visibility=not preview,
+        include_scheduled_slots=include_scheduled_slots,
     )
     talk = next((item for item in data.get('talks') or [] if item.get('code') == talk_code), None)
     if talk is None:
@@ -191,6 +194,8 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
         schedule = event.schedules.filter(version__iexact=version).first()
 
     schedule = schedule or event.current_schedule
+    if not schedule and accepted_sessions_publicly_visible(event):
+        schedule = event.wip_schedule
     if not schedule:
         result = build_unavailable_widget_schedule_data(event)
         response = JsonResponse(result, encoder=I18nJSONEncoder)
@@ -200,14 +205,20 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
 
     enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     include_qrcodes = request.GET.get('qrcodes') in {'1', 'true', 'True'}
-    preview = wip_preview_build_data(request.user, event, schedule)
+    url_preview = version == 'wip'
+    show_slots = schedule_exposes_slot_times(request.user, event, schedule, preview=url_preview)
+    # External embeds may show a released timetable while the on-site schedule
+    # stays hidden. That flag does not apply to the public schedule page.
+    if not show_slots and not url_preview and schedule.version and is_widget_visible(request.user, event):
+        show_slots = True
     talk_code = (request.GET.get('talk') or '').strip()
     if talk_code:
         detail = schedule_talk_detail(
             schedule,
             talk_code,
-            preview=preview,
+            preview=url_preview,
             include_featured_speaker_metadata=are_featured_speakers_visible(AnonymousUser(), event),
+            include_scheduled_slots=show_slots,
         )
         if detail is None:
             raise Http404()
@@ -223,11 +234,12 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
         response['Access-Control-Allow-Origin'] = '*'
         return response
     result = schedule.build_data(
-        all_talks=not schedule.version,
+        all_talks=not schedule.version and url_preview,
         enrich=enrich,
         include_featured_speaker_metadata=are_featured_speakers_visible(AnonymousUser(), event),
         include_qrcodes=include_qrcodes and not compact,
-        respect_public_visibility=not preview,
+        respect_public_visibility=not url_preview,
+        include_scheduled_slots=show_slots,
         compact=compact,
         on_date=on_date if compact else None,
         view_timezone=(request.GET.get('tz') or '').strip() or None,

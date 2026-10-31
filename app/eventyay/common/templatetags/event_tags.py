@@ -14,6 +14,7 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submissions
 from eventyay.talk_rules.agenda import (
+    accepted_sessions_publicly_visible,
     is_agenda_visible,
     is_wip_agenda_url,
     public_speakers_nav_available,
@@ -204,13 +205,16 @@ def can_list_schedule(context, event=None):
     if getattr(user, 'is_authenticated', False):
         if is_admin_mode_active(request):
             return True
-        return user.has_perm('base.list_schedule', event)
+        if user.has_perm('base.list_schedule', event):
+            return True
 
-    return bool(
+    timetable_public = bool(
         event.talks_published
         and event.get_feature_flag('show_schedule')
         and event.current_schedule
+        and not event.private_testmode_talks_enabled
     )
+    return timetable_public or accepted_sessions_publicly_visible(event)
 
 
 @register.simple_tag(takes_context=True)
@@ -239,6 +243,8 @@ def show_schedule_nav_tab(context, event=None):
     if is_wip_agenda_url(path):
         return True
     if is_agenda_visible(user, event) and event.has_schedule_content:
+        return True
+    if accepted_sessions_publicly_visible(event) and event.has_schedule_content:
         return True
     if '/featured/' in path:
         return False
