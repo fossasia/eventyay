@@ -71,6 +71,7 @@
     vertical-align: middle;
     padding: 5px 8px;
     border-top: 1px solid #ebebeb;
+    color: #555;
 }
 .events-table-wrapper .table > thead > tr > th {
     border-bottom: 2px solid #ebebeb;
@@ -99,18 +100,22 @@
     list-style: none;
     line-height: 1.15;
     font-size: 0.8em;
+    color: #555;
 }
 .events-table-wrapper .stats-list li {
     display: flex;
     justify-content: space-between;
     margin-bottom: 1px;
+    color: #555;
 }
 .events-table-wrapper .stats-list li span:first-child {
-    color: #666;
+    color: #555;
     margin-right: 8px;
+    font-weight: normal;
 }
 .events-table-wrapper .stats-list li span:last-child {
-    font-weight: 600;
+    font-weight: normal;
+    color: #555;
 }
 
 /* Stats Dropdown */
@@ -118,7 +123,7 @@
     display: block;
     text-align: left;
     cursor: pointer;
-    color: inherit;
+    color: #555;
     padding-top: 2px;
     font-size: 0.9em;
 }
