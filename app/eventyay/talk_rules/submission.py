@@ -2,8 +2,9 @@ import rules
 from django.db.models import Count, Exists, OuterRef, Q, Subquery
 from django_scopes import scope
 
+from eventyay.talk_rules.tracks import apply_team_track_limit, apply_track_limit, get_allowed_tracks
+
 from .person import is_only_reviewer, is_reviewer
-from .tracks import apply_team_track_limit, apply_track_limit, get_allowed_tracks
 
 
 @rules.predicate
