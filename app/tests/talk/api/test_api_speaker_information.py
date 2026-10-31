@@ -2,9 +2,12 @@ import json
 
 import pytest
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django_scopes import scope
 
 from eventyay.api.serializers.speaker_information import SpeakerInformationSerializer
+from eventyay.base.models import TeamAPIToken
+from eventyay.common.tasks import task_cleanup_file
 
 
 @pytest.mark.django_db
@@ -345,6 +348,117 @@ def test_orga_can_create_speaker_information_with_resource(
         assert response.status_code == 200
         assert content["resource"].startswith("http")
         assert content["resource"].endswith(".pdf")
+
+
+@pytest.fixture
+def upload_token(orga_user, event):
+    team = event.organizer.teams.filter(members=orga_user).first()
+    return TeamAPIToken.objects.create(team=team, name="upload-token")
+
+
+def upload_pdf(client, token, content):
+    response = client.post(
+        "/api/v1/upload",
+        data=content,
+        content_type="application/pdf",
+        headers={
+            "Authorization": f"Token {token.token}",
+            "Content-Disposition": 'attachment; filename="new.pdf"',
+        },
+    )
+    assert response.status_code == 201, response.text
+    return response.data["id"]
+
+
+@pytest.mark.django_db
+def test_orga_can_replace_speaker_information_resource(
+    client, upload_token, event, mocker, django_capture_on_commit_callbacks
+):
+    cleanup = mocker.spy(task_cleanup_file, "apply_async")
+    with scope(event=event):
+        speaker_info = event.information.create(
+            title="Info with Resource",
+            text="This information has an attached resource",
+            target_group="accepted",
+            resource=ContentFile(b"old content", name="old.pdf"),
+        )
+    old_name = speaker_info.resource.name
+    file_id = upload_pdf(client, upload_token, b"new content")
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.patch(
+            event.api_urls.speaker_information + f"{speaker_info.pk}/",
+            follow=True,
+            data=json.dumps({"resource": file_id}),
+            headers={
+                "Authorization": f"Token {upload_token.token}",
+                "Content-Type": "application/json",
+            },
+        )
+    assert response.status_code == 200, response.text
+    with scope(event=event):
+        speaker_info.refresh_from_db()
+        assert speaker_info.resource.name != old_name
+        with speaker_info.resource.open("rb") as resource:
+            assert resource.read() == b"new content"
+    assert not default_storage.exists(old_name)
+    assert cleanup.call_args.kwargs["kwargs"]["event_id"] == event.pk
+
+
+@pytest.mark.django_db
+def test_cleanup_file_skips_speaker_information_from_other_event(event, other_event):
+    with scope(event=event):
+        speaker_info = event.information.create(
+            title="Info with Resource",
+            text="This information has an attached resource",
+            target_group="accepted",
+            resource=ContentFile(b"old content", name="old.pdf"),
+        )
+        old_name = speaker_info.resource.name
+        old_path = speaker_info.resource.path
+        speaker_info.resource.save("new.pdf", ContentFile(b"new content"))
+
+    task_cleanup_file(
+        model="SpeakerInformation",
+        pk=speaker_info.pk,
+        field="resource",
+        path=old_path,
+        event_id=other_event.pk,
+    )
+
+    assert default_storage.exists(old_name)
+
+
+@pytest.mark.django_db
+def test_failed_resource_save_rolls_back_speaker_information_update(
+    client, upload_token, event, mocker
+):
+    with scope(event=event):
+        speaker_info = event.information.create(
+            title="Info with Resource",
+            text="This information has an attached resource",
+            target_group="accepted",
+        )
+    file_id = upload_pdf(client, upload_token, b"new content")
+    mocker.patch(
+        "django.db.models.fields.files.FieldFile.save",
+        side_effect=OSError("storage unavailable"),
+    )
+
+    with pytest.raises(OSError):
+        client.patch(
+            event.api_urls.speaker_information + f"{speaker_info.pk}/",
+            follow=True,
+            data=json.dumps({"title": "Updated title", "resource": file_id}),
+            headers={
+                "Authorization": f"Token {upload_token.token}",
+                "Content-Type": "application/json",
+            },
+        )
+
+    with scope(event=event):
+        speaker_info.refresh_from_db()
+        assert speaker_info.title == "Info with Resource"
 
 
 @pytest.mark.django_db

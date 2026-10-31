@@ -5,7 +5,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Event, Submission, User
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
@@ -42,16 +42,28 @@ def task_process_image(*, model: str, pk: int, field: str, generate_thumbnail: b
 
 
 @app.task(name='pretalx.cleanup_file')
-def task_cleanup_file(*, model: str, pk: int, field: str, path: str):
+def task_cleanup_file(*, model: str, pk: int, field: str, path: str, event_id: int | None = None):
+    """Delete a replaced file, unless the object still uses it."""
+    # Imported here: importing this model at module level breaks its relation lookups.
+    from eventyay.base.models.information import SpeakerInformation
+
     models = {
         'Event': Event,
+        'SpeakerInformation': SpeakerInformation,
         'Submission': Submission,
         'User': User,
     }
     if model not in models:
         return
 
-    with scopes_disabled():
+    lookup_scope = scopes_disabled()
+    if event_id is not None:
+        event = Event.objects.filter(pk=event_id).first()
+        if not event:
+            return
+        lookup_scope = scope(event=event)
+
+    with lookup_scope:
         instance = models[model].objects.filter(pk=pk).first()
         if not instance:
             return

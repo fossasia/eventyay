@@ -164,6 +164,7 @@ class FileCleanupMixin:
         return [field.name for field in self._meta.fields if isinstance(field, models.FileField)]
 
     def save(self, *args, **kwargs):
+        """Save the object and queue deletion of files that were replaced."""
         update_fields = kwargs.get('update_fields', None)
         if not self.pk or (update_fields and not set(self._file_fields) & set(update_fields)):
             return super().save(*args, **kwargs)
@@ -191,8 +192,10 @@ class FileCleanupMixin:
             # otherwise see the old field value and skip cleanup.
             cleanup_jobs.append(
                 {
-                    'model': str(self._meta.model_name.capitalize()),
+                    'model': self._meta.object_name,
                     'pk': self.pk,
+                    # The Event model itself has no event_id.
+                    'event_id': getattr(self, 'event_id', None),
                     'field': field,
                     'path': old_path,
                 }
