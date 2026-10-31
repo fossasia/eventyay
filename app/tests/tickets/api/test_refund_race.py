@@ -114,13 +114,13 @@ def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, paid_o
         t.join()
 
     assert not errors, 'A request thread failed to run: {!r}'.format(errors)
-    print('STATUS CODES:', [r.status_code for r in results])
     with scopes_disabled():
         refunds = list(paid_order.refunds.values_list('amount', flat=True))
-    print('REFUNDS CREATED:', refunds, 'TOTAL:', sum(refunds), 'PAYMENT AMOUNT: 100.00')
 
     assert sum(refunds) <= Decimal('100.00'), 'Over-refund: refunded {} of a 100.00 payment'.format(sum(refunds))
-    assert sorted(r.status_code for r in results) == [200, 400]
+    assert sorted(r.status_code for r in results) == [200, 400], 'Status codes: {}'.format(
+        [r.status_code for r in results]
+    )
     assert len(lock_attempts) == 2, 'Expected both requests to lock the payment, got {}'.format(lock_attempts)
     assert second_lock_seen and all(second_lock_seen), (
         'The second request did not try to lock the payment within the timeout, '
