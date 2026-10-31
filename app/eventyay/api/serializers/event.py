@@ -393,7 +393,7 @@ class CloneEventSerializer(EventSerializer):
     @transaction.atomic
     def create(self, validated_data):
         plugins = validated_data.pop('plugins', None)
-        testmode = validated_data.pop('testmode', None)
+        validated_data.pop('testmode', None)
         has_subevents = validated_data.pop('has_subevents', None)
         tz = validated_data.pop('timezone', None)
         new_event = super().create(validated_data)
@@ -403,8 +403,8 @@ class CloneEventSerializer(EventSerializer):
 
         if plugins is not None:
             new_event.set_active_plugins(plugins)
-        if testmode is not None:
-            new_event.testmode = testmode
+        # Ensure clone starts in draft state and prevent submitted testmode from overriding reset state
+        new_event.reset_publishing_and_testmode_state()
         if has_subevents is not None:
             new_event.has_subevents = has_subevents
         new_event.save()

@@ -880,6 +880,18 @@ class Event(
         self.settings.private_testmode_talks = False
         self.settings.talks_testmode = False
 
+    def reset_publishing_and_testmode_state(self):
+        """
+        Consolidate draft status initialization: ensure the event is in an
+        unpublished draft state with all public ticketing, talks, and testmode
+        flags disabled.
+        """
+        self.live = False
+        self.testmode = False
+        self.private_testmode = False
+        self.tickets_published = False
+        self.talks_published = False
+
     @property
     def social_image(self):
         from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -1176,11 +1188,7 @@ class Event(
 
         if other.date_admission:
             self.date_admission = self.date_from + (other.date_admission - other.date_from)
-        self.live = False
-        self.testmode = False
-        self.private_testmode = False
-        self.tickets_published = False
-        self.talks_published = False
+        self.reset_publishing_and_testmode_state()
         self.save()
         self.log_action('eventyay.object.cloned', data={'source': other.slug, 'source_id': other.pk})
 
