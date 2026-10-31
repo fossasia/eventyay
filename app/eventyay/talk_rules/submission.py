@@ -427,13 +427,32 @@ def limit_for_reviewers(queryset, event, user, reviewer_tracks=None, add_assignm
     return queryset
 
 
-def submissions_for_user(event, user, eventpermset=None):
+def get_request_team(request):
+    """Return the team behind a team API token request, or None for any other caller."""
+    from eventyay.base.models.organizer import TeamAPIToken
+
+    token = getattr(request, 'auth', None)
+    return token.team if isinstance(token, TeamAPIToken) else None
+
+
+def can_list_submissions(request, event):
+    """Whether the caller may see non-public submission data, including team API tokens."""
+    if request.user.has_perm('base.orga_list_submission', event):
+        return True
+    return get_request_team(request) is not None and 'can_change_submissions' in getattr(
+        request, 'eventpermset', ()
+    )
+
+
+def submissions_for_user(event, user, eventpermset=None, team=None):
     from eventyay.base.models import Submission
     from eventyay.talk_rules.agenda import can_view_wip_schedule
+    from eventyay.talk_rules.tracks import apply_team_track_limit
 
-    # Team API tokens authenticate as AnonymousUser, so their rights arrive as a permission set.
-    if user.is_anonymous and eventpermset and 'can_change_submissions' in eventpermset:
-        return event.submissions.all()
+    # Team API tokens authenticate as AnonymousUser, so their rights arrive as a permission
+    # set plus the token's team, whose track limits still apply.
+    if user.is_anonymous and team is not None and eventpermset and 'can_change_submissions' in eventpermset:
+        return apply_team_track_limit(event.submissions.all(), event, team)
 
     if not user.is_anonymous:
         if is_only_reviewer(user, event):
