@@ -1,0 +1,70 @@
+{% load i18n %}
+<div class="cc-split-grid">
+  <!-- Section 6: Milestones -->
+  <div class="cc-card-panel cc-milestones-card">
+    <div class="cc-section-header">
+      <h2 class="cc-section-title">
+        <span class="fa fa-flag text-primary" aria-hidden="true"></span>
+        {% trans 'Upcoming milestones' %}
+      </h2>
+    </div>
+    {% if upcoming_milestones %}
+      <ul class="cc-milestone-list">
+        {% for m in upcoming_milestones %}
+          <li class="cc-milestone-item {% if m.is_current %}cc-milestone-current{% elif m.is_past %}cc-milestone-past{% endif %}">
+            <div class="cc-milestone-info">
+              <span class="fa fa-{% if m.is_past %}check-circle text-muted{% elif m.is_current %}dot-circle-o text-primary{% else %}circle-o text-muted{% endif %}" aria-hidden="true"></span>
+              <span class="cc-milestone-title">{{ m.title }}</span>
+            </div>
+            <span class="cc-milestone-date">{{ m.date|date:'SHORT_DATE_FORMAT' }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="cc-component-empty">
+        {% trans 'No upcoming milestones configured.' %}
+      </div>
+    {% endif %}
+    {% if milestones_schedule_url %}
+    <div class="cc-card-footer-action">
+      <a href="{{ milestones_schedule_url }}" class="cc-component-btn">
+        <span>{% trans 'View schedule' %}</span>
+        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Section 7: Organiser and teams -->
+  <div class="cc-card-panel cc-teams-card">
+    <div class="cc-section-header">
+      <h2 class="cc-section-title">
+        <span class="fa fa-users text-primary" aria-hidden="true"></span>
+        {% trans 'Organiser' %}
+      </h2>
+    </div>
+    <div>
+      <p class="text-muted cc-org-by-text">
+        {% trans 'Organized by' %} <strong>{{ organiser_info.organizer_name }}</strong>
+      </p>
+      <div class="cc-org-teams-block">
+        <strong class="cc-org-teams-heading">{% trans 'Assigned teams:' %}</strong>
+        <div class="cc-team-badges">
+          {% for team in organiser_info.teams %}
+            <span class="cc-team-badge">{{ team.name }}</span>
+          {% empty %}
+            <span class="text-muted">{% trans 'No specific teams assigned.' %}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% if organiser_info.manage_url %}
+    <div class="cc-card-footer-action">
+      <a href="{{ organiser_info.manage_url }}" class="cc-component-btn">
+        <span>{% trans 'Manage teams & roles' %}</span>
+        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>

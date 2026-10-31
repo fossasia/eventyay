@@ -1,0 +1,71 @@
+{% load i18n %}
+<section class="cc-section" aria-labelledby="cc-kpi-title">
+  <div class="cc-section-header">
+    <h2 id="cc-kpi-title" class="cc-section-title">
+      <span class="fa fa-tachometer text-primary" aria-hidden="true"></span>
+      {% trans 'At a glance' %}
+    </h2>
+  </div>
+
+  <div class="cc-kpi-grid">
+    <div class="cc-kpi-card">
+      <div class="cc-kpi-top">
+        <span>{% trans 'Event status' %}</span>
+        <span class="fa fa-dot-circle-o" aria-hidden="true"></span>
+      </div>
+      <div class="cc-kpi-val text-{{ at_a_glance.event_status_class|default:'primary' }}">{{ at_a_glance.event_status_text }}</div>
+      <div class="cc-kpi-sub">{% trans 'Current lifecycle' %}</div>
+    </div>
+
+    {% if can_view_orders %}
+      <div class="cc-kpi-card">
+        <div class="cc-kpi-top">
+          <span>{% trans 'Attendees ordered' %}</span>
+          <span class="fa fa-users" aria-hidden="true"></span>
+        </div>
+        <div class="cc-kpi-val">{{ at_a_glance.attendees_ordered|default:0 }}</div>
+        <div class="cc-kpi-sub">{% trans 'Total registrations' %}</div>
+      </div>
+
+      <div class="cc-kpi-card">
+        <div class="cc-kpi-top">
+          <span>{% trans 'Attendees paid' %}</span>
+          <span class="fa fa-check-circle" aria-hidden="true"></span>
+        </div>
+        <div class="cc-kpi-val">{{ at_a_glance.attendees_paid|default:0 }}</div>
+        <div class="cc-kpi-sub">{% trans 'Completed orders' %}</div>
+      </div>
+    {% endif %}
+
+    {% if has_talk_access %}
+      <div class="cc-kpi-card">
+        <div class="cc-kpi-top">
+          <span>{% trans 'Sessions confirmed' %}</span>
+          <span class="fa fa-check-square-o" aria-hidden="true"></span>
+        </div>
+        <div class="cc-kpi-val">{{ at_a_glance.sessions_confirmed|default:0 }}</div>
+        <div class="cc-kpi-sub">{% trans 'Confirmed program' %}</div>
+      </div>
+
+      <div class="cc-kpi-card">
+        <div class="cc-kpi-top">
+          <span>{% trans 'Speakers confirmed' %}</span>
+          <span class="fa fa-user" aria-hidden="true"></span>
+        </div>
+        <div class="cc-kpi-val">{{ at_a_glance.speakers_confirmed|default:0 }}</div>
+        <div class="cc-kpi-sub">{% trans 'Confirmed speakers' %}</div>
+      </div>
+    {% endif %}
+
+    {% if can_view_orders %}
+      <div class="cc-kpi-card">
+        <div class="cc-kpi-top">
+          <span>{% trans 'Revenue' %}</span>
+          <span class="fa fa-money" aria-hidden="true"></span>
+        </div>
+        <div class="cc-kpi-val">{{ at_a_glance.currency }} {{ at_a_glance.revenue_sum|floatformat:2 }}</div>
+        <div class="cc-kpi-sub">{% trans 'Gross revenue' %}</div>
+      </div>
+    {% endif %}
+  </div>
+</section>
