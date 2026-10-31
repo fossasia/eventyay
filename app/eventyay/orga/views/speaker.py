@@ -666,7 +666,9 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return super().dispatch(request, *args, **kwargs)
         try:
-            self.file  # Load the file now so a missing or expired upload redirects instead of raising 404.
+            # Load the file now so a missing or expired upload redirects. Don't assign it to _:
+            # that would shadow gettext for this whole function.
+            self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
             return redirect(self.import_settings_url)
