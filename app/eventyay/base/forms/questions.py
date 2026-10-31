@@ -675,6 +675,7 @@ class BaseQuestionsForm(forms.Form):
                         '.jpg',
                         '.gif',
                         '.jpeg',
+                        '.webp',
                         '.pdf',
                         '.txt',
                         '.docx',

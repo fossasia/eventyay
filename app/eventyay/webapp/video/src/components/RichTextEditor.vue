@@ -31,7 +31,7 @@ bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
 		button.tiptap-btn(type="button", :title="$t('Undo')", :aria-label="$t('Undo')", @click.prevent="cmd('undo')") &#8630;
 		button.tiptap-btn(type="button", :title="$t('Redo')", :aria-label="$t('Redo')", @click.prevent="cmd('redo')") &#8631;
 	.editor-mount(ref="editorMount")
-	input(type="file", ref="imageInput", accept="image/png, image/gif, image/jpeg, image/bmp, image/x-icon", style="display:none", @change="handleImageUpload")
+	input(type="file", ref="imageInput", accept="image/png, image/gif, image/jpeg, image/webp, image/bmp, image/x-icon", style="display:none", @change="handleImageUpload")
 	.uploading(v-if="uploading")
 		bunt-progress-circular(size="huge")
 	error-dialog(

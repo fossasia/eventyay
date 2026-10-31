@@ -1,13 +1,20 @@
 {% extends "pretixcontrol/items/base.html" %}
 {% load i18n %}
 {% load static %}
+{% load urlreplace %}
 {% block title %}{% trans "Event logs" %}{% endblock %}
 {% block inside %}
     <h1>{% trans "Event logs" %}</h1>
-    <form class="form-inline helper-display-inline" action="" method="get">
+    <p class="sr-only" data-event-log-status role="status" aria-live="polite" data-loading-message="{% trans 'Loading event logs…' %}" data-loaded-message="{% trans 'Event logs updated.' %}"></p>
+    <div class="event-log-results" data-ajax-results-region aria-busy="false">
+    <form class="form-inline helper-display-inline filter-form event-log-search-form" action="" method="get">
         <input type="hidden" name="content_type" value="{{ request.GET.content_type }}">
         <input type="hidden" name="object" value="{{ request.GET.object }}">
         <p>
+            <input type="search" name="q" class="form-control" aria-label="{% trans 'Search event logs' %}" placeholder="{% trans 'Search event logs…' %}" value="{{ request.GET.q|default:'' }}">
+            {% if request.GET.q %}
+                <a class="btn btn-default event-log-clear-search" href="?{{ clear_search_query }}">{% trans "Clear search" %}</a>
+            {% endif %}
             <select name="user" class="form-control">
                 <option value="">{% trans "All actions" %}</option>
                 <option value="yes" {% if request.GET.user == "yes" %}selected="selected"{% endif %}>
@@ -34,6 +41,10 @@
                 {% endfor %}
             </select>
             <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+            <a href="?{% url_replace request 'download' 'yes' %}" class="btn btn-default">
+                <i class="fa fa-download"></i>
+                {% trans "Export as CSV" %}
+            </a>
         </p>
     </form>
     <ul class="list-group">
@@ -96,4 +107,6 @@
         {% endfor %}
     </ul>
     {% include "pretixcontrol/pagination.html" %}
+    </div>
+    <script type="module" src="{% static "pretixcontrol/js/ui/event-logs.js" %}"></script>
 {% endblock %}

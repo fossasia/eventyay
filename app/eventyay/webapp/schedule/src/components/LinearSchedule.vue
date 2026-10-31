@@ -24,7 +24,7 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, normalizePopularityCount } from '../utils'
+import { getLocalizedString, normalizePopularityCount, isDocumentScroller, runWithoutSmoothScroll, bindPassiveScroll } from '../utils'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import { isShiftSchedule } from '../teamshifts-adapter'
@@ -194,23 +194,10 @@ export default {
 		},
 		async sortObserverKey () {
 			await this.$nextTick()
-			if (this.observer) {
-				this.observer.disconnect()
-			}
-			this.observer = new IntersectionObserver(this.onIntersect, {
-				root: this.scrollParent,
-				rootMargin: '-45% 0px'
-			})
-			let lastBucket
-			for (const [ref, el] of Object.entries(this.$refs)) {
-				if (!ref.startsWith('bucket')) continue
-				const date = moment(el[0].dataset.date).tz(this.timezone)
-				if (lastBucket) {
-					if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
-				}
-				lastBucket = date
-				this.observer.observe(el[0])
-			}
+			this.publishScrolledDay()
+		},
+		scrollParent () {
+			this.rebindDayTracking()
 		},
 		currentDay (day) {
 			if (this._scrollDayUpdate) {
@@ -222,20 +209,7 @@ export default {
 	},
 	async mounted () {
 		await this.$nextTick()
-		this.observer = new IntersectionObserver(this.onIntersect, {
-			root: this.scrollParent,
-			rootMargin: '-45% 0px'
-		})
-		let lastBucket
-		for (const [ref, el] of Object.entries(this.$refs)) {
-			if (!ref.startsWith('bucket')) continue
-			const date = moment(el[0].dataset.date).tz(this.timezone)
-			if (lastBucket) {
-				if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
-			}
-			lastBucket = date
-			this.observer.observe(el[0])
-		}
+		this.rebindDayTracking()
 		// scroll to now
 		// scroll to now, unless URL overrides now
 		let fragmentIsDate = false
@@ -251,6 +225,9 @@ export default {
 		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
+	},
+	beforeUnmount () {
+		this.unbindDayTracking()
 	},
 	methods: {
 		titleSortKey (session) {
@@ -347,6 +324,33 @@ export default {
 				window.scroll({top: el.offsetTop + this.getOffsetTop() - this.getStickyClearance()})
 			}
 		},
+		rebindDayTracking () {
+			this.unbindDayTracking()
+			this._unbindDayScroll = bindPassiveScroll(this.scrollParent, () => this.publishScrolledDay())
+			this.publishScrolledDay()
+		},
+		unbindDayTracking () {
+			this._unbindDayScroll?.()
+			this._unbindDayScroll = null
+		},
+		publishScrolledDay () {
+			if (!this.showDayHeaders) return
+			const labels = this.$el?.querySelectorAll('.bucket-label[data-date]')
+			if (!labels?.length) return
+			const origin = isDocumentScroller(this.scrollParent) ? 0 : this.scrollParent.getBoundingClientRect().top
+			const line = origin + this.getStickyClearance()
+			let day = moment(labels[0].dataset.date).tz(this.timezone).startOf('day')
+			for (const el of labels) {
+				if (el.getBoundingClientRect().top > line + 2) break
+				const next = moment(el.dataset.date).tz(this.timezone).startOf('day')
+				if (!day || next.format('YYYY-MM-DD') !== day.format('YYYY-MM-DD')) day = next
+			}
+			const dayStr = day.format('YYYY-MM-DD')
+			if (!dayStr || dayStr === this.currentDay) return
+			this.scrolledDay = day
+			this._scrollDayUpdate = true
+			this.$emit('changeDay', day)
+		},
 		scrollToDay (day, { force = false } = {}) {
 			if (!this.showDayHeaders || !day) return
 			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
@@ -355,27 +359,15 @@ export default {
 			if (!dayBucket) return
 			const el = this.$refs[this.getBucketName(dayBucket.date)]?.[0]
 			if (!el) return
-			if (this.scrollParent) {
-				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - 8
-				this.scrollParent.scrollTop = top
-			} else {
-				window.scroll({ top: el.offsetTop + this.getOffsetTop() - 8 })
-			}
+			runWithoutSmoothScroll(this.scrollParent, () => {
+				if (this.scrollParent) {
+					const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - 8
+					this.scrollParent.scrollTop = top
+				} else {
+					window.scrollTo(0, el.offsetTop + this.getOffsetTop() - 8)
+				}
+			})
 			this.scrolledDay = moment.tz(dayStr, 'YYYY-MM-DD', this.timezone).startOf('day')
-		},
-		onIntersect (results) {
-			if (!this.showDayHeaders) return
-			const intersection = results[0]
-			const day = moment(intersection.target.dataset.date).tz(this.timezone).startOf('day')
-			if (intersection.isIntersecting) {
-				this.scrolledDay = day
-				this._scrollDayUpdate = true
-				this.$emit('changeDay', this.scrolledDay)
-			} else if (intersection.rootBounds && (intersection.boundingClientRect.y - intersection.rootBounds.y) > 0) {
-				this.scrolledDay = day.clone().subtract(1, 'day')
-				this._scrollDayUpdate = true
-				this.$emit('changeDay', this.scrolledDay)
-			}
 		}
 	}
 }

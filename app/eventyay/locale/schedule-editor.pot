@@ -44,6 +44,9 @@ msgstr ""
 msgid "Drag the box to the schedule to create a new break"
 msgstr ""
 
+msgid "Drop here to unassign shift"
+msgstr ""
+
 msgid "Drop shift"
 msgstr ""
 
@@ -96,6 +99,9 @@ msgid "Pending proposal state"
 msgstr ""
 
 msgid "Restricted"
+msgstr ""
+
+msgid "Returns shift to unassigned list"
 msgstr ""
 
 msgid "Roles"
@@ -156,4 +162,7 @@ msgid "minutes"
 msgstr ""
 
 msgid "some speakers have not shared their names"
+msgstr ""
+
+msgid "{{assigned}}/{{capacity}} filled"
 msgstr ""

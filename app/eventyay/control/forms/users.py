@@ -10,6 +10,7 @@ from eventyay.timezones import common_timezones
 
 from eventyay.base.models import User
 from eventyay.base.models.auth import StaffSession
+from eventyay.helpers.timezone import format_timezone_name
 
 
 class StaffSessionForm(forms.ModelForm):
@@ -40,7 +41,7 @@ class UserEditForm(forms.ModelForm):
         widget=forms.PasswordInput(),
     )
     timezone = forms.ChoiceField(
-        choices=((a, a) for a in common_timezones),
+        choices=((a, format_timezone_name(a)) for a in common_timezones),
         label=_('Default timezone'),
         help_text=_(
             'Only used for views that are not bound to an event. For all '

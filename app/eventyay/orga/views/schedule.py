@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import DatabaseError, transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
@@ -41,6 +42,7 @@ from eventyay.common.views.mixins import (
     EventPermissionRequired,
     OrderActionMixin,
     PermissionRequired,
+    Sortable,
 )
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
@@ -127,22 +129,29 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
         return kwargs
 
     @context
+    @cached_property
+    def draft_schedule(self):
+        """Read the release preview without creating a missing draft schedule."""
+        with scope(event=self.request.event):
+            return self.request.event.schedules.filter(version__isnull=True).first()
+
+    @context
     def warnings(self):
-        return self.request.event.wip_schedule.warnings
+        """Return warnings only when an existing draft is available."""
+        return self.draft_schedule.warnings if self.draft_schedule else {}
 
     @context
     def changes(self):
-        return self.request.event.wip_schedule.changes
+        """Return preview changes without creating a missing draft."""
+        return self.draft_schedule.changes if self.draft_schedule else {}
 
     @context
     def notifications(self):
-        return len(self.request.event.wip_schedule.generate_notifications(save=False))
-
-    def form_invalid(self, form):
-        messages.error(self.request, _('You have to provide a new, unique schedule version!'))
-        return super().form_invalid(form)
+        """Count notifications for an existing draft only."""
+        return len(self.draft_schedule.generate_notifications(save=False)) if self.draft_schedule else 0
 
     def form_valid(self, form):
+        """Release a valid draft and report a competing release as a form error."""
         private_talks = self.request.event.private_testmode and self.request.event.settings.get(
             'private_testmode_talks', False, as_type=bool
         )
@@ -152,12 +161,16 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
                 _('Talks must be published or in private test mode to release a schedule.'),
             )
             return self.render_to_response(self.get_context_data(form=form), status=400)
-        self.request.event.release_schedule(
-            form.cleaned_data['version'],
-            user=self.request.user,
-            notify_speakers=form.cleaned_data['notify_speakers'],
-            comment=form.cleaned_data['comment'],
-        )
+        try:
+            self.request.event.release_schedule(
+                form.cleaned_data['version'],
+                user=self.request.user,
+                notify_speakers=form.cleaned_data['notify_speakers'],
+                comment=form.cleaned_data['comment'],
+            )
+        except ValidationError as exc:
+            form.add_error('version', exc)
+            return self.form_invalid(form)
         messages.success(self.request, _('Nice, your schedule has been released!'))
         return redirect(self.request.event.orga_urls.schedule)
 
@@ -246,9 +259,10 @@ class ScheduleResendMailsView(EventPermissionRequired, View):
 
 
 def serialize_break(slot):
+    title = slot.description.data if hasattr(slot.description, 'data') else (str(slot.description) if slot.description else '')
     return {
         'id': slot.pk,
-        'title': slot.description.data if slot.description else '',
+        'title': title,
         'description': '',
         'room': slot.room.pk if slot.room else None,
         'start': slot.start.isoformat() if slot.start else None,
@@ -270,6 +284,7 @@ def serialize_slot(slot, warnings=None):
             'title': str(slot.submission.title),
             'speakers': speakers_list,
             'submission_type': str(slot.submission.submission_type.name),
+            'session_type': str(slot.submission.submission_type.name),
             'track': (
                 {
                     'id': slot.submission.track.pk,
@@ -436,7 +451,13 @@ class TalkUpdate(PermissionRequired, View):
     def get_object(self):
         qs = self.request.event.wip_schedule.talks.filter(pk=self.kwargs.get('pk'))
         qs = apply_track_limit_to_slots(qs, self.request.event, self.request.user)
-        return qs.first()
+        return qs.select_related(
+            'submission',
+            'submission__submission_type',
+            'submission__track',
+            'room',
+            'schedule',
+        ).prefetch_related('submission__speakers').first()
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -476,12 +497,17 @@ class TalkUpdate(PermissionRequired, View):
                     talk.save(update_fields=['start', 'end', 'room', 'description', 'updated'])
             except Room.DoesNotExist:
                 return JsonResponse({'error': 'Room not found'})
-            talk.refresh_from_db()
+            for prop in ('local_start', 'local_end', 'real_end', 'warnings', 'warnings_extended', 'as_availability'):
+                talk.__dict__.pop(prop, None)
+            talk.refresh_from_db(fields=['updated'])
         else:
             talk.start = None
             talk.end = None
             talk.room = None
             talk.save(update_fields=['start', 'end', 'room', 'updated'])
+            for prop in ('local_start', 'local_end', 'real_end', 'warnings', 'warnings_extended', 'as_availability'):
+                talk.__dict__.pop(prop, None)
+            talk.refresh_from_db(fields=['updated'])
 
         with_speakers = self.request.event.cfp.request_availabilities
         warnings = talk.schedule.get_talk_warnings(talk, with_speakers=with_speakers)
@@ -522,14 +548,21 @@ class QuickScheduleView(PermissionRequired, UpdateView):
         return self.request.path
 
 
-class RoomView(OrderActionMixin, OrgaCRUDView):
+class RoomView(Sortable, OrderActionMixin, OrgaCRUDView):
     model = Room
     form_class = RoomForm
     template_namespace = 'orga/schedule'
+    sortable_fields = ('name', 'capacity')
+    secondary_sort = {
+        '': ('position',),
+        'name': ('position',),
+        'capacity': ('position',),
+    }
 
     def get_queryset(self):
         # Filter out soft-deleted rooms to sync with video component
-        return self.request.event.rooms.filter(deleted=False).with_has_linked_sessions()
+        qs = self.request.event.rooms.filter(deleted=False).with_has_linked_sessions()
+        return self.sort_queryset(qs)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -611,6 +644,8 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         return ctx
 
     def order_handler(self, request, *args, **kwargs):
+        if not self.can_reorder():
+            return HttpResponseBadRequest('Reordering is only allowed in default position order.')
         order = request.POST.get('order')
         if order:
             pks = [pk.strip() for pk in order.split(',') if pk.strip()]

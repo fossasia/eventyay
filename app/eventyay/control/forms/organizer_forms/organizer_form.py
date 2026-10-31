@@ -206,6 +206,11 @@ class BillingSettingsForm(forms.ModelForm):
         if not voucher_instance.is_active():
             raise forms.ValidationError('The voucher code has either expired or reached its usage limit.')
 
+        if not voucher_instance.applies_to_platform_fees:
+            raise forms.ValidationError(
+                _('This voucher does not apply to ticket platform fees. Enter it when changing your plan or buying an add-on.')
+            )
+
         if voucher_instance.limit_organizer.exists():
             limit_organizer = voucher_instance.limit_organizer.values_list('id', flat=True)
             if self.organizer.id not in limit_organizer:

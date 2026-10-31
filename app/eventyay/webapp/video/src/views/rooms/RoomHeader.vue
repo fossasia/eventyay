@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-room-header
-	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing'] && $route.name !== 'room:manage' && !isVideoCallRoom")
+	.ui-page-header(v-if="!modules['page.markdown'] && !modules['page.landing'] && $route.name !== 'room:manage'")
 		bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		.room-info
 			.room-name(v-if="room && room.name", v-html="$emojify(room.name)")
@@ -29,6 +29,9 @@ const PERMISSIONS_TO_MANAGE = [
 
 export default {
 	components: { RecordingsPrompt },
+	inject: {
+		leaveMediaSource: { default: null }
+	},
 	props: {
 		roomId: String
 	},
@@ -146,13 +149,17 @@ export default {
 				this.$router.replace({name: 'about'})
 			}
 		},
-		onBack() {
-			if (window.history.state && window.history.state.back) {
-				this.$router.back()
-			} else if (window.eventyay?.isOrganizerArea) {
-				this.$router.replace({ name: 'organizer' })
+		async onBack() {
+			if (this.leaveMediaSource) {
+				this.leaveMediaSource(this.room)
 			} else {
-				this.$router.replace({ name: 'about' })
+				if (window.eventyay?.isOrganizerArea || this.$route.name === 'organizer' || this.$route.name?.startsWith('admin')) {
+					this.$router.push({ name: 'organizer' }).catch(() => {})
+				} else {
+					this.$router.push({ name: 'about' }).catch(() => {
+						this.$router.push('/').catch(() => {})
+					})
+				}
 			}
 		}
 	},

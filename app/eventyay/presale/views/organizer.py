@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import MAXYEAR, MINYEAR, UTC, date, datetime, time, timedelta
 from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import isoweek
@@ -40,6 +40,12 @@ from eventyay.presale.organizer_exports import (
     render_organizer_export,
 )
 from eventyay.presale.views import OrganizerViewMixin
+
+
+def valid_calendar_year(year: int) -> bool:
+    """The calendars look one day before and after the shown range, so the first and
+    last years Python dates support are out of range too."""
+    return MINYEAR < year < MAXYEAR
 
 
 class EventListMixin:
@@ -182,6 +188,8 @@ class EventListMixin:
             try:
                 self.year = int(self.request.GET.get('year'))
                 self.month = int(self.request.GET.get('month'))
+                if not (valid_calendar_year(self.year) and 1 <= self.month <= 12):
+                    raise ValueError
             except ValueError:
                 self.year = now().year
                 self.month = now().month
@@ -288,6 +296,8 @@ class EventListMixin:
             try:
                 self.year = int(self.request.GET.get('year'))
                 self.week = int(self.request.GET.get('week'))
+                if not (valid_calendar_year(self.year) and 1 <= self.week <= 53):
+                    raise ValueError
             except ValueError:
                 self.year = now().isocalendar()[0]
                 self.week = now().isocalendar()[1]

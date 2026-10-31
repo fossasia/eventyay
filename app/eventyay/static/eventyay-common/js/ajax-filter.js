@@ -230,8 +230,14 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
 };
 
 const buildFormUrl = function(form) {
-    const url = form.getAttribute('action') || window.location.pathname;
-    const query = new URLSearchParams(new FormData(form)).toString();
+    const action = form.getAttribute('action');
+    const url = action || window.location.pathname;
+    const params = new URLSearchParams(new FormData(form));
+    const currentSort = new URLSearchParams(window.location.search).get('sort');
+    if (!action && currentSort && !params.has('sort')) {
+        params.set('sort', currentSort);
+    }
+    const query = params.toString();
     if (!query) {
         return url;
     }

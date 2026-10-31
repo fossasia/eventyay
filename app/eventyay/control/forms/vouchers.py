@@ -1,6 +1,9 @@
 import csv
+import json
 from collections import namedtuple
+from html import unescape
 from io import StringIO
+from urllib.parse import urlencode
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -8,6 +11,7 @@ from django.core.validators import EmailValidator
 from django.db.models import Q
 from django.db.models.functions import Upper
 from django.urls import reverse
+from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelChoiceField
@@ -15,6 +19,9 @@ from django_scopes.forms import SafeModelChoiceField
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator
 from eventyay.base.models import Product, Voucher
+from eventyay.base.templatetags.rich_text import VOUCHER_EMAIL_PREVIEW_CONTEXT
+from eventyay.common.forms.fields import EmailBodyField
+from eventyay.common.forms.widgets import EmailEditorWidget
 from eventyay.control.forms import SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.control.forms.widgets import MultipleProductVarQuotaWidget, Select2
 from eventyay.control.signals import voucher_form_validation
@@ -22,6 +29,10 @@ from eventyay.helpers.models import modelcopy
 
 
 ALL_PRODUCTS = 'all'
+
+
+def message_has_visible_text(value) -> bool:
+    return bool(unescape(strip_tags(str(value or ''))).replace('\xa0', ' ').strip())
 
 
 class FakeChoiceField(forms.ChoiceField):
@@ -390,15 +401,18 @@ class VoucherBulkForm(VoucherForm):
         required=False,
         initial=_('Your voucher for {event}'),
     )
-    send_message = forms.CharField(
+    send_message = EmailBodyField(
         label=_('Message'),
-        widget=forms.Textarea(attrs={'data-display-dependency': '#id_send'}),
+        widget=EmailEditorWidget(attrs={'data-display-dependency': '#id_send'}),
         required=False,
         initial=_(
-            'Hello,\n\n'
-            "with this email, we're sending you one or more vouchers for {event}:\n\n{voucher_list}\n\n"
-            'You can redeem them here in our ticket shop:\n\n{url}\n\nBest regards,\n\n'
-            'Your {event} team'
+            '<p>Hello,</p>'
+            "<p>with this email, we're sending you one or more vouchers for {event}:</p>"
+            '<p>{voucher_list}</p>'
+            '<p>You can redeem them directly here:</p>'
+            '<p>{voucher_url}</p>'
+            '<p>Best regards,</p>'
+            '<p>Your {event} team</p>'
         ),
     )
     send_recipients = forms.CharField(
@@ -420,13 +434,25 @@ class VoucherBulkForm(VoucherForm):
     Recipient = namedtuple('Recipient', 'email number name tag')
 
     def _set_field_placeholders(self, fn, base_parameters):
-        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.instance.event, base_parameters).keys())]
+        names = sorted(get_available_placeholders(self.instance.event, base_parameters).keys())
+        phs = ['{%s}' % p for p in names]
         ht = _('Available placeholders: {list}').format(list=', '.join(phs))
         if self.fields[fn].help_text:
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
         self.fields[fn].validators.append(PlaceholderValidator(phs))
+        widget = self.fields[fn].widget
+        if widget.attrs.get('data-tiptap-profile') == 'email':
+            widget.attrs['data-tiptap-placeholders'] = json.dumps(names)
+            event = self.instance.event
+            preview_url = reverse(
+                'control:event.editor.email.preview',
+                kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+            )
+            widget.attrs['data-tiptap-preview-url'] = (
+                f'{preview_url}?{urlencode({"context": VOUCHER_EMAIL_PREVIEW_CONTEXT})}'
+            )
 
     class Meta:
         model = Voucher
@@ -502,16 +528,21 @@ class VoucherBulkForm(VoucherForm):
                         _('{value} is not a valid email address.').format(value=row['email'])
                     ) from err
                 try:
-                    res.append(
-                        self.Recipient(
-                            name=row.get('name', ''),
-                            email=row['email'].strip(),
-                            number=int(row.get('number', 1)),
-                            tag=row.get('tag', None),
-                        )
-                    )
+                    number = int(row.get('number') or 1)
                 except ValueError as err:
                     raise ValidationError(_('Invalid value in row {number}.').format(number=i + 1)) from err
+                if number < 1:
+                    raise ValidationError(
+                        _('The number of vouchers in row {number} must be at least 1.').format(number=i + 1)
+                    )
+                res.append(
+                    self.Recipient(
+                        name=row.get('name', ''),
+                        email=row['email'].strip(),
+                        number=number,
+                        tag=row.get('tag', None),
+                    )
+                )
         else:
             for e in r:
                 try:
@@ -550,16 +581,16 @@ class VoucherBulkForm(VoucherForm):
             if vouchers.exists():
                 raise ValidationError(_('A voucher with one of these codes already exists.'))
 
-        if data.get('send') and not all(
-            [
-                data.get('send_subject'),
-                data.get('send_message'),
-                data.get('send_recipients'),
-            ]
-        ):
-            raise ValidationError(
-                _('If vouchers should be sent by email, subject, message and recipients need to be specified.')
+        if data.get('send'):
+            # A placeholder error already explains a filled message. Do not also
+            # report that message as missing when field validation removed it.
+            message_missing = 'send_message' not in self.errors and not message_has_visible_text(
+                data.get('send_message')
             )
+            if not data.get('send_subject') or message_missing or not data.get('send_recipients'):
+                raise ValidationError(
+                    _('If vouchers should be sent by email, subject, message and recipients need to be specified.')
+                )
 
         if codes and data.get('send'):
             recp = self.cleaned_data.get('send_recipients', [])

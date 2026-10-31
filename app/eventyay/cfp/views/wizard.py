@@ -46,8 +46,15 @@ class SubmitWizard(EventPageMixin, View):
                     .filter(code__iexact=access_code)
                     .first()
                 )
-            if access_code and access_code.is_valid:
-                request.access_code = access_code
+            if not access_code or not access_code.is_valid:
+                messages.error(request, _('This access code is invalid or has already been used.'))
+                return redirect(
+                    reverse(
+                        'cfp:event.start',
+                        kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug},
+                    )
+                )
+            request.access_code = access_code
         if not request.event.cfp.is_open and not request.access_code:
             messages.error(request, _('Proposals are closed'))
             return redirect(reverse('cfp:event.start', kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug}))

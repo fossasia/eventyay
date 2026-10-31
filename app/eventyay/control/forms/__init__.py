@@ -343,6 +343,14 @@ class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
         opt['incubating'] = value in settings.LANGUAGES_INCUBATING
         return opt
 
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        widget_attrs = context['widget'].get('attrs', {})
+        context['widget']['ordered_default'] = widget_attrs.get('data-ordered-default') == 'true'
+        context['widget']['default_locale_input'] = widget_attrs.get('data-default-locale-input', '')
+        context['widget']['selected_order'] = widget_attrs.get('data-selected-order', '')
+        return context
+
 
 class SingleLanguageWidget(forms.Select):
     def modify(self):

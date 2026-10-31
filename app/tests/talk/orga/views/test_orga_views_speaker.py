@@ -109,6 +109,53 @@ def test_orga_can_edit_speaker(orga_client, speaker, event, submission):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("empty_biography", ("", "<p></p>", "<p><br></p>", "<p>&nbsp;</p>"))
+def test_orga_cannot_save_empty_required_biography(
+    orga_client, speaker, event, submission, empty_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        profile = speaker.event_profile(event)
+        original_biography = profile.biography
+        url = profile.orga_urls.base
+
+    response = orga_client.post(
+        url,
+        data={
+            "name": speaker.fullname,
+            "fullname": speaker.fullname,
+            "email": speaker.email,
+            "biography": empty_biography,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert "This field is required." in response.text
+    with scope(event=event):
+        profile.refresh_from_db()
+        assert profile.biography == original_biography
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_rejects_empty_required_biography(speaker, event):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        form = SpeakerProfileForm(
+            data={
+                "fullname": speaker.fullname,
+                "email": speaker.email,
+                "biography": "<p></p>",
+            },
+            event=event,
+            user=speaker,
+        )
+        assert not form.is_valid()
+        assert "biography" in form.errors
+
+
+@pytest.mark.django_db
 def test_speaker_profile_form_not_strict_allows_missing_required_fields(speaker, event):
     event.cfp.fields["avatar"]["visibility"] = "required"
     event.cfp.save()
@@ -478,6 +525,97 @@ def test_speaker_list_sorts_by_featured(
 
     names = speaker_names_in_table(response)
     assert names[0] == speaker.fullname
+
+
+def speaker_names_in_list(response):
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    table = doc.select_one('table tbody')
+    assert table is not None
+    return [link.get_text(strip=True) for link in table.select('td a[href*="/speakers/"]')]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('sort', 'first'),
+    (
+        ('user__fullname', 'speaker'),
+        ('-user__fullname', 'other_speaker'),
+        ('-accepted_submission_count', 'speaker'),
+        ('accepted_submission_count', 'other_speaker'),
+        ('-submission_count', 'speaker'),
+        ('submission_count', 'other_speaker'),
+        ('-has_arrived', 'other_speaker'),
+        ('has_arrived', 'speaker'),
+    ),
+)
+def test_speaker_list_sorts_by_column(
+    orga_client,
+    speaker,
+    other_speaker,
+    event,
+    submission,
+    accepted_submission,
+    other_submission,
+    sort,
+    first,
+):
+    with scope(event=event):
+        profile = other_speaker.event_profile(event)
+        profile.has_arrived = True
+        profile.save(update_fields=['has_arrived'])
+    users = {'speaker': speaker, 'other_speaker': other_speaker}
+    expected = [users[first].fullname, next(user for key, user in users.items() if key != first).fullname]
+
+    response = orga_client.get(f'{event.orga_urls.speakers}?sort={sort}', follow=True)
+
+    assert response.status_code == 200
+    assert speaker_names_in_list(response) == expected
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    active = doc.select('thead a.sort-active')
+    assert len(active) == 1
+    assert f'sort={sort}' in active[0]['href']
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorting_keeps_search(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    response = orga_client.get(f'{event.orga_urls.speakers}?q=example.com&sort=-user__fullname', follow=True)
+
+    assert response.status_code == 200
+    assert speaker_names_in_list(response) == [other_speaker.fullname]
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    sort_link = doc.select_one('thead a.sort-link')
+    assert 'q=example.com' in sort_link['href']
+
+
+@pytest.mark.django_db
+def test_speaker_list_hides_drag_controls_when_sorted(orga_client, speaker, event, submission):
+    response = orga_client.get(f'{event.orga_urls.speakers}?sort=-submission_count', follow=True)
+
+    assert response.status_code == 200
+    assert 'dragsort-url' not in response.text
+    assert 'dragsort-button' not in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_list_sort_links_name_their_column(orga_client, speaker, event, submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    labels = [link['aria-label'] for link in doc.select('thead a.sort-link')]
+    assert len(labels) == len(set(labels))
+    assert 'Sort by accepted proposals (high to low)' in labels
+    assert 'Sort by proposals (high to low)' in labels
+
+
+@pytest.mark.django_db
+def test_speaker_list_sort_resets_page(orga_client, speaker, event, submission):
+    response = orga_client.get(f'{event.orga_urls.speakers}?page=1&sort=user__fullname', follow=True)
+
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, 'lxml')
+    assert all('page=' not in link['href'] for link in doc.select('thead a.sort-link'))
 
 
 @pytest.mark.django_db

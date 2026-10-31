@@ -76,16 +76,22 @@ test('schedule-editor keys fall back the same way as schedule', async () => {
 			Save: 'Save',
 			'Hidden rooms': 'Hidden rooms',
 			'Assign Members for {{title}}': 'Assign Members for {{title}}',
+			'{{assigned}}/{{capacity}} filled': '{{assigned}}/{{capacity}} filled',
 		},
 		de: {
 			Save: 'Speichern',
 			'Hidden rooms': '',
+			'{{assigned}}/{{capacity}} filled': '{{assigned}}/{{capacity}} besetzt',
 		},
 	})
 	await runtime.init({lng: 'de'})
 	assert.equal(runtime.translate('Save'), 'Speichern')
 	assert.equal(runtime.translate('Hidden rooms'), 'Hidden rooms')
 	assert.equal(runtime.translate('Assign Members for {{title}}', {title: 'Keynote'}), 'Assign Members for Keynote')
+	assert.equal(runtime.translate('{{assigned}}/{{capacity}} filled', {assigned: 1, capacity: 9}), '1/9 besetzt')
+
+	await runtime.changeLanguage('en')
+	assert.equal(runtime.translate('{{assigned}}/{{capacity}} filled', {assigned: 0, capacity: 2}), '0/2 filled')
 })
 
 test('missing catalogs and loader errors fall back to English', async () => {

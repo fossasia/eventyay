@@ -323,7 +323,16 @@ def is_event_team_member(context, event=None):
     user = getattr(request, 'user', None)
     if not event or not user or user.is_anonymous:
         return False
-    return user.has_event_permission(event.organizer, event, request=request)
+    if getattr(user, 'is_administrator', False) or user.has_event_permission(event.organizer, event, request=request):
+        return True
+    if event.private_testmode_talks_enabled:
+        from eventyay.talk_rules.event import is_event_speaker
+        if is_event_speaker(user, event) or user_has_cfp_submissions(request, event):
+            return True
+        resolver_match = getattr(request, 'resolver_match', None)
+        if resolver_match and resolver_match.url_name == 'invitation.view':
+            return True
+    return False
 
 
 @register.simple_tag(takes_context=True)

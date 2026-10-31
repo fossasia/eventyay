@@ -14801,7 +14801,7 @@ msgstr "എന്റെ പ്രമേയങ്ങൾ"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "സ്പീക്കർ ഇമെയിൽ"
 
 #: eventyay/common/templates/common/base.html:189

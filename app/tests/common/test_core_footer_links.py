@@ -73,7 +73,7 @@ def test_global_settings_form_footer_defaults():
         for key in ['events', 'terms', 'privacy', 'pricing', 'documentation', 'support']:
             assert f'footer_link_{key}_enabled' in form.fields
             assert f'footer_link_{key}_url' in form.fields
-        for page_key in ['terms', 'privacy', 'pricing', 'support']:
+        for page_key in ['terms', 'privacy', 'support']:
             field_name = f'footer_page_{page_key}_text'
             assert field_name in form.fields
             assert isinstance(form.fields[field_name], I18nRichTextFormField)

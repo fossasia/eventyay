@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django_scopes import scope
 from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
@@ -23,6 +24,11 @@ from eventyay.base.services.room_creation_gate import (
     user_can_create_server_backed_room_during_development,
 )
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.base.services.video_entitlements import (
+    check_video_entitlements,
+    filter_stream_by_entitlement,
+    require_video_entitlements,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     get_provider_for_module_type,
@@ -295,11 +301,13 @@ def count_chat_participants(channel_id):
 
 
 def get_room_config(room, permissions, *, current_stream=_UNSET):
+    """Build room configuration dictionary filtered by module entitlements."""
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
         stream_data = current_stream
+    stream_data = filter_stream_by_entitlement(room.event, stream_data)
     visible_to_attendee = is_room_visible_for_attendee(room)
     room_config = {
         "id": str(room.id),
@@ -328,6 +336,8 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
         room_config["users"] = 0
 
     for module in room.module_config:
+        if not check_video_entitlements(room.event, [module]).allowed:
+            continue
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
@@ -430,6 +440,8 @@ def get_event_config_for_user(event, user):
 @database_sync_to_async
 @transaction.atomic()
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
+    """Create a room instance after verifying video module entitlements."""
+    require_video_entitlements(data['event'], data.get('module_config'))
     if "sorting_priority" not in data:
         data["sorting_priority"] = (
             Room.objects.filter(event=data["event"], deleted=False).aggregate(
@@ -518,7 +530,11 @@ is_video_provider_enabled_for_organizer_async = sync_to_async(
 
 
 async def create_room(event, data, creator):
-    for module in data.get("modules", []):
+    if "modules" not in data and "module_config" in data:
+        data["modules"] = data["module_config"]
+
+    modules = data.get("modules") or []
+    for module in modules:
         if isinstance(module, dict):
             provider = get_provider_for_module_type(module.get("type"))
             if provider and not await is_video_provider_enabled_for_organizer_async(provider):
@@ -527,7 +543,7 @@ async def create_room(event, data, creator):
                     code="denied",
                 )
 
-    types = {m["type"] for m in data.get("modules", [])}
+    types = {m["type"] for m in modules}
     livestream_types = {
         "livestream.native",
         "livestream.youtube",
@@ -836,27 +852,28 @@ def _config_serializer(event, *args, **kwargs):
 @database_sync_to_async
 @transaction.atomic
 def save_event(event, update_fields, old_data, by_user):
-    event.save(update_fields=update_fields)
-    new = _config_serializer(event).data
+    with scope(event=event):
+        event.save(update_fields=update_fields)
+        new = _config_serializer(event).data
 
-    AuditLog.objects.create(
-        event_id=event.id,
-        user=by_user,
-        type="event.updated",
-        data={
-            "old": old_data,
-            "new": new,
-        },
-    )
-    if update_fields and 'feature_flags' in update_fields:
-        log_event(
-            'video',
-            'video.feature_flag',
-            OUTCOME_SUCCESS,
-            event_id=event.pk,
-            user_id=getattr(by_user, 'pk', None),
+        AuditLog.objects.create(
+            event_id=event.id,
+            user=by_user,
+            type="event.updated",
+            data={
+                "old": old_data,
+                "new": new,
+            },
         )
-    return new
+        if update_fields and 'feature_flags' in update_fields:
+            log_event(
+                'video',
+                'video.feature_flag',
+                OUTCOME_SUCCESS,
+                event_id=event.pk,
+                user_id=getattr(by_user, 'pk', None),
+            )
+        return new
 
 
 @database_sync_to_async

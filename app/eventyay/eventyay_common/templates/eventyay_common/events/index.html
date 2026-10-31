@@ -4,6 +4,7 @@
 {% load static %}
 {% load urlreplace %}
 {% load bootstrap3 %}
+{% load timezone %}
 {% block title %}{% trans "Events management" %}{% endblock %}
 
 {% block custom_header %}
@@ -171,6 +172,9 @@
                             {% else %}
                                 {{ e.date_to|date:"SHORT_DATE_FORMAT" }}
                             {% endif %}
+                        {% endif %}
+                        {% if e.settings.timezone != request.timezone %}
+                            <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.timezone|timezone_display }}"></span>
                         {% endif %}
                     </td>
                     

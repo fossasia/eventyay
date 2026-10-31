@@ -121,6 +121,36 @@ class TestOrganiserAddsSpeaker:
                 == 1
             )
 
+    def test_add_speaker_replaces_html_empty_biography(self, event, submission):
+        with scope(event=event):
+            speaker, _ = submission.add_speaker(
+                email='jane@example.net', name='Jane Doe'
+            )
+            profile = speaker.event_profile(event)
+            profile.biography = '<p></p>'
+            profile.save(update_fields=['biography'])
+            assert profile.biography == '<p></p>'
+
+            submission.add_speaker(
+                email='jane@example.net', name='Jane Doe', biography='Real biography content'
+            )
+            profile.refresh_from_db()
+            assert profile.biography == 'Real biography content'
+
+    def test_add_speaker_preserves_existing_valid_biography(self, event, submission):
+        with scope(event=event):
+            speaker, _ = submission.add_speaker(
+                email='jane@example.net', name='Jane Doe', biography='Original biography'
+            )
+            profile = speaker.event_profile(event)
+            assert profile.biography == 'Original biography'
+
+            submission.add_speaker(
+                email='jane@example.net', name='Jane Doe', biography='New biography'
+            )
+            profile.refresh_from_db()
+            assert profile.biography == 'Original biography'
+
     def test_has_speaker_email_detects_existing_speaker(self, event, submission, user):
         with scope(event=event):
             assert submission.has_speaker_email(user.email)

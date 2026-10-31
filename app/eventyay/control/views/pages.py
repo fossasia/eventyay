@@ -22,6 +22,7 @@ from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.forms.pages_admin import (
     ALL_PAGE_I18N_KEYS,
     DEFAULT_PAGE_LOCALE,
+    CONTENT_PAGE_SLUGS,
     DEFAULT_PAGE_SLUGS,
     PAGE_TITLES,
     DefaultPageContentForm,
@@ -137,7 +138,7 @@ class PagesDefaultPageView(PagesSettingsView):
         ctx = super().get_context_data(**kwargs)
         ctx['slug'] = self.slug
         ctx['page_title'] = PAGE_TITLES.get(self.slug, self.slug)
-        ctx['has_content'] = self.slug in ('terms', 'privacy', 'pricing', 'support')
+        ctx['has_content'] = self.slug in CONTENT_PAGE_SLUGS
         ctx['enabled_field'] = f'footer_link_{self.slug}_enabled'
         ctx['url_field'] = f'footer_link_{self.slug}_url'
         ctx['content_field'] = f'footer_page_{self.slug}_text'
@@ -409,7 +410,7 @@ class ShowPageView(TemplateView):
 
 
 class SystemPageView(ShowPageView):
-    """Render system pages (terms, privacy, pricing, support) from DB or with default content if enabled."""
+    """Render system pages (terms, privacy, support) from DB or with default content if enabled."""
 
     slug = None
 
@@ -427,7 +428,6 @@ class SystemPageView(ShowPageView):
                 title_map = {
                     'terms': _('Terms of Service'),
                     'privacy': _('Privacy Policy'),
-                    'pricing': _('Pricing'),
                     'support': _('Support & Help'),
                 }
                 title = title_map.get(slug, slug.capitalize())

@@ -97,7 +97,7 @@ def _default_context(request):
 
         ctx['has_domain'] = get_event_domain(request.event, fallback=True) is not None
 
-        if not request.event.testmode:
+        if not (request.event.testmode or request.event.private_testmode_tickets_enabled):
             with scope(organizer=request.organizer):
                 complain_testmode_orders = request.event.cache.get('complain_testmode_orders')
                 if complain_testmode_orders is None:

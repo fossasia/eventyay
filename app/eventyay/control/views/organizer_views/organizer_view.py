@@ -24,13 +24,15 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from eventyay.base.models.event import Event, EventMetaValue
-from eventyay.base.models.organizer import Organizer, OrganizerBillingModel, Team
+from eventyay.base.models.organizer import Organizer, OrganizerBillingModel
+from eventyay.base.services.organizer_creation import create_core_team
 from eventyay.base.settings import (
     DEFAULTS,
     SETTINGS_AFFECTING_CSS,
     is_event_series_creation_enabled,
     is_meetup_creation_enabled,
 )
+from eventyay.base.signals import organizer_billing_payment_method_saved
 from eventyay.common.text.path import resolve_media_path
 from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm, advanced_filters_open_from_get
 from eventyay.control.forms.organizer_forms import (
@@ -90,34 +92,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
         messages.success(self.request, _('The new organizer has been created.'))
         had_default = bool(self.request.user.get_default_organizer())
         ret = super().form_valid(form)
-        t = Team.objects.create(
-            organizer=form.instance,
-            name=_('Core Organizing Team'),
-            all_events=True,
-            can_create_events=True,
-            can_change_teams=True,
-            can_manage_gift_cards=True,
-            can_change_organizer_settings=True,
-            can_change_event_settings=True,
-            can_change_config=True,
-            can_change_items=True,
-            can_view_orders=True,
-            can_change_orders=True,
-            can_manage_bank_transfers=True,
-            can_checkin_orders=True,
-            can_view_vouchers=True,
-            can_change_vouchers=True,
-            can_change_submissions=True,
-            is_reviewer=True,
-            can_change_exhibition_proposals=True,
-            is_exhibition_reviewer=True,
-            can_manage_social_media=True,
-            can_video_manage_content=True,
-            can_video_moderate=True,
-            can_video_manage_kiosks=True,
-            can_video_view_analytics=True,
-        )
-        t.members.add(self.request.user)
+        create_core_team(form.instance, self.request.user)
         if form.cleaned_data.get('set_as_default') or not had_default:
             self.request.user.default_organizer = self.object
             self.request.user.save(update_fields=['default_organizer'])
@@ -575,10 +550,27 @@ def save_payment_information(request, organizer):
     try:
         stripe_customer_id = get_stripe_customer_id(organizer)
         update_payment_info(setup_intent_id, stripe_customer_id)
+        signal_responses = organizer_billing_payment_method_saved.send_robust(
+            sender=request.organizer,
+            organizer=request.organizer,
+            user=request.user,
+            stripe_customer_id=stripe_customer_id,
+            setup_intent_id=setup_intent_id,
+        )
+        receiver_errors = []
+        for receiver, response in signal_responses:
+            if isinstance(response, Exception):
+                receiver_errors.append(response)
+                logger.error(
+                    'Automatic billing receiver %r failed after saving payment information.',
+                    receiver,
+                    exc_info=(type(response), response, response.__traceback__),
+                )
 
         return Response(
             {
                 'success': True,
+                'billing_integration_notified': not receiver_errors,
             }
         )
     except ValidationError as e:

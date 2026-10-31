@@ -457,6 +457,7 @@ class QuestionFieldsMixin:
                     '.jpg': ['image/jpeg', '.jpg'],
                     '.gif': ['image/gif', '.gif'],
                     '.jpeg': ['image/jpeg', '.jpeg'],
+                    '.webp': ['image/webp', '.webp'],
                     '.svg': ['image/svg+xml', '.svg'],
                     '.bmp': ['image/bmp', '.bmp'],
                     '.tif': ['image/tiff', '.tif'],

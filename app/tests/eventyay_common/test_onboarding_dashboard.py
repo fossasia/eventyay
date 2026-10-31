@@ -3,6 +3,7 @@
 import re
 from datetime import timedelta
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -11,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from eventyay.base.models import Event, Organizer, Team
 from eventyay.base.meetup import EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE
+from eventyay.eventyay_common.navigation import get_global_navigation
 from eventyay.eventyay_common.onboarding import (
     _event_kind,
     format_profile_incomplete_message,
@@ -275,8 +277,44 @@ def test_private_events_are_not_recommended(new_user_client, db):
 def test_global_navigation_labels(new_user_client):
     response = new_user_client.get(reverse('eventyay_common:dashboard'))
     content = response.content.decode()
-    assert 'My Tickets' in content
+    assert 'My orders' in content
     assert 'Dashboard' in content
+
+
+@pytest.mark.django_db
+def test_global_navigation_lists_plugin_items_before_organizers(rf):
+    request = rf.get('/common/')
+    request.resolver_match = MagicMock(url_name='dashboard')
+    request.user = MagicMock(is_authenticated=True)
+    request.user.teams.exists.return_value = True
+    plugin_item = {'label': 'My exhibitions', 'url': '/common/exhibitions/', 'active': False, 'icon': 'building-o'}
+
+    with patch('eventyay.eventyay_common.navigation.nav_global.send', return_value=[(None, [plugin_item])]):
+        labels = [str(item['label']) for item in get_global_navigation(request)]
+
+    assert labels == ['My orders', 'My sessions', 'My events', 'My exhibitions', 'Organizers']
+
+
+@pytest.mark.django_db
+def test_global_navigation_keeps_plugin_children_under_organizers(rf):
+    request = rf.get('/common/')
+    request.resolver_match = MagicMock(url_name='dashboard')
+    request.user = MagicMock(is_authenticated=True)
+    request.user.teams.exists.return_value = True
+    child = {
+        'label': 'Organizer tool',
+        'url': '/common/organizer-tool/',
+        'active': False,
+        'parent': reverse('eventyay_common:organizers'),
+    }
+
+    with patch('eventyay.eventyay_common.navigation.nav_global.send', return_value=[(None, [child])]):
+        nav = get_global_navigation(request)
+
+    organizers = nav[-1]
+    assert str(organizers['label']) == 'Organizers'
+    assert child in organizers['children']
+    assert all(item is not child for item in nav)
 
 
 @pytest.mark.django_db

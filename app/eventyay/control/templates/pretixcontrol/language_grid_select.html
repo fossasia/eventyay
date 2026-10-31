@@ -1,5 +1,11 @@
 {% load i18n %}
-<div class="language-grid-widget" id="{{ widget.attrs.id }}-grid-widget">
+<div class="language-grid-widget" id="{{ widget.attrs.id }}-grid-widget"
+     {% if widget.ordered_default %}data-ordered-default="true"{% endif %}
+     data-default-locale-input="{{ widget.default_locale_input }}"
+     data-selected-order="{{ widget.selected_order }}"
+     data-label-default="{% translate 'Default language' %}"
+     data-label-set-default="{% translate 'Click or press Space to set as default language.' %}"
+     data-label-reorder="{% translate 'Click or press Space or the arrow keys to reorder or set as default' %}">
   <div class="language-grid-summary"
        data-language-grid-summary
        role="button"

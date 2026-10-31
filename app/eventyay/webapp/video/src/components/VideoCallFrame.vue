@@ -68,6 +68,21 @@
 			@hangup="onHangup",
 			@error="onError"
 		)
+		IframeCallFrame(
+			v-else-if="providerId === 'loungemesh' || providerId === 'zoom'",
+			ref="providerComponent",
+			:room="room",
+			:module="module",
+			:provider="providerId",
+			:size="size",
+			@connected="onConnected",
+			@hangup="onHangup",
+			@error="onError"
+		)
+		.unknown-call-error(v-else-if="providerId === 'unknown'")
+			.mdi.mdi-alert-circle-outline.state-icon--error
+			p.error-title {{ $t('Unsupported video call provider.') }}
+			p.error-detail {{ $t('The requested room provider is not supported or not configured.') }}
 
 	//- Google Meet Style Overlay Header Bar (shown only in miniplayer mode on hover)
 	.gmeet-pip-topbar(v-if="size === 'tiny'")
@@ -126,6 +141,7 @@ import JanusCall from 'components/JanusCall'
 import JanusChannelCall from 'components/JanusChannelCall'
 import JitsiCallFrame from 'components/JitsiCallFrame'
 import BBBCallFrame from 'components/BBBCallFrame'
+import IframeCallFrame from 'components/IframeCallFrame'
 
 export default {
 	name: 'VideoCallFrame',
@@ -133,7 +149,8 @@ export default {
 		JanusCall,
 		JanusChannelCall,
 		JitsiCallFrame,
-		BBBCallFrame
+		BBBCallFrame,
+		IframeCallFrame
 	},
 	props: {
 		room: {
@@ -177,6 +194,8 @@ export default {
 			if (this.module.type === 'call.janus') return 'janus'
 			if (this.module.type === 'call.jitsi') return 'jitsi'
 			if (this.module.type === 'call.bigbluebutton') return 'bbb'
+			if (this.module.type === 'call.loungemesh') return 'loungemesh'
+			if (this.module.type === 'call.zoom') return 'zoom'
 			return 'unknown'
 		},
 		statusLabel() {
@@ -205,7 +224,10 @@ export default {
 			this.$emit('hangup')
 			this.$emit('close')
 			if (this.size !== 'tiny' && (this.$route.name === 'room' || this.$route.name === 'room:manage' || this.$route.params?.roomId)) {
-				this.$router.push({ name: 'about' }).catch(() => {
+				const target = (window.eventyay?.isOrganizerArea || this.$route.name?.startsWith('admin') || this.$route.name === 'organizer')
+					? { name: 'organizer' }
+					: { name: 'about' }
+				this.$router.push(target).catch(() => {
 					this.$router.push('/').catch(() => {})
 				})
 			}
@@ -400,6 +422,31 @@ export default {
 		position: relative
 		overflow: hidden
 		background-color: #111827
+
+		.unknown-call-error
+			flex: auto
+			display: flex
+			flex-direction: column
+			align-items: center
+			justify-content: center
+			color: #f1f5f9
+			gap: 16px
+			padding: 24px
+
+			.state-icon--error
+				font-size: 48px
+				color: #ef4444
+
+			.error-title
+				font-size: 18px
+				font-weight: 600
+				color: #f8fafc
+				margin: 0
+
+			.error-detail
+				font-size: 14px
+				color: #94a3b8
+				margin: 0
 
 	&.size-tiny
 		position: fixed

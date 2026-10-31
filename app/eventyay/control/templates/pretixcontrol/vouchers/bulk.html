@@ -1,5 +1,6 @@
 {% extends "pretixcontrol/items/base.html" %}
 {% load i18n %}
+{% load l10n %}
 {% load eventsignal %}
 {% load bootstrap3 %}
 {% load static %}
@@ -19,12 +20,18 @@
                     <input type="text" class="form-control input-xs"
                            id="voucher-bulk-codes-prefix"
                            name="codes_prefix"
+                           maxlength="{{ max_prefix_length|unlocalize }}"
+                           aria-label="{% trans 'Prefix (optional)' %}"
+                           data-length-error="{% trans 'The prefix is too long.' %}"
                            value="{{ request.POST.codes_prefix|default:'' }}"
                            placeholder="{% trans "Prefix (optional)" %}">
                     <div class="input-group">
                         <input type="number" class="form-control input-xs"
                                id="voucher-bulk-codes-num"
                                name="codes_num"
+                               min="1" max="{{ max_codes|unlocalize }}" step="1"
+                               aria-label="{% trans 'Number' context 'number_of_things' %}"
+                               aria-describedby="voucher-bulk-codes-limit"
                                value="{{ request.POST.codes_num|default:'' }}"
                                placeholder="{% trans "Number" context "number_of_things" %}">
                         <div class="input-group-btn">
@@ -38,6 +45,9 @@
                             </button>
                         </div>
                     </div>
+                    <p class="help-block" id="voucher-bulk-codes-limit">
+                        {% blocktrans with maximum=max_codes %}Generate up to {{ maximum }} codes at a time.{% endblocktrans %}
+                    </p>
                 </div>
             </div>
             {% bootstrap_field form.codes layout="control" %}

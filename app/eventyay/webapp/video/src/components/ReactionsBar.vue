@@ -20,7 +20,7 @@ export default {
 	emits: ['expand'],
 	computed: {
 		availableReactions() {
-			return ['👏', '❤️', '🎉', '👍', '🔥', '😂', '😮', '😢', '🙌', '💯', '🤔', '👎'].map(emoji => {
+			return ['👏', '❤️', '🎉', '👍', '🔥', '😂', '😮', '😢', '🙌', '💯', '🤔', '👎', '✨', '🚀', '💡', '😍', '🥳', '🤩', '🤝', '🦾', '🎯', '☕', '🎈', '🌟'].map(emoji => {
 				let label = getEmojiDataFromNative(emoji).short_names[0]
 				label = label.replace(/_/g, ' ')
 				if (label === '+1') label = 'thumbs up'
@@ -44,17 +44,24 @@ export default {
 .c-reactions-bar
 	display: flex
 	align-items: center
-	flex: none
+	min-width: 0
+	flex: 1 1 auto
+	overflow: hidden
 	.actions
-		display: grid
-		grid-template-columns: repeat(6, 28px)
-		grid-auto-rows: 28px
-		gap: 2px
+		display: flex
+		flex-direction: row
+		flex-wrap: nowrap
+		align-items: center
+		gap: 3px
 		background: var(--clr-surface, #ffffff)
 		border: 1px solid var(--clr-grey-200, #e2e8f0)
-		border-radius: 12px
-		padding: 4px
-		overflow: visible
+		border-radius: 20px
+		overflow-x: auto
+		overflow-y: hidden
+		scrollbar-width: none
+		&::-webkit-scrollbar
+			display: none
+		max-width: 100%
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04)
 		transition: border-color 0.15s ease, box-shadow 0.15s ease
 		&:hover
@@ -70,12 +77,14 @@ export default {
 		-webkit-tap-highlight-color: transparent
 		outline: none
 		border-radius: 50%
-		transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.12s ease
+		transition: background-color 0.12s ease
 		&:hover
-			transform: scale(1.25) translateY(-2px)
 			background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
+			.emoji
+				transform: scale(1.25) translateY(-2px)
 		&:active
-			transform: scale(0.92)
+			.emoji
+				transform: scale(0.92)
 		&:focus-visible
 			outline: 2px solid var(--clr-primary, #2185d0)
 			outline-offset: 1px
@@ -83,4 +92,5 @@ export default {
 		height: 18px
 		width: @height
 		display: block
+		transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)
 </style>

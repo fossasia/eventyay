@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 from urllib.parse import quote, urljoin
 
 from django.conf import settings
@@ -8,8 +10,9 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseRedirect,
+    RawPostDataException,
 )
-from django.shortcuts import get_object_or_404, redirect, render, resolve_url
+from django.shortcuts import redirect, render, resolve_url
 from django.template.response import TemplateResponse
 from django.urls import get_script_prefix, resolve, reverse
 from django.utils.encoding import force_str
@@ -18,12 +21,12 @@ from django_scopes import scope
 
 from eventyay.base.models import Event, Organizer
 from eventyay.base.models.auth import SuperuserPermissionSet, User
+from eventyay.eventyay_common.permissions import user_has_ticket_dashboard_access
 from eventyay.helpers.security import (
     SessionInvalid,
     SessionReauthRequired,
     assert_session_valid,
 )
-from eventyay.eventyay_common.permissions import user_has_ticket_dashboard_access
 
 
 logger = logging.getLogger(__name__)
@@ -193,7 +196,11 @@ class PermissionMiddleware:
                 )
             request.organizer = organizer
             if not organizer or not request.user.has_organizer_permission(organizer, request=request):
-                if organizer and request.user.is_staff and not request.user.has_active_staff_session(request.session.session_key):
+                if (
+                    organizer
+                    and request.user.is_staff
+                    and not request.user.has_active_staff_session(request.session.session_key)
+                ):
                     return render(request, 'admin_mode_required.html', status=403)
                 raise Http404(_('The selected organizer was not found or you have no permission to administrate it.'))
             if request.user.has_active_staff_session(request.session.session_key):
@@ -208,27 +215,126 @@ class PermissionMiddleware:
             return r
 
 
+SENSITIVE_KEY_MARKERS = (
+    'password',
+    'passwd',
+    'secret',
+    'token',
+    'credential',
+    'signature',
+    'cvv',
+    'cvc',
+    'card_number',
+    'credit_card',
+    'authorization',
+)
+
+SENSITIVE_KEY_BOUNDARY_RE = re.compile(r'(?:^|[_\-.])(key|auth|pwd)(?:[_\-.]|$)', re.IGNORECASE)
+
+
+def is_sensitive_key(key: str) -> bool:
+    """
+    Determines if a parameter/field key is sensitive and requires value redaction.
+    Uses substring checks for distinctively sensitive keywords and word-boundary matching
+    for keywords like 'key' and 'auth' to avoid over-masking ordinary fields (e.g. 'keynote', 'author').
+    """
+    if not isinstance(key, str):
+        return False
+    k = key.lower()
+    for marker in SENSITIVE_KEY_MARKERS:
+        if marker in k:
+            return True
+    return bool(SENSITIVE_KEY_BOUNDARY_RE.search(k))
+
+
+def mask_audit_data(d):
+    """
+    Recursively scrubs sensitive keys from dictionaries and lists.
+    Replaces values for matched sensitive keys with '***' while preserving list shapes.
+    """
+    if isinstance(d, dict):
+        for k, v in list(d.items()):
+            if is_sensitive_key(k):
+                if isinstance(v, list):
+                    d[k] = ['***'] * len(v)
+                else:
+                    d[k] = '***'
+            else:
+                mask_audit_data(v)
+    elif isinstance(d, list):
+        for item in d:
+            mask_audit_data(item)
+
+
 class AuditLogMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if (request.path.startswith(get_script_prefix() + 'control') or
-            request.path.startswith(get_script_prefix() + 'admin')) and request.user.is_authenticated:
-            if getattr(request.user, 'is_hijacked', False):
-                hijack_history = request.session.get('hijack_history', False)
-                hijacker = get_object_or_404(User, pk=hijack_history[0])
-                ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
-                if ss:
-                    ss.logs.create(
-                        url=request.path,
-                        method=request.method,
-                        impersonating=request.user,
-                    )
+        """
+        Intercepts requests to control/admin areas and records audit logs
+        for active staff sessions. Captures request paths and masked POST payloads.
+        """
+        if (
+            request.path.startswith(get_script_prefix() + 'control')
+            or request.path.startswith(get_script_prefix() + 'admin')
+        ) and request.user.is_authenticated:
+            # Check for active staff session FIRST before touching request payloads or URLs.
+            # This avoids unnecessary performance overhead and eliminates runtime risk
+            # (such as premature request.POST / request.body reads breaking custom upload handlers).
+            ss = None
+            impersonating = None
+            is_hijacked = getattr(request.user, 'is_hijacked', False) or bool(
+                request.session.get('hijack_history')
+            )
+            if is_hijacked:
+                hijack_history = request.session.get('hijack_history') or []
+                if hijack_history:
+                    hijacker = User.objects.filter(pk=hijack_history[0]).first()
+                    if hijacker:
+                        ss = hijacker.get_active_staff_session(request.session.get('hijacker_session'))
+                        if ss:
+                            impersonating = request.user
             else:
                 ss = request.user.get_active_staff_session(request.session.session_key)
-                if ss:
-                    ss.logs.create(url=request.path, method=request.method)
+
+            if ss:
+                post_data = None
+                if request.method == 'POST':
+                    data_dict = None
+                    try:
+                        if request.POST:
+                            data_dict = dict(request.POST.lists())
+                        elif request.content_type == 'application/json' and request.body:
+                            data_dict = json.loads(request.body)
+                    except (ValueError, TypeError, RawPostDataException):
+                        pass
+
+                    if data_dict and isinstance(data_dict, (dict, list)):
+                        mask_audit_data(data_dict)
+                        try:
+                            post_data = json.dumps(data_dict)
+                            if post_data and len(post_data) > 10000:
+                                post_data = post_data[:10000] + '... [truncated]'
+                        except (TypeError, ValueError) as e:
+                            post_data = f'Serialization failed: {str(e)}'
+
+                query = request.GET.copy()
+                for k in list(query.keys()):
+                    if is_sensitive_key(k):
+                        query.setlist(k, ['***'])
+                url = request.path
+                if query:
+                    url += '?' + query.urlencode(safe='*')
+                url = url[:255]
+
+                ss.logs.create(
+                    url=url,
+                    method=request.method,
+                    impersonating=impersonating,
+                    post_data=post_data,
+                )
 
         response = self.get_response(request)
         return response
+

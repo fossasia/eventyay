@@ -8,6 +8,9 @@ dialog.pretalx-modal.shift-confirm-modal(ref="modal", @click="onBackdrop", @canc
 			div(v-for="row in details", :key="row.label")
 				dt {{ row.label }}
 				dd {{ row.value }}
+		label.shift-confirm-email(v-if="emailLabel")
+			input(type="checkbox", :checked="sendEmail", :disabled="busy", @change="$emit('update:sendEmail', $event.target.checked)")
+			span {{ emailLabel }}
 		p.shift-confirm-error(v-if="error") {{ error }}
 		.shift-confirm-actions
 			button.btn.btn-sm.btn-default(type="button", :disabled="busy", @click="cancel") {{ $t('Cancel') }}
@@ -17,11 +20,13 @@ dialog.pretalx-modal.shift-confirm-modal(ref="modal", @click="onBackdrop", @canc
 <script>
 export default {
 	name: 'ShiftConfirmDialog',
-	emits: ['confirm', 'cancel'],
+	emits: ['confirm', 'cancel', 'update:sendEmail'],
 	props: {
 		title: { type: String, default: 'Please confirm' },
 		lead: { type: String, default: '' },
 		details: { type: Array, default: () => [] },
+		emailLabel: { type: String, default: '' },
+		sendEmail: { type: Boolean, default: true },
 		confirmLabel: { type: String, default: 'Confirm' },
 		confirmClass: { type: String, default: 'btn-primary' },
 		error: { type: String, default: '' },
@@ -67,6 +72,17 @@ export default {
 		dd
 			margin: 0
 			color: $clr-grey-900
+	.shift-confirm-email
+		display: flex
+		align-items: center
+		gap: 8px
+		margin: 0 0 16px
+		font-size: 14px
+		font-weight: normal
+		color: $clr-grey-900
+		cursor: pointer
+		input
+			margin: 0
 	.shift-confirm-error
 		color: #d9534f
 		margin: 0 0 12px

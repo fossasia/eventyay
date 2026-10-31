@@ -3,11 +3,12 @@ import decimal
 import json
 
 from django.core import mail as djmail
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
+from eventyay.multidomain.urlreverse import build_absolute_uri
 
 from eventyay.base.models import (
     Event,
@@ -107,15 +108,17 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         doc = self.client.get('/control/event/%s/%s/vouchers/' % (self.orga.slug, self.event.slug))
         assert 'ABCDEFG' in doc.content.decode()
 
+    @override_settings(SITE_URL='https://testserver')
     def test_csv(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
+            self.event.vouchers.create(product=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
         doc = self.client.get('/control/event/%s/%s/vouchers/?download=yes' % (self.orga.slug, self.event.slug))
+        link = build_absolute_uri(self.event, 'presale:event.redeem') + '?voucher=ABCDEFG'
         assert (
-            doc.content.decode().strip() == '"Voucher code","Valid until","Product","Reserve quota",'
+            doc.content.decode().strip() == '"Voucher code","Voucher link","Valid until","Product","Reserve quota",'
             '"Bypass quota","Bypass approval","Price effect","Value","Tag","Redeemed",'
             '"Maximum usages","Seat","Comment"'
-            '\r\n"ABCDEFG","","Early-bird ticket","No","No","Yes","No effect","","","0",'
+            f'\r\n"ABCDEFG","{link}","","Early-bird ticket","No","No","Yes","No effect","","","0",'
             '"1","",""'
         )
 
@@ -561,6 +564,22 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             expected_failure=True,
         )
 
+    def test_create_bulk_send_includes_redemption_urls(self):
+        self._create_bulk_vouchers(
+            {
+                'codes': 'ABCDE\nDEFGH',
+                'itemvar': '%d' % self.shirt.pk,
+                'send': 'on',
+                'send_subject': 'Your voucher',
+                'send_message': 'Redeem here: {voucher_url}',
+                'send_recipients': 'foo@example.com\nfoo@example.net',
+            }
+        )
+        assert len(djmail.outbox) == 2
+        bodies = [m.body for m in djmail.outbox]
+        assert any('/redeem/?voucher=ABCDE' in body for body in bodies)
+        assert any('/redeem/?voucher=DEFGH' in body for body in bodies)
+
     def test_create_bulk_send(self):
         self._create_bulk_vouchers(
             {
@@ -916,4 +935,62 @@ class InvoiceVoucherFormTest(TestCase):
             }
         )
         assert f.is_valid(), f.errors
+
+
+@override_settings(SITE_URL='https://testserver')
+class VoucherFilterEmptyStateTest(SoupTestMixin, TestCase):
+    @scopes_disabled()
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
+        self.orga = Organizer.objects.create(name='CCC', slug='ccc')
+        self.event = Event.objects.create(
+            organizer=self.orga,
+            name='30C3',
+            slug='30c3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+        )
+        t = Team.objects.create(organizer=self.orga, can_view_vouchers=True, can_change_vouchers=True)
+        t.members.add(self.user)
+        t.limit_events.add(self.event)
+        self.client.login(email='dummy@dummy.dummy', password='dummy')
+
+        self.ticket = Item.objects.create(event=self.event, name='Early-bird ticket', default_price=23)
+        self.shirt = Item.objects.create(event=self.event, name='T-Shirt', default_price=12)
+
+    def test_filter_empty_state_quota_handling(self):
+        with scopes_disabled():
+            self.event.vouchers.create(product=self.ticket, code='TESTVOUCHERQM', block_quota=False)
+        response = self.client.get(
+            '/control/event/%s/%s/vouchers/?qm=b' % (self.orga.slug, self.event.slug),
+            follow=True,
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Your search did not match any vouchers.' in content
+        assert "You haven't created any vouchers yet." not in content
+        assert 'TESTVOUCHERQM' not in content
+
+    def test_filter_empty_state_product(self):
+        with scopes_disabled():
+            self.event.vouchers.create(product=self.ticket, code='TESTVOUCHERPROD')
+        response = self.client.get(
+            '/control/event/%s/%s/vouchers/?productvar=%s' % (self.orga.slug, self.event.slug, self.shirt.pk),
+            follow=True,
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Your search did not match any vouchers.' in content
+        assert "You haven't created any vouchers yet." not in content
+        assert 'TESTVOUCHERPROD' not in content
+
+    def test_empty_state_no_filter(self):
+        response = self.client.get(
+            '/control/event/%s/%s/vouchers/' % (self.orga.slug, self.event.slug),
+            follow=True,
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "You haven't created any vouchers yet." in content
+        assert 'Your search did not match any vouchers.' not in content
 

@@ -11,7 +11,7 @@ from allauth.socialaccount.providers import registry
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.db.models import (
     Case,
     Count,
@@ -71,6 +71,11 @@ from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm, VoucherFilterForm
 from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+from eventyay.control.signals import (
+    platform_fee_voucher_copied,
+    platform_fee_voucher_forms,
+    platform_fee_voucher_targets,
+)
 from eventyay.control.video.admin_dashboard import get_video_server_dashboard_rows
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
@@ -1181,7 +1186,50 @@ class VoucherList(PaginationMixin, AdministratorPermissionRequiredMixin, ListVie
         return ctx
 
 
-class VoucherCreate(AdministratorPermissionRequiredMixin, CreateView):
+class VoucherPluginFormsMixin:
+    """Validate and save the forms plugins add to the platform fee voucher form."""
+
+    @cached_property
+    def plugin_forms(self) -> list:
+        voucher = self.object if self.object and self.object.pk else None
+        return [
+            form
+            for _receiver, form in platform_fee_voucher_forms.send(
+                sender=None, request=self.request, voucher=voucher
+            )
+            if form is not None
+        ]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['plugin_forms'] = self.plugin_forms
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        plugin_forms_valid = all([plugin_form.is_valid() for plugin_form in self.plugin_forms])
+        if form.is_valid() and plugin_forms_valid:
+            has_targets = form.cleaned_data.get('applies_to_platform_fees') or any(
+                plugin_form.has_targets() for plugin_form in self.plugin_forms
+            )
+            if form.cleaned_data.get('status') == InvoiceVoucher.STATUS_ACTIVE and not has_targets:
+                form.add_error(
+                    'applies_to_platform_fees',
+                    _('An active voucher must apply to ticket platform fees or to at least one plan or add-on.'),
+                )
+                return self.form_invalid(form)
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            response = super().form_valid(form)
+            for plugin_form in self.plugin_forms:
+                plugin_form.save(self.object)
+        return response
+
+
+class VoucherCreate(VoucherPluginFormsMixin, AdministratorPermissionRequiredMixin, CreateView):
     model = InvoiceVoucher
     template_name = 'pretixcontrol/admin/vouchers/form.html'
     context_object_name = 'voucher'
@@ -1209,10 +1257,11 @@ class VoucherCreate(AdministratorPermissionRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def post(self, request, *args, **kwargs):
+        self.object = None
         return super().post(request, *args, **kwargs)
 
 
-class VoucherUpdate(AdministratorPermissionRequiredMixin, UpdateView):
+class VoucherUpdate(VoucherPluginFormsMixin, AdministratorPermissionRequiredMixin, UpdateView):
     model = InvoiceVoucher
     template_name = 'pretixcontrol/admin/vouchers/form.html'
     context_object_name = 'voucher'
@@ -1239,6 +1288,10 @@ class VoucherUpdate(AdministratorPermissionRequiredMixin, UpdateView):
         messages.success(self.request, _('Your changes have been saved.'))
         return super().form_valid(form)
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
     def get_success_url(self) -> str:
         return reverse('eventyay_admin:admin.vouchers')
 
@@ -1255,6 +1308,14 @@ class VoucherDetail(AdministratorPermissionRequiredMixin, DetailView):
             ).get(id=self.kwargs['voucher'])
         except InvoiceVoucher.DoesNotExist:
             raise Http404(_('The requested voucher does not exist.'))
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        targets = [str(_('Ticket platform fees'))] if self.object.applies_to_platform_fees else []
+        for _receiver, response in platform_fee_voucher_targets.send(sender=None, voucher=self.object):
+            targets.extend(response or [])
+        ctx['targets'] = targets
+        return ctx
 
 
 class VoucherDisable(AdministratorPermissionRequiredMixin, DetailView):
@@ -1297,12 +1358,15 @@ class VoucherDuplicate(AdministratorPermissionRequiredMixin, View):
             status=InvoiceVoucher.STATUS_DRAFT,
             comment=original.comment,
             allow_partial_usage=original.allow_partial_usage,
+            applies_to_platform_fees=original.applies_to_platform_fees,
             created_by=str(request.user),
             updated_by=str(request.user),
         )
-        new_voucher.save()
-        new_voucher.limit_events.set(original.limit_events.all())
-        new_voucher.limit_organizer.set(original.limit_organizer.all())
+        with transaction.atomic():
+            new_voucher.save()
+            new_voucher.limit_events.set(original.limit_events.all())
+            new_voucher.limit_organizer.set(original.limit_organizer.all())
+            platform_fee_voucher_copied.send(sender=None, source=original, voucher=new_voucher)
 
         messages.success(request, _('Voucher duplicated as draft with code %(code)s.') % {'code': new_voucher.code})
         return HttpResponseRedirect(

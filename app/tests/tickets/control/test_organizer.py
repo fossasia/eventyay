@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.db import transaction
@@ -7,7 +7,13 @@ from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.base.models import (
+    Event,
+    Organizer,
+    OrganizerBillingModel,
+    Team,
+    User,
+)
 from tests.tickets.base import SoupTest, extract_form_fields
 
 
@@ -141,6 +147,89 @@ class OrganizerTest(SoupTest):
         self.orga1.refresh_from_db()
         assert self.orga1.name == 'CCC e.V.'
 
+    def test_saving_payment_information_signals_automatic_billing_consent(self):
+        url = reverse(
+            'control:organizer.save_payment_information',
+            kwargs={'organizer': self.orga1.slug},
+        )
+        with (
+            patch(
+                'eventyay.control.views.organizer_views.organizer_view.get_stripe_customer_id',
+                return_value='cus_automatic',
+            ),
+            patch(
+                'eventyay.control.views.organizer_views.organizer_view.update_payment_info'
+            ),
+            patch(
+                'eventyay.control.views.organizer_views.organizer_view.organizer_billing_payment_method_saved.send_robust',
+                return_value=[],
+            ) as send_robust,
+        ):
+            response = self.client.post(url, {'setup_intent_id': 'seti_automatic'})
+
+        assert response.status_code == 200
+        assert response.json()['billing_integration_notified'] is True
+        send_robust.assert_called_once_with(
+            sender=self.orga1,
+            organizer=self.orga1,
+            user=self.user,
+            stripe_customer_id='cus_automatic',
+            setup_intent_id='seti_automatic',
+        )
+
+    def test_receiver_failure_does_not_fail_saved_payment_information(self):
+        url = reverse(
+            'control:organizer.save_payment_information',
+            kwargs={'organizer': self.orga1.slug},
+        )
+        with (
+            patch(
+                'eventyay.control.views.organizer_views.organizer_view.get_stripe_customer_id',
+                return_value='cus_automatic',
+            ),
+            patch(
+                'eventyay.control.views.organizer_views.organizer_view.update_payment_info'
+            ),
+            patch(
+                'eventyay.control.views.organizer_views.organizer_view.organizer_billing_payment_method_saved.send_robust',
+                return_value=[(MagicMock(), RuntimeError('receiver failed'))],
+            ),
+        ):
+            response = self.client.post(url, {'setup_intent_id': 'seti_automatic'})
+
+        assert response.status_code == 200
+        assert response.json() == {
+            'success': True,
+            'billing_integration_notified': False,
+        }
+
+    def test_billing_payment_method_discloses_automatic_payments(self):
+        OrganizerBillingModel.objects.create(
+            organizer=self.orga1,
+            primary_contact_name='Billing Contact',
+            primary_contact_email='billing@example.com',
+            company_or_organization_name='CCC',
+            address_line_1='Example Street 1',
+            address_line_2='',
+            city='Berlin',
+            zip_code='10115',
+            country='DE',
+            preferred_language='en',
+            tax_id='',
+            stripe_customer_id='cus_automatic',
+        )
+
+        response = self.client.get(
+            reverse(
+                'eventyay_common:organizer.billing',
+                kwargs={'organizer': self.orga1.slug},
+            )
+        )
+
+        assert response.status_code == 200
+        assert b'Save and enable automatic payments' in response.content
+        assert b'automatic payments are managed separately' in response.content
+
     def test_organizer_display_settings(self):
         called = False
 
@@ -164,3 +253,20 @@ class OrganizerTest(SoupTest):
         self.orga1.settings.flush()
         assert self.orga1.settings.primary_color == '#33c33c'
         assert called
+
+    def test_gates_empty_state_hides_table(self):
+        url = reverse('eventyay_common:organizer.gates', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
+        self.assertEqual(len(doc.select('.table')), 0)
+        self.assertNotIn('<th>Gate</th>', doc.decode())
+        self.assertEqual(len(doc.select('.empty-collection')), 1)
+        self.assertIn('No gates created yet. Create a new gate to view it here.', doc.decode())
+        self.assertIn('Create a new gate', doc.select_one('.empty-collection a').get_text())
+
+    def test_gates_list_shows_table_when_gates_exist(self):
+        with scopes_disabled():
+            self.orga1.gates.create(name='Main Entrance')
+        url = reverse('eventyay_common:organizer.gates', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
+        self.assertEqual(len(doc.select('.table')), 1)
+        self.assertIn('Main Entrance', doc.decode())

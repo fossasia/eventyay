@@ -10,7 +10,13 @@ class UserOrderFilterForm(forms.Form):
         queryset=Event.objects.none(),
         required=False,
         label=_('Event'),
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search events'),
+            'data-empty-text': _('No matching events'),
+            'data-all-label': _('All events'),
+        }),
         empty_label=_('Select an Event'),
     )
     code = forms.CharField(
@@ -111,7 +117,13 @@ class SessionsFilterForm(forms.Form):
         queryset=Event.objects.none(),
         required=False,
         label=_('Event'),
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search events'),
+            'data-empty-text': _('No matching events'),
+            'data-all-label': _('All events'),
+        }),
         empty_label=_('Select an Event'),
     )
 

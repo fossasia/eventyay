@@ -216,7 +216,7 @@
 			.toolbar-right-quick
 				.timezone-area
 					.timezone-compact(ref="timezoneDropdown")
-						button.toolbar-btn.tz-btn(@click="toggleTzDropdown", :title="timezoneModel")
+						button.toolbar-btn.tz-btn(@click="toggleTzDropdown", :title="timezoneModel.replace(/_/g, ' ')")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								circle(cx="12", cy="12", r="10")
 								line(x1="2", y1="12", x2="22", y2="12")
@@ -585,7 +585,7 @@ export default {
 			const seen = new Set()
 			const addTimezone = (id, suffix) => {
 				if (!id || seen.has(id)) return
-				pinned.push({ id, label: `${id} (${suffix})` })
+				pinned.push({ id, label: `${id.replace(/_/g, ' ')} (${suffix})` })
 				seen.add(id)
 			}
 			addTimezone(this.userTimezone, 'local')
@@ -950,7 +950,7 @@ export default {
 			addTz(this.userTimezone)
 			this.cachedOtherTimezones = result
 				.sort((a, b) => a.localeCompare(b))
-				.map(tz => ({ id: tz, label: tz }))
+				.map(tz => ({ id: tz, label: tz.replace(/_/g, ' ') }))
 		},
 		toggleFilter(item) {
 			item.selected = !item.selected

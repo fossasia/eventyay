@@ -72,7 +72,7 @@
 				.fields-grid.datetime-grid(v-if="isScheduledMode")
 					.field-group
 						label.field-label
-							| {{ $t('Start date & time') }} ({{ eventTimezone }})
+							| {{ $t('Start date & time') }} ({{ eventTimezoneLabel }})
 							span.required-star *
 						.input-wrapper.datetime-wrapper
 							input.datetime-input(
@@ -85,7 +85,7 @@
 
 					.field-group
 						label.field-label
-							| {{ $t('End date & time') }} ({{ eventTimezone }})
+							| {{ $t('End date & time') }} ({{ eventTimezoneLabel }})
 							span.required-star *
 						.input-wrapper.datetime-wrapper
 							input.datetime-input(
@@ -98,7 +98,7 @@
 
 					.timezone-hint
 						i.mdi.mdi-clock-outline(aria-hidden="true")
-						| {{ $t('All times shown in the event timezone') }} ({{ eventTimezone }}).
+						| {{ $t('All times shown in the event timezone') }} ({{ eventTimezoneLabel }}).
 
 				.single-stream-scheduled-hint(v-if="streams.length === 1 && isScheduledMode")
 					span {{ $t('This stage has a scheduled time window.') }}
@@ -174,9 +174,7 @@
 				i.mdi.mdi-information(aria-hidden="true")
 				span
 					| {{ $t('Note: To manage advanced settings like LLM choices, API key management, and streaming languages, visit the') }} 
-					a(
-						:href="interpretationSettingsUrl"
-					) {{ $t('Interpretation Plugin Settings') }}
+					router-link(:to="{ name: 'admin:interpretation' }") {{ $t('Interpretation settings page') }}
 					| .
 
 		.interpretation-plugin-language-streams(v-if="showPluginLanguageStreams && isInterpretationFeatureAvailable")
@@ -184,6 +182,9 @@
 				v-if="interpretationConfig.room_enabled && interpretationConfig.interpreter === 'voxbento'"
 				:title="$t('Interpretation channels')"
 				:entries="pluginLanguageStreamEntries"
+				:roomId="roomId"
+				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
+				:translationModelSetup="!!interpretationConfig.translation_model"
 			)
 			.tool-section.skeleton-provider-layout(v-else-if="interpretationConfig.room_enabled && interpretationConfig.interpreter && interpretationConfig.interpreter !== 'voxbento' && interpretationConfig.interpreter !== 'none'")
 				.tool-section-header
@@ -214,6 +215,7 @@ import moment from 'moment-timezone'
 import api from 'lib/api'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
+import { readApiErrorMessage } from 'lib/apiErrorMessage'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import mixin from './mixin'
@@ -245,7 +247,7 @@ export default defineComponent({
 			validationErrors: {},
 			deletingStreamIndex: null,
 			syncStatus: 'loading',
-			interpretationConfig: { room_enabled: false, interpreter: '' },
+			interpretationConfig: { room_enabled: false, interpreter: '', translation_model: '' },
 			availableInterpreters: [],
 			interpretationPutError: null,
 			_lastFetchRoomId: null,
@@ -253,28 +255,21 @@ export default defineComponent({
 	},
 	computed: {
 		interpretationSettingsUrl() {
-			const world = this.$store.state.world
-			let organizer = world?.organizer_slug || world?.organizer
-			let event = world?.slug || world?.id
-			
-			if (!organizer || organizer === 'default') {
-				const pathParts = window.location.pathname.split('/').filter(Boolean)
-				const eventIndex = pathParts.indexOf('event')
-				if (eventIndex !== -1 && pathParts.length > eventIndex + 2) {
-					organizer = pathParts[eventIndex + 1]
-					event = pathParts[eventIndex + 2]
-				} else if (pathParts.length >= 2) {
-					organizer = pathParts[0]
-					event = pathParts[1]
-				}
+			try {
+				const resolved = this.$router.resolve({ name: 'admin:interpretation' })
+				return resolved?.href || '/event/interpretation'
+			} catch (e) {
+				return '/event/interpretation'
 			}
-			return `/common/event/${organizer}/${event}/interpretation/rooms/`
 		},
 		roomId() {
 			return this.config?.id ? String(this.config.id) : null
 		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || this.$store.state.userTimezone || moment.tz.guess() || 'UTC'
+		},
+		eventTimezoneLabel() {
+			return this.eventTimezone.replace(/_/g, ' ')
 		},
 		isScheduledMode() {
 			return inferPlaybackModeFromStreams(this.streams) === PLAYBACK_MODE_SCHEDULE_DRIVEN
@@ -348,7 +343,8 @@ export default defineComponent({
 				if (data.ui_sync_supported) {
 					this.interpretationConfig = {
 						room_enabled: data.room_enabled,
-						interpreter: data.interpreter === 'none' ? '' : (data.interpreter || '')
+						interpreter: data.interpreter === 'none' ? '' : (data.interpreter || ''),
+						translation_model: data.translation_model || ''
 					}
 					this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
 					this._lastFetchRoomId = fetchingRoomId
@@ -390,6 +386,15 @@ export default defineComponent({
 					const data = await res.json().catch(() => ({}))
 					this.interpretationPutError = data.detail || `Failed to save captioning settings: ${res.statusText}`
 					throw new Error(this.interpretationPutError)
+				}
+
+				try {
+					const updatedConfig = await api.call('room.config.get', { room: roomId })
+					if (updatedConfig) {
+						this.$store.commit('updateRooms', [updatedConfig])
+					}
+				} catch (e) {
+					console.warn('Failed to update room config in store after interpretation save', e)
 				}
 			} catch (err) {
 				console.error('saveInterpretationConfig failed:', err)
@@ -854,11 +859,11 @@ export default defineComponent({
 					})
 					if (!res.ok && res.status !== 404) {
 						logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'delete_failed', status: res.status})
-						const text = await res.text().catch(() => '')
-						console.warn('Failed to delete stream schedule:', scheduleId, text)
+						const errorMessage = await readApiErrorMessage(res, res.statusText || 'Bad Request')
+						console.warn('Failed to delete stream schedule:', scheduleId, errorMessage)
 						remainingDeletions.push(scheduleId)
 						this.deletedScheduleIds = remainingDeletions
-						throw new Error(`Failed to delete stream schedule: ${text || res.statusText}`)
+						throw new Error(`Failed to delete stream schedule: ${errorMessage}`)
 					}
 				} catch (err) {
 					if (!remainingDeletions.includes(scheduleId)) {
@@ -871,6 +876,11 @@ export default defineComponent({
 			this.deletedScheduleIds = []
 
 			if (this.isScheduledMode) {
+				const failSave = async (res, verb, index) => {
+					logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
+					const errorMessage = await readApiErrorMessage(res)
+					throw new Error(`Failed to ${verb} stream schedule ${index + 1}: ${errorMessage}`)
+				}
 				for (let i = 0; i < this.streams.length; i++) {
 					const stream = this.streams[i]
 					const payload = {
@@ -900,11 +910,7 @@ export default defineComponent({
 							body: JSON.stringify(payload),
 							credentials: 'include',
 						})
-						if (!res.ok) {
-							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
-							const text = await res.text()
-							throw new Error(`Failed to update stream schedule ${i + 1}: ${text}`)
-						}
+						if (!res.ok) await failSave(res, 'update', i)
 					} else {
 						const res = await fetch(baseUrl, {
 							method: 'POST',
@@ -912,11 +918,7 @@ export default defineComponent({
 							body: JSON.stringify(payload),
 							credentials: 'include',
 						})
-						if (!res.ok) {
-							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
-							const text = await res.text()
-							throw new Error(`Failed to create stream schedule ${i + 1}: ${text}`)
-						}
+						if (!res.ok) await failSave(res, 'create', i)
 						const saved = await res.json()
 						stream.id = saved.id
 					}

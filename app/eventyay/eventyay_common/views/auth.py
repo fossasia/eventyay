@@ -41,7 +41,7 @@ from eventyay.base.forms.auth import (
     PasswordRecoverForm,
     RegistrationForm,
 )
-from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
+from eventyay.base.models import OrganizerRequest, TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
 from eventyay.helpers.cookies import set_cookie_without_samesite
@@ -58,7 +58,15 @@ def get_used_backend(request):
     return backend
 
 
-def process_login(request, user, keep_logged_in):
+def get_safe_next(request):
+    """Return the ``next`` parameter if it is a safe local URL, otherwise the dashboard."""
+    next_url = request.GET.get('next')
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        return next_url
+    return 'eventyay_common:dashboard'
+
+
+def process_login(request, user, keep_logged_in, *, next_url=None):
     """
     This method allows you to return a response to a successful log-in. This will set all session values correctly
     and redirect to either the URL specified in the ``next`` parameter, or the 2FA login screen, or the dashboard.
@@ -68,7 +76,9 @@ def process_login(request, user, keep_logged_in):
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
 
     # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
-    next_url = request.session.pop('socialauth_next_url', None)
+    socialauth_next_url = request.session.pop('socialauth_next_url', None)
+    if next_url is None:
+        next_url = socialauth_next_url
     if not next_url:
         next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
 
@@ -278,7 +288,7 @@ class Forgot(TemplateView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect(request.GET.get('next', 'eventyay_common:dashboard'))
+            return redirect(get_safe_next(request))
         return super().get(request, *args, **kwargs)
 
     def post(self, request: HttpRequest, *args, **kwargs):
@@ -321,6 +331,18 @@ class Forgot(TemplateView):
         return context
 
 
+def get_organizer_onboarding(user: User) -> OrganizerRequest | None:
+    if user.has_usable_password() or not user.is_active or user.is_spam:
+        return None
+    onboarding = OrganizerRequest.objects.filter(
+        user=user, new_account=True, status=OrganizerRequest.Status.APPROVED,
+        organizer__isnull=False,
+    ).select_related('organizer').first()
+    if onboarding and user.teams.filter(organizer=onboarding.organizer).exists():
+        return onboarding
+    return None
+
+
 class Recover(TemplateView):
     template_name = 'eventyay_common/auth/recover.html'
 
@@ -340,14 +362,14 @@ class Recover(TemplateView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect(request.GET.get('next', 'eventyay_common:dashboard'))
+            return redirect(get_safe_next(request))
         try:
             user = User.objects.get(id=self.request.GET.get('id'), auth_backend='native')
         except User.DoesNotExist:
             return self.invalid('unknownuser')
         if not default_token_generator.check_token(user, self.request.GET.get('token')):
             return self.invalid('invalid')
-        return super().get(request, *args, **kwargs)
+        return super().get(request, *args, onboarding=get_organizer_onboarding(user), **kwargs)
 
     def invalid(self, msg):
         messages.error(self.request, self.error_messages[msg])
@@ -361,8 +383,15 @@ class Recover(TemplateView):
                 return self.invalid('unknownuser')
             if not default_token_generator.check_token(user, self.request.GET.get('token')):
                 return self.invalid('invalid')
+            onboarding = get_organizer_onboarding(user)
             user.set_password(self.form.cleaned_data['password'])
             user.save()
+            if onboarding:
+                user.log_action('eventyay.eventyay_common.auth.user.forgot_password.recovered')
+                return process_login(
+                    request, user, keep_logged_in=False,
+                    next_url=reverse('control:organizer', kwargs={'organizer': onboarding.organizer.slug}),
+                )
             messages.success(request, _('You can now login using your new password.'))
             user.log_action('eventyay.eventyay_common.auth.user.forgot_password.recovered')
             return redirect('auth.login')
@@ -481,7 +510,11 @@ class Login2FAView(TemplateView):
         else:
             log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='2fa_failed', user_id=getattr(self.user, 'pk', None))
             messages.error(request, _('Invalid code, please try again.'))
-            return redirect('auth.login.2fa')
+            retry_url = reverse('auth.login.2fa')
+            next_url = request.GET.get('next')
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+                retry_url += '?next=' + quote(next_url)
+            return redirect(retry_url)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()

@@ -3,7 +3,7 @@
 	.inputs
 		bunt-button.btn-randomize(@click="changeIdenticon") {{ $t('randomize') }}
 		span {{ $t('or') }}
-		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, .png, .jpg, .jpeg") {{ $t('upload') }}
+		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, image/webp, .png, .jpg, .jpeg, .webp") {{ $t('upload') }}
 	.upload-info {{ uploadInfoText }}
 	.image-wrapper
 		.file-error(v-if="fileError")
@@ -25,7 +25,7 @@ const MIN_AVATAR_SIZE = 128
 const UPLOAD_AVATAR_SIZE = 256
 const MAX_FILE_SIZE_MB = 10
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
-const ALLOWED_FORMATS = ['image/png', 'image/jpg', 'image/jpeg']
+const ALLOWED_FORMATS = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp']
 
 // Props & Emits
 const props = defineProps({
@@ -56,7 +56,7 @@ const identiconUser = computed(() => ({
 const uploadInfoText = computed(() => {
 	proxy.$store?.state?.userLocale
 	return proxy.$t(
-		'Maximum file size: {{size}} MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels.',
+		'Maximum file size: {{size}} MB. Supported formats: PNG, JPG, JPEG, WEBP. Minimum dimensions: 128x128 pixels.',
 		{ size: MAX_FILE_SIZE_MB },
 	)
 })
@@ -89,7 +89,7 @@ function fileSelected(event) {
 	
 	// Validate file format
 	if (!ALLOWED_FORMATS.includes(avatarFile.type)) {
-		fileError.value = proxy.$t('Invalid file format. Only PNG, JPG, and JPEG images are allowed.')
+		fileError.value = proxy.$t('Invalid file format. Only PNG, JPG, JPEG, and WEBP images are allowed.')
 		emit('blockSave', true)
 		event.target.value = ''
 		return

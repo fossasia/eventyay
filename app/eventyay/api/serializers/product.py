@@ -167,7 +167,7 @@ class ProductSerializer(I18nAwareModelSerializer):
     picture = UploadedFileField(
         required=False,
         allow_null=True,
-        allowed_types=('image/png', 'image/jpeg', 'image/gif'),
+        allowed_types=('image/png', 'image/jpeg', 'image/gif', 'image/webp'),
         max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
     )
 

@@ -677,6 +677,9 @@ export default {
 	overflow: hidden
 	&:fullscreen
 		background: #fff
+		padding: 0 8px
+		@media (max-width: 768px)
+			padding: 0 6px
 		.c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
 			box-shadow: 0 1px 3px rgba(0,0,0,0.08)

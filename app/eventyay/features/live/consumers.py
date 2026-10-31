@@ -189,6 +189,20 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
                 await component.dispatch_command(content)
             except ConsumerException as e:
                 await self.send_error(e.code, e.message)
+            except Exception as e:
+                if isinstance(e, StopConsumer):
+                    raise e
+                if settings.SENTRY_DSN:
+                    capture_exception(e)
+                logger.exception("Error handling live command %s", content[0])
+                log_event(
+                    'video',
+                    'live.command',
+                    OUTCOME_FAILURE,
+                    error_code='command_failed',
+                    event_id=getattr(self.event, 'pk', None),
+                )
+                await self.send_error("command.error", "Failed to process request")
         else:
             await self.send_error("protocol.unknown_command")
 
@@ -251,6 +265,8 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
                 error_code='server_fatal',
                 event_id=getattr(self.event, 'pk', None),
             )
+            # Async events are not the client command stored in self.content.
+            # Clear it so server.fatal is not correlated with that request.
             self.content = []
             await self.send_error(code="server.fatal", message="Fatal Server Error")
             await asyncio.sleep(0.5)

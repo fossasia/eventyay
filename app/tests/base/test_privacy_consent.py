@@ -356,6 +356,29 @@ def test_footer_links_the_cookie_policy_under_klaro(gs):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('provider', 'loaded'),
+    [(ConsentProvider.KLARO, True), (ConsentProvider.DISABLED, False), (ConsentProvider.EXTERNAL, False)],
+)
+def test_consent_stylesheet_ships_only_with_the_builtin_banner(gs, provider, loaded):
+    gs.settings.set('privacy_consent_provider', provider)
+    gs.settings.set('privacy_cmp_script_url', 'https://cmp.example.org/cmp.js')
+
+    html = render_to_string('eventyay/privacy/consent.html', {})
+
+    assert ('eventyay/css/privacy/consent.css' in html) is loaded
+
+
+def test_consent_layer_sits_above_the_ticket_shop_card():
+    """#main-card is z-index 1030 and the sticky presale tabs 1200; the notice must clear both."""
+    stylesheet = Path(settings.BASE_DIR) / 'static/eventyay/css/privacy/consent.css'
+    css = stylesheet.read_text(encoding='utf-8')
+
+    assert '#klaro {' in css
+    assert 'z-index: 1250;' in css
+
+
+@pytest.mark.django_db
 def test_footer_omits_an_unsafe_cookie_policy_link(gs):
     gs.settings.set('privacy_cookie_policy_url', 'javascript:alert(1)')
 

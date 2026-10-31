@@ -197,7 +197,7 @@ class AnswerSerializer(I18nAwareModelSerializer):
         except CachedFile.DoesNotExist:
             raise ValidationError(f'The submitted file ID "{submitted_file_id}" was not found.')
 
-        allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'application/pdf')
+        allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf')
         if cf.type not in allowed_types:
             raise ValidationError(
                 f'The submitted file "{submitted_file_id}" has a file type that is not allowed in this field.'

@@ -545,6 +545,18 @@ class EventsTest(SoupTest):
         assert doc.select('[name=date_to_1]')[0]['value'] == '17:00:00'
         assert doc.select('[name=settings-max_items_per_order]')[0]['value'] == '12'
 
+    def test_common_settings_region_timezone_display(self):
+        doc = self.get_doc('/common/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))
+        region_select = doc.select_one('[name=settings-timezone]')
+        timezone_output = doc.select_one('[data-region-timezone-display]')
+
+        assert region_select is not None
+        assert timezone_output is not None
+        assert doc.select_one(f'label[for="{region_select["id"]}"]').get_text(strip=True) == 'Region'
+        assert doc.select_one(f'label[for="{timezone_output["id"]}"]').get_text(strip=True) == 'Timezone'
+        assert timezone_output['data-region-timezone-source'] == region_select['id']
+        assert doc.select_one('script[src$="eventyay-common/js/ui/region-timezone-display.js"]')
+
     def test_settings_timezone(self):
         doc = self.get_doc('/control/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))
         doc.select('[name=date_to_0]')[0]['value'] = '2013-12-30'

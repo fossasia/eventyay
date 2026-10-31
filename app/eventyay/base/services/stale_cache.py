@@ -66,7 +66,7 @@ def unwrap_api_cache_payload(cached):
     return cached, None
 
 
-def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_context=''):
+def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_context='', ttl_for_value=None):
     cached = cache_get(hot_key)
     if cached is not None:
         return deserialize_none_sentinel(cached)
@@ -80,7 +80,24 @@ def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_cont
             return deserialize_none_sentinel(stale)
         raise
 
-    store_hot_and_stale(hot_key, stale_key, value if value is not None else NONE_SENTINEL, hot_ttl, stale_ttl)
+    stored_ttl = hot_ttl
+    if ttl_for_value is not None:
+        try:
+            stored_ttl = ttl_for_value(value)
+        except _DB_ERRORS as exc:
+            # The fresh value is already loaded. A TTL lookup must not discard it
+            # for an older stale entry, which can be a slot that has already ended.
+            logger.warning('TTL lookup failed for %s: %s', log_context or hot_key, exc)
+            stored_ttl = hot_ttl
+    if not stored_ttl or stored_ttl < 1:
+        stored_ttl = 1
+    store_hot_and_stale(
+        hot_key,
+        stale_key,
+        value if value is not None else NONE_SENTINEL,
+        stored_ttl,
+        stale_ttl,
+    )
     return value
 
 

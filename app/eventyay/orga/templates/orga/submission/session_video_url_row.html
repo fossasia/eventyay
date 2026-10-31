@@ -1,0 +1,22 @@
+{% load i18n %}
+<div class="row session-video-link-row align-items-center mb-2" data-session-video-row>
+  <div class="col-md-11">
+    <input
+      type="text"
+      class="form-control"
+      name="session_video_urls"
+      value="{{ value|default:'' }}"
+      inputmode="url"
+      placeholder="https://www.youtube.com/watch?v=…"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      aria-label="{% translate 'YouTube, Vimeo, or Wikimedia Commons URL' %}"
+    >
+  </div>
+  <div class="col-md-1">
+    <button type="button" class="btn btn-sm btn-outline-danger" data-session-video-remove title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+      <i class="fa fa-trash" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>

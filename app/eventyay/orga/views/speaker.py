@@ -39,7 +39,8 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import SpeakerImportProcessForm
+
+from eventyay.orga.forms.importers import SpeakerImportProcessForm, csv_sample_values
 from eventyay.orga.forms.submission import SubmissionForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
@@ -64,9 +65,23 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
+    sortable_fields = (
+        'position',
+        'user__email',
+        'user__fullname',
+        'is_featured',
+        'accepted_submission_count',
+        'submission_count',
+        'has_arrived',
+    )
     default_sort_field = 'position'
-    secondary_sort = {'position': ('user__fullname',), 'is_featured': ('position', 'user__fullname')}
+    secondary_sort = {
+        'position': ('user__fullname',),
+        'is_featured': ('position', 'user__fullname'),
+        'accepted_submission_count': ('user__fullname',),
+        'submission_count': ('user__fullname',),
+        'has_arrived': ('user__fullname',),
+    }
     permission_required = 'base.orga_list_speakerprofile'
 
     def _speaker_list_ordering(self, *, descending=False):
@@ -85,6 +100,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         if plain_key == 'position':
             return qs.order_by(*self._speaker_list_ordering(descending=sort_key.startswith('-')))
         return super().sort_queryset(qs)
+
+    @context
+    def is_manual_order(self) -> bool:
+        return self.current_sort() in ('', 'default', 'position')
 
     def get_filter_form(self):
         with scope(event=self.request.event):
@@ -666,24 +685,26 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
     def parsed(self):
         return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
 
+    def _parsed_rows(self):
+        if not hasattr(self, '_cached_parsed_rows'):
+            self._cached_parsed_rows = list(self.parsed) if self.parsed else []
+        return self._cached_parsed_rows
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['headers'] = self.parsed.fieldnames if self.parsed else []
+        headers = list(self.parsed.fieldnames or []) if self.parsed else []
+        kwargs['headers'] = headers
         kwargs['event'] = self.request.event
         kwargs['initial'] = self.request.event.settings.speaker_import_settings
+        kwargs['sample_values'] = csv_sample_values(self._parsed_rows(), headers)
         return kwargs
 
     @context
     def preview_rows(self):
         if not self.parsed:
             return []
-        rows = []
         headers = self.parsed.fieldnames or []
-        for i, row in enumerate(self.parsed):
-            if i >= 5:
-                break
-            rows.append([row.get(h, '') for h in headers])
-        return rows
+        return [[row.get(header, '') for header in headers] for row in self._parsed_rows()[:5]]
 
     @context
     def headers(self):

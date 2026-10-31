@@ -42,10 +42,24 @@
                 e.preventDefault();
                 $(this).blur();
 
-                $(this).parent("li").toggleClass("active").children("ul").collapse("toggle");
+                // Toggle the classes directly instead of Bootstrap's animated collapse, so the
+                // submenu opens instantly and stays in sync with the parent's "active" state.
+                var item = this.parentElement;
+                var isActive = item.classList.toggle("active");
+                var submenu = item.querySelector(":scope > ul");
+                if (submenu) {
+                    submenu.classList.toggle("in", isActive);
+                }
 
                 if ($toggle) {
-                    $(this).parent("li").siblings().removeClass("active").children("ul.in").collapse("hide");
+                    Array.prototype.forEach.call(item.parentElement.children, function(sibling) {
+                        if (sibling === item) return;
+                        sibling.classList.remove("active");
+                        var openSubmenu = sibling.querySelector(":scope > ul.in");
+                        if (openSubmenu) {
+                            openSubmenu.classList.remove("in");
+                        }
+                    });
                 }
 
             });

@@ -45,7 +45,6 @@ presale_patterns_main = [
                     path('all-events/', RedirectView.as_view(url=reverse_lazy('presale:index'), permanent=True)),
                     path('terms/', SystemPageView.as_view(slug='terms'), name='page.terms'),
                     path('privacy/', SystemPageView.as_view(slug='privacy'), name='page.privacy'),
-                    path('pricing/', SystemPageView.as_view(slug='pricing'), name='page.pricing'),
                     path('support/', SystemPageView.as_view(slug='support'), name='page.support'),
                     path('<orgslug:organizer>/', include(organizer_patterns)),
                     path(

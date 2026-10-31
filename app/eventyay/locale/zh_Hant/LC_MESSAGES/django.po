@@ -14474,7 +14474,7 @@ msgstr "我提交的議程稿件"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "講者電子郵件地址"
 
 #: eventyay/common/templates/common/base.html:189
