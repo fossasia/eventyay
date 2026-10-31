@@ -500,6 +500,9 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_eve
         'can_change_event_settings': can_change_event_settings,
         # Querystring suffix so KPI links stay scoped to the selected date.
         'subevent_qs': f'?subevent={subevent.pk}' if subevent else '',
+        # Waiting-list card counts entries without a voucher (status=w), so its
+        # link must carry that filter too (and the selected date, if any).
+        'waitinglist_qs': (f'?subevent={subevent.pk}&status=w' if subevent else '?status=w'),
     }
 
 

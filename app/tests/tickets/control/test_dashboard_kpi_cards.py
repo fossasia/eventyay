@@ -217,7 +217,9 @@ def test_kpi_cards_rendered_with_links_inside_section(client, env):
     assert f'href="{orders_url}"' in ordered_card
     assert f'href="{overview_url}"' in paid_card
     assert f'href="{overview_url}"' in revenue_card
-    assert f'href="{waitinglist_url}"' in waiting_card
+    # The waiting-list card counts no-voucher entries, so its link must carry
+    # the matching status=w filter.
+    assert f'href="{waitinglist_url}?status=w"' in waiting_card
     assert f'href="{checkin_url}"' in checkin_card
 
     # Values appear under the correct label: ordered = 3, paid = 2.
@@ -360,6 +362,10 @@ def test_kpi_respects_subevent_filter(client, env):
     section1 = _kpi_section(resp1.content.decode())
     ordered_card = _card_by_label(section1, 'Ordered attendees')
     assert f'?subevent={se1.pk}' in ordered_card
+    # The waiting-list link keeps the date scope AND the status=w filter,
+    # joined with a valid separator (HTML-escaped as &amp; in the markup).
+    waiting_card = _card_by_label(section1, 'Waiting list')
+    assert f'?subevent={se1.pk}&amp;status=w' in waiting_card
 
 
 @pytest.mark.django_db
@@ -445,6 +451,35 @@ def test_kpi_includes_event_level_checkin_list_for_selected_subevent(client, env
     # so only the single se1 position is counted (not se2's).
     assert kpi['has_checkin_lists'] is True
     assert kpi['checkin_total'] == 1
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_checkin_list_view_includes_event_level_lists_for_selected_date(client, env):
+    # The "View check-in lists" destination must show event-level lists
+    # (subevent=None) when a date is selected, matching what the KPI counts.
+    with scopes_disabled():
+        event = env['event']
+        event.has_subevents = True
+        event.save(update_fields=['has_subevents'])
+    with scope(organizer=env['organizer'], event=env['event']):
+        se1 = event.subevents.create(name='Day 1', date_from=now())
+        se2 = event.subevents.create(name='Day 2', date_from=now())
+        day_list = CheckinList.objects.create(event=event, name='Day 1 gate', all_products=True, subevent=se1)
+        other_day_list = CheckinList.objects.create(event=event, name='Day 2 gate', all_products=True, subevent=se2)
+        event_list = CheckinList.objects.create(event=event, name='All dates gate', all_products=True, subevent=None)
+
+    client.force_login(env['user_with_perm'])
+    url = reverse(
+        'control:event.orders.checkinlists',
+        kwargs={'organizer': env['organizer'].slug, 'event': env['event'].slug},
+    )
+    response = client.get(f'{url}?subevent={se1.pk}')
+    assert response.status_code == 200
+    ids = {cl.pk for cl in response.context['checkinlists']}
+    assert day_list.pk in ids          # the selected date's list
+    assert event_list.pk in ids        # event-level list is also shown
+    assert other_day_list.pk not in ids  # another date's list is excluded
 
 
 @pytest.mark.django_db

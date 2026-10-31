@@ -72,7 +72,7 @@
       <div class="td-kpi-link">{% trans 'View overview' %} <span aria-hidden="true">></span></div>
     </a>
 
-    <a href="{% url 'control:event.orders.waitinglist' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.subevent_qs }}"
+    <a href="{% url 'control:event.orders.waitinglist' organizer=request.event.organizer.slug event=request.event.slug %}{{ at_a_glance.waitinglist_qs }}"
        class="td-kpi-card td-kpi-muted" title="{% trans 'Waiting list' %}">
       <div class="td-kpi-top">
         <span class="td-kpi-icon" aria-hidden="true"><span class="fa fa-hourglass-half"></span></span>
