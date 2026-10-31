@@ -409,7 +409,7 @@ def welcome_wizard_widget(sender, **kwargs):
 
 
 def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_event_settings):
-    """Build the "At a glance" KPI data for the tickets dashboard (issue #5088).
+    """Build the "At a glance" KPI data for the tickets dashboard.
 
     Reuses the same calculations as the dashboard widget receivers so the KPI
     cards stay consistent with the existing numbers:
