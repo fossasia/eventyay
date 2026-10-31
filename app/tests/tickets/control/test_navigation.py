@@ -187,6 +187,31 @@ def test_legacy_plugin_business_navigation_stays_under_business(rf):
 
 
 @pytest.mark.django_db
+def test_personal_nav_global_items_do_not_leak_into_admin_sidebar(rf):
+    user = User.objects.create_user('personal-leak@example.com', 'dummy', is_staff=True)
+    request = rf.get('/admin/global/business/')
+    request.user = user
+    request.session = type('DummySession', (), {'session_key': 'test'})()
+    request.resolver_match = resolve('/admin/global/business/')
+
+    def personal_nav(sender, **kwargs):
+        return [
+            {'label': 'My exhibitions', 'url': '/common/exhibitions/', 'icon': 'th-list'},
+            {'label': 'My Shifts', 'url': '/common/shifts/', 'icon': 'calendar-o'},
+        ]
+
+    nav_global.connect(personal_nav, dispatch_uid='test_personal_nav_leak')
+    try:
+        nav = get_admin_navigation(request)
+    finally:
+        nav_global.disconnect(dispatch_uid='test_personal_nav_leak')
+
+    labels = {str(item.get('label')) for item in nav}
+    assert 'My exhibitions' not in labels
+    assert 'My Shifts' not in labels
+
+
+@pytest.mark.django_db
 def test_admin_navigation_structure_and_hierarchy(rf):
     user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
     request = rf.get('/admin/global/settings/')
@@ -216,7 +241,7 @@ def test_admin_navigation_structure_and_hierarchy(rf):
     assert 'children' in business_nav
 
     business_children_labels = [str(c.get('label')) for c in business_nav['children']]
-    assert business_children_labels == ['Event vouchers']
+    assert 'Event vouchers' in business_children_labels
 
     # Check URLs of Business children
     event_vouchers = next(c for c in business_nav['children'] if str(c.get('label')) == 'Event vouchers')
