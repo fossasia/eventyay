@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0088_invoicevoucher_applies_to_platform_fees_budget_used'),
+        ('base', '0089_organizer_request'),
     ]
 
     operations = [
