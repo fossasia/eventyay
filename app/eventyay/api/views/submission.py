@@ -306,6 +306,9 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             or not can_view_speaker_names(self.request.user, self.event)
         ):
             can_view_speakers = False
+        elif get_request_team(self.request) is not None and can_list_submissions(self.request, self.event):
+            # The serializer applies the team's force_hide_speaker_* policy.
+            can_view_speakers = True
         if self.request.query_params.get('anon'):
             can_view_speakers = False
         return super().get_serializer(
