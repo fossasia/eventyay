@@ -33,11 +33,10 @@
           </tbody>
         </table>
       </div>
-      {% if open_page.paginator.num_pages > 1 %}
+      {% if open_page.has_previous or open_page.has_next %}
         <nav aria-label="{% trans 'Open requests pagination' %}">
-          {% if open_page.has_previous %}<a href="?{% url_replace request 'open_page' open_page.previous_page_number %}#tab-open-requests">{% trans 'Previous' %}</a>{% endif %}
-          <span>{{ open_page.number }} / {{ open_page.paginator.num_pages }}</span>
-          {% if open_page.has_next %}<a href="?{% url_replace request 'open_page' open_page.next_page_number %}#tab-open-requests">{% trans 'Next' %}</a>{% endif %}
+          {% if open_page.has_previous %}<a href="?{% url_replace request 'open_after' open_page.previous_cursor 'open_before' '' %}#tab-open-requests">{% trans 'Previous' %}</a>{% endif %}
+          {% if open_page.has_next %}<a href="?{% url_replace request 'open_before' open_page.next_cursor 'open_after' '' %}#tab-open-requests">{% trans 'Next' %}</a>{% endif %}
         </nav>
       {% endif %}
     </fieldset>
@@ -61,7 +60,7 @@
               <tr>
                 <td><a href="{% url 'eventyay_admin:admin.organizer_requests.detail' pk=application.pk %}">{{ application.organizer_name }}</a></td>
                 <td>{{ application.email }}</td>
-                <td>{{ application.has_account|yesno }}</td>
+                <td>{{ application.had_existing_account|yesno }}</td>
                 <td>{% if application.status == 'approved' %}{% trans 'Accepted' %}{% else %}{% trans 'Rejected' %}{% endif %}</td>
                 <td>{{ application.created|date:'SHORT_DATETIME_FORMAT' }}</td>
                 <td>{% if application.reviewed_at %}{{ application.reviewed_at|date:'SHORT_DATETIME_FORMAT' }}{% else %}—{% endif %}</td>
@@ -73,11 +72,10 @@
           </tbody>
         </table>
       </div>
-      {% if resolved_page.paginator.num_pages > 1 %}
+      {% if resolved_page.has_previous or resolved_page.has_next %}
         <nav aria-label="{% trans 'Resolved requests pagination' %}">
-          {% if resolved_page.has_previous %}<a href="?{% url_replace request 'resolved_page' resolved_page.previous_page_number %}#tab-resolved-requests">{% trans 'Previous' %}</a>{% endif %}
-          <span>{{ resolved_page.number }} / {{ resolved_page.paginator.num_pages }}</span>
-          {% if resolved_page.has_next %}<a href="?{% url_replace request 'resolved_page' resolved_page.next_page_number %}#tab-resolved-requests">{% trans 'Next' %}</a>{% endif %}
+          {% if resolved_page.has_previous %}<a href="?{% url_replace request 'resolved_after' resolved_page.previous_cursor 'resolved_before' '' %}#tab-resolved-requests">{% trans 'Previous' %}</a>{% endif %}
+          {% if resolved_page.has_next %}<a href="?{% url_replace request 'resolved_before' resolved_page.next_cursor 'resolved_after' '' %}#tab-resolved-requests">{% trans 'Next' %}</a>{% endif %}
         </nav>
       {% endif %}
     </fieldset>
