@@ -1314,6 +1314,60 @@ class CartTest(CartTestMixin, TestCase):
                 0,
             )
 
+    def test_max_per_item_variations_free_price_success(self):
+        # The form sends the price of every pay-what-you-want variation, also of the ones not chosen.
+        # Prices above the maximum are not quantities, so the order goes through.
+        self.shirt.free_price = True
+        self.shirt.max_per_order = 1
+        self.shirt.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1',
+                'price_%d_%d' % (self.shirt.id, self.shirt_red.id): '50',
+                'price_%d_%d' % (self.shirt.id, self.shirt_blue.id): '40',
+                'item_%d' % self.ticket.id: '1',
+            },
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            self.assertEqual(positions.count(), 2)
+            self.assertEqual(positions.get(variation=self.shirt_red).price, 50)
+            self.assertTrue(positions.filter(product=self.ticket).exists())
+
+    def test_max_per_item_variations_free_price_failed(self):
+        self.shirt.free_price = True
+        self.shirt.max_per_order = 1
+        self.shirt.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'variation_%d_%d' % (self.shirt.id, self.shirt_blue.id): '1',
+                'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1',
+                'price_%d_%d' % (self.shirt.id, self.shirt_red.id): '14',
+                'price_%d_%d' % (self.shirt.id, self.shirt_blue.id): '12',
+            },
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('more than', doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            self.assertEqual(
+                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
+                0,
+            )
+
     def test_max_per_item_failed(self):
         self.ticket.max_per_order = 2
         self.ticket.save()
