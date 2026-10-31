@@ -1,3 +1,5 @@
+$dashboard-section-gap: 24px;
+
 .dashboard {
   display: flex;
   flex-wrap: wrap;
@@ -235,6 +237,76 @@
   }
   a {
     cursor: pointer;
+  }
+}
+
+.dashboard-event-overview {
+  .dashboard {
+    gap: $dashboard-section-gap;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .dashboard.custom {
+    gap: $dashboard-section-gap;
+    margin-top: 20px;
+    margin-bottom: $dashboard-section-gap;
+  }
+
+  .dashboard:not(.custom) {
+    margin-bottom: $dashboard-section-gap;
+
+    > .widget-container {
+      border: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    > .widget-small {
+      width: calc((100% - 3 * #{$dashboard-section-gap}) / 4);
+    }
+
+    > .widget-big {
+      width: calc((100% - #{$dashboard-section-gap}) / 2);
+    }
+
+    > .widget-full,
+    > .widget-container:only-child {
+      width: 100%;
+    }
+
+    @media (max-width: $screen-sm-max) {
+      > .widget-small {
+        width: calc((100% - #{$dashboard-section-gap}) / 2);
+      }
+    }
+
+    @media (max-width: $screen-xs-max) {
+      > .widget-small,
+      > .widget-big {
+        width: 100%;
+      }
+    }
+  }
+
+  .panel {
+    margin-bottom: $dashboard-section-gap;
+  }
+
+  .dashboard.custom > .panel {
+    margin-bottom: 0;
+  }
+
+  .panel-body .dashboard {
+    margin-bottom: 0;
+  }
+
+  .chart {
+    min-width: 0;
+  }
+
+  .comment-actions {
+    margin-top: 10px;
   }
 }
 

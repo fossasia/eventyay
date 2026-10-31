@@ -18,7 +18,8 @@ def test_event_dashboards_leave_the_navigation_out_of_the_printout(organizer_cli
     html = response.content.decode()
     assert 'class="navigation-button hidden-print"' in html
     assert 'class="navbar-default sidebar hidden-print"' in html
-    assert 'class="nojs sidebar-minimized dashboard-print"' in html
+    body_classes = 'dashboard-print dashboard-event-overview' if path.startswith('/control/') else 'dashboard-print'
+    assert f'class="nojs sidebar-minimized {body_classes}"' in html
 
 
 @pytest.mark.django_db
