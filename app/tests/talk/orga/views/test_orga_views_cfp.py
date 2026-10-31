@@ -665,6 +665,19 @@ def test_question_edit_toggle_form_is_not_nested(orga_client, question):
 
 
 @pytest.mark.django_db
+def test_reviewer_question_chart_has_no_search_url(orga_client, review_question, review, speaker):
+    with scope(event=review_question.event):
+        Answer.objects.create(question=review_question, review=review, person=speaker, answer='Strong talk')
+
+    response = orga_client.get(review_question.urls.base)
+
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert 'data-url=""' in html
+    assert 'data-url="None"' not in html
+
+
+@pytest.mark.django_db
 def test_can_activate_inactive_question(orga_client, inactive_question):
     assert not inactive_question.active
 
