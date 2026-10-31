@@ -1580,43 +1580,48 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         else:
             mark_refunded = request.data.get('mark_canceled', False)
 
-        if payment.state != OrderPayment.PAYMENT_STATE_CONFIRMED:
-            return Response(
-                {'detail': 'Invalid state of payment.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Lock the payment while checking the refundable amount and creating the refund, so that
+        # concurrent requests cannot both pass the check and refund more than was paid.
+        with transaction.atomic():
+            payment = OrderPayment.objects.select_for_update().get(pk=payment.pk)
 
-        full_refund_possible = payment.payment_provider.payment_refund_supported(payment)
-        partial_refund_possible = payment.payment_provider.payment_partial_refund_supported(payment)
-        available_amount = payment.amount - payment.refunded_amount
+            if payment.state != OrderPayment.PAYMENT_STATE_CONFIRMED:
+                return Response(
+                    {'detail': 'Invalid state of payment.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        if amount <= 0:
-            return Response(
-                {'amount': ['Invalid refund amount.']},
-                status=status.HTTP_400_BAD_REQUEST,
+            full_refund_possible = payment.payment_provider.payment_refund_supported(payment)
+            partial_refund_possible = payment.payment_provider.payment_partial_refund_supported(payment)
+            available_amount = payment.amount - payment.refunded_amount
+
+            if amount <= 0:
+                return Response(
+                    {'amount': ['Invalid refund amount.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount > available_amount:
+                return Response(
+                    {'amount': ['Invalid refund amount, only {} are available to refund.'.format(available_amount)]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount != payment.amount and not partial_refund_possible:
+                return Response(
+                    {'amount': ['Partial refund not available for this payment method.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount == payment.amount and not full_refund_possible:
+                return Response(
+                    {'amount': ['Full refund not available for this payment method.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            r = payment.order.refunds.create(
+                payment=payment,
+                source=OrderRefund.REFUND_SOURCE_ADMIN,
+                state=OrderRefund.REFUND_STATE_CREATED,
+                amount=amount,
+                provider=payment.provider,
             )
-        if amount > available_amount:
-            return Response(
-                {'amount': ['Invalid refund amount, only {} are available to refund.'.format(available_amount)]},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if amount != payment.amount and not partial_refund_possible:
-            return Response(
-                {'amount': ['Partial refund not available for this payment method.']},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if amount == payment.amount and not full_refund_possible:
-            return Response(
-                {'amount': ['Full refund not available for this payment method.']},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        r = payment.order.refunds.create(
-            payment=payment,
-            source=OrderRefund.REFUND_SOURCE_ADMIN,
-            state=OrderRefund.REFUND_STATE_CREATED,
-            amount=amount,
-            provider=payment.provider,
-        )
 
         try:
             r.payment_provider.execute_refund(r)
