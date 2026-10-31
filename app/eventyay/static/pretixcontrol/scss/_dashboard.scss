@@ -250,3 +250,44 @@
     width: 100%;
   }
 }
+
+@media print {
+  // The navbar (common/css/_navbar.css) and the sidebar (hidden-print in the base templates)
+  // are left out of every printout, so the content does not keep their space. main.scss sets
+  // the top padding of #wrapper after it imports this file, so the reset also names body to
+  // take precedence.
+  body #wrapper {
+    padding-top: 0;
+  }
+
+  #wrapper #page-wrapper {
+    margin-left: 0;
+    border-left: 0;
+  }
+
+  // A dashboard page adds `dashboard-print` to its body class to print only its content.
+  .dashboard-print {
+    // Links lead to other organizer pages, their addresses only clutter the printout.
+    a[href]::after {
+      content: none;
+    }
+
+    // Keep a panel, such as a chart with its title, on one page when it fits.
+    .panel {
+      break-inside: avoid;
+    }
+
+    // Charts are drawn for the screen width; statistics.js gives them a viewBox before
+    // printing, so they are scaled down to the page width instead of being cut off.
+    .chart svg {
+      width: 100%;
+      height: auto;
+    }
+
+    // The box that follows the mouse over a chart is not useful on paper. Morris sets its
+    // display inline, so it is hidden with visibility instead.
+    .morris-hover {
+      visibility: hidden;
+    }
+  }
+}

@@ -7,8 +7,10 @@
 	template(v-else)
 		.interpretation-plugin-language-streams(v-if="roomId && showPluginLanguageStreams")
 			LanguageAudioSourceList(
-				:title="$t('Interpretation source')"
+				:title="$t('Interpretation channels')"
 				:entries="pluginLanguageStreamEntries"
+				:roomId="roomId"
+				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
 			)
 			p.plugin-language-streams-hint {{ $t('Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.') }}
 		.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules && streamSchedules.length > 0")

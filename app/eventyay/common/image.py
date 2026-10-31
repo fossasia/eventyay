@@ -93,8 +93,8 @@ def invalidate_speaker_avatar_caches(user):
 gravatar_csp = partial(
     csp_update,
     {
-        'IMG_SRC': 'https://www.gravatar.com',
-        'CONNECT_SRC': 'https://www.gravatar.com',
+        'img-src': 'https://www.gravatar.com',
+        'connect-src': 'https://www.gravatar.com',
     },
 )
 
