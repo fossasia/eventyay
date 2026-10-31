@@ -327,6 +327,8 @@ def test_kpi_status_card_link_requires_change_permission(client, env):
     assert 'td-status-card' in status_card
     assert f'href="{live_url}"' not in status_card
     assert 'Click to change' not in status_card
+    # The spacer footer is kept so the card stays the same height as the others.
+    assert 'td-kpi-hint-spacer' in status_card
 
 
 @pytest.mark.django_db
