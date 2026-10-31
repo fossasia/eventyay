@@ -2,12 +2,15 @@ import datetime as dt
 from types import SimpleNamespace
 
 import pytest
+from django.test import RequestFactory
 from django.test.utils import override_settings
 from django.utils.timezone import now
 
 from eventyay.base.models import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services import room as room_service
+from eventyay.base.services.stale_cache import talk_slots_filter_key
+
 
 LOCMEM_CACHE = {
     'default': {
@@ -111,15 +114,14 @@ def test_stream_http_max_age_shrinks_to_the_slot_end():
     end = (now() + dt.timedelta(seconds=5)).isoformat()
     assert room_service.stream_http_max_age({'end_time': end}, 30, 'end_time') <= 5
     assert room_service.stream_http_max_age({'id': 1}, 30, 'end_time') == 30
-    assert room_service.stream_http_max_age(
-        {'end_time': '2026-02-30T10:00:00+00:00'}, 30, 'end_time'
-    ) == 30
+    assert room_service.stream_http_max_age({'end_time': '2026-02-30T10:00:00+00:00'}, 30, 'end_time') == 30
 
 
 @override_settings(CACHES=LOCMEM_CACHE)
 def test_ttl_lookup_database_error_keeps_the_loaded_stream():
     from django.core.cache import cache
     from django.db import DatabaseError
+
     from eventyay.base.services.stale_cache import get_stale_cached
 
     cache.clear()
@@ -374,10 +376,6 @@ def test_video_spa_schedule_cache_avoids_repeat_build():
 
 
 def test_talk_slots_filter_key_includes_ordering():
-    from django.test import RequestFactory
-
-    from eventyay.base.services.stale_cache import talk_slots_filter_key
-
     factory = RequestFactory()
     default = talk_slots_filter_key(factory.get('/'), ['room'])
     ordered = talk_slots_filter_key(factory.get('/?ordering=-start'), ['room'])
@@ -385,14 +383,96 @@ def test_talk_slots_filter_key_includes_ordering():
 
 
 def test_talk_slots_filter_key_includes_page():
-    from django.test import RequestFactory
-
-    from eventyay.base.services.stale_cache import talk_slots_filter_key
-
     factory = RequestFactory()
     page1 = talk_slots_filter_key(factory.get('/'), ['room'])
     page2 = talk_slots_filter_key(factory.get('/?page=2'), ['room'])
     assert page1 != page2
+
+
+def test_talk_slots_filter_key_encodes_values_to_prevent_delimiter_collision():
+    factory = RequestFactory()
+    key1 = talk_slots_filter_key(factory.get('/?schedule_version=v1|search=x'), ['schedule_version'])
+    key2 = talk_slots_filter_key(factory.get('/?schedule_version=v1&search=x'), ['schedule_version'])
+    assert key1 != key2
+
+
+def _legacy_talk_slots_key(event_id, suffix):
+    from eventyay.base.services.stale_cache import get_schedule_cache_version
+
+    version = get_schedule_cache_version(event_id)
+    return f'api:talk-slots:{event_id}:v{version}:public:all::default:{suffix}'
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_talk_slots_cache_keys_include_schema_discriminator():
+    from eventyay.base.services.stale_cache import (
+        TALK_SLOTS_CACHE_SCHEMA,
+        talk_slots_list_cache_keys,
+    )
+
+    hot, stale = talk_slots_list_cache_keys(7, 'public', '', 'default', 'all')
+    schema_segment = f':s{TALK_SLOTS_CACHE_SCHEMA}:'
+
+    assert schema_segment in hot
+    assert schema_segment in stale
+    assert hot != stale
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_talk_slots_cache_ignores_legacy_hot_entry():
+    from django.core.cache import cache
+
+    from eventyay.base.services.stale_cache import (
+        get_cached_talk_slots_list,
+        wrap_api_cache_payload,
+    )
+
+    cache.clear()
+    event_id = 11
+    cache.set(
+        _legacy_talk_slots_key(event_id, 'hot'),
+        wrap_api_cache_payload([{'id': 'legacy'}]),
+        300,
+    )
+    calls = []
+
+    def loader():
+        calls.append(1)
+        return [{'id': 'fresh'}]
+
+    data, etag = get_cached_talk_slots_list(event_id, 'public', '', 'default', 'all', loader)
+
+    assert data == [{'id': 'fresh'}]
+    assert etag
+    assert calls == [1]
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_talk_slots_cache_ignores_legacy_stale_entry_on_db_error():
+    from django.core.cache import cache
+    from django.db import DatabaseError
+
+    from eventyay.base.services.stale_cache import (
+        get_cached_talk_slots_list,
+        wrap_api_cache_payload,
+    )
+
+    cache.clear()
+    event_id = 12
+    cache.set(
+        _legacy_talk_slots_key(event_id, 'stale'),
+        wrap_api_cache_payload([{'id': 'legacy'}]),
+        3600,
+    )
+
+    def loader():
+        raise DatabaseError('database unavailable')
+
+    # get_stale_cached() re-raises the original error when neither the current
+    # hot key nor the current stale key exists. The legacy stale key must not
+    # be used as a fallback.
+    with pytest.raises(DatabaseError):
+        get_cached_talk_slots_list(event_id, 'public', '', 'default', 'all', loader)
 
 
 def test_catalog_list_cache_skips_paginated_viewsets():
@@ -449,6 +529,7 @@ def test_schedule_cache_invalidates_on_room_save(event):
 @override_settings(CACHES=LOCMEM_CACHE)
 def test_schedule_cache_skips_speaker_profile_without_released_slot(event, user):
     from unittest.mock import patch
+
     from django_scopes import scope
 
     from eventyay.base.models.profile import SpeakerProfile
@@ -464,6 +545,7 @@ def test_schedule_cache_skips_speaker_profile_without_released_slot(event, user)
 @override_settings(CACHES=LOCMEM_CACHE)
 def test_schedule_cache_invalidates_on_featured_speaker_without_released_slot(event, user):
     from unittest.mock import patch
+
     from django_scopes import scope
 
     from eventyay.base.models.profile import SpeakerProfile
@@ -479,6 +561,7 @@ def test_schedule_cache_invalidates_on_featured_speaker_without_released_slot(ev
 @override_settings(CACHES=LOCMEM_CACHE)
 def test_schedule_cache_invalidates_on_speaker_profile_save(event, user):
     from unittest.mock import patch
+
     from django_scopes import scope
 
     from eventyay.base.models import Schedule, Submission, SubmissionType, TalkSlot

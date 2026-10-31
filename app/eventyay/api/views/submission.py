@@ -261,6 +261,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     queryset = Submission.objects.none()
     lookup_field = 'code__iexact'
     search_fields = ('title', 'speakers__fullname')
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = SubmissionFilter
     allow_public_read = True
     permission_map = {

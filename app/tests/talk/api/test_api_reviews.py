@@ -5,7 +5,13 @@ import pytest
 from django_scopes import scope
 
 from eventyay.api.serializers.review import ReviewSerializer
-from eventyay.base.models import Answer, Review, ReviewScore, ReviewScoreCategory
+from eventyay.base.models import (
+    Answer,
+    Review,
+    ReviewScore,
+    ReviewScoreCategory,
+    Submission,
+)
 
 
 @pytest.fixture
@@ -189,6 +195,16 @@ def test_reviewer_can_filter_by_submission(
         event.active_review_phase.can_see_other_reviews = "always"
         event.active_review_phase.save()
     response = client.get(
+        event.api_urls.reviews,
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert content["count"] == 2
+
+    response = client.get(
         event.api_urls.reviews + f"?submission={review.submission.code}",
         follow=True,
         headers={"Authorization": f"Token {review_user_token.token}"},
@@ -197,6 +213,46 @@ def test_reviewer_can_filter_by_submission(
 
     assert response.status_code == 200
     assert len(content["results"]) == 1, content
+    returned = content["results"][0]
+    assert returned["submission"] == review.submission.code, content
+    assert returned["submission"] != other_review.submission.code, content
+
+
+@pytest.mark.django_db
+def test_reviewer_can_filter_by_speaker_with_multiple_submissions(
+    client, review_user_token, review_user, event, review, submission, speaker
+):
+    with scope(event=event):
+        event.active_review_phase.can_see_other_reviews = "always"
+        event.active_review_phase.save()
+        second_submission = Submission.objects.create(
+            title="Second talk by the same speaker",
+            event=event,
+            submission_type=event.cfp.default_type,
+            description="Description",
+            abstract="Abstract",
+            notes="Notes",
+            content_locale="en",
+        )
+        second_submission.speakers.add(speaker)
+        Review.objects.create(
+            score=1,
+            submission=second_submission,
+            user=review_user,
+            text="Second review",
+        )
+        speaker_code = speaker.code
+        expected_codes = [submission.code, second_submission.code]
+
+    response = client.get(
+        event.api_urls.reviews + f"?speaker={speaker_code}",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    returned_codes = sorted(r["submission"] for r in content["results"])
+    assert returned_codes == sorted(expected_codes), content
 
 
 @pytest.mark.django_db

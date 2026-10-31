@@ -4,6 +4,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django_filters import rest_framework as filters
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
@@ -348,6 +349,7 @@ class TalkSlotViewSet(
     queryset = TalkSlot.objects.none()
     endpoint = 'slots'
     search_fields = ('submission__title', 'submission__speakers__fullname')
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TalkSlotFilter
     allow_public_read = True
     permission_map = {'ical': 'schedule.view_talkslot'}

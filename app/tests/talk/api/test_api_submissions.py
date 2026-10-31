@@ -257,6 +257,16 @@ def test_orga_can_see_all_talks_even_nonpublic(
     submission.event.feature_flags["show_schedule"] = False
     submission.event.save()
     response = client.get(
+        submission.event.api_urls.submissions,
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert content["count"] == 4
+
+    response = client.get(
         submission.event.api_urls.submissions + "?state=rejected",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
@@ -265,7 +275,19 @@ def test_orga_can_see_all_talks_even_nonpublic(
 
     assert response.status_code == 200
     assert content["count"] == 1
-    assert content["results"][0]["title"] == slot.submission.title
+    assert content["results"][0]["code"] == rejected_submission.code
+    assert content["results"][0]["state"] == "rejected"
+
+
+@pytest.mark.django_db
+def test_submissions_filter_invalid_state(client, orga_user_token, event):
+    response = client.get(
+        event.api_urls.submissions + "?state=invalid_state",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 400
+    assert "state" in response.json()
 
 
 @pytest.mark.django_db
