@@ -50,7 +50,7 @@
     "markdown-it-multimd-table": "^4.2.3",
     "moment": "^2.31.0",
     "moment-timezone": "^0.6.5",
-    "mux-embed": "^5.18.2",
+    "mux-embed": "^5.19.0",
     "mux.js": "^6.3.0",
     "preact": "^10.29.8",
     "random-js": "^2.1.0",
