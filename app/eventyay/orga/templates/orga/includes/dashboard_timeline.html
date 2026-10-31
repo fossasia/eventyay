@@ -3,7 +3,7 @@
     <div class="dashboard-timeline">
         {% for step in timeline_data %}
             <div class="timeline-step {{ step.phase }}">
-                <{% if step.links and step.links.0.url %}a href="{{ step.links.0.url }}"{% else %}div{% endif %} class="timeline-step-content">
+                <{% if step.links and step.links.0.url %}a href="{{ step.links.0.url }}"{% else %}div{% endif %} class="timeline-step-content"{% if step.links %} role="button" tabindex="0" aria-expanded="false"{% endif %}>
                     <div class="timeline-step-icon">
                         <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'check' }}{% endif %}"></span>
                     </div>
@@ -14,14 +14,28 @@
                     {% endif %}
                 </{% if step.links and step.links.0.url %}a{% else %}div{% endif %}>
                 
-                {% if step.links and can_change_settings %}
+                {% if step.links %}
                     <div class="timeline-step-links">
                         <ul>
                             {% for link in step.links %}
                                 <li>
-                                    <a {% if link.url %}href="{{ link.url }}"{% endif %}>
-                                        {{ link.title }}
-                                    </a>
+                                    {% if link.url %}
+                                        <a href="{{ link.url }}">
+                                            {% if link.is_configured is not None %}
+                                                <span class="timeline-checkbox fa fa-{% if link.is_configured %}check-square-o is-checked{% else %}square-o is-unchecked{% endif %}" aria-hidden="true"></span>
+                                                <span class="sr-only">{% if link.is_configured %}{% trans "Done:" %}{% else %}{% trans "To do:" %}{% endif %}</span>
+                                            {% endif %}
+                                            <span>{{ link.title }}</span>
+                                        </a>
+                                    {% else %}
+                                        <div class="timeline-step-text">
+                                            {% if link.is_configured is not None %}
+                                                <span class="timeline-checkbox fa fa-{% if link.is_configured %}check-square-o is-checked{% else %}square-o is-unchecked{% endif %}" aria-hidden="true"></span>
+                                                <span class="sr-only">{% if link.is_configured %}{% trans "Done:" %}{% else %}{% trans "To do:" %}{% endif %}</span>
+                                            {% endif %}
+                                            <span>{{ link.title }}</span>
+                                        </div>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -31,3 +45,4 @@
         {% endfor %}
     </div>
 </div>
+
