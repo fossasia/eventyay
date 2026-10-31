@@ -294,6 +294,24 @@ def test_list_create(token_client, organizer, event, item, item_on_wrong_event):
 
 
 @pytest.mark.django_db
+def test_list_create_without_limit_products(token_client, organizer, event):
+    """Omitting limit_products should behave like an empty list, not raise a 500."""
+    resp = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/checkinlists/',
+        {
+            'name': 'Door A',
+            'all_products': True,
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+    with scopes_disabled():
+        cl = CheckinList.objects.get(pk=resp.data['id'])
+        assert cl.all_products
+        assert cl.limit_products.count() == 0
+
+
+@pytest.mark.django_db
 def test_list_create_with_subevent(token_client, organizer, event, event3, item, subevent, subevent2):
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/checkinlists/'.format(organizer.slug, event.slug),
