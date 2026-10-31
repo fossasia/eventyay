@@ -534,3 +534,23 @@ def test_private_meetup_excluded_from_organizer_public_listing(organizer):
     public_listed = organizer.events.filter(is_public=True, live=True)
     assert public_event in public_listed
     assert private_event not in public_listed
+
+
+@pytest.mark.django_db
+def test_provision_meetup_event_cloned_remains_unpublished(organizer):
+    now = timezone.now()
+    cloned_event = Event.objects.create(
+        organizer=organizer,
+        name='Cloned Meetup',
+        slug='cloned-meetup-draft',
+        date_from=now + timedelta(days=10),
+        date_to=now + timedelta(days=10, hours=2),
+        currency='USD',
+        locale='en',
+    )
+    provision_meetup_event(cloned_event, is_clone=True)
+    cloned_event.refresh_from_db()
+    assert cloned_event.live is False
+    assert cloned_event.tickets_published is False
+    assert cloned_event.testmode is False
+    assert cloned_event.private_testmode is False
