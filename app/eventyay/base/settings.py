@@ -75,6 +75,7 @@ settings_hierarkey.add_default('telemetry_contact_email', '', str)
 
 # Cloudflare Turnstile anti-abuse settings
 settings_hierarkey.add_default('anti_abuse_provider', 'disabled', str)
+settings_hierarkey.add_default('organizer_request_enabled', True, bool)
 settings_hierarkey.add_default('turnstile_site_key', '', str)
 settings_hierarkey.add_default('turnstile_secret_key', '', str)
 settings_hierarkey.add_default('turnstile_on_registration', False, bool)
@@ -301,10 +302,9 @@ class SettingsSandbox:
 def validate_primary_font(primary_font):
     if primary_font:
         from eventyay.presale.style import SYSTEM_FONTS, get_fonts  # noqa: PLC0415
+
         if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
-            raise ValidationError(
-                {'primary_font': _('The selected font is not allowed.')}
-            )
+            raise ValidationError({'primary_font': _('The selected font is not allowed.')})
 
 
 def validate_event_settings(event, settings_dict):

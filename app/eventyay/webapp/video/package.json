@@ -100,8 +100,7 @@
       "glob": "13.0.6"
     },
     "workbox-build": {
-      "glob": "13.0.6",
-      "source-map": "0.8.0"
+      "glob": "13.0.6"
     }
   }
 }

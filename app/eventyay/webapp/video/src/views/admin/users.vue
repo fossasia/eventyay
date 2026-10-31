@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-admin-users
 	.ui-page-header
-		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h2 {{ $t('Users') }}
 		.actions
 			bunt-input.search(name="search", :placeholder="$t('Search users')", icon="search", v-model="search")

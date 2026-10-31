@@ -1,0 +1,70 @@
+.organiser-form-fields .cfp-option-table {
+  margin-bottom: 12px;
+}
+
+.organiser-form-fields .cfp-option-table thead th:first-child,
+.organiser-form-fields .cfp-option-table tbody th {
+  text-align: right;
+  vertical-align: middle;
+  font-weight: 600;
+  width: 30%;
+  padding-right: 8px;
+}
+
+.organiser-form-fields .cfp-option-table tbody td {
+  vertical-align: middle;
+}
+
+.organiser-form-fields .cfp-option-table a:not(.btn) {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.organiser-form-fields .toggle-switch {
+  width: 44px;
+  height: 24px;
+}
+
+.organiser-form-fields .toggle-slider::before {
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.organiser-form-fields .toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.organiser-form-fields .organizer-request-feature-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle > label {
+  margin: 0;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle .toggle-switch {
+  flex: 0 0 auto;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle button {
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .organiser-form-fields .organizer-request-feature-toggle {
+    flex-wrap: wrap;
+  }
+
+  .organiser-form-fields .organizer-request-feature-toggle button {
+    margin-left: 0;
+  }
+}
+
+.organiser-form-fields tr.dragging th,
+.organiser-form-fields tr.dragging td {
+  background: var(--color-grey-lighter);
+}
