@@ -1,6 +1,6 @@
 {% load i18n %}
 {% for member in members %}
-    {% include 'pretixcontrol/vouchers/_voucher_row.html' with v=member row_class='voucher-group-member hidden' group_id=group_id %}
+    {% include 'pretixcontrol/vouchers/_voucher_row.html' with v=member row_class='voucher-group-member voucher-group-member-row hidden' group_id=group_id %}
 {% endfor %}
 {% if next_members_url %}
     <tr class="voucher-group-load-more hidden" data-voucher-group-load-more="{{ group_id }}">

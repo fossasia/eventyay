@@ -1,0 +1,126 @@
+{% extends 'pretixcontrol/items/base.html' %}
+{% load i18n %}
+{% load l10n %}
+{% load eventsignal %}
+{% load bootstrap3 %}
+{% load static %}
+{% block title %}{% trans 'Edit multiple vouchers' %}{% endblock %}
+{% block inside %}
+  {% trans 'Edit multiple vouchers' as header_title %}
+  {% include 'common/includes/header_nav.html' with header_title=header_title header_component_link='pretixcontrol/event/component_link.html' %}
+  <form action='{{ action_url|default:"" }}' method='post' class='form-horizontal'>
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    {% for voucher_id in selection_voucher_ids %}<input type='hidden' name='voucher' value='{{ voucher_id }}'>{% endfor %}
+    {% for group_id in selection_group_ids %}<input type='hidden' name='voucher_group' value='{{ group_id }}'>{% endfor %}
+    {% for voucher_id in selection_excluded_voucher_ids %}<input type='hidden' name='voucher_exclude' value='{{ voucher_id }}'>{% endfor %}
+    {% if mixed_fields %}
+      <div class='alert alert-info'>
+        {% trans 'Fields with different values are left blank. Leave them blank to keep each voucher’s current value, or enter a value to apply it to all selected vouchers.' %}
+      </div>
+    {% endif %}
+    {% if preview %}
+      <div class='alert alert-warning'>
+        <p>
+          {% blocktrans count count=update_count %}
+            <strong>{{ count }}</strong> voucher will be updated.
+          {% plural %}
+            <strong>{{ count }}</strong> vouchers will be updated.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans count count=skip_count %}
+            <strong>{{ count }}</strong> voucher will be skipped.
+          {% plural %}
+            <strong>{{ count }}</strong> vouchers will be skipped.
+          {% endblocktrans %}
+        </p>
+        {% if fully_used_count %}
+          <p>
+            {% blocktrans count count=fully_used_count %}
+              {{ count }} fully used voucher will be skipped.
+            {% plural %}
+              {{ count }} fully used vouchers will be skipped.
+            {% endblocktrans %}
+          </p>
+        {% endif %}
+        {% if max_too_low_count %}
+          <p>
+            {% blocktrans count count=max_too_low_count %}
+              {{ count }} voucher will be skipped because maximum usages is below its redemptions.
+            {% plural %}
+              {{ count }} vouchers will be skipped because maximum usages is below their redemptions.
+            {% endblocktrans %}
+          </p>
+        {% endif %}
+        {% if seat_incompatible_count %}
+          <p>
+            {% blocktrans count count=seat_incompatible_count %}
+              {{ count }} voucher will be skipped because its seat belongs to another product.
+            {% plural %}
+              {{ count }} vouchers will be skipped because their seats belong to another product.
+            {% endblocktrans %}
+          </p>
+        {% endif %}
+      </div>
+    {% endif %}
+    <fieldset>
+      <legend>{% trans 'Voucher codes' %}</legend>
+      {% bootstrap_field form.tag layout='control' %}
+      <div class='form-group'>
+        <label class='col-md-3 control-label'>{% trans 'Codes' %}</label>
+        <div class='col-md-9'>
+          <textarea class='form-control' rows='8' readonly aria-label='{% trans "Voucher codes" %}'>{% for code in voucher_codes %}{{ code }}{% if not forloop.last %}
+{% endif %}{% endfor %}</textarea>
+          <p class='help-block'>{% trans 'Voucher codes cannot be changed.' %}</p>
+        </div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>{% trans 'Voucher details' %}</legend>
+      {% bootstrap_field form.max_usages layout='control' %}
+      {% bootstrap_field form.valid_until layout='control' %}
+      {% bootstrap_field form.productvar layout='control' %}
+      <div class='form-group'>
+        <label class='col-md-3 control-label'>{% trans 'Price effect' %}</label>
+        <div class='col-md-5'>
+          {% bootstrap_field form.price_mode show_label=False form_group_class='' %}
+        </div>
+        <div class='col-md-4'>
+          {% bootstrap_field form.value show_label=False form_group_class='' %}
+        </div>
+      </div>
+      <div class='form-group'>
+        <div class='col-md-9 col-md-offset-3'>
+          <div class='alert alert-info'>
+            {% blocktrans trimmed %}
+              If you choose "any product" for a specific quota and choose to reserve quota for this
+              voucher above, the product can still be unavailable to the voucher holder if another quota
+              associated with the product is sold out!
+            {% endblocktrans %}
+          </div>
+        </div>
+      </div>
+      {% if form.subevent %}{% bootstrap_field form.subevent layout='control' %}{% endif %}
+      {% if 'seats' in form.fields %}{% bootstrap_field form.seats layout='control' %}{% endif %}
+    </fieldset>
+    <fieldset>
+      <legend>{% trans 'Advanced settings' %}</legend>
+      {% bootstrap_field form.block_quota layout='control' %}
+      {% bootstrap_field form.allow_ignore_quota layout='control' %}
+      {% bootstrap_field form.allow_ignore_approval layout='control' %}
+      {% bootstrap_field form.all_addons_included layout='control' %}
+      {% bootstrap_field form.all_bundles_included layout='control' %}
+      {% bootstrap_field form.budget addon_after=request.event.currency layout='control' %}
+      {% bootstrap_field form.comment layout='control' %}
+      {% bootstrap_field form.show_hidden_products layout='control' %}
+    </fieldset>
+    {% eventsignal request.event 'eventyay.control.signals.voucher_form_html' form=form %}
+    <div class='form-group submit-group'>
+      <a href="{% url 'control:event.vouchers' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-default btn-cancel'>{% trans 'Cancel' %}</a>
+      <button type='submit'{% if preview %} name='confirm' value='1'{% endif %} class='btn btn-primary btn-save'>
+        {% if preview %}{% trans 'Confirm and save' %}{% else %}{% trans 'Review changes' %}{% endif %}
+      </button>
+    </div>
+  </form>
+{% endblock %}
