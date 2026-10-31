@@ -280,9 +280,9 @@ class ProductAddOnViewSet(viewsets.ModelViewSet):
         return ctx
 
     def perform_create(self, serializer):
+        """Create a new product add-on scoped to the active product."""
         product = self.product
-        category = get_object_or_404(ProductCategory, pk=self.request.data['addon_category'])
-        serializer.save(base_product=product, addon_category=category)
+        serializer.save(base_product=product)
         product.log_action(
             'eventyay.event.product.addons.added',
             user=self.request.user,
@@ -295,7 +295,8 @@ class ProductAddOnViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        serializer.save(event=self.request.event)
+        """Update an existing product add-on and record audit log."""
+        serializer.save()
         serializer.instance.base_product.log_action(
             'eventyay.event.product.addons.changed',
             user=self.request.user,
