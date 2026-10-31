@@ -891,6 +891,11 @@ class Event(
         self.private_testmode = False
         self.tickets_published = False
         self.talks_published = False
+        if self.pk:
+            self.settings.flush()
+            self.settings.set('private_testmode_tickets', False)
+            self.settings.set('private_testmode_talks', False)
+            self.settings.set('talks_testmode', False)
 
     @property
     def social_image(self):
@@ -1457,11 +1462,11 @@ class Event(
                 else:
                     s.save()
 
-            self.settings.flush()
-            self.settings.set('private_testmode_tickets', False)
-            self.settings.set('private_testmode_talks', False)
-            self.settings.set('talks_testmode', False)
-            
+        self.settings.flush()
+        self.settings.set('private_testmode_tickets', False)
+        self.settings.set('private_testmode_talks', False)
+        self.settings.set('talks_testmode', False)
+
         if clone_talks:
             from eventyay.base.models.type import SubmissionType
             from eventyay.base.models.track import Track
