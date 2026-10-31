@@ -1181,7 +1181,7 @@ dependencies = [
 [[package]]
 name = "eventyay-business"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#75f7b44a7881d92e3d99d1910a3cb9fee8844620" }
+source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#79d7d7b4590a1f70e0224912d0d219f7df51ec1d" }
 
 [[package]]
 name = "eventyay-hubspot"
@@ -1195,7 +1195,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#2c55d7c39939d3844c1ba8b8b4265007ede9a7a3" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#f3f356436ee6633a4cafe3187b785ddbe5be675c" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1219,7 +1219,7 @@ dependencies = [
 [[package]]
 name = "eventyay-stripe"
 version = "1.0.1"
-source = { git = "https://github.com/fossasia/eventyay-stripe.git?branch=main#190e96cfe3f230c9e14f348e47a101de0d298af9" }
+source = { git = "https://github.com/fossasia/eventyay-stripe.git?branch=main#7533dedb7f024e1c75710f6eaaa7684f764d4b19" }
 dependencies = [
     { name = "pydantic" },
     { name = "stripe" },
@@ -1228,7 +1228,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#070f5f39114e442e921cce29f77b32c113a96947" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#ff51c3309fff7622880c234e6d0d97438573e4c8" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1723,7 +1723,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#f8102316e867db9fca5fd37119659ed9aff9ccf7" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#17d298337846c83c3e9cc2b14c04fdb200d895d6" }
 
 [[package]]
 name = "faker"
