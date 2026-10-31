@@ -44,9 +44,9 @@ def published_services(settings):
     Services that are published in the Klaro configuration.
 
     Only these can ever be consented to: strictly necessary services, plus
-    enabled services whose category an administrator has switched on. Anything
-    gated on consent must check against this set, otherwise it waits on a
-    service Klaro does not know about and stays blocked forever.
+    enabled services whose category an administrator has switched on. Content
+    gated on any other service stays blocked, because Klaro never reports
+    consent for a service it does not know about.
     """
     return ThirdPartyService.objects.filter(enabled=True).filter(
         Q(category=ConsentCategory.NECESSARY) | Q(category__in=enabled_consent_categories(settings))
@@ -58,6 +58,16 @@ class ConsentProvider(models.TextChoices):
     DISABLED = 'disabled', _('Disabled')
     KLARO = 'klaro', _('Built-in Eventyay consent using Klaro')
     EXTERNAL = 'external', _('External CMP script')
+
+
+class DPAStatus(models.TextChoices):
+    """Whether a data processing agreement is in place with the provider."""
+
+    # The default, so that nothing is recorded as exempt until someone checks.
+    UNKNOWN = 'unknown', _('Not assessed')
+    NOT_REQUIRED = 'not_required', _('Not required')
+    PENDING = 'pending', _('Pending')
+    SIGNED = 'signed', _('Signed')
 
 
 class ThirdPartyService(models.Model):
@@ -94,7 +104,8 @@ class ThirdPartyService(models.Model):
     privacy_policy_url = models.CharField(
         max_length=500,
         blank=True,
-        validators=[URLValidator()],
+        # The default URLValidator also accepts ftp:// and ftps://.
+        validators=[URLValidator(schemes=['http', 'https'])],
         verbose_name=_('Privacy policy URL'),
     )
     cookie_names = models.TextField(
@@ -106,6 +117,23 @@ class ThirdPartyService(models.Model):
             'e.g. ^_ga_ for Google Analytics; otherwise those cookies are not '
             'cleared when consent is withdrawn.'
         ),
+    )
+    data_processed = models.TextField(
+        blank=True,
+        verbose_name=_('Data processed'),
+        help_text=_('What personal data the service receives, e.g. IP address, email address.'),
+    )
+    region = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_('Country / region'),
+        help_text=_('Where the provider processes the data.'),
+    )
+    dpa_status = models.CharField(
+        max_length=20,
+        choices=DPAStatus.choices,
+        default=DPAStatus.UNKNOWN,
+        verbose_name=_('DPA status'),
     )
 
     class Meta:
