@@ -427,9 +427,13 @@ def limit_for_reviewers(queryset, event, user, reviewer_tracks=None, add_assignm
     return queryset
 
 
-def submissions_for_user(event, user):
+def submissions_for_user(event, user, eventpermset=None):
     from eventyay.base.models import Submission
     from eventyay.talk_rules.agenda import can_view_wip_schedule
+
+    # Team API tokens authenticate as AnonymousUser, so their rights arrive as a permission set.
+    if user.is_anonymous and eventpermset and 'can_change_submissions' in eventpermset:
+        return event.submissions.all()
 
     if not user.is_anonymous:
         if is_only_reviewer(user, event):

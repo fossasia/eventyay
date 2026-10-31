@@ -355,7 +355,9 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         if not self.event:
             # This is just during api doc creation
             return self.queryset
-        queryset = submissions_for_user(self.event, self.request.user).order_by('code')
+        queryset = submissions_for_user(
+            self.event, self.request.user, getattr(self.request, 'eventpermset', None)
+        ).order_by('code')
         expanded_fields = list(
             self.check_expanded_fields(
                 'speakers.user',

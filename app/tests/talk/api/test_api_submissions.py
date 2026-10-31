@@ -1636,3 +1636,56 @@ def test_team_token_read_only_team_forbidden_submission(client, event, submissio
         headers={"Authorization": f"Token {token.token}"},
     )
     assert response.status_code in [403, 401]
+
+
+def _team_token(event, can_change_submissions, name):
+    from eventyay.base.models import TeamAPIToken
+
+    with scope(event=event):
+        team = event.organizer.teams.create(name=name, can_change_submissions=can_change_submissions)
+        team.limit_events.add(event)
+        return TeamAPIToken.objects.create(team=team, name=name)
+
+
+@pytest.mark.django_db
+def test_team_token_can_list_and_retrieve_unscheduled_submissions(client, event, submission):
+    token = _team_token(event, True, "Manage submissions")
+    headers = {"Authorization": f"Token {token.token}"}
+
+    response = client.get(event.api_urls.submissions, follow=True, headers=headers)
+    assert response.status_code == 200, response.text
+    assert [s["code"] for s in response.json()["results"]] == [submission.code]
+
+    response = client.get(
+        event.api_urls.submissions + f"{submission.code}/", follow=True, headers=headers
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["code"] == submission.code
+
+
+@pytest.mark.django_db
+def test_team_token_without_submission_permission_cannot_see_unscheduled_submissions(
+    client, event, submission
+):
+    token = _team_token(event, False, "No submission rights")
+    headers = {"Authorization": f"Token {token.token}"}
+
+    response = client.get(event.api_urls.submissions, follow=True, headers=headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["count"] == 0
+
+    response = client.get(
+        event.api_urls.submissions + f"{submission.code}/", follow=True, headers=headers
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_team_token_of_other_event_cannot_see_unscheduled_submissions(client, event, other_event, submission):
+    token = _team_token(other_event, True, "Other event")
+
+    response = client.get(
+        event.api_urls.submissions, follow=True, headers={"Authorization": f"Token {token.token}"}
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["count"] == 0
