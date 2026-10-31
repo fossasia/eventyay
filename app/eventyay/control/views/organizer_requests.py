@@ -1,10 +1,12 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Exists, OuterRef, Prefetch, QuerySet
+from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.utils.translation import gettext as _
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, TemplateView
 
 from eventyay.base.forms.organizer_request import OrganizerRequestRejectForm, OrganizerRequestReviewForm
 from eventyay.base.models import OrganizerRequest, OrganizerRequestAnswer, User
@@ -12,15 +14,34 @@ from eventyay.base.services.organizer_requests import review_request
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
 
-class OrganizerRequestList(AdministratorPermissionRequiredMixin, ListView):
-    template_name = 'pretixcontrol/admin/organizer_requests/list.html'
-    context_object_name = 'applications'
-    paginate_by = 25
+REQUEST_PAGE_SIZE = 25
 
-    def get_queryset(self):
-        return OrganizerRequest.objects.annotate(
+
+def paginate_requests(request: HttpRequest, queryset: QuerySet, page_param: str):
+    return Paginator(queryset, REQUEST_PAGE_SIZE).get_page(request.GET.get(page_param))
+
+
+class OrganizerRequestList(AdministratorPermissionRequiredMixin, TemplateView):
+    template_name = 'pretixcontrol/admin/organizer_requests/list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        requests = OrganizerRequest.objects.annotate(
             has_account=Exists(User.objects.filter(email__iexact=OuterRef('email')))
         )
+        context['open_page'] = paginate_requests(
+            self.request,
+            requests.filter(status=OrganizerRequest.Status.PENDING),
+            'open_page',
+        )
+        context['resolved_page'] = paginate_requests(
+            self.request,
+            requests.filter(
+                status__in=(OrganizerRequest.Status.APPROVED, OrganizerRequest.Status.REJECTED)
+            ).select_related('reviewed_by'),
+            'resolved_page',
+        )
+        return context
 
 
 class OrganizerRequestDetail(AdministratorPermissionRequiredMixin, DetailView):
