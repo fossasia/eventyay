@@ -1,0 +1,28 @@
+{% load i18n %}
+<section class="team-invitations" aria-label="{% translate 'Pending team invitations' %}">
+  {% for invite in pending_team_invites %}
+    <div class="alert alert-info team-invitation" role="alert">
+      <form action="{% url 'eventyay_common:auth.invite' token=invite.token %}" method="post">
+        {% csrf_token %}
+        <p>
+          <strong>
+            {% blocktranslate trimmed with team=invite.team.name event=invite.event_name %}
+              You have been invited to join “{{ team }}” for “{{ event }}”.
+            {% endblocktranslate %}
+          </strong>
+        </p>
+        <p>
+          {% blocktranslate trimmed with expires=invite.expires|date:'SHORT_DATETIME_FORMAT' %}
+            You will only become a member of the team after you accept. This invitation is valid until {{ expires }}.
+          {% endblocktranslate %}
+        </p>
+        <button type="submit" name="action" value="accept" class="btn btn-primary">
+          {% translate 'Accept' %}
+        </button>
+        <button type="submit" name="action" value="decline" class="btn btn-default">
+          {% translate 'Decline' %}
+        </button>
+      </form>
+    </div>
+  {% endfor %}
+</section>

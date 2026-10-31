@@ -1,0 +1,18 @@
+{% extends 'eventyay_common/auth/base.html' %}
+{% load i18n %}
+{% block content %}
+  <div class="form-signin">
+    <h3>{% translate 'Team invitation' %}</h3>
+    <p>
+      {% blocktranslate trimmed with team=team.name %}
+        This invitation to join the “{{ team }}” team was sent to a different email address than the one
+        of the account you are logged in with.
+      {% endblocktranslate %}
+    </p>
+    <p>{% translate 'Please log out and open the link again with the account the invitation was sent to.' %}</p>
+    <div class="form-group buttons">
+      <a href="{% url 'eventyay_common:dashboard' %}" class="btn btn-default">{% translate 'Go to dashboard' %}</a>
+      <a href="{{ logout_url }}" class="btn btn-primary">{% translate 'Log out' %}</a>
+    </div>
+  </div>
+{% endblock %}
