@@ -1,6 +1,7 @@
 """Track-scoped access helpers for organiser teams."""
 
 from django.db.models import Q
+from django_scopes import scope
 
 
 def applicable_talk_teams(event, user, *, reviewers_only=False):
@@ -49,7 +50,8 @@ def apply_team_track_limit(queryset, event, team, *, track_field='track'):
 
     from eventyay.base.models import Track
 
-    allowed = Track.objects.filter(event=event, team__pk=team.pk)
+    with scope(event=event):
+        allowed = Track.objects.filter(event=event, team__pk=team.pk)
     return queryset.filter(**{f'{track_field}__in': allowed})
 
 

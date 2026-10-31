@@ -1,8 +1,9 @@
 import rules
 from django.db.models import Count, Exists, OuterRef, Q, Subquery
+from django_scopes import scope
 
 from .person import is_only_reviewer, is_reviewer
-from .tracks import apply_track_limit, get_allowed_tracks
+from .tracks import apply_team_track_limit, apply_track_limit, get_allowed_tracks
 
 
 @rules.predicate
@@ -447,12 +448,12 @@ def can_list_submissions(request, event):
 def submissions_for_user(event, user, eventpermset=None, team=None):
     from eventyay.base.models import Submission
     from eventyay.talk_rules.agenda import can_view_wip_schedule
-    from eventyay.talk_rules.tracks import apply_team_track_limit
 
     # Team API tokens authenticate as AnonymousUser, so their rights arrive as a permission
     # set plus the token's team, whose track limits still apply.
     if user.is_anonymous and team is not None and eventpermset and 'can_change_submissions' in eventpermset:
-        return apply_team_track_limit(event.submissions.all(), event, team)
+        with scope(event=event):
+            return apply_team_track_limit(event.submissions.all(), event, team)
 
     if not user.is_anonymous:
         if is_only_reviewer(user, event):

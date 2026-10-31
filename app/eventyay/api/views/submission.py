@@ -288,6 +288,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     def get_legacy_serializer_class(self):  # pragma: no cover
         if self.request.user.has_perm('base.orga_update_submission', self.event):
             return LegacySubmissionOrgaSerializer
+        if get_request_team(self.request) is not None and can_list_submissions(self.request, self.event):
+            return LegacySubmissionOrgaSerializer
         if self.request.user.has_perm('base.orga_list_submission', self.event):
             return LegacySubmissionReviewerSerializer
         return LegacySubmissionSerializer
