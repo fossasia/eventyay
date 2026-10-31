@@ -2,12 +2,18 @@ import { isUsableAudioTranslationEntry } from './lib/validators.js'
 
 const ORIGINAL_LANGUAGE = 'Original'
 
+export function isUsableLanguageStreamEntry(entry) {
+	if (!entry?.language) return false
+	if (entry.caption_ws_url) return true
+	return isUsableAudioTranslationEntry(entry)
+}
+
 export function roomUsesPluginLanguageStreams(room) {
 	if (room?.interpretation_use_plugin_streams) return true
 	const scheduleStreams = room?.currentStream?.config?.language_streams
 		|| room?.currentStream?.config?.languageUrls
 		|| room?.currentStream?.language_streams
-	return Array.isArray(scheduleStreams) && scheduleStreams.length > 0
+	return Array.isArray(scheduleStreams) && scheduleStreams.some(isUsableLanguageStreamEntry)
 }
 
 function ensureOriginalLanguageEntry(languages) {
@@ -25,18 +31,16 @@ export function pluginLanguageStreams(room) {
 	const scheduleStreams = room?.currentStream?.config?.language_streams
 		|| room?.currentStream?.config?.languageUrls
 		|| room?.currentStream?.language_streams
-	const streams = (Array.isArray(scheduleStreams) && scheduleStreams.length > 0)
-		? scheduleStreams
+	const usableScheduleStreams = Array.isArray(scheduleStreams)
+		? scheduleStreams.filter(isUsableLanguageStreamEntry)
+		: []
+	const streams = usableScheduleStreams.length > 0
+		? usableScheduleStreams
 		: room?.interpretation_language_streams
 	if (!Array.isArray(streams)) {
 		return ensureOriginalLanguageEntry([])
 	}
-	// Keep caption-only rows (e.g. Original floor WS) even without WHEP audio.
-	const usable = streams.filter(entry => {
-		if (!entry?.language) return false
-		if (entry.caption_ws_url) return true
-		return isUsableAudioTranslationEntry(entry)
-	})
+	const usable = streams.filter(isUsableLanguageStreamEntry)
 	return ensureOriginalLanguageEntry(usable)
 }
 

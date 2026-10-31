@@ -23,6 +23,9 @@
 	.empty-state(v-if="entries.length === 0")
 		i.mdi.mdi-translate-off(aria-hidden="true")
 		p {{ $t('No interpretation channels added yet. Click "Add another language" above to add one.') }}
+		bunt-button.btn-add-entry(v-if="!title", @click="addEntry")
+			i.mdi.mdi-plus(aria-hidden="true")
+			span {{ $t('Add another language') }}
 
 	.entries-container(v-else)
 		.language-url-entry(v-for="(entry, index) in entries" :key="index")
@@ -69,6 +72,11 @@
 					:label="$t('Use audio and captions from this interpretation channel')",
 					:hint="$t('If enabled, attendees see both video and audio from this channel. If disabled, attendees hear the audio while watching the main video.')"
 				)
+
+		.list-actions-bar(v-if="!title")
+			bunt-button.btn-add-entry(@click="addEntry")
+				i.mdi.mdi-plus(aria-hidden="true")
+				span {{ $t('Add another language') }}
 </template>
 
 <script>

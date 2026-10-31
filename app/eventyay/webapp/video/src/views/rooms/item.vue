@@ -504,7 +504,9 @@ export default {
 		},
 		clearStaleTranslation() {
 			if (!this.room?.id || !this.currentInterpretation) return
-			const selectedLang = this.selectedPluginLanguage
+			const selectedLang = this.activeTranslationConfig?.language
+				|| this.currentInterpretation?.language
+				|| this.selectedPluginLanguage
 			const matchesPlugin = this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages)
 			if (!this.showPluginLanguageDropdown || !matchesPlugin) {
 				const sameLang = selectedLang && selectedLang !== 'Original'
@@ -514,6 +516,7 @@ export default {
 					const audioSource = normalizeAudioTranslationSource(sameLang.url || sameLang.youtube_id)
 					if (audioSource) {
 						this.updateActiveTranslation({
+							...sameLang,
 							url: audioSource,
 							useVideo: Boolean(sameLang.use_video),
 							language: sameLang.language,

@@ -14,13 +14,23 @@ function getNativeRTCPeerConnection() {
 	return nativeRTCPeerConnection
 }
 
+export function normalizeWhepEndpoint(url) {
+	if (typeof url !== 'string' || !url.trim()) return url
+	try {
+		const parsed = new URL(url)
+		if (parsed.pathname.endsWith('/whip') || parsed.pathname.endsWith('/whip/')) {
+			parsed.pathname = parsed.pathname.replace(/\/whip\/?$/, '/whep')
+			return parsed.toString()
+		}
+		return url
+	} catch (e) {
+		return url.replace(/\/whip(\/)?(?=[?#]|$)/, '/whep')
+	}
+}
+
 export class WhepClient {
 	constructor(url, audioElement) {
-		let endpoint = url
-		if (typeof endpoint === 'string' && endpoint.endsWith('/whip')) {
-			endpoint = endpoint.replace(/\/whip$/, '/whep')
-		}
-		this.url = endpoint
+		this.url = normalizeWhepEndpoint(url)
 		this.audioElement = audioElement
 		this.abortController = new AbortController()
 		

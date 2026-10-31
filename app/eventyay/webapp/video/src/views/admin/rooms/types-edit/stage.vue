@@ -138,7 +138,7 @@
 										:placeholder="$t('Stream password')"
 									)
 
-				.stream-interpretation-settings(v-if="interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'manual' || interpretationConfig.interpreter === 'voxbento')")
+				.stream-interpretation-settings(v-if="isScheduledMode && interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'manual' || interpretationConfig.interpreter === 'voxbento')")
 					button.accordion-header.sub-accordion(
 						type="button"
 						@click="stream.showInterpretation = !stream.showInterpretation"
@@ -151,6 +151,8 @@
 						i.mdi(:class="stream.showInterpretation ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
 					.stream-interpretation-body(v-if="stream.showInterpretation")
 						LanguageAudioSourceList(
+							:title="$t('Interpretation channels for this stream')"
+							:subtitle="$t('Add multi-language audio or video interpretation channels specifically for this stream.')"
 							:entries="stream.config.language_streams"
 							:roomId="roomId"
 							:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"

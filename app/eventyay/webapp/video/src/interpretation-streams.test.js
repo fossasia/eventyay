@@ -4,12 +4,13 @@ import {
 	roomUsesPluginLanguageStreams,
 	pluginLanguageStreams,
 	firstCaptionLanguage,
+	isUsableLanguageStreamEntry,
 } from './interpretation-streams.js'
 import {
 	isUsableAudioTranslationEntry,
 	normalizeAudioTranslationSource,
-	normalizeYoutubeVideoId,
 } from './lib/validators.js'
+import { normalizeWhepEndpoint } from './lib/webrtc/whep.js'
 
 test('roomUsesPluginLanguageStreams returns true when room has interpretation_use_plugin_streams', () => {
 	assert.equal(roomUsesPluginLanguageStreams({ interpretation_use_plugin_streams: true }), true)
@@ -41,6 +42,21 @@ test('roomUsesPluginLanguageStreams returns true when active stream schedule def
 		},
 	}
 	assert.equal(roomUsesPluginLanguageStreams(room), true)
+})
+
+test('roomUsesPluginLanguageStreams returns false when schedule only has empty/incomplete entries and room flag is off', () => {
+	const room = {
+		interpretation_use_plugin_streams: false,
+		currentStream: {
+			config: {
+				language_streams: [
+					{ language: '', url: '' },
+					{ language: 'Incomplete', url: 'not-a-valid-url' },
+				],
+			},
+		},
+	}
+	assert.equal(roomUsesPluginLanguageStreams(room), false)
 })
 
 test('roomUsesPluginLanguageStreams returns false when neither room flag nor schedule channels exist', () => {
@@ -76,7 +92,7 @@ test('pluginLanguageStreams prioritizes active schedule language streams over ro
 	assert.equal(streams.some(s => s.language === 'RoomFrench'), false)
 })
 
-test('pluginLanguageStreams falls back to room interpretation_language_streams when schedule has none', () => {
+test('pluginLanguageStreams falls back to room interpretation_language_streams when schedule has empty channels', () => {
 	const room = {
 		interpretation_use_plugin_streams: true,
 		interpretation_language_streams: [
@@ -85,6 +101,26 @@ test('pluginLanguageStreams falls back to room interpretation_language_streams w
 		currentStream: {
 			config: {
 				language_streams: [],
+			},
+		},
+	}
+	const streams = pluginLanguageStreams(room)
+	assert.equal(streams[0].language, 'Original')
+	assert.equal(streams[1].language, 'RoomGerman')
+})
+
+test('pluginLanguageStreams falls back to room interpretation_language_streams when schedule only has unusable rows', () => {
+	const room = {
+		interpretation_use_plugin_streams: true,
+		interpretation_language_streams: [
+			{ language: 'RoomGerman', url: 'https://example.com/room-de/whep' },
+		],
+		currentStream: {
+			config: {
+				language_streams: [
+					{ language: '', url: '' },
+					{ language: 'BadUrl', url: 'not-valid' },
+				],
 			},
 		},
 	}
@@ -102,6 +138,13 @@ test('pluginLanguageStreams preserves caption-only entries without audio URL', (
 	}
 	const streams = pluginLanguageStreams(room)
 	assert.equal(streams.some(s => s.language === 'English Captions'), true)
+})
+
+test('isUsableLanguageStreamEntry validates languages with audio or caption endpoints', () => {
+	assert.equal(isUsableLanguageStreamEntry({ language: 'Spanish', url: 'https://live.example.com/whep' }), true)
+	assert.equal(isUsableLanguageStreamEntry({ language: 'Original', caption_ws_url: 'wss://live.example.com/ws' }), true)
+	assert.equal(isUsableLanguageStreamEntry({ language: '', url: 'https://live.example.com/whep' }), false)
+	assert.equal(isUsableLanguageStreamEntry({ language: 'Spanish', url: 'invalid' }), false)
 })
 
 test('firstCaptionLanguage returns non-original caption language when available', () => {
@@ -126,4 +169,14 @@ test('normalizeAudioTranslationSource returns normalized URL or YouTube ID', () 
 	assert.equal(normalizeAudioTranslationSource('https://www.youtube.com/watch?v=dQw4w9WgXcQ'), 'dQw4w9WgXcQ')
 	assert.equal(normalizeAudioTranslationSource('dQw4w9WgXcQ'), 'dQw4w9WgXcQ')
 	assert.equal(normalizeAudioTranslationSource('not-a-source'), null)
+})
+
+test('normalizeWhepEndpoint rewrites /whip endpoints to /whep while preserving query strings and trailing slashes', () => {
+	assert.equal(normalizeWhepEndpoint('https://live.example.com/whip'), 'https://live.example.com/whep')
+	assert.equal(normalizeWhepEndpoint('https://live.example.com/whip/'), 'https://live.example.com/whep')
+	assert.equal(normalizeWhepEndpoint('https://live.example.com/whip?token=secret123'), 'https://live.example.com/whep?token=secret123')
+	assert.equal(normalizeWhepEndpoint('https://live.example.com/whip/?token=secret123'), 'https://live.example.com/whep?token=secret123')
+	assert.equal(normalizeWhepEndpoint('https://live.example.com/channel/whip?flow=wispr'), 'https://live.example.com/channel/whep?flow=wispr')
+	assert.equal(normalizeWhepEndpoint('https://live.example.com/channel/whep?flow=wispr'), 'https://live.example.com/channel/whep?flow=wispr')
+	assert.equal(normalizeWhepEndpoint('/relative/whip?token=123'), '/relative/whep?token=123')
 })
