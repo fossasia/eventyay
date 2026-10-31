@@ -746,18 +746,6 @@ def get_admin_navigation(request):
         'children': message_center_children,
     })
 
-    plugin_items = sum((list(a[1]) for a in nav_global.send(request, request=request)), [])
-    legacy_business_url = reverse('eventyay_admin:admin.global.business')
-    vouchers_url = reverse('eventyay_admin:admin.vouchers')
-    plugin_items = [
-        {**item, 'parent': vouchers_url} if item.get('parent') == legacy_business_url else item
-        for item in plugin_items
-    ]
-    merge_in(
-        nav,
-        sorted(plugin_items, key=lambda r: (1 if r.get('parent') else 0, r.get('position', 100), r['label'])),
-    )
-
     def _business_child_sort_key(item):
         if 'position' in item:
             return (item['position'], str(item.get('label', '')))
