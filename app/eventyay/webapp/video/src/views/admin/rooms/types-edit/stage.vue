@@ -138,6 +138,27 @@
 										:placeholder="$t('Stream password')"
 									)
 
+				.stream-interpretation-settings(v-if="interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'manual' || interpretationConfig.interpreter === 'voxbento')")
+					button.accordion-header.sub-accordion(
+						type="button"
+						@click="stream.showInterpretation = !stream.showInterpretation"
+						:aria-expanded="String(stream.showInterpretation)"
+					)
+						span.accordion-title
+							| {{ $t('Interpretation channels for this stream') }}
+							span.channels-badge(v-if="stream.config.language_streams && stream.config.language_streams.length > 0")
+								| {{ stream.config.language_streams.length }}
+						i.mdi(:class="stream.showInterpretation ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
+					.stream-interpretation-body(v-if="stream.showInterpretation")
+						LanguageAudioSourceList(
+							:entries="stream.config.language_streams"
+							:roomId="roomId"
+							:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
+							:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
+						)
+						p.stream-interpretation-hint
+							| {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
+
 		.scheduled-actions-footer(v-if="isScheduledMode")
 			bunt-button.btn-add-another(@click="addScheduledStream")
 				i.mdi.mdi-plus(aria-hidden="true")
@@ -182,7 +203,8 @@
 				span {{ $t('Failed to load interpretation channels. Changes cannot be saved until reloaded successfully.') }}
 			LanguageAudioSourceList(
 				v-else-if="interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'voxbento' || interpretationConfig.interpreter === 'manual')"
-				:title="$t('Interpretation channels')"
+				:title="isScheduledMode ? $t('Default interpretation channels (room fallback)') : $t('Interpretation channels')"
+				:subtitle="isScheduledMode ? $t('These channels will be used whenever a stream schedule does not define its own specific interpretation channels.') : ''"
 				:entries="pluginLanguageStreamEntries"
 				:roomId="roomId"
 				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
@@ -220,6 +242,7 @@ import { logOperational } from 'lib/operationalLog'
 import { readApiErrorMessage } from 'lib/apiErrorMessage'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
+import { cloneLanguageStreamEntries, serializeLanguageStreamEntry } from 'lib/interpretation-language-streams'
 import mixin from './mixin'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators'
 import { parseVimeoUrl } from 'lib/vimeo'
@@ -464,6 +487,7 @@ export default defineComponent({
 			config = {},
 		} = {}) {
 			const self = this
+			const rawLanguageStreams = config.language_streams || config.languageUrls || []
 			const stream = reactive({
 				...createDefaultStream(stream_type),
 				id,
@@ -482,8 +506,10 @@ export default defineComponent({
 					showInfo: !!config.showInfo,
 					dnt: !!config.dnt,
 					password: config.password ? String(config.password).trim() : '',
+					language_streams: cloneLanguageStreamEntries(rawLanguageStreams),
 				},
 				showAdvanced: false,
+				showInterpretation: false,
 			})
 
 			Object.defineProperty(stream, 'plainStartTime', {
@@ -925,6 +951,7 @@ export default defineComponent({
 							showInfo: stream.config?.showInfo,
 							dnt: stream.config?.dnt,
 							password: stream.config?.password || undefined,
+							language_streams: (stream.config?.language_streams || []).map(serializeLanguageStreamEntry),
 						},
 					}
 
@@ -1278,6 +1305,25 @@ export default defineComponent({
 			.password-group
 				margin-top: 6px
 				max-width: 380px
+
+		.stream-interpretation-settings
+			margin-top: 12px
+			border-top: 1px solid $clr-grey-100
+			padding-top: 10px
+			.channels-badge
+				margin-left: 8px
+				padding: 2px 7px
+				font-size: 11px
+				font-weight: 600
+				border-radius: 10px
+				background: var(--clr-primary, #1e88e5)
+				color: #ffffff
+			.stream-interpretation-body
+				margin-top: 12px
+			.stream-interpretation-hint
+				margin-top: 8px
+				font-size: 12px
+				color: $clr-secondary-text-light
 
 	.scheduled-actions-footer
 		display: flex

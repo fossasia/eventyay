@@ -5,7 +5,7 @@
 			i.mdi.mdi-translate.header-icon(aria-hidden="true")
 			.header-text
 				h4 {{ title }}
-				p.header-subtitle {{ $t('Add multi-language audio or video interpretation channels for attendees.') }}
+				p.header-subtitle {{ subtitle || $t('Add multi-language audio or video interpretation channels for attendees.') }}
 				p.header-warning(v-if="!translationModelSetup")
 					i.mdi.mdi-alert-circle-outline(aria-hidden="true")
 					span {{ $t('No translation model configured. Please set up a model first.') }}
@@ -51,13 +51,13 @@
 
 				.field-group.source-field
 					label.field-label
-						| {{ $t('Audio / Video Source (YouTube or WHEP)') }}
+						| {{ $t('Audio / Video Source (YouTube, WHEP, or WHIP)') }}
 						span.required-star *
 					.input-wrapper
 						input.text-input(
 							type="text"
 							v-model="entry.url"
-							:placeholder="$t('YouTube URL/ID or WHEP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
+							:placeholder="$t('YouTube URL/ID, WHEP, or WHIP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
 							@blur="normalizeEntry(entry)"
 							@input="syncLegacyField(entry)"
 						)
@@ -83,6 +83,10 @@ export default {
 			required: true,
 		},
 		title: {
+			type: String,
+			default: '',
+		},
+		subtitle: {
 			type: String,
 			default: '',
 		},

@@ -16,7 +16,11 @@ function getNativeRTCPeerConnection() {
 
 export class WhepClient {
 	constructor(url, audioElement) {
-		this.url = url
+		let endpoint = url
+		if (typeof endpoint === 'string' && endpoint.endsWith('/whip')) {
+			endpoint = endpoint.replace(/\/whip$/, '/whep')
+		}
+		this.url = endpoint
 		this.audioElement = audioElement
 		this.abortController = new AbortController()
 		

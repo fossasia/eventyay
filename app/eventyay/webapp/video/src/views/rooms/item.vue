@@ -504,8 +504,23 @@ export default {
 		},
 		clearStaleTranslation() {
 			if (!this.room?.id || !this.currentInterpretation) return
+			const selectedLang = this.selectedPluginLanguage
 			const matchesPlugin = this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages)
 			if (!this.showPluginLanguageDropdown || !matchesPlugin) {
+				const sameLang = selectedLang && selectedLang !== 'Original'
+					? this.pluginLanguages.find(l => l.language === selectedLang)
+					: null
+				if (sameLang) {
+					const audioSource = normalizeAudioTranslationSource(sameLang.url || sameLang.youtube_id)
+					if (audioSource) {
+						this.updateActiveTranslation({
+							url: audioSource,
+							useVideo: Boolean(sameLang.use_video),
+							language: sameLang.language,
+						})
+						return
+					}
+				}
 				this.$store.commit('updateInterpretationAudio', {
 					roomId: this.room.id,
 					interpretation: null
