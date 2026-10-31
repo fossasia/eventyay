@@ -223,7 +223,9 @@ def test_make_submitted(submission, state):
 @pytest.mark.django_db
 def test_submission_set_state_error_msg(submission):
     with scope(event=submission.event):
+        # _set_state validates against the persisted state, so save it first.
         submission.state = SubmissionStates.CANCELED
+        submission.save(update_fields=['state'])
 
         with pytest.raises(SubmissionError) as excinfo:
             submission._set_state(SubmissionStates.SUBMITTED)

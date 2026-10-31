@@ -286,8 +286,13 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
         form = SubmissionFilterForm(data=query, event=self.request.event)
         if not form.is_valid():
             return False
-        submissions = Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
-        return not form.filter_queryset(submissions).exists()
+        with scope(event=self.request.event):
+            submissions = Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
+            # Match the track access limits the list itself applies, so sessions on
+            # inaccessible tracks don't keep the organiser on an empty filtered list.
+            if user_has_track_limits(self.request.event, self.request.user):
+                submissions = apply_track_limit(submissions, self.request.event, self.request.user)
+            return not form.filter_queryset(submissions).exists()
 
     @context
     def next(self):
@@ -1682,6 +1687,13 @@ class CommentList(SubmissionViewMixin, FormView):
     write_permission_required = 'base.add_submissioncomment'
     form_class = SubmissionCommentForm
     include_deleted = True
+
+    def dispatch(self, request, *args, **kwargs):
+        # Comments of a deleted session can be read, but not added.
+        # Permissions are checked first so the deleted state is not exposed.
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and self.has_permission() and self.object.is_deleted:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

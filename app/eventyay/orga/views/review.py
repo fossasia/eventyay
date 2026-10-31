@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -469,11 +469,15 @@ class ReviewViewMixin:
 
     @cached_property
     def object(self):
-        return (
-            self.submission.reviews.exclude(user__in=self.submission.speakers.all())
-            .filter(user=self.request.user)
-            .first()
-        )
+        # Use all_objects so saved reviews stay readable on deleted sessions; writes
+        # remain blocked by can_be_reviewed.
+        with scope(event=self.request.event):
+            return (
+                self.submission.reviews(manager='all_objects')
+                .exclude(user__in=self.submission.speakers.all())
+                .filter(user=self.request.user)
+                .first()
+            )
 
     def get_object(self):
         return self.object
@@ -565,9 +569,9 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
                 'user': review.user,
                 'answers': [review.answers.filter(question=question).first() for question in self.qform.queryset],
             }
-            for review in self.submission.reviews.exclude(
-                pk=(self.object.pk if self.object else None)
-            ).prefetch_related('scores', 'scores__category')
+            for review in self.submission.reviews(manager='all_objects')
+            .exclude(pk=(self.object.pk if self.object else None))
+            .prefetch_related('scores', 'scores__category')
         ]
 
     @context
@@ -631,6 +635,8 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
     def post(self, request, *args, **kwargs):
         action = self.request.POST.get('review_submit') or 'save'
         if action == 'abstain':
+            if not can_be_reviewed(self.request.user, self.submission):
+                raise Http404()
             Review.objects.get_or_create(user=self.request.user, submission=self.submission)
             return redirect(self.get_success_url())
         if action == 'skip_for_now':
