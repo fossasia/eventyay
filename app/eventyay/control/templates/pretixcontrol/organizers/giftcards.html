@@ -121,7 +121,8 @@
         </form>
     </div>
 
-    <div class="gc-card gc-table-card" data-ajax-results-region>
+    <div data-ajax-results-region>
+        <div class="gc-card gc-table-card">
         {% if giftcards|length == 0 %}
             <div class="gc-empty-box">
                 <div class="gc-empty-icon">
@@ -354,5 +355,6 @@
             </div>
         </section>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
