@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -56,7 +56,7 @@ def parse_cursor(value: str | None) -> tuple[datetime, int] | None:
     except ValueError:
         return None
     if timezone.is_naive(created):
-        created = timezone.make_aware(created, timezone.utc)
+        created = timezone.make_aware(created, UTC)
     return created, pk
 
 
