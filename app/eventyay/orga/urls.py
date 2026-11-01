@@ -61,6 +61,11 @@ urlpatterns = [
                     organizer.OrganizerSpeakerList.as_view(),
                     name='organizer.speakers',
                 ),
+                path(
+                    'teams/',
+                    RedirectView.as_view(pattern_name='eventyay_common:organizer.teams', permanent=False, query_string=True),
+                    name='organizer.teams',
+                ),
             ]
         ),
     ),
