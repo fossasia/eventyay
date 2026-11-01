@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -64,14 +66,21 @@ def other_orga(test_user):
 def other_orga_event(other_orga):
     """Create an event under the second organizer."""
     with scopes_disabled():
-        return Event.objects.create(organizer=other_orga, name='Event 3', slug='e3', date_from=now())
+        return Event.objects.create(
+            organizer=other_orga,
+            name='Event 3',
+            slug='e3',
+            date_from=now() + timedelta(days=30),
+            live=True,
+        )
 
 @pytest.fixture
 def events_with_stats(orga, test_user):
     """Create events with submissions and speakers for stats testing."""
     with scopes_disabled():
-        e1 = Event.objects.create(organizer=orga, name='Event 1', slug='e1', date_from=now())
-        e2 = Event.objects.create(organizer=orga, name='Event 2', slug='e2', date_from=now())
+        starts = now() + timedelta(days=30)
+        e1 = Event.objects.create(organizer=orga, name='Event 1', slug='e1', date_from=starts, live=True)
+        e2 = Event.objects.create(organizer=orga, name='Event 2', slug='e2', date_from=starts, live=True)
 
         sub_type = SubmissionType.objects.create(event=e1, name='Talk')
 
