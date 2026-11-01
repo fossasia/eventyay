@@ -1768,7 +1768,7 @@ thank you for registering for {event}.
 
 You are successfully registered for the meetup. Here are the details of your registration:
 Event: {event}
-Organizer: {organizer}
+Organizer: {organizer_name}
 
 You can view the details and status of your registration here:
 {event_url}
@@ -1788,7 +1788,7 @@ thank you for registering for {event}.
 
 You are successfully registered for the meetup. Here are the details of your registration:
 Event: {event}
-Organizer: {organizer}
+Organizer: {organizer_name}
 
 You can view the details and status of your registration at:
 {event_url}

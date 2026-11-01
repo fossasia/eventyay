@@ -242,7 +242,9 @@ def expand_email_preview_placeholders(
         resolved_locale = event.settings.locale
 
     with language(resolved_locale, event.settings.region):
-        context_dict = build_email_preview_context(event, _preview_parameters(html_body, preview_context))
+        context_dict = build_email_preview_context(
+            event, _preview_parameters(html_body, preview_context), shared_event_values=True
+        )
         expanded = html_body.format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
@@ -282,11 +284,16 @@ def is_placeholder_html_sample(sample: str) -> bool:
     return stripped.startswith('<') and not stripped.startswith('</')
 
 
-def build_email_preview_context(event, base_parameters: list[str]):
-    """Build sendmail preview context, keeping HTML placeholder samples intact."""
+def build_email_preview_context(event, base_parameters: list[str], shared_event_values: bool = False):
+    """Build an email preview context, keeping HTML placeholder samples intact.
+
+    Talk samples win over base ones of the same name, as in talk emails. With ``shared_event_values``
+    the shared event placeholders use the base samples instead, as ticket and sendmail emails do.
+    """
     from django.utils.translation import gettext
 
     from eventyay.base.email import get_available_placeholders as get_base_placeholders
+    from eventyay.base.email import shared_event_placeholder_names
     from eventyay.mail.context import get_available_placeholders as get_talk_placeholders
     from eventyay.base.services.mail import TolerantDict
 
@@ -300,6 +307,9 @@ def build_email_preview_context(event, base_parameters: list[str]):
     talk_placeholders = get_talk_placeholders(event, list(base_parameters))
         
     all_placeholders = {**base_placeholders, **talk_placeholders}
+    if shared_event_values:
+        shared = shared_event_placeholder_names()
+        all_placeholders.update({key: placeholder for key, placeholder in base_placeholders.items() if key in shared})
 
     for key, placeholder in all_placeholders.items():
         sample = str(placeholder.render_sample(event))
