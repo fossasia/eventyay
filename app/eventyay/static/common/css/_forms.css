@@ -116,7 +116,7 @@ legend {
 
 /* input level styles */
 
-input:not([type="checkbox"]):not([type="radio"]),
+input:not([type="checkbox"]):not([type="radio"]):not(.select2-search__field):not(.choices__input),
 select,
 textarea {
   display: block;
@@ -1004,4 +1004,44 @@ input.password_strength {
 }
 .teamshifts-roles-selector {
   margin-top: 15px;
+}
+
+/* Fix for Select2 multiple selection chip alignment */
+body .select2-container--bootstrap .select2-selection--multiple {
+  padding: 2px 4px;
+}
+body .select2-container--bootstrap .select2-selection--multiple .select2-selection__rendered {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+body .select2-container--bootstrap .select2-selection--multiple .select2-selection__choice {
+  float: none;
+  margin: 2px 4px 2px 0;
+  display: flex;
+  align-items: center;
+}
+body .select2-container--bootstrap .select2-selection--multiple .select2-selection__choice__remove {
+  float: none;
+  margin-right: 4px;
+  margin-left: 0;
+}
+body .select2-container--bootstrap .select2-selection--multiple .select2-search--inline {
+  float: none;
+  margin: 0;
+  flex: 1 1 auto;
+}
+body .select2-container--bootstrap .select2-selection--multiple .select2-search--inline .select2-search__field {
+  margin: 0;
+  height: auto;
+  line-height: normal;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+body .select2-container--bootstrap .select2-selection--multiple .select2-selection__clear {
+  float: none;
+  margin: 0 4px 0 0;
+  order: -1; /* Place clear button before chips if it appears inline */
 }
