@@ -463,7 +463,7 @@ export default {
 		},
 		handleCcLanguageChange(translationConfig) {
 			this.isManualCCOverride = true
-			this.selectedCcLanguage = this.getLanguageForTranslation(translationConfig, this.pluginLanguages) || 'Original'
+			this.selectedCcLanguage = translationConfig?.language || 'Original'
 		},
 		toggleCc() {
 			this.ccEnabled = !this.ccEnabled
@@ -508,12 +508,12 @@ export default {
 				|| this.currentInterpretation?.language
 				|| this.selectedPluginLanguage
 			const matchesPlugin = this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages)
-			if (!this.showPluginLanguageDropdown || !matchesPlugin) {
-				const sameLang = selectedLang && selectedLang !== 'Original'
-					? this.pluginLanguages.find(l => l.language === selectedLang)
-					: null
+			const sameLang = selectedLang && selectedLang !== 'Original'
+				? this.pluginLanguages.find(l => l.language === selectedLang)
+				: null
+			const audioSource = normalizeAudioTranslationSource(sameLang?.url || sameLang?.youtube_id)
+			if (!this.showPluginLanguageDropdown || !matchesPlugin || (audioSource && audioSource !== this.currentInterpretation.url)) {
 				if (sameLang) {
-					const audioSource = normalizeAudioTranslationSource(sameLang.url || sameLang.youtube_id)
 					if (audioSource) {
 						this.updateActiveTranslation({
 							...sameLang,
