@@ -411,22 +411,25 @@ class AddSpeakerForm(QuestionFieldsMixin, forms.Form):
             )
 
     def save_speaker_questions(self, speaker):
-        """Save submitted speaker question responses, reconciling any existing answers."""
+        """Save submitted speaker answers. A blank value keeps an existing answer."""
         from eventyay.base.models import Answer
 
         self.speaker = speaker
         with scope(event=self.event):
             for key, value in self.cleaned_data.items():
-                if key.startswith('question_'):
-                    field = self.fields[key]
-                    if not getattr(field, 'answer', None) and speaker:
-                        existing_answer = Answer.objects.filter(
-                            person=speaker,
-                            question=field.question,
-                        ).first()
-                        if existing_answer:
-                            field.answer = existing_answer
-                    self.save_questions(key, value)
+                if not key.startswith('question_'):
+                    continue
+                field = self.fields[key]
+                if not getattr(field, 'answer', None) and speaker:
+                    existing_answer = Answer.objects.filter(
+                        person=speaker,
+                        question=field.question,
+                    ).first()
+                    if existing_answer:
+                        field.answer = existing_answer
+                if getattr(field, 'answer', None) and value in ('', None, False):
+                    continue
+                self.save_questions(key, value)
 
     @property
     def speaker_question_fields(self):

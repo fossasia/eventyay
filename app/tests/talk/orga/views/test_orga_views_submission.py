@@ -784,6 +784,59 @@ def test_orga_create_submission_reconciles_existing_speaker_custom_answers(
 
 
 @pytest.mark.django_db
+def test_orga_create_submission_keeps_blank_existing_speaker_answers(
+    orga_client, event
+):
+    """A blank create-form answer must not delete a speaker's stored response."""
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+        speaker_user = User.objects.create(
+            fullname="Existing Speaker",
+            email="keep-answer@example.com",
+        )
+        SpeakerProfile.objects.create(user=speaker_user, event=event)
+        speaker_q = Question.objects.create(
+            event=event,
+            question="T-shirt size?",
+            variant=QuestionVariant.STRING,
+            target="speaker",
+            active=True,
+        )
+        old_answer = Answer.objects.create(
+            person=speaker_user,
+            question=speaker_q,
+            answer="Medium",
+        )
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "add_new_speaker": "on",
+            "speaker-email": "keep-answer@example.com",
+            "speaker-name": "Existing Speaker",
+            "speaker-locale": "en",
+            "title": "Keep Existing Answer",
+            "submission_type": type_pk,
+            "state": "submitted",
+            f"speaker-question_{speaker_q.pk}": "",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        old_answer.refresh_from_db()
+        assert old_answer.answer == "Medium"
+        assert event.submissions.filter(title="Keep Existing Answer").exists()
+
+
+@pytest.mark.django_db
 def test_orga_create_submission_links_multiple_speakers_and_rejects_other_event(
     orga_client, event, other_event
 ):

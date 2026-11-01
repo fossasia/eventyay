@@ -289,6 +289,8 @@ class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
         return instance
 
     def validate_email(self, value):
+        if value is None:
+            raise exceptions.ValidationError('This field may not be null.')
         value = value.lower()
         if User.objects.exclude(pk=self.instance.pk).filter(email__iexact=value).exists():
             raise exceptions.ValidationError('Email already exists in system.')

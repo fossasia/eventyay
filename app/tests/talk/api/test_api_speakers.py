@@ -641,6 +641,24 @@ def test_speaker_update_by_orga_duplicate_email(
 
 
 @pytest.mark.django_db
+def test_speaker_update_rejects_null_email(
+    client, orga_user_write_token, event, speaker, submission
+):
+    original_email = speaker.email
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"email": None}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400
+    with scope(event=event):
+        speaker.refresh_from_db()
+        assert speaker.email == original_email
+
+
+@pytest.mark.django_db
 def test_speaker_retrieve_answers_scoped_to_event(
     client,
     orga_user_token,
