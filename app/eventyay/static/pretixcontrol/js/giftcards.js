@@ -23,30 +23,31 @@ const copyFallback = (btn) => {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.gc-copy-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const text = btn.getAttribute('data-clipboard-text');
-            if (!text) {
-                return;
-            }
+document.addEventListener('click', (event) => {
+    const btn = event.target.closest('.gc-copy-btn');
+    if (!btn) {
+        return;
+    }
 
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    const icon = btn.querySelector('i');
-                    if (icon) {
-                        const originalClass = icon.className;
-                        icon.className = 'fa fa-check text-success';
-                        setTimeout(() => {
-                            icon.className = originalClass;
-                        }, 1500);
-                    }
-                }).catch(() => {
-                    copyFallback(btn);
-                });
-            } else {
-                copyFallback(btn);
+    const text = btn.getAttribute('data-clipboard-text');
+    if (!text) {
+        return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btn.querySelector('i');
+            if (icon) {
+                const originalClass = icon.className;
+                icon.className = 'fa fa-check text-success';
+                setTimeout(() => {
+                    icon.className = originalClass;
+                }, 1500);
             }
+        }).catch(() => {
+            copyFallback(btn);
         });
-    });
+    } else {
+        copyFallback(btn);
+    }
 });
