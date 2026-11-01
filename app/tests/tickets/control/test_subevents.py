@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.test import override_settings
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     Event,
@@ -204,6 +204,7 @@ class SubEventsTest(SoupTest):
     def test_create_bulk(self):
         with scopes_disabled():
             self.event1.subevents.all().delete()
+            gate = self.orga1.gates.create(name='Main entrance')
         self.event1.settings.timezone = 'Europe/Berlin'
 
         doc = self.get_doc('/control/event/ccc/30c3/subevents/bulk_add')
@@ -265,6 +266,7 @@ class SubEventsTest(SoupTest):
                 'checkinlist_set-0-id': '',
                 'checkinlist_set-0-name': 'Foo',
                 'checkinlist_set-0-limit_products': str(self.ticket.pk),
+                'checkinlist_set-0-gates': str(gate.pk),
             },
         )
         assert doc.select('.alert-success')
@@ -282,6 +284,8 @@ class SubEventsTest(SoupTest):
             assert list(ses[0].quotas.first().products.all()) == [self.ticket]
             assert SubEventItem.objects.get(subevent=ses[0], product=self.ticket).price == 16
             assert ses[0].checkinlist_set.count() == 1
+        with scope(event=self.event1, organizer=self.orga1):
+            assert list(ses[0].checkinlist_set.get().gates.all()) == [gate]
 
         assert str(ses[1].name) == 'Foo'
         assert ses[1].date_from.isoformat() == '2019-04-03T11:29:31+00:00'
@@ -1221,3 +1225,31 @@ class SubEventsTest(SoupTest):
         )
         fields = extract_form_fields(doc)
         assert 'checkinlist_set-TOTAL_FORMS' not in fields
+
+    def test_edit_bulk_lists_change_gates(self):
+        with scope(event=self.event1, organizer=self.orga1):
+            gates = [self.orga1.gates.create(name='Main entrance'), self.orga1.gates.create(name='Side entrance')]
+            for se in (self.subevent1, self.subevent2):
+                cl = se.checkinlist_set.create(event=self.event1, name='Entry', all_products=False)
+                cl.limit_products.add(self.ticket)
+        doc = self.post_doc('/control/event/ccc/30c3/subevents/bulk_edit', {'__ALL': 'on'}, follow=True)
+        fields = extract_form_fields(doc)
+        fields['_bulk'] = ['__checkinlists']
+        fields['checkinlist_set-0-gates'] = [str(gate.pk) for gate in gates]
+        doc = self.post_doc('/control/event/ccc/30c3/subevents/bulk_edit', fields, follow=True)
+        assert doc.select('.alert-success')
+        with scope(event=self.event1, organizer=self.orga1):
+            for se in (self.subevent1, self.subevent2):
+                cl = se.checkinlist_set.get(name='Entry')
+                assert set(cl.gates.all()) == set(gates)
+                assert list(cl.limit_products.all()) == [self.ticket]
+
+    def test_create_bulk_copy_from_prefills_list_gates(self):
+        with scope(event=self.event1, organizer=self.orga1):
+            gates = [self.orga1.gates.create(name='Main entrance'), self.orga1.gates.create(name='Side entrance')]
+            cl = self.subevent1.checkinlist_set.create(event=self.event1, name='Entry', allow_entry_after_exit=False)
+            cl.gates.set(gates)
+        doc = self.get_doc(f'/control/event/ccc/30c3/subevents/bulk_add?copy_from={self.subevent1.pk}')
+        checked = {box['value'] for box in doc.select('input[name=checkinlist_set-0-gates][checked]')}
+        assert checked == {str(gate.pk) for gate in gates}
+        assert not doc.select('input[name=checkinlist_set-0-allow_entry_after_exit][checked]')
