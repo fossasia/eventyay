@@ -18,6 +18,7 @@ from eventyay.base.models.tag import Tag
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
 from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
+from eventyay.talk_rules.submission import can_list_submissions, get_request_team
 
 
 @register_serializer()
@@ -169,7 +170,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 self.fields[field].required = getattr(self.event.cfp, f'require_{field}')
 
         request = self.context.get('request')
-        is_public_view = bool(request and not request.user.has_perm('base.orga_list_submission', self.event))
+        is_public_view = bool(request and not can_list_submissions(request, self.event))
         if is_public_view:
             if not self.event.cfp.public_abstract:
                 self.fields.pop('abstract', None)
@@ -187,8 +188,10 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         request = self.context.get('request')
         from eventyay.talk_rules.orga import enforces_hide_speaker_names
 
+        team = get_request_team(request) if request else None
         if request and (
-            enforces_hide_speaker_names(request.user, self.event)
+            (team is not None and team.force_hide_speaker_names)
+            or enforces_hide_speaker_names(request.user, self.event)
             or (
                 is_reviewer_only_for_event(request.user, self.event)
                 and not can_view_speaker_names(request.user, self.event)
@@ -203,7 +206,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     @extend_schema_field(list[int])
     def get_answers(self, obj):
         request = self.context.get('request')
-        if self.event and request and not request.user.has_perm('base.orga_list_submission', self.event):
+        if self.event and request and not can_list_submissions(request, self.event):
             qs = obj.answers.filter(
                 question__event=self.event,
                 question__target=TalkQuestionTarget.SUBMISSION,
@@ -239,7 +242,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
-        if not self.event or not request or request.user.has_perm('base.orga_list_submission', self.event):
+        if not self.event or not request or can_list_submissions(request, self.event):
             return data
 
         if 'resources' in data:

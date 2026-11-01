@@ -24,6 +24,7 @@ from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.tag import Tag
+from eventyay.talk_rules.submission import get_request_team
 
 
 class LegacySubmitterSerializer(ModelSerializer):
@@ -161,14 +162,22 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
         return obj.get_duration()
 
     def get_speakers(self, obj):
+        request = self.context.get('request')
+        team = get_request_team(request) if request else None
+        # Team API tokens are anonymous users, so their team's privacy policy applies here.
+        if team is not None and team.force_hide_speaker_names:
+            return []
         has_slots = obj.slots.filter(is_visible=True) and obj.state == SubmissionStates.CONFIRMED
         if has_slots or self.can_view_speakers:
-            return self.speaker_serializer_class(
+            speakers = self.speaker_serializer_class(
                 obj.speakers.all(),
                 many=True,
                 context=self.context,
                 event=self.event,
             ).data
+            if team is not None and team.force_hide_speaker_emails:
+                speakers = [{key: value for key, value in speaker.items() if key != 'email'} for speaker in speakers]
+            return speakers
         return []
 
     def get_attribute(self, obj, attribute=None):

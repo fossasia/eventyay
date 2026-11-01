@@ -24,6 +24,7 @@ from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, validate_image
 from eventyay.common.social_links import serialize_social_link
 from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.talk_rules.orga import is_reviewer_only_for_event
+from eventyay.talk_rules.submission import get_request_team
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -70,7 +71,25 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
-        if self.event and request and request.user.is_authenticated:
+        team = get_request_team(request) if request else None
+        if self.event and team is not None:
+            # Team API tokens are anonymous users; their team's policy decides what is hidden.
+            if team.force_hide_speaker_names:
+                for field in (
+                    'fullname',
+                    'email',
+                    'biography',
+                    'job_title',
+                    'organization',
+                    'avatar_url',
+                    'social_links',
+                    'avatar_source',
+                    'avatar_license',
+                ):
+                    data.pop(field, None)
+            elif team.force_hide_speaker_emails:
+                data.pop('email', None)
+        elif self.event and request and request.user.is_authenticated:
             from eventyay.talk_rules.orga import (
                 can_view_speaker_emails,
                 can_view_speaker_names,
