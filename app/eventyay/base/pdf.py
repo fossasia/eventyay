@@ -824,11 +824,16 @@ def resolve_textarea_font(font, text_content):
     # Script runs are wrapped in <font name="..."> tags in _draw_textarea().
     # The rest is drawn in the base font, so if the requested font has no glyphs
     # for it (e.g. Latin text in Droid Sans Fallback), use Open Sans instead.
+    # Switch only if Open Sans draws characters the requested font cannot and loses none
+    # it can; characters neither font has (e.g. emoji) do not block the switch.
     base_text = _SCRIPT_RUNS_RE.sub('', text_content)
     if base_text.strip() and not font_supports_text(font, base_text):
         suffix = next((s for s in (' B I', ' B', ' I') if font.endswith(s)), '')
         fallback = 'Open Sans' + suffix
-        if font_supports_text(fallback, base_text):
+        chars = set(base_text)
+        in_font = {c for c in chars if font_supports_text(font, c)}
+        in_fallback = {c for c in chars if font_supports_text(fallback, c)}
+        if in_fallback - in_font and in_font <= in_fallback:
             return fallback, text_content
     return font, text_content
 

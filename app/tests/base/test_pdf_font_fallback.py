@@ -2,7 +2,7 @@ import datetime
 from io import BytesIO
 
 import pytest
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from pypdf import PdfReader
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen.canvas import Canvas
@@ -63,6 +63,14 @@ def test_mixed_text_base_font_draws_latin():
     assert font_supports_text(font, 'Jane ')
 
 
+def test_character_missing_from_both_fonts_does_not_block_fallback():
+    assert resolve_textarea_font('Droid Sans Fallback', 'Jane 😀') == ('Open Sans', 'Jane 😀')
+
+
+def test_font_with_latin_glyphs_is_kept_when_a_character_is_missing():
+    assert resolve_textarea_font('NotoSansCJK', 'Jane 😀') == ('NotoSansCJK', 'Jane 😀')
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize('bold', [False, True])
 def test_rendered_pdf_contains_latin_text_in_font_without_latin_glyphs(position, bold):
@@ -82,7 +90,7 @@ def test_rendered_pdf_contains_latin_text_in_font_without_latin_glyphs(position,
             'align': 'left',
         }
     ]
-    with scopes_disabled():
+    with scope(organizer=position.order.event.organizer, event=position.order.event):
         buffer = BytesIO()
         canvas = Canvas(buffer, pagesize=A4)
         Renderer(position.order.event, layout, None).draw_page(canvas, position.order, position)
