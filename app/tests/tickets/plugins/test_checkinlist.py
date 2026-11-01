@@ -1,9 +1,12 @@
+import csv
 import datetime
+import io
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import pytest
-from zoneinfo import ZoneInfo
-from django.utils.timezone import now
+from django.utils.formats import date_format
+from django.utils.timezone import now, override
 from django_scopes import scope
 
 from eventyay.base.models import (
@@ -325,3 +328,29 @@ def test_checkinlog_includes_all_checkins(event):
     )
     rows = [line for line in clean(content.decode()).split('\n') if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
     assert len(rows) == 2
+
+
+@pytest.mark.django_db
+def test_checkinlog_uses_event_timezone(event):
+    event.timezone = 'Asia/Kolkata'
+    event.save(update_fields=['timezone'])
+    checked_at = datetime.datetime(2019, 2, 22, 23, 30, tzinfo=datetime.timezone.utc)
+    with scope(organizer=event.organizer):
+        event = Event.objects.get(pk=event.pk)
+        with scope(event=event):
+            cl = event.checkin_lists.first()
+            op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
+            Checkin.objects.create(position=op, list=cl, type=Checkin.TYPE_ENTRY, datetime=checked_at)
+
+            with override(ZoneInfo('UTC')):
+                _, _, content = CheckinLogList(event).render(
+                    {'list': cl.pk, 'products': [event.items.first().pk], '_format': 'default'}
+                )
+
+    rows = list(csv.reader(io.StringIO(content.decode())))
+    row = next(row for row in rows if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in row)
+    local_time = checked_at.astimezone(ZoneInfo('Asia/Kolkata'))
+    assert row[:2] == [
+        date_format(local_time, 'SHORT_DATE_FORMAT'),
+        date_format(local_time, 'TIME_FORMAT'),
+    ]
