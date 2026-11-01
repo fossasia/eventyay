@@ -292,6 +292,42 @@ async function handleActionClick(button) {
     }
 }
 
+let activeActionsGroup = null;
+
+function resetActionsMenu(group) {
+    const menu = group.querySelector('.dropdown-menu');
+    ['position', 'top', 'left', 'right'].forEach((property) => menu.style.removeProperty(property));
+}
+
+function closeActionsMenu() {
+    if (!activeActionsGroup) return;
+    activeActionsGroup.classList.remove('open');
+    activeActionsGroup.querySelector('.dropdown-backdrop')?.remove();
+    activeActionsGroup.querySelector('.user-email-actions-toggle').setAttribute('aria-expanded', 'false');
+    resetActionsMenu(activeActionsGroup);
+    activeActionsGroup = null;
+}
+
+function positionActionsMenu() {
+    const group = document.querySelector('.admin-users-table .btn-group.open');
+    if (activeActionsGroup && activeActionsGroup !== group) resetActionsMenu(activeActionsGroup);
+    activeActionsGroup = group;
+    if (!group) return;
+
+    const toggle = group.querySelector('.user-email-actions-toggle');
+    const menu = group.querySelector('.dropdown-menu');
+    const rect = toggle.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.right = 'auto';
+    menu.style.left = '0px';
+    const left = rect.right - menu.offsetWidth;
+    const top = window.innerHeight - rect.bottom >= menu.offsetHeight + 8
+        ? rect.bottom
+        : rect.top - menu.offsetHeight;
+    menu.style.left = `${Math.max(8, Math.min(left, window.innerWidth - menu.offsetWidth - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(top, window.innerHeight - menu.offsetHeight - 8))}px`;
+}
+
 /* The results table is swapped out by ajax-filter.js on search, filter, sort and
  * pagination, so listeners are delegated from the document instead of being bound
  * to the rows present at page load. */
@@ -309,12 +345,49 @@ function init() {
     });
 
     document.addEventListener('click', (event) => {
+        // Bootstrap toggles the dropdown during this click; position it after its handlers finish.
+        queueMicrotask(positionActionsMenu);
         const button = event.target.closest('.user-action-form button');
         if (button) {
             event.preventDefault();
             handleActionClick(button);
         }
     });
+
+    document.addEventListener('keydown', (event) => {
+        const group = event.target.closest('.admin-users-table .btn-group');
+        if (!group) return;
+        const toggle = group.querySelector('.user-email-actions-toggle');
+        if (event.key === ' ' && (event.target === toggle || event.target.matches('.user-action-form button'))) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.target.click();
+        } else if (event.key === 'Escape' && group.classList.contains('open')) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeActionsMenu();
+            toggle.focus();
+        } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!group.classList.contains('open')) toggle.click();
+            queueMicrotask(() => {
+                const buttons = Array.from(group.querySelectorAll('.dropdown-menu button:not(:disabled)'));
+                const index = buttons.indexOf(document.activeElement);
+                const next = event.key === 'ArrowDown' ? index + 1 : (index < 0 ? buttons.length - 1 : index - 1);
+                buttons[(next + buttons.length) % buttons.length]?.focus();
+            });
+        }
+    }, true);
+    document.addEventListener('focusin', (event) => {
+        if (activeActionsGroup && !activeActionsGroup.contains(event.target)) closeActionsMenu();
+    });
+    window.addEventListener('scroll', (event) => {
+        if (!(event.target instanceof Node) || !activeActionsGroup?.querySelector('.dropdown-menu').contains(event.target)) {
+            closeActionsMenu();
+        }
+    }, true);
+    window.addEventListener('resize', closeActionsMenu);
 }
 
 if (document.readyState === 'loading') {
