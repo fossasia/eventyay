@@ -635,8 +635,9 @@ class EventCreateView(TemplateView):
 
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
-            event.testmode = False
-            event.private_testmode = False
+            # Defensive safeguard: ensure newly created draft events initialize
+            # in an unpublished state before any clone data copying or provisioning.
+            event.reset_publishing_and_testmode_state()
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
@@ -708,7 +709,12 @@ class EventCreateView(TemplateView):
                     payment_stripe_secret_key=basics_data.get('payment_stripe_secret_key', ''),
                     payment_stripe_merchant_country=basics_data.get('payment_stripe_merchant_country', ''),
                     is_private=is_private,
+                    is_clone=bool(self.clone_from),
                 )
+                if self.clone_from:
+                    # Defensive safeguard: keep meetup provisioning from publishing cloned events
+                    event.reset_publishing_and_testmode_state()
+                    event.save(update_fields=['live', 'tickets_published', 'talks_published', 'testmode', 'private_testmode'])
 
         return redirect(
             reverse(
@@ -1614,8 +1620,9 @@ class EventCloneView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             new_event.plugins = old_event.plugins
         new_event.has_subevents = old_event.has_subevents
         new_event.is_video_creation = old_event.is_video_creation
-        new_event.testmode = False
-        new_event.private_testmode = False
+        # Defensive safeguard: ensure clone starts in an unpublished draft state
+        # before copy_data_from enforces model-level clone state.
+        new_event.reset_publishing_and_testmode_state()
         
         new_event.timezone = form.cleaned_data['timezone']
         new_event.locale = form.cleaned_data['locale']

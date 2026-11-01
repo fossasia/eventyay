@@ -2618,6 +2618,124 @@ class EventTest(TestCase):
             assert cloned_item.free_price_min is None
             assert cloned_item.free_price_max is None
 
+    def test_copy_data_from_resets_publishing_and_testmode_flags(self):
+        event1 = Event.objects.create(
+            organizer=self.organizer,
+            name='Live Source Event',
+            slug='copy-src-live',
+            date_from=datetime.datetime(2026, 12, 26, 9, 0, 0, tzinfo=datetime.UTC),
+            live=True,
+            tickets_published=True,
+            talks_published=True,
+            testmode=True,
+            private_testmode=True,
+        )
+        event1.settings.set('private_testmode_tickets', True)
+        event1.settings.set('private_testmode_talks', True)
+        event1.settings.set('talks_testmode', True)
+
+        event2 = Event.objects.create(
+            organizer=self.organizer,
+            name='Cloned Destination Event',
+            slug='copy-dst-live',
+            date_from=datetime.datetime(2026, 12, 27, 9, 0, 0, tzinfo=datetime.UTC),
+        )
+        event2.copy_data_from(event1)
+
+        event2.refresh_from_db()
+        assert event2.live is False
+        assert event2.tickets_published is False
+        assert event2.talks_published is False
+        assert event2.testmode is False
+        assert event2.private_testmode is False
+        assert event2.settings.get('private_testmode_tickets', as_type=bool) is False
+        assert event2.settings.get('private_testmode_talks', as_type=bool) is False
+        assert event2.settings.get('talks_testmode', as_type=bool) is False
+
+    def test_copy_data_from_with_explicit_clone_options_resets_publishing_and_testmode(self):
+        event1 = Event.objects.create(
+            organizer=self.organizer,
+            name='Live Source Event With Options',
+            slug='copy-src-live-opts',
+            date_from=datetime.datetime(2026, 12, 26, 9, 0, 0, tzinfo=datetime.UTC),
+            live=True,
+            tickets_published=True,
+            talks_published=True,
+            testmode=True,
+            private_testmode=True,
+        )
+        event1.settings.set('private_testmode_tickets', True)
+        event1.settings.set('private_testmode_talks', True)
+        event1.settings.set('talks_testmode', True)
+
+        event2 = Event.objects.create(
+            organizer=self.organizer,
+            name='Cloned Destination Event With Options',
+            slug='copy-dst-live-opts',
+            date_from=datetime.datetime(2026, 12, 27, 9, 0, 0, tzinfo=datetime.UTC),
+        )
+        clone_options = {
+            'clone_common_data': True,
+            'clone_settings': True,
+            'clone_talk_data': True,
+            'clone_ticketing_data': True,
+            'clone_payment_settings': True,
+        }
+        event2.copy_data_from(event1, clone_options=clone_options)
+
+        event2.refresh_from_db()
+        assert event2.live is False
+        assert event2.tickets_published is False
+        assert event2.talks_published is False
+        assert event2.testmode is False
+        assert event2.private_testmode is False
+        assert event2.settings.get('private_testmode_tickets', as_type=bool) is False
+        assert event2.settings.get('private_testmode_talks', as_type=bool) is False
+        assert event2.settings.get('talks_testmode', as_type=bool) is False
+
+    def test_copy_data_from_resets_testmode_settings_when_settings_cloning_is_skipped(self):
+        event1 = Event.objects.create(
+            organizer=self.organizer,
+            name='Live Source Event',
+            slug='copy-src-skipped-settings',
+            date_from=datetime.datetime(2026, 12, 26, 9, 0, 0, tzinfo=datetime.UTC),
+            live=True,
+            tickets_published=True,
+            talks_published=True,
+            testmode=True,
+            private_testmode=True,
+        )
+        event2 = Event.objects.create(
+            organizer=self.organizer,
+            name='Existing Destination Event With Testmode',
+            slug='copy-dst-skipped-settings',
+            date_from=datetime.datetime(2026, 12, 27, 9, 0, 0, tzinfo=datetime.UTC),
+            live=True,
+            testmode=True,
+            private_testmode=True,
+        )
+        event2.settings.set('private_testmode_tickets', True)
+        event2.settings.set('private_testmode_talks', True)
+        event2.settings.set('talks_testmode', True)
+
+        clone_options = {
+            'clone_common_data': False,
+            'clone_payment_settings': False,
+            'clone_talk_data': False,
+            'clone_ticketing_data': False,
+        }
+        event2.copy_data_from(event1, clone_options=clone_options)
+
+        event2.refresh_from_db()
+        assert event2.live is False
+        assert event2.tickets_published is False
+        assert event2.talks_published is False
+        assert event2.testmode is False
+        assert event2.private_testmode is False
+        assert event2.settings.get('private_testmode_tickets', as_type=bool) is False
+        assert event2.settings.get('private_testmode_talks', as_type=bool) is False
+        assert event2.settings.get('talks_testmode', as_type=bool) is False
+
     @classscope(attr='organizer')
     def test_presale_has_ended(self):
         event = Event.objects.create(organizer=self.organizer, name='Download', slug='download', date_from=now())
