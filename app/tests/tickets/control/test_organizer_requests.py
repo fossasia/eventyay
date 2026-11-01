@@ -1,6 +1,7 @@
 import json
 import re
 import time
+from html import unescape
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit
 
@@ -26,6 +27,7 @@ from eventyay.base.models import (
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.organizer_requests import review_request
+from eventyay.control.views.organizer_requests import request_cursor
 from eventyay.eventyay_common.views.organizer_request import OrganizerRequestCreate
 
 
@@ -227,6 +229,96 @@ def test_admin_review_pages(client, application, admin):
     application.refresh_from_db()
     assert application.status == 'approved'
     assert client.get(url).status_code == 200
+
+
+def request_list_href(html: str, param: str) -> str:
+    match = re.search(rf'href="(\?[^"]*{re.escape(param)}=[^"]*)"', html)
+    assert match, param
+    return unescape(match.group(1)).split('#', 1)[0]
+
+
+def create_requests(prefix: str, status: str = 'pending'):
+    return [
+        OrganizerRequest.objects.create(
+            name=f'{prefix} {index}',
+            email=f'{prefix}-{index}@example.com',
+            organizer_name=f'{prefix} {index:02d}',
+            slug=f'{prefix}-{index}',
+            status=status,
+        )
+        for index in range(26)
+    ]
+
+
+def test_organizer_request_cursors_page_each_list(client, admin):
+    create_requests('open')
+    create_requests('resolved', status='rejected')
+    list_url = reverse('eventyay_admin:admin.organizer_requests')
+    first = client.get(list_url)
+    html = first.content.decode()
+    assert first.status_code == 200
+    assert 'open 25' in html
+    assert 'open 00' not in html
+    assert 'resolved 25' in html
+    assert 'resolved 00' not in html
+    open_next = request_list_href(html, 'open_before')
+    resolved_next = request_list_href(html, 'resolved_before')
+    assert 'resolved_before=' not in open_next
+    assert 'open_before=' not in resolved_next
+
+    older_open = client.get(list_url + open_next)
+    older_open_html = older_open.content.decode()
+    assert 'open 00' in older_open_html
+    assert 'open 25' not in older_open_html
+    assert 'resolved 25' in older_open_html
+    open_previous = request_list_href(older_open_html, 'open_after')
+    newest_open = client.get(list_url + open_previous)
+    newest_open_html = newest_open.content.decode()
+    assert 'open 25' in newest_open_html
+    assert 'open 00' not in newest_open_html
+
+    older_resolved = client.get(list_url + resolved_next)
+    older_resolved_html = older_resolved.content.decode()
+    assert 'resolved 00' in older_resolved_html
+    assert 'resolved 25' not in older_resolved_html
+    assert 'open 25' in older_resolved_html
+    resolved_previous = request_list_href(older_resolved_html, 'resolved_after')
+    newest_resolved = client.get(list_url + resolved_previous)
+    assert 'resolved 25' in newest_resolved.content.decode()
+    assert 'resolved 00' not in newest_resolved.content.decode()
+
+
+def test_stale_previous_cursor_shows_newest_open_requests(client, admin):
+    oldest = OrganizerRequest.objects.create(
+        name='Oldest',
+        email='oldest-open@example.com',
+        organizer_name='Oldest open',
+        slug='oldest-open',
+    )
+    middle = OrganizerRequest.objects.create(
+        name='Middle',
+        email='middle-open@example.com',
+        organizer_name='Middle open',
+        slug='middle-open',
+    )
+    newest = OrganizerRequest.objects.create(
+        name='Newest',
+        email='newest-open@example.com',
+        organizer_name='Newest open',
+        slug='newest-open',
+    )
+    middle.status = OrganizerRequest.Status.REJECTED
+    newest.status = OrganizerRequest.Status.REJECTED
+    middle.save(update_fields=['status'])
+    newest.save(update_fields=['status'])
+    page = client.get(
+        reverse('eventyay_admin:admin.organizer_requests'),
+        {'open_after': request_cursor(oldest)},
+    )
+    html = page.content.decode()
+    assert page.status_code == 200
+    assert 'Oldest open' in html
+    assert 'No open organiser requests.' not in html
 
 
 def test_non_admin_cannot_review(client, application):

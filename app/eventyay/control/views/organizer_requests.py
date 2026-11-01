@@ -91,6 +91,11 @@ def paginate_requests(
         has_previous = len(fetched) > REQUEST_PAGE_SIZE
         items = list(reversed(fetched[:REQUEST_PAGE_SIZE]))
         has_next = ordered.filter(older_than(created, pk) | Q(created=created, pk=pk)).exists()
+        if not items:
+            fetched = list(ordered[: REQUEST_PAGE_SIZE + 1])
+            has_previous = False
+            has_next = len(fetched) > REQUEST_PAGE_SIZE
+            items = fetched[:REQUEST_PAGE_SIZE]
     elif before_cursor:
         created, pk = before_cursor
         fetched = list(ordered.filter(older_than(created, pk))[: REQUEST_PAGE_SIZE + 1])
