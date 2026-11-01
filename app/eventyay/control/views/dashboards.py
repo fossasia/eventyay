@@ -30,6 +30,7 @@ from django.utils.html import escape
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext, pgettext
+from django_scopes import scope
 
 from eventyay.base.decimal import round_decimal
 from eventyay.base.meetup import is_meetup_event
@@ -407,6 +408,278 @@ def welcome_wizard_widget(sender, **kwargs):
     return [{'display_size': 'full', 'priority': 2000, 'content': template.render(ctx)}]
 
 
+def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_event_settings):
+    """Build the "At a glance" KPI data for the tickets dashboard.
+
+    Reuses the same calculations as the dashboard widget receivers so the KPI
+    cards stay consistent with the existing numbers:
+
+    * ordered / paid attendees -> admission ``OrderPosition`` counts by order
+      status (see :func:`base_widgets`).
+    * total revenue -> paid ``Order.total`` (or ``OrderPosition.price`` for a
+      single subevent), matching :func:`base_widgets`.
+    * waiting list -> ``WaitingListEntry`` count (see
+      :func:`waitinglist_widgets`).
+    * checked in -> distinct order positions across the relevant check-in
+      lists, so a position on several lists is only counted once.
+    * ticket shop status -> :attr:`Event.ticket_component_presale_status`.
+
+    When no ``subevent`` is selected on an event series, counts span all dates
+    (the subevent filter is applied only when a date is chosen). ``checked_in``
+    and ``checkin_total`` are computed over distinct positions with live
+    queries (not the 60s-cached per-list properties) to avoid double counting
+    and stale denominators.
+
+    Returns ``None`` when the user may not view orders, so the template can skip
+    the whole section.
+    """
+    event = request.event
+    if not can_view_orders:
+        return None
+
+    with scope(event=event):
+        admission_qs = OrderPosition.objects.filter(order__event=event, product__admission=True)
+        if subevent:
+            admission_qs = admission_qs.filter(subevent=subevent)
+
+        ordered_attendees = admission_qs.filter(
+            order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
+        ).count()
+        paid_attendees = admission_qs.filter(order__status=Order.STATUS_PAID).count()
+
+        if subevent:
+            total_revenue = OrderPosition.objects.filter(
+                order__event=event, subevent=subevent, order__status=Order.STATUS_PAID
+            ).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+        else:
+            total_revenue = Order.objects.filter(event=event, status=Order.STATUS_PAID).aggregate(
+                sum=Sum('total')
+            )['sum'] or Decimal('0.00')
+
+        waiting_qs = WaitingListEntry.objects.filter(event=event, voucher__isnull=True)
+        if subevent:
+            waiting_qs = waiting_qs.filter(subevent=subevent)
+        waiting_list = waiting_qs.count()
+
+        # Check-in totals over DISTINCT positions across the relevant lists.
+        # Each list restricts to its own subevent/products, so iterating all of
+        # the event's lists (when no date is selected) still covers every date.
+        # When a date IS selected, include event-level lists (subevent=None)
+        # too -- they apply to every date, matching the API/device behaviour --
+        # but scope their positions to the selected date.
+        checkin_lists = event.checkin_lists.all()
+        if subevent:
+            checkin_lists = checkin_lists.filter(Q(subevent=subevent) | Q(subevent__isnull=True))
+
+        position_ids = set()
+        inside_ids = set()
+        has_checkin_lists = False
+        for cl in checkin_lists:
+            has_checkin_lists = True
+            positions = cl.positions
+            positions_inside = cl.positions_inside
+            if subevent and cl.subevent_id is None:
+                positions = positions.filter(subevent=subevent)
+                positions_inside = positions_inside.filter(subevent=subevent)
+            position_ids.update(positions.values_list('pk', flat=True))
+            inside_ids.update(positions_inside.values_list('pk', flat=True))
+        checkin_total = len(position_ids)
+        checked_in = len(inside_ids)
+
+    return {
+        'ticket_shop_status': event.ticket_component_presale_status,
+        'ordered_attendees': ordered_attendees,
+        'paid_attendees': paid_attendees,
+        'total_revenue': total_revenue,
+        'total_revenue_display': formats.localize(round_decimal(total_revenue, event.currency)),
+        'currency': event.currency,
+        'waiting_list': waiting_list,
+        'checked_in': checked_in,
+        'checkin_total': checkin_total,
+        'has_checkin_lists': has_checkin_lists,
+        'can_change_event_settings': can_change_event_settings,
+        # Querystring suffix so KPI links stay scoped to the selected date.
+        'subevent_qs': f'?subevent={subevent.pk}' if subevent else '',
+        # Waiting-list card counts entries without a voucher (status=w), so its
+        # link must carry that filter too (and the selected date, if any).
+        'waitinglist_qs': (f'?subevent={subevent.pk}&status=w' if subevent else '?status=w'),
+    }
+
+
+def get_dashboard_sales_context(request, subevent, can_view_orders):
+    """Build the "Sales and capacity" table data for the tickets dashboard.
+
+    One row per quota (quotas carry the capacity and availability), showing the
+    quota's products, ordered/paid/pending counts, remaining availability,
+    capacity and a status. All numbers come from a single ``QuotaAvailability``
+    computation (``full_results=True``) so we reuse the canonical quota maths
+    instead of recomputing it. ``full_results`` cannot be combined with
+    ``allow_cache``, so this computes fresh.
+
+    Status maps the ``Quota.AVAILABILITY_*`` result (and ``closed``) the same way
+    as ``pretixcontrol/items/fragment_quota_availability.html``:
+
+    * closed -> disabled (grey)
+    * AVAILABILITY_OK -> on sale (green)
+    * AVAILABILITY_RESERVED -> limited (orange)
+    * AVAILABILITY_ORDERED -> sold out, pending orders (orange)
+    * AVAILABILITY_GONE -> sold out (red)
+
+    Returns ``None`` when the user may not view orders (so the template skips the
+    section) and sets ``has_quotas`` False for a meaningful empty state.
+    """
+    event = request.event
+    if not can_view_orders:
+        return None
+
+    def orders_url(product_id=None, status=None):
+        url = reverse(
+            'control:event.orders',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        params = []
+        if subevent:
+            params.append(f'subevent={subevent.pk}')
+        if product_id is not None:
+            params.append(f'product={product_id}')
+        if status is not None:
+            params.append(f'status={status}')
+        return url + ('?' + '&'.join(params) if params else '')
+
+    with scope(event=event):
+        # Quotas are per-date; only filter by the selected date when one is
+        # chosen. Event-level quotas (subevent=None) apply to every date, so
+        # include them alongside the selected date's quotas (matching how
+        # QuotaAvailability and the check-in lists treat subevent=None).
+        quotas_qs = event.quotas.all()
+        if subevent:
+            quotas_qs = quotas_qs.filter(Q(subevent=subevent) | Q(subevent__isnull=True))
+        # Annotate variation counts so we never query has_variations per product.
+        quotas = list(
+            quotas_qs.prefetch_related(
+                Prefetch(
+                    'products',
+                    queryset=Product.objects.annotate(variation_count=Count('variations')),
+                ),
+                Prefetch('variations', queryset=ProductVariation.objects.select_related('product')),
+            )
+        )
+        for q in quotas:
+            q.prefetched_products = list(q.products.all())
+            q.prefetched_variations = list(q.variations.all())
+
+        qa = QuotaAvailability(full_results=True)
+        if quotas:
+            qa.queue(*quotas)
+            qa.compute()
+
+        rows = []
+        # Collect the union of products/variations across the shown quotas so
+        # the totals can be computed over DISTINCT order positions. Summing the
+        # per-quota rows would double-count any product that is in more than one
+        # quota, and capacity/remaining cannot be added meaningfully across
+        # overlapping quotas at all.
+        all_product_ids = set()
+        all_variation_ids = set()
+
+        for q in quotas:
+            paid = qa.count_paid_orders.get(q, 0)
+            pending = qa.count_pending_orders.get(q, 0)
+            ordered = paid + pending
+            status_code, left = qa.results.get(q, (Quota.AVAILABILITY_OK, None))
+
+            if q.closed:
+                status_key, status_label, status_dot = 'disabled', _('Disabled'), 'td-dot-neutral'
+            elif status_code == Quota.AVAILABILITY_OK:
+                status_key, status_label, status_dot = 'on_sale', _('On sale'), 'td-dot-success'
+            elif status_code == Quota.AVAILABILITY_RESERVED:
+                status_key, status_label, status_dot = 'limited', _('Limited'), 'td-dot-warning'
+            elif status_code == Quota.AVAILABILITY_ORDERED:
+                status_key, status_label, status_dot = 'pending', _('Sold out (pending orders)'), 'td-dot-warning'
+            else:  # AVAILABILITY_GONE
+                status_key, status_label, status_dot = 'sold_out', _('Sold out'), 'td-dot-danger'
+
+            # Single-product quotas can link counts to the filtered order list;
+            # otherwise point at the quota detail, which breaks down its orders.
+            quota_url = reverse(
+                'control:event.products.quotas.show',
+                kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'quota': q.pk},
+            )
+            single_product = (
+                q.prefetched_products[0]
+                if len(q.prefetched_products) == 1 and not q.prefetched_variations
+                else None
+            )
+            # An event-level quota (subevent=None) counts only null-subevent
+            # positions. When a specific date is selected, the order list can't
+            # express "null-subevent only", so its counts would not match the
+            # row -- fall back to the quota detail for that case.
+            event_level_with_date = subevent and q.subevent_id is None
+            if single_product is not None and not event_level_with_date:
+                ordered_url = orders_url(product_id=single_product.pk)
+                paid_url = orders_url(product_id=single_product.pk, status='p')
+                pending_url = orders_url(product_id=single_product.pk, status='n')
+            else:
+                ordered_url = paid_url = pending_url = quota_url
+
+            product_names = [str(p) for p in q.prefetched_products if not p.variation_count]
+            product_names += [f'{v.product} – {v}' for v in q.prefetched_variations]
+
+            rows.append(
+                {
+                    'name': q.name,
+                    'products': product_names,
+                    'ordered': ordered,
+                    'paid': paid,
+                    'pending': pending,
+                    'remaining': left,  # None means unlimited
+                    'capacity': q.size,  # None means unlimited
+                    'status_key': status_key,
+                    'status_label': status_label,
+                    'status_dot': status_dot,
+                    'quota_url': quota_url,
+                    'ordered_url': ordered_url,
+                    'paid_url': paid_url,
+                    'pending_url': pending_url,
+                }
+            )
+
+            all_product_ids.update(p.pk for p in q.prefetched_products)
+            all_variation_ids.update(v.pk for v in q.prefetched_variations)
+
+        # Totals over DISTINCT positions (a product may be in several quotas).
+        # Capacity and remaining are intentionally omitted ('n/a'): they cannot
+        # be summed across overlapping quotas without overstating the event.
+        total_paid = total_pending = 0
+        if all_product_ids or all_variation_ids:
+            positions = OrderPosition.objects.filter(order__event=event)
+            if subevent:
+                positions = positions.filter(Q(subevent=subevent) | Q(subevent__isnull=True))
+            positions = positions.filter(
+                # Match whole-product positions (no variation) for products in a
+                # quota, OR specific variations. This mirrors
+                # QuotaAvailability._compute_orders and avoids counting
+                # out-of-quota variations of a product that a quota restricts.
+                Q(Q(variation_id__isnull=True) & Q(product_id__in=all_product_ids))
+                | Q(variation_id__in=all_variation_ids)
+            )
+            total_paid = positions.filter(order__status=Order.STATUS_PAID).count()
+            total_pending = positions.filter(order__status=Order.STATUS_PENDING).count()
+
+    return {
+        'rows': rows,
+        'has_quotas': bool(rows),
+        'totals': {
+            'ordered': total_paid + total_pending,
+            'paid': total_paid,
+            'pending': total_pending,
+            # Not summable across overlapping quotas.
+            'remaining': 'n/a',
+            'capacity': 'n/a',
+        },
+    }
+
+
 def event_index(request, organizer, event):
     subevent = None
     if request.GET.get('subevent', '') != '' and request.event.has_subevents:
@@ -478,6 +751,12 @@ def event_index(request, organizer, event):
 
     if can_view_orders:
         ctx.update(get_statistics_context(request, subevent=subevent))
+
+    ctx['at_a_glance'] = get_dashboard_kpi_context(
+        request, subevent, can_view_orders, can_change_event_settings
+    )
+
+    ctx['sales_capacity'] = get_dashboard_sales_context(request, subevent, can_view_orders)
 
     ctx['has_overpaid_orders'] = (
         can_view_orders

@@ -1,7 +1,7 @@
 import dateutil.parser
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Exists, Max, OuterRef, Subquery
+from django.db.models import Exists, Max, OuterRef, Q, Subquery
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -232,7 +232,11 @@ class CheckinListList(EventPermissionRequiredMixin, PaginationMixin, ListView):
 
         if self.request.GET.get('subevent', '') != '':
             s = self.request.GET.get('subevent', '')
-            qs = qs.filter(subevent_id=s)
+            # Event-level lists (subevent=None) apply to every date, so include
+            # them alongside the date-specific lists. This matches the API and
+            # device behaviour and the dashboard KPI, so the "View check-in
+            # lists" link shows the lists counted in the "Checked in" card.
+            qs = qs.filter(Q(subevent_id=s) | Q(subevent__isnull=True))
         return qs
 
     def get_context_data(self, **kwargs):

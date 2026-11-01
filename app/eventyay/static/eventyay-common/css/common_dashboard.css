@@ -1523,6 +1523,13 @@ body:has(.td-dashboard) #page-content {
   height: 9px;
   border-radius: 50%
 }
+.td-dot-danger {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--td-red)
+}
 .td-st-dot span {
   display: inline-block;
   width: 9px;
