@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from bs4 import BeautifulSoup
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
@@ -81,6 +82,10 @@ def test_giftcards_ajax_markup(organizer, admin_user, client, gift_card):
     assert 'data-ajax-results-region' in content
     assert 'filter-form' in content
     assert 'btn-clear-filter' in content
+    region = BeautifulSoup(content, 'html.parser').select_one('[data-ajax-results-region]')
+    assert region is not None
+    assert region.select_one('.gc-table-card') is not None
+    assert region.select_one('.gc-accepted-card') is not None
 
 
 @pytest.mark.django_db
@@ -92,9 +97,11 @@ def test_card_list_pagination(organizer, admin_user, client):
     resp = client.get('/control/organizer/dummy/giftcards')
     assert resp.status_code == 200
     assert 'Showing 10 of 12 gift cards' in resp.content.decode()
+    assert 'gc-accepted-card' in resp.content.decode()
     resp = client.get('/control/organizer/dummy/giftcards?page=2')
     assert resp.status_code == 200
     assert 'Showing 2 of 12 gift cards' in resp.content.decode()
+    assert 'gc-accepted-card' not in resp.content.decode()
 
 
 @pytest.mark.django_db
