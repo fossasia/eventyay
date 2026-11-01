@@ -94,14 +94,14 @@ class SubmissionStates(Choices):
     valid_choices = [(key, value) for key, value in display_values.items()]
 
     valid_next_states = {
-        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED),
-        REJECTED: (ACCEPTED, SUBMITTED),
-        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN),
-        CONFIRMED: (ACCEPTED, CANCELED),
-        CANCELED: (ACCEPTED, CONFIRMED),
-        WITHDRAWN: (SUBMITTED),
+        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED, DELETED),
+        REJECTED: (ACCEPTED, SUBMITTED, DELETED),
+        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN, DELETED),
+        CONFIRMED: (ACCEPTED, CANCELED, DELETED),
+        CANCELED: (ACCEPTED, CONFIRMED, DELETED),
+        WITHDRAWN: (SUBMITTED, DELETED),
         DELETED: (),
-        DRAFT: (SUBMITTED,),
+        DRAFT: (SUBMITTED, DELETED),
     }
 
     method_names = {
@@ -116,6 +116,7 @@ class SubmissionStates(Choices):
 
     accepted_states = (ACCEPTED, CONFIRMED)
     terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
+    valid_submission_states = (SUBMITTED, ACCEPTED, CONFIRMED, REJECTED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -124,12 +125,13 @@ class SubmissionStates(Choices):
             SubmissionStates.ACCEPTED: '--color-success',
             SubmissionStates.CONFIRMED: '--color-success',
             SubmissionStates.REJECTED: '--color-danger',
+            SubmissionStates.DELETED: '--color-danger',
         }.get(state, '--color-grey')
 
 
 class SubmissionManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().exclude(state=SubmissionStates.DELETED).exclude(state=SubmissionStates.DRAFT)
+        return super().get_queryset().exclude(state__in=[SubmissionStates.DELETED, SubmissionStates.DRAFT])
 
 
 class DeletedSubmissionManager(models.Manager):
@@ -497,44 +499,60 @@ class Submission(GenerateCode, PretalxModel):
         If yes, set it and save the object. if no, raise a
         SubmissionError with a helpful message.
         """
-        valid_next_states = SubmissionStates.valid_next_states.get(self.state, [])
+        with transaction.atomic():
+            if self.pk:
+                # Lock and reload the current state so a concurrent state change cannot be
+                # silently overwritten (e.g. an accept resurrecting a just-deleted session).
+                with scopes_disabled():
+                    current_state = (
+                        type(self)
+                        .all_objects.select_for_update()
+                        .filter(pk=self.pk)
+                        .values_list('state', flat=True)
+                        .first()
+                    )
+                if current_state is not None:
+                    self.state = current_state
 
-        if self.state == new_state:
-            self.pending_state = None
-            self.save(update_fields=['state', 'pending_state'])
-            self.update_talk_slots()
-            return
-        if force or new_state in valid_next_states:
-            old_state = self.state
-            self.state = new_state
-            self.pending_state = None
-            update_fields = ['state', 'pending_state']
-            if new_state in SubmissionStates.terminal_states:
-                self.is_featured = False
-                update_fields.append('is_featured')
-            self.save(update_fields=update_fields)
-            self.update_talk_slots()
-            submission_state_change.send_robust(
-                self.event,
-                submission=self,
-                old_state=old_state if old_state != SubmissionStates.DRAFT else None,
-                user=person,
-            )
-        else:
-            source_states = (src for src, dsts in SubmissionStates.valid_next_states.items() if new_state in dsts)
+            valid_next_states = SubmissionStates.valid_next_states.get(self.state, [])
 
-            # build an error message mentioning all states, which are valid source states for the desired new state.
-            trans_or = pgettext_lazy(
-                'used in talk confirm/accept/reject/...-errors, like "... must be accepted OR foo OR bar ..."',
-                ' or ',
-            )
-            state_names = dict(SubmissionStates.get_choices())
-            source_states = trans_or.join(str(state_names[state]) for state in source_states)
-            raise SubmissionError(
-                _('Proposal must be {src_states} not {state} to be {new_state}.').format(
-                    src_states=source_states, state=self.state, new_state=new_state
+            if self.state == new_state:
+                self.pending_state = None
+                self.save(update_fields=['state', 'pending_state'])
+                self.update_talk_slots()
+                return
+            if force or new_state in valid_next_states:
+                old_state = self.state
+                self.state = new_state
+                self.pending_state = None
+                update_fields = ['state', 'pending_state']
+                if new_state in SubmissionStates.terminal_states:
+                    self.is_featured = False
+                    update_fields.append('is_featured')
+                self.save(update_fields=update_fields)
+                self.update_talk_slots()
+            else:
+                source_states = (src for src, dsts in SubmissionStates.valid_next_states.items() if new_state in dsts)
+
+                # build an error message mentioning all states, which are valid source states for the desired new state.
+                trans_or = pgettext_lazy(
+                    'used in talk confirm/accept/reject/...-errors, like "... must be accepted OR foo OR bar ..."',
+                    ' or ',
                 )
-            )
+                state_names = dict(SubmissionStates.get_choices())
+                source_states = trans_or.join(str(state_names[state]) for state in source_states)
+                raise SubmissionError(
+                    _('Proposal must be {src_states} not {state} to be {new_state}.').format(
+                        src_states=source_states, state=self.state, new_state=new_state
+                    )
+                )
+
+        submission_state_change.send_robust(
+            self.event,
+            submission=self,
+            old_state=old_state if old_state != SubmissionStates.DRAFT else None,
+            user=person,
+        )
 
     def update_talk_slots(self):
         """Makes sure the correct amount of.
@@ -836,17 +854,18 @@ class Submission(GenerateCode, PretalxModel):
         orga: bool = True,
         from_pending: bool = False,
     ):
-        """Sets the submission's state to 'deleted'."""
+        """Sets the submission's state to 'deleted' while preserving session data."""
         previous = self.state
-        self._set_state(SubmissionStates.DELETED, force, person=person)
-        for answer in self.answers.all():
-            answer.remove(person=person, force=force)
-        self.log_action(
-            'eventyay.submission.deleted',
-            person=person,
-            orga=True,
-            data={'previous': previous, 'from_pending': from_pending},
-        )
+        # Keep the state change, slot cleanup and log entry in one transaction so a
+        # failure during slot cleanup cannot leave a deleted session with stale slots.
+        with transaction.atomic():
+            self._set_state(SubmissionStates.DELETED, force, person=person)
+            self.log_action(
+                'eventyay.submission.deleted',
+                person=person,
+                orga=True,
+                data={'previous': previous, 'from_pending': from_pending},
+            )
 
     remove.alters_data = True
 

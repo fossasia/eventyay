@@ -66,7 +66,7 @@
                     {{ phrases.schedule.speakers }}
                 </a>
             {% endif %}
-            {% if can_edit_submission and has_anonymised_review %}
+            {% if can_edit_submission and has_anonymised_review and not submission.is_deleted %}
                 <a role="tab" href="{{ submission.orga_urls.anonymise }}" {% if "submissions.anonymise" in url_name %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
                     {% translate "Anonymisation" %}
                 </a>
