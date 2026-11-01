@@ -44,7 +44,7 @@ class ScheduleSerializer(ScheduleListSerializer):
             qs = apply_track_limit_to_slots(qs, obj.event, request.user)
         if serializer := self.get_extra_flex_field('slots', qs):
             return serializer.data
-        return qs.values_list('pk', flat=True)
+        return list(qs.values_list('pk', flat=True))
 
     class Meta(ScheduleListSerializer.Meta):
         fields = ScheduleListSerializer.Meta.fields + ['comment', 'slots']

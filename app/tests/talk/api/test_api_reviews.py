@@ -5,7 +5,13 @@ import pytest
 from django_scopes import scope
 
 from eventyay.api.serializers.review import ReviewSerializer
-from eventyay.base.models import Answer, Review, ReviewScore, ReviewScoreCategory
+from eventyay.base.models import (
+    Answer,
+    Review,
+    ReviewScore,
+    ReviewScoreCategory,
+    Submission,
+)
 
 
 @pytest.fixture
@@ -189,6 +195,16 @@ def test_reviewer_can_filter_by_submission(
         event.active_review_phase.can_see_other_reviews = "always"
         event.active_review_phase.save()
     response = client.get(
+        event.api_urls.reviews,
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert content["count"] == 2
+
+    response = client.get(
         event.api_urls.reviews + f"?submission={review.submission.code}",
         follow=True,
         headers={"Authorization": f"Token {review_user_token.token}"},
@@ -197,6 +213,46 @@ def test_reviewer_can_filter_by_submission(
 
     assert response.status_code == 200
     assert len(content["results"]) == 1, content
+    returned = content["results"][0]
+    assert returned["submission"] == review.submission.code, content
+    assert returned["submission"] != other_review.submission.code, content
+
+
+@pytest.mark.django_db
+def test_reviewer_can_filter_by_speaker_with_multiple_submissions(
+    client, review_user_token, review_user, event, review, submission, speaker
+):
+    with scope(event=event):
+        event.active_review_phase.can_see_other_reviews = "always"
+        event.active_review_phase.save()
+        second_submission = Submission.objects.create(
+            title="Second talk by the same speaker",
+            event=event,
+            submission_type=event.cfp.default_type,
+            description="Description",
+            abstract="Abstract",
+            notes="Notes",
+            content_locale="en",
+        )
+        second_submission.speakers.add(speaker)
+        Review.objects.create(
+            score=1,
+            submission=second_submission,
+            user=review_user,
+            text="Second review",
+        )
+        speaker_code = speaker.code
+        expected_codes = [submission.code, second_submission.code]
+
+    response = client.get(
+        event.api_urls.reviews + f"?speaker={speaker_code}",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    returned_codes = sorted(r["submission"] for r in content["results"])
+    assert returned_codes == sorted(expected_codes), content
 
 
 @pytest.mark.django_db
@@ -549,3 +605,339 @@ def test_anonymous_cannot_delete_review(client, event, review):
     url = event.api_urls.reviews + f"{review.pk}/"
     response = client.delete(url)
     assert response.status_code == 404, response.text
+
+
+@pytest.mark.django_db
+def test_reviewer_cannot_enumerate_inaccessible_submission_or_speaker(
+    client,
+    review_user_token,
+    review_user,
+    event,
+    review,
+    other_review,
+    track,
+    other_track,
+):
+    with scope(event=event):
+        event.active_review_phase.can_see_other_reviews = "always"
+        event.active_review_phase.save()
+        review.submission.track = track
+        review.submission.save()
+        other_review.submission.track = other_track
+        other_review.submission.save()
+        review_user.teams.filter(is_reviewer=True).first().limit_tracks.add(track)
+
+        accessible_sub_code = review.submission.code
+        inaccessible_sub_code = other_review.submission.code
+        accessible_speaker_code = review.submission.speakers.first().code
+        inaccessible_speaker_code = other_review.submission.speakers.first().code
+
+    headers = {"Authorization": f"Token {review_user_token.token}"}
+
+    resp = client.get(event.api_urls.reviews + f"?submission={accessible_sub_code}", follow=True, headers=headers)
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["submission"] == accessible_sub_code
+
+    resp = client.get(event.api_urls.reviews + f"?speaker={accessible_speaker_code}", follow=True, headers=headers)
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["submission"] == accessible_sub_code
+
+    resp = client.get(event.api_urls.reviews + f"?submission={inaccessible_sub_code}", follow=True, headers=headers)
+    assert resp.status_code == 400
+    assert "submission" in resp.json()
+
+    resp = client.get(event.api_urls.reviews + f"?speaker={inaccessible_speaker_code}", follow=True, headers=headers)
+    assert resp.status_code == 400
+    assert "speaker" in resp.json()
+
+
+@pytest.mark.django_db
+def test_organizer_can_filter_reviews_by_submission_and_speaker(
+    client, orga_user_token, event, review
+):
+    with scope(event=event):
+        sub_code = review.submission.code
+        speaker_code = review.submission.speakers.first().code
+
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+    resp = client.get(event.api_urls.reviews + f"?submission={sub_code}", follow=True, headers=headers)
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["submission"] == sub_code
+
+    resp = client.get(event.api_urls.reviews + f"?speaker={speaker_code}", follow=True, headers=headers)
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["submission"] == sub_code
+
+
+@pytest.mark.django_db
+def test_review_search_by_submission_title_and_reviewer_name(
+    client, orga_user_token, event, review, other_review
+):
+    with scope(event=event):
+        review.submission.title = "Unique Quantum Review Title"
+        review.submission.save()
+        other_review.submission.title = "Completely Other Title"
+        other_review.submission.save()
+        review.user.fullname = "SpecificReviewerAlpha"
+        review.user.save()
+
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+
+    # Search by submission title
+    resp = client.get(event.api_urls.reviews + "?search=Quantum", follow=True, headers=headers)
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["submission"] == review.submission.code
+
+    # Search by reviewer fullname
+    resp = client.get(event.api_urls.reviews + "?search=SpecificReviewerAlpha", follow=True, headers=headers)
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["id"] == review.pk
+
+
+@pytest.mark.django_db
+def test_review_filter_init_supports_explicit_event_and_fallback(event, orga_user_token, other_event, other_submission):
+    from eventyay.api.filters.review import ReviewFilter
+
+    # 1. Call with event=event directly (no request) -> missing user yields empty choices
+    filt = ReviewFilter(event=event)
+    assert filt.filters['user'].queryset.count() == 0
+    assert filt.filters['submission'].queryset.count() == 0
+
+    # 2. Call without event or request: qs is empty, no cross-event review leakage
+    filt_empty = ReviewFilter()
+    assert filt_empty.qs.count() == 0
+    assert filt_empty.filters['submission'].queryset.count() == 0
+    assert filt_empty.filters['user'].queryset.count() == 0
+    assert filt_empty.filters['speaker'].queryset.count() == 0
+
+    # 3. Explicitly empty visible_submissions does not fall through
+    class MockView:
+        visible_submissions = Submission.objects.none()
+
+    class MockUser:
+        is_anonymous = False
+        is_authenticated = True
+        pk = 99999
+
+    class MockRequest:
+        def __init__(self, ev):
+            self.event = ev
+            self.user = MockUser()
+            self.parser_context = {'view': MockView()}
+
+    filt_mock = ReviewFilter(request=MockRequest(event))
+    assert filt_mock.filters['submission'].queryset.count() == 0
+
+
+@pytest.mark.django_db
+def test_review_filter_rejects_submission_from_other_event(
+    client, orga_user_token, event, other_event
+):
+    with scope(event=other_event):
+        foreign_sub = Submission.objects.create(
+            event=other_event,
+            title="Foreign Submission",
+            submission_type=other_event.cfp.default_type,
+        )
+
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+    # Attempting to filter by another event's submission code produces 400
+    resp = client.get(
+        event.api_urls.reviews + f"?submission={foreign_sub.code}",
+        follow=True,
+        headers=headers,
+    )
+    assert resp.status_code == 400
+    assert "submission" in resp.json()
+
+
+@pytest.mark.django_db
+def test_review_filter_anonymous_user_without_view_has_empty_submissions(event):
+    from django.contrib.auth.models import AnonymousUser
+    from eventyay.api.filters.review import ReviewFilter
+
+    class MockRequestWithoutView:
+        def __init__(self, ev):
+            self.event = ev
+            self.user = AnonymousUser()
+            self.parser_context = {}
+
+    filt = ReviewFilter(request=MockRequestWithoutView(event), event=event)
+    assert filt.filters['submission'].queryset.count() == 0
+    assert filt.filters['speaker'].queryset.count() == 0
+
+
+@pytest.mark.django_db
+def test_review_filter_submission_choice_with_multiple_related_rows_no_duplicate_error(
+    client, orga_user_token, event, review, speaker, other_speaker
+):
+    from eventyay.api.filters.review import ReviewFilter
+
+    with scope(event=event):
+        # Attach multiple speakers to create multi-table join multiplicity
+        sub = review.submission
+        sub.speakers.add(speaker, other_speaker)
+        sub.save()
+
+    # Instantiate filter directly
+    class MockRequest:
+        def __init__(self, ev, user):
+            self.event = ev
+            self.user = user
+            self.parser_context = {}
+
+    req = MockRequest(event, orga_user_token.user)
+    filt = ReviewFilter(request=req, event=event)
+
+    # 1. Verify submission count for this code is exactly 1 (no duplicate rows)
+    sub_qs = filt.filters['submission'].queryset
+    assert sub_qs.filter(code=sub.code).count() == 1
+    # 2. Verify .get() works cleanly without MultipleObjectsReturned
+    resolved_sub = sub_qs.get(code=sub.code)
+    assert resolved_sub.pk == sub.pk
+
+    # 3. Verify API GET request with ?submission=<code > validates and returns 200
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+    resp = client.get(
+        event.api_urls.reviews + f"?submission={sub.code}",
+        follow=True,
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    assert len(content["results"]) == 1
+    assert content["results"][0]["submission"] == sub.code
+
+
+@pytest.mark.django_db
+def test_review_filter_speaker_choice_anonymised_phase(
+    client, orga_user_token, review_user, event, review, speaker
+):
+    from eventyay.api.filters.review import ReviewFilter
+
+    with scope(event=event):
+        event.active_review_phase.can_see_speaker_names = False
+        event.active_review_phase.save()
+        team = review_user.teams.first()
+        team.all_events = True
+        team.save()
+
+    class MockRequest:
+        def __init__(self, ev, user):
+            self.event = ev
+            self.user = user
+            self.parser_context = {}
+
+    req_rev = MockRequest(event, review_user)
+    filt_rev = ReviewFilter(request=req_rev, event=event)
+    assert filt_rev.filters['speaker'].queryset.count() == 0
+
+    req_orga = MockRequest(event, orga_user_token.user)
+    filt_orga = ReviewFilter(request=req_orga, event=event)
+    assert filt_orga.filters['speaker'].queryset.filter(pk=speaker.pk).exists()
+
+
+@pytest.mark.django_db
+def test_review_filter_anonymous_user_empty_choices(event, review):
+    from django.contrib.auth.models import AnonymousUser
+    from eventyay.api.filters.review import ReviewFilter
+
+    class MockAnonRequest:
+        def __init__(self, ev):
+            self.event = ev
+            self.user = AnonymousUser()
+            self.parser_context = {}
+
+    req_anon = MockAnonRequest(event)
+    filt_anon = ReviewFilter(request=req_anon, event=event)
+    assert filt_anon.filters['user'].queryset.count() == 0
+    assert filt_anon.filters['submission'].queryset.count() == 0
+    assert filt_anon.filters['speaker'].queryset.count() == 0
+
+    filt_no_user = ReviewFilter(request=None, event=event)
+    assert filt_no_user.filters['user'].queryset.count() == 0
+    assert filt_no_user.filters['submission'].queryset.count() == 0
+    assert filt_no_user.filters['speaker'].queryset.count() == 0
+
+    # 3. Authenticated authorized user retains legitimate choices
+    class MockAuthRequest:
+        def __init__(self, ev, u):
+            self.event = ev
+            self.user = u
+            self.parser_context = {}
+
+    from eventyay.base.models import User
+    filt_auth = ReviewFilter(request=MockAuthRequest(event, review.user), event=event)
+    assert filt_auth.filters['user'].queryset.count() == event.reviewers.count()
+
+
+@pytest.mark.django_db
+def test_review_ordering_whitelist_and_speaker_leak_prevention(
+    client, event, review_user, orga_user_token, submission
+):
+    from eventyay.base.models import Review, Submission
+
+    with scope(event=event):
+        event.active_review_phase.can_see_other_reviews = 'always'
+        event.active_review_phase.can_see_speaker_names = False
+        event.active_review_phase.save()
+
+        sub2 = Submission.objects.create(
+            event=event,
+            title='Second Submission',
+            state='submitted',
+            submission_type=event.submission_types.first(),
+        )
+        # Create two reviews with distinct scores
+        rev1 = Review.objects.create(
+            submission=submission,
+            user=review_user,
+            text='Low score review',
+            score=1,
+        )
+        rev2 = Review.objects.create(
+            submission=sub2,
+            user=review_user,
+            text='High score review',
+            score=5,
+        )
+
+    headers = {'Authorization': f'Token {orga_user_token.token}'}
+
+    # 1. Allowed ordering by score ascending
+    resp_asc = client.get(f'{event.api_urls.reviews}?ordering=score', follow=True, headers=headers)
+    assert resp_asc.status_code == 200
+    results_asc = resp_asc.json()['results']
+    assert len(results_asc) >= 2
+    scores_asc = [float(r['score']) for r in results_asc]
+    assert scores_asc == sorted(scores_asc)
+
+    # 2. Allowed ordering by score descending
+    resp_desc = client.get(f'{event.api_urls.reviews}?ordering=-score', follow=True, headers=headers)
+    assert resp_desc.status_code == 200
+    results_desc = resp_desc.json()['results']
+    scores_desc = [float(r['score']) for r in results_desc]
+    assert scores_desc == sorted(scores_desc, reverse=True)
+
+    # 3. Disallowed speaker-derived ordering is rejected/ignored by whitelist
+    resp_disallowed = client.get(
+        f'{event.api_urls.reviews}?ordering=submission__speakers__fullname',
+        follow=True,
+        headers=headers,
+    )
+    assert resp_disallowed.status_code == 200
+    # Falls back to default ordering (pk ascending), not reordered by speaker
+    pks = [r['id'] for r in resp_disallowed.json()['results']]
+    assert pks == sorted(pks)

@@ -257,6 +257,16 @@ def test_orga_can_see_all_talks_even_nonpublic(
     submission.event.feature_flags["show_schedule"] = False
     submission.event.save()
     response = client.get(
+        submission.event.api_urls.submissions,
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert content["count"] == 4
+
+    response = client.get(
         submission.event.api_urls.submissions + "?state=rejected",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
@@ -265,7 +275,22 @@ def test_orga_can_see_all_talks_even_nonpublic(
 
     assert response.status_code == 200
     assert content["count"] == 1
-    assert content["results"][0]["title"] == slot.submission.title
+    assert len(content["results"]) == 1
+    assert content["results"][0]["code"] == rejected_submission.code
+    assert content["results"][0]["state"] == "rejected"
+    assert all(r["state"] == "rejected" for r in content["results"])
+    assert {r["code"] for r in content["results"]} == {rejected_submission.code}
+
+
+@pytest.mark.django_db
+def test_submissions_filter_invalid_state(client, orga_user_token, event):
+    response = client.get(
+        event.api_urls.submissions + "?state=invalid_state",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 400
+    assert "state" in response.json()
 
 
 @pytest.mark.django_db
@@ -1589,6 +1614,7 @@ def test_remove_favourite_not_favourited(event, speaker_client, slot, speaker):
 @pytest.mark.django_db
 def test_team_token_can_create_submission(client, event, submission_type):
     from django_scopes import scope
+
     from eventyay.base.models import TeamAPIToken
     with scope(event=event):
         team = event.organiser.teams.filter(can_change_submissions=True).first()
@@ -1617,6 +1643,7 @@ def test_team_token_can_create_submission(client, event, submission_type):
 @pytest.mark.django_db
 def test_team_token_read_only_team_forbidden_submission(client, event, submission_type):
     from django_scopes import scope
+
     from eventyay.base.models import TeamAPIToken
     with scope(event=event):
         team = event.organiser.teams.filter(can_change_submissions=False).first()
@@ -1636,3 +1663,194 @@ def test_team_token_read_only_team_forbidden_submission(client, event, submissio
         headers={"Authorization": f"Token {token.token}"},
     )
     assert response.status_code in [403, 401]
+
+
+@pytest.mark.django_db
+def test_submission_search_filters_by_title_and_speaker(
+    client, orga_user_token, event, slot, accepted_submission, other_speaker
+):
+    with scope(event=event):
+        slot.submission.title = "Unique Python Alpha Title"
+        slot.submission.save()
+        accepted_submission.title = "Distinct Ruby Beta Title"
+        accepted_submission.speakers.set([other_speaker])
+        accepted_submission.save()
+        other_speaker.fullname = "SpecificSpeakerName"
+        other_speaker.save()
+
+    headers = {"Authorization": f"Token {orga_user_token.token}"}
+
+    # Search by title keyword
+    resp = client.get(
+        event.api_urls.submissions + "?search=Alpha",
+        follow=True,
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    codes = [s["code"] for s in content["results"]]
+    assert slot.submission.code in codes
+    assert accepted_submission.code not in codes
+
+    # Search by speaker name
+    resp = client.get(
+        event.api_urls.submissions + "?search=SpecificSpeakerName",
+        follow=True,
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    codes = [s["code"] for s in content["results"]]
+    assert accepted_submission.code in codes
+    assert slot.submission.code not in codes
+
+    # Search combined with filter backend
+    resp = client.get(
+        event.api_urls.submissions + "?state=confirmed&search=Alpha",
+        follow=True,
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    content = json.loads(resp.text)
+    codes = [s["code"] for s in content["results"]]
+    assert slot.submission.code in codes
+
+
+@pytest.mark.django_db
+def test_reviewer_search_cannot_leak_speakers_in_anonymised_phase(
+    client, orga_user_token, review_user, event, submission, speaker
+):
+    with scope(event=event):
+        event.active_review_phase.can_see_speaker_names = False
+        event.active_review_phase.save()
+        team = review_user.teams.first()
+        team.all_events = True
+        team.save()
+
+    from eventyay.base.models.auth_token import UserApiToken
+    token = UserApiToken.objects.create(name="reviewer_token", user=review_user)
+    token.events.set([event])
+    token.endpoints = {"submissions": ["list", "retrieve"]}
+    token.save()
+
+    # Step 1: Reviewer search for speaker name -> search_fields dynamically excludes speakers__fullname
+    resp_rev = client.get(
+        submission.event.api_urls.submissions + f"?search={speaker.fullname}",
+        follow=True,
+        headers={"Authorization": f"Token {token.token}"},
+    )
+    assert resp_rev.status_code == 200
+    assert resp_rev.json()["count"] == 0
+
+    # Step 2: Reviewer searches by submission title -> matches successfully
+    resp_rev_title = client.get(
+        submission.event.api_urls.submissions + f"?search={submission.title}",
+        follow=True,
+        headers={"Authorization": f"Token {token.token}"},
+    )
+    assert resp_rev_title.status_code == 200
+    assert resp_rev_title.json()["count"] >= 1
+
+    # Step 3: Organizer search for speaker name matches submission
+    resp_orga = client.get(
+        submission.event.api_urls.submissions + f"?search={speaker.fullname}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert resp_orga.status_code == 200
+    assert resp_orga.json()["count"] >= 1
+
+
+@pytest.mark.django_db
+def test_anonymous_user_can_list_filter_and_search_public_submissions(client, slot):
+    event = slot.event
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.save()
+        if not event.current_schedule:
+            event.current_schedule = slot.schedule
+            event.save()
+        else:
+            slot.schedule = event.current_schedule
+            slot.is_visible = True
+            slot.save()
+
+        # Non-public submission (submitted state, not in any released schedule)
+        from eventyay.base.models.submission import Submission
+        non_public_sub = Submission.objects.create(
+            event=event,
+            title='Secret Unconfirmed Talk',
+            state='submitted',
+            submission_type=event.submission_types.first(),
+        )
+
+    # 1. Anonymous list: public submission present, non-public absent
+    resp = client.get(event.api_urls.submissions, follow=True)
+    assert resp.status_code == 200
+    assert resp.json()["count"] >= 1
+    codes = [item["code"] for item in resp.json()["results"]]
+    assert slot.submission.code in codes
+    assert non_public_sub.code not in codes
+
+    # 2. Filter by state
+    resp_state = client.get(event.api_urls.submissions + "?state=confirmed", follow=True)
+    assert resp_state.status_code == 200
+    assert resp_state.json()["count"] >= 1
+
+    resp_state_none = client.get(event.api_urls.submissions + "?state=rejected", follow=True)
+    assert resp_state_none.status_code == 200
+    assert resp_state_none.json()["count"] == 0
+
+    # 3. Search by title
+    resp_search = client.get(event.api_urls.submissions + f"?search={slot.submission.title}", follow=True)
+    assert resp_search.status_code == 200
+    assert resp_search.json()["count"] >= 1
+    assert resp_search.json()["results"][0]["code"] == slot.submission.code
+
+    # 4. Combined filter and search request with exact code assertion
+    resp_combined = client.get(
+        event.api_urls.submissions + f"?state=confirmed&search={slot.submission.title}",
+        follow=True,
+    )
+    assert resp_combined.status_code == 200
+    assert resp_combined.json()["count"] == 1
+    assert [r["code"] for r in resp_combined.json()["results"]] == [slot.submission.code]
+
+    # Non-public search and filter must return 0 for anonymous user
+    resp_nonpublic = client.get(
+        event.api_urls.submissions + "?state=submitted&search=Secret",
+        follow=True,
+    )
+    assert resp_nonpublic.status_code == 200
+    assert resp_nonpublic.json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_submission_filter_and_search_speaker_leak_protection(
+    client, event, review_user, submission, speaker
+):
+    from eventyay.api.views.submission import SubmissionFilter, SubmissionViewSet
+
+    # 1. SubmissionFilter fields verification
+    assert 'speaker' not in SubmissionFilter.base_filters
+    assert set(SubmissionFilter.base_filters.keys()) == {'state', 'content_locale', 'submission_type', 'is_featured'}
+
+    # 2. Reviewer with blind review cannot search by speaker name
+    with scope(event=event):
+        event.active_review_phase.can_see_speaker_names = False
+        event.active_review_phase.save()
+        team = review_user.teams.first()
+        team.all_events = True
+        team.save()
+        submission.speakers.add(speaker)
+        submission.save()
+
+    view = SubmissionViewSet()
+    class MockReq:
+        def __init__(self, user, ev):
+            self.user = user
+            self.event = ev
+    view.request = MockReq(review_user, event)
+    view.event = event
+    assert view.search_fields == ('title',)

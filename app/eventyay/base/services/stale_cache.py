@@ -2,9 +2,12 @@ import hashlib
 import json
 import logging
 import threading
+import urllib.parse
 
 from django.core.cache import cache
 from django.db import DatabaseError, OperationalError, transaction
+from rest_framework.utils.encoders import JSONEncoder
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,12 @@ CATALOG_HOT_TTL = 300
 CATALOG_STALE_TTL = 3600
 SCHEDULE_HOT_TTL = 300
 SCHEDULE_STALE_TTL = 3600
+
+# Bump this whenever the cached talk-slot payload shape or key layout changes.
+# It makes hot and stale keys from older code unreachable instead of serving
+# them as if they were produced by the current serializer.
+TALK_SLOTS_CACHE_SCHEMA = 2
+SCHEDULE_DETAIL_CACHE_SCHEMA = 1
 
 CATALOG_NAMES = ('tracks', 'tags', 'submission-types')
 
@@ -53,11 +62,12 @@ def deserialize_none_sentinel(cached):
 
 
 def api_cache_fingerprint(data):
-    return hashlib.md5(json.dumps(data, sort_keys=True, default=str).encode(), usedforsecurity=False).hexdigest()
+    return hashlib.md5(json.dumps(data, sort_keys=True, cls=JSONEncoder).encode(), usedforsecurity=False).hexdigest()
 
 
 def wrap_api_cache_payload(data):
-    return {'payload': data, 'etag': api_cache_fingerprint(data)}
+    clean_data = json.loads(json.dumps(data, cls=JSONEncoder))
+    return {'payload': clean_data, 'etag': api_cache_fingerprint(clean_data)}
 
 
 def unwrap_api_cache_payload(cached):
@@ -177,13 +187,19 @@ def catalog_cache_keys(event_id, catalog, locale_key='all'):
 
 def schedule_detail_cache_keys(event_id, schedule_id, expand_key, user_scope, locale_key='all'):
     version = get_schedule_cache_version(event_id)
-    prefix = f'api:schedule:{event_id}:v{version}:{schedule_id}:{user_scope}:{locale_key}:{expand_key}'
+    prefix = (
+        f'api:schedule:{event_id}:s{SCHEDULE_DETAIL_CACHE_SCHEMA}:v{version}:'
+        f'{schedule_id}:{user_scope}:{locale_key}:{expand_key}'
+    )
     return f'{prefix}:hot', f'{prefix}:stale'
 
 
 def talk_slots_list_cache_keys(event_id, user_scope, expand_key, filter_key, locale_key='all'):
     version = get_schedule_cache_version(event_id)
-    prefix = f'api:talk-slots:{event_id}:v{version}:{user_scope}:{locale_key}:{expand_key}:{filter_key}'
+    prefix = (
+        f'api:talk-slots:{event_id}:s{TALK_SLOTS_CACHE_SCHEMA}:v{version}:'
+        f'{user_scope}:{locale_key}:{expand_key}:{filter_key}'
+    )
     return f'{prefix}:hot', f'{prefix}:stale'
 
 
@@ -225,9 +241,7 @@ def get_cached_catalog_list(event_id, catalog, locale_key, loader):
 
 
 def get_cached_schedule_detail(event_id, schedule_id, expand_key, user_scope, locale_key, loader):
-    hot_key, stale_key = schedule_detail_cache_keys(
-        event_id, schedule_id, expand_key, user_scope, locale_key
-    )
+    hot_key, stale_key = schedule_detail_cache_keys(event_id, schedule_id, expand_key, user_scope, locale_key)
 
     def wrapping_loader():
         return wrap_api_cache_payload(loader())
@@ -263,9 +277,7 @@ def get_cached_video_spa_schedule(event_id, schedule_id, featured_key, loader):
 
 
 def get_cached_talk_slots_list(event_id, user_scope, expand_key, filter_key, locale_key, loader):
-    hot_key, stale_key = talk_slots_list_cache_keys(
-        event_id, user_scope, expand_key, filter_key, locale_key
-    )
+    hot_key, stale_key = talk_slots_list_cache_keys(event_id, user_scope, expand_key, filter_key, locale_key)
 
     def wrapping_loader():
         return wrap_api_cache_payload(loader())
@@ -282,24 +294,66 @@ def get_cached_talk_slots_list(event_id, user_scope, expand_key, filter_key, loc
     return data, etag
 
 
+def extract_flex_tokens(params, param_name):
+    """Extract flex fields query parameter tokens matching rest_flex_fields semantics.
+
+    Preserves exact whitespace and empty string tokens without stripping,
+    and sorts tokens for canonical cache key stability.
+    """
+    if hasattr(params, 'getlist'):
+        values = params.getlist(param_name)
+        if not values:
+            values = params.getlist(f'{param_name}[]')
+    else:
+        val = params.get(param_name)
+        if val is None:
+            val = params.get(f'{param_name}[]')
+        values = [val] if val is not None else []
+
+    if not values:
+        if param_name in params or f'{param_name}[]' in params:
+            values = ['']
+        else:
+            return None
+
+    if len(values) == 1:
+        values = values[0].split(',')
+
+    return tuple(sorted(values))
+
+
+def talk_slots_expand_key(request):
+    params = getattr(request, 'query_params', None) if hasattr(request, 'query_params') else getattr(request, 'GET', {})
+    tokens = extract_flex_tokens(params, 'expand')
+    if tokens is None:
+        return 'default'
+    encoded = [urllib.parse.quote(str(t), safe='') for t in tokens]
+    return f'expand={",".join(encoded)}'
+
+
 def talk_slots_filter_key(request, filter_fields):
-    params = getattr(request, 'query_params', request.GET)
+    params = getattr(request, 'query_params', None) if hasattr(request, 'query_params') else getattr(request, 'GET', {})
     parts = []
     for field in sorted(filter_fields):
         value = params.get(field)
-        if value is not None:
-            parts.append(f'{field}={value}')
+        if value is not None and str(value).strip():
+            parts.append(f'{field}={urllib.parse.quote(str(value), safe="")}')
     search = params.get('search')
-    if search:
-        parts.append(f'search={search}')
+    if search and str(search).strip():
+        parts.append(f'search={urllib.parse.quote(str(search), safe="")}')
     ordering = params.get('ordering')
-    if ordering:
-        parts.append(f'ordering={ordering}')
+    if ordering and str(ordering).strip():
+        parts.append(f'ordering={urllib.parse.quote(str(ordering), safe="")}')
+    for key in ('fields', 'omit'):
+        tokens = extract_flex_tokens(params, key)
+        if tokens is not None:
+            encoded_tokens = [urllib.parse.quote(str(t), safe='') for t in tokens]
+            parts.append(f'{key}={",".join(encoded_tokens)}')
     for key in ('page', 'page_size', 'limit', 'offset'):
         value = params.get(key)
-        if value is not None:
-            parts.append(f'{key}={value}')
-    if not any(params.get(key) is not None for key in ('page', 'page_size', 'limit', 'offset')):
+        if value is not None and str(value).strip():
+            parts.append(f'{key}={urllib.parse.quote(str(value), safe="")}')
+    if not any(params.get(key) is not None and str(params.get(key)).strip() for key in ('page', 'page_size', 'limit', 'offset')):
         parts.append('page=1')
     if not parts:
         return 'default'
