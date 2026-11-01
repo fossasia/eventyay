@@ -444,6 +444,7 @@ def test_order_export_orders_include_name_parts_from_position(env):
         'family_name': 'Lovelace',
         '_scheme': 'given_family',
     }
+    position.job_title = 'Programmer'
     position.save()
 
     exporter = OrderListExporter(event)
@@ -453,6 +454,7 @@ def test_order_export_orders_include_name_parts_from_position(env):
     headers = rows[0]
     data = rows[1]
 
+    assert data[headers.index('Job Title')] == 'Programmer'
     assert data[headers.index('Name')] == 'Ada Lovelace'
     assert data[headers.index('Given name')] == 'Ada'
     assert data[headers.index('Family name')] == 'Lovelace'
