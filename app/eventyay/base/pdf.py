@@ -752,6 +752,9 @@ _CJK_RE = re.compile(
 _HANGUL_RE = re.compile(r'[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]')
 _THAI_RE = re.compile(r'[\u0E00-\u0E7F]')
 _HEBREW_RE = re.compile(r'[\u0590-\u05FF\uFB1D-\uFB4F]')
+_SCRIPT_RUNS_RE = re.compile(
+    '|'.join(p.pattern for p in (_ARABIC_RE, _DEVANAGARI_RE, _CJK_RE, _HANGUL_RE, _THAI_RE, _HEBREW_RE))
+)
 
 
 def _detect_scripts(text):
@@ -819,6 +822,19 @@ def resolve_textarea_font(font, text_content):
 
     # For multi-script text, preserve requested font (Open Sans) as base font.
     # Script runs are wrapped in <font name="..."> tags in _draw_textarea().
+    # The rest is drawn in the base font, so if the requested font has no glyphs
+    # for it (e.g. Latin text in Droid Sans Fallback), use Open Sans instead.
+    # Switch only if Open Sans draws characters the requested font cannot and loses none
+    # it can; characters neither font has (e.g. emoji) do not block the switch.
+    base_text = _SCRIPT_RUNS_RE.sub('', text_content)
+    if base_text.strip() and not font_supports_text(font, base_text):
+        suffix = next((s for s in (' B I', ' B', ' I') if font.endswith(s)), '')
+        fallback = 'Open Sans' + suffix
+        chars = set(base_text)
+        in_font = {c for c in chars if font_supports_text(font, c)}
+        in_fallback = {c for c in chars if font_supports_text(fallback, c)}
+        if in_fallback - in_font and in_font <= in_fallback:
+            return fallback, text_content
     return font, text_content
 
 
