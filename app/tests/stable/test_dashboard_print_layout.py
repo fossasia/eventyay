@@ -36,7 +36,7 @@ def test_organizer_dashboard_uses_the_dashboard_print_layout(organizer_client, o
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-@pytest.mark.parametrize('view_name', ['eventyay_common:events', 'control:event.settings'])
+@pytest.mark.parametrize('view_name', ['common:events', 'control:event.settings'])
 def test_other_pages_keep_their_print_layout(organizer_client, organizer, event, view_name):
     """Only the dashboards opt in to the dashboard print rules."""
     kwargs = {'organizer': organizer.slug, 'event': event.slug} if view_name == 'control:event.settings' else None
