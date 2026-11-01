@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.test import override_settings
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     Event,
@@ -284,6 +284,7 @@ class SubEventsTest(SoupTest):
             assert list(ses[0].quotas.first().products.all()) == [self.ticket]
             assert SubEventItem.objects.get(subevent=ses[0], product=self.ticket).price == 16
             assert ses[0].checkinlist_set.count() == 1
+        with scope(event=self.event1, organizer=self.orga1):
             assert list(ses[0].checkinlist_set.get().gates.all()) == [gate]
 
         assert str(ses[1].name) == 'Foo'
@@ -1226,7 +1227,7 @@ class SubEventsTest(SoupTest):
         assert 'checkinlist_set-TOTAL_FORMS' not in fields
 
     def test_edit_bulk_lists_change_gates(self):
-        with scopes_disabled():
+        with scope(event=self.event1, organizer=self.orga1):
             gates = [self.orga1.gates.create(name='Main entrance'), self.orga1.gates.create(name='Side entrance')]
             for se in (self.subevent1, self.subevent2):
                 cl = se.checkinlist_set.create(event=self.event1, name='Entry', all_products=False)
@@ -1237,14 +1238,14 @@ class SubEventsTest(SoupTest):
         fields['checkinlist_set-0-gates'] = [str(gate.pk) for gate in gates]
         doc = self.post_doc('/control/event/ccc/30c3/subevents/bulk_edit', fields, follow=True)
         assert doc.select('.alert-success')
-        with scopes_disabled():
+        with scope(event=self.event1, organizer=self.orga1):
             for se in (self.subevent1, self.subevent2):
                 cl = se.checkinlist_set.get(name='Entry')
                 assert set(cl.gates.all()) == set(gates)
                 assert list(cl.limit_products.all()) == [self.ticket]
 
     def test_create_bulk_copy_from_prefills_list_gates(self):
-        with scopes_disabled():
+        with scope(event=self.event1, organizer=self.orga1):
             gates = [self.orga1.gates.create(name='Main entrance'), self.orga1.gates.create(name='Side entrance')]
             cl = self.subevent1.checkinlist_set.create(event=self.event1, name='Entry', allow_entry_after_exit=False)
             cl.gates.set(gates)
