@@ -5,6 +5,7 @@ from json import loads
 from unittest.mock import patch
 
 from django.conf import settings
+from django.contrib.staticfiles import finders
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -517,7 +518,10 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
         self.assertIn('Red', doc.select('section:nth-of-type(1)')[0].text)
         self.assertNotIn('Black', doc.select('section:nth-of-type(1)')[0].text)
 
-    def _create_variation_item_for_max_total(self, max_per_order):
+    def _create_variation_item_for_max_total(self, max_per_order, free_price=False):
+        # The shop only lists the products once the tickets are published.
+        self.event.tickets_published = True
+        self.event.save()
         with scopes_disabled():
             q = Quota.objects.create(event=self.event, name='Quota', size=20)
             item = Item.objects.create(
@@ -525,10 +529,12 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
                 name='Early-bird shirt',
                 default_price=12,
                 max_per_order=max_per_order,
+                free_price=free_price,
+                sales_channels=['web', 'bar'],
             )
-            var1 = ItemVariation.objects.create(item=item, value='Red')
-            var2 = ItemVariation.objects.create(item=item, value='Blue')
-            q.items.add(item)
+            var1 = ItemVariation.objects.create(product=item, value='Red')
+            var2 = ItemVariation.objects.create(product=item, value='Blue')
+            q.products.add(item)
             q.variations.add(var1)
             q.variations.add(var2)
         return item
@@ -549,6 +555,31 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
         details = doc.select_one('#item-%d' % item.pk)
         self.assertIsNotNone(details)
         self.assertEqual(details.get('data-variation-max-total'), '')
+
+    def test_variation_max_total_counts_only_quantities_with_free_price(self):
+        # The price of a pay-what-you-want variation is a number input as well. Run the selector of
+        # variation-limits.js on the page to check that it counts the quantities and not the prices,
+        # so a price above the maximum does not block the order.
+        path = finders.find('pretixpresale/js/ui/variation-limits.js')
+        with open(path, encoding='utf-8') as fp:
+            match = re.search(r"VARIATION_INPUTS_SELECTOR = '([^']+)'", fp.read())
+        self.assertIsNotNone(match, 'VARIATION_INPUTS_SELECTOR not found in variation-limits.js')
+        selector = match.group(1)
+        item = self._create_variation_item_for_max_total(max_per_order=3, free_price=True)
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        details = doc.select_one('#item-%d' % item.pk)
+        self.assertIsNotNone(details)
+        self.assertEqual(details.get('data-variation-max-total'), '3')
+        with scopes_disabled():
+            variation_ids = list(item.variations.values_list('pk', flat=True))
+        self.assertEqual(
+            sorted(field['name'] for field in details.select('.variations input.input-product-price')),
+            sorted('price_%d_%d' % (item.pk, pk) for pk in variation_ids),
+        )
+        self.assertEqual(
+            sorted(field['name'] for field in details.select(selector)),
+            sorted('variation_%d_%d' % (item.pk, pk) for pk in variation_ids),
+        )
 
     def test_variation_prices_in_quota(self):
         with scopes_disabled():
