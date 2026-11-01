@@ -3,11 +3,17 @@ from io import BytesIO, StringIO
 
 import pytest
 from django.core.files.base import ContentFile
+from django.utils.translation import override
 from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import CachedFile, Event, Room, SpeakerProfile, Submission, User
+from eventyay.base.models import CachedFile, Event, Room, SpeakerProfile, Submission, TalkQuestion, User
 from eventyay.base.services.orderimport import parse_csv
-from eventyay.base.services.talkimport import import_submission_records, import_submissions
+from eventyay.base.services.talkimport import (
+    ImportExecutionError,
+    _set_question_answer,
+    import_submission_records,
+    import_submissions,
+)
 from eventyay.orga.forms.schedule import ScheduleExportForm
 
 
@@ -288,3 +294,126 @@ def test_import_submission_records_keep_quoted_speaker_columns(event, orga_user)
         assert submission.abstract == DEEPAK_ABSTRACT
         assert list(submission.speakers.values_list('fullname', flat=True)) == ['Deepak Koul']
         assert not User.objects.filter(fullname='1').exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('locale,value,error', [
+    ('en', ' OTHER ', 'ambiguous'),
+    ('en', 'Vegn', 'Unknown choice'),
+    ('de', 'Unbekannt', 'Unknown choice'),
+    ('en', 'Unique', None),
+    ('de', 'Andere', None),
+])
+def test_csv_import_rejects_invalid_translated_answers(
+    event, orga_user, submission, variant, locale, value, error,
+):
+    """Reject unknown or ambiguous choices before saving any changes to a row."""
+    with scope(event=event):
+        question = TalkQuestion.objects.create(event=event, question='Choice', variant=variant, target='submission')
+        first = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        question.options.create(answer={'en': ' other ', 'de': 'Sonstige'}, position=2)
+        unique = question.options.create(answer={'en': 'Unique', 'de': 'Einzigartig'}, position=3)
+        answer = question.answers.create(submission=submission, answer='Original')
+        answer.options.add(unique)
+        original_title = submission.title
+
+    content = export_style_csv(
+        [{'ID': submission.code, 'Title': 'Updated title', 'Choice': value}],
+        headers=['ID', 'Title', 'Choice'],
+    )
+    cached = CachedFile.objects.create(type='text/csv', filename='choices.csv')
+    cached.file.save('choices.csv', ContentFile(content.encode('utf-8')))
+    result = import_submissions(
+        event=event.pk, fileid=str(cached.pk), locale=locale, user_id=orga_user.pk,
+        settings={'code': 'csv:ID', 'title': 'csv:Title', f'question_{question.pk}': 'csv:Choice'},
+    )
+
+    with scope(event=event):
+        submission.refresh_from_db()
+        answer.refresh_from_db()
+        if error:
+            assert result['skipped'] == 1
+            assert result['updated'] == 0
+            assert error.lower() in str(result['errors'][0]).lower()
+            assert submission.title == original_title
+            assert answer.answer == 'Original'
+            assert list(answer.options.values_list('pk', flat=True)) == [unique.pk]
+        else:
+            assert result['updated'] == 1
+            assert result['skipped'] == 0
+            assert not result['errors']
+            assert submission.title == 'Updated title'
+            expected = first if locale == 'de' else unique
+            assert list(answer.options.values_list('pk', flat=True)) == [expected.pk]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+@pytest.mark.parametrize('value,error', [('Other', 'ambiguous'), ('Vegn', 'Unknown choice')])
+def test_import_answer_rejects_invalid_choices_without_cache(event, submission, variant, value, error):
+    """Uncached imports preserve answers when a choice is unknown or ambiguous."""
+    with scope(event=event), override('en'):
+        question = TalkQuestion.objects.create(event=event, question='Choice', variant=variant, target='submission')
+        first = question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        question.options.create(answer={'en': 'Other', 'de': 'Sonstige'}, position=2)
+        answer = question.answers.create(submission=submission, answer='Original')
+        answer.options.add(first)
+        with pytest.raises(ImportExecutionError, match=error):
+            _set_question_answer(question.pk, value, submission=submission, event=event)
+        answer.refresh_from_db()
+        assert answer.answer == 'Original'
+        assert list(answer.options.values_list('pk', flat=True)) == [first.pk]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('invalid_label', ('Other', 'Vegn'))
+def test_csv_import_skips_new_invalid_row_and_continues(event, orga_user, invalid_label):
+    """A checkbox answer containing an invalid label must reject the whole row."""
+    with scope(event=event):
+        question = TalkQuestion.objects.create(
+            event=event, question='Choice', variant='multiple_choice', target='submission',
+        )
+        question.options.create(answer={'en': 'Other', 'de': 'Andere'}, position=1)
+        question.options.create(answer={'en': 'Other', 'de': 'Sonstige'}, position=2)
+        unique = question.options.create(answer='Unique', position=3)
+    content = export_style_csv([
+        {'Title': 'Rejected session', 'Choice': f'Unique, {invalid_label}'},
+        {'Title': 'Imported session', 'Choice': 'Unique'},
+    ], headers=['Title', 'Choice'])
+    cached = CachedFile.objects.create(type='text/csv', filename='choices.csv')
+    cached.file.save('choices.csv', ContentFile(content.encode('utf-8')))
+    result = import_submissions(
+        event=event.pk, fileid=str(cached.pk), locale='en', user_id=orga_user.pk,
+        settings={'title': 'csv:Title', f'question_{question.pk}': 'csv:Choice'},
+    )
+    assert result['created'] == 1
+    assert result['skipped'] == 1
+    assert len(result['errors']) == 1
+    assert 'Row 2:' in str(result['errors'][0])
+    with scope(event=event):
+        assert not Submission.objects.filter(title='Rejected session').exists()
+        answer = question.answers.get(submission__title='Imported session')
+        assert list(answer.options.values_list('pk', flat=True)) == [unique.pk]
+
+
+@pytest.mark.django_db
+def test_import_answer_keeps_generated_choice_creation(event, submission):
+    """Import-generated fields still create and cache new choices after validation changes."""
+    with scope(event=event), override('en'):
+        question = TalkQuestion.objects.create(
+            event=event, question='Imported choice', variant='multiple_choice',
+            target='submission', import_key='csv-choice',
+        )
+        existing = question.options.create(answer='Existing')
+        option_lookup = {'existing': existing}
+        created_options = []
+        for _ in range(2):
+            _set_question_answer(
+                question.pk, 'Existing, New', question_cache={question.pk: (question, option_lookup)},
+                submission=submission, event=event, created_options=created_options,
+            )
+        answer = question.answers.get(submission=submission)
+        assert {str(option.answer) for option in answer.options.all()} == {'Existing', 'New'}
+        assert question.options.count() == 2
+        assert created_options == [(option_lookup, 'new')]
