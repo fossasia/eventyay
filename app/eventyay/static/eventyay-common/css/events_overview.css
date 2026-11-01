@@ -72,6 +72,7 @@
     vertical-align: middle;
     padding: 5px 8px;
     border-top: 1px solid #ebebeb;
+    color: #555;
 }
 .events-table-wrapper .table > thead > tr > th {
     border-bottom: 2px solid #ebebeb;
@@ -100,21 +101,22 @@
     list-style: none;
     line-height: 1.15;
     font-size: 0.8em;
-    color: #666;
+    color: #555;
     font-weight: 400;
 }
 .events-table-wrapper .stats-list li {
     display: flex;
     justify-content: space-between;
     margin-bottom: 1px;
+    color: #555;
 }
 .events-table-wrapper .stats-list li span:first-child {
-    color: #666;
+    color: #555;
     font-weight: 400;
     margin-right: 8px;
 }
 .events-table-wrapper .stats-list li span:last-child {
-    color: #666;
+    color: #555;
     font-weight: 400;
 }
 
@@ -123,7 +125,7 @@
     display: block;
     text-align: left;
     cursor: pointer;
-    color: #666;
+    color: #555;
     font-weight: 400;
     padding-top: 2px;
     font-size: 0.9em;
