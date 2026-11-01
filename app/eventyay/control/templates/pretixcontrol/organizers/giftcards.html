@@ -93,7 +93,7 @@
     </div>
 
     <div class="gc-card gc-filter-card">
-        <form class="gc-filter-form" action="" method="get" aria-label="{% trans 'Filter gift cards' %}">
+        <form class="gc-filter-form filter-form" action="" method="get" aria-label="{% trans 'Filter gift cards' %}">
             <div class="gc-filter-input-wrap">
                 <i class="fa fa-search gc-filter-search-icon" aria-hidden="true"></i>
                 {{ filter_form.query }}
@@ -114,14 +114,14 @@
                     <i class="fa fa-filter" aria-hidden="true"></i>
                     {% trans "Filter" %}
                 </button>
-                <a href="{% url 'control:organizer.giftcards' organizer=request.organizer.slug %}" class="gc-btn-reset">
+                <a href="{% url 'control:organizer.giftcards' organizer=request.organizer.slug %}" class="gc-btn-reset btn-clear-filter">
                     {% trans "Reset" %}
                 </a>
             </div>
         </form>
     </div>
 
-    <div class="gc-card gc-table-card">
+    <div class="gc-card gc-table-card" data-ajax-results-region>
         {% if giftcards|length == 0 %}
             <div class="gc-empty-box">
                 <div class="gc-empty-icon">
