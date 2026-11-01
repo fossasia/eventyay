@@ -4,7 +4,7 @@ const isFilterForm = function(form) {
         return false;
     }
 
-    return form.classList.contains('filter-form') || !!form.querySelector('.filter-form') || !!form.closest('.filter-form');
+    return form.classList.contains('filter-form') || form.classList.contains('gc-filter-form') || !!form.querySelector('.filter-form') || !!form.closest('.filter-form');
 };
 
 const getFilterForms = function(root = document) {
@@ -237,6 +237,10 @@ const buildFormUrl = function(form) {
     if (!action && currentSort && !params.has('sort')) {
         params.set('sort', currentSort);
     }
+    const currentOrdering = new URLSearchParams(window.location.search).get('ordering');
+    if (!action && currentOrdering && !params.has('ordering')) {
+        params.set('ordering', currentOrdering);
+    }
     const query = params.toString();
     if (!query) {
         return url;
@@ -298,7 +302,7 @@ const handleClearFilter = function(event) {
 };
 
 const handlePaginationClick = function(event) {
-    const paginationLink = event.target.closest('.pagination-container a, .pagination a');
+    const paginationLink = event.target.closest('.pagination-container a, .pagination a, .gc-pagination a');
     if (!paginationLink) {
         return;
     }

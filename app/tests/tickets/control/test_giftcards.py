@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from bs4 import BeautifulSoup
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
@@ -12,6 +13,11 @@ from eventyay.base.models import (
     Team,
     User,
 )
+
+
+@pytest.fixture(autouse=True)
+def site_url_settings(settings):
+    settings.SITE_URL = 'https://testserver'
 
 
 @pytest.fixture
@@ -64,6 +70,22 @@ def test_list_of_cards(organizer, organizer2, team2, admin_user, client, gift_ca
     # Zero gift cards view test
     resp = client.get('/control/organizer/partner/giftcards')
     assert resp.status_code == 200
+    assert 'data-ajax-results-region' in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_giftcards_ajax_markup(organizer, admin_user, client, gift_card):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    resp = client.get('/control/organizer/dummy/giftcards')
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert 'data-ajax-results-region' in content
+    assert 'filter-form' in content
+    assert 'btn-clear-filter' in content
+    region = BeautifulSoup(content, 'html.parser').select_one('[data-ajax-results-region]')
+    assert region is not None
+    assert region.select_one('.gc-table-card') is not None
+    assert region.select_one('.gc-accepted-card') is not None
 
 
 @pytest.mark.django_db
@@ -75,15 +97,17 @@ def test_card_list_pagination(organizer, admin_user, client):
     resp = client.get('/control/organizer/dummy/giftcards')
     assert resp.status_code == 200
     assert 'Showing 10 of 12 gift cards' in resp.content.decode()
+    assert 'gc-accepted-card' in resp.content.decode()
     resp = client.get('/control/organizer/dummy/giftcards?page=2')
     assert resp.status_code == 200
     assert 'Showing 2 of 12 gift cards' in resp.content.decode()
+    assert 'gc-accepted-card' not in resp.content.decode()
 
 
 @pytest.mark.django_db
 def test_card_detail_view(organizer, admin_user, gift_card, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
-    resp = client.get('/control/organizer/dummy/giftcard/{}/'.format(gift_card.pk))
+    resp = client.get(f'/control/organizer/dummy/giftcard/{gift_card.pk}/')
     assert gift_card.secret in resp.content.decode()
     assert '42.00' in resp.content.decode()
 
@@ -109,7 +133,7 @@ def test_card_add(organizer, admin_user, client):
 @pytest.mark.django_db
 def test_card_detail_view_transact(organizer, admin_user, gift_card, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
-    client.post('/control/organizer/dummy/giftcard/{}/'.format(gift_card.pk), {'value': '23.00'})
+    client.post(f'/control/organizer/dummy/giftcard/{gift_card.pk}/', {'value': '23.00'})
     assert gift_card.value == 23 + 42
     assert gift_card.all_logentries().count() == 1
 
@@ -118,7 +142,7 @@ def test_card_detail_view_transact(organizer, admin_user, gift_card, client):
 def test_card_detail_edit(organizer, admin_user, gift_card, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post(
-        '/control/organizer/dummy/giftcard/{}/edit'.format(gift_card.pk),
+        f'/control/organizer/dummy/giftcard/{gift_card.pk}/edit',
         {'conditions': 'Foo'},
     )
     gift_card.refresh_from_db()
@@ -133,6 +157,7 @@ def test_card_detail_view_transact_revert_refund(organizer, admin_user, gift_car
             slug='dummy',
             date_from=now(),
             plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe,tests.tickets.testdummy',
+            currency='EUR',
         )
         o = Order.objects.create(
             code='FOO',
@@ -154,7 +179,7 @@ def test_card_detail_view_transact_revert_refund(organizer, admin_user, gift_car
 
     client.login(email='dummy@dummy.dummy', password='dummy')
     r = client.post(
-        '/control/organizer/dummy/giftcard/{}/'.format(gift_card.pk),
+        f'/control/organizer/dummy/giftcard/{gift_card.pk}/',
         {'revert': str(t.pk)},
     )
     assert 'alert-success' in r.rendered_content
@@ -167,7 +192,7 @@ def test_card_detail_view_transact_revert_refund(organizer, admin_user, gift_car
 def test_card_detail_view_transact_min_value(organizer, admin_user, gift_card, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
     r = client.post(
-        '/control/organizer/dummy/giftcard/{}/'.format(gift_card.pk),
+        f'/control/organizer/dummy/giftcard/{gift_card.pk}/',
         {'value': '-50.00'},
     )
     assert 'alert-danger' in r.rendered_content
@@ -177,7 +202,7 @@ def test_card_detail_view_transact_min_value(organizer, admin_user, gift_card, c
 @pytest.mark.django_db
 def test_card_detail_view_transact_invalid_value(organizer, admin_user, gift_card, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
-    r = client.post('/control/organizer/dummy/giftcard/{}/'.format(gift_card.pk), {'value': 'foo'})
+    r = client.post(f'/control/organizer/dummy/giftcard/{gift_card.pk}/', {'value': 'foo'})
     assert 'alert-danger' in r.rendered_content
     assert gift_card.value == 42
 
