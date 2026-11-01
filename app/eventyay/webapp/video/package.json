@@ -72,7 +72,7 @@
     "@vue-macros/reactivity-transform": "^3.1.2",
     "@vue/language-plugin-pug": "^3.3.13",
     "eslint": "^10.13.0",
-    "eslint-plugin-vue": "^10.11.1",
+    "eslint-plugin-vue": "^10.12.0",
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
     "globals": "^17.13.0",
     "i18next-conv": "^17.0.0",
