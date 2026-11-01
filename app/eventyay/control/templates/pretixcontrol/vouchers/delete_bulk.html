@@ -6,34 +6,15 @@
     <h1>{% trans "Delete vouchers" %}</h1>
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
-        {% if allowed %}
-            <p>{% blocktrans %}Are you sure you want to delete the following vouchers?{% endblocktrans %}</p>
-            <ul>
-                {% for s in allowed %}
-                    <li>
-                        {{ s }}
-                        <input type="hidden" name="voucher" value="{{ s.pk }}">
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-        {% if forbidden %}
-            <p>{% blocktrans trimmed %}The following vouchers can't be deleted as they already have been redeemed or used in an order.{% endblocktrans %}</p>
-            <ul>
-                {% for s in forbidden %}
-                    <li>
-                        {{ s }}
-                        <input type="hidden" name="voucher" value="{{ s.pk }}">
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+        <p>{% blocktrans count count=allowed_count %}<strong>{{ count }}</strong> unused voucher will be deleted.{% plural %}<strong>{{ count }}</strong> unused vouchers will be deleted.{% endblocktrans %}</p>
+        <p>{% blocktrans count count=forbidden_count %}<strong>{{ count }}</strong> used voucher will be kept. Existing orders are not affected.{% plural %}<strong>{{ count }}</strong> used vouchers will be kept. Existing orders are not affected.{% endblocktrans %}</p>
+        {% for voucher_id in voucher_ids %}<input type="hidden" name="voucher" value="{{ voucher_id }}">{% endfor %}
         <div class="form-group submit-group">
             <a href="{% url "control:event.vouchers" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
                 {% trans "Cancel" %}
             </a>
-            <button type="submit" class="btn btn-delete btn-danger btn-save" value="delete_confirm" name="action" {% if not allowed %}disabled{% endif %}>
-                {% trans "Delete" %}
+            <button type="submit" class="btn btn-delete btn-danger btn-save" value="delete_confirm" name="action" {% if not allowed_count %}disabled{% endif %}>
+                {% blocktrans count count=allowed_count %}Delete {{ count }} voucher{% plural %}Delete {{ count }} vouchers{% endblocktrans %}
             </button>
         </div>
     </form>

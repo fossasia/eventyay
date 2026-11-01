@@ -17,6 +17,42 @@ function groupMemberCheckboxes(table, groupId) {
     return table.querySelectorAll(`[data-voucher-group-member="${groupId}"] input[name="voucher"]`);
 }
 
+function setGroupMemberSelection(table, groupId, checked) {
+    groupMemberCheckboxes(table, groupId).forEach((checkbox) => {
+        checkbox.checked = checked;
+    });
+    const form = table.closest('form');
+    form?.querySelectorAll(`input[name="voucher_exclude"][data-voucher-group-exclude="${groupId}"]`).forEach((input) => {
+        input.remove();
+    });
+}
+
+function syncGroupExclusions(table, groupId) {
+    const form = table.closest('form');
+    if (!form) {
+        return;
+    }
+    form.querySelectorAll(`input[name="voucher_exclude"][data-voucher-group-exclude="${groupId}"]`).forEach((input) => {
+        input.remove();
+    });
+    const groupCheckbox = table.querySelector(
+        `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
+    );
+    if (!groupCheckbox?.checked) {
+        return;
+    }
+    groupMemberCheckboxes(table, groupId).forEach((checkbox) => {
+        if (!checkbox.checked) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'voucher_exclude';
+            input.value = checkbox.value;
+            input.dataset.voucherGroupExclude = groupId;
+            form.appendChild(input);
+        }
+    });
+}
+
 function groupHasMoreMembers(table, groupId) {
     return !!table.querySelector(`${loadMoreRowSelector}[data-voucher-group-load-more="${groupId}"]`);
 }
@@ -57,15 +93,22 @@ function syncGroupCheckbox(groupCheckbox) {
     } else if (groupCheckbox.checked && checkedCount === memberCheckboxes.length) {
         groupCheckbox.indeterminate = false;
     } else if (checkedCount === 0) {
-        groupCheckbox.checked = false;
-        groupCheckbox.indeterminate = false;
-    } else if (!groupHasMoreMembers(table, groupId) && checkedCount === memberCheckboxes.length) {
+        if (!groupHasMoreMembers(table, groupId)) {
+            groupCheckbox.checked = false;
+            groupCheckbox.indeterminate = false;
+        } else {
+            groupCheckbox.indeterminate = true;
+        }
+    } else if (checkedCount < memberCheckboxes.length) {
+        groupCheckbox.checked = true;
+        groupCheckbox.indeterminate = true;
+    } else if (!groupHasMoreMembers(table, groupId)) {
         groupCheckbox.checked = true;
         groupCheckbox.indeterminate = false;
     } else {
-        groupCheckbox.checked = false;
-        groupCheckbox.indeterminate = true;
+        groupCheckbox.indeterminate = false;
     }
+    syncGroupExclusions(table, groupId);
 }
 
 function syncGroupCheckboxes(table) {
@@ -96,9 +139,7 @@ function applyGroupSelection(table, groupId) {
         `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
     );
     if (groupCheckbox && groupCheckbox.checked) {
-        groupMemberCheckboxes(table, groupId).forEach((checkbox) => {
-            checkbox.checked = true;
-        });
+        setGroupMemberSelection(table, groupId, true);
     }
 
     const toggle = table.querySelector(`${groupToggleSelector}[data-voucher-group-toggle="${groupId}"]`);
@@ -124,6 +165,12 @@ function insertGroupMembers(table, groupId, html) {
     anchor.insertAdjacentHTML('afterend', html);
     if (existingLoadMoreRow) {
         existingLoadMoreRow.remove();
+    }
+    const groupCheckbox = table.querySelector(
+        `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
+    );
+    if (groupCheckbox?.checked) {
+        setGroupMemberSelection(table, groupId, true);
     }
 }
 
@@ -212,12 +259,29 @@ async function loadMoreMembers(button) {
 function setGroupSelection(groupCheckbox) {
     const table = groupCheckbox.closest(voucherTableSelector);
     const groupId = groupCheckbox.dataset.voucherGroupSelect;
+    if (!table) {
+        return;
+    }
 
     groupCheckbox.indeterminate = false;
-    groupMemberCheckboxes(table, groupId).forEach((memberCheckbox) => {
-        memberCheckbox.checked = groupCheckbox.checked;
-    });
+    setGroupMemberSelection(table, groupId, groupCheckbox.checked);
     updateBatchActions(table);
+
+    if (!groupCheckbox.checked) {
+        return;
+    }
+
+    const group = groupRow(table, groupId);
+    if (!group) {
+        return;
+    }
+
+    loadInitialGroupMembers(group).then((loaded) => {
+        if (loaded && groupCheckbox.checked) {
+            setGroupMemberSelection(table, groupId, true);
+            updateBatchActions(table);
+        }
+    });
 }
 
 function syncMemberGroupCheckbox(memberCheckbox) {
@@ -278,6 +342,12 @@ document.addEventListener('change', (event) => {
         }
     }
 });
+
+document.addEventListener('pointerdown', (event) => {
+    if (event.target instanceof Element && event.target.closest(groupCheckboxSelector)) {
+        event.stopPropagation();
+    }
+}, true);
 
 document.addEventListener('pointerdown', (event) => {
     if (event.target instanceof Element) {

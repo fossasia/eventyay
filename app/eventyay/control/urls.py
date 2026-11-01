@@ -366,6 +366,16 @@ urlpatterns = [
                     vouchers.VoucherGroupMembers.as_view(),
                     name='event.voucher.members',
                 ),
+                url(
+                    r'^vouchers/(?P<voucher>\d+)/group_edit$',
+                    vouchers.VoucherGroupUpdate.as_view(),
+                    name='event.voucher.group_edit',
+                ),
+                url(
+                    r'^vouchers/(?P<voucher>\d+)/group_delete$',
+                    vouchers.VoucherGroupDelete.as_view(),
+                    name='event.voucher.group_delete',
+                ),
                 url(r'^vouchers/(?P<voucher>\d+)/$', vouchers.VoucherUpdate.as_view(), name='event.voucher'),
                 url(
                     r'^vouchers/(?P<voucher>\d+)/delete$', vouchers.VoucherDelete.as_view(), name='event.voucher.delete'
