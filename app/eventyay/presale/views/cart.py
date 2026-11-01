@@ -524,23 +524,16 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                 if product_ids:
                     exists = OrderPosition.objects.filter(
                         order__event=self.request.event,
-                        order__email=email,
+                        order__email__iexact=email,
                         order__status__in=[Order.STATUS_PENDING, Order.STATUS_PAID],
                         product_id__in=product_ids,
+                        product__meta_values__property__name='limit_one_per_user',
                     ).exists()
                     if exists:
-                        if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
-                            return JsonResponse(
-                                {
-                                    'redirect': self.get_error_url(),
-                                    'success': False,
-                                    'message': _('Only one ticket per user is allowed for this product. You already have a ticket.'),
-                                }
-                            )
-                        else:
-                            messages.error(self.request, _('Only one ticket per user is allowed for this product. You already have a ticket.'))
-                            return redirect(self.get_error_url())
-            
+                        return self.error(CartError(
+                            _('Only one ticket per user is allowed for this product. You already have a ticket.')
+                        ))
+
             return self.do(
                 self.request.event.id,
                 products,
