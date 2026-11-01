@@ -287,4 +287,10 @@ class LogView(OrganizerPermissionRequiredMixin, PaginationMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
+        # String ids, so the template can compare them with request.GET['user'].
+        ctx['userlist'] = [
+            {'user__id': str(row['user__id']), 'user__email': row['user__email']}
+            for row in self.request.organizer.all_logentries().order_by().distinct().values('user__id', 'user__email')
+            if row['user__id']
+        ]
         return ctx
