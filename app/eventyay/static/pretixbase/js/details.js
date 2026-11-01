@@ -49,6 +49,12 @@ setup_collapsible_details = function (el) {
         e.preventDefault();
         return false;
     }).keyup(function (event) {
+        var $details = $(this).closest("details");
+        // Skip synthetic click for header/menu dropdowns so native browser keyboard toggles work cleanly
+        if ($details.hasClass("dropdown")) {
+            return;
+        }
+
         if (32 == event.keyCode || (13 == event.keyCode && !isOpera)) {
             // Space or Enter is pressed — trigger the `click` event on the `summary` element
             // Opera already seems to trigger the `click` event when Enter is pressed
