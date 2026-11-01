@@ -5,6 +5,8 @@
 	bunt-progress-circular(size="huge", v-if="!isReady")
 	.unauthorized-notice(v-else-if="!hasAccess")
 		p {{ $t('You do not have permission to view interpretation settings.') }}
+	.unauthorized-notice(v-else-if="!isPluginEnabled")
+		p {{ $t('The interpretation plugin is not enabled for this event.') }}
 	iframe(v-else, ref="iframe", :src="iframeUrl", class="interpretation-iframe")
 </template>
 
@@ -29,7 +31,10 @@ const hasAccess = computed(() => Boolean(
 	store.getters['hasPermission']?.('world:update')
 ))
 
+const isPluginEnabled = computed(() => Boolean(store.getters['isInterpretationEnabled']))
+
 const iframeUrl = computed(() => {
+	if (!isPluginEnabled.value) return ''
 	let url = window.eventyay?.interpretationUrl || ''
 	if (!url) {
 		const { organizer, event } = interpretationRouting(store)

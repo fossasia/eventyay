@@ -122,12 +122,17 @@ export default new Vuex.Store({
 		},
 		isInterpretationEnabled(state) {
 			if (typeof window !== 'undefined') {
+				if (Array.isArray(window.eventyay?.plugins)) {
+					const hasPlugin = window.eventyay.plugins.some(p => p.includes('interpretation'))
+					if (!hasPlugin) return false
+				}
+				if (!window.eventyay?.interpretationUrl || window.eventyay?.interpretationUrl === '/missing-url-registration/') {
+					return false
+				}
 				if (window.eventyay?.interpretation?.isEnabled !== undefined) {
 					return Boolean(window.eventyay.interpretation.isEnabled)
 				}
-				const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
-				const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
-				if (hasPlugin && hasValidUrl) return true
+				return true
 			}
 			return Boolean(state.world?.interpretation?.isEnabled)
 		},

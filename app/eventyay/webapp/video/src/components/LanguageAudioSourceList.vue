@@ -10,7 +10,7 @@
 					i.mdi.mdi-alert-circle-outline(aria-hidden="true")
 					span {{ $t('No translation model configured. Please set up a model first.') }}
 		.header-actions
-			bunt-button.btn-add-entry(@click="addEntry", :disabled="!translationModelSetup || disabled")
+			bunt-button.btn-add-entry(@click="addEntry", :disabled="disabled")
 				i.mdi.mdi-plus(aria-hidden="true")
 				span {{ $t('Add another language') }}
 			router-link.btn-settings-link(
