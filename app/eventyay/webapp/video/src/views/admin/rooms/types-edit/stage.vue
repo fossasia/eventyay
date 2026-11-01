@@ -146,8 +146,8 @@
 					)
 						span.accordion-title
 							| {{ $t('Interpretation channels for this stream') }}
-							span.channels-badge(v-if="stream.config.language_streams && stream.config.language_streams.length > 0")
-								| {{ stream.config.language_streams.length }}
+							span.channels-badge(v-if="usableLanguageStreamCount(stream) > 0")
+								| {{ usableLanguageStreamCount(stream) }}
 						i.mdi(:class="stream.showInterpretation ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
 					.stream-interpretation-body(v-if="stream.showInterpretation")
 						LanguageAudioSourceList(
@@ -245,6 +245,7 @@ import { readApiErrorMessage } from 'lib/apiErrorMessage'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import { cloneLanguageStreamEntries, serializeLanguageStreamEntry } from 'lib/interpretation-language-streams'
+import { isUsableLanguageStreamEntry } from '../../../../interpretation-streams'
 import mixin from './mixin'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators'
 import { parseVimeoUrl } from 'lib/vimeo'
@@ -347,6 +348,9 @@ export default defineComponent({
 		}
 	},
 	methods: {
+		usableLanguageStreamCount(stream) {
+			return (stream.config?.language_streams || []).filter(isUsableLanguageStreamEntry).length
+		},
 		async fetchInterpretationConfig() {
 			if (this.creating) {
 				this.syncStatus = 'unsupported'

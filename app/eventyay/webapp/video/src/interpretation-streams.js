@@ -9,17 +9,16 @@ export function isUsableLanguageStreamEntry(entry) {
 }
 
 export function roomUsesPluginLanguageStreams(room) {
-	if (room?.interpretation_use_plugin_streams) return true
-	const scheduleStreams = room?.currentStream?.config?.language_streams
-		|| room?.currentStream?.config?.languageUrls
-		|| room?.currentStream?.language_streams
-	return Array.isArray(scheduleStreams) && scheduleStreams.some(isUsableLanguageStreamEntry)
+	return Boolean(room?.interpretation_use_plugin_streams)
 }
 
-function ensureOriginalLanguageEntry(languages) {
+function ensureOriginalLanguageEntry(languages, originalCaptionUrl) {
 	const list = Array.isArray(languages) ? [...languages] : []
 	if (!list.some(entry => entry?.language === ORIGINAL_LANGUAGE)) {
-		list.unshift({ language: ORIGINAL_LANGUAGE, url: null, youtube_id: null, use_video: false })
+		list.unshift({
+			language: ORIGINAL_LANGUAGE, url: null, youtube_id: null, use_video: false,
+			...(originalCaptionUrl ? { caption_ws_url: originalCaptionUrl } : {}),
+		})
 	}
 	return list
 }
@@ -40,8 +39,16 @@ export function pluginLanguageStreams(room) {
 	if (!Array.isArray(streams)) {
 		return ensureOriginalLanguageEntry([])
 	}
-	const usable = streams.filter(isUsableLanguageStreamEntry)
-	return ensureOriginalLanguageEntry(usable)
+	const roomStreams = Array.isArray(room?.interpretation_language_streams)
+		? room.interpretation_language_streams
+		: []
+	const usable = streams.filter(isUsableLanguageStreamEntry).map(entry => {
+		const captionUrl = entry.caption_ws_url
+			|| roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
+		return captionUrl ? { ...entry, caption_ws_url: captionUrl } : entry
+	})
+	const originalCaptionUrl = roomStreams.find(entry => entry?.language === ORIGINAL_LANGUAGE)?.caption_ws_url
+	return ensureOriginalLanguageEntry(usable, originalCaptionUrl)
 }
 
 export function firstCaptionLanguage(languages) {

@@ -18,13 +18,17 @@ export function normalizeWhepEndpoint(url) {
 	if (typeof url !== 'string' || !url.trim()) return url
 	try {
 		const parsed = new URL(url)
-		if (parsed.pathname.endsWith('/whip') || parsed.pathname.endsWith('/whip/')) {
-			parsed.pathname = parsed.pathname.replace(/\/whip\/?$/, '/whep')
+		if (/\/whip(?=\/|$)/.test(parsed.pathname)) {
+			parsed.pathname = parsed.pathname.replace(/\/whip(?:\/$|(?=\/|$))/, '/whep')
 			return parsed.toString()
 		}
 		return url
 	} catch (e) {
-		return url.replace(/\/whip(\/)?(?=[?#]|$)/, '/whep')
+		// Relative endpoints are also accepted; query and fragment values stay intact.
+		const pathEnd = url.search(/[?#]/)
+		const path = pathEnd < 0 ? url : url.slice(0, pathEnd)
+		const suffix = pathEnd < 0 ? '' : url.slice(pathEnd)
+		return path.replace(/\/whip(?:\/$|(?=\/|$))/, '/whep') + suffix
 	}
 }
 
