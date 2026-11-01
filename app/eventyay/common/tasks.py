@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Submission, User
+from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.signals import periodic_task as base_periodic_task
 from eventyay.celery_app import app
@@ -47,6 +48,8 @@ def task_cleanup_file(*, model: str, pk: int, field: str, path: str):
         'Event': Event,
         'Submission': Submission,
         'User': User,
+        'Speakerinformation': SpeakerInformation,
+        'SpeakerInformation': SpeakerInformation,
     }
     if model not in models:
         return
@@ -57,7 +60,12 @@ def task_cleanup_file(*, model: str, pk: int, field: str, path: str):
             return
 
         file = getattr(instance, field, None)
-        if file and file.path == path:
+        try:
+            file_path = file.path if file else None
+        except (NotImplementedError, ValueError, OSError, AttributeError):
+            file_path = file.name if file else None
+
+        if file and (file_path == path or file.name == path):
             # The save action that triggered this task did not go through and the file
             # is still in use, so we should not delete it.
             return
