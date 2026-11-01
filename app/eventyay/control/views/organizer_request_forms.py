@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import CreateView, DeleteView, TemplateView, UpdateView, View
 
 from eventyay.base.forms.organizer_request import OrganizerRequestQuestionForm
-from eventyay.base.models import OrganizerRequestFieldSetting, OrganizerRequestQuestion
+from eventyay.base.models.organizer_request import OrganizerRequestFieldSetting, OrganizerRequestQuestion
 from eventyay.base.organizer_request_fields import (
     REQUEST_FIELDS,
     next_form_position,
