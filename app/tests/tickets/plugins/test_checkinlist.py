@@ -344,7 +344,7 @@ def test_checkinlog_uses_event_timezone(event):
 
             with override(ZoneInfo('UTC')):
                 _, _, content = CheckinLogList(event).render(
-                    {'list': cl.pk, 'products': [event.items.first().pk], '_format': 'default'}
+                    {'list': cl.pk, 'products': [op.product_id], '_format': 'default'}
                 )
 
     rows = list(csv.reader(io.StringIO(content.decode())))
