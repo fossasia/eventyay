@@ -6,7 +6,18 @@ const DIRECTION_HORIZONTAL = Symbol();
 const DIRECTION_VERTICAL = Symbol();
 const INTENT_BEFORE = Symbol();
 const INTENT_AFTER = Symbol();
-const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
+const getCsrfToken = () => {
+    for (const name of ['eventyay_csrftoken', 'csrftoken', 'pretix_csrftoken']) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return decodeURIComponent(parts.pop().split(';').shift());
+        }
+    }
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+};
+const EVENTYAY_CSRF_TOKEN = getCsrfToken();
 
 const computeCentroid = (element) => {
     const rect = element.getBoundingClientRect();
@@ -123,20 +134,27 @@ const pushOrder = (parentElement) => {
         }
     });
 
+    const orderValue = ids.join(",");
+    const formOrderInput = document.getElementById("organiser-form-order-value") || document.querySelector('input[name="order"]');
+    if (formOrderInput) {
+        formOrderInput.value = orderValue;
+    }
+
     if (url) {
         const data = new URLSearchParams();
-        data.append("order", ids.join(","));
+        data.append("order", orderValue);
         fetch(url, {
             method: "POST",
             headers: {
-                "X-CSRFToken": EVENTYAY_CSRF_TOKEN,
+                "X-CSRFToken": getCsrfToken(),
+                "X-Requested-With": "XMLHttpRequest",
             },
             body: data,
         });
     }
 };
 
-onReady(() => {
+const initDragsort = () => {
     document.addEventListener("dragstart", (evt) => {
         const handle = evt.target.closest(".dragsort-button");
         if (!handle) return;
@@ -173,4 +191,12 @@ onReady(() => {
 
         document.addEventListener("dragend", dragEndHandler, { once: true });
     });
-});
+};
+
+if (typeof onReady === 'function') {
+    onReady(initDragsort);
+} else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDragsort);
+} else {
+    initDragsort();
+}

@@ -1,5 +1,23 @@
+.organiser-form-fields {
+  --color-bg: #fff;
+  --color-border: #dee2e6;
+  --color-grey-light: #e9ecef;
+  --color-grey-lighter: #f8f9fa;
+  --color-text-muted: #6c757d;
+  --size-border-radius: 4px;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 .organiser-form-fields .cfp-option-table {
+  table-layout: auto;
+  width: 100%;
   margin-bottom: 12px;
+}
+
+.organiser-form-fields .cfp-option-table thead th {
+  line-height: 1;
+  vertical-align: middle;
+  text-align: center;
 }
 
 .organiser-form-fields .cfp-option-table thead th:first-child,
@@ -11,8 +29,18 @@
   padding-right: 8px;
 }
 
+.organiser-form-fields .cfp-option-table thead th:last-child {
+  width: 140px;
+  text-align: right;
+}
+
 .organiser-form-fields .cfp-option-table tbody td {
   vertical-align: middle;
+}
+
+.organiser-form-fields .cfp-option-table tbody tr:first-child th,
+.organiser-form-fields .cfp-option-table tbody tr:first-child td {
+  border-top: none;
 }
 
 .organiser-form-fields .cfp-option-table a:not(.btn) {
@@ -20,20 +48,21 @@
   font-size: 16px;
 }
 
-.organiser-form-fields .toggle-switch {
-  width: 44px;
-  height: 24px;
+.organiser-form-fields .cfp-option-table td.text-right {
+  white-space: nowrap;
 }
 
-.organiser-form-fields .toggle-slider::before {
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
+.organiser-form-fields .cfp-option-table td.text-right .btn,
+.organiser-form-fields .cfp-option-table td.text-right a.btn {
+  margin: 0;
+  border-radius: var(--size-border-radius, 4px);
 }
 
-.organiser-form-fields .toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(20px);
+.organiser-form-fields .cfp-option-table td.text-right .btn + .btn,
+.organiser-form-fields .cfp-option-table td.text-right .btn + a.btn,
+.organiser-form-fields .cfp-option-table td.text-right a.btn + a.btn,
+.organiser-form-fields .cfp-option-table td.text-right a.btn + .btn {
+  margin-left: 4px;
 }
 
 .organiser-form-fields .organizer-request-feature-toggle {
@@ -47,7 +76,20 @@
 }
 
 .organiser-form-fields .organizer-request-feature-toggle .toggle-switch {
+  width: 44px;
+  height: 24px;
   flex: 0 0 auto;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle .toggle-slider::before {
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle .toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
 }
 
 .organiser-form-fields .organizer-request-feature-toggle button {
@@ -64,7 +106,29 @@
   }
 }
 
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-before th,
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-before td {
+  border-top: 2px solid var(--color-primary, #007bff);
+}
+
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-after th,
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-after td {
+  border-bottom: 2px solid var(--color-primary, #007bff);
+}
+
 .organiser-form-fields tr.dragging th,
 .organiser-form-fields tr.dragging td {
-  background: var(--color-grey-lighter);
+  background-color: var(--color-grey-lighter, #f8f9fa);
+}
+
+.organiser-form-fields thead.drag-indicator.insert-after {
+  box-shadow: 0 2px var(--color-primary, #007bff);
+}
+
+.organiser-form-fields .cfp-forms-new-field-actions {
+  margin-top: 0.5rem;
+}
+
+.organiser-form-fields .submit-group {
+  margin-top: 1rem;
 }
