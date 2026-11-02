@@ -34,3 +34,20 @@ def test_widget_shows_presale_start_in_event_timezone(client, event):
     assert response.status_code == 200
     # 08:30 UTC is 10:30 in Berlin (summer time).
     assert response.json()['error'] == 'The presale for this event will start on 2099-05-01 at 10:30.'
+
+
+@pytest.mark.django_db
+def test_organizer_event_list_shows_presale_start_in_event_timezone(client, event):
+    event.presale_start = datetime.datetime(2099, 5, 1, 20, 0, tzinfo=ZoneInfo('UTC'))
+    event.save()
+    event.settings.timezone = 'Asia/Tokyo'
+
+    response = client.get('/dummy/widget/product_list')
+
+    assert response.status_code == 200
+    # 20:00 UTC is 05:00 on the next day in Tokyo.
+    assert response.json()['events'][0]['availability'] == {
+        'color': 'orange',
+        'text': 'from 2099-05-02',
+        'reason': 'soon',
+    }

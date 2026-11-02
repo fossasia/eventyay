@@ -391,7 +391,10 @@ class WidgetAPIProductList(EventListMixin, View):
         elif event.settings.presale_start_show_date and ev.presale_start:
             availability['color'] = 'orange'
             availability['text'] = gettext('from %(start_date)s') % {
-                'start_date': date_format(ev.presale_start, 'SHORT_DATE_FORMAT')
+                'start_date': date_format(
+                    ev.presale_start.astimezone(ZoneInfo(event.settings.timezone)),
+                    'SHORT_DATE_FORMAT',
+                )
             }
             availability['reason'] = 'soon'
         else:
