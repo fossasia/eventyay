@@ -400,15 +400,18 @@ class EventCreateView(TemplateView):
             or is_meetup_event(self.clone_from)
         )
 
-    def dispatch(self, request, *args, **kwargs):
-        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
-        if is_series and not is_event_series_creation_enabled(request):
-            raise PermissionDenied(_('Event series creation is currently disabled.'))
+    def check_meetup_permissions(self, request):
         if self.is_meetup_request:
             if not is_meetup_creation_enabled(request):
                 raise PermissionDenied(_('Meetup creation is currently disabled.'))
             if not self.get_create_organizer_queryset().exists():
                 raise PermissionDenied(_('You do not have permission to create meetup events.'))
+
+    def dispatch(self, request, *args, **kwargs):
+        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
+        if is_series and not is_event_series_creation_enabled(request):
+            raise PermissionDenied(_('Event series creation is currently disabled.'))
+        self.check_meetup_permissions(request)
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -569,6 +572,7 @@ class EventCreateView(TemplateView):
                     self.clone_from = None
             else:
                 self.clone_from = None
+            self.check_meetup_permissions(request)
             basics_form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
             basics_form = basics_form_class(
                 data=basics_post,
