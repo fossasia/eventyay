@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.core.mail import EmailMessage
 from django.test import override_settings
+from django.utils.timezone import localdate
 
 from eventyay.base.gmail.backend import GmailAPIEmail
 from eventyay.base.gmail.crypto import decrypt_value, encrypt_value
@@ -161,7 +162,7 @@ def test_gmail_daily_limit_falls_back_to_alternate_backend():
         sender_email='organizer@example.com',
         encrypted_refresh_token=encrypt_value('refresh'),
         daily_send_count=10,
-        daily_send_count_date=date.today(),
+        daily_send_count_date=localdate(),
     )
     fallback = MagicMock()
     fallback.send_messages.return_value = 1
@@ -185,7 +186,7 @@ def test_gmail_limit_without_fallback_raises_limit_error(limit, error):
         sender_email='organizer@example.com',
         encrypted_refresh_token=encrypt_value('refresh'),
         daily_send_count=10 if limit == 'daily' else 0,
-        daily_send_count_date=date.today(),
+        daily_send_count_date=localdate(),
     )
     email = EmailMessage(subject='Test', body='Test body', to=['user@example.com'])
 
