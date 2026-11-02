@@ -25,7 +25,7 @@
             <a class="dropdown-item" href="{{ base_path }}/common/events/">
                 <i class="fa fa-calendar"></i> {% translate "My events" %}
             </a>
-            {% signal "eventyay.common.signals.user_dashboard_links" request %}
+            {% sorted_signal "eventyay.common.signals.user_dashboard_links" request %}
             <a class="dropdown-item" href="{{ base_path }}/common/organizers/">
                 <i class="fa fa-users"></i> {% translate "Organizers" %}
             </a>

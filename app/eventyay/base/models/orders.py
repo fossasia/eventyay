@@ -2085,7 +2085,7 @@ class OrderPayment(models.Model):
         )
 
         if self.order.pending_sum + r.amount == Decimal('0.00'):
-            self.refund.done()
+            r.done()
 
         return r
 
