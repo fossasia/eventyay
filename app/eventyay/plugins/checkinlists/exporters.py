@@ -29,7 +29,7 @@ UTC = datetime.timezone.utc
 from reportlab.lib.units import mm
 from reportlab.platypus import Flowable, Paragraph, Spacer, Table, TableStyle
 
-from eventyay.base.exporter import BaseExporter, ListExporter
+from eventyay.base.exporter import BaseExporter, ListExporter, neutralize_spreadsheet_formula
 from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.models import (
     Checkin,
@@ -567,7 +567,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 elif c == 'company':
                     row.append(Paragraph(op.company or iac, rowstyle))
                 elif c == 'job_title':
-                    job_title = op.job_title or (op.addon_to.job_title if op.addon_to else '')
+                    job_title = op.job_title or (op.addon_to.job_title or '' if op.addon_to else '')
                     row.append(Paragraph(conditional_escape(job_title), rowstyle))
                 elif c == 'voucher':
                     row.append(Paragraph(op.voucher.code if op.voucher else '', rowstyle))
@@ -748,7 +748,8 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
         if 'company' in columns:
             row.append(op.company or ia.company)
         if 'job_title' in columns:
-            row.append(op.job_title or (op.addon_to.job_title if op.addon_to else ''))
+            job_title = op.job_title or (op.addon_to.job_title or '' if op.addon_to else '')
+            row.append(neutralize_spreadsheet_formula(job_title))
         if 'voucher' in columns:
             row.append(op.voucher.code if op.voucher else '')
         if 'order_date' in columns:

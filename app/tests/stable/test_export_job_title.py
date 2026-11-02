@@ -54,7 +54,7 @@ def test_order_list_export_orders_includes_job_title(event):
             price=Decimal('25.00'),
             canceled=True,
             attendee_name_parts={'full_name': 'Grace Hopper', '_scheme': 'full'},
-            job_title='Principal Architect',
+            job_title='=1+1',
         )
         OrderPosition.objects.create(
             order=order_addon,
@@ -78,7 +78,7 @@ def test_order_list_export_orders_includes_job_title(event):
     rows_by_code = {row[headers.index('Order code')]: row for row in rows[1:]}
     job_idx = headers.index('Job Title')
     assert rows_by_code['ORD01'][job_idx] == 'Staff Engineer'
-    assert rows_by_code['ORD02'][job_idx] == 'Principal Architect'
+    assert rows_by_code['ORD02'][job_idx] == "'=1+1"
 
 
 @pytest.mark.django_db
@@ -174,6 +174,21 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
             price=Decimal('0.00'),
         )
 
+        OrderPosition.objects.create(
+            order=order,
+            positionid=3,
+            product=addon,
+            addon_to=OrderPosition.objects.create(
+                order=order,
+                positionid=4,
+                product=ticket,
+                price=Decimal('25.00'),
+                job_title=None,
+            ),
+            price=Decimal('0.00'),
+            job_title=None,
+        )
+
         exporter = PDFCheckinList(event)
         form_data = {
             'list': checkin_list.pk,
@@ -191,6 +206,6 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
 
     assert 'Job title' in header_texts
     job_col = header_texts.index('Job title')
-    assert [row[job_col] for row in row_texts] == ['R&amp;D &lt;Director&gt;', 'R&amp;D &lt;Director&gt;']
+    assert [row[job_col] for row in row_texts] == ['R&amp;D &lt;Director&gt;', 'R&amp;D &lt;Director&gt;', '', '']
     assert content_type == 'application/pdf'
     assert pdf_bytes.startswith(b'%PDF-')
