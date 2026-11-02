@@ -45,6 +45,14 @@
 					.timezone-hint
 						i {{ $t('All times in') }} {{ eventTimezoneLabel }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", :label="$t('Stream Type')", :options="streamTypeOptions", option-value="id", option-label="label", :validation="v$.formData.stream_type")
+					.stream-schedule-interpretation-channels(v-if="showPluginLanguageStreams")
+						LanguageAudioSourceList(
+							:title="$t('Interpretation channels for this stream')"
+							:subtitle="$t('Add multi-language audio or video interpretation channels specifically for this stream.')"
+							:entries="formData.config.language_streams"
+							:roomId="roomId"
+						)
+						p.schedule-interpretation-hint {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -61,6 +69,7 @@ import { readApiErrorMessage } from 'lib/apiErrorMessage';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
+import { cloneLanguageStreamEntries, serializeLanguageStreamEntry } from 'lib/interpretation-language-streams';
 
 export default {
 	name: 'StreamSchedule',
@@ -103,7 +112,9 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: {},
+				config: {
+					language_streams: [],
+				},
 			},
 		};
 	},
@@ -220,6 +231,7 @@ export default {
 				stream_type: this.formData.stream_type,
 				config: {
 					...this.formData.config,
+					language_streams: (this.formData.config?.language_streams || []).map(serializeLanguageStreamEntry),
 				},
 			};
 		},
@@ -231,6 +243,7 @@ export default {
 			try {
 				const draft = JSON.parse(savedDraft);
 				const tz = this.eventTimezone || 'UTC';
+				const rawLanguageStreams = draft.config?.language_streams || draft.config?.languageUrls || [];
 				return {
 					title: draft.title || '',
 					url: draft.url || '',
@@ -239,6 +252,7 @@ export default {
 					stream_type: draft.stream_type || 'youtube',
 					config: {
 						...(draft.config || {}),
+						language_streams: cloneLanguageStreamEntries(rawLanguageStreams),
 					},
 				};
 			} catch (error) {
@@ -316,6 +330,8 @@ export default {
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
 			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
+			const rawLanguageStreams = config.language_streams || config.languageUrls || [];
+			config.language_streams = cloneLanguageStreamEntries(rawLanguageStreams);
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.stream_type === 'youtube' ? toYoutubeWatchUrl(schedule.url) : schedule.url,
@@ -334,7 +350,9 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: {},
+				config: {
+					language_streams: [],
+				},
 			};
 			this.saveError = null;
 			this.v$.$reset();
@@ -608,6 +626,14 @@ export default {
 			color: $clr-grey-600
 			i
 				font-style: italic
+		.stream-schedule-interpretation-channels
+			margin-top: 16px
+			padding-top: 16px
+			border-top: border-separator()
+			.schedule-interpretation-hint
+				margin-top: 8px
+				font-size: 12px
+				color: $clr-grey-600
 		.form-error
 			color: $clr-danger
 			font-size: 14px
