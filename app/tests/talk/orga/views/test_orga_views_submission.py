@@ -1,8 +1,10 @@
 import datetime as dt
 import io
 import json
+from decimal import Decimal
 
 import pytest
+from django import forms
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 from django_scopes import scope
@@ -10,6 +12,7 @@ from PIL import Image
 
 from eventyay.base.models import (
     Answer,
+    AnswerOption,
     Availability,
     SpeakerProfile,
     Submission,
@@ -28,6 +31,7 @@ from eventyay.common.session_video import (
     get_submission_video_url,
     set_submission_video_urls,
 )
+from eventyay.orga.forms.submission import is_unanswered_speaker_question_value
 
 
 @pytest.mark.django_db
@@ -834,6 +838,136 @@ def test_orga_create_submission_keeps_blank_existing_speaker_answers(
         old_answer.refresh_from_db()
         assert old_answer.answer == "Medium"
         assert event.submissions.filter(title="Keep Existing Answer").exists()
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_keeps_blank_existing_speaker_multiple_choice_answers(
+    orga_client, event
+):
+    """An unanswered multiple-choice field must not clear stored option selections."""
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+        speaker_user = User.objects.create(
+            fullname="Existing Speaker",
+            email="keep-multi@example.com",
+        )
+        SpeakerProfile.objects.create(user=speaker_user, event=event)
+        speaker_q = Question.objects.create(
+            event=event,
+            question="Which colors do you like?",
+            variant=QuestionVariant.MULTIPLE,
+            target="speaker",
+            active=True,
+        )
+        yellow = AnswerOption.objects.create(question=speaker_q, answer="yellow")
+        AnswerOption.objects.create(question=speaker_q, answer="blue")
+        old_answer = Answer.objects.create(
+            person=speaker_user,
+            question=speaker_q,
+            answer="yellow",
+        )
+        old_answer.options.add(yellow)
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "add_new_speaker": "on",
+            "speaker-email": "keep-multi@example.com",
+            "speaker-name": "Existing Speaker",
+            "speaker-locale": "en",
+            "title": "Keep Existing Multiple Choice",
+            "submission_type": type_pk,
+            "state": "submitted",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        old_answer.refresh_from_db()
+        assert old_answer.answer == "yellow"
+        assert list(old_answer.options.values_list("pk", flat=True)) == [yellow.pk]
+        assert event.submissions.filter(title="Keep Existing Multiple Choice").exists()
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_updates_existing_numeric_speaker_answer_to_zero(
+    orga_client, event
+):
+    """Submitting 0 for a numeric speaker question must replace the stored answer."""
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+        speaker_user = User.objects.create(
+            fullname="Existing Speaker",
+            email="zero-answer@example.com",
+        )
+        SpeakerProfile.objects.create(user=speaker_user, event=event)
+        speaker_q = Question.objects.create(
+            event=event,
+            question="How many extra seats?",
+            variant=QuestionVariant.NUMBER,
+            target="speaker",
+            active=True,
+        )
+        old_answer = Answer.objects.create(
+            person=speaker_user,
+            question=speaker_q,
+            answer="5",
+        )
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "duration": "",
+            "slot_count": 1,
+            "notes": "notes",
+            "internal_notes": "internal_notes",
+            "add_new_speaker": "on",
+            "speaker-email": "zero-answer@example.com",
+            "speaker-name": "Existing Speaker",
+            "speaker-locale": "en",
+            "title": "Update Numeric Answer To Zero",
+            "submission_type": type_pk,
+            "state": "submitted",
+            f"speaker-question_{speaker_q.pk}": "0",
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        old_answer.refresh_from_db()
+        assert Decimal(old_answer.answer) == 0
+        assert event.submissions.filter(title="Update Numeric Answer To Zero").exists()
+
+
+def test_unanswered_speaker_question_value_distinguishes_zero_from_empty_multichoice():
+    number_field = forms.DecimalField()
+    assert is_unanswered_speaker_question_value(number_field, None) is True
+    assert is_unanswered_speaker_question_value(number_field, "") is True
+    assert is_unanswered_speaker_question_value(number_field, False) is True
+    assert is_unanswered_speaker_question_value(number_field, Decimal("0")) is False
+    assert is_unanswered_speaker_question_value(number_field, 0) is False
+
+    class _EmptyQuerySet:
+        def __bool__(self):
+            return False
+
+    class _FilledQuerySet:
+        def __bool__(self):
+            return True
+
+    multi_field = forms.ModelMultipleChoiceField.__new__(forms.ModelMultipleChoiceField)
+    assert is_unanswered_speaker_question_value(multi_field, _EmptyQuerySet()) is True
+    assert is_unanswered_speaker_question_value(multi_field, _FilledQuerySet()) is False
 
 
 @pytest.mark.django_db

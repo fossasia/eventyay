@@ -257,6 +257,19 @@ def get_speaker_choice_label(*, name: str | None, email: str) -> str:
     return f'{name} ({email})' if name else email
 
 
+def is_unanswered_speaker_question_value(field: forms.Field, value: object) -> bool:
+    """True when the create form left this custom speaker field unanswered.
+
+    Empty strings, None, and boolean False are unanswered. Numeric zero is a
+    submitted answer. An empty multiple-choice QuerySet or list is unanswered.
+    """
+    if value is None or value is False or value == '':
+        return True
+    if isinstance(field, forms.ModelMultipleChoiceField):
+        return not value
+    return False
+
+
 class AddSpeakerForm(QuestionFieldsMixin, forms.Form):
     email = forms.EmailField(
         label=phrases.cfp.speaker_email,
@@ -427,7 +440,7 @@ class AddSpeakerForm(QuestionFieldsMixin, forms.Form):
                     ).first()
                     if existing_answer:
                         field.answer = existing_answer
-                if getattr(field, 'answer', None) and value in ('', None, False):
+                if getattr(field, 'answer', None) and is_unanswered_speaker_question_value(field, value):
                     continue
                 self.save_questions(key, value)
 
