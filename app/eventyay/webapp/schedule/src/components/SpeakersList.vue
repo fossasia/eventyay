@@ -1393,7 +1393,8 @@ export default {
 
 @media (max-width: 600px)
 	.c-speakers-list
-		.speakers-details .featured-speaker-stack
+		.speakers-details .featured-speaker-stack,
+		&:not(.is-embedded) .speakers-details .featured-speaker-stack
 			max-width: 100%
 		.speakers-toolbar
 			padding: 6px 0 0
