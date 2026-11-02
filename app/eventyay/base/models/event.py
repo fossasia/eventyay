@@ -3272,6 +3272,7 @@ class Event(
 
     update_review_phase.alters_data = True
 
+    @transaction.atomic
     def release_schedule(self, name: str, user=None, notify_speakers: bool = False, comment: str = None):
         """Releases a new :class:`~eventyay.base.models.schedule.Schedule`
         by finalising the current WIP schedule.
@@ -3282,7 +3283,11 @@ class Event(
         :param comment: Public comment for the release
         :type user: :class:`~eventyay.base.models.user.User`
         """
-        self.wip_schedule.freeze(name=name, user=user, notify_speakers=notify_speakers, comment=comment)
+        with scope(event=self):
+            type(self).objects.select_for_update(no_key=True).get(pk=self.pk)
+            with suppress(AttributeError):
+                del self.wip_schedule
+            return self.wip_schedule.freeze(name=name, user=user, notify_speakers=notify_speakers, comment=comment)
 
     release_schedule.alters_data = True
 

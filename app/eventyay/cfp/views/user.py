@@ -421,8 +421,22 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         kwargs['draft_save'] = self.is_draft_action()
         return kwargs
 
+    @transaction.atomic
     def form_valid(self, form):
+        """Save speaker edits and their derived schedule timings in one transaction."""
         if self.can_edit:
+            with scope(event=self.request.event):
+                if (
+                    {'duration', 'submission_type', 'slot_count'}.intersection(form.changed_data)
+                    or self.request.POST.get('action') == 'dedraft'
+                ):
+                    type(self.request.event).objects.select_for_update(no_key=True).get(pk=self.request.event.pk)
+                previous_defaults = {key: getattr(form.instance, key) for key in form.default_values}
+                form.instance.refresh_for_update(form.changed_data)
+                for key, previous in previous_defaults.items():
+                    current = getattr(form.instance, key)
+                    if current != previous:
+                        form.default_values[key] = current
             # Validate formset before saving form to prevent partial persistence
             result = self.save_formset(form.instance)
             if not result:
@@ -430,7 +444,10 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             # Save form only after formset validation succeeds
             form.save()
             if form.has_changed():
-                if form.instance.pk and 'duration' in form.changed_data:
+                if form.instance.pk and (
+                    'duration' in form.changed_data
+                    or ('submission_type' in form.changed_data and form.instance.duration is None)
+                ):
                     form.instance.update_duration()
                 if form.instance.pk and 'track' in form.changed_data:
                     form.instance.update_review_scores()
