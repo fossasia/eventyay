@@ -24,6 +24,11 @@ from eventyay.base.services.room_creation_gate import (
     user_can_create_server_backed_room_during_development,
 )
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.base.services.video_entitlements import (
+    check_video_entitlements,
+    filter_stream_by_entitlement,
+    require_video_entitlements,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     get_provider_for_module_type,
@@ -296,11 +301,13 @@ def count_chat_participants(channel_id):
 
 
 def get_room_config(room, permissions, *, current_stream=_UNSET):
+    """Build room configuration dictionary filtered by module entitlements."""
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
         stream_data = current_stream
+    stream_data = filter_stream_by_entitlement(room.event, stream_data)
     visible_to_attendee = is_room_visible_for_attendee(room)
     room_config = {
         "id": str(room.id),
@@ -329,6 +336,8 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
         room_config["users"] = 0
 
     for module in room.module_config:
+        if not check_video_entitlements(room.event, [module]).allowed:
+            continue
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
@@ -431,6 +440,8 @@ def get_event_config_for_user(event, user):
 @database_sync_to_async
 @transaction.atomic()
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
+    """Create a room instance after verifying video module entitlements."""
+    require_video_entitlements(data['event'], data.get('module_config'))
     if "sorting_priority" not in data:
         data["sorting_priority"] = (
             Room.objects.filter(event=data["event"], deleted=False).aggregate(
