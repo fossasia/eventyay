@@ -2,14 +2,23 @@ import { isUsableAudioTranslationEntry } from './lib/validators.js'
 
 const ORIGINAL_LANGUAGE = 'Original'
 
+export function isUsableLanguageStreamEntry(entry) {
+	if (!entry?.language) return false
+	if (entry.caption_ws_url) return true
+	return isUsableAudioTranslationEntry(entry)
+}
+
 export function roomUsesPluginLanguageStreams(room) {
 	return Boolean(room?.interpretation_use_plugin_streams)
 }
 
-function ensureOriginalLanguageEntry(languages) {
+function ensureOriginalLanguageEntry(languages, originalCaptionUrl) {
 	const list = Array.isArray(languages) ? [...languages] : []
 	if (!list.some(entry => entry?.language === ORIGINAL_LANGUAGE)) {
-		list.unshift({ language: ORIGINAL_LANGUAGE, url: null, youtube_id: null, use_video: false })
+		list.unshift({
+			language: ORIGINAL_LANGUAGE, url: null, youtube_id: null, use_video: false,
+			...(originalCaptionUrl ? { caption_ws_url: originalCaptionUrl } : {}),
+		})
 	}
 	return list
 }
@@ -18,17 +27,28 @@ export function pluginLanguageStreams(room) {
 	if (!roomUsesPluginLanguageStreams(room)) {
 		return []
 	}
-	const streams = room?.interpretation_language_streams
+	const scheduleStreams = room?.currentStream?.config?.language_streams
+		|| room?.currentStream?.config?.languageUrls
+		|| room?.currentStream?.language_streams
+	const usableScheduleStreams = Array.isArray(scheduleStreams)
+		? scheduleStreams.filter(isUsableLanguageStreamEntry)
+		: []
+	const streams = usableScheduleStreams.length > 0
+		? usableScheduleStreams
+		: room?.interpretation_language_streams
 	if (!Array.isArray(streams)) {
 		return ensureOriginalLanguageEntry([])
 	}
-	// Keep caption-only rows (e.g. Original floor WS) even without WHEP audio.
-	const usable = streams.filter(entry => {
-		if (!entry?.language) return false
-		if (entry.caption_ws_url) return true
-		return isUsableAudioTranslationEntry(entry)
+	const roomStreams = Array.isArray(room?.interpretation_language_streams)
+		? room.interpretation_language_streams
+		: []
+	const usable = streams.filter(isUsableLanguageStreamEntry).map(entry => {
+		const captionUrl = entry.caption_ws_url
+			|| roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
+		return captionUrl ? { ...entry, caption_ws_url: captionUrl } : entry
 	})
-	return ensureOriginalLanguageEntry(usable)
+	const originalCaptionUrl = roomStreams.find(entry => entry?.language === ORIGINAL_LANGUAGE)?.caption_ws_url
+	return ensureOriginalLanguageEntry(usable, originalCaptionUrl)
 }
 
 export function firstCaptionLanguage(languages) {
