@@ -35,7 +35,7 @@ class OrganizerRequestFeatureToggle(AdministratorPermissionRequiredMixin, View):
         GlobalSettingsObject().settings.set('organizer_request_enabled', enabled)
         messages.success(
             request,
-            _('The public organiser request form has been {state}.').format(
+            _('The public organizer request form has been {state}.').format(
                 state=_('enabled') if enabled else _('disabled')
             ),
         )
