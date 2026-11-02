@@ -219,15 +219,15 @@
   min-height: 0;
 }
 
-.mail-composer .select2-search--inline .select2-search__field,
-.mail-composer .select2-search--inline .select2-search__field:focus,
-.mail-composer .select2-search--inline .select2-search__field:focus-visible {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
+.mail-composer .select2-container .select2-search--inline .select2-search__field,
+.mail-composer .select2-container .select2-search--inline .select2-search__field:focus,
+.mail-composer .select2-container .select2-search--inline .select2-search__field:focus-visible {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  outline: none;
 }
 
 .mail-composer .choices__list--dropdown .choices__item--selectable.is-highlighted,
@@ -947,6 +947,7 @@ body > .select2-container.select2-container--open.mail-composer-dropdown {
   max-width: 70vw;
   min-width: 420px;
   padding: 0;
+  position: fixed;
 }
 
 #send-confirm-dialog::backdrop,

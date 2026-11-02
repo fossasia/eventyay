@@ -101,6 +101,7 @@
 }
 
 .mail-composer .composer-filters .select2-search--inline {
+  display: flex;
   flex: 1 1 12em;
   float: none;
   margin: 0;
@@ -108,26 +109,33 @@
   width: auto;
 }
 
-.mail-composer .composer-filters .select2-search--inline .select2-search__field,
-.mail-composer .composer-filters .select2-search--inline .select2-search__field:focus,
-.mail-composer .composer-filters .select2-search--inline .select2-search__field:focus-visible,
-.mail-composer .composer-filters .select2-search--inline .select2-search__field:active {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple .select2-search--inline input.select2-search__field,
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple .select2-search--inline input.select2-search__field:focus,
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple .select2-search--inline input.select2-search__field:focus-visible,
+.mail-composer .composer-filters .select2-container--bootstrap .select2-selection--multiple .select2-search--inline input.select2-search__field:active {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  box-sizing: border-box;
   color: var(--color-text-input, inherit);
+  flex: 1 1 auto;
   font-size: var(--composer-font-size);
-  height: 28px !important;
+  height: 28px;
   line-height: 28px;
   margin: 0;
   max-width: 100%;
-  min-height: 28px !important;
-  min-width: 0 !important;
-  outline: none !important;
-  padding: 0 4px !important;
-  width: 100% !important;
+  min-height: 28px;
+  min-width: 100%;
+  outline: none;
+  padding: 0 4px;
+}
+
+.mail-composer .composer-filters .select2-search--inline input.select2-search__field::-webkit-search-decoration,
+.mail-composer .composer-filters .select2-search--inline input.select2-search__field::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .mail-composer .composer-filters .select2-container--bootstrap.select2-container--focus .select2-selection,
