@@ -2,8 +2,10 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.core.mail import EmailMessage
 from django.test import override_settings
 
+from eventyay.base.gmail.backend import GmailAPIEmail
 from eventyay.base.gmail.crypto import decrypt_value, encrypt_value
 from eventyay.base.gmail.errors import GmailDailyLimitError, GmailRateLimitError
 from eventyay.base.gmail.models import GmailOAuthCredential
@@ -155,10 +157,6 @@ def test_event_gmail_oauth_views_require_permission(client):
 @pytest.mark.django_db
 @override_settings(GMAIL_DAILY_SEND_LIMIT=10)
 def test_gmail_daily_limit_falls_back_to_alternate_backend():
-    from django.core.mail import EmailMessage
-
-    from eventyay.base.gmail.backend import GmailAPIEmail
-
     credential = GmailOAuthCredential.objects.create(
         sender_email='organizer@example.com',
         encrypted_refresh_token=encrypt_value('refresh'),
@@ -183,10 +181,6 @@ def test_gmail_daily_limit_falls_back_to_alternate_backend():
 )
 @override_settings(GMAIL_DAILY_SEND_LIMIT=10)
 def test_gmail_limit_without_fallback_raises_limit_error(limit, error):
-    from django.core.mail import EmailMessage
-
-    from eventyay.base.gmail.backend import GmailAPIEmail
-
     credential = GmailOAuthCredential.objects.create(
         sender_email='organizer@example.com',
         encrypted_refresh_token=encrypt_value('refresh'),
