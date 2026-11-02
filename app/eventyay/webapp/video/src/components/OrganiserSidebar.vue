@@ -20,10 +20,9 @@ aside.c-organiser-sidebar(
 						span.context-meta {{ eventDateSubtitle }}
 				bunt-icon-button.btn-close-mobile(
 					v-if="$mq.below.m",
-					icon="close",
 					:aria-label="$t('Close sidebar')",
 					@click="$emit('close')"
-				)
+				) close
 
 			ul.startpage-sidebar-nav(role="group", :aria-label="$t('Organiser Navigation')")
 				//- 1. Overview
