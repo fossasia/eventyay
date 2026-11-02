@@ -1719,6 +1719,37 @@ def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
     assert 'Rachit Makwana' in subject
 
 
+@pytest.mark.django_db
+def test_outbox_mail_form_resolves_attendee_name_placeholder(event, order, pos):
+    pos.attendee_name_parts = {'_legacy': 'Rachit Makwana'}
+    pos.attendee_email = 'rachit@example.com'
+    pos.save()
+
+    with scope(event=event):
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello {name}',
+            message='<p>Hi <span class="tiptap-placeholder-chip" data-variable="name">{name}</span></p>',
+            is_draft=False,
+            locale='en',
+        )
+        EmailQueueToUser.objects.create(
+            mail=queue,
+            email=pos.attendee_email,
+            orders=[order.pk],
+            positions=[pos.pk],
+        )
+        form = EmailQueueEditForm(instance=queue, event=event, read_only=False)
+
+    text = str(form.fields['text'].initial)
+    subject = str(form.fields['subject'].initial)
+    assert 'Rachit Makwana' in text
+    assert '{name}' not in text
+    assert 'tiptap-placeholder-chip' not in text
+    assert 'Rachit Makwana' in subject
+
+
 def test_resolve_queued_mail_text_keeps_unbalanced_braces():
     assert resolve_queued_mail_text('Hello {name} and {', {'name': 'Ada'}) == 'Hello Ada and {'
 

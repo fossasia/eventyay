@@ -1025,7 +1025,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
 
         subject_initial = self.instance.subject
         text_initial = self.instance.message
-        if self.read_only and self.recipient_objects:
+        if self.recipient_objects:
             recipient = self.recipient_objects[0]
             subject_initial = resolve_queued_mail_i18n(
                 subject_initial,
