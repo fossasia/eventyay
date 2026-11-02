@@ -158,14 +158,26 @@ const pushOrder = (parentElement) => {
                     },
                     body: data,
                 });
-                if (!response.ok) {
-                    throw new Error(`Order save request failed with status ${response.status}`);
+                if (!response.ok || response.redirected) {
+                    throw new Error(
+                        `Order save request failed: status ${response.status}${response.redirected ? " (redirected)" : ""}`
+                    );
+                }
+                const contentType = response.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    const resData = await response.json();
+                    if (resData && resData.ok === false) {
+                        throw new Error(resData.error || "Order save response indicated failure");
+                    }
                 }
                 return response;
             })
             .catch((err) => {
                 console.error("Failed to save new item order", err);
-                window.alert("The question order could not be saved. Reload the page and try again.");
+                const message = typeof window.gettext === "function"
+                    ? window.gettext("The question order could not be saved. Reload the page and try again.")
+                    : "The question order could not be saved. Reload the page and try again.";
+                window.alert(message);
                 throw err;
             });
         return pendingSave;
