@@ -564,7 +564,7 @@ def test_admin_manages_organiser_form_questions(client, admin):
     list_url = reverse('eventyay_admin:admin.organizer_forms')
     page = client.get(list_url)
     assert page.status_code == 200
-    assert 'Organiser forms' in page.content.decode()
+    assert 'Organizer forms' in page.content.decode()
     response = client.post(
         reverse('eventyay_admin:admin.organizer_forms.add'),
         {
@@ -591,7 +591,7 @@ def test_admin_manages_organiser_form_questions(client, admin):
 def test_admin_can_disable_public_organizer_requests(client, admin):
     list_url = reverse('eventyay_admin:admin.organizer_forms')
     page = client.get(list_url)
-    assert 'Enable public organiser requests' in page.content.decode()
+    assert 'Enable public organizer requests' in page.content.decode()
     assert 'id="organizer-request-enabled"' in page.content.decode()
     assert 'Confirm' in page.content.decode()
     response = client.post(reverse('eventyay_admin:admin.organizer_forms.request.toggle'))

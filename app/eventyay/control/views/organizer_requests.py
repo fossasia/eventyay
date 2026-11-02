@@ -8,7 +8,7 @@ from django.db.models import Exists, OuterRef, Prefetch, Q, QuerySet
 from django.shortcuts import redirect
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.views.generic import DetailView, TemplateView
+from django.views.generic import DetailView
 
 from eventyay.base.forms.organizer_request import OrganizerRequestRejectForm, OrganizerRequestReviewForm
 from eventyay.base.models import OrganizerRequest, OrganizerRequestAnswer, User
@@ -130,29 +130,26 @@ def consistent_read():
     yield
 
 
-class OrganizerRequestList(AdministratorPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/admin/organizer_requests/list.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        requests = OrganizerRequest.objects.annotate(
-            has_account=Exists(User.objects.filter(email__iexact=OuterRef('email')))
-        )
-        with consistent_read():
-            context['open_page'] = paginate_requests(
+def organizer_request_tab_context(request) -> dict:
+    requests = OrganizerRequest.objects.annotate(
+        has_account=Exists(User.objects.filter(email__iexact=OuterRef('email')))
+    )
+    with consistent_read():
+        return {
+            'open_page': paginate_requests(
                 requests.filter(status=OrganizerRequest.Status.PENDING),
-                before=self.request.GET.get('open_before'),
-                after=self.request.GET.get('open_after'),
-            )
-            context['resolved_page'] = paginate_requests(
+                before=request.GET.get('open_before'),
+                after=request.GET.get('open_after'),
+            ),
+            'resolved_page': paginate_requests(
                 requests.filter(
                     status__in=(OrganizerRequest.Status.APPROVED, OrganizerRequest.Status.REJECTED)
                 ).select_related('reviewed_by'),
-                before=self.request.GET.get('resolved_before'),
-                after=self.request.GET.get('resolved_after'),
+                before=request.GET.get('resolved_before'),
+                after=request.GET.get('resolved_after'),
                 mark_account=True,
-            )
-        return context
+            ),
+        }
 
 
 class OrganizerRequestDetail(AdministratorPermissionRequiredMixin, DetailView):

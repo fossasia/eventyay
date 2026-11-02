@@ -47,10 +47,19 @@ $(function () {
             }
             i++;
         });
+        var initialTid = $form.attr("data-initial-tab");
+        if (hash_preselect === null && error_preselect === null && initialTid) {
+            $form.children("fieldset.tab-pane").each(function (idx) {
+                if ($(this).attr("id") === initialTid) {
+                    hash_preselect = idx;
+                    return false;
+                }
+            });
+        }
         var preselect = error_preselect !== null ? error_preselect : (hash_preselect !== null ? hash_preselect : 0);
         var initial_load = true;
         $tabs.find("a").on('shown.bs.tab', function (e) {
-            if (!initial_load || location.hash) {
+            if (!initial_load) {
                 history.replaceState(null, null, e.target.getAttribute("href"));
             }
             var targetId = e.target.getAttribute("href");
