@@ -35,6 +35,7 @@ from eventyay.base.models import (
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.helpers.dicts import merge_dicts
 
+
 with scopes_disabled():
 
     class ProductFilter(FilterSet):
