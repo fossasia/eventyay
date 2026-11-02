@@ -19,7 +19,7 @@
             <legend>{% trans "Organizers" %}</legend>
             <p>{% trans "The list below shows all organizer accounts you have administrative access to." %}</p>
             <div class="advanced-filter-search" data-advanced-filter-search>
-                <form class="filter-form advanced-filter-search-form" action="{% url "eventyay_admin:admin.organizers" %}" method="get">
+                <form class="filter-form advanced-filter-search-form" action="{% url 'eventyay_admin:admin.organizers' %}" method="get">
                     <div class="advanced-filter-search-bar">
                         <div class="input-group advanced-filter-search-query-group">
                             <input type="text" name="query" class="form-control" placeholder="{% trans 'Search organizers' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
@@ -41,7 +41,7 @@
             </div>
             {% if staff_session %}
                 <p>
-                    <a href="{% url "control:organizers.add" %}" class="btn btn-default">
+                    <a href="{% url 'control:organizers.add' %}" class="btn btn-default">
                         <span class="fa fa-plus"></span>
                         {% trans "Create a new organizer" %}
                     </a>
@@ -66,7 +66,7 @@
                     {% for o in organizers %}
                     <tr>
                         <td><strong>
-                            <a href="{% url "eventyay_common:organizer.events" organizer=o.slug %}">{{ o.name }}</a>
+                            <a href="{% url 'eventyay_common:organizer.events' organizer=o.slug %}">{{ o.name }}</a>
                         </strong></td>
                         <td>{{ o.slug }}</td>
                     </tr>
@@ -79,7 +79,7 @@
                     {% endfor %}
                 </tbody>
             </table>
-            {% include "pretixcontrol/pagination.html" %}
+            {% include 'pretixcontrol/pagination.html' with pagination_hash='tab-organizers' %}
         </fieldset>
         <fieldset id="tab-organizer-requests">
             <legend>{% trans "Organizer requests" %}</legend>

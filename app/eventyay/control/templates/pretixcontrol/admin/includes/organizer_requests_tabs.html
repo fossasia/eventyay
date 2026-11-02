@@ -3,10 +3,10 @@
 <div data-organizer-request-tabs>
   <ul class="nav nav-tabs organizer-request-status-tabs" role="tablist">
     <li role="presentation" class="active">
-      <a href="#tab-open-requests" role="tab" aria-selected="true" data-request-tab="tab-open-requests">{% trans 'Open requests' %}</a>
+      <a href="#tab-open-requests" role="tab" aria-selected="true" tabindex="0" data-request-tab="tab-open-requests">{% trans 'Open requests' %}</a>
     </li>
     <li role="presentation">
-      <a href="#tab-resolved-requests" role="tab" aria-selected="false" data-request-tab="tab-resolved-requests">{% trans 'Resolved requests' %}</a>
+      <a href="#tab-resolved-requests" role="tab" aria-selected="false" tabindex="-1" data-request-tab="tab-resolved-requests">{% trans 'Resolved requests' %}</a>
     </li>
   </ul>
   <div id="tab-open-requests" role="tabpanel" data-request-pane>
