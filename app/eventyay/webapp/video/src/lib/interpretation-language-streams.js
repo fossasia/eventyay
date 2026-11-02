@@ -11,7 +11,7 @@ export async function fetchInterpretationLanguageStreams(store, roomId) {
 		headers: await interpretationAuthHeaders(),
 		credentials: 'include',
 	})
-	if (response.status === 404 || response.status === 403) {
+	if (response.status === 404) {
 		return { unsupported: true, use_plugin_language_streams: false, language_streams: [] }
 	}
 	const data = await response.json().catch(() => ({}))

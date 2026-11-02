@@ -465,7 +465,7 @@ export default defineComponent({
 
 				if (!response.ok) {
 					this._lastFetchRoomId = null
-					if (response.status === 404 || response.status === 403) {
+					if (response.status === 404) {
 						this.syncStatus = 'unsupported'
 						return
 					}

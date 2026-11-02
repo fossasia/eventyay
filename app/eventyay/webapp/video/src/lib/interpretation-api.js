@@ -1,4 +1,5 @@
 import api from 'lib/api'
+import { logOperational } from './operationalLog.js'
 
 export function apiErrorDetail(data) {
 	const detail = data?.detail
@@ -136,19 +137,25 @@ export function interpretationApiUrl(store, roomId, suffix = 'config/') {
 }
 
 export async function fetchListenerToken(store, roomId) {
-	const url = interpretationApiUrl(store, roomId, 'token/')
+	const url = interpretationApiUrl(store, roomId, 'listener-token/')
 	if (!url) {
 		return null
 	}
 	try {
+		const headers = await interpretationAuthHeaders(true)
 		const response = await fetch(url, {
-			headers: await interpretationAuthHeaders(),
+			method: 'POST',
+			headers,
 			credentials: 'include',
 		})
-		if (!response.ok) return null
+		if (!response.ok) {
+			logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status})
+			return null
+		}
 		const data = await response.json().catch(() => ({}))
-		return data.token || null
-	} catch (e) {
+		return data?.token || null
+	} catch (err) {
+		logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'network_error'})
 		return null
 	}
 }
