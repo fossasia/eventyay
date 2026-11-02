@@ -234,19 +234,6 @@ const initRecipientPreview = () => {
         if (MESSAGE_FIELDS.test(e.target.name || "")) return
         scheduleRefresh()
     })
-    const filters = form.querySelector(".composer-filters")
-    if (filters) {
-        filters.querySelectorAll("select[data-model-select2], select.select2-hidden-accessible").forEach((select) => {
-            new MutationObserver(() => {
-                select.dispatchEvent(new Event("change", { bubbles: true }))
-            }).observe(select, {
-                attributeFilter: ["selected"],
-                attributes: true,
-                childList: true,
-                subtree: true,
-            })
-        })
-    }
 
     trigger.addEventListener("click", async () => {
         body.textContent = body.dataset.loadingLabel

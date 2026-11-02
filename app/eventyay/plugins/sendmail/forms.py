@@ -1025,7 +1025,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
 
         subject_initial = self.instance.subject
         text_initial = self.instance.message
-        if self.recipient_objects:
+        # Sent mail is read-only, so resolved names are display-only. Editable
+        # Outbox fields keep stored placeholders so Save cannot persist one
+        # recipient's values for everyone else.
+        if self.read_only and self.recipient_objects:
             recipient = self.recipient_objects[0]
             subject_initial = resolve_queued_mail_i18n(
                 subject_initial,

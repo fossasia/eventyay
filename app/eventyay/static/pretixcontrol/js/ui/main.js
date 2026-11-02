@@ -668,9 +668,10 @@ var form_handlers = function (el) {
                 }
                 return $ret;
             },
-        }).on("select2:select", function () {
-            // Allow continuing to select
-            if ($s.prop("multiple")) {
+        }).on("select2:select select2:unselect select2:clear", function (e) {
+            // Native listeners (mail-recipients.js) do not see jQuery change.
+            this.dispatchEvent(new Event("change", { bubbles: true }));
+            if (e.type === "select2:select" && $s.prop("multiple")) {
                 window.setTimeout(function () {
                     $s.parent().find('.select2-search__field').focus();
                 }, 50);

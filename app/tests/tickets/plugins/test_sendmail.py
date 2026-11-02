@@ -1720,7 +1720,7 @@ def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
 
 
 @pytest.mark.django_db
-def test_outbox_mail_form_resolves_attendee_name_placeholder(event, order, pos):
+def test_outbox_mail_form_keeps_attendee_name_placeholder(event, order, pos):
     pos.attendee_name_parts = {'_legacy': 'Rachit Makwana'}
     pos.attendee_email = 'rachit@example.com'
     pos.save()
@@ -1744,10 +1744,10 @@ def test_outbox_mail_form_resolves_attendee_name_placeholder(event, order, pos):
 
     text = str(form.fields['text'].initial)
     subject = str(form.fields['subject'].initial)
-    assert 'Rachit Makwana' in text
-    assert '{name}' not in text
-    assert 'tiptap-placeholder-chip' not in text
-    assert 'Rachit Makwana' in subject
+    assert '{name}' in text
+    assert '{name}' in subject
+    assert 'Rachit Makwana' not in text
+    assert 'Rachit Makwana' not in subject
 
 
 def test_resolve_queued_mail_text_keeps_unbalanced_braces():
