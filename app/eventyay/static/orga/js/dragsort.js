@@ -146,17 +146,28 @@ const pushOrder = (parentElement) => {
         const data = new URLSearchParams();
         data.append("order", orderValue);
         pendingSave = pendingSave
-            .catch(() => {})
-            .then(() =>
-                fetch(url, {
+            .catch((err) => {
+                console.error("Previous order save failed, continuing with latest order", err);
+            })
+            .then(async () => {
+                const response = await fetch(url, {
                     method: "POST",
                     headers: {
                         "X-CSRFToken": getCsrfToken(),
                         "X-Requested-With": "XMLHttpRequest",
                     },
                     body: data,
-                })
-            );
+                });
+                if (!response.ok) {
+                    throw new Error(`Order save request failed with status ${response.status}`);
+                }
+                return response;
+            })
+            .catch((err) => {
+                console.error("Failed to save new item order", err);
+                window.alert("The question order could not be saved. Reload the page and try again.");
+                throw err;
+            });
         return pendingSave;
     }
 };
