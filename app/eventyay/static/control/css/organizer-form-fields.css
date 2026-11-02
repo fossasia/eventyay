@@ -20,13 +20,22 @@
   text-align: center;
 }
 
-.organiser-form-fields .cfp-option-table thead th:first-child,
-.organiser-form-fields .cfp-option-table tbody th {
-  text-align: right;
-  vertical-align: middle;
-  font-weight: 600;
-  width: 30%;
-  padding-right: 8px;
+@media (min-width: 769px) {
+  .organiser-form-fields .cfp-option-table thead th:first-child,
+  .organiser-form-fields .cfp-option-table tbody th {
+    text-align: right;
+    vertical-align: middle;
+    font-weight: 600;
+    width: 30%;
+    padding-right: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .organiser-form-fields.cfp-forms-page .cfp-option-table tbody th {
+    width: 100%;
+    text-align: left;
+  }
 }
 
 .organiser-form-fields .cfp-option-table thead th:last-child {
@@ -41,6 +50,69 @@
 .organiser-form-fields .cfp-option-table tbody tr:first-child th,
 .organiser-form-fields .cfp-option-table tbody tr:first-child td {
   border-top: none;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 110px;
+  margin: 0;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper::after {
+  display: block !important;
+  content: '\f0d7';
+  font-family: 'FontAwesome';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-dropdown {
+  display: inline-block;
+  width: 110px;
+  max-width: 110px;
+  height: 34px;
+  padding: 6px 26px 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: var(--size-border-radius, 4px);
+  text-align: center;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.organiser-form-fields .cfp-option-table select.required-status-dropdown[data-current="required"] {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: #fff !important;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper[data-current="required"]::after {
+  color: #fff !important;
+}
+
+.organiser-form-fields .cfp-option-table select.required-status-dropdown[data-current="optional"] {
+  background-color: #fff !important;
+  border-color: #6c757d !important;
+  color: #6c757d !important;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper[data-current="optional"]::after {
+  color: #6c757d !important;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-dropdown:disabled {
+  opacity: 1;
+  cursor: not-allowed;
 }
 
 .organiser-form-fields .cfp-option-table a:not(.btn) {

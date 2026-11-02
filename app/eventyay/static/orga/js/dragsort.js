@@ -121,6 +121,8 @@ const dragStart = (el) => {
     return stopDragging;
 };
 
+let pendingSave = Promise.resolve();
+
 const pushOrder = (parentElement) => {
     const url = parentElement.getAttribute("dragsort-url");
     const ids = Array.from(parentElement.querySelectorAll("[dragsort-id], [data-formset-form]")).map(
@@ -143,18 +145,51 @@ const pushOrder = (parentElement) => {
     if (url) {
         const data = new URLSearchParams();
         data.append("order", orderValue);
-        fetch(url, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": getCsrfToken(),
-                "X-Requested-With": "XMLHttpRequest",
-            },
-            body: data,
-        });
+        pendingSave = pendingSave
+            .catch(() => {})
+            .then(() =>
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCsrfToken(),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    body: data,
+                })
+            );
+        return pendingSave;
     }
 };
 
 const initDragsort = () => {
+    document.addEventListener("keydown", (evt) => {
+        if (evt.key !== "ArrowUp" && evt.key !== "ArrowDown") return;
+        const handle = evt.target.closest(".dragsort-button");
+        if (!handle) return;
+
+        const el = handle.closest("[dragsort-id]") || handle.closest("[data-formset-form]");
+        if (!el || !el.parentElement) return;
+
+        const parentElement = el.closest("[dragsort-url]") || el.parentElement;
+        if (evt.key === "ArrowUp") {
+            const prev = el.previousElementSibling;
+            if (prev && (prev.hasAttribute("dragsort-id") || prev.hasAttribute("data-formset-form"))) {
+                evt.preventDefault();
+                prev.insertAdjacentElement("beforebegin", el);
+                pushOrder(parentElement);
+                handle.focus();
+            }
+        } else if (evt.key === "ArrowDown") {
+            const next = el.nextElementSibling;
+            if (next && (next.hasAttribute("dragsort-id") || next.hasAttribute("data-formset-form"))) {
+                evt.preventDefault();
+                next.insertAdjacentElement("afterend", el);
+                pushOrder(parentElement);
+                handle.focus();
+            }
+        }
+    });
+
     document.addEventListener("dragstart", (evt) => {
         const handle = evt.target.closest(".dragsort-button");
         if (!handle) return;
@@ -172,21 +207,28 @@ const initDragsort = () => {
         const stop = dragStart(el);
         if (!stop) return;  // Exit early if dragStart couldn't find a valid parent
 
-        const dropHandler = (evt) => evt.preventDefault();
+        let dropped = false;
+        const dropHandler = (dropEvt) => {
+            dropEvt.preventDefault();
+            dropped = true;
+        };
         el.parentElement.addEventListener("drop", dropHandler, { once: true });
 
-        const dragEndHandler = (evt) => {
-            evt.preventDefault();
+        const dragEndHandler = (dragEvt) => {
+            dragEvt.preventDefault();
+            el.parentElement.removeEventListener("drop", dropHandler);
             el.classList.remove("dragging");
             document.querySelector("body").classList.remove("dragging");
 
             const { closest, intent } = stop();
-            if (intent === INTENT_AFTER) {
-                closest.insertAdjacentElement("afterend", el);
-            } else {
-                closest.insertAdjacentElement("beforebegin", el);
+            if (dropped && closest && closest !== el) {
+                if (intent === INTENT_AFTER) {
+                    closest.insertAdjacentElement("afterend", el);
+                } else {
+                    closest.insertAdjacentElement("beforebegin", el);
+                }
+                pushOrder(el.parentElement);
             }
-            pushOrder(el.parentElement);
         };
 
         document.addEventListener("dragend", dragEndHandler, { once: true });
