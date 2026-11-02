@@ -378,8 +378,10 @@
                         </div>
                     {% endif %}
 
-                    {% block content %}
-                    {% endblock %}
+                    <main class="container" id="main-content">
+                        {% block content %}
+                        {% endblock %}
+                    </main>
                     <footer>
                         {% if request.timezone %}
                             <span class="fa fa-globe"></span>
