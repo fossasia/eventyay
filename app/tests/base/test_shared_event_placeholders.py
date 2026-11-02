@@ -17,7 +17,7 @@ from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue
 
 
 rename_placeholder = importlib.import_module(
-    'eventyay.base.migrations.0089_rename_organizer_placeholder'
+    'eventyay.base.migrations.0090_rename_organizer_placeholder'
 ).rename_placeholder
 
 
