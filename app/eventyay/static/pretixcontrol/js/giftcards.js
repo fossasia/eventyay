@@ -7,22 +7,34 @@ const activeTimeouts = new WeakMap();
  * @param {HTMLElement|null} icon - The icon element inside the button.
  */
 const resetFeedback = (btn, icon) => {
-    if (icon && icon.dataset.originalClass) {
+    if (icon && 'originalClass' in icon.dataset) {
         icon.className = icon.dataset.originalClass;
         delete icon.dataset.originalClass;
     }
-    if (btn.dataset.originalAriaLabel) {
-        btn.setAttribute('aria-label', btn.dataset.originalAriaLabel);
+
+    if ('originalCaptured' in btn.dataset) {
+        if (btn.dataset.originalAriaLabel) {
+            btn.setAttribute('aria-label', btn.dataset.originalAriaLabel);
+        } else {
+            btn.removeAttribute('aria-label');
+        }
+
+        if ('originalTitle' in btn.dataset) {
+            btn.setAttribute('title', btn.dataset.originalTitle);
+            delete btn.dataset.originalTitle;
+        } else {
+            btn.removeAttribute('title');
+        }
+
+        if ('originalDataTitle' in btn.dataset) {
+            btn.setAttribute('data-original-title', btn.dataset.originalDataTitle);
+            delete btn.dataset.originalDataTitle;
+        }
+
+        delete btn.dataset.originalCaptured;
         delete btn.dataset.originalAriaLabel;
-    } else {
-        btn.removeAttribute('aria-label');
     }
-    if (btn.dataset.originalTitle) {
-        btn.setAttribute('title', btn.dataset.originalTitle);
-        delete btn.dataset.originalTitle;
-    } else {
-        btn.removeAttribute('title');
-    }
+
     activeTimeouts.delete(btn);
 };
 
@@ -36,14 +48,25 @@ const resetFeedback = (btn, icon) => {
  */
 const setFeedback = (btn, feedbackClass, message, durationMs) => {
     const icon = btn.querySelector('i');
-    if (icon && !icon.dataset.originalClass) {
+    if (icon && !('originalClass' in icon.dataset)) {
         icon.dataset.originalClass = icon.className;
     }
-    if (!btn.dataset.originalAriaLabel) {
-        btn.dataset.originalAriaLabel = btn.getAttribute('aria-label') || btn.getAttribute('title') || '';
-    }
-    if (!btn.dataset.originalTitle) {
-        btn.dataset.originalTitle = btn.getAttribute('title') || '';
+
+    if (!('originalCaptured' in btn.dataset)) {
+        btn.dataset.originalCaptured = 'true';
+
+        const originalLabel = btn.getAttribute('aria-label')
+            || btn.getAttribute('data-original-title')
+            || btn.getAttribute('title')
+            || '';
+        btn.dataset.originalAriaLabel = originalLabel;
+
+        if (btn.hasAttribute('title')) {
+            btn.dataset.originalTitle = btn.getAttribute('title');
+        }
+        if (btn.hasAttribute('data-original-title')) {
+            btn.dataset.originalDataTitle = btn.getAttribute('data-original-title');
+        }
     }
 
     if (icon) {
