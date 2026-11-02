@@ -38,7 +38,7 @@ def add_ticket_to_cart(client, event):
     client.post('/dummy/dummy/cart/add', {f'item_{product.pk}': '1'})
 
 
-def set_cart_email(client, event, email):
+def set_cart_email(client, email):
     session = client.session
     for cart in session['carts'].values():
         cart['email'] = email
@@ -64,7 +64,7 @@ def test_later_step_without_attendee_name_redirects_to_questions(client, event):
     event.settings.attendee_names_asked = True
     event.settings.attendee_names_required = True
     add_ticket_to_cart(client, event)
-    set_cart_email(client, event, 'dummy@dummy.test')
+    set_cart_email(client, 'dummy@dummy.test')
 
     response = client.get('/dummy/dummy/checkout/confirm/')
 

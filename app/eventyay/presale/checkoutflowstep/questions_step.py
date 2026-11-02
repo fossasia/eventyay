@@ -294,6 +294,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                         )
                     return False
 
+            # Don't unpack into _: that would shadow gettext for this whole method.
             _asked, attendee_name_required = get_system_question_asked_required(
                 self.request.event,
                 'attendee_name_parts',
