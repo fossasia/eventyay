@@ -40,7 +40,7 @@ dialog.pretalx-modal.shift-edit-modal(ref="modal", :aria-labelledby="titleId", @
 						span {{ $t('Add role') }}
 			.button-row
 				bunt-button.btn-cancel(type="button", :disabled="busy", @click="cancel") {{ $t('Cancel') }}
-				bunt-button.btn-save(type="submit", :loading="busy") {{ $t('Save') }}
+				bunt-button.btn-save(type="submit", :loading="busy", :error="!!error") {{ $t('Save') }}
 </template>
 
 <script setup>
@@ -237,4 +237,10 @@ dialog.pretalx-modal.shift-edit-modal
 			margin-left: auto
 			font-weight: bold
 			button-style(color: $clr-primary)
+			// The schedule doesn't load the mdi icon font, so keep the label instead of bunt's retry icon.
+			&.error
+				.bunt-button-content
+					visibility: visible
+				.bunt-icon.error
+					display: none
 </style>

@@ -8,7 +8,7 @@ NameError therefore aborted the whole periodic run, skipping every receiver disp
 this one - and there are 21 of them, including order and invoice cleanup.
 
 These tests need no database: the Room queryset is mocked and the test cache backend is
-DummyCache, so `cache.get()` returns None and the broadcast branch is not taken.
+DummyCache, so `cache.get()` returns None and the broadcast branch is taken; the broadcasts are mocked.
 """
 
 from unittest import mock
@@ -75,11 +75,20 @@ def test_check_stream_schedule_changes_runs_for_a_scheduled_room():
     """Regression: the loop body raised NameError on its first `cache.get()`."""
     room = mock.Mock(pk=4242)
     room.get_current_stream.return_value = None
+    room.get_next_stream.return_value = None
 
-    with mock.patch.object(room_service, 'Room') as room_model:
+    with (
+        mock.patch.object(room_service, 'Room') as room_model,
+        mock.patch.object(room_service, 'check_video_entitlements', return_value=mock.Mock(allowed=True)),
+        mock.patch.object(room_service, 'broadcast_stream_change', mock.AsyncMock()) as current,
+        mock.patch.object(room_service, 'broadcast_upcoming_stream', mock.AsyncMock()) as upcoming,
+    ):
         queryset = room_model.objects.filter.return_value.select_related.return_value.distinct
         queryset.return_value = [room]
 
         room_service.check_stream_schedule_changes(sender=None)
 
     room.get_current_stream.assert_called_once()
+    current.assert_awaited_once_with(4242, None, reload=True)
+    upcoming.assert_awaited_once_with(4242, None)
+    room_model.objects.filter.return_value.select_related.assert_called_once_with('event__organizer')
