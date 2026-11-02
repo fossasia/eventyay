@@ -5,7 +5,7 @@ from django.core import mail as djmail
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
     Checkin,
@@ -16,6 +16,13 @@ from eventyay.base.models import (
     Organizer,
     Team,
     User,
+)
+from eventyay.plugins.sendmail.forms import EmailQueueEditForm
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+    EmailQueueToUser,
+    resolve_queued_mail_text,
 )
 
 
@@ -1682,11 +1689,6 @@ def test_sendmail_team_draft_to_outbox_logs_enqueue_event(logged_in_client, even
 
 @pytest.mark.django_db
 def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
-    from django_scopes import scope
-
-    from eventyay.plugins.sendmail.forms import EmailQueueEditForm
-    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
-
     pos.attendee_name_parts = {'_legacy': 'Rachit Makwana'}
     pos.attendee_email = 'rachit@example.com'
     pos.save()
@@ -1715,3 +1717,78 @@ def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
     assert '{name}' not in text
     assert 'tiptap-placeholder-chip' not in text
     assert 'Rachit Makwana' in subject
+
+
+def test_resolve_queued_mail_text_keeps_unbalanced_braces():
+    assert resolve_queued_mail_text('Hello {name} and {', {'name': 'Ada'}) == 'Hello Ada and {'
+
+
+@pytest.mark.django_db
+def test_placeholder_context_does_not_record_recipient_errors(event, order, pos, monkeypatch):
+    pos.attendee_email = 'rachit@example.com'
+    pos.save()
+
+    with scope(event=event):
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello',
+            message='Hi',
+            locale='en',
+        )
+        recipient = EmailQueueToUser.objects.create(
+            mail=queue,
+            email=pos.attendee_email,
+            orders=[order.pk],
+            positions=[pos.pk],
+        )
+
+        def fail_context(**kwargs):
+            raise ValueError('sample context failure')
+
+        monkeypatch.setattr('eventyay.plugins.sendmail.models.get_email_context', fail_context)
+        assert queue.placeholder_context(recipient) is None
+        recipient.refresh_from_db()
+        assert recipient.error is None
+
+
+@pytest.mark.django_db
+def test_queued_mail_uses_position_matching_recipient_email(event, order, item):
+    OrderPosition.objects.create(
+        order=order,
+        product=item,
+        price=13,
+        attendee_name_parts={'_legacy': 'First Person'},
+        attendee_email='first@example.com',
+    )
+    second = OrderPosition.objects.create(
+        order=order,
+        product=item,
+        price=13,
+        attendee_name_parts={'_legacy': 'Second Person'},
+        attendee_email='second@example.com',
+    )
+
+    with scope(event=event):
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello {name}',
+            message='Hi {name}',
+            is_draft=False,
+            sent_at=now(),
+            locale='en',
+        )
+        EmailQueueToUser.objects.create(
+            mail=queue,
+            email=second.attendee_email,
+            orders=[order.pk],
+            positions=list(
+                OrderPosition.objects.filter(order=order).order_by('pk').values_list('pk', flat=True)
+            ),
+        )
+        form = EmailQueueEditForm(instance=queue, event=event, read_only=True)
+
+    subject = str(form.fields['subject'].initial)
+    assert 'Second Person' in subject
+    assert 'First Person' not in subject

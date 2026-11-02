@@ -32,7 +32,14 @@ def resolve_queued_mail_text(text, context: dict | None) -> str:
     if text is None:
         return ''
     string_context = {key: '' if value is None else str(value) for key, value in (context or {}).items()}
-    return expand_email_variable_chips(str(text).format_map(TolerantDict(string_context)), string_context)
+    source = str(text)
+    try:
+        resolved = source.format_map(TolerantDict(string_context))
+    except ValueError:
+        resolved = source
+        for key in sorted(string_context, key=len, reverse=True):
+            resolved = resolved.replace('{' + key + '}', string_context[key])
+    return expand_email_variable_chips(resolved, string_context)
 
 
 def resolve_queued_mail_i18n(value, context: dict | None):
@@ -338,7 +345,29 @@ class EmailQueue(models.Model):
         self._finalize_send_status()
         return True
 
-    def _build_email_context(self, order, position, position_or_address, recipient):
+    def _recipient_order_and_position(self, recipient) -> tuple[Order | None, OrderPosition | None]:
+        """Return the order and the position that matches this recipient email."""
+        order_id = recipient.orders[0] if recipient.orders else None
+        order = Order.objects.filter(pk=order_id, event=self.event).first() if order_id else None
+        position_ids = list(recipient.positions or [])
+        if not position_ids:
+            return order, None
+        positions = list(
+            OrderPosition.objects.filter(pk__in=position_ids, order__event=self.event)
+            .select_related('order')
+            .order_by('pk')
+        )
+        if not positions:
+            return order, None
+        recipient_email = (recipient.email or '').strip().lower()
+        matching = [
+            position
+            for position in positions
+            if (position.attendee_email or '').strip().lower() == recipient_email
+        ]
+        return order, (matching or positions)[0]
+
+    def _build_email_context(self, order, position, position_or_address, recipient, *, record_errors=True):
         try:
             if self.composing_for != ComposingFor.ATTENDEES:
                 user_obj = User.objects.filter(email__iexact=recipient.email).first()
@@ -370,8 +399,9 @@ class EmailQueue(models.Model):
             return get_email_context(**kwargs)
         except (AttributeError, KeyError, TypeError, ValueError) as e:
             logger.exception('Error while generating email context')
-            recipient.error = f'Context error: {e}'
-            recipient.save(update_fields=['error'])
+            if record_errors and recipient is not None:
+                recipient.error = f'Context error: {e}'
+                recipient.save(update_fields=['error'])
             return None
 
     def placeholder_context(self, recipient=None):
@@ -380,15 +410,18 @@ class EmailQueue(models.Model):
         if not recipient:
             return None
 
-        order_id = recipient.orders[0] if recipient.orders else None
-        position_id = recipient.positions[0] if recipient.positions else None
-        order = Order.objects.filter(pk=order_id, event=self.event).first() if order_id else None
-        position = OrderPosition.objects.filter(pk=position_id).first() if position_id else None
+        order, position = self._recipient_order_and_position(recipient)
         try:
             invoice_address = order.invoice_address if order else None
         except InvoiceAddress.DoesNotExist:
             invoice_address = InvoiceAddress(order=order) if order else None
-        return self._build_email_context(order, position, position or invoice_address, recipient)
+        return self._build_email_context(
+            order,
+            position,
+            position or invoice_address,
+            recipient,
+            record_errors=False,
+        )
 
     def _finalize_send_status(self):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
@@ -404,11 +437,7 @@ class EmailQueue(models.Model):
         if not email:
             return False
 
-        order_id = recipient.orders[0] if recipient.orders else None
-        position_id = recipient.positions[0] if recipient.positions else None
-
-        order = Order.objects.filter(pk=order_id, event=self.event).first() if order_id else None
-        position = OrderPosition.objects.filter(pk=position_id).first() if position_id else None
+        order, position = self._recipient_order_and_position(recipient)
 
         try:
             ia = order.invoice_address if order else None

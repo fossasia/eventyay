@@ -38,7 +38,14 @@ from eventyay.plugins.sendmail.mixins import (
     QueryFilterOrderingMixin,
     ensure_draft_defaults,
 )
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser, TicketMailTemplate
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+    EmailQueueFilter,
+    EmailQueueToUser,
+    TicketMailTemplate,
+    resolve_queued_mail_text,
+)
 from eventyay.plugins.sendmail.tasks import send_queued_mail
 
 from . import forms
@@ -991,27 +998,15 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                     subject_text = subject.localize(l) if subject else ''
                     if not str(subject_text).strip():
                         subject_text = str(_('Example Subject for {event_name}'))
-                    try:
-                        subject_preview = nh3.clean(
-                            subject_text.format_map(context_dict),
-                            tags=set(),
-                        )
-                    except KeyError as e:
-                        form.add_error('subject', _('Invalid placeholder(s): {}').format(str(e)))
-                        return self.form_invalid(form)
+                    subject_preview = nh3.clean(
+                        resolve_queued_mail_text(subject_text, context_dict),
+                        tags=set(),
+                    )
 
                     message_text = message.localize(l) if message else ''
                     if not str(message_text).strip():
                         message_text = str(sample_body)
-                    try:
-                        message_preview = expand_email_variable_chips(
-                            message_text.format_map(context_dict),
-                            dict(context_dict),
-                        )
-                    except KeyError as e:
-                        error_field = 'text' if 'text' in form.fields else 'message'
-                        form.add_error(error_field, _('Invalid placeholder(s): {}').format(str(e)))
-                        return self.form_invalid(form)
+                    message_preview = resolve_queued_mail_text(message_text, context_dict)
 
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=subject_preview),
