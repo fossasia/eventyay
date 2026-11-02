@@ -225,11 +225,14 @@ const initRecipientPreview = () => {
     }
 
     let timer = null
-    form.addEventListener("change", (e) => {
-        if (MESSAGE_FIELDS.test(e.target.name || "")) return
+    const scheduleRefresh = () => {
         invalidateCount()
         window.clearTimeout(timer)
         timer = window.setTimeout(refreshCount, 300)
+    }
+    form.addEventListener("change", (e) => {
+        if (MESSAGE_FIELDS.test(e.target.name || "")) return
+        scheduleRefresh()
     })
 
     trigger.addEventListener("click", async () => {
@@ -253,8 +256,13 @@ const initRecipientPreview = () => {
     })
 
     if (window.jQuery) {
-        window.jQuery('.mail-composer select').on('select2:open', function () {
-            window.jQuery('body > .select2-container.select2-container--open').addClass('mail-composer-dropdown')
+        const $form = window.jQuery(form)
+        // Select2 only fires jQuery change, which the native form listener never sees.
+        $form.on("select2:select select2:unselect select2:clear", "select", function () {
+            this.dispatchEvent(new Event("change", { bubbles: true }))
+        })
+        $form.on("select2:open", "select", function () {
+            window.jQuery("body > .select2-container.select2-container--open").addClass("mail-composer-dropdown")
         })
     }
 

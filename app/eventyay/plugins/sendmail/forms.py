@@ -36,7 +36,13 @@ from eventyay.control.forms import CachedFileField, SplitDateTimeField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
 from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone
 from eventyay.orga.forms.mails import TalkSplitDateTimePickerWidget
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, TicketMailTemplate
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+    EmailQueueToUser,
+    TicketMailTemplate,
+    resolve_queued_mail_i18n,
+)
 
 
 MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP = _( 'If the order contains attendees with email addresses different from the person who orders the ' 'tickets, the following email will be sent out to the attendees.' )
@@ -1008,6 +1014,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
         self.recipient_objects = list(existing_recipients)
         self.fields['emails'].initial = ", ".join([u.email for u in self.recipient_objects])
 
+        display_context = None
+        if self.read_only and self.recipient_objects:
+            display_context = self.instance.placeholder_context(self.recipient_objects[0])
+
         saved_locales = set()
         if self.instance.subject and hasattr(self.instance.subject, '_data'):
             saved_locales |= set(self.instance.subject._data.keys())
@@ -1017,12 +1027,18 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
         configured_locales = set(self.event.settings.get('locales', [])) if self.event else set()
         allowed_locales = saved_locales | configured_locales
 
+        subject_initial = self.instance.subject
+        text_initial = self.instance.message
+        if display_context:
+            subject_initial = resolve_queued_mail_i18n(subject_initial, display_context)
+            text_initial = resolve_queued_mail_i18n(text_initial, display_context)
+
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
             widget=I18nTextInput,
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.subject
+            initial=subject_initial,
         )
         self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
@@ -1030,7 +1046,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             widget_kwargs={'placeholders': placeholder_names},
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.message,
+            initial=text_initial,
         )
 
         if not self.read_only:

@@ -1678,3 +1678,40 @@ def test_sendmail_team_draft_to_outbox_logs_enqueue_event(logged_in_client, even
     assert enqueue_events[0]['outcome'] == OUTCOME_SUCCESS
     assert enqueue_events[0]['kwargs']['event_id'] == event.pk
     assert enqueue_events[0]['kwargs']['object_id'] == draft.pk
+
+
+@pytest.mark.django_db
+def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
+    from django_scopes import scope
+
+    from eventyay.plugins.sendmail.forms import EmailQueueEditForm
+    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
+
+    pos.attendee_name_parts = {'_legacy': 'Rachit Makwana'}
+    pos.attendee_email = 'rachit@example.com'
+    pos.save()
+
+    with scope(event=event):
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello {name}',
+            message='<p>Hi <span class="tiptap-placeholder-chip" data-variable="name">{name}</span></p>',
+            is_draft=False,
+            sent_at=now(),
+            locale='en',
+        )
+        EmailQueueToUser.objects.create(
+            mail=queue,
+            email=pos.attendee_email,
+            orders=[order.pk],
+            positions=[pos.pk],
+        )
+        form = EmailQueueEditForm(instance=queue, event=event, read_only=True)
+
+    text = str(form.fields['text'].initial)
+    subject = str(form.fields['subject'].initial)
+    assert 'Rachit Makwana' in text
+    assert '{name}' not in text
+    assert 'tiptap-placeholder-chip' not in text
+    assert 'Rachit Makwana' in subject

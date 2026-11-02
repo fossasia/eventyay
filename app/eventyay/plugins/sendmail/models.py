@@ -8,18 +8,41 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
-from eventyay.base.email import get_email_context
-from eventyay.mail.context import get_mail_context
+from eventyay.base.email import get_best_name, get_email_context
+from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
-from eventyay.base.i18n import LazyI18nString
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
-from eventyay.base.services.mail import mail, SendMailException as MailTransportError
+from eventyay.base.services.mail import (
+    SendMailException as MailTransportError,
+    TolerantDict,
+    expand_email_variable_chips,
+    mail,
+)
 from eventyay.common.exceptions import SendMailException
+from eventyay.mail.context import get_mail_context
 
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_queued_mail_text(text, context: dict | None) -> str:
+    """Replace ``{placeholder}`` tokens and Tiptap chips using a mail context."""
+    if text is None:
+        return ''
+    string_context = {key: '' if value is None else str(value) for key, value in (context or {}).items()}
+    return expand_email_variable_chips(str(text).format_map(TolerantDict(string_context)), string_context)
+
+
+def resolve_queued_mail_i18n(value, context: dict | None):
+    """Resolve placeholders in each locale of a ``LazyI18nString``."""
+    if not value:
+        return value
+    data = getattr(value, 'data', None)
+    if isinstance(data, dict) and data:
+        return LazyI18nString({locale: resolve_queued_mail_text(text, context) for locale, text in data.items()})
+    return LazyI18nString(resolve_queued_mail_text(value, context))
 
 
 class TicketMailTemplate(models.Model):
@@ -341,12 +364,31 @@ class EmailQueue(models.Model):
                 kwargs['position'] = position
             if position_or_address is not None:
                 kwargs['position_or_address'] = position_or_address
+                best_name = get_best_name(position_or_address)
+                if best_name:
+                    kwargs['name'] = best_name
             return get_email_context(**kwargs)
         except (AttributeError, KeyError, TypeError, ValueError) as e:
             logger.exception('Error while generating email context')
             recipient.error = f'Context error: {e}'
             recipient.save(update_fields=['error'])
             return None
+
+    def placeholder_context(self, recipient=None):
+        """Build the placeholder context for one queued recipient, or the first."""
+        recipient = recipient or self.recipients.order_by('id').first()
+        if not recipient:
+            return None
+
+        order_id = recipient.orders[0] if recipient.orders else None
+        position_id = recipient.positions[0] if recipient.positions else None
+        order = Order.objects.filter(pk=order_id, event=self.event).first() if order_id else None
+        position = OrderPosition.objects.filter(pk=position_id).first() if position_id else None
+        try:
+            invoice_address = order.invoice_address if order else None
+        except InvoiceAddress.DoesNotExist:
+            invoice_address = InvoiceAddress(order=order) if order else None
+        return self._build_email_context(order, position, position or invoice_address, recipient)
 
     def _finalize_send_status(self):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
