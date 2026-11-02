@@ -1,13 +1,3 @@
-.organiser-form-fields {
-  --color-bg: var(--color-white);
-  --color-border: var(--color-border);
-  --color-grey-light: var(--color-grey-light);
-  --color-grey-lighter: var(--color-grey-lighter);
-  --color-text-muted: var(--color-text-muted);
-  --size-border-radius: var(--size-border-radius);
-  --shadow-light: var(--shadow-light);
-}
-
 .organiser-form-fields .cfp-option-table {
   table-layout: auto;
   width: 100%;
