@@ -218,13 +218,14 @@ def test_redirect_version_followed_by_user_schedule_not_public(client, event):
 
 @pytest.mark.django_db
 def test_orga_can_release_schedule(client, orga_user_write_token, event, slot):
+    """Release a valid mixed-case version without changing its spelling."""
     with scope(event=event):
         initial_wip_schedule = event.wip_schedule
         assert initial_wip_schedule.version is None
         initial_wip_pk = initial_wip_schedule.pk
         initial_schedule_count = event.schedules.count()
 
-    release_data = {"version": "v_test_release", "comment": "A test release comment"}
+    release_data = {"version": "v_Test_Release", "comment": "A test release comment"}
     response = client.post(
         event.api_urls.schedules + "release/",
         data=json.dumps(release_data),
@@ -269,12 +270,67 @@ def test_orga_can_release_breaks_only_schedule_via_api(client, orga_user_write_t
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('version', ('v2.0', 'V2.0', ' V2.0 '))
 def test_orga_cannot_release_schedule_with_existing_version(
-    client, orga_user_write_token, event
+    client, orga_user_write_token, event, version
 ):
+    """Return a version field error when a release name is already in use."""
     with scope(event=event):
         event.wip_schedule.freeze("v2.0")
-    release_data = {"version": "v2.0"}
+        schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
+    release_data = {"version": version}
+    response = client.post(
+        event.api_urls.schedules + "release/",
+        data=json.dumps(release_data),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400
+    content = json.loads(response.text)
+    assert content['version'] == [f"A schedule with the version '{version.strip()}' already exists for this event."]
+    with scope(event=event):
+        assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'version', ('wip', 'latest', ' wip ', ' latest ', 'WIP', 'Wip', 'LATEST', 'Latest', ' wIp ', ' LaTeSt '),
+)
+@pytest.mark.parametrize('has_wip', (True, False))
+def test_orga_cannot_release_reserved_schedule_version(client, orga_user_write_token, event, slot, version, has_wip):
+    """Reject reserved names without changing schedules, including a missing draft."""
+    with scope(event=event):
+        if not has_wip:
+            draft = event.schedules.get(version__isnull=True)
+            draft.talks.all().delete()
+            draft.delete()
+        assert event.schedules.filter(version__isnull=True).exists() is has_wip
+        schedules = list(event.schedules.order_by('pk').values_list('pk', 'version', 'published'))
+        original_slot = (slot.schedule_id, slot.start, slot.end, slot.room_id)
+        mail_count = event.queued_mails.count()
+
+    response = client.post(
+        event.api_urls.schedules + 'release/',
+        data=json.dumps({'version': version}),
+        content_type='application/json',
+        headers={'Authorization': f'Token {orga_user_write_token.token}'},
+    )
+
+    assert response.status_code == 400
+    assert response.json()['version'] == ['This schedule version is reserved. Please choose a different name.']
+    with scope(event=event):
+        assert list(event.schedules.order_by('pk').values_list('pk', 'version', 'published')) == schedules
+        slot.refresh_from_db()
+        assert (slot.schedule_id, slot.start, slot.end, slot.room_id) == original_slot
+        assert event.queued_mails.count() == mail_count
+
+
+@pytest.mark.django_db
+def test_orga_cannot_release_schedule_without_version_name(
+    client, orga_user_write_token, event
+):
+    """Require a version name even when the release includes a comment."""
+    release_data = {"comment": "Just a comment"}
     response = client.post(
         event.api_urls.schedules + "release/",
         data=json.dumps(release_data),
@@ -287,19 +343,56 @@ def test_orga_cannot_release_schedule_with_existing_version(
 
 
 @pytest.mark.django_db
-def test_orga_cannot_release_schedule_without_version_name(
-    client, orga_user_write_token, event
+@pytest.mark.parametrize('via_api', (True, False))
+@pytest.mark.parametrize('competing_action', ('release', 'reset'))
+def test_release_reports_competing_release(
+    client, orga_client, orga_user_write_token, event, slot, monkeypatch, via_api, competing_action
 ):
-    release_data = {"comment": "Just a comment"}
-    response = client.post(
-        event.api_urls.schedules + "release/",
-        data=json.dumps(release_data),
-        content_type="application/json",
-        headers={"Authorization": f"Token {orga_user_write_token.token}"},
-    )
-    assert response.status_code == 400
-    content = json.loads(response.text)
-    assert "version" in content
+    """Report a competing release or reset through both interfaces without overwriting it."""
+    original_freeze = Schedule.freeze
+    with scope(event=event):
+        if competing_action == 'reset':
+            released, _ = event.wip_schedule.freeze('previous-release', notify_speakers=False)
+    error_message = 'draft no longer exists' if competing_action == 'reset' else 'already versioned'
+
+    def freeze_after_competing_release(draft, *args, **kwargs):
+        """Complete another request after this request has loaded its draft."""
+        with scope(event=draft.event):
+            if competing_action == 'reset':
+                released.unfreeze()
+            else:
+                competing_draft = Schedule.objects.get(pk=draft.pk)
+                original_freeze(competing_draft, 'competing-release', notify_speakers=False)
+            return original_freeze(draft, *args, **kwargs)
+
+    monkeypatch.setattr(Schedule, 'freeze', freeze_after_competing_release)
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+        schedule_count = event.schedules.count()
+
+    if via_api:
+        response = client.post(
+            event.api_urls.schedules + 'release/',
+            data=json.dumps({'version': 'my-release'}),
+            content_type='application/json',
+            headers={'Authorization': f'Token {orga_user_write_token.token}'},
+        )
+        assert response.status_code == 400
+        assert error_message in response.json()['version'][0]
+    else:
+        response = orga_client.post(event.orga_urls.release_schedule, data={'version': 'my-release'})
+        assert response.status_code == 200
+        assert response.text.count(error_message) == 1
+        assert 'We had trouble saving your input' not in response.text
+        assert 'You have to provide a new, unique schedule version!' not in response.text
+
+    with scope(event=event):
+        assert event.schedules.count() == schedule_count + (competing_action == 'release')
+        preserved_version = 'previous-release' if competing_action == 'reset' else 'competing-release'
+        assert event.schedules.filter(version=preserved_version).exists()
+        assert not event.schedules.filter(version='my-release').exists()
+        assert event.schedules.filter(version__isnull=True).count() == 1
 
 
 @pytest.mark.django_db

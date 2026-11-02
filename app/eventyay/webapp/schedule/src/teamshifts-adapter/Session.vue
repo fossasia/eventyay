@@ -121,6 +121,7 @@ import {
 	manageUrl,
 	assignmentsUrl,
 	membersUrl,
+	getErrorMessage,
 } from './index'
 
 export default {
@@ -462,6 +463,10 @@ export default {
 			this.editError = ''
 		},
 		async saveEdit (payload) {
+			if (new Date(payload.end) <= new Date(payload.start)) {
+				this.editError = this.$t('End date must be after start date.')
+				return
+			}
 			this.editBusy = true
 			this.editError = ''
 			try {
@@ -478,10 +483,9 @@ export default {
 					credentials: 'same-origin',
 					body: JSON.stringify(payload),
 				})
-				const data = await response.json().catch(() => ({}))
 				if (!response.ok) {
 					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
-					this.editError = data.detail || data.error || this.$t('Could not update this shift.')
+					this.editError = await getErrorMessage(response) || this.$t('Could not update this shift.')
 					return
 				}
 				window.location.reload()
@@ -514,9 +518,8 @@ export default {
 					credentials: 'same-origin',
 				})
 				if (!response.ok) {
-					const data = await response.json().catch(() => ({}))
 					logOperational({action: 'schedule.save', outcome: 'failure', backend: 'teamshifts', error_code: 'http_error', status: response.status})
-					this.confirmError = data.detail || data.error || this.$t('Could not delete this shift.')
+					this.confirmError = await getErrorMessage(response) || this.$t('Could not delete this shift.')
 					return
 				}
 				window.location.reload()

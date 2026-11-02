@@ -128,7 +128,7 @@
             data-payment-weekdays-disabled="{{ js_payment_weekdays_disabled }}"
             {% if request.organizer %}data-organizer="{{ request.organizer.slug }}"{% endif %}
             {% if request.event %}data-event="{{ request.event.slug }}"{% endif %}
-            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" data-reveal-secret-url="{% url 'eventyay_admin:admin.global.settings.reveal_secret' %}" class="nojs sidebar-minimized">
+            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" data-reveal-secret-url="{% url 'eventyay_admin:admin.global.settings.reveal_secret' %}" class="nojs sidebar-minimized {% block body_class %}{% endblock %}">
         <div id="wrapper">
             <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
                 <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar">
@@ -260,7 +260,7 @@
                     {{ staff_session|json_script:"is_admin_mode" }}
                     {% include "common/fragment_profile_dropdown.html" %}
                 </ul>
-                <div class="navbar-default sidebar" role="navigation">
+                <div class="navbar-default sidebar hidden-print" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
                         <div class="dropdown context-selector">
                             {% block nav_top_header %}
