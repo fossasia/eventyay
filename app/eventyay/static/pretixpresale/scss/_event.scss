@@ -186,6 +186,17 @@ section.front-page {
         border-radius: 10px;
         margin-bottom: 10px;
     }
+
+    // The row's -15px gutter is wider than the 12px page inset and makes the page scroll sideways.
+    .front-page > .row {
+        margin-left: 0;
+        margin-right: 0;
+
+        > [class*="col-"] {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
 }
 
 #questions_group .panel-title a {
