@@ -384,11 +384,13 @@ class EventCreateView(TemplateView):
 
         return initial_form
 
-    @cached_property
+    @property
     def clone_from(self):
-        if hasattr(self, '_clone_from'):
-            return self._clone_from
-        return None
+        return getattr(self, '_clone_from', None)
+
+    @clone_from.setter
+    def clone_from(self, value):
+        self._clone_from = value
 
     @property
     def is_meetup_request(self):
@@ -559,6 +561,14 @@ class EventCreateView(TemplateView):
             basics_post = legacy_data.get('basics')
             if not basics_post:
                 return redirect(request.path)
+            copy_from_event = request.POST.get('copy-copy_from_event')
+            if copy_from_event:
+                try:
+                    self.clone_from = self.get_clone_queryset().get(pk=copy_from_event)
+                except Event.DoesNotExist:
+                    self.clone_from = None
+            else:
+                self.clone_from = None
             basics_form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
             basics_form = basics_form_class(
                 data=basics_post,
@@ -573,12 +583,6 @@ class EventCreateView(TemplateView):
                 is_video_creation=foundation_form.cleaned_data.get('is_video_creation', True),
                 restrict_locale_choices=False,
             )
-            copy_from_event = request.POST.get('copy-copy_from_event')
-            if copy_from_event:
-                try:
-                    self._clone_from = self.get_clone_queryset().get(pk=copy_from_event)
-                except Event.DoesNotExist:
-                    self._clone_from = None
             if basics_form.is_valid():
                 request.session.pop(self.legacy_session_key, None)
                 return self.create_event(foundation_form, basics_form)
