@@ -191,7 +191,7 @@
                                             <a href="{% url 'control:organizer.giftcard' organizer=request.organizer.slug giftcard=g.id %}" class="gc-code-link" title="{% trans 'View details' %}">
                                                 <code class="gc-code">{{ g.secret }}</code>
                                             </a>
-                                            <button type="button" class="btn-clipboard gc-copy-btn" data-clipboard-text="{{ g.secret }}" title="{% trans 'Copy to clipboard' %}">
+                                            <button type="button" class="gc-copy-btn" data-clipboard-text="{{ g.secret }}" title="{% trans 'Copy to clipboard' %}">
                                                 <i class="fa fa-clone" aria-hidden="true"></i>
                                             </button>
                                         </div>
