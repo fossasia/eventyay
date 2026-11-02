@@ -1014,10 +1014,6 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
         self.recipient_objects = list(existing_recipients)
         self.fields['emails'].initial = ", ".join([u.email for u in self.recipient_objects])
 
-        display_context = None
-        if self.read_only and self.recipient_objects:
-            display_context = self.instance.placeholder_context(self.recipient_objects[0])
-
         saved_locales = set()
         if self.instance.subject and hasattr(self.instance.subject, '_data'):
             saved_locales |= set(self.instance.subject._data.keys())
@@ -1029,9 +1025,16 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
 
         subject_initial = self.instance.subject
         text_initial = self.instance.message
-        if display_context:
-            subject_initial = resolve_queued_mail_i18n(subject_initial, display_context)
-            text_initial = resolve_queued_mail_i18n(text_initial, display_context)
+        if self.read_only and self.recipient_objects:
+            recipient = self.recipient_objects[0]
+            subject_initial = resolve_queued_mail_i18n(
+                subject_initial,
+                context_factory=lambda: self.instance.placeholder_context(recipient),
+            )
+            text_initial = resolve_queued_mail_i18n(
+                text_initial,
+                context_factory=lambda: self.instance.placeholder_context(recipient),
+            )
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),

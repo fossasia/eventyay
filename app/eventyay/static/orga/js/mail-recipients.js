@@ -255,17 +255,6 @@ const initRecipientPreview = () => {
         })
     })
 
-    if (window.jQuery) {
-        const $form = window.jQuery(form)
-        // Select2 only fires jQuery change, which the native form listener never sees.
-        $form.on("select2:select select2:unselect select2:clear", "select", function () {
-            this.dispatchEvent(new Event("change", { bubbles: true }))
-        })
-        $form.on("select2:open", "select", function () {
-            window.jQuery("body > .select2-container.select2-container--open").addClass("mail-composer-dropdown")
-        })
-    }
-
     refreshCount()
 }
 

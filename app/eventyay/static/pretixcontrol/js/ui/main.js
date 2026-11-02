@@ -854,6 +854,11 @@ var form_handlers = function (el) {
 $(function () {
     "use strict";
 
+    // Select2 only triggers jQuery change; native listeners need a bubbling Event.
+    $(document).on("select2:select select2:unselect select2:clear", "select", function () {
+        this.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
     $("body").removeClass("nojs");
     lightbox.init();
 

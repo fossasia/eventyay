@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.base.email import get_best_name, get_email_context
-from eventyay.base.i18n import LazyI18nString
+from eventyay.base.i18n import LazyI18nString, language
 from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
@@ -42,14 +42,20 @@ def resolve_queued_mail_text(text, context: dict | None) -> str:
     return expand_email_variable_chips(resolved, string_context)
 
 
-def resolve_queued_mail_i18n(value, context: dict | None):
+def resolve_queued_mail_i18n(value, context: dict | None = None, *, context_factory=None):
     """Resolve placeholders in each locale of a ``LazyI18nString``."""
     if not value:
         return value
     data = getattr(value, 'data', None)
     if isinstance(data, dict) and data:
-        return LazyI18nString({locale: resolve_queued_mail_text(text, context) for locale, text in data.items()})
-    return LazyI18nString(resolve_queued_mail_text(value, context))
+        resolved = {}
+        for locale, text in data.items():
+            with language(locale):
+                locale_context = context_factory() if context_factory else context
+                resolved[locale] = resolve_queued_mail_text(text, locale_context)
+        return LazyI18nString(resolved)
+    locale_context = context_factory() if context_factory else context
+    return LazyI18nString(resolve_queued_mail_text(value, locale_context))
 
 
 class TicketMailTemplate(models.Model):

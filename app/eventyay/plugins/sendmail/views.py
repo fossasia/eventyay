@@ -990,10 +990,11 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                     'Best regards,\nThe {event_name} team'
                 )
 
-            recipient_context = form.instance.placeholder_context()
             for l in event.settings.locales:
                 with language(l, event.settings.region):
-                    context_dict = recipient_context or build_email_preview_context(event, base_placeholders)
+                    context_dict = form.instance.placeholder_context() or build_email_preview_context(
+                        event, base_placeholders
+                    )
 
                     subject_text = subject.localize(l) if subject else ''
                     if not str(subject_text).strip():

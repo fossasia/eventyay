@@ -83,7 +83,10 @@
   line-height: 22px;
   margin: 2px 4px 2px 0;
   max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 3px 10px 3px 6px;
+  white-space: normal;
 }
 
 .mail-composer .composer-filters .select2-selection__choice__remove {
@@ -141,7 +144,7 @@
 .mail-composer .composer-filters .select2-container--bootstrap.select2-container--focus .select2-selection,
 .mail-composer .composer-filters .select2-container--bootstrap.select2-container--open .select2-selection {
   border-color: var(--color-primary-light, var(--color-primary));
-  box-shadow: none;
+  box-shadow: var(--shadow-focus);
 }
 
 .mail-composer .composer-filters .select2-container--bootstrap.select2-container--open .select2-selection--multiple,
@@ -151,11 +154,11 @@
 }
 
 /* Dropdown is appended to body; never raise the in-page widget or the whole card. */
-body > .select2-container.select2-container--open.mail-composer-dropdown {
+body:has(.mail-composer) > .select2-container.select2-container--open {
   z-index: 20000;
 }
 
-body > .select2-container.mail-composer-dropdown .select2-dropdown {
+body:has(.mail-composer) > .select2-container.select2-container--open .select2-dropdown {
   border-color: var(--color-border, #ccc);
   border-radius: 0 0 var(--composer-border-radius, 4px) var(--composer-border-radius, 4px);
   box-shadow: 0 6px 16px rgb(0 0 0 / 0.12);
@@ -163,13 +166,13 @@ body > .select2-container.mail-composer-dropdown .select2-dropdown {
   overflow: hidden;
 }
 
-body > .select2-container.mail-composer-dropdown .select2-dropdown--above {
+body:has(.mail-composer) > .select2-container.select2-container--open .select2-dropdown--above {
   border-radius: var(--composer-border-radius, 4px) var(--composer-border-radius, 4px) 0 0;
   margin-bottom: -1px;
   margin-top: 0;
 }
 
-body > .select2-container.mail-composer-dropdown .select2-results__option {
+body:has(.mail-composer) > .select2-container.select2-container--open .select2-results__option {
   border-radius: 0;
   font-size: var(--composer-font-size, 14px);
   padding: 8px 12px;
