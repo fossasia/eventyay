@@ -1,11 +1,11 @@
 .organiser-form-fields {
-  --color-bg: #fff;
-  --color-border: #dee2e6;
-  --color-grey-light: #e9ecef;
-  --color-grey-lighter: #f8f9fa;
-  --color-text-muted: #6c757d;
-  --size-border-radius: 4px;
-  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --color-bg: var(--color-white);
+  --color-border: var(--color-border);
+  --color-grey-light: var(--color-grey-light);
+  --color-grey-lighter: var(--color-grey-lighter);
+  --color-text-muted: var(--color-text-muted);
+  --size-border-radius: var(--size-border-radius);
+  --shadow-light: var(--shadow-light);
 }
 
 .organiser-form-fields .cfp-option-table {
@@ -59,8 +59,8 @@
   margin: 0;
 }
 
-.organiser-form-fields .cfp-option-table .required-status-wrapper::after {
-  display: block !important;
+.organiser-form-fields.cfp-forms-page .cfp-option-table .required-status-wrapper::after {
+  display: block;
   content: '\f0d7';
   font-family: 'FontAwesome';
   position: absolute;
@@ -82,7 +82,7 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 20px;
-  border-radius: var(--size-border-radius, 4px);
+  border-radius: var(--size-border-radius);
   text-align: center;
   cursor: pointer;
   -webkit-appearance: none;
@@ -90,24 +90,12 @@
   appearance: none;
 }
 
-.organiser-form-fields .cfp-option-table select.required-status-dropdown[data-current="required"] {
-  background-color: #28a745 !important;
-  border-color: #28a745 !important;
-  color: #fff !important;
-}
-
 .organiser-form-fields .cfp-option-table .required-status-wrapper[data-current="required"]::after {
-  color: #fff !important;
-}
-
-.organiser-form-fields .cfp-option-table select.required-status-dropdown[data-current="optional"] {
-  background-color: #fff !important;
-  border-color: #6c757d !important;
-  color: #6c757d !important;
+  color: var(--color-white);
 }
 
 .organiser-form-fields .cfp-option-table .required-status-wrapper[data-current="optional"]::after {
-  color: #6c757d !important;
+  color: var(--color-text-muted);
 }
 
 .organiser-form-fields .cfp-option-table .required-status-dropdown:disabled {
@@ -127,7 +115,7 @@
 .organiser-form-fields .cfp-option-table td.text-right .btn,
 .organiser-form-fields .cfp-option-table td.text-right a.btn {
   margin: 0;
-  border-radius: var(--size-border-radius, 4px);
+  border-radius: var(--size-border-radius);
 }
 
 .organiser-form-fields .cfp-option-table td.text-right .btn + .btn,
@@ -180,21 +168,21 @@
 
 .organiser-form-fields tr[dragsort-id].drag-indicator.insert-before th,
 .organiser-form-fields tr[dragsort-id].drag-indicator.insert-before td {
-  border-top: 2px solid var(--color-primary, #007bff);
+  border-top: 2px solid var(--color-primary);
 }
 
 .organiser-form-fields tr[dragsort-id].drag-indicator.insert-after th,
 .organiser-form-fields tr[dragsort-id].drag-indicator.insert-after td {
-  border-bottom: 2px solid var(--color-primary, #007bff);
+  border-bottom: 2px solid var(--color-primary);
 }
 
 .organiser-form-fields tr.dragging th,
 .organiser-form-fields tr.dragging td {
-  background-color: var(--color-grey-lighter, #f8f9fa);
+  background-color: var(--color-grey-lighter);
 }
 
 .organiser-form-fields thead.drag-indicator.insert-after {
-  box-shadow: 0 2px var(--color-primary, #007bff);
+  box-shadow: 0 2px var(--color-primary);
 }
 
 .organiser-form-fields .cfp-forms-new-field-actions {
