@@ -1752,6 +1752,13 @@ def test_outbox_mail_form_resolves_attendee_name_placeholder(event, order, pos):
 
 def test_resolve_queued_mail_text_keeps_unbalanced_braces():
     assert resolve_queued_mail_text('Hello {name} and {', {'name': 'Ada'}) == 'Hello Ada and {'
+    assert (
+        resolve_queued_mail_text(
+            'Hi {attendee_name} {',
+            {'name': 'Ada', 'attendee_name': '{name}'},
+        )
+        == 'Hi {name} {'
+    )
 
 
 @pytest.mark.django_db
@@ -1823,3 +1830,101 @@ def test_queued_mail_uses_position_matching_recipient_email(event, order, item):
     subject = str(form.fields['subject'].initial)
     assert 'Second Person' in subject
     assert 'First Person' not in subject
+
+
+@pytest.mark.django_db
+def test_queued_mail_pairs_matching_position_with_its_order(event, item):
+    first_order = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='FIRST',
+        email='buyer-a@example.com',
+        datetime=now(),
+        locale='en',
+    )
+    second_order = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='SECOND',
+        email='buyer-b@example.com',
+        datetime=now(),
+        locale='en',
+    )
+    first_pos = OrderPosition.objects.create(
+        order=first_order,
+        product=item,
+        price=13,
+        attendee_name_parts={'_legacy': 'First Person'},
+        attendee_email='other@example.com',
+    )
+    second_pos = OrderPosition.objects.create(
+        order=second_order,
+        product=item,
+        price=13,
+        attendee_name_parts={'_legacy': 'Second Person'},
+        attendee_email='shared@example.com',
+    )
+
+    with scope(event=event):
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello {name} {code}',
+            message='Hi {name}',
+            is_draft=False,
+            sent_at=now(),
+            locale='en',
+        )
+        EmailQueueToUser.objects.create(
+            mail=queue,
+            email=second_pos.attendee_email,
+            orders=[first_order.pk],
+            positions=[first_pos.pk, second_pos.pk],
+        )
+        form = EmailQueueEditForm(instance=queue, event=event, read_only=True)
+
+    subject = str(form.fields['subject'].initial)
+    assert 'Second Person' in subject
+    assert 'SECOND' in subject
+    assert 'First Person' not in subject
+    assert 'FIRST' not in subject
+
+
+@pytest.mark.django_db
+def test_placeholder_context_uses_override_email(event, order, item):
+    first = OrderPosition.objects.create(
+        order=order,
+        product=item,
+        price=13,
+        attendee_name_parts={'_legacy': 'First Person'},
+        attendee_email='first@example.com',
+    )
+    second = OrderPosition.objects.create(
+        order=order,
+        product=item,
+        price=13,
+        attendee_name_parts={'_legacy': 'Second Person'},
+        attendee_email='second@example.com',
+    )
+
+    with scope(event=event):
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello {name}',
+            message='Hi {name}',
+            locale='en',
+        )
+        recipient = EmailQueueToUser.objects.create(
+            mail=queue,
+            email=second.attendee_email,
+            orders=[order.pk],
+            positions=[first.pk, second.pk],
+        )
+        ctx = queue.placeholder_context(recipient, email=first.attendee_email)
+
+    assert ctx['name'] == 'First Person'

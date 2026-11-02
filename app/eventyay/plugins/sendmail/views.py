@@ -990,11 +990,13 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                     'Best regards,\nThe {event_name} team'
                 )
 
+            preview_emails = form.cleaned_data.get('emails') or []
+            preview_email = preview_emails[0] if preview_emails else None
             for l in event.settings.locales:
                 with language(l, event.settings.region):
-                    context_dict = form.instance.placeholder_context() or build_email_preview_context(
-                        event, base_placeholders
-                    )
+                    context_dict = form.instance.placeholder_context(
+                        email=preview_email
+                    ) or build_email_preview_context(event, base_placeholders)
 
                     subject_text = subject.localize(l) if subject else ''
                     if not str(subject_text).strip():
