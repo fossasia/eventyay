@@ -61,10 +61,22 @@ export function pluginLanguageStreams(room) {
 	const usable = streams.filter(isUsableLanguageStreamEntry).map(entry => {
 		let captionUrl = entry.caption_ws_url
 			|| roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
-		if (!captionUrl && originalCaptionUrl && entry.language && entry.language !== ORIGINAL_LANGUAGE) {
-			const langCode = (ISO6391.getCode(entry.language) || entry.language_code || entry.language).toLowerCase()
+		if (
+			!captionUrl &&
+			entry.caption_ws_url !== '' &&
+			entry.caption_ws_url !== false &&
+			originalCaptionUrl &&
+			typeof entry.language === 'string' &&
+			entry.language.trim() &&
+			entry.language !== ORIGINAL_LANGUAGE
+		) {
+			const rawLang = entry.language.trim()
+			const code = ISO6391.getCode(rawLang)
+				|| (typeof entry.language_code === 'string' ? entry.language_code.trim() : null)
+				|| rawLang
+			const langCode = typeof code === 'string' ? code.toLowerCase() : ''
 			const floorRegex = /([/-])floor(\?.*)?$/
-			if (floorRegex.test(originalCaptionUrl)) {
+			if (langCode && floorRegex.test(originalCaptionUrl)) {
 				captionUrl = originalCaptionUrl.replace(floorRegex, `$1${langCode}$2`)
 			}
 		}

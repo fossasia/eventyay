@@ -209,7 +209,6 @@ export default {
 				const whepUrl = getWhepUrlForLanguage(entry.language, this.effectiveFallbackEntries)
 				entry.url = whepUrl
 				entry.youtube_id = whepUrl
-				entry.use_video = !!whepUrl
 			}
 		},
 		autoPopulateEntries() {
@@ -222,7 +221,6 @@ export default {
 					if (whepUrl) {
 						entry.url = whepUrl
 						entry.youtube_id = whepUrl
-						entry.use_video = true
 					}
 				}
 			}

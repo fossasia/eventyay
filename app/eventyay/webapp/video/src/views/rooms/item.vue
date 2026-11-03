@@ -307,8 +307,25 @@ export default {
 			if (!lang?.caption_ws_url) return null
 			// VoxBento caption WS is public; do not require listenerToken (often unavailable with OAuth-only).
 			if (this.listenerToken) {
-				const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
-				return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
+				let isTrusted = false
+				try {
+					const captionHost = new URL(lang.caption_ws_url, window.location.href).host
+					const roomStreams = Array.isArray(this.room?.interpretation_language_streams)
+						? this.room.interpretation_language_streams
+						: []
+					const origUrl = roomStreams.find(entry => entry?.language === 'Original')?.caption_ws_url
+					const origHost = origUrl ? new URL(origUrl, window.location.href).host : null
+					const apiHost = this.room ? new URL(interpretationApiUrl(this.room), window.location.href).host : null
+					if (captionHost === origHost || captionHost === apiHost) {
+						isTrusted = true
+					}
+				} catch (e) {
+					isTrusted = false
+				}
+				if (isTrusted) {
+					const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
+					return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
+				}
 			}
 			return lang.caption_ws_url
 		},
