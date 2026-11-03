@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -89,9 +90,12 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
         try:
-            instance = serializer.save(room=room)
-            instance.refresh_from_db()
-            log_event('video', 'stream_schedule.create', OUTCOME_SUCCESS, event_id=room.event_id, object_id=instance.pk)
+            with transaction.atomic():
+                instance = serializer.save(room=room)
+                instance.refresh_from_db()
+            log_event(
+                'video', 'stream_schedule.create', OUTCOME_SUCCESS, event_id=room.event_id, object_id=instance.pk
+            )
             publish_room_stream_schedule(instance.room)
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
@@ -115,9 +119,13 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
         try:
-            instance = serializer.save()
-            instance.refresh_from_db()
-            log_event('video', 'stream_schedule.update', OUTCOME_SUCCESS, event_id=instance.room.event_id, object_id=instance.pk)
+            with transaction.atomic():
+                instance = serializer.save()
+                instance.refresh_from_db()
+            log_event(
+                'video', 'stream_schedule.update', OUTCOME_SUCCESS,
+                event_id=instance.room.event_id, object_id=instance.pk,
+            )
             publish_room_stream_schedule(instance.room)
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)

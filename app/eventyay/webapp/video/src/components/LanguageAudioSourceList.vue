@@ -206,9 +206,14 @@ export default {
 		onLanguageChange(entry) {
 			if (!entry) return
 			if (this.isVoxbento && entry.language) {
-				const whepUrl = getWhepUrlForLanguage(entry.language, this.effectiveFallbackEntries)
-				entry.url = whepUrl
-				entry.youtube_id = whepUrl
+				const otherFallback = (this.effectiveFallbackEntries || []).filter(e => e !== entry)
+				const whepUrl = getWhepUrlForLanguage(entry.language, otherFallback)
+				const isAutoPopulated = !entry.url || entry.url.includes('/whep') || entry.is_auto_populated
+				if (isAutoPopulated) {
+					entry.url = whepUrl || ''
+					entry.youtube_id = whepUrl || ''
+					entry.is_auto_populated = Boolean(whepUrl)
+				}
 			}
 		},
 		autoPopulateEntries() {
@@ -217,10 +222,12 @@ export default {
 			if (!fallback || fallback.length === 0) return
 			for (const entry of this.entries) {
 				if (entry.language && !entry.url && !entry.youtube_id) {
-					const whepUrl = getWhepUrlForLanguage(entry.language, fallback)
+					const otherFallback = fallback.filter(e => e !== entry)
+					const whepUrl = getWhepUrlForLanguage(entry.language, otherFallback)
 					if (whepUrl) {
 						entry.url = whepUrl
 						entry.youtube_id = whepUrl
+						entry.is_auto_populated = true
 					}
 				}
 			}

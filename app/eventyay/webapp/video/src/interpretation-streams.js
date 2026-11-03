@@ -30,6 +30,7 @@ function getScheduleConfig(schedule) {
 		try {
 			return JSON.parse(schedule.config)
 		} catch (e) {
+			console.warn('Failed to parse schedule config JSON:', schedule.id, e)
 			return null
 		}
 	}
@@ -82,11 +83,12 @@ export function pluginLanguageStreams(room) {
 				captionUrl = originalCaptionUrl.replace(floorRegex, `$1${langCode}$2`)
 			}
 		}
-		const mappedEntry = captionUrl ? { ...entry, caption_ws_url: captionUrl } : { ...entry }
+		const baseEntry = { ...entry }
 		if (fromSchedule) {
-			mappedEntry.is_schedule_stream = true
+			delete baseEntry.caption_ws_url
+			baseEntry.is_schedule_stream = true
 		}
-		return mappedEntry
+		return captionUrl ? { ...baseEntry, caption_ws_url: captionUrl } : baseEntry
 	})
 	return ensureOriginalLanguageEntry(usable, originalCaptionUrl)
 }
