@@ -305,6 +305,9 @@ export default {
 			if (!this.ccEnabled) return null
 			const lang = this.pluginLanguages.find(l => l.language === this.selectedCcLanguage)
 			if (!lang?.caption_ws_url) return null
+			if (lang.is_schedule_stream) {
+				return lang.caption_ws_url
+			}
 			// VoxBento caption WS is public; do not require listenerToken (often unavailable with OAuth-only).
 			if (this.listenerToken) {
 				let isTrusted = false
@@ -520,7 +523,7 @@ export default {
 		},
 		initializeLanguages() {
 			this.pluginLanguages = pluginLanguageStreams(this.room)
-			if (this.selectedCcLanguage !== 'Original' && !this.pluginLanguages.some(l => l.language === this.selectedCcLanguage && l.caption_ws_url)) {
+			if (!this.pluginLanguages.some(l => l.language === this.selectedCcLanguage && l.caption_ws_url)) {
 				this.selectedCcLanguage = firstCaptionLanguage(this.pluginLanguages) || 'Original'
 			}
 			this.clearStaleTranslation()

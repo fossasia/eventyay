@@ -216,7 +216,7 @@ export default {
 			const fallback = this.effectiveFallbackEntries
 			if (!fallback || fallback.length === 0) return
 			for (const entry of this.entries) {
-				if (entry.language && !entry.url) {
+				if (entry.language && !entry.url && !entry.youtube_id) {
 					const whepUrl = getWhepUrlForLanguage(entry.language, fallback)
 					if (whepUrl) {
 						entry.url = whepUrl

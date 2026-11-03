@@ -46,9 +46,10 @@ export function pluginLanguageStreams(room) {
 		|| config?.languageUrls
 		|| activeOrUpcomingSchedule?.language_streams
 	const usableScheduleStreams = Array.isArray(scheduleStreams)
-		? scheduleStreams.filter(isUsableLanguageStreamEntry)
+		? scheduleStreams.filter(isUsableAudioTranslationEntry)
 		: []
-	const streams = usableScheduleStreams.length > 0
+	const fromSchedule = usableScheduleStreams.length > 0
+	const streams = fromSchedule
 		? usableScheduleStreams
 		: room?.interpretation_language_streams
 	if (!Array.isArray(streams)) {
@@ -59,12 +60,13 @@ export function pluginLanguageStreams(room) {
 		: []
 	const originalCaptionUrl = roomStreams.find(entry => entry?.language === ORIGINAL_LANGUAGE)?.caption_ws_url
 	const usable = streams.filter(isUsableLanguageStreamEntry).map(entry => {
-		let captionUrl = entry.caption_ws_url
-			|| roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
+		// Schedule configurations must not inject arbitrary caption WebSocket URLs
+		let captionUrl = fromSchedule
+			? roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
+			: (entry.caption_ws_url || roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url)
 		if (
 			!captionUrl &&
-			entry.caption_ws_url !== '' &&
-			entry.caption_ws_url !== false &&
+			(!fromSchedule ? (entry.caption_ws_url !== '' && entry.caption_ws_url !== false) : true) &&
 			originalCaptionUrl &&
 			typeof entry.language === 'string' &&
 			entry.language.trim() &&
@@ -80,7 +82,11 @@ export function pluginLanguageStreams(room) {
 				captionUrl = originalCaptionUrl.replace(floorRegex, `$1${langCode}$2`)
 			}
 		}
-		return captionUrl ? { ...entry, caption_ws_url: captionUrl } : entry
+		const mappedEntry = captionUrl ? { ...entry, caption_ws_url: captionUrl } : { ...entry }
+		if (fromSchedule) {
+			mappedEntry.is_schedule_stream = true
+		}
+		return mappedEntry
 	})
 	return ensureOriginalLanguageEntry(usable, originalCaptionUrl)
 }
