@@ -1,3 +1,4 @@
+import ISO6391 from 'iso-639-1'
 import { isUsableAudioTranslationEntry } from './lib/validators.js'
 
 const ORIGINAL_LANGUAGE = 'Original'
@@ -23,13 +24,27 @@ function ensureOriginalLanguageEntry(languages, originalCaptionUrl) {
 	return list
 }
 
+function getScheduleConfig(schedule) {
+	if (!schedule?.config) return null
+	if (typeof schedule.config === 'string') {
+		try {
+			return JSON.parse(schedule.config)
+		} catch (e) {
+			return null
+		}
+	}
+	return schedule.config
+}
+
 export function pluginLanguageStreams(room) {
 	if (!roomUsesPluginLanguageStreams(room)) {
 		return []
 	}
-	const scheduleStreams = room?.currentStream?.config?.language_streams
-		|| room?.currentStream?.config?.languageUrls
-		|| room?.currentStream?.language_streams
+	const activeOrUpcomingSchedule = room?.currentStream || room?.upcomingStream
+	const config = getScheduleConfig(activeOrUpcomingSchedule)
+	const scheduleStreams = config?.language_streams
+		|| config?.languageUrls
+		|| activeOrUpcomingSchedule?.language_streams
 	const usableScheduleStreams = Array.isArray(scheduleStreams)
 		? scheduleStreams.filter(isUsableLanguageStreamEntry)
 		: []
@@ -42,12 +57,16 @@ export function pluginLanguageStreams(room) {
 	const roomStreams = Array.isArray(room?.interpretation_language_streams)
 		? room.interpretation_language_streams
 		: []
+	const originalCaptionUrl = roomStreams.find(entry => entry?.language === ORIGINAL_LANGUAGE)?.caption_ws_url
 	const usable = streams.filter(isUsableLanguageStreamEntry).map(entry => {
-		const captionUrl = entry.caption_ws_url
+		let captionUrl = entry.caption_ws_url
 			|| roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
+		if (!captionUrl && originalCaptionUrl && entry.language && entry.language !== ORIGINAL_LANGUAGE) {
+			const langCode = (ISO6391.getCode(entry.language) || entry.language_code || entry.language).toLowerCase()
+			captionUrl = originalCaptionUrl.replace(/([/-])floor$/, `$1${langCode}`)
+		}
 		return captionUrl ? { ...entry, caption_ws_url: captionUrl } : entry
 	})
-	const originalCaptionUrl = roomStreams.find(entry => entry?.language === ORIGINAL_LANGUAGE)?.caption_ws_url
 	return ensureOriginalLanguageEntry(usable, originalCaptionUrl)
 }
 

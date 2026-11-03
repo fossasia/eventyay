@@ -359,7 +359,12 @@ export default {
 			immediate: true
 		},
 		'room.currentStream': {
-			handler: 'initializeLanguages'
+			handler: 'initializeLanguages',
+			deep: true
+		},
+		'room.upcomingStream': {
+			handler: 'initializeLanguages',
+			deep: true
 		},
 		'room.interpretation_language_streams': {
 			handler: 'initializeLanguages'
@@ -491,6 +496,9 @@ export default {
 		},
 		initializeLanguages() {
 			this.pluginLanguages = pluginLanguageStreams(this.room)
+			if (this.selectedCcLanguage !== 'Original' && !this.pluginLanguages.some(l => l.language === this.selectedCcLanguage)) {
+				this.selectedCcLanguage = firstCaptionLanguage(this.pluginLanguages) || 'Original'
+			}
 			this.clearStaleTranslation()
 		},
 		getLanguageForTranslation(translationConfig, languages) {

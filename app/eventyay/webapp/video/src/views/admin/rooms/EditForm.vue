@@ -307,6 +307,7 @@ export default {
 						roomId,
 						this.interpretationAdmin.languageStreams
 					)
+					await this.loadInterpretationLanguageStreams()
 				}
 				this.saving = false
 				if (this.creating) {

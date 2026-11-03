@@ -90,6 +90,7 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
         try:
             instance = serializer.save(room=room)
+            instance.refresh_from_db()
             log_event('video', 'stream_schedule.create', OUTCOME_SUCCESS, event_id=room.event_id, object_id=instance.pk)
             publish_room_stream_schedule(instance.room)
             event_id = self.event.id if self.event else instance.room.event_id
@@ -115,6 +116,7 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
         try:
             instance = serializer.save()
+            instance.refresh_from_db()
             log_event('video', 'stream_schedule.update', OUTCOME_SUCCESS, event_id=instance.room.event_id, object_id=instance.pk)
             publish_room_stream_schedule(instance.room)
             event_id = self.event.id if self.event else instance.room.event_id
