@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.db import transaction
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 
 from eventyay.api.mixins import PretalxSerializer
@@ -55,8 +56,12 @@ class SpeakerInformationSerializer(FlexFieldsSerializerMixin, PretalxSerializer)
         return instance
 
     def update(self, instance, validated_data):
+        """Save the field changes and the new resource together, so a failed file
+        save leaves the entry unchanged."""
         resource = validated_data.pop("resource", None)
-        instance = super().update(instance, validated_data)
-        if resource:
-            instance.resource.update(Path(resource.name).name, resource)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if resource:
+                instance.resource.save(Path(resource.name).name, resource, save=False)
+                instance.save(update_fields=("resource",))
         return instance
