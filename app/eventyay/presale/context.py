@@ -8,7 +8,7 @@ from django.utils.translation import get_language_info
 from django_scopes import get_scope
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.models.page import Page
+from eventyay.base.models.page import get_visible_system_pages
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_event_organiser, user_has_cfp_submissions
 from eventyay.helpers.i18n import (
@@ -43,6 +43,7 @@ def contextprocessor(request):
 
 
 def _safe_language_info(code):
+    """Retrieve language metadata dictionary, falling back to basic code dict on error."""
     try:
         return get_language_info(code)
     except KeyError:
@@ -50,6 +51,7 @@ def _safe_language_info(code):
 
 
 def _default_context(request):
+    """Build the default template context for presale storefront views."""
     if request.path.startswith('/control'):
         return {}
 
@@ -139,9 +141,8 @@ def _default_context(request):
     elif hasattr(request, 'organizer'):
         if not hasattr(request, 'event'):
             # Re-generate CSS if missing or checksum is cleared.
-            needs_regen = (
-                not request.organizer.settings.get('presale_css_file')
-                or not request.organizer.settings.get('presale_css_checksum')
+            needs_regen = not request.organizer.settings.get('presale_css_file') or not request.organizer.settings.get(
+                'presale_css_checksum'
             )
             if needs_regen:
                 lock_key = f'presale:regenerate_organizer_css:{request.organizer.pk}'
@@ -203,13 +204,19 @@ def _default_context(request):
     ctx['show_organizer_area'] = False
     ctx['user_has_cfp_submissions'] = False
     ctx['talks_published'] = False
-    if hasattr(request, 'user') and request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
+    if (
+        hasattr(request, 'user')
+        and request.user
+        and request.user.is_authenticated
+        and hasattr(request, 'event')
+        and request.event
+    ):
         ctx['show_organizer_area'] = is_event_organiser(request.user, request, request.event)
         ctx['talks_published'] = request.event.talks_published
         if ctx['talks_published']:
             ctx['user_has_cfp_submissions'] = user_has_cfp_submissions(request, request.event)
 
-    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
-    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
+    ctx['show_link_in_header_for_all_pages'] = get_visible_system_pages('link_in_header', request=request)
+    ctx['show_link_in_footer_for_all_pages'] = get_visible_system_pages('link_in_footer', request=request)
 
     return ctx

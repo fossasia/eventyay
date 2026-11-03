@@ -7,15 +7,16 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView
 from django_scopes import scopes_disabled
-from eventyay.common.views.mixins import PaginationMixin
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event, Organizer, OrganizerFollower
-from eventyay.base.models.page import Page
+from eventyay.base.models.page import get_visible_start_page_pages
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
+from eventyay.common.views.mixins import PaginationMixin
 from eventyay.eventyay_common.navigation import get_global_navigation
 from eventyay.multidomain.urlreverse import eventreverse
+
 
 _SEARCH_PAGE_LIMIT = 200
 
@@ -120,22 +121,19 @@ class StartPageView(TemplateView):
 
 def _common_base_context(request):
     """Return shared context variables for the three dedicated event-list views."""
+    settings_obj = GlobalSettingsObject().settings
     ctx = {
         'site_name': settings.INSTANCE_NAME,
         'staff_session': is_admin_mode_active(request),
+        'global_settings': settings_obj,
     }
     ctx['nav_items'] = get_global_navigation(request) if request.user.is_authenticated else []
-    ctx['show_link_in_header_for_start_page'] = Page.objects.filter(
-        link_on_website_start_page=True,
-        link_in_header=True,
+    ctx['show_link_in_header_for_start_page'] = get_visible_start_page_pages(
+        'link_in_header', gs=settings_obj, request=request
     )
-    ctx['show_link_in_footer_for_start_page'] = Page.objects.filter(
-        link_on_website_start_page=True,
-        link_in_footer=True,
+    ctx['show_link_in_footer_for_start_page'] = get_visible_start_page_pages(
+        'link_in_footer', gs=settings_obj, request=request
     )
-
-    settings_obj = GlobalSettingsObject().settings
-    ctx['global_settings'] = settings_obj
     header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
     if header_image.startswith('file://'):
         header_image = header_image[7:]

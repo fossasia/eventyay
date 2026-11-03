@@ -1,5 +1,4 @@
 from importlib import import_module
-from urllib.parse import urljoin
 
 from django.conf import settings
 from django.db.models import Q
@@ -9,7 +8,7 @@ from django_scopes import scope
 
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.auth import StaffSession
-from eventyay.base.models.page import Page
+from eventyay.base.models.page import get_visible_system_pages
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.navigation import (
     get_admin_navigation,
@@ -17,6 +16,7 @@ from eventyay.control.navigation import (
     get_global_navigation,
 )
 from eventyay.eventyay_common.navigation import get_organizer_navigation
+from eventyay.eventyay_common.permissions import get_cached_event_dashboard_access
 
 from ..eventyay_common.utils import EventCreatedFor
 from ..helpers.i18n import (
@@ -27,7 +27,7 @@ from ..helpers.i18n import (
 from ..helpers.plugin_enable import is_video_enabled
 from ..multidomain.urlreverse import get_event_domain
 from .signals import html_head, nav_topbar
-from eventyay.eventyay_common.permissions import get_cached_event_dashboard_access
+
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -42,6 +42,7 @@ def contextprocessor(request):
 
 
 def _default_context(request):
+    """Build the default template context for control views."""
     try:
         url = resolve(request.path_info)
     except Resolver404:
@@ -69,8 +70,7 @@ def _default_context(request):
         ctx['is_meetup_event'] = is_meetup
         ctx['talk_edit_url'] = reverse(
             'orga:event.dashboard',
-            kwargs={'organizer': request.event.organizer.slug,
-                    'event': request.event.slug},
+            kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug},
         )
         ctx['is_video_enabled'] = is_video_enabled(request.event)
         ctx['is_talk_event_created'] = False
@@ -85,9 +85,7 @@ def _default_context(request):
     if getattr(request, 'event', None) and hasattr(request, 'organizer') and request.user.is_authenticated:
         ctx['nav_items'] = get_event_navigation(request)
 
-        access = get_cached_event_dashboard_access(
-            request, request.user, request.organizer, request.event
-        )
+        access = get_cached_event_dashboard_access(request, request.user, request.organizer, request.event)
         ctx['has_ticket_access'] = access['has_ticket_access']
         ctx['has_talk_access'] = access['has_talk_access']
         ctx['has_video_access'] = access['has_video_access']
@@ -110,13 +108,13 @@ def _default_context(request):
             ctx['complain_testmode_orders'] = False
 
         if not request.event.live and ctx['has_domain']:
-            child_sess = request.session.get('child_session_{}'.format(request.event.pk))
+            child_sess = request.session.get(f'child_session_{request.event.pk}')
             s = SessionStore()
             if not child_sess or not s.exists(child_sess):
-                s['eventyay_event_access_{}'.format(request.event.pk)] = request.session.session_key
+                s[f'eventyay_event_access_{request.event.pk}'] = request.session.session_key
                 s.create()
                 ctx['new_session'] = s.session_key
-                request.session['child_session_{}'.format(request.event.pk)] = s.session_key
+                request.session[f'child_session_{request.event.pk}'] = s.session_key
                 request.session['event_access'] = True
             else:
                 ctx['new_session'] = child_sess
@@ -168,7 +166,7 @@ def _default_context(request):
 
     ctx['talk_hostname'] = settings.TALK_HOSTNAME
 
-    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
-    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
+    ctx['show_link_in_header_for_all_pages'] = get_visible_system_pages('link_in_header', request=request)
+    ctx['show_link_in_footer_for_all_pages'] = get_visible_system_pages('link_in_footer', request=request)
 
     return ctx
