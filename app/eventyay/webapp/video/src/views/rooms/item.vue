@@ -308,20 +308,27 @@ export default {
 			// VoxBento caption WS is public; do not require listenerToken (often unavailable with OAuth-only).
 			if (this.listenerToken) {
 				let isTrusted = false
+				let captionHost = null
 				try {
-					const captionHost = new URL(lang.caption_ws_url, window.location.href).host
-					const roomStreams = Array.isArray(this.room?.interpretation_language_streams)
-						? this.room.interpretation_language_streams
-						: []
-					const origUrl = roomStreams.find(entry => entry?.language === 'Original')?.caption_ws_url
-					const origHost = origUrl ? new URL(origUrl, window.location.href).host : null
-					const apiHost = this.room ? new URL(interpretationApiUrl(this.room), window.location.href).host : null
-					if (captionHost === origHost || captionHost === apiHost) {
-						isTrusted = true
-					}
+					captionHost = new URL(lang.caption_ws_url, window.location.href).host
 				} catch (e) {
-					isTrusted = false
+					console.warn('Failed to parse caption WebSocket URL:', lang.caption_ws_url, e)
 				}
+
+				let apiHost = null
+				try {
+					const apiUrl = this.room?.id
+						? interpretationApiUrl(this.$store, this.room.id)
+						: window.location.href
+					apiHost = new URL(apiUrl, window.location.href).host
+				} catch (e) {
+					console.warn('Failed to parse interpretation API URL:', e)
+				}
+
+				if (captionHost && apiHost && captionHost === apiHost) {
+					isTrusted = true
+				}
+
 				if (isTrusted) {
 					const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
 					return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
