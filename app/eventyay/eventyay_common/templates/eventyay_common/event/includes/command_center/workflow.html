@@ -1,0 +1,32 @@
+{% load i18n %}
+<div class="dashboard-timeline-container">
+  <div class="dashboard-timeline">
+    {% for step in workflow_timeline %}
+      <div class="timeline-step {{ step.phase }}">
+        {% if step.url %}
+          <a href="{{ step.url }}" class="timeline-step-content" title="{{ step.name }}: {{ step.status_text }}">
+            <div class="timeline-step-icon">
+              <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'circle-o' }}{% endif %}" aria-hidden="true"></span>
+            </div>
+            <div class="timeline-step-label">{{ step.name }}</div>
+            <span class="sr-only">{{ step.status_text }}</span>
+            {% if step.summary %}
+              <div class="timeline-step-summary">{{ step.summary }}</div>
+            {% endif %}
+          </a>
+        {% else %}
+          <div class="timeline-step-content" title="{{ step.name }}: {{ step.status_text }}">
+            <div class="timeline-step-icon">
+              <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'circle-o' }}{% endif %}" aria-hidden="true"></span>
+            </div>
+            <div class="timeline-step-label">{{ step.name }}</div>
+            <span class="sr-only">{{ step.status_text }}</span>
+            {% if step.summary %}
+              <div class="timeline-step-summary">{{ step.summary }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>

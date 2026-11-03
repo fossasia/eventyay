@@ -1,0 +1,53 @@
+{% load i18n eventsignal %}
+<section class="cc-section" aria-labelledby="cc-components-title">
+  <div class="cc-section-header">
+    <h2 id="cc-components-title" class="cc-section-title">
+      <span class="fa fa-th-large text-primary" aria-hidden="true"></span>
+      {% trans 'Component dashboards' %}
+    </h2>
+  </div>
+
+  <div class="cc-component-grid">
+    {% for card in component_cards %}
+      <article class="cc-component-card cc-card-{{ card.id }}">
+        <div class="cc-component-header">
+          <h3 class="cc-component-title">
+            <span class="fa fa-{{ card.icon|default:'cube' }}" aria-hidden="true"></span>
+            <span>{{ card.name }}</span>
+          </h3>
+          <span class="cc-component-pill cc-component-pill-{{ card.status_class|default:'off' }}">
+            {{ card.status }}
+          </span>
+        </div>
+
+        <div class="cc-component-body">
+          {% if card.metrics %}
+            <div class="cc-component-metrics">
+              {% for m in card.metrics %}
+                <div class="cc-component-metric-item">
+                  <span class="cc-component-metric-val">{{ m.value }}</span>
+                  <span class="cc-component-metric-lbl">{{ m.label }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% elif card.empty_state %}
+            <div class="cc-component-empty">
+              {{ card.empty_state }}
+            </div>
+          {% endif %}
+        </div>
+
+        {% if card.btn_text and card.url %}
+          <div class="cc-component-footer">
+            <a href="{{ card.url }}" class="cc-component-btn">
+              <span>{{ card.btn_text }}</span>
+              <span class="fa fa-arrow-right" aria-hidden="true"></span>
+            </a>
+          </div>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+
+  {% eventsignal request.event 'eventyay.control.signals.event_dashboard_components' request=request %}
+</section>
