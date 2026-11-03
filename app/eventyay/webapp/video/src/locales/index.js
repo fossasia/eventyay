@@ -83,6 +83,10 @@ export const locales = [{
 	nativeLabel: 'ગુજરાતી',
 	englishLabel: 'Gujarati'
 }, {
+	code: 'ha',
+	nativeLabel: 'Hausa',
+	englishLabel: 'Hausa'
+}, {
 	code: 'id',
 	nativeLabel: 'Bahasa Indonesia',
 	englishLabel: 'Indonesian'
