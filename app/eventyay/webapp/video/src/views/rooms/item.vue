@@ -496,7 +496,7 @@ export default {
 		},
 		initializeLanguages() {
 			this.pluginLanguages = pluginLanguageStreams(this.room)
-			if (this.selectedCcLanguage !== 'Original' && !this.pluginLanguages.some(l => l.language === this.selectedCcLanguage)) {
+			if (this.selectedCcLanguage !== 'Original' && !this.pluginLanguages.some(l => l.language === this.selectedCcLanguage && l.caption_ws_url)) {
 				this.selectedCcLanguage = firstCaptionLanguage(this.pluginLanguages) || 'Original'
 			}
 			this.clearStaleTranslation()

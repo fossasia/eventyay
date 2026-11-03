@@ -63,7 +63,10 @@ export function pluginLanguageStreams(room) {
 			|| roomStreams.find(roomEntry => roomEntry?.language === entry.language)?.caption_ws_url
 		if (!captionUrl && originalCaptionUrl && entry.language && entry.language !== ORIGINAL_LANGUAGE) {
 			const langCode = (ISO6391.getCode(entry.language) || entry.language_code || entry.language).toLowerCase()
-			captionUrl = originalCaptionUrl.replace(/([/-])floor$/, `$1${langCode}`)
+			const floorRegex = /([/-])floor(\?.*)?$/
+			if (floorRegex.test(originalCaptionUrl)) {
+				captionUrl = originalCaptionUrl.replace(floorRegex, `$1${langCode}$2`)
+			}
 		}
 		return captionUrl ? { ...entry, caption_ws_url: captionUrl } : entry
 	})
