@@ -384,11 +384,13 @@ class EventCreateView(TemplateView):
 
         return initial_form
 
-    @cached_property
+    @property
     def clone_from(self):
-        if hasattr(self, '_clone_from'):
-            return self._clone_from
-        return None
+        return getattr(self, '_clone_from', None)
+
+    @clone_from.setter
+    def clone_from(self, value):
+        self._clone_from = value
 
     @property
     def is_meetup_request(self):
@@ -398,15 +400,18 @@ class EventCreateView(TemplateView):
             or is_meetup_event(self.clone_from)
         )
 
-    def dispatch(self, request, *args, **kwargs):
-        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
-        if is_series and not is_event_series_creation_enabled(request):
-            raise PermissionDenied(_('Event series creation is currently disabled.'))
+    def check_meetup_permissions(self, request):
         if self.is_meetup_request:
             if not is_meetup_creation_enabled(request):
                 raise PermissionDenied(_('Meetup creation is currently disabled.'))
             if not self.get_create_organizer_queryset().exists():
                 raise PermissionDenied(_('You do not have permission to create meetup events.'))
+
+    def dispatch(self, request, *args, **kwargs):
+        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
+        if is_series and not is_event_series_creation_enabled(request):
+            raise PermissionDenied(_('Event series creation is currently disabled.'))
+        self.check_meetup_permissions(request)
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -559,6 +564,15 @@ class EventCreateView(TemplateView):
             basics_post = legacy_data.get('basics')
             if not basics_post:
                 return redirect(request.path)
+            copy_from_event = request.POST.get('copy-copy_from_event')
+            if copy_from_event:
+                try:
+                    self.clone_from = self.get_clone_queryset().get(pk=copy_from_event)
+                except Event.DoesNotExist:
+                    self.clone_from = None
+            else:
+                self.clone_from = None
+            self.check_meetup_permissions(request)
             basics_form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
             basics_form = basics_form_class(
                 data=basics_post,
@@ -573,12 +587,6 @@ class EventCreateView(TemplateView):
                 is_video_creation=foundation_form.cleaned_data.get('is_video_creation', True),
                 restrict_locale_choices=False,
             )
-            copy_from_event = request.POST.get('copy-copy_from_event')
-            if copy_from_event:
-                try:
-                    self._clone_from = self.get_clone_queryset().get(pk=copy_from_event)
-                except Event.DoesNotExist:
-                    self._clone_from = None
             if basics_form.is_valid():
                 request.session.pop(self.legacy_session_key, None)
                 return self.create_event(foundation_form, basics_form)
@@ -635,8 +643,9 @@ class EventCreateView(TemplateView):
 
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
-            event.testmode = False
-            event.private_testmode = False
+            # Defensive safeguard: ensure newly created draft events initialize
+            # in an unpublished state before any clone data copying or provisioning.
+            event.reset_publishing_and_testmode_state()
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
@@ -708,7 +717,12 @@ class EventCreateView(TemplateView):
                     payment_stripe_secret_key=basics_data.get('payment_stripe_secret_key', ''),
                     payment_stripe_merchant_country=basics_data.get('payment_stripe_merchant_country', ''),
                     is_private=is_private,
+                    is_clone=bool(self.clone_from),
                 )
+                if self.clone_from:
+                    # Defensive safeguard: keep meetup provisioning from publishing cloned events
+                    event.reset_publishing_and_testmode_state()
+                    event.save(update_fields=['live', 'tickets_published', 'talks_published', 'testmode', 'private_testmode'])
 
         return redirect(
             reverse(
@@ -1614,8 +1628,9 @@ class EventCloneView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             new_event.plugins = old_event.plugins
         new_event.has_subevents = old_event.has_subevents
         new_event.is_video_creation = old_event.is_video_creation
-        new_event.testmode = False
-        new_event.private_testmode = False
+        # Defensive safeguard: ensure clone starts in an unpublished draft state
+        # before copy_data_from enforces model-level clone state.
+        new_event.reset_publishing_and_testmode_state()
         
         new_event.timezone = form.cleaned_data['timezone']
         new_event.locale = form.cleaned_data['locale']

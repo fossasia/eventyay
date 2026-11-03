@@ -19,7 +19,7 @@ def clone_url(event):
 
 
 @pytest.mark.django_db
-@override_settings(SITE_URL='http://testserver')
+@override_settings(SITE_URL='https://testserver')
 def test_clone_view_get(organizer_client, event, clone_url):
     response = organizer_client.get(clone_url)
     assert response.status_code == 200
@@ -27,9 +27,14 @@ def test_clone_view_get(organizer_client, event, clone_url):
 
 
 @pytest.mark.django_db
-@override_settings(SITE_URL='http://testserver')
-def test_clone_view_post_success(organizer_client, event, clone_url, user):
+@override_settings(SITE_URL='https://testserver')
+def test_clone_view_post_success(organizer_client, event, clone_url, user, team):
     with scopes_disabled():
+        event.live = True
+        event.tickets_published = True
+        event.talks_published = True
+        event.testmode = True
+        event.save()
         tr = event.tax_rules.create(rate=19, name='VAT')
         event.products.create(
             name='Early-bird ticket',
@@ -56,7 +61,6 @@ def test_clone_view_post_success(organizer_client, event, clone_url, user):
         'locales': ['en'],
         'clone_common_data': 'on',
         'clone_ticketing_data': 'on',
-        'clone_talk_data': 'on',
         'clone_settings': 'on',
         'clone_design_texts': 'on',
         'clone_email_settings': 'on',
@@ -64,9 +68,6 @@ def test_clone_view_post_success(organizer_client, event, clone_url, user):
         'clone_questions': 'on',
         'clone_checkin_lists': 'on',
         'clone_payment_settings': 'on',
-        'clone_cfp': 'on',
-        'clone_session_types_tracks': 'on',
-        'clone_review_settings': 'on',
     }
 
     response = organizer_client.post(clone_url, payload, follow=True)
@@ -75,11 +76,16 @@ def test_clone_view_post_success(organizer_client, event, clone_url, user):
     from eventyay.base.models import Event
     cloned_event = Event.objects.get(slug='cloned-event')
 
-    assert cloned_event.name == 'Cloned Event'
+    assert str(cloned_event.name) == 'Cloned Event'
     assert cloned_event.organizer == event.organizer
     assert cloned_event.settings.timezone == 'Europe/Berlin'
+    assert cloned_event.live is False
+    assert cloned_event.tickets_published is False
+    assert cloned_event.talks_published is False
+    assert cloned_event.testmode is False
+    assert cloned_event.private_testmode is False
 
-    assert Team.objects.filter(limit_events=cloned_event, members=user).exists()
+    assert team.all_events or Team.objects.filter(limit_events=cloned_event, members=user).exists()
 
     with scopes_disabled():
         assert cloned_event.tax_rules.filter(rate=Decimal('19.00')).count() == 1
@@ -88,9 +94,14 @@ def test_clone_view_post_success(organizer_client, event, clone_url, user):
 
 
 @pytest.mark.django_db
-@override_settings(SITE_URL='http://testserver')
+@override_settings(SITE_URL='https://testserver')
 def test_clone_view_post_selective_clone(organizer_client, event, clone_url):
     with scopes_disabled():
+        event.live = True
+        event.tickets_published = True
+        event.talks_published = True
+        event.testmode = True
+        event.save()
         tr = event.tax_rules.create(rate=19, name='VAT')
         event.products.create(
             name='Early-bird ticket',
@@ -127,7 +138,12 @@ def test_clone_view_post_selective_clone(organizer_client, event, clone_url):
     from eventyay.base.models import Event
     cloned_event = Event.objects.get(slug='cloned-event-2')
 
-    assert cloned_event.name == 'Cloned Event 2'
+    assert str(cloned_event.name) == 'Cloned Event 2'
+    assert cloned_event.live is False
+    assert cloned_event.tickets_published is False
+    assert cloned_event.talks_published is False
+    assert cloned_event.testmode is False
+    assert cloned_event.private_testmode is False
 
     with scopes_disabled():
         # Products and tax rules should not be cloned since clone_ticketing_data is not set

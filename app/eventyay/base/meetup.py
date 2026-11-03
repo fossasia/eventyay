@@ -347,11 +347,11 @@ def _save_meetup_header_image(event, header_image, crop_box=None):
         event.settings.set(setting_key, f'file://{file_path}')
 
 
-def set_meetup_privacy(event, is_private: bool):
+def set_meetup_privacy(event, is_private: bool, is_clone: bool = False):
     """Configure meetup visibility flags for public or private operation."""
     with transaction.atomic():
-        event.live = True
-        event.tickets_published = True
+        event.live = False if is_clone else True
+        event.tickets_published = False if is_clone else True
         event.private_testmode = False
         event.is_public = not is_private
         event.startpage_visible = not is_private
@@ -376,9 +376,10 @@ def provision_meetup_event(
     payment_stripe_secret_key='',
     payment_stripe_merchant_country='',
     is_private=False,
+    is_clone=False,
 ):
     event.settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
-    set_meetup_privacy(event, is_private=is_private)
+    set_meetup_privacy(event, is_private=is_private, is_clone=is_clone)
 
     if frontpage_text is not None:
         event.settings.set('frontpage_text', frontpage_text)
