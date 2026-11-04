@@ -306,7 +306,7 @@ export default {
 				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - this.getStickyClearance()
 				this.scrollParent.scrollTop = top
 			} else {
-				window.scroll({top: el.offsetTop + this.getOffsetTop() - this.getStickyClearance()})
+				window.scroll({top: el.getBoundingClientRect().top + window.scrollY - this.getStickyClearance()})
 			}
 		},
 		rebindDayTracking () {

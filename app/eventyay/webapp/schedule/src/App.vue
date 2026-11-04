@@ -1986,6 +1986,8 @@ export default {
 		--pretalx-sticky-top-offset: 0px
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
+		> .c-linear-schedule
+			flex: none
 	&:fullscreen
 		fullscreen-root()
 	&:-webkit-full-screen
