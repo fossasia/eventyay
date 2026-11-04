@@ -58,9 +58,8 @@ def logged_in_client(client, event):
     return client
 
 
-def _url(event, name, link_list):
-    suffix = {'rows': 'rows/', 'unused': 'unused/delete/', 'assignments': 'assignments.csv'}[name]
-    return f'/control/event/{event.organizer.slug}/{event.slug}/sendmail/link-lists/{link_list.pk}/{suffix}'
+def _rows_url(event, link_list):
+    return f'/control/event/{event.organizer.slug}/{event.slug}/sendmail/link-lists/{link_list.pk}/rows/'
 
 
 def test_parse_turns_the_header_into_placeholder_columns():
@@ -151,40 +150,32 @@ def test_compose_form_needs_a_list_for_list_placeholders(event, link_list):
 
 
 @pytest.mark.django_db
-def test_dialog_adds_rows_and_deletes_only_unused_ones(logged_in_client, event, link_list):
+def test_dialog_adds_rows_from_a_csv(logged_in_client, event, link_list):
     with scopes_disabled():
         link_list.assign('ali@example.com')
 
-    added = logged_in_client.post(
-        _url(event, 'rows', link_list), {'file': _csv('link,code\nhttps://p.test/c,C3\nhttps://p.test/a,A1\n')}
+    response = logged_in_client.post(
+        _rows_url(event, link_list), {'file': _csv('link,code\nhttps://p.test/c,C3\nhttps://p.test/a,A1\n')}
     )
-    deleted = logged_in_client.post(_url(event, 'unused', link_list))
 
-    assert added.json() == {'total': 3, 'used': 1, 'left': 2, 'added': 1, 'skipped': 1}
-    assert deleted.json() == {'total': 1, 'used': 1, 'left': 0, 'deleted': 2}
+    assert response.json() == {'total': 3, 'used': 1, 'left': 2, 'added': 1, 'skipped': 1}
 
 
 @pytest.mark.django_db
-def test_assignments_download_lists_who_got_which_row(logged_in_client, event, link_list):
-    with scopes_disabled():
-        link_list.assign('ali@example.com')
+def test_dialog_rejects_a_csv_without_the_list_columns(logged_in_client, event, link_list):
+    response = logged_in_client.post(_rows_url(event, link_list), {'file': _csv('seat\n12A\n')})
 
-    response = logged_in_client.get(_url(event, 'assignments', link_list))
-    lines = response.content.decode().splitlines()
-
-    assert lines[0] == 'link,code,email,assigned_at'
-    assert lines[1].startswith('https://p.test/a,A1,ali@example.com,')
-    assert lines[2] == 'https://p.test/b,B2,,'
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_lists_belong_to_their_event(logged_in_client, event, link_list):
+def test_lists_belong_to_their_event(logged_in_client, event):
     other_event = Event.objects.create(
         organizer=event.organizer, name='Other', slug='other', date_from=now(), plugins='tests.tickets.testdummy'
     )
     with scopes_disabled():
         foreign = MailLinkList.objects.create(event=other_event, name='Other', columns=['link'])
 
-    response = logged_in_client.get(_url(event, 'assignments', foreign))
+    response = logged_in_client.post(_rows_url(event, foreign), {'file': _csv('link\nhttps://p.test/x\n')})
 
     assert response.status_code == 404
