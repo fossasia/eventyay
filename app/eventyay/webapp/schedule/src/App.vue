@@ -957,10 +957,13 @@ export default {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
 			const knownDays = (this.allDays?.length ? this.allDays : this.days) || []
 			const filteredDays = knownDays.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
-			if (filteredDays.length) {
-				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
+			const navigationType = performance.getEntriesByType('navigation')[0]?.type
+			if (filteredDays.length && navigationType === 'reload' && this.isViewingToday()) {
 				// A reload keeps the hash that scrolling wrote, so it does not count as a link.
-				this._openedFromDayLink = performance.getEntriesByType('navigation')[0]?.type === 'navigate'
+				window.history.replaceState(null, null, '#' + this.currentDay)
+			} else if (filteredDays.length) {
+				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
+				this._openedOnLinkedDay = navigationType === 'navigate' || !this.isViewingToday()
 			}
 		}
 		this._initialized = true
@@ -1454,11 +1457,12 @@ export default {
 		async scrollToNowOnOpen () {
 			if (this._openScrollDone) return
 			this._openScrollDone = true
-			if (this.disableAutoScroll || this._openedFromDayLink || !this.isViewingToday()) return
+			if (this.disableAutoScroll || (!this._openedOnLinkedDay && !this.isViewingToday())) return
 			try {
 				await this.$nextTick()
 				await new Promise(resolve => requestAnimationFrame(resolve))
-				this.scrollToNowInstantly()
+				if (this._openedOnLinkedDay) this.forceScrollDay++
+				else this.scrollToNowInstantly()
 			} catch (error) {
 				console.error('Failed to scroll the schedule to the current time on open', error)
 			}

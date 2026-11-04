@@ -311,7 +311,6 @@ export default {
 		rebindDayTracking () {
 			this.unbindDayTracking()
 			this._unbindDayScroll = bindPassiveScroll(this.scrollParent, () => this.publishScrolledDay())
-			this.publishScrolledDay()
 		},
 		unbindDayTracking () {
 			this._unbindDayScroll?.()
