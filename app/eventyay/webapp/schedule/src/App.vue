@@ -1453,11 +1453,18 @@ export default {
 			this.scrollToNowInstantly()
 		},
 		syncFullscreenScrollParent () {
+			// Rebinding resets the scroller, which can move the selected day.
+			const followNow = !this.disableAutoScroll && this.isViewingToday()
 			// Day jumps follow whichever element is actually fullscreen, then the page scroller again on exit.
 			const scroller = this.fullscreenScroller()
 			if (scroller) this.bindScrollParent(scroller)
 			else this.bindScrollParent(this._pageScrollParent || null)
-			this.$nextTick(() => { this.forceScrollDay++ })
+			this.$nextTick(async () => {
+				this.forceScrollDay++
+				if (!followNow) return
+				await this.$nextTick()
+				this.scrollToNowInstantly()
+			})
 		},
 		fullscreenScroller () {
 			const root = this.$el
