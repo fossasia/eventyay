@@ -1,6 +1,7 @@
 {% load i18n %}
 <dialog class="info-dialog link-list-dialog" id="link-list-dialog" aria-labelledby="link-list-dialog-title"
-        data-added-label="{% translate '{added} rows added, {skipped} skipped.' %}"
+        data-added-label="{% translate '{added} rows added. {skipped} were skipped because they were empty or already in the list.' %}"
+        data-nothing-added-label="{% translate 'No rows added: all {skipped} rows were empty or already in the list.' %}"
         data-choose-file-label="{% translate 'Choose a CSV file to add.' %}"
         data-error-label="{% translate 'The rows could not be added. Please try again.' %}">
   <div class="dialog-content">

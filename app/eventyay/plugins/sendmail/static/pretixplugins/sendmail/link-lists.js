@@ -219,7 +219,8 @@ dialog?.querySelectorAll('[data-link-list-panel]').forEach((panel) => {
         body.append('file', file)
         const data = await post(panel, panel.dataset.rowsUrl, body)
         if (data) {
-            setStatus(panel, fill(dialog.dataset.addedLabel, data))
+            const label = data.added ? dialog.dataset.addedLabel : dialog.dataset.nothingAddedLabel
+            setStatus(panel, fill(label, data))
             input.value = ''
         }
     })
