@@ -1163,11 +1163,13 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
+					const opening = !this._openScrollDone
 					await this.scrollToNowOnOpen()
 					if (!ownsRequest()) return
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
-					if (!navigatingTo) await this.maybeLoadPreviousGridDay()
+					// So does prepending on open, which moves the day under the reading line.
+					if (!navigatingTo && !opening) await this.maybeLoadPreviousGridDay()
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
