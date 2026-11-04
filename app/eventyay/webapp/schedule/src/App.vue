@@ -1173,13 +1173,14 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
-					const opening = !this._openScrollDone
+					const settling = !this._openScrollDone || this._scrollToNowAfterLoad
 					await this.scrollToNowOnOpen()
+					await this.finishGoToNow()
 					if (!ownsRequest()) return
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
-					// So does prepending on open, which moves the day under the reading line.
-					if (!navigatingTo && !opening) await this.maybeLoadPreviousGridDay()
+					// So does prepending on open or after Now, which moves the day under the reading line.
+					if (!navigatingTo && !settling) await this.maybeLoadPreviousGridDay()
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
@@ -1467,6 +1468,17 @@ export default {
 				console.error('Failed to scroll the schedule to the current time on open', error)
 			}
 		},
+		async finishGoToNow () {
+			if (!this._scrollToNowAfterLoad) return
+			this._scrollToNowAfterLoad = false
+			try {
+				await this.$nextTick()
+				await new Promise(resolve => requestAnimationFrame(resolve))
+				this.scrollToNowInstantly()
+			} catch (error) {
+				console.error('Failed to scroll the schedule to the current time after loading the day', error)
+			}
+		},
 		isFullscreenChanging () {
 			// The browser resets the page scroll before it reports the change.
 			return (this.fullscreenScroller() || this._pageScrollParent || null) !== this.scrollParent
@@ -1544,6 +1556,7 @@ export default {
 			}
 			document.documentElement.style.scrollBehavior = 'auto'
 			this._toolbarDay = dayId
+			this._scrollToNowAfterLoad = false
 			// Drop a day prepend or append that started before this click.
 			this._gridExtendGeneration = (this._gridExtendGeneration || 0) + 1
 			this._extendingGrid = false
@@ -1562,7 +1575,13 @@ export default {
 			const today = todayMoment.format('YYYY-MM-DD')
 			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
+			// A day outside the grid arrives later, and the scroll has to wait for it.
+			const gridWaitsForToday = today !== this.currentDay && this.schedule?.compact && this.showGrid && !this.sessionsMode && !this.scheduleNeedsEveryDay && !this.gridScrollDays.includes(today)
 			this.changeDay(todayMoment)
+			if (gridWaitsForToday) {
+				this._scrollToNowAfterLoad = true
+				return
+			}
 			this.$nextTick(() => {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 			})
