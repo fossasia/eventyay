@@ -1,4 +1,6 @@
 import datetime
+import json
+from urllib.parse import urlencode
 
 import pytest
 from django.core import mail as djmail
@@ -179,3 +181,22 @@ def test_lists_belong_to_their_event(logged_in_client, event):
     response = logged_in_client.post(_rows_url(event, foreign), {'file': _csv('link\nhttps://p.test/x\n')})
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_editor_preview_fills_in_a_row_of_the_chosen_list(logged_in_client, event, link_list):
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/editor/email-preview'
+
+    saved = logged_in_client.post(
+        f'{url}?link_list={link_list.pk}',
+        data='{"html": "<p>{list_link}</p>"}',
+        content_type='application/json',
+    )
+    unsaved = logged_in_client.post(
+        f'{url}?{urlencode({"link_list_sample": json.dumps({"list_seat": "12A"})})}',
+        data='{"html": "<p>{list_seat}</p>"}',
+        content_type='application/json',
+    )
+
+    assert 'https://p.test/a' in saved.json()['html']
+    assert '12A' in unsaved.json()['html']
