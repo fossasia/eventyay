@@ -1,5 +1,3 @@
-import csv
-import io
 import logging
 
 import nh3
@@ -8,7 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import OuterRef, Q, Subquery
 from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -171,42 +169,6 @@ class LinkListRowsAddView(LinkListMixin, View):
                 data={'link_list': link_list.pk, 'added': added, 'skipped': skipped},
             )
         return self.counts_response(link_list, added=added, skipped=skipped)
-
-
-class LinkListUnusedDeleteView(LinkListMixin, View):
-    """Remove the rows nobody has been given yet; rows already sent stay as the record."""
-
-    def post(self, request, *args, **kwargs):
-        link_list = self.get_link_list()
-        with transaction.atomic():
-            deleted, _details = link_list.rows.filter(assigned_email__isnull=True).delete()
-            request.event.log_action(
-                'eventyay.sendmail.link_list.unused_deleted',
-                user=request.user,
-                data={'link_list': link_list.pk, 'deleted': deleted},
-            )
-        return self.counts_response(link_list, deleted=deleted)
-
-
-class LinkListAssignmentsDownloadView(LinkListMixin, View):
-    """Every row of a link list with the address it went to and when, as CSV."""
-
-    def get(self, request, *args, **kwargs):
-        link_list = self.get_link_list()
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow([*link_list.columns, 'email', 'assigned_at'])
-        for row in link_list.rows.all():
-            writer.writerow(
-                [
-                    *(row.values.get(column, '') for column in link_list.columns),
-                    row.assigned_email or '',
-                    row.assigned_at.isoformat() if row.assigned_at else '',
-                ]
-            )
-        response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
-        response['Content-Disposition'] = f'attachment; filename="link-list-{link_list.pk}.csv"'
-        return response
 
 
 class TeamMailRecipients(EventPermissionRequiredMixin, View):
