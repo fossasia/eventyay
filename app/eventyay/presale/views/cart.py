@@ -528,6 +528,7 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                         order__status__in=[Order.STATUS_PENDING, Order.STATUS_PAID],
                         product_id__in=product_ids,
                         product__meta_values__property__name='limit_one_per_user',
+                        product__meta_values__value__in=['1', 'True', 'true'],
                     ).exists()
                     if exists:
                         return self.error(CartError(
