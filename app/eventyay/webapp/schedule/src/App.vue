@@ -976,6 +976,7 @@ export default {
 			poll()
 		})
 		this._onScheduleScroll = () => {
+			if (this.isFullscreenChanging()) return
 			this.maybeLoadPreviousGridDay()
 			this.maybeLoadNextGridDay()
 		}
@@ -1452,6 +1453,10 @@ export default {
 			await new Promise(resolve => requestAnimationFrame(resolve))
 			this.scrollToNowInstantly()
 		},
+		isFullscreenChanging () {
+			// The browser resets the page scroll before it reports the change.
+			return (this.fullscreenScroller() || this._pageScrollParent || null) !== this.scrollParent
+		},
 		syncFullscreenScrollParent () {
 			// Rebinding resets the scroller, which can move the selected day.
 			const followNow = !this.disableAutoScroll && this.isViewingToday()
@@ -1483,6 +1488,7 @@ export default {
 			return host
 		},
 		setCurrentDay (day) {
+			if (this.isFullscreenChanging()) return
 			const dayStr = day.format('YYYY-MM-DD')
 			if (this._toolbarDay && dayStr !== this._toolbarDay) return
 			const pool = (this.allDays && this.allDays.length) ? this.allDays : (this.days || [])
