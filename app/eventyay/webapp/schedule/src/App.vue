@@ -959,6 +959,8 @@ export default {
 			const filteredDays = knownDays.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
 			if (filteredDays.length) {
 				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
+				// A reload keeps the hash that scrolling wrote, so it does not count as a link.
+				this._openedFromDayLink = performance.getEntriesByType('navigation')[0]?.type === 'navigate'
 			}
 		}
 		this._initialized = true
@@ -1452,7 +1454,7 @@ export default {
 		async scrollToNowOnOpen () {
 			if (this._openScrollDone) return
 			this._openScrollDone = true
-			if (this.disableAutoScroll || !this.isViewingToday()) return
+			if (this.disableAutoScroll || this._openedFromDayLink || !this.isViewingToday()) return
 			await this.$nextTick()
 			await new Promise(resolve => requestAnimationFrame(resolve))
 			this.scrollToNowInstantly()
