@@ -1110,6 +1110,8 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
             for l in event.settings.locales:
                 with language(l, event.settings.region):
                     context_dict = build_email_preview_context(event, base_placeholders)
+                    if self.object.link_list_id:
+                        context_dict.update(self.object.link_list.sample_values())
 
                     subject_text = subject.localize(l) if subject else ''
                     if not str(subject_text).strip():
