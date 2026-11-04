@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-mainconfig
 	.ui-page-header
-		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h1 {{ $t('Settings') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!loaded && !error")
