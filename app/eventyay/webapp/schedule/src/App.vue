@@ -71,7 +71,6 @@
 			:favs="favs",
 			:showFavCount="showPopularityOnSchedule",
 			:onHomeServer="onHomeServer",
-			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
 			:density="'default'",
 			:timeDensityMinutes="timeDensityMinutes",
@@ -94,7 +93,6 @@
 			:includeDateSortKey="sortIncludeDate",
 			:includePopularitySortKey="sortIncludePopularity",
 			:onHomeServer="onHomeServer",
-			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
 			:showBreaks="!sessionsMode",
 			:density="'default'",
@@ -962,6 +960,8 @@ export default {
 		this._initialized = true
 		if (this.schedule?.compact) {
 			this.syncCompactCoverage()
+		} else {
+			this.scrollToNowOnOpen()
 		}
 	},
 	async mounted () {
@@ -1136,6 +1136,7 @@ export default {
 				} finally {
 					this.dayLoading = false
 				}
+				await this.scrollToNowOnOpen()
 				return
 			}
 			if (!this.currentDay) return
@@ -1162,6 +1163,8 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
+					await this.scrollToNowOnOpen()
+					if (!ownsRequest()) return
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
 					if (!navigatingTo) await this.maybeLoadPreviousGridDay()
@@ -1430,6 +1433,20 @@ export default {
 				this.onWindowResize()
 				window.addEventListener('scroll', this._onScheduleScroll, { passive: true })
 			}
+		},
+		isViewingToday () {
+			return this.currentDay === this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+		},
+		scrollToNowInstantly () {
+			runWithoutSmoothScroll(this.scrollParent, () => this.$refs.scheduleDisplay?.scrollToNow?.())
+		},
+		async scrollToNowOnOpen () {
+			if (this._openScrollDone) return
+			this._openScrollDone = true
+			if (this.disableAutoScroll || !this.isViewingToday()) return
+			await this.$nextTick()
+			await new Promise(resolve => requestAnimationFrame(resolve))
+			this.scrollToNowInstantly()
 		},
 		syncFullscreenScrollParent () {
 			// Day jumps follow whichever element is actually fullscreen, then the page scroller again on exit.

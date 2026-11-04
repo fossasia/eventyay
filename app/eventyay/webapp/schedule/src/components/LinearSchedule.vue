@@ -55,7 +55,6 @@ export default {
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
-		disableAutoScroll: Boolean,
 		sortBy: {
 			type: String,
 			default: 'title',
@@ -210,21 +209,6 @@ export default {
 	async mounted () {
 		await this.$nextTick()
 		this.rebindDayTracking()
-		// scroll to now
-		// scroll to now, unless URL overrides now
-		let fragmentIsDate = false
-		const fragment = window.location.hash.slice(1)
-		if (fragment && fragment.length === 10) {
-			const initialDay = moment.tz(fragment, this.timezone)
-			if (initialDay.isValid()) {
-				fragmentIsDate = true
-			}
-		}
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
-		await new Promise(resolve => requestAnimationFrame(resolve))
-		this.scrollToNow()
 	},
 	beforeUnmount () {
 		this.unbindDayTracking()

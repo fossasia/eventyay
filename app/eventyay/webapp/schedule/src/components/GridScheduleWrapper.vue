@@ -15,7 +15,6 @@
 		:favs="favs",
 		:showFavCount="showFavCount",
 		:onHomeServer="onHomeServer",
-		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
 		:density="density",
 		:timeDensityMinutes="timeDensityMinutes"
@@ -51,7 +50,6 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		disableAutoScroll: Boolean,
 		forceScrollDay: { type: Number, default: 0 },
 		density: {
 			type: String,

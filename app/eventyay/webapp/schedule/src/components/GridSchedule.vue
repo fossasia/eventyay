@@ -137,7 +137,6 @@ export default {
 			type: Boolean,
 			default: false
 		},
-		disableAutoScroll: Boolean,
 		density: {
 			type: String,
 			default: 'default'
@@ -485,12 +484,6 @@ export default {
 		this.rebindDayTracking()
 		await this.$nextTick()
 		this.initScrollSync()
-		if (!this.$refs.now) return
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
-		await new Promise(resolve => requestAnimationFrame(resolve))
-		this.scrollToNow()
 	},
 	beforeUnmount () {
 		this.cancelDayJump()
