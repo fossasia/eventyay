@@ -299,6 +299,12 @@ class TeamForm(forms.ModelForm):
             if 'limit_teamshifts_roles' in data and hasattr(data['limit_teamshifts_roles'], 'values_list'):
                 data['limit_teamshifts_roles'] = list(data['limit_teamshifts_roles'].values_list('pk', flat=True))
 
+            if not teamshifts_role:
+                # Access was removed: don't leave stale role scoping behind.
+                data['all_teamshifts_roles'] = False
+                data['limit_teamshifts_roles'] = []
+                data['hide_teamshifts_emails'] = False
+
         permissions = (
             'can_create_events',
             'can_change_teams',
