@@ -14,8 +14,8 @@
            hidden>
         <p class="link-list-name">{{ panel.list.name }}</p>
         <p class="link-list-counts">
-          <span><strong data-link-list-count="used">{{ panel.counts.used }}</strong> {% translate "used" %}</span>
-          <span><strong data-link-list-count="left">{{ panel.counts.left }}</strong> {% translate "left" %}</span>
+          <span><strong data-link-list-count="used">{{ panel.counts.used }}</strong> {% translate "rows used" %}</span>
+          <span><strong data-link-list-count="left">{{ panel.counts.left }}</strong> {% translate "rows left" %}</span>
         </p>
         <label class="link-list-add-label" for="link-list-rows-{{ panel.list.pk }}">{% translate "Add rows from a CSV file" %}</label>
         <input type="file" class="link-list-add-file" id="link-list-rows-{{ panel.list.pk }}" accept=".csv,text/csv" data-link-list-rows-file>
