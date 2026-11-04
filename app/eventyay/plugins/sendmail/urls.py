@@ -23,6 +23,17 @@ urlpatterns = [
     path('sendmail/', views.SenderView.as_view(), name='event.mail.send'),
     path('sendmail/sent/', views.SentMailView.as_view(), name='event.mail.sent'),
     path('sendmail/templates/', views.MailTemplatesView.as_view(), name='event.mail.templates'),
+    path('sendmail/link-lists/<int:pk>/rows/', views.LinkListRowsAddView.as_view(), name='event.mail.link_lists.rows'),
+    path(
+        'sendmail/link-lists/<int:pk>/unused/delete/',
+        views.LinkListUnusedDeleteView.as_view(),
+        name='event.mail.link_lists.unused_delete',
+    ),
+    path(
+        'sendmail/link-lists/<int:pk>/assignments.csv',
+        views.LinkListAssignmentsDownloadView.as_view(),
+        name='event.mail.link_lists.assignments',
+    ),
     path(
         'sendmail/templates/system/<slug:template_key>/',
         views.MailSystemTemplateUpdateView.as_view(),

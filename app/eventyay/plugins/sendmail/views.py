@@ -1,3 +1,5 @@
+import csv
+import io
 import logging
 
 import nh3
@@ -5,7 +7,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import OuterRef, Q, Subquery
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.core.exceptions import ValidationError
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -33,12 +36,20 @@ from eventyay.control.permissions import EventPermissionRequiredMixin, event_per
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
 from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
+from eventyay.plugins.sendmail.link_lists import add_rows, create_link_list, parse_link_list
 from eventyay.plugins.sendmail.mixins import (
     CopyDraftMixin,
     QueryFilterOrderingMixin,
     ensure_draft_defaults,
 )
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser, TicketMailTemplate
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+    EmailQueueFilter,
+    EmailQueueToUser,
+    MailLinkList,
+    TicketMailTemplate,
+)
 from eventyay.plugins.sendmail.tasks import send_queued_mail
 
 from . import forms
@@ -119,6 +130,83 @@ class TicketMailRecipients(EventPermissionRequiredMixin, View):
         )
 
 
+
+
+class LinkListMixin(EventPermissionRequiredMixin):
+    permission = 'can_change_orders'
+
+    def get_link_list(self):
+        return get_object_or_404(MailLinkList, pk=self.kwargs['pk'], event=self.request.event)
+
+    def counts_response(self, link_list, **extra):
+        return JsonResponse({**link_list.counts(), **extra})
+
+
+class LinkListRowsAddView(LinkListMixin, View):
+    """Append the rows of an uploaded CSV to a link list, matching its columns by name."""
+
+    def post(self, request, *args, **kwargs):
+        link_list = self.get_link_list()
+        upload = request.FILES.get('file')
+        if not upload:
+            return JsonResponse({'error': str(_('Choose a CSV file to add.'))}, status=400)
+        try:
+            parsed = parse_link_list(upload)
+        except ValidationError as error:
+            return JsonResponse({'error': ' '.join(error.messages)}, status=400)
+        if not set(parsed.columns) & set(link_list.columns):
+            return JsonResponse(
+                {
+                    'error': str(_('The file has none of the columns of this list: {columns}.')).format(
+                        columns=', '.join(link_list.columns)
+                    )
+                },
+                status=400,
+            )
+        with transaction.atomic():
+            added, skipped = add_rows(link_list, parsed.rows)
+            request.event.log_action(
+                'eventyay.sendmail.link_list.rows_added',
+                user=request.user,
+                data={'link_list': link_list.pk, 'added': added, 'skipped': skipped},
+            )
+        return self.counts_response(link_list, added=added, skipped=skipped)
+
+
+class LinkListUnusedDeleteView(LinkListMixin, View):
+    """Remove the rows nobody has been given yet; rows already sent stay as the record."""
+
+    def post(self, request, *args, **kwargs):
+        link_list = self.get_link_list()
+        with transaction.atomic():
+            deleted, _details = link_list.rows.filter(assigned_email__isnull=True).delete()
+            request.event.log_action(
+                'eventyay.sendmail.link_list.unused_deleted',
+                user=request.user,
+                data={'link_list': link_list.pk, 'deleted': deleted},
+            )
+        return self.counts_response(link_list, deleted=deleted)
+
+
+class LinkListAssignmentsDownloadView(LinkListMixin, View):
+    """Every row of a link list with the address it went to and when, as CSV."""
+
+    def get(self, request, *args, **kwargs):
+        link_list = self.get_link_list()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([*link_list.columns, 'email', 'assigned_at'])
+        for row in link_list.rows.all():
+            writer.writerow(
+                [
+                    *(row.values.get(column, '') for column in link_list.columns),
+                    row.assigned_email or '',
+                    row.assigned_at.isoformat() if row.assigned_at else '',
+                ]
+            )
+        response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="link-list-{link_list.pk}.csv"'
+        return response
 
 
 class TeamMailRecipients(EventPermissionRequiredMixin, View):
@@ -244,6 +332,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 context_dict = build_email_preview_context(
                     self.request.event, ['event', 'order', 'position_or_address']
                 )
+                context_dict.update(form.link_list_sample())
 
                 mail(
                     email=test_email,
@@ -296,6 +385,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                     context_dict = build_email_preview_context(
                         self.request.event, ['event', 'order', 'position_or_address']
                     )
+                    context_dict.update(form.link_list_sample())
                     subject_val = form.cleaned_data.get('subject')
                     subject = nh3.clean(subject_val.localize(l), tags=set()) if subject_val else ''
                     if not subject.strip():
@@ -351,6 +441,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
         message_val = form.cleaned_data['text'].data if hasattr(form.cleaned_data['text'], 'data') else form.cleaned_data['text']
         attachment = form.cleaned_data.get('attachment')
         attachment_ids = [] if is_draft or not attachment else [attachment.id]
+        link_list = self._link_list_for_queue(form)
 
         if qm:
             qm.subject = subject_val
@@ -360,6 +451,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             qm.bcc = form.cleaned_data.get('bcc') or self.request.event.settings.get('mail_bcc') or ''
             qm.scheduled_at = scheduled_at
             qm.is_draft = True
+            qm.link_list = link_list
             qm.save()
 
             qmf, created = EmailQueueFilter.objects.get_or_create(mail=qm)
@@ -390,6 +482,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 composing_for=ComposingFor.ATTENDEES,
                 scheduled_at=scheduled_at,
                 is_draft=True,
+                link_list=link_list,
             )
 
             EmailQueueFilter.objects.create(
@@ -423,6 +516,22 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 self.request,
                 _('There are no valid email addresses for the selected recipients.'),
             )
+            return self.form_invalid(form)
+
+        shortfall = qm.link_list.shortfall(unique_recipients) if qm.link_list_id and not is_draft else 0
+        if shortfall:
+            qm.is_draft = True
+            qm.save(update_fields=['is_draft'])
+            error_msg = ngettext_lazy(
+                'The link list "{name}" needs {count} more unused row for these recipients. '
+                'Add rows to the list, then send again.',
+                'The link list "{name}" needs {count} more unused rows for these recipients. '
+                'Add rows to the list, then send again.',
+                shortfall,
+            ).format(name=qm.link_list.name, count=shortfall)
+            form.add_error('link_list', error_msg)
+            messages.error(self.request, error_msg)
+            self.draft_id = qm.pk
             return self.form_invalid(form)
 
         if is_draft and form.cleaned_data.get('attachment'):
@@ -506,6 +615,21 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             event=self.request.event.slug,
             organizer=self.request.event.organizer.slug,
         )
+
+    def _link_list_for_queue(self, form):
+        """The list the email uses: a newly uploaded one is saved first, else the one chosen."""
+        if form.uploaded_link_list is None:
+            return form.cleaned_data.get('link_list')
+        link_list, added, skipped = create_link_list(
+            self.request.event, form.link_list_name_for_upload(), form.uploaded_link_list, user=self.request.user
+        )
+        data = form.data.copy()
+        data[form.add_prefix('link_list')] = str(link_list.pk)
+        form.data = data
+        form.fields['link_list'].queryset = MailLinkList.objects.filter(event=self.request.event)
+        saved = _('The link list "{name}" was saved with {added} rows; {skipped} empty or repeated rows were skipped.')
+        messages.info(self.request, saved.format(name=link_list.name, added=added, skipped=skipped))
+        return link_list
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
