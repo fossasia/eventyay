@@ -179,6 +179,7 @@ export default {
 				groupedBuckets.push({
 					date: moment(),
 					sessions: sortedPending,
+					pending: true,
 				})
 			}
 			return groupedBuckets
@@ -297,8 +298,9 @@ export default {
 		},
 		scrollToNow() {
 			if (!this.showDayHeaders) return
-			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
-			const nowBucket = this.sessionBuckets.at(nowIndex < 0 ? -1 : Math.max(0, nowIndex - 1))
+			const scheduledBuckets = this.sessionBuckets.filter(bucket => !bucket.pending)
+			const nowIndex = scheduledBuckets.findIndex(bucket => this.now < bucket.date)
+			const nowBucket = scheduledBuckets.at(nowIndex < 0 ? -1 : Math.max(0, nowIndex - 1))
 			if (!nowBucket) return
 			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
 			if (!el) return
