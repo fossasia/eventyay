@@ -42,11 +42,13 @@
   <div class="composer-link-list" data-link-list data-menu-label="{% translate '{ } Link list' %}">
     <hr>
     {{ form.link_list.as_field_group }}
-    <p class="composer-link-list-manage" data-link-list-manage hidden>
-      <button type="button" class="btn btn-sm btn-outline-info" data-dialog-target="#link-list-dialog">
-        {% translate "Manage link list" %}
-      </button>
-    </p>
+    <div class="form-group row" data-link-list-manage hidden>
+      <div class="col-md-9 offset-md-3">
+        <button type="button" class="btn btn-sm btn-outline-info" data-dialog-target="#link-list-dialog">
+          {% translate "Manage link list" %}
+        </button>
+      </div>
+    </div>
     {{ form.link_list_file.as_field_group }}
     {{ form.link_list_name.as_field_group }}
     {{ form.link_list_columns|json_script:"link-list-columns" }}

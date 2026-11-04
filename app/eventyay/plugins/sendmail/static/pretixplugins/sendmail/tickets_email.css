@@ -743,3 +743,13 @@ form.mail-templates-info-dialog__card {
 .link-list-counts dd {
     margin: 0;
 }
+
+.link-list-dialog {
+    width: min(440px, calc(100vw - 32px));
+}
+
+.link-list-dialog .dialog-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}

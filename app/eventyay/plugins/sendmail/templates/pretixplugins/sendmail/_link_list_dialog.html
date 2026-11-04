@@ -1,5 +1,5 @@
 {% load i18n %}
-<dialog class="info-dialog" id="link-list-dialog" aria-labelledby="link-list-dialog-title"
+<dialog class="info-dialog link-list-dialog" id="link-list-dialog" aria-labelledby="link-list-dialog-title"
         data-added-label="{% translate '{added} rows added, {skipped} skipped.' %}"
         data-deleted-label="{% translate '{deleted} unused rows deleted.' %}"
         data-choose-file-label="{% translate 'Choose a CSV file to add.' %}"
@@ -20,11 +20,6 @@
           <dt>{% translate "Used" %}</dt><dd data-link-list-count="used">{{ panel.counts.used }}</dd>
           <dt>{% translate "Left" %}</dt><dd data-link-list-count="left">{{ panel.counts.left }}</dd>
         </dl>
-        <p class="text-muted small">
-          {% blocktranslate trimmed with columns=panel.placeholders|join:", " %}
-            Placeholders: {{ columns }}
-          {% endblocktranslate %}
-        </p>
         <div class="form-group">
           <label for="link-list-rows-{{ panel.list.pk }}">{% translate "Add rows from a CSV file" %}</label>
           <input type="file" class="form-control-file" id="link-list-rows-{{ panel.list.pk }}" accept=".csv,text/csv" data-link-list-rows-file>
