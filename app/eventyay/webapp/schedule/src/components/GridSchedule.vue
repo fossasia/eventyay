@@ -493,11 +493,7 @@ export default {
 		this.scrollToNow()
 	},
 	beforeUnmount () {
-		this._scrollGeneration = (this._scrollGeneration || 0) + 1
-		if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
-		this._scrollAnim = null
-		const scroller = isDocumentScroller(this.scrollParent) ? document.documentElement : this.scrollParent
-		if (scroller?.style) scroller.style.scrollBehavior = ''
+		this.cancelDayJump()
 		this.unbindDayTracking()
 		if (this._gridResizeObserver) {
 			this._gridResizeObserver.disconnect()
@@ -653,8 +649,18 @@ export default {
 				window.scrollBy({ top: rect.top - clearance })
 			}
 		},
+		cancelDayJump () {
+			this._scrollGeneration = (this._scrollGeneration || 0) + 1
+			if (!this._scrollAnim) return
+			cancelAnimationFrame(this._scrollAnim)
+			this._scrollAnim = null
+			this._ignoreScrollDay = false
+			const scroller = isDocumentScroller(this.scrollParent) ? document.documentElement : this.scrollParent
+			if (scroller?.style) scroller.style.scrollBehavior = ''
+		},
 		scrollToNow() {
 			if (!this.$refs.now) return
+			this.cancelDayJump()
 			this.scrollElementIntoViewWithClearance(this.$refs.now)
 		},
 		toolbarBottomY () {
