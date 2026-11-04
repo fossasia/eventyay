@@ -35,16 +35,15 @@ const currentPlaceholders = () => {
     return savedColumns[select?.value || ''] || []
 }
 
-const menuItem = (editor, dropdown, name) => {
+const menuItem = (editor, close, name) => {
     const item = document.createElement('li')
     item.className = 'tiptap-placeholder-item'
-    item.dataset.linkListPlaceholder = name
     item.setAttribute('role', 'option')
     item.tabIndex = 0
     item.textContent = `{${name}}`
     const insert = () => {
         editor.chain().focus().insertPlaceholder(name).run()
-        dropdown.hidden = true
+        close()
     }
     item.addEventListener('click', insert)
     item.addEventListener('keydown', (event) => {
@@ -56,16 +55,66 @@ const menuItem = (editor, dropdown, name) => {
     return item
 }
 
+const buildLinkListMenu = (editor, names) => {
+    const menu = document.createElement('span')
+    menu.className = 'tiptap-placeholder-menu'
+    menu.dataset.linkListMenu = 'true'
+
+    const toggle = document.createElement('button')
+    toggle.type = 'button'
+    toggle.className = 'tiptap-btn'
+    toggle.textContent = container?.dataset.menuLabel || 'Link list'
+    toggle.setAttribute('aria-haspopup', 'listbox')
+    toggle.setAttribute('aria-expanded', 'false')
+
+    const dropdown = document.createElement('ul')
+    dropdown.className = 'tiptap-placeholder-dropdown'
+    dropdown.setAttribute('role', 'listbox')
+    dropdown.hidden = true
+
+    const close = () => {
+        dropdown.hidden = true
+        toggle.setAttribute('aria-expanded', 'false')
+    }
+    names.forEach((name) => dropdown.append(menuItem(editor, close, name)))
+    menu.append(toggle, dropdown)
+
+    toggle.addEventListener('click', (event) => {
+        event.stopPropagation()
+        const open = !dropdown.hidden
+        document.querySelectorAll('.tiptap-placeholder-dropdown').forEach((other) => {
+            other.hidden = true
+        })
+        dropdown.hidden = open
+        toggle.setAttribute('aria-expanded', String(!open))
+    })
+
+    const separator = document.createElement('span')
+    separator.className = 'tiptap-separator'
+    separator.setAttribute('aria-hidden', 'true')
+    separator.dataset.linkListMenu = 'true'
+    return [separator, menu]
+}
+
 const refreshEditorMenus = () => {
     const names = currentPlaceholders()
     document.querySelectorAll('textarea[id^="id_text_"]').forEach((textarea) => {
         const editor = textarea.__eventyayTiptapEditor
-        const dropdown = textarea.closest('[data-tiptap-wrapper]')?.querySelector('.tiptap-placeholder-dropdown')
-        if (!editor || !dropdown) {
+        const toolbar = textarea.closest('[data-tiptap-wrapper]')?.querySelector('.tiptap-toolbar')
+        if (!editor || !toolbar) {
             return
         }
-        dropdown.querySelectorAll('[data-link-list-placeholder]').forEach((item) => item.remove())
-        names.forEach((name) => dropdown.append(menuItem(editor, dropdown, name)))
+        toolbar.querySelectorAll('[data-link-list-menu]').forEach((element) => element.remove())
+        if (!names.length) {
+            return
+        }
+        const [separator, menu] = buildLinkListMenu(editor, names)
+        const placeholderMenu = toolbar.querySelector('.tiptap-placeholder-menu:not([data-link-list-menu])')
+        if (placeholderMenu) {
+            placeholderMenu.after(separator, menu)
+        } else {
+            toolbar.append(separator, menu)
+        }
     })
 }
 
@@ -161,13 +210,11 @@ dialog?.querySelector('[data-link-list-close]')?.addEventListener('click', () =>
 
 select?.addEventListener('change', showSelectedList)
 container?.querySelector('[data-link-list-file]')?.addEventListener('change', (event) => showFileColumns(event.target))
-document.addEventListener(
-    'click',
-    (event) => {
-        if (event.target.closest?.('.tiptap-placeholder-menu .tiptap-btn')) {
-            refreshEditorMenus()
-        }
-    },
-    true,
-)
+window.addEventListener('load', refreshEditorMenus)
+document.addEventListener('click', () => {
+    document.querySelectorAll('[data-link-list-menu] .tiptap-placeholder-dropdown').forEach((dropdown) => {
+        dropdown.hidden = true
+        dropdown.previousElementSibling?.setAttribute('aria-expanded', 'false')
+    })
+})
 showSelectedList()
