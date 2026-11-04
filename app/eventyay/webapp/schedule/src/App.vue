@@ -1455,9 +1455,13 @@ export default {
 			if (this._openScrollDone) return
 			this._openScrollDone = true
 			if (this.disableAutoScroll || this._openedFromDayLink || !this.isViewingToday()) return
-			await this.$nextTick()
-			await new Promise(resolve => requestAnimationFrame(resolve))
-			this.scrollToNowInstantly()
+			try {
+				await this.$nextTick()
+				await new Promise(resolve => requestAnimationFrame(resolve))
+				this.scrollToNowInstantly()
+			} catch (error) {
+				console.error('Failed to scroll the schedule to the current time on open', error)
+			}
 		},
 		isFullscreenChanging () {
 			// The browser resets the page scroll before it reports the change.
@@ -1473,8 +1477,12 @@ export default {
 			this.$nextTick(async () => {
 				this.forceScrollDay++
 				if (!followNow) return
-				await this.$nextTick()
-				this.scrollToNowInstantly()
+				try {
+					await this.$nextTick()
+					this.scrollToNowInstantly()
+				} catch (error) {
+					console.error('Failed to scroll the schedule to the current time after a fullscreen change', error)
+				}
 			})
 		},
 		fullscreenScroller () {
