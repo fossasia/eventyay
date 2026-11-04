@@ -36,7 +36,15 @@ from eventyay.control.forms import CachedFileField, SplitDateTimeField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
 from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone
 from eventyay.orga.forms.mails import TalkSplitDateTimePickerWidget
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, TicketMailTemplate
+from eventyay.plugins.sendmail.link_lists import default_list_name, parse_link_list, used_link_list_placeholders
+from eventyay.plugins.sendmail.models import (
+    LINK_LIST_PLACEHOLDER_PREFIX,
+    ComposingFor,
+    EmailQueue,
+    EmailQueueToUser,
+    MailLinkList,
+    TicketMailTemplate,
+)
 
 
 MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP = _( 'If the order contains attendees with email addresses different from the person who orders the ' 'tickets, the following email will be sent out to the attendees.' )
@@ -300,6 +308,28 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         label=_('Test email address'),
         required=False,
     )
+    link_list = forms.ModelChoiceField(
+        queryset=MailLinkList.objects.none(),
+        label=_('Link list'),
+        required=False,
+        empty_label=_('No link list'),
+        help_text=_(
+            'Each recipient gets one unused row of the list, and its columns can be used as placeholders. '
+            'An address that already got a row gets the same row again.'
+        ),
+    )
+    link_list_file = forms.FileField(
+        label=_('Upload a new link list'),
+        required=False,
+        help_text=_('A CSV file whose first row names the columns, with one link or code per row below it.'),
+        widget=forms.ClearableFileInput(attrs={'accept': '.csv,text/csv', 'data-link-list-file': 'true'}),
+    )
+    link_list_name = forms.CharField(
+        label=_('Name of the new link list'),
+        required=False,
+        max_length=190,
+        help_text=_('Leave empty to use the file name.'),
+    )
     individual_attendees = SafeModelMultipleChoiceField(
         queryset=Product.objects.none(), required=False
     )
@@ -344,6 +374,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             return d
         d['has_filter_checkins'] = d.get('has_filter_checkins') in ('yes', True)
         d['not_checked_in'] = d.get('not_checked_in') in ('yes', True)
+        self._clean_link_list(d)
         if self.draft_save:
             return d
         if d.get('subevent') and (d.get('subevents_from') or d.get('subevents_to')):
@@ -373,13 +404,95 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
 
     def _set_field_placeholders(self, fn, base_parameters):
         """Validate placeholders without rendering the long help-text list (drawer covers that)."""
-        phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
+        names = [*get_available_placeholders(self.event, base_parameters).keys(), *self.link_list_placeholders]
+        phs = [f'{{{p}}}' for p in sorted(names)]
         self.fields[fn].validators.append(PlaceholderValidator(phs))
+
+    def _read_uploaded_link_list(self):
+        self.uploaded_link_list = None
+        self.link_list_error = None
+        upload = self.files.get(self.add_prefix('link_list_file')) if self.is_bound else None
+        if not upload:
+            return
+        try:
+            self.uploaded_link_list = parse_link_list(upload)
+        except ValidationError as error:
+            self.link_list_error = error
+
+    @cached_property
+    def link_lists(self):
+        return list(MailLinkList.objects.filter(event=self.event))
+
+    @cached_property
+    def link_list_panels(self):
+        """Each saved list with its counts and placeholders, for the manage dialog and the placeholder drawer."""
+        return [
+            {'list': link_list, 'counts': link_list.counts(), 'placeholders': link_list.placeholders}
+            for link_list in self.link_lists
+        ]
+
+    @property
+    def link_list_placeholders(self):
+        names = {name for link_list in self.link_lists for name in link_list.placeholders}
+        if self.uploaded_link_list is not None:
+            names.update(f'{LINK_LIST_PLACEHOLDER_PREFIX}{column}' for column in self.uploaded_link_list.columns)
+        return sorted(names)
+
+    def link_list_sample(self):
+        """Placeholder values from the chosen or uploaded list, for previews and test emails."""
+        if self.uploaded_link_list is not None:
+            first_row = self.uploaded_link_list.rows[0]
+            return {f'{LINK_LIST_PLACEHOLDER_PREFIX}{column}': value for column, value in first_row.items()}
+        link_list = self.cleaned_data.get('link_list') if hasattr(self, 'cleaned_data') else None
+        return link_list.sample_values() if link_list else {}
+
+    def link_list_name_for_upload(self):
+        return (self.cleaned_data.get('link_list_name') or '').strip() or default_list_name(
+            self.files.get(self.add_prefix('link_list_file'))
+        )
+
+    def _clean_link_list(self, d):
+        if self.link_list_error is not None:
+            self.add_error('link_list_file', self.link_list_error)
+            return
+        chosen = d.get('link_list')
+        uploaded = self.uploaded_link_list
+        if chosen and uploaded:
+            self.add_error('link_list_file', _('Choose an existing link list or upload a new one, not both.'))
+            return
+        if self.draft_save:
+            return
+        used = used_link_list_placeholders(d.get('subject'), d.get('text'))
+        if not used:
+            return
+        if uploaded is not None:
+            available = {f'{LINK_LIST_PLACEHOLDER_PREFIX}{column}' for column in uploaded.columns}
+        elif chosen:
+            available = set(chosen.placeholders)
+        else:
+            self.add_error(
+                'link_list',
+                _('The message uses {placeholders}. Choose or upload the link list they come from.').format(
+                    placeholders=', '.join(f'{{{name}}}' for name in sorted(used))
+                ),
+            )
+            return
+        missing = used - available
+        if missing:
+            self.add_error(
+                'link_list',
+                _('The chosen link list has no column for {placeholders}.').format(
+                    placeholders=', '.join(f'{{{name}}}' for name in sorted(missing))
+                ),
+            )
 
     def __init__(self, *args, **kwargs):
         event = self.event = kwargs.pop('event')
         self.draft_save = kwargs.pop('draft_save', False)
         super().__init__(*args, **kwargs)
+        self.fields['link_list'].queryset = MailLinkList.objects.filter(event=event)
+        self.fields['link_list'].widget.attrs['data-link-list-select'] = 'true'
+        self._read_uploaded_link_list()
         
         self.fields['scheduled_at'].widget.widgets[0].attrs['placeholder'] = ''
         self.fields['scheduled_at'].widget.widgets[1].attrs['placeholder'] = ''
@@ -408,7 +521,9 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             locales=event.settings.get('locales'),
         )
         message_placeholders = ['event', 'order', 'position_or_address']
-        placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
+        placeholder_names = sorted(
+            [*get_available_placeholders(self.event, message_placeholders).keys(), *self.link_list_placeholders]
+        )
         self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
@@ -990,6 +1105,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             'scheduled_at': SplitDateTimePickerWidget(),
         }
 
+    @property
+    def link_list_placeholders(self):
+        return self.instance.link_list.placeholders if self.instance.link_list_id else []
+
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event', None)
         self.read_only = kwargs.pop('read_only', False)
@@ -1002,7 +1121,9 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             placeholder_names = sorted({**base_ph, **talk_ph}.keys())
         else:
             base_placeholders = ['event', 'order', 'position_or_address']
-            placeholder_names = sorted(get_available_placeholders(self.event, base_placeholders).keys())
+            placeholder_names = sorted(
+                [*get_available_placeholders(self.event, base_placeholders).keys(), *self.link_list_placeholders]
+            )
 
         existing_recipients = EmailQueueToUser.objects.filter(mail=self.instance).order_by('id')
         self.recipient_objects = list(existing_recipients)
@@ -1044,7 +1165,8 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             all_ph = {**base_ph, **talk_ph}
             phs = ['{%s}' % p for p in sorted(all_ph.keys())]
         else:
-            phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
+            names = [*get_available_placeholders(self.event, base_parameters).keys(), *self.link_list_placeholders]
+            phs = ['{%s}' % p for p in sorted(names)]
         ht = _('Available placeholders: {list}').format(list=', '.join(phs))
         if self.fields[fn].help_text:
             self.fields[fn].help_text += ' ' + str(ht)
