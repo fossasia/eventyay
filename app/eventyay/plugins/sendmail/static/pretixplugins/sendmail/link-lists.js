@@ -139,7 +139,7 @@ const showFileColumns = async (input) => {
 const csrfToken = () => document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || ''
 
 const updateCounts = (panel, counts) => {
-    ;['total', 'used', 'left'].forEach((name) => {
+    ;['used', 'left'].forEach((name) => {
         const element = panel.querySelector(`[data-link-list-count="${name}"]`)
         if (element && counts[name] !== undefined) {
             element.textContent = counts[name]
@@ -193,15 +193,6 @@ dialog?.querySelectorAll('[data-link-list-panel]').forEach((panel) => {
         if (data) {
             setStatus(panel, fill(dialog.dataset.addedLabel, data))
             input.value = ''
-        }
-    })
-    panel.querySelector('[data-link-list-delete-unused]')?.addEventListener('click', async (event) => {
-        if (!window.confirm(event.currentTarget.dataset.confirm)) {
-            return
-        }
-        const data = await post(panel, panel.dataset.unusedDeleteUrl, new FormData())
-        if (data) {
-            setStatus(panel, fill(dialog.dataset.deletedLabel, data))
         }
     })
 })
