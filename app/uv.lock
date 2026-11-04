@@ -1181,7 +1181,10 @@ dependencies = [
 [[package]]
 name = "eventyay-business"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#79d7d7b4590a1f70e0224912d0d219f7df51ec1d" }
+source = { git = "https://github.com/fossasia/eventyay-business.git?branch=main#09b18932673965352ed4aa2f8378e88dda4957c8" }
+dependencies = [
+    { name = "unilimit" },
+]
 
 [[package]]
 name = "eventyay-hubspot"
@@ -1195,7 +1198,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#f3f356436ee6633a4cafe3187b785ddbe5be675c" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?branch=main#9714389e75910d27c2405d75932f1b7ab52dde0b" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1209,7 +1212,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?branch=main#1a
 [[package]]
 name = "eventyay-socialmedia"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?branch=main#c633a76c4a1a0ab63b7e05c33ba1080a478da4f1" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?branch=main#6d26a2976b6c71f42f362c811fd14afb48c3770a" }
 dependencies = [
     { name = "cryptography" },
     { name = "mastodon-py" },
@@ -1219,7 +1222,7 @@ dependencies = [
 [[package]]
 name = "eventyay-stripe"
 version = "1.0.1"
-source = { git = "https://github.com/fossasia/eventyay-stripe.git?branch=main#7533dedb7f024e1c75710f6eaaa7684f764d4b19" }
+source = { git = "https://github.com/fossasia/eventyay-stripe.git?branch=main#3c6f4b75e56ee3398e6afe1755479e19b6ebf2f5" }
 dependencies = [
     { name = "pydantic" },
     { name = "stripe" },
@@ -1228,7 +1231,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#ff51c3309fff7622880c234e6d0d97438573e4c8" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?branch=main#a28b097079073fe6dd73e84dded43b29619e962f" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1709,7 +1712,7 @@ test = [
 [[package]]
 name = "eventyay-veditor"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#37223a0fe578d54d928ed80a4e53bb4f5139c515" }
+source = { git = "https://github.com/fossasia/eventyay-veditor.git?branch=main#1085313b6c8ca91f7aeafda375b5ab83afcbf780" }
 
 [[package]]
 name = "execnet"
@@ -1723,7 +1726,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#17d298337846c83c3e9cc2b14c04fdb200d895d6" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#2eb511c7dd13c4cc6d5bff8106f55c204c84dbc6" }
 
 [[package]]
 name = "faker"
@@ -3761,6 +3764,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/71/fea2ca18986a366c750767b694430d5ded6b20b6985fddca72f74af38a4c/ujson-5.11.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:1aa8a2ab482f09f6c10fba37112af5f957689a79ea598399c85009f2f29898b5", size = 1036313, upload-time = "2025-08-20T11:55:41.408Z" },
     { url = "https://files.pythonhosted.org/packages/a3/bb/d4220bd7532eac6288d8115db51710fa2d7d271250797b0bfba9f1e755af/ujson-5.11.0-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:a638425d3c6eed0318df663df44480f4a40dc87cc7c6da44d221418312f6413b", size = 1195782, upload-time = "2025-08-20T11:55:43.357Z" },
     { url = "https://files.pythonhosted.org/packages/80/47/226e540aa38878ce1194454385701d82df538ccb5ff8db2cf1641dde849a/ujson-5.11.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:7e3cff632c1d78023b15f7e3a81c3745cd3f94c044d1e8fa8efbd6b161997bbc", size = 1088817, upload-time = "2025-08-20T11:55:45.262Z" },
+]
+
+[[package]]
+name = "unilimit"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/98/80/12ecefa51989f4d2b8503d4bcebee711cca675df3ffba9e75a2a14e86e8e/unilimit-0.1.1.tar.gz", hash = "sha256:1b7b2af301b4988e3fdf61e50b02a7527599974c2db691b5b535fae5c06fe724", size = 241462, upload-time = "2026-10-30T20:31:00.426Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/dc/f638f9916e679e9c70ceac0b1b2ac378f1fed36d30db501e2a9eb62c95e3/unilimit-0.1.1-py3-none-any.whl", hash = "sha256:e2e6b040531275195a71000c7cabf154e88ae83c57351334a3f8af11a8273965", size = 113166, upload-time = "2026-10-30T20:30:58.717Z" },
 ]
 
 [[package]]
