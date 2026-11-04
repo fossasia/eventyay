@@ -1,0 +1,19 @@
+{% load i18n %}
+<div class="card mb-2" id="placeholder-link_list" data-link-list-placeholders hidden>
+  <div class="card-header">
+    <strong>{% translate "Link list" %}</strong>
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for panel in form.link_list_panels %}
+      {% for placeholder in panel.placeholders %}
+        <li class="list-group-item list-group-item-action placeholder" data-placeholder="{{ placeholder }}"
+            data-link-list="{{ panel.list.pk }}" hidden>
+          <div class="placeholder-content">
+            <span class="placeholder-text">{% templatetag openbrace %}{{ placeholder }}{% templatetag closebrace %}</span>
+          </div>
+          <small class="text-muted">{% blocktranslate trimmed with name=panel.list.name %}One row of "{{ name }}" per recipient{% endblocktranslate %}</small>
+        </li>
+      {% endfor %}
+    {% endfor %}
+  </ul>
+</div>

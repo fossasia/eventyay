@@ -732,3 +732,14 @@ form.mail-templates-info-dialog__card {
     display: none;
   }
 }
+
+.link-list-counts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    margin-bottom: 12px;
+}
+
+.link-list-counts dd {
+    margin: 0;
+}

@@ -1,0 +1,48 @@
+{% load i18n %}
+<dialog class="info-dialog" id="link-list-dialog" aria-labelledby="link-list-dialog-title"
+        data-added-label="{% translate '{added} rows added, {skipped} skipped.' %}"
+        data-deleted-label="{% translate '{deleted} unused rows deleted.' %}"
+        data-choose-file-label="{% translate 'Choose a CSV file to add.' %}"
+        data-error-label="{% translate 'The change could not be saved. Please try again.' %}">
+  <div class="dialog-content">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0" id="link-list-dialog-title">{% translate "Link list" %}</h5>
+      <button type="button" class="btn btn-link p-0" data-link-list-close aria-label="{% translate 'Close' %}">&times;</button>
+    </div>
+    {% for panel in form.link_list_panels %}
+      <div data-link-list-panel="{{ panel.list.pk }}"
+           data-rows-url="{% url 'control:event.mail.link_lists.rows' organizer=request.event.organizer.slug event=request.event.slug pk=panel.list.pk %}"
+           data-unused-delete-url="{% url 'control:event.mail.link_lists.unused_delete' organizer=request.event.organizer.slug event=request.event.slug pk=panel.list.pk %}"
+           hidden>
+        <p class="mb-2"><strong>{{ panel.list.name }}</strong></p>
+        <dl class="link-list-counts">
+          <dt>{% translate "Rows" %}</dt><dd data-link-list-count="total">{{ panel.counts.total }}</dd>
+          <dt>{% translate "Used" %}</dt><dd data-link-list-count="used">{{ panel.counts.used }}</dd>
+          <dt>{% translate "Left" %}</dt><dd data-link-list-count="left">{{ panel.counts.left }}</dd>
+        </dl>
+        <p class="text-muted small">
+          {% blocktranslate trimmed with columns=panel.placeholders|join:", " %}
+            Placeholders: {{ columns }}
+          {% endblocktranslate %}
+        </p>
+        <div class="form-group">
+          <label for="link-list-rows-{{ panel.list.pk }}">{% translate "Add rows from a CSV file" %}</label>
+          <input type="file" class="form-control-file" id="link-list-rows-{{ panel.list.pk }}" accept=".csv,text/csv" data-link-list-rows-file>
+          <small class="form-text text-muted">{% translate "Use the same column names as the list. Empty and repeated rows are skipped." %}</small>
+        </div>
+        <p class="link-list-status small" role="status" data-link-list-status></p>
+        <div class="dialog-footer">
+          <a class="btn btn-outline-info" href="{% url 'control:event.mail.link_lists.assignments' organizer=request.event.organizer.slug event=request.event.slug pk=panel.list.pk %}">
+            <i class="fa fa-download" aria-hidden="true"></i>
+            {% translate "Download who got which row" %}
+          </a>
+          <button type="button" class="btn btn-outline-danger" data-link-list-delete-unused
+                  data-confirm="{% translate 'Delete every row nobody has been sent yet? Rows already sent are kept.' %}">
+            {% translate "Delete unused rows" %}
+          </button>
+          <button type="button" class="btn btn-primary" data-link-list-add-rows>{% translate "Add rows" %}</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</dialog>

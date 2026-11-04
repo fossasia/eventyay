@@ -176,6 +176,7 @@
             {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.invoice tag="invoice" %}
             {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.event tag="event" %}
             {% include "orga/mails/_placeholder_group.html" with placeholders=form.grouped_placeholders.other tag="other" %}
+            {% if form.link_list_panels %}{% include "pretixplugins/sendmail/_link_list_placeholders.html" %}{% endif %}
         </div>
 
         {% block email_editor_actions %}
