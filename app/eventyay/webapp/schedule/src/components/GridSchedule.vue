@@ -651,10 +651,17 @@ export default {
 			const scroller = isDocumentScroller(this.scrollParent) ? document.documentElement : this.scrollParent
 			if (scroller?.style) scroller.style.scrollBehavior = ''
 		},
+		lastSliceOfToday () {
+			const slice = this.visibleTimeslices.at(-1)
+			if (!slice || !this.now || this.now.isBefore(slice.date)) return null
+			if (!this.occupiedDayKeys.has(sliceDayKey(this.now, this.timezone))) return null
+			return this.$refs[slice.name]?.[0]
+		},
 		scrollToNow() {
-			if (!this.$refs.now) return
+			const target = this.$refs.now || this.lastSliceOfToday()
+			if (!target) return
 			this.cancelDayJump()
-			this.scrollElementIntoViewWithClearance(this.$refs.now)
+			this.scrollElementIntoViewWithClearance(target)
 		},
 		toolbarBottomY () {
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
