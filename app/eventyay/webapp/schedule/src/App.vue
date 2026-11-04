@@ -805,7 +805,9 @@ export default {
 	async created () {
 		this._compactTimezoneGeneration = 0
 		// A restored offset points at a layout the lazily loaded days no longer have.
-		if (!this.disableAutoScroll) window.history.scrollRestoration = 'manual'
+		// Embeds share the page with their host, and talk and speaker pages have no lazy days.
+		const ownsScrollPosition = !this.isTalkView && !this.isSpeakerView && document.getElementById('pretalx-schedule-data')
+		if (!this.disableAutoScroll && ownsScrollPosition) window.history.scrollRestoration = 'manual'
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
