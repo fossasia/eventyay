@@ -25,19 +25,43 @@ const headerColumns = (text) => {
     return keys
 }
 
+const editorInputSelector = 'textarea[id^="id_text_"], input[id^="id_subject"]'
+let lastFocusedInput = document.querySelector('#id_text_0')
+document.querySelectorAll(editorInputSelector).forEach((input) => {
+    input.addEventListener('focus', () => {
+        lastFocusedInput = input
+    })
+})
+
+const insertPlaceholder = (name) => {
+    if (!lastFocusedInput) {
+        return
+    }
+    const text = `{${name}}`
+    const start = lastFocusedInput.selectionStart ?? lastFocusedInput.value.length
+    const end = lastFocusedInput.selectionEnd ?? start
+    lastFocusedInput.value = lastFocusedInput.value.slice(0, start) + text + lastFocusedInput.value.slice(end)
+    lastFocusedInput.selectionStart = start
+    lastFocusedInput.selectionEnd = start + text.length
+    lastFocusedInput.dispatchEvent(new Event('input', { bubbles: true }))
+    lastFocusedInput.focus()
+}
+
+const group = document.querySelector('[data-link-list-placeholders]')
+const fileList = group?.querySelector('[data-link-list-file-placeholders]')
+
 const showSelectedList = () => {
     const selected = select ? select.value : ''
-    const placeholders = document.querySelectorAll('[data-link-list-placeholders] [data-link-list]')
+    const usingFile = Boolean(fileList?.children.length)
     let visible = 0
-    placeholders.forEach((item) => {
-        item.hidden = item.dataset.linkList !== selected
+    group?.querySelectorAll('[data-link-list]').forEach((item) => {
+        item.hidden = usingFile || item.dataset.linkList !== selected
         if (!item.hidden) {
             visible += 1
         }
     })
-    const group = document.querySelector('[data-link-list-placeholders]')
     if (group) {
-        group.hidden = visible === 0
+        group.hidden = visible === 0 && !usingFile
     }
     const manage = container?.querySelector('[data-link-list-manage]')
     if (manage) {
@@ -48,19 +72,34 @@ const showSelectedList = () => {
     })
 }
 
+const fileColumnItem = (name) => {
+    const item = document.createElement('li')
+    item.className = 'list-group-item list-group-item-action placeholder'
+    item.dataset.placeholder = name
+    const content = document.createElement('div')
+    content.className = 'placeholder-content'
+    const label = document.createElement('span')
+    label.className = 'placeholder-text'
+    label.textContent = `{${name}}`
+    content.append(label)
+    const hint = document.createElement('small')
+    hint.className = 'text-muted'
+    hint.textContent = group.dataset.fileLabel
+    item.append(content, hint)
+    item.addEventListener('click', () => insertPlaceholder(name))
+    return item
+}
+
 const showFileColumns = async (input) => {
     const target = container?.querySelector('[data-link-list-file-columns]')
-    if (!target) {
-        return
-    }
     const file = input.files?.[0]
-    if (!file) {
-        target.hidden = true
-        return
+    const names = file ? headerColumns(await file.text()).map((column) => `list_${column}`) : []
+    fileList?.replaceChildren(...names.map(fileColumnItem))
+    if (target) {
+        target.textContent = names.length ? `${target.dataset.label} ${names.map((name) => `{${name}}`).join(', ')}` : ''
+        target.hidden = !names.length
     }
-    const columns = headerColumns(await file.text())
-    target.textContent = `${target.dataset.label} ${columns.map((column) => `{list_${column}}`).join(', ')}`
-    target.hidden = false
+    showSelectedList()
 }
 
 const csrfToken = () => document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || ''

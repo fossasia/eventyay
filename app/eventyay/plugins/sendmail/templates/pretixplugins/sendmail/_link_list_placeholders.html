@@ -1,5 +1,8 @@
 {% load i18n %}
-<div class="card mb-2" id="placeholder-link_list" data-link-list-placeholders hidden>
+{% with selected=form.link_list.value|stringformat:"s" %}
+<div class="card mb-2" id="placeholder-link_list" data-link-list-placeholders
+     data-file-label="{% translate 'One row of the uploaded file per recipient' %}"
+     {% if not selected %}hidden{% endif %}>
   <div class="card-header">
     <strong>{% translate "Link list" %}</strong>
   </div>
@@ -7,7 +10,7 @@
     {% for panel in form.link_list_panels %}
       {% for placeholder in panel.placeholders %}
         <li class="list-group-item list-group-item-action placeholder" data-placeholder="{{ placeholder }}"
-            data-link-list="{{ panel.list.pk }}" hidden>
+            data-link-list="{{ panel.list.pk }}" {% if panel.list.pk|stringformat:"s" != selected %}hidden{% endif %}>
           <div class="placeholder-content">
             <span class="placeholder-text">{% templatetag openbrace %}{{ placeholder }}{% templatetag closebrace %}</span>
           </div>
@@ -16,4 +19,6 @@
       {% endfor %}
     {% endfor %}
   </ul>
+  <ul class="list-group list-group-flush" data-link-list-file-placeholders></ul>
 </div>
+{% endwith %}
