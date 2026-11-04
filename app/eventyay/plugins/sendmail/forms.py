@@ -424,6 +424,11 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         return list(MailLinkList.objects.filter(event=self.event))
 
     @cached_property
+    def link_list_columns(self):
+        """Placeholders of each saved list by its id, for the editor's placeholder menu."""
+        return {str(link_list.pk): link_list.placeholders for link_list in self.link_lists}
+
+    @cached_property
     def link_list_panels(self):
         """Each saved list with its counts and placeholders, for the manage dialog and the placeholder drawer."""
         return [
@@ -521,9 +526,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             locales=event.settings.get('locales'),
         )
         message_placeholders = ['event', 'order', 'position_or_address']
-        placeholder_names = sorted(
-            [*get_available_placeholders(self.event, message_placeholders).keys(), *self.link_list_placeholders]
-        )
+        placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
         self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,

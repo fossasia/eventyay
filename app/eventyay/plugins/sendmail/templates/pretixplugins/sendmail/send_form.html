@@ -49,8 +49,7 @@
     </p>
     {{ form.link_list_file.as_field_group }}
     {{ form.link_list_name.as_field_group }}
-    <p class="text-muted" data-link-list-file-columns hidden
-       data-label="{% translate 'This file adds these placeholders:' %}"></p>
+    {{ form.link_list_columns|json_script:"link-list-columns" }}
   </div>
 {% endblock recipient_form %}
 
