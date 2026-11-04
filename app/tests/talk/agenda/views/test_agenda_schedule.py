@@ -18,6 +18,17 @@ def _inline_schedule_payload(html):
 
 
 @pytest.mark.django_db
+def test_schedule_page_allows_scrolling_to_current_time(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+    response = client.get(event.urls.schedule, follow=True, HTTP_ACCEPT='text/html')
+    assert response.status_code == 200
+    assert '<pretalx-schedule' in response.text
+    assert 'disable-auto-scroll' not in response.text
+
+
+@pytest.mark.django_db
 @pytest.mark.usefixtures('other_slot')
 def test_schedule_page_embeds_compact_day_without_abstract(client, event, slot):
     with scope(event=event):
