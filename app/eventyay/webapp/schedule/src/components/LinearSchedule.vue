@@ -296,9 +296,10 @@ export default {
 			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
 		},
 		scrollToNow() {
+			if (!this.showDayHeaders) return
 			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
-			if (nowIndex < 0) return
-			const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
+			const nowBucket = this.sessionBuckets.at(nowIndex < 0 ? -1 : Math.max(0, nowIndex - 1))
+			if (!nowBucket) return
 			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
 			if (!el) return
 			if (this.scrollParent) {
