@@ -2567,6 +2567,81 @@ class CartTest(CartTestMixin, TestCase):
             assert positions.count() == 1
             assert all(cp.voucher == v for cp in positions)
 
+    def test_voucher_multiuse_multiprod_remaining_count(self):
+        with scopes_disabled():
+            self.quota_shirts.size = 3
+            self.quota_shirts.save()
+            v = Voucher.objects.create(event=self.event, quota=self.quota_all, max_usages=3)
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '1',
+                'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '3',
+                '_voucher_code': v.code,
+            },
+            follow=True,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('can only be redeemed 2 more times', doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.count() == 3
+            assert positions.filter(product=self.ticket).count() == 1
+            assert positions.filter(product=self.shirt).count() == 2
+            assert all(cp.voucher == v for cp in positions)
+
+    def test_voucher_multiuse_multiprod_exhausted_after_add(self):
+        with scopes_disabled():
+            v = Voucher.objects.create(event=self.event, quota=self.quota_all, max_usages=2)
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '2',
+                'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1',
+                '_voucher_code': v.code,
+            },
+            follow=True,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('can only be redeemed 2 more times', doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.count() == 2
+            assert all(cp.product == self.ticket and cp.voucher == v for cp in positions)
+
+    def test_voucher_multiuse_multiprod_remaining_count_after_renewal(self):
+        with scopes_disabled():
+            self.quota_shirts.size = 3
+            self.quota_shirts.save()
+            v = Voucher.objects.create(event=self.event, quota=self.quota_all, max_usages=4)
+            cp = CartPosition.objects.create(
+                expires=now() - timedelta(minutes=10),
+                product=self.ticket,
+                voucher=v,
+                price=Decimal('23.00'),
+                event=self.event,
+                cart_id=self.session_key,
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '1',
+                'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '3',
+                '_voucher_code': v.code,
+            },
+            follow=True,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('can only be redeemed 2 more times', doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            cp.refresh_from_db()
+            assert cp.expires > now()
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.count() == 4
+            assert positions.filter(product=self.ticket).count() == 2
+            assert positions.filter(product=self.shirt).count() == 2
+            assert all(p.voucher == v for p in positions)
+
     def test_voucher_multiuse_redeemed(self):
         with scopes_disabled():
             v = Voucher.objects.create(

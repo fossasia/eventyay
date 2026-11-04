@@ -1213,7 +1213,7 @@ class CartManager:
 
     def _perform_operations(self):
         vouchers_ok = self._get_voucher_availability()
-        vouchers_left = {}
+        vouchers_used = Counter()
         quotas_ok = self._get_quota_availability()
         err = None
         warning = None
@@ -1250,7 +1250,6 @@ class CartManager:
                     quota_available_count = min(requested_count, min(quotas_ok[q] for q in op.quotas))
 
                 if op.voucher:
-                    voucher_left = vouchers_left.setdefault((type(op), op.voucher), vouchers_ok[op.voucher])
                     voucher_available_count = min(voucher_available_count, vouchers_ok[op.voucher])
 
                 if quota_available_count < 1:
@@ -1259,6 +1258,7 @@ class CartManager:
                     err = err or error_messages['in_part']
 
                 if voucher_available_count < requested_count:
+                    voucher_left = vouchers_ok[op.voucher] or vouchers_used[type(op), op.voucher]
                     if voucher_left < 1:
                         err = err or error_messages['voucher_redeemed']
                     else:
@@ -1381,6 +1381,8 @@ class CartManager:
                                     )
 
                         new_cart_positions.append(cp)
+                    if op.voucher:
+                        vouchers_used[type(op), op.voucher] += available_count
                 elif isinstance(op, self.ExtendOperation):
                     if op.seat and not op.seat.is_available(
                         ignore_cart=op.position,
@@ -1400,6 +1402,9 @@ class CartManager:
                         except DatabaseError:
                             # Best effort... The position might have been deleted in the meantime!
                             pass
+                        else:
+                            if op.voucher:
+                                vouchers_used[type(op), op.voucher] += 1
                     elif available_count == 0:
                         op.position.addons.all().delete()
                         op.position.delete()
