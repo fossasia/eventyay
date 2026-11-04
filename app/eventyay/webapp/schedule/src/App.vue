@@ -1443,7 +1443,9 @@ export default {
 			return this.currentDay === this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
 		},
 		scrollToNowInstantly () {
-			runWithoutSmoothScroll(this.scrollParent, () => this.$refs.scheduleDisplay?.scrollToNow?.())
+			const display = this.$refs.scheduleDisplay
+			display?.cancelDayJump?.()
+			runWithoutSmoothScroll(this.scrollParent, () => display?.scrollToNow?.())
 		},
 		async scrollToNowOnOpen () {
 			if (this._openScrollDone) return

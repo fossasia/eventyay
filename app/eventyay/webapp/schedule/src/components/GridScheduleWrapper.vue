@@ -116,6 +116,12 @@ export default {
 		}
 	},
 	methods: {
+		cancelDayJump() {
+			const grids = this.$refs.gridSchedules || []
+			for (const grid of grids) {
+				grid?.cancelDayJump?.()
+			}
+		},
 		scrollToNow() {
 			const grids = this.$refs.gridSchedules || []
 			for (const grid of grids) {
