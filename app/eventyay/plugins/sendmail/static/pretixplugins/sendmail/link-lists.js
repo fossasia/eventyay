@@ -11,22 +11,46 @@ const columnKey = (header, index) => {
     return key || `column_${index + 1}`
 }
 
-const headerColumns = (text) => {
-    const firstLine = text.split(/\r\n|\n|\r/)[0] || ''
+const unquote = (value) => value.trim().replace(/^"|"$/g, '')
+
+const readListFile = (text) => {
+    const lines = text.split(/\r\n|\n|\r/).filter((line) => line.trim())
+    const firstLine = lines[0] || ''
     const delimiter = [';', ',', '\t'].find((candidate) => firstLine.includes(candidate)) || ','
     const keys = []
     firstLine.split(delimiter).forEach((header, index) => {
-        let key = columnKey(header.replace(/^"|"$/g, ''), index)
+        let key = columnKey(unquote(header), index)
         while (keys.includes(key)) {
             key = `${key}_${index + 1}`
         }
         keys.push(key)
     })
-    return keys
+    const firstRow = (lines[1] || '').split(delimiter).map(unquote)
+    const sample = Object.fromEntries(keys.map((key, index) => [`list_${key}`, firstRow[index] || '']))
+    return { names: keys.map((key) => `list_${key}`), sample }
 }
 
 const savedColumns = JSON.parse(document.querySelector('#link-list-columns')?.textContent || '{}')
 let fileColumns = []
+let fileSample = {}
+
+const updatePreviewUrls = () => {
+    document.querySelectorAll('[data-email-preview-wrapper]').forEach((wrapper) => {
+        if (!wrapper.dataset.basePreviewUrl) {
+            wrapper.dataset.basePreviewUrl = wrapper.dataset.emailPreviewUrl || ''
+        }
+        if (!wrapper.dataset.basePreviewUrl) {
+            return
+        }
+        const url = new URL(wrapper.dataset.basePreviewUrl, window.location.origin)
+        if (fileColumns.length) {
+            url.searchParams.set('link_list_sample', JSON.stringify(fileSample))
+        } else if (select?.value) {
+            url.searchParams.set('link_list', select.value)
+        }
+        wrapper.dataset.emailPreviewUrl = `${url.pathname}${url.search}`
+    })
+}
 
 const currentPlaceholders = () => {
     if (fileColumns.length) {
@@ -128,12 +152,16 @@ const showSelectedList = () => {
         panel.hidden = panel.dataset.linkListPanel !== selected
     })
     refreshEditorMenus()
+    updatePreviewUrls()
 }
 
 const showFileColumns = async (input) => {
     const file = input.files?.[0]
-    fileColumns = file ? headerColumns(await file.text()).map((column) => `list_${column}`) : []
+    const parsed = file ? readListFile(await file.text()) : { names: [], sample: {} }
+    fileColumns = parsed.names
+    fileSample = parsed.sample
     refreshEditorMenus()
+    updatePreviewUrls()
 }
 
 const csrfToken = () => document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || ''
