@@ -1,0 +1,66 @@
+{% load i18n %}
+{# Sales and capacity table: one row per quota, with a totals row. #}
+<section class="td-section" aria-labelledby="td-sales-title">
+  <div class="td-section-heading">
+    <h2 id="td-sales-title" class="td-section-title">
+      <span class="fa fa-ticket" aria-hidden="true"></span>
+      {% trans 'Sales and capacity' %}
+    </h2>
+  </div>
+
+  {% if sales_capacity.has_quotas %}
+    <div class="td-analytics-table-wrap">
+      <table class="td-stats-table">
+        <thead>
+          <tr>
+            <th>{% trans 'Product / quota' %}</th>
+            <th class="td-st-count">{% trans 'Ordered' %}</th>
+            <th class="td-st-count">{% trans 'Paid' %}</th>
+            <th class="td-st-count">{% trans 'Pending' %}</th>
+            <th class="td-st-count">{% trans 'Remaining' %}</th>
+            <th class="td-st-count">{% trans 'Capacity' %}</th>
+            <th>{% trans 'Status' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in sales_capacity.rows %}
+            <tr>
+              <td class="td-st-name">
+                <a href="{{ row.quota_url }}">{{ row.name }}</a>
+                {% if row.products %}
+                  <div class="td-muted">{{ row.products|join:', ' }}</div>
+                {% endif %}
+              </td>
+              <td class="td-st-count"><a href="{{ row.ordered_url }}">{{ row.ordered }}</a></td>
+              <td class="td-st-count"><a href="{{ row.paid_url }}">{{ row.paid }}</a></td>
+              <td class="td-st-count"><a href="{{ row.pending_url }}">{{ row.pending }}</a></td>
+              <td class="td-st-count">
+                {% if row.remaining == None %}<span aria-label="{% trans 'Unlimited' %}">&infin;</span>{% else %}{{ row.remaining }}{% endif %}
+              </td>
+              <td class="td-st-count">
+                {% if row.capacity == None %}<span aria-label="{% trans 'Unlimited' %}">&infin;</span>{% else %}{{ row.capacity }}{% endif %}
+              </td>
+              <td>
+                <span class="{{ row.status_dot }}" aria-hidden="true"></span>
+                {{ row.status_label }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>{% trans 'Total' %}</strong></td>
+            <td class="td-st-count"><strong>{{ sales_capacity.totals.ordered }}</strong></td>
+            <td class="td-st-count"><strong>{{ sales_capacity.totals.paid }}</strong></td>
+            <td class="td-st-count"><strong>{{ sales_capacity.totals.pending }}</strong></td>
+            <td class="td-st-count"><span class="td-muted" aria-label="{% trans 'Not applicable' %}">&mdash;</span></td>
+            <td class="td-st-count"><span class="td-muted" aria-label="{% trans 'Not applicable' %}">&mdash;</span></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  {% else %}
+    <p class="td-muted">{% trans 'No quotas have been set up yet.' %}</p>
+  {% endif %}
+</section>
