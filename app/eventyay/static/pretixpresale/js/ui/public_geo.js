@@ -47,7 +47,100 @@ function initMap(grp) {
     grp.appendChild(target);
   }
 
-  const map = L.map(target).setView([lat, lon], DEFAULT_ZOOM);
+  const map = L.map(target, {
+    scrollWheelZoom: false,
+  }).setView([lat, lon], DEFAULT_ZOOM);
+
+  let accumulatedDelta = 0;
+  let lastMousePos = null;
+  let pinchDebounceTimer = null;
+
+  function performPinchZoom() {
+    if (Math.abs(accumulatedDelta) > 5) {
+      const direction = accumulatedDelta < 0 ? 1 : -1;
+      const currentZoom = map.getZoom();
+      const newZoom = Math.max(
+        map.getMinZoom(),
+        Math.min(map.getMaxZoom(), currentZoom + direction)
+      );
+      if (newZoom !== currentZoom) {
+        const centerPos = lastMousePos || map.getSize().divideBy(2);
+        map.setZoomAround(centerPos, newZoom);
+      }
+    }
+    accumulatedDelta = 0;
+  }
+
+  grp.addEventListener(
+    "wheel",
+    (e) => {
+      if (!e.ctrlKey && !e.metaKey) {
+        return;
+      }
+
+      e.preventDefault();
+      lastMousePos = map.mouseEventToContainerPoint(e);
+      accumulatedDelta += e.deltaY;
+
+      const threshold = 60;
+      if (Math.abs(accumulatedDelta) >= threshold) {
+        clearTimeout(pinchDebounceTimer);
+        performPinchZoom();
+      } else {
+        clearTimeout(pinchDebounceTimer);
+        pinchDebounceTimer = setTimeout(performPinchZoom, 80);
+      }
+    },
+    { passive: false }
+  );
+
+  grp.addEventListener("gesturestart", (e) => e.preventDefault());
+  grp.addEventListener("gesturechange", (e) => e.preventDefault());
+  grp.addEventListener("gestureend", (e) => e.preventDefault());
+
+  let isHovered = false;
+  grp.addEventListener("mouseenter", () => {
+    isHovered = true;
+  });
+  grp.addEventListener("mouseleave", () => {
+    isHovered = false;
+  });
+  grp.addEventListener("mousemove", () => {
+    isHovered = true;
+  });
+  window.addEventListener("blur", () => {
+    isHovered = false;
+  });
+
+  const isZoomInKey = (e) =>
+    e.key === "+" ||
+    e.key === "=" ||
+    e.key === "Add" ||
+    e.code === "Equal" ||
+    e.code === "NumpadAdd";
+
+  const isZoomOutKey = (e) =>
+    e.key === "-" ||
+    e.key === "_" ||
+    e.key === "Subtract" ||
+    e.code === "Minus" ||
+    e.code === "NumpadSubtract";
+
+  window.addEventListener("keydown", (e) => {
+    if (!isHovered) return;
+    if (e.ctrlKey || e.metaKey) {
+      if (isZoomInKey(e)) {
+        e.preventDefault();
+        map.zoomIn();
+      } else if (isZoomOutKey(e)) {
+        e.preventDefault();
+        map.zoomOut();
+      } else if (e.key === "0" || e.code === "Digit0" || e.code === "Numpad0") {
+        e.preventDefault();
+        map.setZoom(DEFAULT_ZOOM);
+      }
+    }
+  });
 
   L.tileLayer(tiles, {
     attribution: attrib,
