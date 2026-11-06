@@ -58,3 +58,18 @@ test('clamps interpretation volume', () => {
 	scheduler.setVolume(-1)
 	assert.equal(context.gain.gain.value, 0)
 })
+
+test('reports malformed PCM chunks', () => {
+	const context = audioContext()
+	const scheduler = new AudioScheduler(context)
+	const originalWarn = console.warn
+	const warnings = []
+	console.warn = (...args) => warnings.push(args)
+	try {
+		assert.equal(scheduler.schedule(new Uint8Array(3)), null)
+		assert.equal(warnings.length, 1)
+		assert.deepEqual(warnings[0][1], { byteLength: 3, sampleRate: 24000 })
+	} finally {
+		console.warn = originalWarn
+	}
+})
