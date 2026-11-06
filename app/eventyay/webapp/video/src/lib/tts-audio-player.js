@@ -20,8 +20,13 @@ export class TtsAudioPlayer {
 
 	connect() {
 		this.stopped = false
-		this.ensureAudioContext()
-		this.openSocket()
+		try {
+			this.ensureAudioContext()
+			this.openSocket()
+		} catch (error) {
+			this.disconnect()
+			throw error
+		}
 	}
 
 	ensureAudioContext() {
