@@ -12,7 +12,7 @@
 			@click="toggleMenu",
 			@keydown="onToggleKeydown"
 		)
-			span.value {{ languageLabel(internalSelectedLanguage) }}
+			span.value {{ selectedOptionLabel }}
 			i.mdi.mdi-menu-down(aria-hidden="true")
 	teleport(to="body")
 		template(v-if="menuOpen")
@@ -24,18 +24,18 @@
 				:aria-label="resolvedLabel"
 			)
 				li(
-					v-for="(language, index) of languageOptions",
-					:key="language",
+					v-for="(option, index) of languageOptions",
+					:key="option.id",
 					role="option",
-					:aria-selected="language === internalSelectedLanguage ? 'true' : 'false'",
-					:class="{active: language === internalSelectedLanguage, highlight: index === highlightedIndex}",
-					@click="selectLanguage(language)",
+					:aria-selected="option.id === internalSelectedStream ? 'true' : 'false'",
+					:class="{active: option.id === internalSelectedStream, highlight: index === highlightedIndex}",
+					@click="selectStream(option.id)",
 					@mouseenter="highlightedIndex = index"
-				) {{ languageLabel(language) }}
+				) {{ optionLabel(option) }}
 </template>
 <script>
 import { createPopper } from '@popperjs/core'
-import { interpretationStreamKind } from '../interpretation-streams.js'
+import { interpretationStreamIdentity, interpretationStreamKind } from '../interpretation-streams.js'
 import { normalizeAudioTranslationSource } from 'lib/validators'
 
 let dropdownId = 0
@@ -52,6 +52,10 @@ export default {
 			type: String,
 			default: 'Original'
 		},
+		selectedStream: {
+			type: Object,
+			default: null
+		},
 		label: {
 			type: String,
 			default: null
@@ -63,7 +67,7 @@ export default {
 	},
 	data() {
 		return {
-			internalSelectedLanguage: null,
+			internalSelectedStream: null,
 			languageOptions: [],
 			isSyncingSelection: false,
 			menuOpen: false,
@@ -76,24 +80,39 @@ export default {
 		resolvedLabel() {
 			return this.label || this.$t('Interpretation')
 		},
+		selectedOption() {
+			return this.languageOptions.find(option => option.id === this.internalSelectedStream) || null
+		},
+		selectedOptionLabel() {
+			return this.optionLabel(this.selectedOption) || this.selectedLanguage
+		},
 	},
 	watch: {
 		languages: {
 			immediate: true,
 			handler(newLanguages) {
-				this.languageOptions = newLanguages.map(entry => entry.language)
-				this.syncSelectedLanguage()
+				this.languageOptions = newLanguages.map(entry => ({
+					id: interpretationStreamIdentity(entry),
+					entry,
+				}))
+				this.syncSelectedStream()
 			}
 		},
 		selectedLanguage: {
 			immediate: true,
 			handler() {
-				this.syncSelectedLanguage()
+				this.syncSelectedStream()
 			}
 		},
-		internalSelectedLanguage(newLanguage) {
+		selectedStream: {
+			deep: true,
+			handler() {
+				this.syncSelectedStream()
+			}
+		},
+		internalSelectedStream(newStream) {
 			if (this.isSyncingSelection) return
-			if (newLanguage) {
+			if (newStream) {
 				this.sendLanguageChange()
 			}
 		}
@@ -102,24 +121,28 @@ export default {
 		this.destroyPopper()
 	},
 	methods: {
-		languageLabel(language) {
-			if (!this.showStreamType) return language
-			const entry = this.languages.find(item => item.language === language)
-			const kind = interpretationStreamKind(entry)
-			return kind ? `${language} (${this.$t(kind)})` : language
+		optionLabel(option) {
+			const language = option?.entry?.language
+			if (!language || !this.showStreamType) return language
+			const kind = interpretationStreamKind(option.entry)
+			const translatedKind = kind === 'AI' ? this.$t('AI') : kind === 'Human' ? this.$t('Human') : null
+			return translatedKind ? `${language} (${translatedKind})` : language
 		},
-		syncSelectedLanguage() {
-			const fallback = this.languageOptions.includes('Original') ? 'Original' : null
-			const nextLanguage = this.languageOptions.includes(this.selectedLanguage) ? this.selectedLanguage : fallback
-			if (this.internalSelectedLanguage === nextLanguage) return
+		syncSelectedStream() {
+			const selectedId = interpretationStreamIdentity(this.selectedStream)
+			const selected = this.languageOptions.find(option => option.id === selectedId)
+				|| this.languageOptions.find(option => option.entry.language === this.selectedLanguage)
+				|| this.languageOptions.find(option => option.entry.language === 'Original')
+			const nextStream = selected?.id || null
+			if (this.internalSelectedStream === nextStream) return
 			this.isSyncingSelection = true
-			this.internalSelectedLanguage = nextLanguage
+			this.internalSelectedStream = nextStream
 			this.$nextTick(() => {
 				this.isSyncingSelection = false
 			})
 		},
 		sendLanguageChange() {
-			const selected = this.languages.find(item => item.language === this.internalSelectedLanguage)
+			const selected = this.selectedOption?.entry
 			const audioSource = normalizeAudioTranslationSource(selected?.url || selected?.youtube_id)
 			const useVideo = selected?.use_video || false
 
@@ -130,7 +153,7 @@ export default {
 				this.closeMenu()
 				return
 			}
-			this.highlightedIndex = Math.max(this.languageOptions.indexOf(this.internalSelectedLanguage), 0)
+			this.highlightedIndex = Math.max(this.languageOptions.findIndex(option => option.id === this.internalSelectedStream), 0)
 			this.menuOpen = true
 			await this.$nextTick()
 			if (!this.$refs.shell || !this.$refs.menu) {
@@ -171,8 +194,8 @@ export default {
 			this.popper?.destroy()
 			this.popper = null
 		},
-		selectLanguage(language) {
-			this.internalSelectedLanguage = language
+		selectStream(streamId) {
+			this.internalSelectedStream = streamId
 			this.closeMenu()
 		},
 		onToggleKeydown(event) {
@@ -187,8 +210,8 @@ export default {
 					this.toggleMenu()
 					return
 				}
-				const language = this.languageOptions[this.highlightedIndex]
-				if (language) this.selectLanguage(language)
+				const option = this.languageOptions[this.highlightedIndex]
+				if (option) this.selectStream(option.id)
 				return
 			}
 			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
