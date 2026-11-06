@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django_filters import rest_framework as filters
 from django_scopes import scopes_disabled
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
+from rest_framework import filters as rest_filters
 from rest_framework import serializers, status, viewsets
 from rest_framework.authentication import SessionAuthentication, get_authorization_header
 from rest_framework.decorators import (
@@ -260,7 +261,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = SubmissionSerializer
     queryset = Submission.objects.none()
     lookup_field = 'code__iexact'
-    search_fields = ('title', 'speakers__fullname')
+    filter_backends = (filters.DjangoFilterBackend, rest_filters.SearchFilter)
     filterset_class = SubmissionFilter
     allow_public_read = True
     permission_map = {
@@ -269,6 +270,23 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         'remove_speaker': 'submission.update_submission',
     }
     endpoint = 'submissions'
+
+    @property
+    def search_fields(self):
+        user = getattr(self.request, 'user', None) if hasattr(self, 'request') else None
+        event = getattr(self, 'event', None)
+        if event and user and user.is_authenticated and isinstance(user, User):
+            from eventyay.talk_rules.orga import (
+                can_view_speaker_names,
+                enforces_hide_speaker_names,
+                is_reviewer_only_for_event,
+            )
+            if enforces_hide_speaker_names(user, event) or (
+                is_reviewer_only_for_event(user, event)
+                and not can_view_speaker_names(user, event)
+            ):
+                return ('title',)
+        return ('title', 'speakers__fullname')
 
     def get_legacy_queryset(self):  # pragma: no cover
         base_qs = self.event.submissions.all().prefetch_related('resources').order_by('code')
