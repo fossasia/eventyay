@@ -63,7 +63,7 @@
 				.tool-section.audio-section(v-if="isInterpretationEnabled")
 					.dropdown-wrapper(v-if="showPluginLanguageDropdown")
 						i.mdi.mdi-account-voice
-						AudioTranslationDropdown(:key="`${room.id}-plugin`", :languages="interpretationLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
+						AudioTranslationDropdown(:key="`${room.id}-plugin`", :languages="interpretationLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", :show-stream-type="true", @languageChanged="handlePluginLanguageChange")
 					.static-audio-pill(v-else)
 						i.mdi.mdi-volume-high
 						span {{ $t('Original Audio') }}
@@ -138,8 +138,13 @@ import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import LiveCaptions from 'components/LiveCaptions'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
-import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
-import { firstCaptionLanguage, pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
+import {
+	firstCaptionLanguage,
+	interpretationAudioSource,
+	isUsableLanguageStreamEntry,
+	pluginLanguageStreams,
+	roomUsesPluginLanguageStreams,
+} from '../../interpretation-streams'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
 import { hasOrganizerTraits } from 'lib/traitGrants'
@@ -283,7 +288,7 @@ export default {
 			return Number(this.$store.state.captionTextSize) || 13
 		},
 		hasInterpretationActive() {
-			return Boolean(this.currentInterpretation?.url || (this.selectedPluginLanguage && this.selectedPluginLanguage !== 'Original'))
+			return Boolean(interpretationAudioSource(this.currentInterpretation))
 		},
 		currentInterpretation() {
 			if (!this.room?.id) return null
@@ -296,7 +301,7 @@ export default {
 			return roomUsesPluginLanguageStreams(this.room) && this.interpretationLanguages.some(entry => entry.language !== 'Original')
 		},
 		interpretationLanguages() {
-			return (this.pluginLanguages || []).filter(entry => isUsableAudioTranslationEntry(entry))
+			return (this.pluginLanguages || []).filter(entry => isUsableLanguageStreamEntry(entry) && interpretationAudioSource(entry))
 		},
 		selectedPluginLanguage() {
 			return this.getLanguageForTranslation(this.currentInterpretation, this.interpretationLanguages) || 'Original'
@@ -481,7 +486,7 @@ export default {
 			if (finalConfig && finalConfig.language === 'Original') {
 				finalConfig = null;
 			}
-			if (finalConfig && !finalConfig.url && !finalConfig.youtube_id) {
+			if (finalConfig && !interpretationAudioSource(finalConfig)) {
 				finalConfig = null;
 			}
 			this.$store.commit('updateInterpretationAudio', {
@@ -494,10 +499,11 @@ export default {
 			this.clearStaleTranslation()
 		},
 		getLanguageForTranslation(translationConfig, languages) {
-			if (!translationConfig?.url || !languages?.length) return 'Original'
+			const translationSource = interpretationAudioSource(translationConfig)
+			if (!translationSource || !languages?.length) return 'Original'
 			const matchingLanguage = languages.find(entry => (
 				entry.language !== 'Original' &&
-				normalizeAudioTranslationSource(entry.url || entry.youtube_id) === translationConfig.url &&
+				interpretationAudioSource(entry) === translationSource &&
 				!!entry.use_video === !!translationConfig.useVideo
 			))
 			return matchingLanguage?.language || null
@@ -511,8 +517,9 @@ export default {
 			const sameLang = selectedLang && selectedLang !== 'Original'
 				? this.pluginLanguages.find(l => l.language === selectedLang)
 				: null
-			const audioSource = normalizeAudioTranslationSource(sameLang?.url || sameLang?.youtube_id)
-			if (!this.showPluginLanguageDropdown || !matchesPlugin || (audioSource && audioSource !== this.currentInterpretation.url)) {
+			const audioSource = interpretationAudioSource(sameLang)
+			const currentAudioSource = interpretationAudioSource(this.currentInterpretation)
+			if (!this.showPluginLanguageDropdown || !matchesPlugin || (audioSource && audioSource !== currentAudioSource)) {
 				if (sameLang) {
 					if (audioSource) {
 						this.updateActiveTranslation({
