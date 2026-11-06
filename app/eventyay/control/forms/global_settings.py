@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from collections import OrderedDict
 from typing import List, Union
 
@@ -11,7 +12,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
-from eventyay.base.models.privacy import ConsentProvider
+from eventyay.base.models.privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 from eventyay.common.urls import get_file_url_path
@@ -944,3 +945,150 @@ class PrivacySettingsForm(SettingsForm):
             )
 
         return data
+
+
+# Quantifier braces as Python's re reads them: {n}, {n,} and {n,m}.
+QUANTIFIER_BRACES = re.compile(r'\{\d+(?:,\d*)?\}')
+
+
+def browser_regex_problem(pattern):
+    """Syntax in ``pattern`` that Python's re accepts but a browser's RegExp rejects, or None.
+
+    ``pattern`` must already compile with re. Of the (? group extensions, browsers only know
+    (?: (?= (?! (?<= and (?<!, not named groups, comments, inline flags, atomic groups or
+    conditionals. They also reject possessive quantifiers such as *+, a quantifier on a
+    lookbehind, and read a ] straight after [ or [^ as the end of the class, not a character.
+    """
+    i = 0
+    groups = []
+    # What the token before the current one was: 'greedy' or 'lazy' for a quantifier, 'lookbehind'
+    # or 'group' for a closed group, None for anything else.
+    previous = None
+    while i < len(pattern):
+        char = pattern[i]
+        if char == '\\':
+            i += 2
+            previous = None
+        elif char == '[':
+            start = i
+            i += 1
+            if pattern.startswith('^', i):
+                i += 1
+            if pattern.startswith(']', i):
+                return pattern[start : i + 1]
+            while i < len(pattern) and pattern[i] != ']':
+                i += 2 if pattern[i] == '\\' else 1
+            i += 1
+            previous = None
+        elif char == '(':
+            if pattern.startswith('?', i + 1):
+                if not pattern.startswith((':', '=', '!', '<=', '<!'), i + 2):
+                    return pattern[i : i + 3]
+                groups.append('lookbehind' if pattern.startswith('<', i + 2) else 'group')
+                i += 2
+            else:
+                groups.append('group')
+                i += 1
+            previous = None
+        elif char == ')':
+            previous = groups.pop() if groups else None
+            i += 1
+        elif char in '*+?' or (char == '{' and QUANTIFIER_BRACES.match(pattern, i)):
+            end = QUANTIFIER_BRACES.match(pattern, i).end() if char == '{' else i + 1
+            if previous == 'greedy' and char == '?':
+                previous = 'lazy'
+            elif previous in ('greedy', 'lazy', 'lookbehind'):
+                return pattern[i - 1 : end]
+            else:
+                previous = 'greedy'
+            i = end
+        else:
+            previous = None
+            i += 1
+    return None
+
+
+class ThirdPartyServiceForm(forms.ModelForm):
+    """Add or edit an entry of the third-party service registry."""
+
+    class Meta:
+        model = ThirdPartyService
+        fields = ('title', 'name', 'provider', 'purpose', 'category', 'enabled', 'privacy_policy_url', 'cookie_names')
+        widgets = {
+            'purpose': forms.Textarea(attrs={'rows': 3}),
+            'cookie_names': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    # Klaro looks the service up by this exact name in its config, in the data-name of
+    # consent-gated content and in the consent it stores, so it has a single spelling.
+    name_pattern = re.compile(r'^[a-z0-9_-]+$')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A service without a category is left out of the consent banner, so it has to get one here.
+        self.fields['category'].required = True
+        self.fields['category'].help_text = _(
+            '"%(necessary)s" is only for services the site cannot work without: they run without asking '
+            'and visitors cannot switch them off.'
+        ) % {'necessary': ConsentCategory.NECESSARY.label}
+        if self.instance.pk:
+            # Renaming would detach the service from the content that refers to it and from the
+            # consent visitors already gave, so the name is fixed once the service exists.
+            self.fields['name'].disabled = True
+            self.fields['name'].help_text = _(
+                'Consent-gated embeds and the consent visitors already gave refer to the service by this '
+                'name, so it cannot be changed.'
+            )
+        else:
+            self.fields['name'].help_text = _(
+                'Short machine name of lowercase letters, digits, "-" and "_", e.g. "google-analytics". '
+                'Consent-gated embeds refer to the service by this name.'
+            )
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        # A fixed name is kept as it is, even one saved before this check.
+        if not self.fields['name'].disabled and not self.name_pattern.match(name):
+            raise ValidationError(_('Use only lowercase letters, digits, "-" and "_".'))
+        return name
+
+    def clean_cookie_names(self):
+        # A cookie name cannot contain a comma or whitespace, so a line such as "_ga, _gid" is
+        # split into its names. A line starting with ^ is a regular expression, which may
+        # contain both (e.g. "^_ga_.{1,3}"), so it is kept as it is.
+        names = []
+        for line in self.cleaned_data['cookie_names'].splitlines():
+            entry = line.strip()
+            if entry.startswith('^'):
+                names.append(entry)
+            else:
+                names.extend(name for name in re.split(r'[\s,]+', entry) if name)
+
+        # Every entry starting with ^ is a regular expression, including one split off a line
+        # such as "_ga, ^_ga_". Klaro compiles it in the visitor's browser without catching
+        # errors, so an invalid one stops it from clearing cookies. Compiling it here catches
+        # the mistakes Python and JavaScript both reject; browser_regex_problem() the syntax
+        # only Python accepts. The pattern is only compiled here, never matched against anything.
+        errors = []
+        for pattern in names:
+            if not pattern.startswith('^'):
+                continue
+            reason = None
+            try:
+                re.compile(pattern)
+            except re.error as e:
+                reason = e.msg
+            else:
+                problem = browser_regex_problem(pattern)
+                if problem:
+                    reason = _('browsers do not support "%(syntax)s"') % {'syntax': problem}
+            if reason:
+                errors.append(
+                    ValidationError(
+                        _('"%(pattern)s" is not a valid regular expression: %(reason)s.'),
+                        params={'pattern': pattern, 'reason': reason},
+                    )
+                )
+        if errors:
+            raise ValidationError(errors)
+        return '\n'.join(names)

@@ -9,12 +9,13 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.db import IntegrityError, OperationalError, ProgrammingError
+from django.db.models import ProtectedError
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import NoReverseMatch, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import DeleteView, FormView, RedirectView, TemplateView
+from django.views.generic import CreateView, DeleteView, FormView, RedirectView, TemplateView, UpdateView
 from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
@@ -34,6 +35,7 @@ from eventyay.control.forms.global_settings import (
     GlobalTicketingSettingsForm,
     SSOConfigForm,
     PrivacySettingsForm,
+    ThirdPartyServiceForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
@@ -827,6 +829,49 @@ class PrivacySettingsView(AdministratorPermissionRequiredMixin, FormView):
     def get_success_url(self):
         """get_success_url method."""
         return reverse('eventyay_admin:admin.global.privacy')
+
+
+class ThirdPartyServiceFormMixin:
+    model = ThirdPartyService
+    form_class = ThirdPartyServiceForm
+    template_name = 'pretixcontrol/admin/privacy_service_form.html'
+    success_url = reverse_lazy('eventyay_admin:admin.global.privacy')
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+
+class ThirdPartyServiceCreateView(AdministratorPermissionRequiredMixin, ThirdPartyServiceFormMixin, CreateView):
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _('The service has been added.'))
+        return response
+
+
+class ThirdPartyServiceUpdateView(AdministratorPermissionRequiredMixin, ThirdPartyServiceFormMixin, UpdateView):
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _('Your changes have been saved.'))
+        return response
+
+
+class ThirdPartyServiceDeleteView(AdministratorPermissionRequiredMixin, DeleteView):
+    model = ThirdPartyService
+    template_name = 'pretixcontrol/admin/privacy_service_delete.html'
+    success_url = reverse_lazy('eventyay_admin:admin.global.privacy')
+
+    def form_valid(self, form):
+        try:
+            response = super().form_valid(form)
+        except ProtectedError:
+            messages.error(
+                self.request,
+                _('The service could not be removed as other data (e.g. created by plug-ins) still refers to it.'),
+            )
+            return redirect(self.success_url)
+        messages.success(self.request, _('The service has been removed.'))
+        return response
 
 
 class RevealSecretSettingView(View):
