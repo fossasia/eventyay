@@ -1,9 +1,9 @@
 <template lang="pug">
 .ts-confirm-overlay(v-if="visible", @click="cancel")
-  .ts-confirm-panel(@click.stop="")
+  .ts-confirm-panel(ref="panel", role="dialog", aria-modal="true", :aria-label="title", tabindex="-1", @keydown="onKeydown", @click.stop="")
     .ts-confirm-header
       h3 {{ title }}
-      button.modal-close-btn(type="button", :aria-label="$t('Close')", @click="cancel")
+      button.modal-close-btn(type="button", :aria-label="$t('Close')", :disabled="busy", @click="cancel")
         i.fa.fa-times(aria-hidden="true")
     p.ts-confirm-lead(v-if="lead") {{ lead }}
     p.ts-confirm-error(v-if="error") {{ error }}
@@ -14,9 +14,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   title: string
   lead?: string
   confirmLabel?: string
@@ -31,16 +31,56 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
+const panel = ref<HTMLElement | null>(null)
+let previousFocus: HTMLElement | null = null
+
+// Move focus before the render disables the active button.
+watch(() => props.busy, busy => {
+  if (busy && visible.value) panel.value?.focus()
+})
 
 function show() {
+  if (visible.value) return
+  previousFocus = document.activeElement as HTMLElement | null
   visible.value = true
+  nextTick(() => { if (visible.value) panel.value?.focus() })
 }
 
 function close() {
+  if (!visible.value) return
   visible.value = false
+  const opener = previousFocus
+  previousFocus = null
+  opener?.focus()
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    cancel()
+  } else if (event.key === 'Tab') {
+    const buttons = panel.value?.querySelectorAll<HTMLElement>('button:not(:disabled)')
+    const first = buttons?.[0]
+    const last = buttons?.[buttons.length - 1]
+    if (!first) {
+      event.preventDefault()
+      panel.value?.focus()
+    } else if (event.shiftKey && (document.activeElement === first || document.activeElement === panel.value)) {
+      event.preventDefault()
+      last?.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 }
 
 function cancel() {
+  if (props.busy) {
+    panel.value?.focus()
+    return
+  }
   close()
   emit('cancel')
 }
