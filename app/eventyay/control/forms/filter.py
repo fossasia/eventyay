@@ -71,6 +71,18 @@ def searchable_product_select():
     )
 
 
+def searchable_country_select():
+    # Country lists can be long, so let organizers type to filter them (see common/js/searchable-select.js).
+    return forms.Select(
+        attrs={
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search'),
+            'data-empty-text': _('No results'),
+            'data-all-label': _('All countries'),
+        }
+    )
+
+
 def get_all_payment_providers():
     global PAYMENT_PROVIDERS
 
@@ -650,6 +662,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             required=False,
             label=gettext('Invoice address') + ': ' + gettext('Country'),
             choices=[('', '')] + list(CachedCountries()),
+            widget=searchable_country_select(),
         )
         self.fields['attendee_name'] = forms.CharField(required=False, label=_('Attendee name'))
         self.fields['attendee_email'] = forms.CharField(required=False, label=_('Attendee e-mail address'))
@@ -675,6 +688,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             required=False,
             label=gettext('Attendee address') + ': ' + gettext('Country'),
             choices=[('', '')] + list(CachedCountries()),
+            widget=searchable_country_select(),
         )
         self.fields['ticket_secret'] = forms.CharField(label=_('Ticket secret'), required=False)
         for q in self.event.questions.all():
