@@ -15,7 +15,14 @@ export class AudioScheduler {
 	}
 
 	schedule(audioBytes) {
-		if (!audioBytes?.byteLength || audioBytes.byteLength % 2 !== 0) return null
+		if (!audioBytes?.byteLength) return null
+		if (audioBytes.byteLength % 2 !== 0) {
+			console.warn('Ignoring malformed TTS PCM chunk', {
+				byteLength: audioBytes.byteLength,
+				sampleRate: this.sampleRate,
+			})
+			return null
+		}
 
 		const view = new DataView(audioBytes.buffer, audioBytes.byteOffset, audioBytes.byteLength)
 		const samples = new Float32Array(audioBytes.byteLength / 2)
