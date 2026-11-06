@@ -10,18 +10,33 @@ export function isUsableLanguageStreamEntry(entry) {
 }
 
 export function interpretationAudioSource(entry) {
-	return normalizeAudioTranslationSource(
-		entry?.tts_ws_url
-		|| entry?.whep_url
-		|| entry?.whip_url
-		|| entry?.url
-		|| entry?.youtube_id
-	)
+	const candidates = [
+		entry?.tts_ws_url,
+		entry?.whep_url,
+		entry?.whip_url,
+		entry?.url,
+		entry?.youtube_id,
+	]
+	for (const candidate of candidates) {
+		const source = normalizeAudioTranslationSource(candidate)
+		if (source) return source
+	}
+	return null
 }
 
 export function interpretationStreamKind(entry) {
 	if (!entry || entry.language === ORIGINAL_LANGUAGE) return null
 	return entry.tts_ws_url ? 'AI' : 'Human'
+}
+
+export function interpretationStreamIdentity(entry) {
+	if (!entry) return null
+	const id = entry.id ?? entry.stream_id ?? entry.streamId
+	if (id !== null && id !== undefined) return `id:${id}`
+	const source = interpretationAudioSource(entry)
+		|| normalizeAudioTranslationSource(entry.caption_ws_url)
+		|| ''
+	return [entry.language || '', interpretationStreamKind(entry) || '', source, entry.use_video ? 'video' : 'audio'].join(':')
 }
 
 export function roomUsesPluginLanguageStreams(room) {
