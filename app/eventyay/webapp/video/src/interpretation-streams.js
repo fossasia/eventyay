@@ -1,11 +1,27 @@
-import { isUsableAudioTranslationEntry } from './lib/validators.js'
+import { normalizeAudioTranslationSource } from './lib/validators.js'
 
 const ORIGINAL_LANGUAGE = 'Original'
 
 export function isUsableLanguageStreamEntry(entry) {
 	if (!entry?.language) return false
 	if (entry.caption_ws_url) return true
-	return isUsableAudioTranslationEntry(entry)
+	if (entry.language === ORIGINAL_LANGUAGE) return true
+	return Boolean(interpretationAudioSource(entry))
+}
+
+export function interpretationAudioSource(entry) {
+	return normalizeAudioTranslationSource(
+		entry?.tts_ws_url
+		|| entry?.whep_url
+		|| entry?.whip_url
+		|| entry?.url
+		|| entry?.youtube_id
+	)
+}
+
+export function interpretationStreamKind(entry) {
+	if (!entry || entry.language === ORIGINAL_LANGUAGE) return null
+	return entry.tts_ws_url ? 'AI' : 'Human'
 }
 
 export function roomUsesPluginLanguageStreams(room) {
