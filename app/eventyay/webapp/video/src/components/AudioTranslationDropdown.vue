@@ -12,7 +12,7 @@
 			@click="toggleMenu",
 			@keydown="onToggleKeydown"
 		)
-			span.value {{ internalSelectedLanguage }}
+			span.value {{ languageLabel(internalSelectedLanguage) }}
 			i.mdi.mdi-menu-down(aria-hidden="true")
 	teleport(to="body")
 		template(v-if="menuOpen")
@@ -31,10 +31,11 @@
 					:class="{active: language === internalSelectedLanguage, highlight: index === highlightedIndex}",
 					@click="selectLanguage(language)",
 					@mouseenter="highlightedIndex = index"
-				) {{ language }}
+				) {{ languageLabel(language) }}
 </template>
 <script>
 import { createPopper } from '@popperjs/core'
+import { interpretationStreamKind } from '../interpretation-streams.js'
 import { normalizeAudioTranslationSource } from 'lib/validators'
 
 let dropdownId = 0
@@ -54,6 +55,10 @@ export default {
 		label: {
 			type: String,
 			default: null
+		},
+		showStreamType: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {
@@ -97,6 +102,12 @@ export default {
 		this.destroyPopper()
 	},
 	methods: {
+		languageLabel(language) {
+			if (!this.showStreamType) return language
+			const entry = this.languages.find(item => item.language === language)
+			const kind = interpretationStreamKind(entry)
+			return kind ? `${language} (${this.$t(kind)})` : language
+		},
 		syncSelectedLanguage() {
 			const fallback = this.languageOptions.includes('Original') ? 'Original' : null
 			const nextLanguage = this.languageOptions.includes(this.selectedLanguage) ? this.selectedLanguage : fallback
