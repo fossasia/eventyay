@@ -38,6 +38,27 @@ def test_can_see_talk(client, event, slot):
 
 
 @pytest.mark.django_db
+def test_talk_meta_description_strips_html(client, event, slot):
+    with scope(event=event):
+        slot.submission.abstract = (
+            '<p>This is a <strong>keynote</strong> talk about Python &amp; AI.</p>'
+            '<p>Join us to learn &nbsp; more!</p>'
+        )
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    # Meta and OG descriptions must not contain raw HTML tags or &nbsp;
+    expected = 'This is a keynote talk about Python &amp; AI. Join us to learn more!'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+    og_tag = content.split('<meta property="og:description"')[1].split('>', 1)[0]
+    assert '<p>' not in og_tag
+    assert '<strong>' not in og_tag
+    assert '&nbsp;' not in og_tag
+
+
+@pytest.mark.django_db
 def test_can_see_talk_with_iframe(client, event, slot):
     event.plugins = 'tests'
     event.save()

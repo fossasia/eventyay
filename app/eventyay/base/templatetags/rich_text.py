@@ -434,6 +434,28 @@ def html_to_markdown_filter(html_text: str) -> str:
     return html_text if not html_text else html_to_markdown(html_text)
 
 
+_BLOCK_TAGS = {'p', 'div', 'li', 'tr', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr'}
+
+
+def rich_text_to_plain_text(text: str) -> str:
+    """Convert rich text (HTML) to single-line plain text suitable for meta descriptions and link previews."""
+    if not text:
+        return ''
+    text = re.sub(r'<br\s*/?>', ' ', str(text), flags=re.IGNORECASE)
+    soup = BeautifulSoup(text, 'html.parser')
+    for tag in soup.find_all(_BLOCK_TAGS):
+        tag.append(' ')
+    plain = soup.get_text()
+    plain = html.unescape(plain)
+    plain = plain.replace('\xa0', ' ')
+    return ' '.join(plain.split())
+
+
+@register.filter
+def rich_text_plain(text: str) -> str:
+    return rich_text_to_plain_text(text)
+
+
 @register.filter
 def append_colon(text: LazyI18nString) -> str:
     text = str(text).strip()

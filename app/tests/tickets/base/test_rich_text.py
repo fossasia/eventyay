@@ -9,7 +9,9 @@ from eventyay.base.templatetags.rich_text import (
     expand_email_preview_placeholders,
     markdown_compile_email,
     render_markdown_abslinks,
+    rich_text_plain,
     rich_text_snippet,
+    rich_text_to_plain_text,
 )
 
 
@@ -126,3 +128,48 @@ def test_linkify_abs(link):
     assert rich_text_snippet(input) == output
     assert render_markdown_abslinks(input) == f'<p>{output}</p>'
     assert markdown_compile_email(input) == f'<p>{output}</p>'
+
+
+@pytest.mark.parametrize(
+    'input_text,expected_output',
+    [
+        ('', ''),
+        (None, ''),
+        ('<p>Simple paragraph</p>', 'Simple paragraph'),
+        ('<p>First</p><p>Second</p>', 'First Second'),
+        ('<p>Text with <strong>bold</strong> and <em>italic</em>.</p>', 'Text with bold and italic.'),
+        ('<p>Visit <a href="https://eventyay.com">Eventyay</a> today!</p>', 'Visit Eventyay today!'),
+        ('<ul><li>Item 1</li><li>Item 2</li></ul>', 'Item 1 Item 2'),
+        ('<p>Entities: &amp; &lt; &gt; &quot; &#39; &nbsp; end</p>', 'Entities: & < > " \' end'),
+        ('Line 1<br>Line 2<br/>Line 3', 'Line 1 Line 2 Line 3'),
+        ('   Multiple    spaces   and\nnewlines   ', 'Multiple spaces and newlines'),
+        ('__init__.py', '__init__.py'),
+        ('2 ** 8 = 256', '2 ** 8 = 256'),
+        ('##general', '##general'),
+        ('Text with [square brackets]', 'Text with [square brackets]'),
+        ('<p>Check out <strong>__init__.py</strong></p>', 'Check out __init__.py'),
+    ],
+)
+def test_rich_text_to_plain_text(input_text, expected_output):
+    assert rich_text_to_plain_text(input_text) == expected_output
+    assert rich_text_plain(input_text) == expected_output
+
+
+def test_rich_text_plain_in_template():
+    import html
+
+    from django.template import Context, Template
+
+    t = Template('{% load rich_text %}{{ text|rich_text_plain }}')
+    ctx = Context({
+        'text': (
+            '<p>This is a <strong>keynote</strong> talk about Python &amp; AI.</p>'
+            '<p>Join us to learn &nbsp; more!</p>'
+        )
+    })
+    rendered = t.render(ctx)
+    parsed = html.unescape(rendered)
+    assert '<p>' not in rendered
+    assert '<strong>' not in rendered
+    assert '&nbsp;' not in rendered
+    assert parsed == 'This is a keynote talk about Python & AI. Join us to learn more!'
