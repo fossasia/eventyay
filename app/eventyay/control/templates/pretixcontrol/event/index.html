@@ -9,7 +9,7 @@
 {% load getitem %}
 
 {% block title %}{{ request.event.name }}{% endblock %}
-{% block body_class %}dashboard-print{% endblock %}
+{% block body_class %}dashboard-print dashboard-event-overview{% endblock %}
 {% block content %}
     {% if is_meetup_event %}
         {% trans "Meetup" as date_text %}
@@ -115,7 +115,6 @@
             {% include "pretixcontrol/event/fragment_subevent_choice_simple.html" %}
         </form>
     {% endif %}
-    <br>
     <div class="dashboard custom">
         {% if not request.event.has_subevents or subevent %}
             {% include "pretixcontrol/event/fragment_timeline.html" %}
@@ -307,7 +306,6 @@
         {% endif %}
     {% endif %}
 
-    <p>&nbsp;</p>
     <div class="panel panel-default items">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -322,8 +320,7 @@
                     {% bootstrap_field comment_form.comment layout="horizontal" show_help=True show_label=False horizontal_field_class="col-md-12" %}
                 </div>
                 {% if not comment_form.readonly %}
-                    <p class="text-right flip">
-                        <br>
+                    <p class='text-right flip comment-actions'>
                         <button class="btn btn-default">
                             {% trans "Update comment" %}
                         </button>
