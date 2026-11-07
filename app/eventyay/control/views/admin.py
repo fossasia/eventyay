@@ -79,6 +79,8 @@ from eventyay.control.signals import (
 from eventyay.control.video.admin_dashboard import get_video_server_dashboard_rows
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
+from eventyay.control.views.organizer_request_forms import organizer_form_tab_context
+from eventyay.control.views.organizer_requests import organizer_request_tab_context
 
 logger = logging.getLogger(__name__)
 
@@ -643,6 +645,7 @@ class OrganizerList(AdministratorPermissionRequiredMixin, PaginationMixin, ListV
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'pretixcontrol/admin/organizers.html'
+    initial_organizer_tab = 'tab-organizers'
 
     def get_queryset(self):
         qs = Organizer.objects.all()
@@ -653,6 +656,9 @@ class OrganizerList(AdministratorPermissionRequiredMixin, PaginationMixin, ListV
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['initial_organizer_tab'] = self.initial_organizer_tab
+        ctx.update(organizer_request_tab_context(self.request))
+        ctx.update(organizer_form_tab_context())
         return ctx
 
     @cached_property
