@@ -681,3 +681,7 @@
     display: none;
   }
 }
+
+  .vouchers-table .voucher-group-member-row > .list-name-cell {
+      padding-left: 2.5rem;
+  }

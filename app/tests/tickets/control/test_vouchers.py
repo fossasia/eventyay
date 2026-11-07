@@ -756,6 +756,102 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         )
         assert doc.select('.alert-danger')
 
+    def test_group_edit_applies_representative_price_to_all_vouchers(self):
+        with scopes_disabled():
+            first = self.event.vouchers.create(
+                code='GROUPONE',
+                tag='group',
+                product=self.ticket,
+                value=decimal.Decimal('5.00'),
+                price_mode='subtract',
+                allow_ignore_quota=True,
+            )
+            second = self.event.vouchers.create(
+                code='GROUPTWO',
+                tag='group',
+                product=self.ticket,
+                value=decimal.Decimal('20.00'),
+                price_mode='subtract',
+                allow_ignore_quota=True,
+            )
+        url = '/control/event/%s/%s/vouchers/%s/group_edit' % (self.orga.slug, self.event.slug, first.pk)
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['value'] = '5.00'
+        preview = self.post_doc(url, form_data)
+        assert '2 vouchers will be updated' in preview.text
+        form_data['confirm'] = '1'
+        self.post_doc(url, form_data)
+        with scopes_disabled():
+            assert self.event.vouchers.get(pk=second.pk).value == decimal.Decimal('5.00')
+            assert LogEntry.objects.filter(
+                action_type='eventyay.voucher.changed',
+                object_id__in=[first.pk, second.pk],
+            ).count() == 2
+
+    def test_group_edit_changes_product_and_logs_each_voucher(self):
+        with scopes_disabled():
+            first = self.event.vouchers.create(
+                code='GROUPTHREE',
+                tag='product-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+            second = self.event.vouchers.create(
+                code='GROUPFOUR',
+                tag='product-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+        url = '/control/event/%s/%s/vouchers/%s/group_edit' % (self.orga.slug, self.event.slug, first.pk)
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['productvar'] = str(self.shirt.pk)
+        preview = self.post_doc(url, form_data)
+        assert '2 vouchers will be updated' in preview.text
+        form_data['confirm'] = '1'
+        self.post_doc(url, form_data)
+        with scopes_disabled():
+            assert self.event.vouchers.filter(pk__in=[first.pk, second.pk], product=self.shirt).count() == 2
+            assert LogEntry.objects.filter(
+                action_type='eventyay.voucher.changed',
+                object_id__in=[first.pk, second.pk],
+            ).count() == 2
+
+    def test_group_edit_keeps_mixed_tags_when_expiry_changes(self):
+        expiry = now() + datetime.timedelta(days=10)
+        with scopes_disabled():
+            first = self.event.vouchers.create(
+                code='TAGONE',
+                tag='first-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+            second = self.event.vouchers.create(
+                code='TAGTWO',
+                tag='second-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+        url = '/control/event/%s/%s/vouchers/%s/group_edit' % (self.orga.slug, self.event.slug, first.pk)
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data.update(
+            {
+                'voucher_group': [first.pk, second.pk],
+                'valid_until_0': expiry.strftime('%Y-%m-%d'),
+                'valid_until_1': expiry.strftime('%H:%M:%S'),
+            }
+        )
+        preview = self.post_doc(url, form_data)
+        assert '2 vouchers will be updated' in preview.text
+        form_data['confirm'] = '1'
+        self.post_doc(url, form_data)
+        with scopes_disabled():
+            assert self.event.vouchers.get(pk=first.pk).tag == 'first-group'
+            assert self.event.vouchers.get(pk=second.pk).tag == 'second-group'
+            assert self.event.vouchers.filter(pk__in=[first.pk, second.pk], valid_until=expiry).count() == 2
+
     def test_subevent_optional(self):
         self.event.has_subevents = True
         self.event.save()
@@ -993,4 +1089,3 @@ class VoucherFilterEmptyStateTest(SoupTestMixin, TestCase):
         content = response.content.decode()
         assert "You haven't created any vouchers yet." in content
         assert 'Your search did not match any vouchers.' not in content
-
