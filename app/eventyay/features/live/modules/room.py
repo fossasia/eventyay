@@ -1,4 +1,6 @@
 import asyncio
+import hashlib
+import hmac
 import ipaddress
 import logging
 import secrets
@@ -71,6 +73,7 @@ from eventyay.features.live.decorators import (
 )
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
+from eventyay.features.live.tasks import send_room_system_message
 
 logger = logging.getLogger(__name__)
 
@@ -134,15 +137,16 @@ class RoomModule(BaseModule):
 
     async def _verify_webhook_challenges(self, old_module_config, new_module_config):
         """
-        When module_config is updated, verify any new webhook URLs via
-        challenge-response before allowing them to be saved.
+        When module_config is updated, verify any new or updated webhook URLs and secrets via
+        signed challenge-response before allowing them to be saved.
         """
-        old_urls = {}
+        old_configs = {}
         for m in old_module_config:
             cfg = m.get("config", {})
             url = cfg.get("webhook_url")
+            secret = cfg.get("webhook_hmac_secret")
             if url:
-                old_urls[m["type"]] = url
+                old_configs[m["type"]] = (url, secret)
 
         for m in new_module_config:
             cfg = m.get("config", {})
@@ -187,15 +191,22 @@ class RoomModule(BaseModule):
                         "webhook.invalid_url",
                         "Webhook URL must not point to a private network address.",
                     )
-            # Only run challenge verification if the URL is new or changed
-            if old_urls.get(m["type"]) == url:
+            # Only run challenge verification if the URL or secret is new or changed
+            if old_configs.get(m["type"]) == (url, secret):
                 continue
-            # Challenge verification
+            # Challenge verification with HMAC-SHA256 signature
             challenge_token = secrets.token_urlsafe(32)
+            signature = hmac.new(
+                secret.encode("utf-8"),
+                challenge_token.encode("utf-8"),
+                hashlib.sha256,
+            ).hexdigest()
+            headers = {"X-Eventyay-Signature": f"sha256={signature}"}
             try:
                 resp = await asgiref.sync.sync_to_async(http_requests.get)(
                     url,
                     params={"challenge": challenge_token},
+                    headers=headers,
                     timeout=5,
                     allow_redirects=False,
                 )
@@ -791,6 +802,55 @@ class RoomModule(BaseModule):
         rooms = await database_sync_to_async(get_rooms)(self.consumer.event, user=None)
         await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(rooms, many=True))
         await notify_event_change(self.consumer.event.id)
+
+    @command("chat.webhook.test")
+    @room_action(
+        permission_required=[
+            Permission.ROOM_UPDATE,
+            Permission.EVENT_UPDATE,
+            Permission.ROOM_JITSI_MODERATE,
+            Permission.ROOM_JANUSCALL_MODERATE,
+            Permission.ROOM_BBB_MODERATE,
+            Permission.ROOM_LOUNGEMESH_MODERATE,
+        ]
+    )
+    async def chat_webhook_test(self, body):
+        """Send a test system message to the room's configured chat webhook URL."""
+        cfg = None
+        for module in self.room.module_config or []:
+            if module.get("type") == "chat.native":
+                cfg = module.get("config", {})
+                break
+
+        if not cfg or not cfg.get("webhook_url") or not cfg.get("webhook_hmac_secret"):
+            await self.consumer.send_error(
+                code="webhook.not_configured",
+                message="No chat webhook is configured for this room.",
+            )
+            return
+
+        try:
+            status = await database_sync_to_async(send_room_system_message)(
+                self.room, kind="test"
+            )
+        except Exception:
+            logger.exception("Error executing room system message test")
+            await self.consumer.send_error(
+                code="webhook.delivery_failed",
+                message="Could not deliver test event to webhook URL.",
+            )
+            return
+
+        if status is None:
+            await self.consumer.send_error(
+                code="webhook.delivery_failed",
+                message="Could not reach webhook endpoint.",
+            )
+            return
+
+        await self.consumer.send_success({
+            "status_code": status,
+        })
 
     @command("delete")
     @room_action(permission_required=Permission.ROOM_DELETE)

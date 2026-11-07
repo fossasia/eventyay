@@ -210,6 +210,11 @@ class ChatModule(BaseModule):
         sender = self.consumer.user
         sender_id = str(sender.id)  # always the acting user (reactor or author)
         centralauth_id, centralauth_username = await database_sync_to_async(_get_centralauth_info)(sender)
+
+        room_name = getattr(self.channel.room, "name", "")
+        if isinstance(room_name, dict):
+            room_name = next(iter(room_name.values()), "")
+
         payload = {
             "message_id": event_data.get("event_id"),
             "channel": event_data.get("channel"),
@@ -222,7 +227,12 @@ class ChatModule(BaseModule):
             "message_type": message_type,
             "profile_img": None,
             "user_language": getattr(sender, "locale", None),
-            "meta": {},
+            "meta": {
+                "room": {
+                    "id": str(self.channel.room.id),
+                    "name": str(room_name),
+                }
+            },
         }
         if message_type == "emoji":
             payload["meta"]["target_message_id"] = event_data.get("event_id")
