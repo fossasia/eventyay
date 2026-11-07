@@ -254,3 +254,11 @@ def is_rtl(locale: str | None = None) -> bool:
     base_lang = locale.split('-')[0].split('_')[0]
     return base_lang in settings.LANGUAGES_RTL
 
+
+def get_html_locale() -> str:
+    """Return the active language as a value for the HTML ``lang`` attribute."""
+    lang = translation.get_language() or settings.LANGUAGE_CODE
+    try:
+        return translation.get_language_info(lang).get('public_code', lang)
+    except KeyError:
+        return lang
