@@ -386,6 +386,12 @@ def checkin_widget(sender, subevent=None, lazy=False, **kwargs):
 
 @receiver(signal=event_dashboard_widgets)
 def welcome_wizard_widget(sender, **kwargs):
+    request = kwargs.get('request')
+    if request is None or not request.user.has_event_permission(
+        sender.organizer, sender, 'can_change_event_settings', request=request
+    ):
+        return []
+
     template = get_template('pretixcontrol/event/dashboard_widget_welcome.html')
     ctx = {'title': _('Tickets')}
     kwargs = {'event': sender.slug, 'organizer': sender.organizer.slug}
