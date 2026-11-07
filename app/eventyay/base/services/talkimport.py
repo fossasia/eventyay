@@ -357,7 +357,7 @@ def _build_question_cache(event: Event, question_ids: set[int], *, target: str) 
     for question in questions:
         option_lookup = None
         if question.variant in _CHOICE_QUESTION_VARIANTS:
-            option_lookup = {str(option.answer).strip().casefold(): option for option in question.options.all()}
+            option_lookup = get_question_option_lookup(question)
         question_cache[question.pk] = (question, option_lookup)
     return question_cache
 
@@ -551,7 +551,7 @@ def _apply_new_question_mappings(
         question_mappings.append((question.pk, spec['mapping']))
         option_lookup = None
         if question.variant in _CHOICE_QUESTION_VARIANTS:
-            option_lookup = {str(option.answer).strip().casefold(): option for option in question.options.all()}
+            option_lookup = get_question_option_lookup(question)
         question_cache[question.pk] = (question, option_lookup)
         mapped_ids.add(question.pk)
     return question_mappings, question_cache
@@ -559,7 +559,7 @@ def _apply_new_question_mappings(
 def _option_lookup_for_question(question: TalkQuestion, option_lookup: dict | None) -> dict:
     if option_lookup is not None:
         return option_lookup
-    return {str(option.answer).strip().casefold(): option for option in question.options.all()}
+    return get_question_option_lookup(question)
 
 def _discard_created_choice_options(created_options: list[tuple[dict, str]]) -> None:
     for lookup, key in created_options:
@@ -582,19 +582,13 @@ def _matched_choice_options(
     matched = []
     for value in values:
         option_key = value.casefold()
-        option = lookup.get(option_key)
-        if option is None:
-            if not question.import_key:
-                raise ImportExecutionError(
-                    _('Invalid answer "{value}" for question "{question}".').format(
-                        value=value,
-                        question=question.question,
-                    )
-                )
-            option = AnswerOption.objects.create(question=question, answer=value)
-            lookup[option_key] = option
-            if created_options is not None:
-                created_options.append((lookup, option_key))
+        if option_key in lookup or not question.import_key:
+            matched.extend(resolve_question_options(question, value, lookup))
+            continue
+        option = AnswerOption.objects.create(question=question, answer=value)
+        lookup[option_key] = option
+        if created_options is not None:
+            created_options.append((lookup, option_key))
         matched.append(option)
     return matched
 
@@ -1387,6 +1381,7 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
 
 @app.task(base=ProfiledEventTask, bind=True, throws=(ImportExecutionError,))
 def import_submissions(self, event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
+    """Import session rows, rejecting ambiguous choice labels before saving a row."""
     try:
         cf = CachedFile.objects.get(id=fileid)
     except CachedFile.DoesNotExist:
@@ -1445,9 +1440,7 @@ def import_submissions(self, event: Event, fileid: str, settings: dict, locale: 
                             TalkQuestionVariant.MULTIPLE,
                             TalkQuestionVariant.SELECT,
                         ):
-                            option_lookup = {
-                                str(option.answer).strip().casefold(): option for option in question.options.all()
-                            }
+                            option_lookup = get_question_option_lookup(question)
                         question_cache[question.pk] = (question, option_lookup)
 
                 caches['question_mappings'] = question_mappings
@@ -1463,6 +1456,11 @@ def import_submissions(self, event: Event, fileid: str, settings: dict, locale: 
                     if total > 0 and (row_num - 2) % max(1, total // 10) == 0:
                         self.update_state(state='PROGRESS', meta={'value': round((row_num - 2) / total * 100)})
                     try:
+                        for question_id, mapping_value in question_mappings:
+                            cached_question = question_cache.get(question_id)
+                            if cached_question:
+                                question, option_lookup = cached_question
+                                resolve_question_options(question, _resolve_csv(mapping_value, record), option_lookup)
                         was_created = _import_submission_row(
                             event, settings, record, acting_user, speaker_cache, caches
                         )
@@ -1891,6 +1889,46 @@ def _parse_schedule_datetime(value: str, event: Event) -> dt.datetime | None:
         logger.warning('Skipping invalid schedule datetime "%s" for event %s', value, event.slug)
         return None
 
+
+def get_question_option_lookup(question):
+    """Keep ambiguous localized labels distinct from unique options and unknown labels."""
+    lookup = {}
+    for option in question.options.all():
+        key = str(option.answer).strip().casefold()
+        lookup[key] = None if key in lookup else option
+    return lookup
+
+
+def resolve_question_options(question, answer_text, option_lookup=None):
+    """Resolve choice labels without silently selecting among localized duplicates."""
+    if question.variant not in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
+        return []
+    if option_lookup is None:
+        option_lookup = get_question_option_lookup(question)
+    labels = answer_text.split(',') if question.variant == TalkQuestionVariant.MULTIPLE else [answer_text]
+    options = []
+    for label in labels:
+        key = label.strip().casefold()
+        if not key:
+            continue
+        if key not in option_lookup:
+            raise ImportExecutionError(
+                _('Unknown choice "{value}" for custom field "{question}".').format(
+                    value=label.strip(), question=question,
+                )
+            )
+        option = option_lookup[key]
+        if option is None:
+            raise ImportExecutionError(
+                _(
+                    'Choice "{value}" is ambiguous for custom field "{question}". '
+                    'Rename the choices or select a different import language.'
+                ).format(value=label.strip(), question=question)
+            )
+        options.append(option)
+    return options
+
+
 def _set_question_answer(
     question_id,
     answer_value,
@@ -1901,6 +1939,7 @@ def _set_question_answer(
     event=None,
     created_options: list[tuple[dict, str]] | None = None,
 ):
+    """Save an imported answer only after its choice labels are unambiguous."""
     question = None
     option_lookup = None
 
