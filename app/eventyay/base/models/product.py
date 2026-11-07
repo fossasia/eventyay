@@ -1149,17 +1149,20 @@ class ProductAddOn(models.Model):
 
     @staticmethod
     def clean_min_count(min_count):
-        if min_count < 0:
+        """Validate that minimum count is non-negative when provided."""
+        if min_count is not None and min_count < 0:
             raise ValidationError(_('The minimum count needs to be equal to or greater than zero.'))
 
     @staticmethod
     def clean_max_count(max_count):
-        if max_count < 0:
+        """Validate that maximum count is non-negative when provided."""
+        if max_count is not None and max_count < 0:
             raise ValidationError(_('The maximum count needs to be equal to or greater than zero.'))
 
     @staticmethod
     def clean_max_min_count(max_count, min_count):
-        if max_count < min_count:
+        """Validate that maximum count is greater than or equal to minimum count when both are provided."""
+        if max_count is not None and min_count is not None and max_count < min_count:
             raise ValidationError(_('The maximum count needs to be greater than the minimum count.'))
 
 
