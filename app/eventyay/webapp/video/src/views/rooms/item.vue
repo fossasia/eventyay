@@ -63,7 +63,7 @@
 				.tool-section.audio-section(v-if="isInterpretationEnabled")
 					.dropdown-wrapper(v-if="showPluginLanguageDropdown")
 						i.mdi.mdi-account-voice
-						AudioTranslationDropdown(:key="`${room.id}-plugin`", :languages="interpretationLanguages", :selected-language="selectedPluginLanguage", :label="$t('Interpretation')", @languageChanged="handlePluginLanguageChange")
+						AudioTranslationDropdown(:key="`${room.id}-plugin`", :languages="interpretationLanguages", :selected-language="selectedPluginLanguage", :selected-stream="currentInterpretation", :label="$t('Interpretation')", :show-stream-type="true", @languageChanged="handlePluginLanguageChange")
 					.static-audio-pill(v-else)
 						i.mdi.mdi-volume-high
 						span {{ $t('Original Audio') }}
@@ -138,8 +138,13 @@ import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import LiveCaptions from 'components/LiveCaptions'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
-import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
-import { firstCaptionLanguage, pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
+import {
+	firstCaptionLanguage,
+	interpretationAudioSource,
+	isUsableLanguageStreamEntry,
+	pluginLanguageStreams,
+	roomUsesPluginLanguageStreams,
+} from '../../interpretation-streams'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
 import { hasOrganizerTraits } from 'lib/traitGrants'
@@ -283,7 +288,7 @@ export default {
 			return Number(this.$store.state.captionTextSize) || 13
 		},
 		hasInterpretationActive() {
-			return Boolean(this.currentInterpretation?.url || (this.selectedPluginLanguage && this.selectedPluginLanguage !== 'Original'))
+			return Boolean(interpretationAudioSource(this.currentInterpretation))
 		},
 		currentInterpretation() {
 			if (!this.room?.id) return null
@@ -296,7 +301,7 @@ export default {
 			return roomUsesPluginLanguageStreams(this.room) && this.interpretationLanguages.some(entry => entry.language !== 'Original')
 		},
 		interpretationLanguages() {
-			return (this.pluginLanguages || []).filter(entry => isUsableAudioTranslationEntry(entry))
+			return (this.pluginLanguages || []).filter(entry => isUsableLanguageStreamEntry(entry) && interpretationAudioSource(entry))
 		},
 		selectedPluginLanguage() {
 			return this.getLanguageForTranslation(this.currentInterpretation, this.interpretationLanguages) || 'Original'
@@ -481,7 +486,7 @@ export default {
 			if (finalConfig && finalConfig.language === 'Original') {
 				finalConfig = null;
 			}
-			if (finalConfig && !finalConfig.url && !finalConfig.youtube_id) {
+			if (finalConfig && !interpretationAudioSource(finalConfig)) {
 				finalConfig = null;
 			}
 			this.$store.commit('updateInterpretationAudio', {
@@ -494,41 +499,39 @@ export default {
 			this.clearStaleTranslation()
 		},
 		getLanguageForTranslation(translationConfig, languages) {
-			if (!translationConfig?.url || !languages?.length) return 'Original'
-			const matchingLanguage = languages.find(entry => (
+			return this.findTranslationStream(translationConfig, languages)?.language || 'Original'
+		},
+		findTranslationStream(translationConfig, languages) {
+			const translationSource = interpretationAudioSource(translationConfig)
+			if (!translationSource || !languages?.length) return null
+			return languages.find(entry => (
 				entry.language !== 'Original' &&
-				normalizeAudioTranslationSource(entry.url || entry.youtube_id) === translationConfig.url &&
-				!!entry.use_video === !!translationConfig.useVideo
+				interpretationAudioSource(entry) === translationSource &&
+				!!entry.use_video === !!(translationConfig.useVideo ?? translationConfig.use_video)
 			))
-			return matchingLanguage?.language || null
 		},
 		clearStaleTranslation() {
 			if (!this.room?.id || !this.currentInterpretation) return
+			const matchingStream = this.findTranslationStream(this.currentInterpretation, this.pluginLanguages)
+			if (this.showPluginLanguageDropdown && matchingStream) return
 			const selectedLang = this.activeTranslationConfig?.language
 				|| this.currentInterpretation?.language
 				|| this.selectedPluginLanguage
-			const matchesPlugin = this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages)
-			const sameLang = selectedLang && selectedLang !== 'Original'
+			const replacement = this.findTranslationStream(this.activeTranslationConfig, this.pluginLanguages)
+				|| (selectedLang && selectedLang !== 'Original'
 				? this.pluginLanguages.find(l => l.language === selectedLang)
-				: null
-			const audioSource = normalizeAudioTranslationSource(sameLang?.url || sameLang?.youtube_id)
-			if (!this.showPluginLanguageDropdown || !matchesPlugin || (audioSource && audioSource !== this.currentInterpretation.url)) {
-				if (sameLang) {
-					if (audioSource) {
-						this.updateActiveTranslation({
-							...sameLang,
-							url: audioSource,
-							useVideo: Boolean(sameLang.use_video),
-							language: sameLang.language,
-						})
-						return
-					}
-				}
-				this.$store.commit('updateInterpretationAudio', {
-					roomId: this.room.id,
-					interpretation: null
+				: null)
+			if (this.showPluginLanguageDropdown && interpretationAudioSource(replacement)) {
+				this.updateActiveTranslation({
+					...replacement,
+					useVideo: Boolean(replacement.use_video),
 				})
+				return
 			}
+			this.$store.commit('updateInterpretationAudio', {
+				roomId: this.room.id,
+				interpretation: null
+			})
 		},
 		toggleSidebar() {
 			if (!this.room?.id || this.isMobileLayout) return

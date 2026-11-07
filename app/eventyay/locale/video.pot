@@ -23,6 +23,9 @@ msgstr ""
 msgid "A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by Janus."
 msgstr ""
 
+msgid "AI"
+msgstr ""
+
 msgid "About"
 msgstr ""
 
@@ -687,6 +690,9 @@ msgid "Hide presentation when users join"
 msgstr ""
 
 msgid "Home"
+msgstr ""
+
+msgid "Human"
 msgstr ""
 
 msgid "ID"

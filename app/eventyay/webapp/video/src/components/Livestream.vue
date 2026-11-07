@@ -53,6 +53,7 @@ import config from 'config'
 import theme from 'theme'
 import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN, STREAM_TYPE_HLS } from 'lib/stage-streams'
 import {logOperational} from 'lib/operationalLog'
+import { interpretationAudioSource } from '../interpretation-streams.js'
 
 const RETRY_INTERVAL = 5000
 // TODO look at capLevelToPlayerSize
@@ -129,7 +130,7 @@ export default {
 		...mapGetters(['autoplay']),
 		hasActiveInterpretation() {
 			if (!this.room?.id) return false
-			return Boolean(this.$store.state.interpretationStreamsByRoom?.[this.room.id]?.url)
+			return Boolean(interpretationAudioSource(this.$store.state.interpretationStreamsByRoom?.[this.room.id]))
 		},
 		seekable() {
 			return this.isLive === false || config.seekableLiveStreams
