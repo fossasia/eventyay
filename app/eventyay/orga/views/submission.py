@@ -1730,8 +1730,6 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return super().dispatch(request, *args, **kwargs)
         try:
-            # Load the file now so a missing or expired upload redirects. Don't assign it to _:
-            # that would shadow gettext for this whole function.
             self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
