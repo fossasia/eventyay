@@ -72,7 +72,7 @@ def searchable_product_select():
 
 
 def searchable_country_select():
-    # Country lists can be long, so let organizers type to filter them (see common/js/searchable-select.js).
+    """Return a Select widget configured for searchable country filtering."""
     return forms.Select(
         attrs={
             'data-searchable-select': '',
@@ -661,7 +661,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         self.fields['invoice_address_country'] = forms.ChoiceField(
             required=False,
             label=gettext('Invoice address') + ': ' + gettext('Country'),
-            choices=[('', '')] + list(CachedCountries()),
+            choices=[('', _('All countries'))] + list(CachedCountries()),
             widget=searchable_country_select(),
         )
         self.fields['attendee_name'] = forms.CharField(required=False, label=_('Attendee name'))
@@ -687,7 +687,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         self.fields['attendee_address_country'] = forms.ChoiceField(
             required=False,
             label=gettext('Attendee address') + ': ' + gettext('Country'),
-            choices=[('', '')] + list(CachedCountries()),
+            choices=[('', _('All countries'))] + list(CachedCountries()),
             widget=searchable_country_select(),
         )
         self.fields['ticket_secret'] = forms.CharField(label=_('Ticket secret'), required=False)
