@@ -50,6 +50,7 @@ from eventyay.base.settings import (
     is_video_provider_enabled_for_organizer,
 )
 from eventyay.core.permissions import Permission
+from eventyay.base.services.video_entitlements import check_video_entitlements
 from eventyay.core.utils.redis import aredis
 from eventyay.features.live.channels import (
     GROUP_EVENT,
@@ -623,7 +624,7 @@ class RoomModule(BaseModule):
         conf = await get_room_config_for_user(
             body["room"], self.consumer.event.id, self.consumer.user
         )
-        if "room:view" not in conf["permissions"]:
+        if conf is None or "room:view" not in conf["permissions"]:
             return
         await self.consumer.send_json(
             [
@@ -664,6 +665,24 @@ class RoomModule(BaseModule):
         ]
     )
     async def config_patch(self, body):
+        """Handle live room configuration patch after validating module entitlements."""
+        if 'module_config' in body:
+            module_config = body['module_config']
+            if not isinstance(module_config, list) or not all(
+                isinstance(module, dict) and isinstance(module.get('type'), str) for module in module_config
+            ):
+                log_event('video', 'room.config', OUTCOME_FAILURE, error_code='invalid', event_id=getattr(self.consumer.event, 'pk', None))
+                await self.consumer.send_error(code='config.invalid')
+                return
+            decision = await database_sync_to_async(check_video_entitlements)(
+                self.consumer.event, body['module_config']
+            )
+            if not decision.allowed:
+                await self.consumer.send_error(
+                    code='config.entitlement_denied',
+                    message=decision.message or 'Your plan does not include this video feature.',
+                )
+                return
         newly_added_server_modules = newly_added_server_backed_room_modules(
             self.room.module_config,
             body.get("module_config"),
@@ -832,7 +851,7 @@ class RoomModule(BaseModule):
         config = await get_room_config_for_user(
             body["room"], self.consumer.event.id, self.consumer.user
         )
-        if "room:view" not in config["permissions"]:
+        if config is None or "room:view" not in config["permissions"]:
             return
         await self.consumer.send_json(
             [

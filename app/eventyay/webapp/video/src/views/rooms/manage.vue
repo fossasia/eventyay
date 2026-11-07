@@ -3,7 +3,6 @@
 	dashboard-layout
 		panel.media(:class="{'is-call-media': isServerStreamRoom}")
 			.manage-room-header
-				bunt-icon-button.btn-back(@click="onBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 				.manage-room-title(v-if="room") {{ room.name }}
 				router-link.btn-edit-settings(v-if="hasPermission('room:update')", :to="{name: 'admin:rooms:item', params: {roomId: room.id}}")
 					i.mdi.mdi-cog-outline
@@ -823,6 +822,11 @@ export default {
 	beforeUnmount() {
 		if (this.queueTimer) clearInterval(this.queueTimer)
 		if (this._popperInstance) this._popperInstance.destroy()
+		if (this.$store.state.chat?.call) {
+			this.$store.dispatch('chat/leaveCall').catch(err => {
+				console.warn('Failed to leave chat call during room exit:', err)
+			})
+		}
 	},
 	methods: {
 		formatTime(momentDate) {
@@ -927,25 +931,6 @@ export default {
 			if (this.room?.id) {
 				this.$store.commit('clearRoomFatalError', this.room.id)
 				this.$store.dispatch('reconnect')
-			}
-		},
-		async onBack() {
-			try {
-				await this.$store.dispatch('chat/leaveCall')
-			} catch (err) {
-				console.warn('Failed to leave chat call during room exit:', err)
-			}
-			if (this.leaveMediaSource) {
-				this.leaveMediaSource(this.room)
-			}
-			if (window.eventyay?.isOrganizerArea || this.$route.name === 'organizer' || this.$route.name?.startsWith('admin') || this.$route.name === 'room:manage') {
-				this.$router.push({ name: 'organizer' }).catch(err => {
-					console.warn('Failed navigation to organizer:', err)
-				})
-			} else {
-				this.$router.push({ name: 'about' }).catch(err => {
-					console.warn('Failed navigation to about:', err)
-				})
 			}
 		},
 		copyRoomLink() {
@@ -1544,10 +1529,6 @@ export default {
 		gap: 8px
 		border-bottom: border-separator()
 		background-color: $clr-white
-		.btn-back
-			icon-button-style(style: clear)
-			flex: none
-			margin-right: 4px
 		.manage-room-title
 			font-size: 20px
 			font-weight: 600
