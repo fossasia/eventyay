@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from django.template import Context, Template
 
 from eventyay.base.email import get_available_placeholders, get_email_context
 from eventyay.base.models import Event, Organizer
@@ -10,6 +11,7 @@ from eventyay.base.templatetags.rich_text import (
     markdown_compile_email,
     render_markdown_abslinks,
     rich_text_snippet,
+    rich_text_to_plain_text,
 )
 
 
@@ -126,3 +128,221 @@ def test_linkify_abs(link):
     assert rich_text_snippet(input) == output
     assert render_markdown_abslinks(input) == f'<p>{output}</p>'
     assert markdown_compile_email(input) == f'<p>{output}</p>'
+
+
+@pytest.mark.parametrize(
+    'raw, expected',
+    [
+        ('', ''),
+        (None, ''),
+        ('   ', ''),
+        ('<p>Simple paragraph</p>', 'Simple paragraph'),
+        ('<p>First</p><p>Second</p>', 'First Second'),
+        (
+            '<p>Text with <strong>bold</strong> and <em>italic</em>.</p>',
+            'Text with bold and italic.',
+        ),
+        (
+            '<p>Visit <a href="https://eventyay.com">Eventyay</a> today!</p>',
+            'Visit Eventyay today!',
+        ),
+        ('Visit [Eventyay](https://eventyay.com) today!', 'Visit Eventyay today!'),
+        ('Visit [our site](https://eventyay.com "Title")!', 'Visit our site!'),
+        ('<ul><li>Item 1</li><li>Item 2</li></ul>', 'Item 1 Item 2'),
+        (
+            '<tr><td>Track</td><td>Python</td></tr>',
+            'Track Python',
+        ),
+        (
+            '<table><thead><tr><th>Topic</th><th>Speaker</th></tr></thead></table>',
+            'Topic Speaker',
+        ),
+        ('First<br class="line-break">Second', 'First Second'),
+        ('Line 1<br style="clear: both;">Line 2<br/>Line 3', 'Line 1 Line 2 Line 3'),
+        (
+            'Working with vector<T> in C++',
+            'Working with vector<T> in C++',
+        ),
+        (
+            'Working with std::vector<int> & List<T>',
+            'Working with std::vector<int> & List<T>',
+        ),
+        (
+            'Use Map<String, Object> here',
+            'Use Map<String, Object> here',
+        ),
+        (
+            '<div title="a > b">Session text</div>',
+            'Session text',
+        ),
+        (
+            '<div title=\'a > b\'>Single quoted text</div>',
+            'Single quoted text',
+        ),
+        (
+            '<a href="https://example.com?a=1&b=2" title="x > y">Link</a>',
+            'Link',
+        ),
+        (
+            '<custom-widget>Widget content</custom-widget>',
+            'Widget content',
+        ),
+        (
+            '<my-session-card class="active">Card content</my-session-card>',
+            'Card content',
+        ),
+        (
+            '`vector<T>`',
+            'vector<T>',
+        ),
+        (
+            '`<b>code</b>`',
+            '<b>code</b>',
+        ),
+        (
+            'Check `x < y and y > z` logic',
+            'Check x < y and y > z logic',
+        ),
+        (
+            '<script>alert("xss")</script><p>Clean content</p>',
+            'Clean content',
+        ),
+        (
+            '<style>body { color: red; }</style><p>Styled content</p>',
+            'Styled content',
+        ),
+        (
+            '<figure><img src="x.jpg"><figcaption>A photo</figcaption></figure>',
+            'A photo',
+        ),
+        (
+            '<aside>Sidebar</aside><main>Main content</main>',
+            'Sidebar Main content',
+        ),
+        (
+            '<dialog open><p>Modal dialog</p></dialog>',
+            'Modal dialog',
+        ),
+        (
+            'Time: <time datetime="2026-11-07">Nov 7</time>',
+            'Time: Nov 7',
+        ),
+        (
+            'Press <kbd>Ctrl</kbd> + <kbd>C</kbd>',
+            'Press Ctrl + C',
+        ),
+        (
+            '<details><summary>More info</summary>Hidden details</details>',
+            'More info Hidden details',
+        ),
+        (
+            '<article><header>Header</header><section>Section</section><footer>Footer</footer></article>',
+            'Header Section Footer',
+        ),
+        ('<blockquote>Quote text</blockquote>', 'Quote text'),
+        (
+            '<p>Entities: &amp; &lt; &gt; &quot; &#39; &nbsp; end</p>',
+            'Entities: & < > " \' end',
+        ),
+        (
+            '&amp;lt;script&amp;gt;',
+            '&lt;script&gt;',
+        ),
+        (
+            '   Multiple    spaces   and\nnewlines   ',
+            'Multiple spaces and newlines',
+        ),
+        ('__init__.py', '__init__.py'),
+        ('2 ** 8 = 256', '2 ** 8 = 256'),
+        ('##general', '##general'),
+        ('Text with [square brackets]', 'Text with [square brackets]'),
+        (
+            '<p>Check out <strong>__init__.py</strong></p>',
+            'Check out __init__.py',
+        ),
+        (
+            '**Bold text** and *italic text*',
+            'Bold text and italic text',
+        ),
+        (
+            '# Heading 1\n## Heading 2',
+            'Heading 1 Heading 2',
+        ),
+        (
+            '**Not bold across\nnew lines**',
+            '**Not bold across new lines**',
+        ),
+        (
+            '<p>Unclosed paragraph',
+            'Unclosed paragraph',
+        ),
+    ],
+)
+def test_rich_text_to_plain_text(raw, expected):
+    """Test conversion of rich text / HTML / Markdown to clean plain text."""
+    assert rich_text_to_plain_text(raw) == expected
+
+
+def test_rich_text_bounded_large_plain_text():
+    """Verify bounded scanner extracts required text budget from large plain text input."""
+    large_input = 'Word ' * 2000  # 10,000 characters
+    result = rich_text_to_plain_text(large_input)
+    assert len(result) >= 1000
+    assert len(result) <= len(large_input)
+    assert result.startswith('Word Word')
+
+
+def test_rich_text_bounded_markup_only_input():
+    """Verify bounded scanner does not exhaust budget on markup-only input."""
+    markup_only = '<div><span></span></div>' * 2000  # 48,000 characters
+    result = rich_text_to_plain_text(markup_only)
+    assert result == ''
+
+
+def test_rich_text_bounded_quote_aware_tag_end():
+    """Verify bounded scanner respects quotes containing > characters."""
+    raw = '<p title="value > another">' + ('Session ' * 300) + '</p>'
+    result = rich_text_to_plain_text(raw)
+    assert result.startswith('Session Session')
+    assert len(result) >= 1000
+
+
+def test_rich_text_bounded_huge_attribute_fallback():
+    """Verify bounded scanner caps input safely when single attribute exceeds budget."""
+    raw = '<div data-info="' + ('x' * 12000) + '">Visible Text</div>'
+    result = rich_text_to_plain_text(raw)
+    # The opening tag alone exceeds the 10,000 char budget, so scanner safely falls back to text[:10000]
+    # and BeautifulSoup extracts what it can without crashing or memory explosion.
+    assert isinstance(result, str)
+
+
+def test_rich_text_plain_in_template():
+    """Verify rich_text_plain filter integration within Django templates."""
+    template = Template(
+        '{% load rich_text %}{{ description|rich_text_plain }}'
+    )
+    rendered = template.render(
+        Context(
+            {'description': '<p>Hello <strong>World</strong> &amp; friends!</p>'}
+        )
+    )
+    # In template output, Django auto-escapes plain text characters for HTML attributes/context
+    assert rendered == 'Hello World &amp; friends!'
+
+
+def test_rich_text_plain_truncation_in_template():
+    """Verify rich_text_plain piped into truncatechars:200 within Django templates."""
+    template = Template(
+        '{% load rich_text %}{{ description|rich_text_plain|truncatechars:200 }}'
+    )
+    # Short description remains unchanged
+    short_text = '<p>A short session description.</p>'
+    rendered_short = template.render(Context({'description': short_text}))
+    assert rendered_short == 'A short session description.'
+
+    # Long description (>200 characters) gets truncated to 200 characters ending with …
+    long_raw = '<p>' + 'A' * 250 + '</p>'
+    rendered_long = template.render(Context({'description': long_raw}))
+    assert len(rendered_long) == 200
+    assert rendered_long.endswith('…')
+    assert rendered_long == ('A' * 199) + '…'
