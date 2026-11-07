@@ -19,15 +19,20 @@ stream_schedule_migration = importlib.import_module(
 
 
 async def _allow_permission(**kwargs):
+    """Allow permission check in test async contexts."""
     return True
 
 
 class ChannelLayer:
+    """Mock channel layer for group messaging in tests."""
+
     async def group_send(self, *args, **kwargs):
+        """Simulate group_send method of channel layer."""
         pass
 
 
 def _patch_room_creation(monkeypatch):
+    """Patch event_service._create_room and channel layer for unit tests."""
     created = {}
 
     async def fake_create_room(data, with_channel=False, **kwargs):
@@ -42,6 +47,7 @@ def _patch_room_creation(monkeypatch):
 
 
 def test_create_schedule_driven_stage_without_base_stream(monkeypatch):
+    """Verify creating a schedule-driven stage without a base stream creates room with channel."""
     created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
 
@@ -72,6 +78,7 @@ def test_create_schedule_driven_stage_without_base_stream(monkeypatch):
 
 
 def test_create_always_on_youtube_stage_stores_playback_flags(monkeypatch):
+    """Verify creating an always-on YouTube stage properly persists playback flags."""
     created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
 
@@ -121,6 +128,7 @@ def test_create_always_on_youtube_stage_stores_playback_flags(monkeypatch):
 
 
 def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
+    """Verify creating an always-on HLS stage properly persists the base HLS stream URL."""
     created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
 
@@ -237,36 +245,53 @@ def test_create_always_on_stage_rejects_invalid_autostart_flag(monkeypatch):
         )
 
 
-def test_create_always_on_vimeo_rejects_chromeless_non_autostart_stream(monkeypatch):
-    """Verify that Vimeo streams with autostart disabled cannot both hide controls and disable keyboard controls."""
+def test_create_always_on_vimeo_stage_stores_playback_flags(monkeypatch):
+    """Verify that Vimeo streams preserve all playback flags including autoStart, hideControls, and disableKb."""
+    created = _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
-    _patch_room_creation(monkeypatch)
 
-    with pytest.raises(ValidationError):
-        async_to_sync(event_service.create_room)(
-            event,
-            {
-                "name": "Invalid Vimeo Stage",
-                "description": "a description",
-                "modules": [
-                    {
-                        "type": "livestream.vimeo",
-                        "config": {
-                            "playback_mode": "always_on",
-                            "url": "https://vimeo.com/123456789",
-                            "autoStart": False,
-                            "hideControls": True,
-                            "disableKb": True,
-                        },
+    async_to_sync(event_service.create_room)(
+        event,
+        {
+            "name": "Vimeo Stage",
+            "description": "a description",
+            "modules": [
+                {
+                    "type": "livestream.vimeo",
+                    "config": {
+                        "playback_mode": "always_on",
+                        "url": "https://vimeo.com/123456789",
+                        "autoStart": False,
+                        "hideControls": True,
+                        "disableKb": True,
+                        "loop": True,
+                        "dnt": True,
                     },
-                ],
-            },
-            object(),
-        )
+                },
+            ],
+        },
+        object(),
+    )
+
+    livestream = next(
+        m
+        for m in created["data"]["module_config"]
+        if m["type"] == "livestream.vimeo"
+    )
+    assert livestream["config"] == {
+        "playback_mode": "always_on",
+        "url": "https://vimeo.com/123456789",
+        "autoStart": False,
+        "hideControls": True,
+        "disableKb": True,
+        "loop": True,
+        "dnt": True,
+    }
 
 
 @pytest.mark.django_db
 def test_stream_schedule_choices_do_not_expose_native():
+    """Verify StreamSchedule stream_type choices do not include native."""
     choices = [choice[0] for choice in StreamSchedule._meta.get_field("stream_type").choices]
     assert choices == ["youtube", "vimeo", "hls"]
     assert "native" not in choices
@@ -274,6 +299,7 @@ def test_stream_schedule_choices_do_not_expose_native():
 
 @pytest.mark.django_db
 def test_native_stream_schedule_migration_maps_to_hls(event):
+    """Verify migration maps legacy native stream_type to hls."""
     room = Room.objects.create(event=event, name="Stage")
     schedule = StreamSchedule.objects.create(
         room=room,
@@ -299,6 +325,7 @@ def test_native_stream_schedule_migration_maps_to_hls(event):
 
 @pytest.mark.django_db
 def test_native_stream_schedule_migration_reverse_is_noop(event):
+    """Verify reverse migration for native stream schedules is a no-op."""
     room = Room.objects.create(event=event, name="Stage")
     schedule = StreamSchedule.objects.create(
         room=room,
@@ -319,6 +346,7 @@ def test_native_stream_schedule_migration_reverse_is_noop(event):
 def test_clear_stream_schedules_when_stage_leaves_schedule_driven(
     event, monkeypatch
 ):
+    """Verify stream schedules are cleared when a stage leaves schedule-driven mode."""
     room = Room.objects.create(
         event=event,
         name="Stage",
@@ -369,6 +397,7 @@ def test_clear_stream_schedules_when_stage_leaves_schedule_driven(
 def test_clear_stream_schedules_keeps_schedules_when_stage_stays_schedule_driven(
     event, monkeypatch
 ):
+    """Verify stream schedules are retained when a stage remains schedule-driven."""
     room = Room.objects.create(
         event=event,
         name="Stage",
@@ -444,4 +473,5 @@ def test_clear_stream_schedules_keeps_schedules_when_stage_stays_schedule_driven
     ],
 )
 def test_uses_schedule_driven_stage(module_config, expected):
+    """Verify uses_schedule_driven_stage detects schedule-driven stage modules."""
     assert room_service.uses_schedule_driven_stage(module_config) is expected

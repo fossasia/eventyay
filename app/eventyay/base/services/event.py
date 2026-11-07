@@ -647,15 +647,6 @@ async def create_room(event, data, creator):
                 ):
                     if config.get(key):
                         clean_config[key] = True
-                if (
-                    clean_config.get("autoStart") is False
-                    and clean_config.get("hideControls")
-                    and clean_config.get("disableKb")
-                ):
-                    raise ValidationError(
-                        "Vimeo streams with autostart disabled cannot hide controls while disabling keyboard controls.",
-                        code="invalid",
-                    )
                 if config.get("password"):
                     clean_config["password"] = str(config["password"]).strip()
         module["config"] = clean_config

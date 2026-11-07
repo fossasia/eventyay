@@ -24,6 +24,14 @@
 			.error-title {{ $t('Connection Failed') }}
 			.error-subtitle {{ iframeError && iframeError.message ? iframeError.message : $t('We could not connect to the video conference server, sorry.') }}
 			bunt-button.btn-retry(v-if="!background", @click="retryIframe") {{ $t('Retry Connection') }}
+	button.vimeo-chromeless-play-control(
+		v-if="showVimeoPlayControl",
+		type="button",
+		:aria-label="$t('Play video')",
+		@click="playVimeoPlayer"
+	)
+		.play-icon-circle
+			.mdi.mdi-play
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
@@ -546,6 +554,29 @@ function subscribeToVimeoPlayerEvents() {
 	}
 }
 
+const showVimeoPlayControl = computed(() => {
+	if (!iframeEl.value || props.background || shouldUseLivestream.value) return false;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+	const isVimeo = streamType === STREAM_TYPE_VIMEO || module.value?.type === 'livestream.vimeo';
+	if (!isVimeo) return false;
+	const config = getVimeoConfig();
+	return Boolean(config.hideControls && mainPlayerPaused.value);
+});
+
+function playVimeoPlayer() {
+	if (!iframeEl.value?.contentWindow) return;
+	try {
+		subscribeToVimeoPlayerEvents();
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'play' }),
+			'*'
+		);
+		onMainPlayerPlaybackChanged(true);
+	} catch (error) {
+		console.warn('Failed to start Vimeo playback:', error);
+	}
+}
+
 function getVimeoConfig() {
 	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const currentStream = streamType === STREAM_TYPE_VIMEO ? props.room?.currentStream : null;
@@ -888,16 +919,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
 				const shouldAutoplay = Boolean(autoplay.value && config.autoStart !== false);
-				// If autostart is disabled and keyboard controls are disabled, preserve on-screen controls
-				// so viewers have a manual play control to start Vimeo playback.
-				const shouldHideControls = Boolean(
-					config.hideControls && (shouldAutoplay || !config.disableKb)
-				);
 				iframeUrl = getVimeoEmbedUrl(vimeoUrl, {
 					autoplay: shouldAutoplay,
 					startMuted: shouldStartMuted,
 					loop: Boolean(config.loop),
-					hideControls: shouldHideControls,
+					hideControls: Boolean(config.hideControls),
 					disableKb: Boolean(config.disableKb),
 					dnt: Boolean(config.dnt || config.enablePrivacyEnhancedMode),
 					showInfo: Boolean(config.showInfo),
@@ -1276,4 +1302,35 @@ iframe.iframe-media-source
 	&.size-tiny, &.background
 		.offline-card, .error-card
 			display: none
+.c-media-source .vimeo-chromeless-play-control
+	position: fixed
+	display: flex
+	align-items: center
+	justify-content: center
+	z-index: 100
+	background: transparent
+	border: none
+	cursor: pointer
+	padding: 0
+	margin: 0
+	&:not(.size-tiny):not(.background)
+		top: var(--mediasource-placeholder-top, 104px)
+		left: var(--mediasource-placeholder-left, var(--sidebar-width))
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+	.play-icon-circle
+		width: 72px
+		height: 72px
+		border-radius: 50%
+		background: rgba(0, 0, 0, 0.7)
+		color: #ffffff
+		display: flex
+		align-items: center
+		justify-content: center
+		font-size: 40px
+		transition: transform 0.2s ease, background 0.2s ease
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4)
+	&:hover .play-icon-circle, &:focus-visible .play-icon-circle
+		background: rgba(0, 0, 0, 0.9)
+		transform: scale(1.1)
 </style>

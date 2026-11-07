@@ -129,8 +129,6 @@
 							bunt-switch(name="loop", v-model="stream.config.loop", :label="$t('Loop')")
 							bunt-switch(name="hideControls", v-model="stream.config.hideControls", :label="$t('Hide Controls')")
 							bunt-switch(name="disableKb", v-model="stream.config.disableKb", :label="$t('Disable Keyboard Controls')")
-							.field-error(v-if="getStreamError(index, 'vimeo_controls')")
-								| {{ getStreamError(index, 'vimeo_controls') }}
 							bunt-switch(name="showInfo", v-model="stream.config.showInfo", :label="$t('Hide Video Info')")
 							.field-group.password-group
 								label.field-label {{ $t('Password (optional, for password-protected streams)') }}
@@ -771,20 +769,6 @@ export default defineComponent({
 					isValid = false
 				} else if (stream.stream_type === STREAM_TYPE_VIMEO && !parseVimeoUrl(stream.url)) {
 					this.validationErrors[`${index}.url`] = this.$t('Invalid Vimeo URL or Video ID')
-					isValid = false
-				}
-
-				if (
-					stream.stream_type === STREAM_TYPE_VIMEO
-					&& stream.config.autoStart === false
-					&& stream.config.hideControls
-					&& stream.config.disableKb
-				) {
-					const msg = this.$t(
-						'Vimeo requires autostart, on-screen controls, or keyboard controls so viewers can start playback.'
-					)
-					this.validationErrors[`${index}.vimeo_controls`] = msg
-					this.globalError = msg
 					isValid = false
 				}
 
