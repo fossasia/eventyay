@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import defaultdict
 
 from django.contrib.postgres.fields import ArrayField
@@ -8,18 +9,60 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
-from eventyay.base.email import get_email_context
-from eventyay.mail.context import get_mail_context
+from eventyay.base.email import get_best_name, get_email_context
+from eventyay.base.i18n import LazyI18nString, language
 from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
-from eventyay.base.i18n import LazyI18nString
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
-from eventyay.base.services.mail import mail, SendMailException as MailTransportError
+from eventyay.base.services.mail import (
+    SendMailException as MailTransportError,
+    TolerantDict,
+    expand_email_variable_chips,
+    mail,
+)
 from eventyay.common.exceptions import SendMailException
+from eventyay.mail.context import get_mail_context
 
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_queued_mail_text(text, context: dict | None) -> str:
+    """Replace ``{placeholder}`` tokens and Tiptap chips using a mail context."""
+    if text is None:
+        return ''
+    string_context = {key: '' if value is None else str(value) for key, value in (context or {}).items()}
+    source = str(text)
+    try:
+        resolved = source.format_map(TolerantDict(string_context))
+    except ValueError:
+        parts = []
+        cursor = 0
+        for match in re.finditer(r'\{([A-Za-z_][A-Za-z0-9_]*)\}', source):
+            parts.append(source[cursor:match.start()])
+            key = match.group(1)
+            parts.append(string_context[key] if key in string_context else match.group(0))
+            cursor = match.end()
+        parts.append(source[cursor:])
+        resolved = ''.join(parts)
+    return expand_email_variable_chips(resolved, string_context)
+
+
+def resolve_queued_mail_i18n(value, context: dict | None = None, *, context_factory=None):
+    """Resolve placeholders in each locale of a ``LazyI18nString``."""
+    if not value:
+        return value
+    data = getattr(value, 'data', None)
+    if isinstance(data, dict) and data:
+        resolved = {}
+        for locale, text in data.items():
+            with language(locale):
+                locale_context = context_factory() if context_factory else context
+                resolved[locale] = resolve_queued_mail_text(text, locale_context)
+        return LazyI18nString(resolved)
+    locale_context = context_factory() if context_factory else context
+    return LazyI18nString(resolve_queued_mail_text(value, locale_context))
 
 
 class TicketMailTemplate(models.Model):
@@ -315,10 +358,37 @@ class EmailQueue(models.Model):
         self._finalize_send_status()
         return True
 
-    def _build_email_context(self, order, position, position_or_address, recipient):
+    def _recipient_order_and_position(
+        self, recipient, email: str | None = None
+    ) -> tuple[Order | None, OrderPosition | None]:
+        """Return the order and the position that matches this recipient email."""
+        position_ids = list(recipient.positions or [])
+        positions = list(
+            OrderPosition.objects.filter(pk__in=position_ids, order__event=self.event)
+            .select_related('order')
+            .order_by('pk')
+        )
+        match_email = (email or recipient.email or '').strip().lower()
+        matching = [
+            position
+            for position in positions
+            if (position.attendee_email or '').strip().lower() == match_email
+        ]
+        position = (matching or positions)[0] if (matching or positions) else None
+        if position is not None:
+            return position.order, position
+
+        order_id = recipient.orders[0] if recipient.orders else None
+        order = Order.objects.filter(pk=order_id, event=self.event).first() if order_id else None
+        return order, None
+
+    def _build_email_context(
+        self, order, position, position_or_address, recipient, *, record_errors=True, email=None
+    ):
         try:
             if self.composing_for != ComposingFor.ATTENDEES:
-                user_obj = User.objects.filter(email__iexact=recipient.email).first()
+                lookup_email = email or recipient.email
+                user_obj = User.objects.filter(email__iexact=lookup_email).first() if lookup_email else None
                 ctx = get_email_context(event=self.event, user=user_obj)
                 ctx.update(get_mail_context(event=self.event, user=user_obj))
                 return ctx
@@ -341,12 +411,36 @@ class EmailQueue(models.Model):
                 kwargs['position'] = position
             if position_or_address is not None:
                 kwargs['position_or_address'] = position_or_address
+                best_name = get_best_name(position_or_address)
+                if best_name:
+                    kwargs['name'] = best_name
             return get_email_context(**kwargs)
         except (AttributeError, KeyError, TypeError, ValueError) as e:
             logger.exception('Error while generating email context')
-            recipient.error = f'Context error: {e}'
-            recipient.save(update_fields=['error'])
+            if record_errors and recipient is not None:
+                recipient.error = f'Context error: {e}'
+                recipient.save(update_fields=['error'])
             return None
+
+    def placeholder_context(self, recipient=None, email: str | None = None):
+        """Build the placeholder context for one queued recipient, or the first."""
+        recipient = recipient or self.recipients.order_by('id').first()
+        if not recipient:
+            return None
+
+        order, position = self._recipient_order_and_position(recipient, email=email)
+        try:
+            invoice_address = order.invoice_address if order else None
+        except InvoiceAddress.DoesNotExist:
+            invoice_address = InvoiceAddress(order=order) if order else None
+        return self._build_email_context(
+            order,
+            position,
+            position or invoice_address,
+            recipient,
+            record_errors=False,
+            email=email,
+        )
 
     def _finalize_send_status(self):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
@@ -362,11 +456,7 @@ class EmailQueue(models.Model):
         if not email:
             return False
 
-        order_id = recipient.orders[0] if recipient.orders else None
-        position_id = recipient.positions[0] if recipient.positions else None
-
-        order = Order.objects.filter(pk=order_id, event=self.event).first() if order_id else None
-        position = OrderPosition.objects.filter(pk=position_id).first() if position_id else None
+        order, position = self._recipient_order_and_position(recipient)
 
         try:
             ia = order.invoice_address if order else None

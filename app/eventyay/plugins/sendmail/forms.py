@@ -36,7 +36,13 @@ from eventyay.control.forms import CachedFileField, SplitDateTimeField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
 from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone
 from eventyay.orga.forms.mails import TalkSplitDateTimePickerWidget
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, TicketMailTemplate
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+    EmailQueueToUser,
+    TicketMailTemplate,
+    resolve_queued_mail_i18n,
+)
 
 
 MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP = _( 'If the order contains attendees with email addresses different from the person who orders the ' 'tickets, the following email will be sent out to the attendees.' )
@@ -1017,12 +1023,28 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
         configured_locales = set(self.event.settings.get('locales', [])) if self.event else set()
         allowed_locales = saved_locales | configured_locales
 
+        subject_initial = self.instance.subject
+        text_initial = self.instance.message
+        # Sent mail is read-only, so resolved names are display-only. Editable
+        # Outbox fields keep stored placeholders so Save cannot persist one
+        # recipient's values for everyone else.
+        if self.read_only and self.recipient_objects:
+            recipient = self.recipient_objects[0]
+            subject_initial = resolve_queued_mail_i18n(
+                subject_initial,
+                context_factory=lambda: self.instance.placeholder_context(recipient),
+            )
+            text_initial = resolve_queued_mail_i18n(
+                text_initial,
+                context_factory=lambda: self.instance.placeholder_context(recipient),
+            )
+
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
             widget=I18nTextInput,
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.subject
+            initial=subject_initial,
         )
         self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
@@ -1030,7 +1052,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             widget_kwargs={'placeholders': placeholder_names},
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.message,
+            initial=text_initial,
         )
 
         if not self.read_only:
