@@ -17,6 +17,10 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, KNOWN_TYPES
 from eventyay.base.models import Event
 
 
+SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '\t', '\r')
+NUMERIC_TEXT_RE = re.compile(r'^-?[0-9,.]+$')
+
+
 def excel_safe(val):
     if not isinstance(val, KNOWN_TYPES):
         val = str(val)
@@ -25,6 +29,16 @@ def excel_safe(val):
         val = re.sub(ILLEGAL_CHARACTERS_RE, '', val)
 
     return val
+
+
+def neutralize_spreadsheet_formula(val: str | None) -> str:
+    """Prefix formula-like text with an apostrophe so CSV and XLSX viewers treat it as plain text."""
+    if not val:
+        return ''
+    text = str(val)
+    if text.startswith(SPREADSHEET_FORMULA_PREFIXES) and not NUMERIC_TEXT_RE.match(text):
+        return f"'{text}"
+    return text
 
 
 class BaseExporter:
