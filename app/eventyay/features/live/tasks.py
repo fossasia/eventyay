@@ -46,7 +46,7 @@ def post_chat_webhook(payload, webhook_url, hmac_secret):
     Returns the HTTP response status code, or None on network error.
     """
     if is_private_url(webhook_url):
-        logger.warning('Rejected chat webhook POST to private or unresolvable address: %s', webhook_url)
+        logger.warning('Rejected chat webhook POST to private or unresolvable host: %s', urlparse(webhook_url).hostname)
         return None
 
     body = json.dumps(payload, separators=(',', ':'), sort_keys=True)

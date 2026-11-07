@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import hashlib
 import hmac
 import logging
@@ -720,6 +721,9 @@ class RoomModule(BaseModule):
             validate_room_config_patch
         )(self.room, body)
         if validated_data is not None:
+            original_values = {
+                field: copy.deepcopy(getattr(self.room, field)) for field in update_fields
+            }
             for field in update_fields:
                 setattr(self.room, field, validated_data[field])
 
@@ -732,11 +736,11 @@ class RoomModule(BaseModule):
                     )
                 except ConsumerException:
                     for field in update_fields:
-                        setattr(self.room, field, old.get(field))
+                        setattr(self.room, field, original_values[field])
                     raise
                 except Exception:
                     for field in update_fields:
-                        setattr(self.room, field, old.get(field))
+                        setattr(self.room, field, original_values[field])
                     log_event(
                         'video',
                         'connection.webhook',
