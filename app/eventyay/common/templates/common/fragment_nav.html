@@ -29,14 +29,12 @@
             <i class="fa fa-certificate" aria-hidden="true"></i> {% translate "Featured" %}
         </a>
     {% endif %}
-    {% if show_talks_tab %}
-        {% show_schedule_nav_tab current_event as show_schedule_nav %}
-            {% if show_schedule_nav %}
-            {% agenda_schedule_nav_url request current_event as schedule_url %}
-                <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path %}active{% endif %}">
-                    <i class="fa fa-calendar"></i> {{ schedule_label }}
-                </a>
-            {% endif %}
+    {% show_schedule_nav_tab current_event as show_schedule_nav %}
+    {% if show_schedule_nav %}
+        {% agenda_schedule_nav_url request current_event as schedule_url %}
+        <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path %}active{% endif %}">
+            <i class="fa fa-calendar"></i> {{ schedule_label }}
+        </a>
     {% endif %}
     {% show_public_speakers_list current_event as show_speakers_list %}
     {% if show_speakers_list %}
