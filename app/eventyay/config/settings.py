@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 import django.conf.locale
 import importlib_metadata
-from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -296,7 +295,6 @@ DATABASES = {
 
 _LIBRARY_APPS = (
     'bootstrap3',
-    'corsheaders',
     'channels',
     'compressor',
     'daphne',
@@ -407,23 +405,6 @@ CORE_MODULES = (
     )
 )
 
-# Widgets are public embeds served to any origin, so all origins must be allowed.
-# CORS_URLS_REGEX restricts which URL paths receive the header — widget endpoints,
-# event CSS, and /api/v1 (check-in app on access.eventyay.com or local Vite dev).
-CORS_ALLOW_ALL_ORIGINS = True
-
-CORS_URLS_REGEX = (
-    r"^(?:"
-    r".*/widget[s]?/.*|"
-    r".*/schedule/widget/.*|"
-    r".*/static/event\.css|"
-    r".*/static/schedule/.*\.js|"
-    r"/api/v1/.*"
-    r")$"
-)
-
-CORS_ALLOW_HEADERS = [*default_headers, "exhibitor"]
-
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
 for entry_point in entry_points(group='pretalx.plugin'):
@@ -446,7 +427,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 _LIBRARY_MIDDLEWARES = (
     'eventyay.api.middleware.PrivateNetworkAccessMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'eventyay.base.middleware.LoadSheddingMiddleware',
@@ -1245,6 +1225,13 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
 SESSION_COOKIE_NAME = 'eventyay_session'
 LANGUAGE_COOKIE_NAME = 'eventyay_language'
 CSRF_COOKIE_NAME = 'eventyay_csrftoken'
+# The widget shop is a third-party iframe. Lax cookies are not stored there, so
+# the cart session and its CSRF token use None. Browsers only keep that when
+# the cookie is Secure. Django's session middleware writes the session cookie
+# after the Pretix helper, so the setting has to match or it overwrites None.
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
 # TODO: After merging eventyay-xxx componenents, we may not need this.
 CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', 'http://next.eventyay.com:1337', 'https://next.eventyay.com']
 SESSION_COOKIE_HTTPONLY = True
