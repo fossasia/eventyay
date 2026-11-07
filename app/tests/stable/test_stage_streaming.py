@@ -4,12 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 from asgiref.sync import async_to_sync
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
 from eventyay.base.models import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services import event as event_service
 from eventyay.base.services import room as room_service
+
 
 stream_schedule_migration = importlib.import_module(
     "eventyay.base.migrations.0034_migrate_native_stream_schedules"
@@ -35,7 +37,7 @@ def _patch_room_creation(monkeypatch):
         return SimpleNamespace(id="room-id"), channel
 
     monkeypatch.setattr(event_service, "_create_room", fake_create_room)
-    monkeypatch.setattr(event_service, "get_channel_layer", lambda: ChannelLayer())
+    monkeypatch.setattr(event_service, "get_channel_layer", ChannelLayer)
     return created
 
 
@@ -154,6 +156,7 @@ def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
 
 
 def test_create_always_on_stage_stores_autostart_flags(monkeypatch):
+    """Verify that always-on YouTube, Vimeo, and HLS stage creation preserves boolean and parsed autostart flags."""
     event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
 
     cases = [
@@ -165,26 +168,29 @@ def test_create_always_on_stage_stores_autostart_flags(monkeypatch):
                 "autoStart": False,
                 "startMuted": True,
             },
+            False,
         ),
         (
             "livestream.vimeo",
             {
                 "playback_mode": "always_on",
                 "url": "https://vimeo.com/123456789",
-                "autoStart": False,
+                "autoStart": "false",
             },
+            False,
         ),
         (
             "livestream.native",
             {
                 "playback_mode": "always_on",
                 "hls_url": "https://example.com/live.m3u8",
-                "autoStart": False,
+                "autoStart": "true",
             },
+            True,
         ),
     ]
 
-    for module_type, config in cases:
+    for module_type, config, expected_autostart in cases:
         created = _patch_room_creation(monkeypatch)
         async_to_sync(event_service.create_room)(
             event,
@@ -202,7 +208,33 @@ def test_create_always_on_stage_stores_autostart_flags(monkeypatch):
         )
 
         mod = next(m for m in created["data"]["module_config"] if m["type"] == module_type)
-        assert mod["config"]["autoStart"] is False
+        assert mod["config"]["autoStart"] is expected_autostart
+
+
+def test_create_always_on_stage_rejects_invalid_autostart_flag(monkeypatch):
+    """Verify that invalid autoStart values raise ValidationError."""
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
+    _patch_room_creation(monkeypatch)
+
+    with pytest.raises(ValidationError):
+        async_to_sync(event_service.create_room)(
+            event,
+            {
+                "name": "Invalid Stage",
+                "description": "a description",
+                "modules": [
+                    {
+                        "type": "livestream.native",
+                        "config": {
+                            "playback_mode": "always_on",
+                            "hls_url": "https://example.com/live.m3u8",
+                            "autoStart": "not-a-boolean",
+                        },
+                    },
+                ],
+            },
+            object(),
+        )
 
 
 @pytest.mark.django_db

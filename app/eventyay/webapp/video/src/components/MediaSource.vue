@@ -158,9 +158,6 @@ function applyInterpretationVolume(vol) {
 		}
 	}
 }
-const autoplay = computed(() => store.getters.autoplay);
-const mainPlayerPaused = ref(!autoplay.value);
-
 const module = computed(() => {
 	if (!props.room) return null;
 	return props.room.modules.find((m) =>
@@ -176,6 +173,14 @@ const module = computed(() => {
 		].includes(m.type)
 	);
 });
+
+function getEffectiveStreamAutoStart() {
+	const streamConfig = props.room?.currentStream?.config || module.value?.config || {};
+	return streamConfig.autoStart !== false;
+}
+
+const autoplay = computed(() => store.getters.autoplay);
+const mainPlayerPaused = ref(!(autoplay.value && getEffectiveStreamAutoStart()));
 
 const isRoomDisabled = computed(() => {
 	if (!props.room) return false;
@@ -436,6 +441,7 @@ async function applyInterpretation(interpConfig) {
 onMounted(async () => {
 	window.addEventListener('message', onWindowMessage);
 	if (!props.room) return;
+	resetMainPlayerPaused();
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
 	await applyInterpretation(activeInterpretation.value);
@@ -694,9 +700,7 @@ function onMainPlayerPlaybackChanged(isPlaying) {
 }
 
 function resetMainPlayerPaused() {
-	const streamConfig = props.room?.currentStream?.config || module.value?.config || {};
-	const streamAutoStart = streamConfig.autoStart !== false;
-	mainPlayerPaused.value = !(autoplay.value && streamAutoStart);
+	mainPlayerPaused.value = !(autoplay.value && getEffectiveStreamAutoStart());
 }
 
 function onTranslationIframeLoaded() {
@@ -713,6 +717,8 @@ function onTranslationIframeLoaded() {
 	}
 	if (mainPlayerPaused.value) {
 		pauseYouTubeTranslationIframe();
+	} else {
+		resumeTranslationAudio();
 	}
 }
 
@@ -1062,8 +1068,10 @@ function getLanguageIframeUrl(languageUrl) {
 	if (!languageUrl) return null;
 	const config = getYoutubeConfig();
 	const videoId = normalizeYoutubeVideoId(languageUrl) || languageUrl;
+	const activeStreamConfig = props.room?.currentStream?.config || module.value?.config || {};
+	const shouldAutoplay = autoplay.value && activeStreamConfig.autoStart !== false && config.autoStart !== false;
 	return getYoutubeEmbedUrl(videoId, {
-		autoplay: autoplay.value && config.autoStart !== false,
+		autoplay: shouldAutoplay,
 		startMuted: Boolean(config.startMuted),
 		hideControls: true,
 		noRelated: config.noRelated,

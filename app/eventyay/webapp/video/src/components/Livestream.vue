@@ -385,7 +385,9 @@ export default {
 				this.player?.startLoad()
 				// force live edge after unpausing
 				// TODO make this less yarring
-				this.$refs.video.currentTime = this.$refs.video.buffered.end(this.$refs.video.buffered.length - 1)
+				if (this.$refs.video.buffered?.length > 0) {
+					this.$refs.video.currentTime = this.$refs.video.buffered.end(this.$refs.video.buffered.length - 1)
+				}
 			} else {
 				this.playbackRequested = false
 				this.$refs.video.pause()
