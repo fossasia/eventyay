@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 
 # Mock heavy external services so unit tests run cleanly and fast in isolation
-for _mod in [
+_modules_to_mock = [
     'eventyay.base.services.chat',
     'eventyay.base.services.event',
     'eventyay.base.services.user',
@@ -20,7 +20,9 @@ for _mod in [
     'eventyay.base.services.video_entitlements',
     'eventyay.eventyay_common.utils',
     'sentry_sdk',
-]:
+]
+_orig_modules = {m: sys.modules[m] for m in _modules_to_mock if m in sys.modules}
+for _mod in _modules_to_mock:
     sys.modules[_mod] = MagicMock()
 
 import django  # noqa: E402
@@ -36,6 +38,23 @@ if not settings.configured:
     django.setup()
 
 import pytest  # noqa: E402
+
+
+@pytest.fixture(scope='module', autouse=True)
+def cleanup_sys_modules():
+    yield
+    for mod_name in _modules_to_mock:
+        if mod_name in _orig_modules:
+            sys.modules[mod_name] = _orig_modules[mod_name]
+        else:
+            sys.modules.pop(mod_name, None)
+    for mod_name in [
+        'eventyay.features.live.modules.room',
+        'eventyay.features.live.modules.chat',
+        'eventyay.features.live.tasks',
+    ]:
+        sys.modules.pop(mod_name, None)
+
 
 from eventyay.features.live.exceptions import ConsumerException  # noqa: E402
 from eventyay.features.live.modules.chat import ChatModule  # noqa: E402
@@ -295,9 +314,10 @@ async def test_chat_webhook_test_command_success():
     consumer.room_cache = {'room-123': room}
     room.refresh_from_db_if_outdated = AsyncMock()
 
-    with patch('eventyay.features.live.modules.room.send_room_system_message', return_value=200):
+    with patch('eventyay.features.live.modules.room.send_room_system_message', return_value=200) as mock_send:
         await room_module.chat_webhook_test({'room': 'room-123'})
 
+    mock_send.assert_called_once_with(room, kind='test')
     consumer.send_success.assert_called_once_with({'status_code': 200})
     consumer.send_error.assert_not_called()
 
@@ -357,3 +377,106 @@ async def test_chat_webhook_payload_includes_meta_room():
     assert payload['meta']['room'] == {'id': 'room-xyz', 'name': 'Track A'}
     assert payload['message'] == 'Hello world!'
     assert payload['message_type'] == 'text'
+
+
+def test_post_chat_webhook_rejects_private_url():
+    """Test that post_chat_webhook rejects private/internal URLs for SSRF protection."""
+    payload = {'message': 'hello'}
+    status = post_chat_webhook(payload, 'http://127.0.0.1:8000/webhook', 'secret')
+    assert status is None
+
+
+@pytest.mark.asyncio
+async def test_verify_webhook_challenges_handles_duplicate_modules():
+    """Test that duplicate module entries are checked individually and verified configs are tracked."""
+    consumer = MagicMock()
+    room_module = RoomModule(consumer)
+
+    old_config = [
+        {'type': 'chat.native', 'config': {'webhook_url': 'https://example.com/one', 'webhook_hmac_secret': 's1'}}
+    ]
+    new_config = [
+        {'type': 'chat.native', 'config': {'webhook_url': 'https://example.com/one', 'webhook_hmac_secret': 's1'}},
+        {'type': 'chat.native', 'config': {'webhook_url': 'https://example.com/two', 'webhook_hmac_secret': 's2'}},
+    ]
+
+    captured_requests = []
+
+    def mock_get(url, params=None, headers=None, timeout=None, allow_redirects=None):
+        captured_requests.append(url)
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {'challenge': params.get('challenge')}
+        return resp
+
+    with patch('eventyay.features.live.modules.room.http_requests.get', side_effect=mock_get):
+        with patch.object(RoomModule, '_is_private_url', return_value=False):
+            await room_module._verify_webhook_challenges(old_config, new_config)
+
+    assert captured_requests == ['https://example.com/two']
+
+
+@pytest.mark.asyncio
+async def test_config_patch_restores_room_on_challenge_failure():
+    """Test that room fields are restored in consumer cache when webhook verification fails."""
+    consumer = MagicMock()
+    consumer.send_error = AsyncMock()
+    consumer.event = MagicMock()
+    consumer.event.has_permission_async = AsyncMock(return_value=True)
+
+    room = DummyRoom(
+        room_id='room-123',
+        name='Original Name',
+        module_config=[
+            {
+                'type': 'chat.native',
+                'config': {'webhook_url': 'https://example.com/old', 'webhook_hmac_secret': 'old-secret'},
+            }
+        ],
+    )
+    consumer.room_cache = {'room-123': room}
+    room.refresh_from_db_if_outdated = AsyncMock()
+
+    room_module = RoomModule(consumer)
+
+    body = {
+        'room': 'room-123',
+        'name': 'Proposed Name',
+        'module_config': [
+            {
+                'type': 'chat.native',
+                'config': {'webhook_url': 'https://example.com/new', 'webhook_hmac_secret': 'new-secret'},
+            }
+        ],
+    }
+
+    old_serialized = {
+        'id': 'room-123',
+        'name': 'Original Name',
+        'module_config': [
+            {
+                'type': 'chat.native',
+                'config': {'webhook_url': 'https://example.com/old', 'webhook_hmac_secret': 'old-secret'},
+            }
+        ],
+    }
+
+    with patch('eventyay.features.live.modules.room.check_video_entitlements', return_value=MagicMock(allowed=True)):
+        with patch('eventyay.features.live.modules.room.newly_added_server_backed_room_modules', return_value=[]):
+            with patch('eventyay.features.live.modules.room.newly_added_provider_modules', return_value=[]):
+                with patch('eventyay.features.live.modules.room.serialize_room_config', return_value=old_serialized):
+                    with patch(
+                        'eventyay.features.live.modules.room.validate_room_config_patch',
+                        return_value=(dict(body), ['name', 'module_config']),
+                    ):
+                        with patch.object(
+                            room_module,
+                            '_verify_webhook_challenges',
+                            side_effect=ConsumerException('webhook.verification_failed', 'Failed'),
+                        ):
+                            with pytest.raises(ConsumerException):
+                                await room_module.config_patch(body)
+
+    # Assert that room name and module_config were rolled back on the cached room instance
+    assert room.name == 'Original Name'
+    assert room.module_config[0]['config']['webhook_url'] == 'https://example.com/old'

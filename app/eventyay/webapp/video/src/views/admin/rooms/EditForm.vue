@@ -49,7 +49,7 @@
 								bunt-switch(name="force_join", v-model="config.force_join")
 
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id] && !isProviderDisabled", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
-			sidebar-addons(v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')", :config="config", :modules="modules", :creating="creating")
+			sidebar-addons(ref="sidebarAddons", v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')", :config="config", :modules="modules", :creating="creating")
 			.danger-zone(v-if="!creating && hasPermission('room:delete')")
 				h3 {{ $t('Danger Zone') }}
 				template(v-if="config.has_linked_sessions")
@@ -279,6 +279,7 @@ export default {
 					module_config: moduleConfig,
 				})
 				Object.assign(this.config, updated)
+				this.$refs.sidebarAddons?.syncInitialWebhookConfig?.()
 
 				if (openScheduleAfterCreate && streamScheduleDraft) {
 					try {

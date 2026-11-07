@@ -145,6 +145,14 @@ export default {
 		'config.id'() {
 			this.syncInitialWebhookConfig()
 			this.testResult = null
+		},
+		'config.module_config'() {
+			this.syncInitialWebhookConfig()
+		},
+		isConfigDirty(dirty) {
+			if (dirty) {
+				this.testResult = null
+			}
 		}
 	},
 	computed: {
@@ -224,17 +232,19 @@ export default {
 			this.testResult = null
 		},
 		async sendTestEvent() {
+			const targetRoomId = this.config.id
 			this.testingWebhook = true
 			this.testResult = null
 			try {
 				const response = await api.call('room.chat.webhook.test', {
-					room: this.config.id
+					room: targetRoomId
 				})
+				if (this.config.id !== targetRoomId) return
 				const statusCode = response?.status_code
 				if (statusCode >= 200 && statusCode <= 299) {
 					this.testResult = {
 						success: true,
-						title: this.$t('Test event delivered successfully (HTTP {code}).', {code: statusCode}),
+						title: this.$t('Test event delivered successfully (HTTP {{code}}).', {code: statusCode}),
 						hint: ''
 					}
 				} else if (statusCode === 403) {
@@ -252,18 +262,22 @@ export default {
 				} else {
 					this.testResult = {
 						success: false,
-						title: this.$t('Receiver returned HTTP {code}.', {code: statusCode}),
+						title: this.$t('Receiver returned HTTP {{code}}.', {code: statusCode}),
 						hint: ''
 					}
 				}
 			} catch (error) {
+				if (this.config.id !== targetRoomId) return
+				console.error('Failed to deliver test webhook for room', targetRoomId, error)
 				this.testResult = {
 					success: false,
 					title: this.$t('Could not deliver test event.'),
 					hint: error.message || this.$t('Check that the Webhook URL is reachable.')
 				}
 			} finally {
-				this.testingWebhook = false
+				if (this.config.id === targetRoomId) {
+					this.testingWebhook = false
+				}
 			}
 		}
 	}

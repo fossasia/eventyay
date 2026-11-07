@@ -1,10 +1,8 @@
 import asyncio
 import hashlib
 import hmac
-import ipaddress
 import logging
 import secrets
-import socket
 import time
 from datetime import timedelta
 from urllib.parse import urljoin, urlparse
@@ -73,7 +71,7 @@ from eventyay.features.live.decorators import (
 )
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
-from eventyay.features.live.tasks import send_room_system_message
+from eventyay.features.live.tasks import is_private_url, send_room_system_message
 
 logger = logging.getLogger(__name__)
 
@@ -120,33 +118,20 @@ class RoomModule(BaseModule):
     @staticmethod
     def _is_private_url(url):
         """Check if a URL points to a private/localhost address (SSRF protection)."""
-        parsed = urlparse(url)
-        hostname = parsed.hostname
-        if not hostname:
-            return True
-        if hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
-            return True
-        try:
-            for info in socket.getaddrinfo(hostname, None):
-                addr = info[4][0]
-                if not ipaddress.ip_address(addr).is_global:
-                    return True
-        except (socket.gaierror, ValueError):
-            return True
-        return False
+        return is_private_url(url)
 
     async def _verify_webhook_challenges(self, old_module_config, new_module_config):
         """
         When module_config is updated, verify any new or updated webhook URLs and secrets via
         signed challenge-response before allowing them to be saved.
         """
-        old_configs = {}
+        old_configs = set()
         for m in old_module_config:
             cfg = m.get("config", {})
             url = cfg.get("webhook_url")
             secret = cfg.get("webhook_hmac_secret")
             if url:
-                old_configs[m["type"]] = (url, secret)
+                old_configs.add((m.get("type"), url, secret))
 
         for m in new_module_config:
             cfg = m.get("config", {})
@@ -192,7 +177,7 @@ class RoomModule(BaseModule):
                         "Webhook URL must not point to a private network address.",
                     )
             # Only run challenge verification if the URL or secret is new or changed
-            if old_configs.get(m["type"]) == (url, secret):
+            if (m.get("type"), url, secret) in old_configs:
                 continue
             # Challenge verification with HMAC-SHA256 signature
             challenge_token = secrets.token_urlsafe(32)
@@ -218,7 +203,7 @@ class RoomModule(BaseModule):
             if resp.status_code != 200:
                 raise ConsumerException(
                     "webhook.verification_failed",
-                    f"Webhook challenge returned HTTP {resp.status_code}.",
+                    f"Webhook challenge verification returned HTTP {resp.status_code}.",
                 )
             try:
                 data = resp.json()
@@ -232,6 +217,7 @@ class RoomModule(BaseModule):
                     "webhook.verification_failed",
                     "Webhook challenge token mismatch.",
                 )
+            old_configs.add((m.get("type"), url, secret))
 
     @command("enter")
     @room_action(permission_required=Permission.ROOM_VIEW)
@@ -745,8 +731,12 @@ class RoomModule(BaseModule):
                         self.room.module_config or [],
                     )
                 except ConsumerException:
+                    for field in update_fields:
+                        setattr(self.room, field, old.get(field))
                     raise
                 except Exception:
+                    for field in update_fields:
+                        setattr(self.room, field, old.get(field))
                     log_event(
                         'video',
                         'connection.webhook',
