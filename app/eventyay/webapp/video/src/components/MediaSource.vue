@@ -571,7 +571,6 @@ function playVimeoPlayer() {
 			JSON.stringify({ method: 'play' }),
 			'*'
 		);
-		onMainPlayerPlaybackChanged(true);
 	} catch (error) {
 		console.warn('Failed to start Vimeo playback:', error);
 	}
@@ -1313,11 +1312,13 @@ iframe.iframe-media-source
 	cursor: pointer
 	padding: 0
 	margin: 0
+	width: 72px
+	height: 72px
+	border-radius: 50%
 	&:not(.size-tiny):not(.background)
-		top: var(--mediasource-placeholder-top, 104px)
-		left: var(--mediasource-placeholder-left, var(--sidebar-width))
-		width: var(--mediasource-placeholder-width, 100vw)
-		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+		top: calc(var(--mediasource-placeholder-top, 104px) + 0.5 * var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh)))
+		left: calc(var(--mediasource-placeholder-left, var(--sidebar-width)) + 0.5 * var(--mediasource-placeholder-width, 100vw))
+		transform: translate(-50%, -50%)
 	.play-icon-circle
 		width: 72px
 		height: 72px
