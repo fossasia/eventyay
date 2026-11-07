@@ -237,6 +237,34 @@ def test_create_always_on_stage_rejects_invalid_autostart_flag(monkeypatch):
         )
 
 
+def test_create_always_on_vimeo_rejects_chromeless_non_autostart_stream(monkeypatch):
+    """Verify that Vimeo streams with autostart disabled cannot both hide controls and disable keyboard controls."""
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
+    _patch_room_creation(monkeypatch)
+
+    with pytest.raises(ValidationError):
+        async_to_sync(event_service.create_room)(
+            event,
+            {
+                "name": "Invalid Vimeo Stage",
+                "description": "a description",
+                "modules": [
+                    {
+                        "type": "livestream.vimeo",
+                        "config": {
+                            "playback_mode": "always_on",
+                            "url": "https://vimeo.com/123456789",
+                            "autoStart": False,
+                            "hideControls": True,
+                            "disableKb": True,
+                        },
+                    },
+                ],
+            },
+            object(),
+        )
+
+
 @pytest.mark.django_db
 def test_stream_schedule_choices_do_not_expose_native():
     choices = [choice[0] for choice in StreamSchedule._meta.get_field("stream_type").choices]

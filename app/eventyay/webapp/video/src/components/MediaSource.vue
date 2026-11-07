@@ -888,11 +888,16 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
 				const shouldAutoplay = Boolean(autoplay.value && config.autoStart !== false);
+				// If autostart is disabled and keyboard controls are disabled, preserve on-screen controls
+				// so viewers have a manual play control to start Vimeo playback.
+				const shouldHideControls = Boolean(
+					config.hideControls && (shouldAutoplay || !config.disableKb)
+				);
 				iframeUrl = getVimeoEmbedUrl(vimeoUrl, {
 					autoplay: shouldAutoplay,
 					startMuted: shouldStartMuted,
 					loop: Boolean(config.loop),
-					hideControls: Boolean(config.hideControls),
+					hideControls: shouldHideControls,
 					disableKb: Boolean(config.disableKb),
 					dnt: Boolean(config.dnt || config.enablePrivacyEnhancedMode),
 					showInfo: Boolean(config.showInfo),
