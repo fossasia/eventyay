@@ -38,6 +38,54 @@ def test_can_see_talk(client, event, slot):
 
 
 @pytest.mark.django_db
+def test_talk_meta_description_strips_html(client, event, slot):
+    with scope(event=event):
+        slot.submission.abstract = (
+            '<p>This is a <strong>keynote</strong> talk about Python &amp; AI.</p>'
+            '<p>Join us to learn &nbsp; more!</p>'
+        )
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = 'This is a keynote talk about Python &amp; AI. Join us to learn more!'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+    og_tag = content.split('<meta property="og:description"')[1].split('>', 1)[0]
+    assert '<p>' not in og_tag
+    assert '<strong>' not in og_tag
+    assert '&nbsp;' not in og_tag
+
+
+@pytest.mark.django_db
+def test_talk_meta_description_long_abstract_shortened(client, event, slot):
+    with scope(event=event):
+        slot.submission.abstract = '<p>' + 'A' * 250 + '</p>'
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = ('A' * 199) + '…'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
+def test_talk_meta_description_preserves_technical_text_and_markdown_links(client, event, slot):
+    with scope(event=event):
+        slot.submission.abstract = (
+            'Exploring std::vector<T> with [Eventyay](https://eventyay.com) and `__init__.py`!'
+        )
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = 'Exploring std::vector&lt;T&gt; with Eventyay and `__init__.py`!'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
 def test_can_see_talk_with_iframe(client, event, slot):
     event.plugins = 'tests'
     event.save()

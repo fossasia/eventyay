@@ -10,6 +10,7 @@ from eventyay.base.templatetags.rich_text import (
     markdown_compile_email,
     render_markdown_abslinks,
     rich_text_snippet,
+    rich_text_to_plain_text,
 )
 
 
@@ -126,3 +127,96 @@ def test_linkify_abs(link):
     assert rich_text_snippet(input) == output
     assert render_markdown_abslinks(input) == f'<p>{output}</p>'
     assert markdown_compile_email(input) == f'<p>{output}</p>'
+
+
+@pytest.mark.parametrize(
+    'raw, expected',
+    [
+        ('', ''),
+        (None, ''),
+        ('   ', ''),
+        ('<p>Simple paragraph</p>', 'Simple paragraph'),
+        ('<p>First</p><p>Second</p>', 'First Second'),
+        (
+            '<p>Text with <strong>bold</strong> and <em>italic</em>.</p>',
+            'Text with bold and italic.',
+        ),
+        (
+            '<p>Visit <a href="https://eventyay.com">Eventyay</a> today!</p>',
+            'Visit Eventyay today!',
+        ),
+        ('Visit [Eventyay](https://eventyay.com) today!', 'Visit Eventyay today!'),
+        ('Visit [our site](https://eventyay.com "Title")!', 'Visit our site!'),
+        ('<ul><li>Item 1</li><li>Item 2</li></ul>', 'Item 1 Item 2'),
+        (
+            '<tr><td>Track</td><td>Python</td></tr>',
+            'Track Python',
+        ),
+        (
+            '<table><thead><tr><th>Topic</th><th>Speaker</th></tr></thead></table>',
+            'Topic Speaker',
+        ),
+        ('First<br class="line-break">Second', 'First Second'),
+        ('Line 1<br style="clear: both;">Line 2<br/>Line 3', 'Line 1 Line 2 Line 3'),
+        (
+            'Working with vector<T> in C++',
+            'Working with vector<T> in C++',
+        ),
+        (
+            'Working with std::vector<int> & List<T>',
+            'Working with std::vector<int> & List<T>',
+        ),
+        (
+            '<p>Entities: &amp; &lt; &gt; &quot; &#39; &nbsp; end</p>',
+            'Entities: & < > " \' end',
+        ),
+        (
+            '   Multiple    spaces   and\nnewlines   ',
+            'Multiple spaces and newlines',
+        ),
+        ('__init__.py', '__init__.py'),
+        ('2 ** 8 = 256', '2 ** 8 = 256'),
+        ('##general', '##general'),
+        ('Text with [square brackets]', 'Text with [square brackets]'),
+        (
+            '<p>Check out <strong>__init__.py</strong></p>',
+            'Check out __init__.py',
+        ),
+    ],
+)
+def test_rich_text_to_plain_text(raw, expected):
+    assert rich_text_to_plain_text(raw) == expected
+
+
+def test_rich_text_plain_in_template():
+    from django.template import Context, Template
+
+    template = Template(
+        '{% load rich_text %}{{ description|rich_text_plain }}'
+    )
+    rendered = template.render(
+        Context(
+            {'description': '<p>Hello <strong>World</strong> &amp; friends!</p>'}
+        )
+    )
+    # In template output, Django auto-escapes plain text characters for HTML attributes/context
+    assert rendered == 'Hello World &amp; friends!'
+
+
+def test_rich_text_plain_truncation_in_template():
+    from django.template import Context, Template
+
+    template = Template(
+        '{% load rich_text %}{{ description|rich_text_plain|truncatechars:200 }}'
+    )
+    # Short description remains unchanged
+    short_text = '<p>A short session description.</p>'
+    rendered_short = template.render(Context({'description': short_text}))
+    assert rendered_short == 'A short session description.'
+
+    # Long description (>200 characters) gets truncated to 200 characters ending with …
+    long_raw = '<p>' + 'A' * 250 + '</p>'
+    rendered_long = template.render(Context({'description': long_raw}))
+    assert len(rendered_long) == 200
+    assert rendered_long.endswith('…')
+    assert rendered_long == ('A' * 199) + '…'

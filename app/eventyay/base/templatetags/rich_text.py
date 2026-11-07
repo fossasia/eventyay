@@ -434,6 +434,103 @@ def html_to_markdown_filter(html_text: str) -> str:
     return html_text if not html_text else html_to_markdown(html_text)
 
 
+_BLOCK_TAGS = frozenset({
+    'article',
+    'blockquote',
+    'div',
+    'footer',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'header',
+    'hr',
+    'li',
+    'p',
+    'pre',
+    'section',
+    'table',
+    'tbody',
+    'td',
+    'th',
+    'thead',
+    'tr',
+})
+
+_KNOWN_HTML_TAGS = frozenset(
+    ALLOWED_TAGS
+    | {
+        'article',
+        'aside',
+        'caption',
+        'col',
+        'colgroup',
+        'dd',
+        'details',
+        'dl',
+        'dt',
+        'figcaption',
+        'figure',
+        'footer',
+        'header',
+        'img',
+        'main',
+        'mark',
+        'nav',
+        's',
+        'section',
+        'strike',
+        'sub',
+        'summary',
+        'sup',
+        'tfoot',
+        'wbr',
+    }
+)
+
+_MARKDOWN_LINK_RE = re.compile(
+    r'\[([^\]\n]+)\]\((?:[^\s)]+)(?:\s+["\'][^"\']*["\']\s*)?\)'
+)
+
+
+def _escape_non_html_tags(text: str) -> str:
+    """Escape angle brackets that do not form recognized HTML tags, preserving technical text such as vector<T>."""
+
+    def repl(m: re.Match) -> str:
+        slash = m.group(1) or ''
+        name = m.group(2).lower()
+        rest = m.group(3) or ''
+        if name in _KNOWN_HTML_TAGS:
+            return m.group(0)
+        return f'&lt;{slash}{m.group(2)}{rest}&gt;'
+
+    return re.sub(r'<(/)?([a-zA-Z][a-zA-Z0-9]*)([^>]*)>', repl, text)
+
+
+def rich_text_to_plain_text(text: str) -> str:
+    """Convert rich text (HTML/markdown) to single-line plain text suitable for meta descriptions and link previews."""
+    if not text:
+        return ''
+    text = _MARKDOWN_LINK_RE.sub(r'\1', str(text))
+    text = _escape_non_html_tags(text)
+    soup = BeautifulSoup(text, 'html.parser')
+    for br in soup.find_all('br'):
+        br.replace_with(' ')
+    for tag in soup.find_all(_BLOCK_TAGS):
+        tag.append(' ')
+    plain = soup.get_text()
+    plain = html.unescape(plain)
+    plain = plain.replace('\xa0', ' ')
+    return ' '.join(plain.split())
+
+
+@register.filter
+def rich_text_plain(text: str) -> str:
+    return rich_text_to_plain_text(text)
+
+
 @register.filter
 def append_colon(text: LazyI18nString) -> str:
     text = str(text).strip()
