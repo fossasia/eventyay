@@ -435,3 +435,70 @@ def test_unclosed_long_markdown_link_near_boundary():
     assert '[' not in result_no_prefix
     assert '](http' not in result_no_prefix
     assert 'x' * 100 not in result_no_prefix
+
+
+def test_mathematical_comparisons_near_boundary_not_truncated():
+    """Verify mathematical comparisons like 'p < 0.05' and 'a < b' are not treated as HTML tags."""
+    # Place 'p < 0.05' and 'a < b' across the ~950-1,000 character region
+    prefix = 'Statistical analysis ' * 44  # ~924 chars
+    math_text = 'Result indicates p < 0.05 was achieved with a < b and n < 100.'
+    suffix = ' Further details ' * 500
+    raw = f'{prefix}{math_text}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert 'p < 0.05' in result
+    assert 'a < b' in result
+    assert 'n < 100' in result
+
+
+def test_literal_less_than_followed_by_whitespace_or_digit():
+    """Verify literal '<' followed by space or digit is not treated as a tag opener."""
+    prefix = 'Benchmark ' * 95  # ~950 chars
+    comparisons = 'Cases: < 5ms latency, score < 10, value < 0.001, alpha < beta.'
+    suffix = ' Detailed metrics ' * 500
+    raw = f'{prefix}{comparisons}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert '< 5ms' in result
+    assert 'score < 10' in result
+    assert 'value < 0.001' in result
+
+
+def test_valid_html_tag_near_boundary_with_mathematical_text():
+    """Verify valid HTML tags and quote-aware attributes work correctly alongside comparisons."""
+    prefix = 'Overview ' * 100  # ~900 chars
+    body = 'Analysis <span class="badge" title="stat < 5 and stat > 1"><strong>Confirmed</strong></span> for p < 0.05.'
+    suffix = ' Extended report ' * 500
+    raw = f'{prefix}{body}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert 'Confirmed' in result
+    assert 'p < 0.05' in result
+    assert '<span' not in result
+    assert '<strong>' not in result
+
+
+def test_many_literal_less_than_near_boundary_performance_and_no_truncation():
+    """Verify many literal '<' characters near the preview boundary scan linearly without truncation."""
+    # Place hundreds of literal '< ' comparisons right around the 1,000-character boundary
+    prefix = 'Data point ' * 75  # ~825 chars
+    repeated_lt = '< 1 and < 2 and < 3 and ' * 20  # ~480 chars of literal '<' followed by digits/spaces
+    suffix = ' Final remarks ' * 500
+    raw = f'{prefix}{repeated_lt}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    # Ensure multiple sequential comparisons survive across the boundary rather than rolling back to the first '<'
+    assert result.count('< 1') >= 5
+    assert result.count('< 2') >= 5
+    assert result.count('< 3') >= 5
+    assert result.count('<') >= 20
+    assert len(result) >= 1000
+
+
+def test_html_tag_starts_before_cutoff_and_closes_after():
+    """Verify an HTML tag crossing the 1,000-char cutoff is completed cleanly without truncation or raw tag leakage."""
+    # Prefix places the opening '<span' around index 988
+    prefix = 'Summary text ' * 76  # ~988 chars
+    tag = '<span class="status-badge" title="score > 90 and rating > 4.5">Accredited Partner</span>'
+    suffix = ' More trailing details ' * 500
+    raw = f'{prefix}{tag}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert 'Accredited Partner' in result
+    assert '<span' not in result
+    assert 'status-badge' not in result

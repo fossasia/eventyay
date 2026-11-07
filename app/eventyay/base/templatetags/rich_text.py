@@ -817,14 +817,23 @@ def _bound_input_for_preview(
                         break
 
                 # 4. Check if inside an HTML tag
-                last_lt = text.rfind('<', 0, cutoff)
-                last_gt = text.rfind('>', 0, cutoff)
-                if last_lt > last_gt:
-                    next_gt = _find_next_tag_end(text, cutoff, max_budget)
-                    if next_gt != -1:
-                        cutoff = next_gt + 1
-                    elif last_lt > 0:
-                        cutoff = last_lt
+                # Single-pass linear backward scan to find the last candidate HTML tag opener:
+                # matches the scanner requirement that the following char is alpha, '/', or '!'.
+                last_tag_lt = -1
+                for idx in range(cutoff - 1, -1, -1):
+                    if text[idx] == '<' and idx + 1 < len(text) and (
+                        text[idx + 1].isalpha() or text[idx + 1] in ('/', '!')
+                    ):
+                        last_tag_lt = idx
+                        break
+
+                if last_tag_lt != -1:
+                    tag_end = _find_next_tag_end(text, last_tag_lt, max_budget)
+                    if tag_end != -1:
+                        if tag_end >= cutoff:
+                            cutoff = tag_end + 1
+                    elif last_tag_lt > 0:
+                        cutoff = last_tag_lt
                         rolled_back = True
 
                 # 5. Advance to next word/tag boundary if safe
