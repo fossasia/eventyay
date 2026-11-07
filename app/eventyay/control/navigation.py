@@ -661,6 +661,28 @@ def get_admin_navigation(request):
         )
     # --------------------------------------------------------------------------
 
+    organiser_children = [
+        {
+            'label': _('Organiser requests'),
+            'url': reverse('eventyay_admin:admin.organizer_requests'),
+            'active': (url.url_name or '').startswith('admin.organizer_requests'),
+        },
+        {
+            'label': _('Organiser forms'),
+            'url': reverse('eventyay_admin:admin.organizer_forms'),
+            'active': (url.url_name or '').startswith('admin.organizer_forms'),
+        },
+    ]
+    nav.append(
+        {
+            'label': _('Organisers'),
+            'url': reverse('eventyay_admin:admin.organizer_requests'),
+            'active': any(child['active'] for child in organiser_children),
+            'icon': 'group',
+            'children': organiser_children,
+        }
+    )
+
     platform_data_children = [
         {
             'label': _('Events'),
@@ -670,7 +692,7 @@ def get_admin_navigation(request):
         {
             'label': _('Organizers'),
             'url': reverse('eventyay_admin:admin.organizers'),
-            'active': 'organizers' in url.url_name,
+            'active': url.url_name == 'admin.organizers',
         },
         {
             'label': _('Attendees'),
