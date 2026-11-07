@@ -15,7 +15,6 @@
 		:favs="favs",
 		:showFavCount="showFavCount",
 		:onHomeServer="onHomeServer",
-		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
 		:density="density",
 		:timeDensityMinutes="timeDensityMinutes"
@@ -51,7 +50,6 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		disableAutoScroll: Boolean,
 		forceScrollDay: { type: Number, default: 0 },
 		density: {
 			type: String,
@@ -118,6 +116,12 @@ export default {
 		}
 	},
 	methods: {
+		cancelDayJump() {
+			const grids = this.$refs.gridSchedules || []
+			for (const grid of grids) {
+				grid?.cancelDayJump?.()
+			}
+		},
 		scrollToNow() {
 			const grids = this.$refs.gridSchedules || []
 			for (const grid of grids) {

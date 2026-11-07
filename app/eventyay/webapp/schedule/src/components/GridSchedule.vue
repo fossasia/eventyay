@@ -137,7 +137,6 @@ export default {
 			type: Boolean,
 			default: false
 		},
-		disableAutoScroll: Boolean,
 		density: {
 			type: String,
 			default: 'default'
@@ -485,19 +484,9 @@ export default {
 		this.rebindDayTracking()
 		await this.$nextTick()
 		this.initScrollSync()
-		if (!this.$refs.now) return
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
-		await new Promise(resolve => requestAnimationFrame(resolve))
-		this.scrollToNow()
 	},
 	beforeUnmount () {
-		this._scrollGeneration = (this._scrollGeneration || 0) + 1
-		if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
-		this._scrollAnim = null
-		const scroller = isDocumentScroller(this.scrollParent) ? document.documentElement : this.scrollParent
-		if (scroller?.style) scroller.style.scrollBehavior = ''
+		this.cancelDayJump()
 		this.unbindDayTracking()
 		if (this._gridResizeObserver) {
 			this._gridResizeObserver.disconnect()
@@ -653,9 +642,26 @@ export default {
 				window.scrollBy({ top: rect.top - clearance })
 			}
 		},
+		cancelDayJump () {
+			this._scrollGeneration = (this._scrollGeneration || 0) + 1
+			if (!this._scrollAnim) return
+			cancelAnimationFrame(this._scrollAnim)
+			this._scrollAnim = null
+			this._ignoreScrollDay = false
+			const scroller = isDocumentScroller(this.scrollParent) ? document.documentElement : this.scrollParent
+			if (scroller?.style) scroller.style.scrollBehavior = ''
+		},
+		lastSliceOfToday () {
+			const slice = this.visibleTimeslices.at(-1)
+			if (!slice || !this.now || this.now.isBefore(slice.date)) return null
+			if (!this.occupiedDayKeys.has(sliceDayKey(this.now, this.timezone))) return null
+			return this.$refs[slice.name]?.[0]
+		},
 		scrollToNow() {
-			if (!this.$refs.now) return
-			this.scrollElementIntoViewWithClearance(this.$refs.now)
+			const target = this.$refs.now || this.lastSliceOfToday()
+			if (!target) return
+			this.cancelDayJump()
+			this.scrollElementIntoViewWithClearance(target)
 		},
 		toolbarBottomY () {
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')

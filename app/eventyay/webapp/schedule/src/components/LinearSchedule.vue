@@ -55,7 +55,6 @@ export default {
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
-		disableAutoScroll: Boolean,
 		sortBy: {
 			type: String,
 			default: 'title',
@@ -180,6 +179,7 @@ export default {
 				groupedBuckets.push({
 					date: moment(),
 					sessions: sortedPending,
+					pending: true,
 				})
 			}
 			return groupedBuckets
@@ -210,21 +210,6 @@ export default {
 	async mounted () {
 		await this.$nextTick()
 		this.rebindDayTracking()
-		// scroll to now
-		// scroll to now, unless URL overrides now
-		let fragmentIsDate = false
-		const fragment = window.location.hash.slice(1)
-		if (fragment && fragment.length === 10) {
-			const initialDay = moment.tz(fragment, this.timezone)
-			if (initialDay.isValid()) {
-				fragmentIsDate = true
-			}
-		}
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
-		await new Promise(resolve => requestAnimationFrame(resolve))
-		this.scrollToNow()
 	},
 	beforeUnmount () {
 		this.unbindDayTracking()
@@ -312,22 +297,23 @@ export default {
 			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
 		},
 		scrollToNow() {
-			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
-			if (nowIndex < 0) return
-			const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
+			if (!this.showDayHeaders) return
+			const scheduledBuckets = this.sessionBuckets.filter(bucket => !bucket.pending)
+			const nowIndex = scheduledBuckets.findIndex(bucket => this.now < bucket.date)
+			const nowBucket = scheduledBuckets.at(nowIndex < 0 ? -1 : Math.max(0, nowIndex - 1))
+			if (!nowBucket) return
 			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
 			if (!el) return
 			if (this.scrollParent) {
 				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - this.getStickyClearance()
 				this.scrollParent.scrollTop = top
 			} else {
-				window.scroll({top: el.offsetTop + this.getOffsetTop() - this.getStickyClearance()})
+				window.scroll({top: el.getBoundingClientRect().top + window.scrollY - this.getStickyClearance()})
 			}
 		},
 		rebindDayTracking () {
 			this.unbindDayTracking()
 			this._unbindDayScroll = bindPassiveScroll(this.scrollParent, () => this.publishScrolledDay())
-			this.publishScrolledDay()
 		},
 		unbindDayTracking () {
 			this._unbindDayScroll?.()

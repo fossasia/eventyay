@@ -71,7 +71,6 @@
 			:favs="favs",
 			:showFavCount="showPopularityOnSchedule",
 			:onHomeServer="onHomeServer",
-			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
 			:density="'default'",
 			:timeDensityMinutes="timeDensityMinutes",
@@ -94,7 +93,6 @@
 			:includeDateSortKey="sortIncludeDate",
 			:includePopularitySortKey="sortIncludePopularity",
 			:onHomeServer="onHomeServer",
-			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
 			:showBreaks="!sessionsMode",
 			:density="'default'",
@@ -806,6 +804,10 @@ export default {
 	},
 	async created () {
 		this._compactTimezoneGeneration = 0
+		// A restored offset points at a layout the lazily loaded days no longer have.
+		// Embeds share the page with their host, and talk and speaker pages have no lazy days.
+		const ownsScrollPosition = !this.isTalkView && !this.isSpeakerView && document.getElementById('pretalx-schedule-data')
+		if (!this.disableAutoScroll && ownsScrollPosition) window.history.scrollRestoration = 'manual'
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
@@ -955,13 +957,20 @@ export default {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
 			const knownDays = (this.allDays?.length ? this.allDays : this.days) || []
 			const filteredDays = knownDays.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
-			if (filteredDays.length) {
+			const navigationType = performance.getEntriesByType('navigation')[0]?.type
+			if (filteredDays.length && navigationType === 'reload' && this.isViewingToday()) {
+				// A reload keeps the hash that scrolling wrote, so it does not count as a link.
+				window.history.replaceState(null, null, '#' + this.currentDay)
+			} else if (filteredDays.length) {
 				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
+				this._openedOnLinkedDay = navigationType === 'navigate' || !this.isViewingToday()
 			}
 		}
 		this._initialized = true
 		if (this.schedule?.compact) {
 			this.syncCompactCoverage()
+		} else {
+			this.scrollToNowOnOpen()
 		}
 	},
 	async mounted () {
@@ -974,6 +983,7 @@ export default {
 			poll()
 		})
 		this._onScheduleScroll = () => {
+			if (this.isFullscreenChanging()) return
 			this.maybeLoadPreviousGridDay()
 			this.maybeLoadNextGridDay()
 		}
@@ -1136,6 +1146,7 @@ export default {
 				} finally {
 					this.dayLoading = false
 				}
+				await this.scrollToNowOnOpen()
 				return
 			}
 			if (!this.currentDay) return
@@ -1162,9 +1173,14 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
+					const settling = !this._openScrollDone || this._scrollToNowAfterLoad
+					await this.scrollToNowOnOpen()
+					await this.finishGoToNow()
+					if (!ownsRequest()) return
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
-					if (!navigatingTo) await this.maybeLoadPreviousGridDay()
+					// So does prepending on open or after Now, which moves the day under the reading line.
+					if (!navigatingTo && !settling) await this.maybeLoadPreviousGridDay()
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
@@ -1431,12 +1447,59 @@ export default {
 				window.addEventListener('scroll', this._onScheduleScroll, { passive: true })
 			}
 		},
+		isViewingToday () {
+			return this.currentDay === this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+		},
+		scrollToNowInstantly () {
+			const display = this.$refs.scheduleDisplay
+			display?.cancelDayJump?.()
+			runWithoutSmoothScroll(this.scrollParent, () => display?.scrollToNow?.())
+		},
+		async scrollToNowOnOpen () {
+			if (this._openScrollDone) return
+			this._openScrollDone = true
+			if (this.disableAutoScroll || (!this._openedOnLinkedDay && !this.isViewingToday())) return
+			try {
+				await this.$nextTick()
+				await new Promise(resolve => requestAnimationFrame(resolve))
+				if (this._openedOnLinkedDay) this.forceScrollDay++
+				else this.scrollToNowInstantly()
+			} catch (error) {
+				console.error('Failed to scroll the schedule to the current time on open', error)
+			}
+		},
+		async finishGoToNow () {
+			if (!this._scrollToNowAfterLoad) return
+			this._scrollToNowAfterLoad = false
+			try {
+				await this.$nextTick()
+				await new Promise(resolve => requestAnimationFrame(resolve))
+				this.scrollToNowInstantly()
+			} catch (error) {
+				console.error('Failed to scroll the schedule to the current time after loading the day', error)
+			}
+		},
+		isFullscreenChanging () {
+			// The browser resets the page scroll before it reports the change.
+			return (this.fullscreenScroller() || this._pageScrollParent || null) !== this.scrollParent
+		},
 		syncFullscreenScrollParent () {
+			// Rebinding resets the scroller, which can move the selected day.
+			const followNow = !this.disableAutoScroll && this.isViewingToday()
 			// Day jumps follow whichever element is actually fullscreen, then the page scroller again on exit.
 			const scroller = this.fullscreenScroller()
 			if (scroller) this.bindScrollParent(scroller)
 			else this.bindScrollParent(this._pageScrollParent || null)
-			this.$nextTick(() => { this.forceScrollDay++ })
+			this.$nextTick(async () => {
+				this.forceScrollDay++
+				if (!followNow) return
+				try {
+					await this.$nextTick()
+					this.scrollToNowInstantly()
+				} catch (error) {
+					console.error('Failed to scroll the schedule to the current time after a fullscreen change', error)
+				}
+			})
 		},
 		fullscreenScroller () {
 			const root = this.$el
@@ -1455,6 +1518,7 @@ export default {
 			return host
 		},
 		setCurrentDay (day) {
+			if (this.isFullscreenChanging()) return
 			const dayStr = day.format('YYYY-MM-DD')
 			if (this._toolbarDay && dayStr !== this._toolbarDay) return
 			const pool = (this.allDays && this.allDays.length) ? this.allDays : (this.days || [])
@@ -1492,6 +1556,7 @@ export default {
 			}
 			document.documentElement.style.scrollBehavior = 'auto'
 			this._toolbarDay = dayId
+			this._scrollToNowAfterLoad = false
 			// Drop a day prepend or append that started before this click.
 			this._gridExtendGeneration = (this._gridExtendGeneration || 0) + 1
 			this._extendingGrid = false
@@ -1510,7 +1575,13 @@ export default {
 			const today = todayMoment.format('YYYY-MM-DD')
 			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
+			// A day outside the grid arrives later, and the scroll has to wait for it.
+			const gridWaitsForToday = today !== this.currentDay && this.schedule?.compact && this.showGrid && !this.sessionsMode && !this.scheduleNeedsEveryDay && !this.gridScrollDays.includes(today)
 			this.changeDay(todayMoment)
+			if (gridWaitsForToday) {
+				this._scrollToNowAfterLoad = true
+				return
+			}
 			this.$nextTick(() => {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 			})
@@ -1934,6 +2005,8 @@ export default {
 		--pretalx-sticky-top-offset: 0px
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
+		> .c-linear-schedule
+			flex: none
 	&:fullscreen
 		fullscreen-root()
 	&:-webkit-full-screen
