@@ -20,7 +20,7 @@
             {% include "orga/submission/fragment_invitation_state.html" with invitation=speaker.invitation %}
         {% endif %}
         {% include "orga/includes/submission_speaker_details.html" with speaker=speaker %}
-        {% if can_edit_speakers %}
+        {% if can_edit_speakers and not submission.is_deleted %}
             <div class="d-flex flex-wrap justify-content-end mt-3">
                 {% if can_mark_speaker and speaker.profile and submission.state in 'accepted,confirmed' %}
                     <div class="mr-2 mb-2">
@@ -65,7 +65,7 @@
             </p>
         {% endif %}
         {% include "orga/submission/fragment_invitation_state.html" with invitation=invitation %}
-        {% if can_edit_speakers %}
+        {% if can_edit_speakers and not submission.is_deleted %}
             <div class="d-flex flex-wrap justify-content-end mt-3">
                 <button type="button" class="btn btn-danger mb-2"
                         data-revoke-invitation="{% url 'orga:submissions.speakers.revoke_invitation' organizer=request.event.organizer.slug event=request.event.slug code=submission.code pk=invitation.pk %}"
@@ -78,7 +78,7 @@
     </div></div>
 {% endfor %}
 
-{% if can_edit_speakers %}<div class="card mb-3 speaker-add-card"><div class="card-body">
+{% if can_edit_speakers and not submission.is_deleted %}<div class="card mb-3 speaker-add-card"><div class="card-body">
     <form method="POST" class="form w-100 flex-column speaker-inline-form" data-add-speaker-form
           data-error-text="{% translate 'The invitation email could not be sent. Please try again.' %}">
         {% csrf_token %}

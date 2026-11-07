@@ -42,6 +42,7 @@ from eventyay.api.serializers.schedule import (
 )
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.talk_rules.tracks import (
     apply_track_limit_to_slots,
     schedule_cache_user_scope,
@@ -374,7 +375,10 @@ class TalkSlotViewSet(
         )
         if not self.is_orga:
             queryset = (
-                queryset.filter(is_visible=True).exclude(room__deleted=True).exclude(schedule__version__isnull=True)
+                queryset.filter(is_visible=True)
+                .exclude(room__deleted=True)
+                .exclude(schedule__version__isnull=True)
+                .exclude(submission__state=SubmissionStates.DELETED)
             )
 
         expanded_fields = list(
