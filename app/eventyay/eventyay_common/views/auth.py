@@ -41,7 +41,8 @@ from eventyay.base.forms.auth import (
     PasswordRecoverForm,
     RegistrationForm,
 )
-from eventyay.base.models import OrganizerRequest, TeamInvite, U2FDevice, User, WebAuthnDevice
+from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
+from eventyay.base.models.organizer_request import OrganizerRequest
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.mail import SendMailException
 from eventyay.helpers.cookies import set_cookie_without_samesite
