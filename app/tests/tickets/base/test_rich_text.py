@@ -346,3 +346,92 @@ def test_rich_text_plain_truncation_in_template():
     assert len(rendered_long) == 200
     assert rendered_long.endswith('…')
     assert rendered_long == ('A' * 199) + '…'
+
+
+def test_extremely_long_incomplete_html_tag():
+    """Verify extremely long incomplete HTML tags do not cause worker hangs or crashes."""
+    raw = '<div class="' + ('very-long-attribute-value-' * 2000)
+    result = rich_text_to_plain_text(raw)
+    assert isinstance(result, str)
+
+
+def test_repeated_tag_starts_linear_performance():
+    """Verify repeated tag starts without closing brackets complete in bounded time without quadratic backtracking."""
+    import time
+    raw = '<a ' * 20000  # 60,000 characters of unclosed tag starts
+    start = time.perf_counter()
+    result = rich_text_to_plain_text(raw)
+    elapsed = time.perf_counter() - start
+    assert isinstance(result, str)
+    # 60,000 chars should take well under 1 second with linear scanning (<0.05s typical)
+    assert elapsed < 2.0
+
+
+def test_repeated_less_than_characters():
+    """Verify repeated '<' characters are processed safely in linear time."""
+    raw = '<' * 20000
+    result = rich_text_to_plain_text(raw)
+    assert isinstance(result, str)
+
+
+def test_long_quoted_attributes_with_greater_than():
+    """Verify long quoted attributes containing '>' do not break tag parsing."""
+    attr_val = 'condition > 0 and value > 100 ' * 100
+    raw = f'<span data-expr="{attr_val}" title="formula > 5">Calculated Result</span>'
+    result = rich_text_to_plain_text(raw)
+    assert result == 'Calculated Result'
+
+
+def test_markdown_link_near_truncation_boundary():
+    """Verify Markdown links crossing or near the truncation budget boundary are preserved without cutting."""
+    prefix = 'Word ' * 195  # ~975 characters
+    link = '[Special Keynote Session](https://eventyay.com/keynote)'
+    suffix = ' Extra ' * 1000  # Pushes total length past trigger bound
+    raw = f'{prefix}{link}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert 'Special Keynote Session' in result
+    assert '[' not in result
+    assert '](http' not in result
+
+
+def test_inline_code_and_generics_near_truncation_boundary():
+    """Verify inline code spans and technical generics near the boundary are preserved cleanly."""
+    prefix = 'Overview ' * 105  # ~945 characters
+    code_span = '`std::vector<int>`'
+    generic = 'Map<String, Object>'
+    suffix = ' Trailing details ' * 500
+    raw = f'{prefix}{code_span} and {generic}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert 'std::vector<int>' in result
+    assert 'Map<String, Object>' in result
+
+
+def test_emphasis_near_truncation_boundary():
+    """Verify Markdown bold and italic near the truncation boundary are not severed in half."""
+    prefix = 'Section ' * 120  # ~960 characters
+    bold = '**Crucial Announcement**'
+    suffix = ' More description ' * 500
+    raw = f'{prefix}{bold}{suffix}'
+    result = rich_text_to_plain_text(raw)
+    assert 'Crucial Announcement' in result
+    assert '**' not in result
+
+
+def test_unclosed_long_markdown_link_near_boundary():
+    """Verify very long malformed Markdown link with no closing delimiter is safely bounded and cleanly cut."""
+    prefix = 'Summary ' * 120  # ~960 characters
+    unclosed_link = '[Unclosed Malformed Link](https://example.com/very/long/path/' + ('x' * 50000)
+    raw = f'{prefix}{unclosed_link}'
+    result = rich_text_to_plain_text(raw)
+    assert 'Summary' in result
+    assert '[' not in result
+    assert '](http' not in result
+    assert 'x' * 100 not in result
+    assert len(result) <= 10000
+
+    # Also verify unclosed link without preceding text does not leave broken link syntax
+    raw_no_prefix = unclosed_link
+    result_no_prefix = rich_text_to_plain_text(raw_no_prefix)
+    assert '[' not in result_no_prefix
+    assert '](http' not in result_no_prefix
+    assert 'x' * 100 not in result_no_prefix

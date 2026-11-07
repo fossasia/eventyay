@@ -615,12 +615,6 @@ _MARKDOWN_ITALIC_RE = re.compile(
 # Markdown strikethrough: strictly single-line
 _MARKDOWN_STRIKE_RE = re.compile(r'~~([^~\n]+)~~')
 
-# Quote-aware HTML tag matching: respects both single and double quotes inside attributes
-_HTML_TAG_RE = re.compile(
-    r'<(/)?([a-zA-Z][a-zA-Z0-9_-]*)(?:[^>"\']|"[^"]*"|\'[^\']*\')*>',
-    re.DOTALL,
-)
-
 _MAX_PREVIEW_INPUT_CHARS = 10000
 _TRIGGER_BOUND_LEN = 4000
 _TARGET_TEXT_LEN = 1000
@@ -633,25 +627,74 @@ def is_html_tag_name(name: str) -> bool:
 
 
 def _escape_non_html_tags(text: str) -> str:
-    """Escape angle brackets that do not form recognized HTML5 or custom tags, respecting quoted attributes."""
+    """Escape angle brackets that do not form recognized HTML5 or custom tags, respecting quoted attributes.
 
-    def repl(m: re.Match) -> str:
-        """Replace non-HTML tags with escaped angle brackets while keeping valid HTML intact."""
-        full_tag = m.group(0)
-        name = m.group(2)
-        after_name = full_tag[1 + (1 if m.group(1) else 0) + len(name):-1]
-        if is_html_tag_name(name) and (not after_name or after_name[0] in ' \t\r\n/'):
-            return full_tag
-        inner = full_tag[1:-1]
-        return f'&lt;{inner}&gt;'
+    Uses a single-pass linear-time scanner that avoids regex backtracking on malformed or incomplete tags.
+    """
+    n = len(text)
+    if n == 0:
+        return ''
+    out: list[str] = []
+    i = 0
+    while i < n:
+        ch = text[i]
+        if ch != '<':
+            out.append(ch)
+            i += 1
+            continue
 
-    return _HTML_TAG_RE.sub(repl, text)
+        name_start = i + 1
+        if name_start < n and text[name_start] == '/':
+            name_start += 1
+
+        if name_start >= n or not text[name_start].isalpha():
+            out.append(ch)
+            i += 1
+            continue
+
+        name_end = name_start + 1
+        while name_end < n and (text[name_end].isalnum() or text[name_end] in '_-'):
+            name_end += 1
+
+        name = text[name_start:name_end]
+
+        quote_char = None
+        tag_closed = False
+        j = name_end
+        while j < n:
+            c = text[j]
+            if quote_char is not None:
+                if c == quote_char:
+                    quote_char = None
+            elif c in ('"', "'"):
+                quote_char = c
+            elif c == '>':
+                tag_closed = True
+                break
+            elif c == '<':
+                # An unquoted '<' indicates an unclosed tag prefix; abort this candidate
+                break
+            j += 1
+
+        if tag_closed and quote_char is None:
+            after_name = text[name_end:j]
+            if is_html_tag_name(name) and (not after_name or after_name[0] in ' \t\r\n/'):
+                out.append(text[i:j + 1])
+            else:
+                inner = text[i + 1:j]
+                out.append(f'&lt;{inner}&gt;')
+            i = j + 1
+        else:
+            out.append(text[i:j])
+            i = j
+
+    return ''.join(out)
 
 
-def _find_next_tag_end(text: str, start: int) -> int:
+def _find_next_tag_end(text: str, start: int, limit: int | None = None) -> int:
     """Find the index of the next closing '>' character outside of attribute quotes."""
     quote_char = None
-    n = len(text)
+    n = len(text) if limit is None else min(len(text), limit)
     for idx in range(start, n):
         ch = text[idx]
         if quote_char is not None:
@@ -664,22 +707,23 @@ def _find_next_tag_end(text: str, start: int) -> int:
     return -1
 
 
-def _bound_html_for_preview(
+def _bound_input_for_preview(
     text: str,
     target_text_len: int = _TARGET_TEXT_LEN,
     trigger_len: int = _TRIGGER_BOUND_LEN,
     max_budget: int = _MAX_PREVIEW_INPUT_CHARS,
 ) -> str:
-    """Bound HTML processing for metadata previews to avoid large DOM allocations.
+    """Bound preview processing BEFORE regex matching, preserving Markdown & HTML constructs.
 
     Only activates when `len(text) > trigger_len`. Scans for at least `target_text_len`
-    plain text characters while properly tracking quote states in attributes. Caps the
+    plain text characters while properly tracking quote states in attributes and completing
+    open Markdown constructs (links, code spans, emphasis) before cutting off. Caps the
     maximum returned string at `max_budget` (10,000 characters). Note that any text
     appearing past a 10,000-character attribute or markup prefix is intentionally discarded
     to protect against denial of service and memory bloat.
     """
     if len(text) <= trigger_len:
-        return text
+        return text[:max_budget]
 
     text_chars = 0
     in_tag = False
@@ -703,10 +747,94 @@ def _bound_html_for_preview(
                 text_chars += 1
 
             if text_chars >= target_text_len:
-                next_close = _find_next_tag_end(text, i)
-                if next_close != -1 and next_close < max_budget:
-                    return text[:next_close + 1]
-                return text[:min(i + 50, max_budget)]
+                cutoff = i + 1
+
+                # Check for open Markdown constructs on the current line
+                line_start = text.rfind('\n', 0, cutoff)
+                line_start = 0 if line_start == -1 else line_start + 1
+                current_line_prefix = text[line_start:cutoff]
+                rolled_back = False
+
+                # 1. Check if inside a Markdown link: [label](url)
+                last_open_bracket = current_line_prefix.rfind('[')
+                if last_open_bracket != -1:
+                    bracket_pos = line_start + last_open_bracket
+                    # Bound regex matching strictly to avoid scanning beyond budget
+                    max_link_window = min(cutoff + 500, max_budget)
+                    link_match = (
+                        _MARKDOWN_LINK_RE.match(text[bracket_pos:max_link_window])
+                        if max_link_window > bracket_pos
+                        else None
+                    )
+                    if link_match:
+                        link_end = bracket_pos + link_match.end()
+                        if link_end > cutoff:
+                            cutoff = link_end
+                    else:
+                        close_bracket = current_line_prefix.find(']', last_open_bracket)
+                        is_broken_link = (
+                            close_bracket == -1
+                            or text[line_start + close_bracket + 1 : line_start + close_bracket + 2] == '('
+                        )
+                        if is_broken_link:
+                            cutoff = bracket_pos
+                            rolled_back = True
+
+                # 2. Check if inside an inline code span
+                backtick_count = current_line_prefix.count('`')
+                if backtick_count % 2 == 1:
+                    max_code_window = min(cutoff + 200, max_budget)
+                    next_backtick = text.find('`', cutoff, max_code_window)
+                    next_newline = text.find('\n', cutoff, max_code_window)
+                    if (
+                        next_backtick != -1
+                        and (next_newline == -1 or next_backtick < next_newline)
+                    ):
+                        cutoff = next_backtick + 1
+                    else:
+                        last_tick = text.rfind('`', line_start, cutoff)
+                        if last_tick > 0:
+                            cutoff = last_tick
+                            rolled_back = True
+
+                # 3. Check if inside emphasis/strikethrough (**bold**, ~~strike~~, *italic*)
+                for delim in ('**', '~~', '*'):
+                    delim_count = current_line_prefix.count(delim)
+                    if delim_count % 2 == 1:
+                        max_delim_window = min(cutoff + 200, max_budget)
+                        next_delim = text.find(delim, cutoff, max_delim_window)
+                        next_newline = text.find('\n', cutoff, max_delim_window)
+                        if (
+                            next_delim != -1
+                            and (next_newline == -1 or next_delim < next_newline)
+                        ):
+                            cutoff = next_delim + len(delim)
+                        else:
+                            last_delim = text.rfind(delim, line_start, cutoff)
+                            if last_delim > 0:
+                                cutoff = last_delim
+                                rolled_back = True
+                        break
+
+                # 4. Check if inside an HTML tag
+                last_lt = text.rfind('<', 0, cutoff)
+                last_gt = text.rfind('>', 0, cutoff)
+                if last_lt > last_gt:
+                    next_gt = _find_next_tag_end(text, cutoff, max_budget)
+                    if next_gt != -1:
+                        cutoff = next_gt + 1
+                    elif last_lt > 0:
+                        cutoff = last_lt
+                        rolled_back = True
+
+                # 5. Advance to next word/tag boundary if safe
+                if not rolled_back and cutoff < limit:
+                    for adv in range(cutoff, min(cutoff + 40, limit)):
+                        if text[adv] in (' ', '\t', '\n', '<'):
+                            cutoff = adv
+                            break
+
+                return text[:min(cutoff, max_budget)]
 
         else:
             if quote_char is not None:
@@ -716,10 +844,23 @@ def _bound_html_for_preview(
                 quote_char = ch
             elif ch == '>':
                 in_tag = False
+            elif ch == '<':
+                # An unquoted '<' starts a new candidate tag
+                in_tag = i + 1 < limit and (text[i + 1].isalpha() or text[i + 1] in ('/', '!'))
 
         i += 1
 
     return text[:max_budget]
+
+
+def _bound_html_for_preview(
+    text: str,
+    target_text_len: int = _TARGET_TEXT_LEN,
+    trigger_len: int = _TRIGGER_BOUND_LEN,
+    max_budget: int = _MAX_PREVIEW_INPUT_CHARS,
+) -> str:
+    """Backwards-compatible wrapper for `_bound_input_for_preview`."""
+    return _bound_input_for_preview(text, target_text_len, trigger_len, max_budget)
 
 
 def rich_text_to_plain_text(text: str) -> str:
@@ -732,23 +873,23 @@ def rich_text_to_plain_text(text: str) -> str:
     if not text:
         return ''
 
-    # 1. Protect inline code spans so literal tags like `<p>` are not eaten by the HTML parser
-    raw = _CODE_SPAN_RE.sub(lambda m: html.escape(m.group(1)), str(text))
+    # 1. Bound exceptionally large inputs BEFORE regex matching to protect CPU and memory
+    raw = _bound_input_for_preview(str(text))
 
-    # 2. Convert Markdown links [label](url) to their label text
+    # 2. Protect inline code spans so literal tags like `<p>` are not eaten by the HTML parser
+    raw = _CODE_SPAN_RE.sub(lambda m: html.escape(m.group(1)), raw)
+
+    # 3. Convert Markdown links [label](url) to their label text
     raw = _MARKDOWN_LINK_RE.sub(r'\1', raw)
 
-    # 3. Unwrap targeted Markdown formatting within single-line boundaries
+    # 4. Unwrap targeted Markdown formatting within single-line boundaries
     raw = _MARKDOWN_HEADING_RE.sub('', raw)
     raw = _MARKDOWN_BOLD_RE.sub(r'\1', raw)
     raw = _MARKDOWN_ITALIC_RE.sub(r'\1', raw)
     raw = _MARKDOWN_STRIKE_RE.sub(r'\1', raw)
 
-    # 4. Escape non-HTML angle brackets (e.g. vector<T>) so they are not treated as tags
+    # 5. Escape non-HTML angle brackets (e.g. vector<T>) using linear-time scanner
     raw = _escape_non_html_tags(raw)
-
-    # 5. Bound exceptionally large inputs to protect CPU and memory
-    raw = _bound_html_for_preview(raw)
 
     soup = BeautifulSoup(raw, 'html.parser')
 
