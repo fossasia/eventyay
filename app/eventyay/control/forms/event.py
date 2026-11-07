@@ -283,6 +283,15 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
+        existing_tz_classes = self.fields['timezone'].widget.attrs.get('class', '').split()
+        if 'form-control' not in existing_tz_classes:
+            existing_tz_classes.append('form-control')
+        self.fields['timezone'].widget.attrs.update({
+            'class': ' '.join(existing_tz_classes),
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search'),
+            'data-empty-text': _('No results'),
+        })
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
