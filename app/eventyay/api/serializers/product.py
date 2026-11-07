@@ -445,7 +445,7 @@ class QuestionSerializer(I18nAwareModelSerializer):
         if full_data.get('ask_during_checkin') and full_data.get('type') in Question.ASK_DURING_CHECKIN_UNSUPPORTED:
             raise ValidationError(_('This type of question cannot be asked during check-in.'))
 
-        Question.clean_products(event, full_data.get('products'))
+        Question.clean_products(event, full_data.get('products') or [])
         return data
 
     def validate_options(self, value):
@@ -465,7 +465,7 @@ class QuestionSerializer(I18nAwareModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         options_data = validated_data.pop('options') if 'options' in validated_data else []
-        products = validated_data.pop('products')
+        products = validated_data.pop('products', None) or []
 
         question = Question.objects.create(**validated_data)
         question.products.set(products)
@@ -496,8 +496,11 @@ class QuotaSerializer(I18nAwareModelSerializer):
         full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
         full_data.update(data)
 
-        Quota.clean_variations(full_data.get('products'), full_data.get('variations'))
-        Quota.clean_products(event, full_data.get('products'), full_data.get('variations'))
+        products = full_data.get('products') or []
+        variations = full_data.get('variations') or []
+
+        Quota.clean_variations(products, variations)
+        Quota.clean_products(event, products, variations)
         Quota.clean_subevent(event, full_data.get('subevent'))
 
         return data
