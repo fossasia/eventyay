@@ -385,18 +385,26 @@ def test_dashboard_independent_score_aggregation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "client_name, reviews_open",
+    "client_name, reviews_open, has_reviewed",
     (
         # Organiser who may see all reviews but is not a reviewer.
-        ("orga_client", True),
+        ("orga_client", True, False),
         # Reviewer while the review phase does not allow reviewing.
-        ("review_client", False),
+        ("review_client", False, False),
         # Reviewer who can review.
-        ("review_client", True),
+        ("review_client", True, False),
+        # Reviewer with an existing review after reviewing has closed.
+        ("review_client", False, True),
     ),
 )
 def test_dashboard_table_columns_match_headers(
-    request, client_name, reviews_open, submission, other_submission
+    request,
+    review_user,
+    client_name,
+    reviews_open,
+    has_reviewed,
+    submission,
+    other_submission,
 ):
     client = request.getfixturevalue(client_name)
     event = submission.event
@@ -404,6 +412,8 @@ def test_dashboard_table_columns_match_headers(
         ReviewScoreCategory.objects.create(
             event=event, name="Relevance", is_independent=True
         )
+        if has_reviewed:
+            Review.objects.create(user=review_user, submission=submission)
         phase = event.active_review_phase
         phase.can_review = reviews_open
         phase.save()
@@ -412,11 +422,26 @@ def test_dashboard_table_columns_match_headers(
 
     assert response.status_code == 200
     table = BeautifulSoup(response.text, "html.parser").select_one("table.review-table")
-    header_cells = len(table.select("thead tr th"))
+    headers = table.select("thead tr th")
+    assert len(table.select("colgroup col")) == len(headers)
     rows = table.select("tbody tr")
     assert rows
-    assert [len(row.find_all("td")) for row in rows] == [header_cells] * len(rows)
-    assert len(table.select("colgroup col")) == header_cells
+
+    def positions(cells, css_class):
+        return [i for i, cell in enumerate(cells) if css_class in cell.get("class", [])]
+
+    marker_classes = (
+        "col-score-avg",
+        "col-score-user",
+        "col-review-count",
+        "col-speakers",
+        "col-state",
+    )
+    for row in rows:
+        cells = row.find_all("td")
+        assert len(cells) == len(headers)
+        for css_class in marker_classes:
+            assert positions(cells, css_class) == positions(headers, css_class), css_class
 
 
 @pytest.mark.django_db
