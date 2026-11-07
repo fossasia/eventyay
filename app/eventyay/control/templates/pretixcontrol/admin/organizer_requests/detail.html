@@ -1,0 +1,94 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load bootstrap3 i18n %}
+{% block title %}{{ application.organizer_name }}{% endblock %}
+{% block video_admin_content %}
+  <h1>
+    {{ application.organizer_name }}
+    {% if application.status == 'pending' %}
+      <span class="label label-warning">{{ application.get_status_display }}</span>
+    {% elif application.status == 'approved' %}
+      <span class="label label-success">{{ application.get_status_display }}</span>
+    {% else %}
+      <span class="label label-danger">{{ application.get_status_display }}</span>
+    {% endif %}
+  </h1>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">{% trans 'Request details' %}</h3>
+    </div>
+    <div class="panel-body">
+      <table class="table table-condensed">
+        <tbody>
+          <tr>
+            <th class="col-md-3">{% trans 'Your name' %}</th>
+            <td>{{ application.name }}</td>
+          </tr>
+          <tr>
+            <th>{% trans 'Email' %}</th>
+            <td>{{ application.email }}</td>
+          </tr>
+          <tr>
+            <th>{% trans 'Existing account' %}</th>
+            <td>{{ has_account|yesno:_('Yes,No') }}</td>
+          </tr>
+          <tr>
+            <th>{% trans 'Organisation' %}</th>
+            <td>{{ application.affiliation|default:'—' }}</td>
+          </tr>
+          <tr>
+            <th>{% trans 'Events you organise' %}</th>
+            <td>{% if application.events %}{{ application.events|linebreaksbr }}{% else %}—{% endif %}</td>
+          </tr>
+          {% for answer in application.answers.all %}
+            <tr>
+              <th>{{ answer.question.label }}</th>
+              <td>{% if answer.answer %}{{ answer.answer|linebreaksbr }}{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+          <tr>
+            <th>{% trans 'Organiser name on Eventyay' %}</th>
+            <td>{{ application.organizer_name }}</td>
+          </tr>
+          <tr>
+            <th>{% trans 'Short form' %}</th>
+            <td>{{ application.slug }}</td>
+          </tr>
+          {% if application.status != 'pending' %}
+            <tr>
+              <th>{% trans 'Reviewed by' %}</th>
+              <td>{{ application.reviewed_by }} — {{ application.reviewed_at }}</td>
+            </tr>
+            {% if application.reason %}
+              <tr>
+                <th>{% trans 'Reason' %}</th>
+                <td>{{ application.reason|linebreaksbr }}</td>
+              </tr>
+            {% endif %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if application.status == 'pending' %}
+    <form method="post" class="form-horizontal">
+      {% csrf_token %}
+      <fieldset>
+        <legend>{% trans 'Approve' %}</legend>
+        {% bootstrap_form form layout='control' %}
+      </fieldset>
+      <div class="form-group submit-group">
+        <button type="submit" name="action" value="approve" class="btn btn-success btn-save">{% trans 'Approve' %}</button>
+      </div>
+    </form>
+    <form method="post" class="form-horizontal">
+      {% csrf_token %}
+      <fieldset>
+        <legend>{% trans 'Reject' %}</legend>
+        {% bootstrap_form reject_form layout='control' %}
+      </fieldset>
+      <div class="form-group submit-group">
+        <button type="submit" name="action" value="reject" class="btn btn-danger btn-save">{% trans 'Reject' %}</button>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}
