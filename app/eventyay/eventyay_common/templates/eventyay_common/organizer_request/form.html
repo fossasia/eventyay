@@ -1,0 +1,35 @@
+{% extends 'eventyay_common/auth/base.html' %}
+{% load bootstrap3 i18n static turnstile_tags %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'common/css/organizer_request.css' %}">
+{% endblock %}
+{% block logo %}{% endblock %}
+{% block content %}
+  <form method="post" class="form-horizontal" id="organizer-request" data-slug-url="{% url 'organizer_request.slug' %}" data-site-url="{{ site_url }}" data-checking="{% trans 'Checking availability…' %}" data-unavailable="{% trans 'Availability could not be checked. It will be checked when you submit.' %}">
+    <h1>{% trans 'Request an organiser account' %}</h1>
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    {% for field in form.visible_request_fields %}
+      {% bootstrap_field field layout='control' %}
+      {% if field.name == 'slug' %}
+        <div class="form-group organizer-request-slug-feedback">
+          <div class="col-md-9 col-md-offset-3">
+            <p id="slug-preview"></p>
+            <p id="slug-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+    {{ form.website }}
+    <div class="form-group organizer-request-turnstile">
+      <div class="col-md-9 col-md-offset-3">
+        {% turnstile_widget 'organizer_create' %}
+        {% turnstile_script 'organizer_create' %}
+      </div>
+    </div>
+    <div class="form-group submit-group">
+      <button type="submit" class="btn btn-primary btn-save">{% trans 'Submit request' %}</button>
+    </div>
+  </form>
+  <script type="module" src="{% static 'common/js/organizer_request.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n %}
+{% block title %}{% trans 'Delete question' %}{% endblock %}
+{% block video_admin_content %}
+  <h1>{% trans 'Delete question' %}</h1>
+  <p>{% blocktrans with label=question.label %}Delete "{{ label }}" from the organiser request form?{% endblocktrans %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <a href="{% url 'eventyay_admin:admin.organizer_forms' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
+    <button type="submit" class="btn btn-danger">{% trans 'Delete' %}</button>
+  </form>
+{% endblock %}

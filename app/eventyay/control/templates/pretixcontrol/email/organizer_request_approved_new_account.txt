@@ -1,0 +1,14 @@
+{% load i18n %}
+{% autoescape off %}
+{% blocktranslate with organizer_name=organizer_name %}Your request for the organiser "{{ organizer_name }}" has been approved.{% endblocktranslate %}
+
+{% blocktranslate with email=email %}We have created an Eventyay account with {{ email }}.{% endblocktranslate %}
+
+{% translate 'Set your password and access your organiser:' %}
+[{% translate 'Set your password' %}]({{ setup_url }})
+
+{% blocktranslate with hours=password_reset_timeout_hours %}This link expires after {{ hours }} hours. If it expires, use “Forgot password” on the login page to request a new one.{% endblocktranslate %}
+
+{% blocktranslate %}After setting your password, you will be signed in and taken to your organiser dashboard.{% endblocktranslate %}
+[{% translate 'Open your organiser dashboard' %}]({{ organizer_url }})
+{% endautoescape %}
