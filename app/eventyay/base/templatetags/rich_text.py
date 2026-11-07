@@ -434,11 +434,138 @@ def html_to_markdown_filter(html_text: str) -> str:
     return html_text if not html_text else html_to_markdown(html_text)
 
 
-_BLOCK_TAGS = frozenset({
+_HTML5_TAGS = frozenset({
+    'a',
+    'abbr',
+    'address',
+    'area',
     'article',
+    'aside',
+    'audio',
+    'b',
+    'base',
+    'bdi',
+    'bdo',
     'blockquote',
+    'body',
+    'br',
+    'button',
+    'canvas',
+    'caption',
+    'cite',
+    'code',
+    'col',
+    'colgroup',
+    'data',
+    'datalist',
+    'dd',
+    'del',
+    'details',
+    'dfn',
+    'dialog',
     'div',
+    'dl',
+    'dt',
+    'em',
+    'embed',
+    'fieldset',
+    'figcaption',
+    'figure',
     'footer',
+    'form',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'head',
+    'header',
+    'hgroup',
+    'hr',
+    'html',
+    'i',
+    'iframe',
+    'img',
+    'input',
+    'ins',
+    'kbd',
+    'label',
+    'legend',
+    'li',
+    'link',
+    'main',
+    'map',
+    'mark',
+    'menu',
+    'meta',
+    'meter',
+    'nav',
+    'noscript',
+    'object',
+    'ol',
+    'optgroup',
+    'option',
+    'output',
+    'p',
+    'picture',
+    'portal',
+    'pre',
+    'progress',
+    'q',
+    'rp',
+    'rt',
+    'ruby',
+    's',
+    'samp',
+    'script',
+    'search',
+    'section',
+    'select',
+    'slot',
+    'small',
+    'source',
+    'span',
+    'strong',
+    'style',
+    'sub',
+    'summary',
+    'sup',
+    'svg',
+    'table',
+    'tbody',
+    'td',
+    'template',
+    'textarea',
+    'tfoot',
+    'th',
+    'thead',
+    'time',
+    'title',
+    'tr',
+    'track',
+    'u',
+    'ul',
+    'var',
+    'video',
+    'wbr',
+})
+
+_BLOCK_TAGS = frozenset({
+    'address',
+    'article',
+    'aside',
+    'blockquote',
+    'dd',
+    'details',
+    'div',
+    'dl',
+    'dt',
+    'fieldset',
+    'figcaption',
+    'figure',
+    'footer',
+    'form',
     'h1',
     'h2',
     'h3',
@@ -448,86 +575,204 @@ _BLOCK_TAGS = frozenset({
     'header',
     'hr',
     'li',
+    'main',
+    'nav',
+    'ol',
     'p',
     'pre',
     'section',
+    'summary',
     'table',
     'tbody',
     'td',
     'th',
     'thead',
     'tr',
+    'ul',
 })
 
-_KNOWN_HTML_TAGS = frozenset(
-    ALLOWED_TAGS
-    | {
-        'article',
-        'aside',
-        'caption',
-        'col',
-        'colgroup',
-        'dd',
-        'details',
-        'dl',
-        'dt',
-        'figcaption',
-        'figure',
-        'footer',
-        'header',
-        'img',
-        'main',
-        'mark',
-        'nav',
-        's',
-        'section',
-        'strike',
-        'sub',
-        'summary',
-        'sup',
-        'tfoot',
-        'wbr',
-    }
-)
+# Code spans: inline backticks
+_CODE_SPAN_RE = re.compile(r'`([^`\n]+)`')
 
+# Markdown links: [label](url)
 _MARKDOWN_LINK_RE = re.compile(
     r'\[([^\]\n]+)\]\((?:[^\s)]+)(?:\s+["\'][^"\']*["\']\s*)?\)'
 )
 
+# Markdown headings: 1-6 hashes at line start followed by whitespace
+_MARKDOWN_HEADING_RE = re.compile(r'(?m)^[ \t]*#{1,6}[ \t]+')
+
+# Markdown bold: strictly single-line, non-space adjacent to delimiters
+_MARKDOWN_BOLD_RE = re.compile(
+    r'(?<![a-zA-Z0-9*])\*\*([^\s*\n](?:[^\n*]*?[^\s*\n])?)\*\*(?![a-zA-Z0-9*])'
+)
+
+# Markdown italic: strictly single-line, non-space adjacent to delimiters
+_MARKDOWN_ITALIC_RE = re.compile(
+    r'(?<![a-zA-Z0-9*])\*([^\s*\n](?:[^\n*]*?[^\s*\n])?)\*(?![a-zA-Z0-9*])'
+)
+
+# Markdown strikethrough: strictly single-line
+_MARKDOWN_STRIKE_RE = re.compile(r'~~([^~\n]+)~~')
+
+# Quote-aware HTML tag matching: respects both single and double quotes inside attributes
+_HTML_TAG_RE = re.compile(
+    r'<(/)?([a-zA-Z][a-zA-Z0-9_-]*)(?:[^>"\']|"[^"]*"|\'[^\']*\')*>',
+    re.DOTALL,
+)
+
+_MAX_PREVIEW_INPUT_CHARS = 10000
+_TRIGGER_BOUND_LEN = 4000
+_TARGET_TEXT_LEN = 1000
+
+
+def is_html_tag_name(name: str) -> bool:
+    """Return True if `name` matches a standard HTML5 element or a valid W3C custom element."""
+    name_lower = name.lower()
+    return name_lower in _HTML5_TAGS or ('-' in name_lower and name_lower[0].isalpha())
+
 
 def _escape_non_html_tags(text: str) -> str:
-    """Escape angle brackets that do not form recognized HTML tags, preserving technical text such as vector<T>."""
+    """Escape angle brackets that do not form recognized HTML5 or custom tags, respecting quoted attributes."""
 
     def repl(m: re.Match) -> str:
-        slash = m.group(1) or ''
-        name = m.group(2).lower()
-        rest = m.group(3) or ''
-        if name in _KNOWN_HTML_TAGS:
-            return m.group(0)
-        return f'&lt;{slash}{m.group(2)}{rest}&gt;'
+        """Replace non-HTML tags with escaped angle brackets while keeping valid HTML intact."""
+        full_tag = m.group(0)
+        name = m.group(2)
+        after_name = full_tag[1 + (1 if m.group(1) else 0) + len(name):-1]
+        if is_html_tag_name(name) and (not after_name or after_name[0] in ' \t\r\n/'):
+            return full_tag
+        inner = full_tag[1:-1]
+        return f'&lt;{inner}&gt;'
 
-    return re.sub(r'<(/)?([a-zA-Z][a-zA-Z0-9]*)([^>]*)>', repl, text)
+    return _HTML_TAG_RE.sub(repl, text)
+
+
+def _find_next_tag_end(text: str, start: int) -> int:
+    """Find the index of the next closing '>' character outside of attribute quotes."""
+    quote_char = None
+    n = len(text)
+    for idx in range(start, n):
+        ch = text[idx]
+        if quote_char is not None:
+            if ch == quote_char:
+                quote_char = None
+        elif ch in ('"', "'"):
+            quote_char = ch
+        elif ch == '>':
+            return idx
+    return -1
+
+
+def _bound_html_for_preview(
+    text: str,
+    target_text_len: int = _TARGET_TEXT_LEN,
+    trigger_len: int = _TRIGGER_BOUND_LEN,
+    max_budget: int = _MAX_PREVIEW_INPUT_CHARS,
+) -> str:
+    """Bound HTML processing for metadata previews to avoid large DOM allocations.
+
+    Only activates when `len(text) > trigger_len`. Scans for at least `target_text_len`
+    plain text characters while properly tracking quote states in attributes. Caps the
+    maximum returned string at `max_budget` (10,000 characters). Note that any text
+    appearing past a 10,000-character attribute or markup prefix is intentionally discarded
+    to protect against denial of service and memory bloat.
+    """
+    if len(text) <= trigger_len:
+        return text
+
+    text_chars = 0
+    in_tag = False
+    quote_char = None
+    i = 0
+    limit = min(len(text), max_budget)
+
+    while i < limit:
+        ch = text[i]
+
+        if not in_tag:
+            if ch == '<':
+                if i + 1 < limit and (text[i + 1].isalpha() or text[i + 1] in ('/', '!')):
+                    in_tag = True
+                    quote_char = None
+                    i += 1
+                    continue
+                else:
+                    text_chars += 1
+            else:
+                text_chars += 1
+
+            if text_chars >= target_text_len:
+                next_close = _find_next_tag_end(text, i)
+                if next_close != -1 and next_close < max_budget:
+                    return text[:next_close + 1]
+                return text[:min(i + 50, max_budget)]
+
+        else:
+            if quote_char is not None:
+                if ch == quote_char:
+                    quote_char = None
+            elif ch in ('"', "'"):
+                quote_char = ch
+            elif ch == '>':
+                in_tag = False
+
+        i += 1
+
+    return text[:max_budget]
 
 
 def rich_text_to_plain_text(text: str) -> str:
-    """Convert rich text (HTML/markdown) to single-line plain text suitable for meta descriptions and link previews."""
+    """Convert rich text (HTML/Markdown) to single-line plain text for metadata previews.
+
+    Strips HTML tags, unwraps Markdown links, headings, bold, italic, and strikethrough,
+    preserves technical notation like ``vector<T>`` and literal code spans, decomposes
+    ``<script>`` and ``<style>`` blocks, and normalizes all whitespace.
+    """
     if not text:
         return ''
-    text = _MARKDOWN_LINK_RE.sub(r'\1', str(text))
-    text = _escape_non_html_tags(text)
-    soup = BeautifulSoup(text, 'html.parser')
+
+    # 1. Protect inline code spans so literal tags like `<p>` are not eaten by the HTML parser
+    raw = _CODE_SPAN_RE.sub(lambda m: html.escape(m.group(1)), str(text))
+
+    # 2. Convert Markdown links [label](url) to their label text
+    raw = _MARKDOWN_LINK_RE.sub(r'\1', raw)
+
+    # 3. Unwrap targeted Markdown formatting within single-line boundaries
+    raw = _MARKDOWN_HEADING_RE.sub('', raw)
+    raw = _MARKDOWN_BOLD_RE.sub(r'\1', raw)
+    raw = _MARKDOWN_ITALIC_RE.sub(r'\1', raw)
+    raw = _MARKDOWN_STRIKE_RE.sub(r'\1', raw)
+
+    # 4. Escape non-HTML angle brackets (e.g. vector<T>) so they are not treated as tags
+    raw = _escape_non_html_tags(raw)
+
+    # 5. Bound exceptionally large inputs to protect CPU and memory
+    raw = _bound_html_for_preview(raw)
+
+    soup = BeautifulSoup(raw, 'html.parser')
+
+    # Remove script and style elements completely
+    for tag in soup.find_all(['script', 'style']):
+        tag.decompose()
+
+    # Convert br tags to spaces
     for br in soup.find_all('br'):
         br.replace_with(' ')
+
+    # Insert spaces around block elements
     for tag in soup.find_all(_BLOCK_TAGS):
         tag.append(' ')
+
+    # BeautifulSoup naturally decodes all standard HTML entities (&amp;, &lt;, &gt;, &quot;, &#39;)
     plain = soup.get_text()
-    plain = html.unescape(plain)
     plain = plain.replace('\xa0', ' ')
     return ' '.join(plain.split())
 
 
 @register.filter
 def rich_text_plain(text: str) -> str:
+    """Template filter converting rich text into single-line plain text for metadata descriptions."""
     return rich_text_to_plain_text(text)
 
 

@@ -39,6 +39,7 @@ def test_can_see_talk(client, event, slot):
 
 @pytest.mark.django_db
 def test_talk_meta_description_strips_html(client, event, slot):
+    """Verify that talk page meta tags contain clean plain text without HTML tags."""
     with scope(event=event):
         slot.submission.abstract = (
             '<p>This is a <strong>keynote</strong> talk about Python &amp; AI.</p>'
@@ -59,6 +60,7 @@ def test_talk_meta_description_strips_html(client, event, slot):
 
 @pytest.mark.django_db
 def test_talk_meta_description_long_abstract_shortened(client, event, slot):
+    """Verify that long abstracts are truncated to approximately 200 characters ending with an ellipsis."""
     with scope(event=event):
         slot.submission.abstract = '<p>' + 'A' * 250 + '</p>'
         slot.submission.save()
@@ -72,6 +74,7 @@ def test_talk_meta_description_long_abstract_shortened(client, event, slot):
 
 @pytest.mark.django_db
 def test_talk_meta_description_preserves_technical_text_and_markdown_links(client, event, slot):
+    """Verify that technical markup, code spans, and markdown links are preserved cleanly in meta tags."""
     with scope(event=event):
         slot.submission.abstract = (
             'Exploring std::vector<T> with [Eventyay](https://eventyay.com) and `__init__.py`!'
