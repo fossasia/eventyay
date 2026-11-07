@@ -2,6 +2,7 @@ import json
 import re
 import tempfile
 import pytest
+from bs4 import BeautifulSoup
 from django_scopes import scope
 from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, SubmissionStates, User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
@@ -380,6 +381,42 @@ def test_dashboard_independent_score_aggregation(
     assert submissions[submission.pk].independent_scores == [expected]
     assert submissions[submission.pk].current_score == 1
     assert submissions[other_submission.pk].independent_scores == [None]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "client_name, reviews_open",
+    (
+        # Organiser who may see all reviews but is not a reviewer.
+        ("orga_client", True),
+        # Reviewer while the review phase does not allow reviewing.
+        ("review_client", False),
+        # Reviewer who can review.
+        ("review_client", True),
+    ),
+)
+def test_dashboard_table_columns_match_headers(
+    request, client_name, reviews_open, submission, other_submission
+):
+    client = request.getfixturevalue(client_name)
+    event = submission.event
+    with scope(event=event):
+        ReviewScoreCategory.objects.create(
+            event=event, name="Relevance", is_independent=True
+        )
+        phase = event.active_review_phase
+        phase.can_review = reviews_open
+        phase.save()
+
+    response = client.get(event.orga_urls.reviews)
+
+    assert response.status_code == 200
+    table = BeautifulSoup(response.text, "html.parser").select_one("table.review-table")
+    header_cells = len(table.select("thead tr th"))
+    rows = table.select("tbody tr")
+    assert rows
+    assert [len(row.find_all("td")) for row in rows] == [header_cells] * len(rows)
+    assert len(table.select("colgroup col")) == header_cells
 
 
 @pytest.mark.django_db
