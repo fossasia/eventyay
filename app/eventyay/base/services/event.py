@@ -597,6 +597,8 @@ async def create_room(event, data, creator):
 
         clean_config = {"playback_mode": playback_mode}
         if playback_mode == "always_on":
+            if "autoStart" in config:
+                clean_config["autoStart"] = bool(config["autoStart"])
             if module["type"] == "livestream.native":
                 clean_config["hls_url"] = config.get("hls_url", "")
             elif module["type"] == "livestream.youtube":

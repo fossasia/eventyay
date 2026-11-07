@@ -153,6 +153,58 @@ def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
     }
 
 
+def test_create_always_on_stage_stores_autostart_flags(monkeypatch):
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
+
+    cases = [
+        (
+            "livestream.youtube",
+            {
+                "playback_mode": "always_on",
+                "ytid": "dQw4w9WgXcQ",
+                "autoStart": False,
+                "startMuted": True,
+            },
+        ),
+        (
+            "livestream.vimeo",
+            {
+                "playback_mode": "always_on",
+                "url": "https://vimeo.com/123456789",
+                "autoStart": False,
+            },
+        ),
+        (
+            "livestream.native",
+            {
+                "playback_mode": "always_on",
+                "hls_url": "https://example.com/live.m3u8",
+                "autoStart": False,
+            },
+        ),
+    ]
+
+    for module_type, config in cases:
+        created = _patch_room_creation(monkeypatch)
+        async_to_sync(event_service.create_room)(
+            event,
+            {
+                "name": f"{module_type} Stage",
+                "description": "a description",
+                "modules": [
+                    {
+                        "type": module_type,
+                        "config": config,
+                    },
+                ],
+            },
+            object(),
+        )
+
+        mod = next(m for m in created["data"]["module_config"] if m["type"] == module_type)
+        assert mod["config"]["autoStart"] is False
+
+
 @pytest.mark.django_db
 def test_stream_schedule_choices_do_not_expose_native():
     choices = [choice[0] for choice in StreamSchedule._meta.get_field("stream_type").choices]

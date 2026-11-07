@@ -541,9 +541,12 @@ function subscribeToVimeoPlayerEvents() {
 function getVimeoConfig() {
 	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const currentStream = streamType === STREAM_TYPE_VIMEO ? props.room?.currentStream : null;
+	const moduleConfig = module.value?.config || {};
+	const streamConfig = currentStream?.config || {};
+	const raw = currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig;
 	return {
-		...(currentStream?.config || {}),
-		...(module.value?.config || {}),
+		...raw,
+		autoStart: raw.autoStart !== false,
 	};
 }
 
@@ -565,6 +568,7 @@ function muteYouTubePlayer() {
 
 function youtubePlaybackConfig(config = {}) {
 	return {
+		autoStart: config.autoStart !== false,
 		startMuted: Boolean(config.startMuted),
 		enablePrivacyEnhancedMode: Boolean(config.enablePrivacyEnhancedMode),
 		loop: Boolean(config.loop),
@@ -690,7 +694,9 @@ function onMainPlayerPlaybackChanged(isPlaying) {
 }
 
 function resetMainPlayerPaused() {
-	mainPlayerPaused.value = !autoplay.value;
+	const streamConfig = props.room?.currentStream?.config || module.value?.config || {};
+	const streamAutoStart = streamConfig.autoStart !== false;
+	mainPlayerPaused.value = !(autoplay.value && streamAutoStart);
 }
 
 function onTranslationIframeLoaded() {
@@ -871,7 +877,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				const shouldStartMuted = Boolean(
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
-				const shouldAutoplay = Boolean(autoplay.value);
+				const shouldAutoplay = Boolean(autoplay.value && config.autoStart !== false);
 				iframeUrl = getVimeoEmbedUrl(vimeoUrl, {
 					autoplay: shouldAutoplay,
 					startMuted: shouldStartMuted,
@@ -915,7 +921,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				const shouldStartMuted = Boolean(
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
-				const shouldAutoplay = Boolean(autoplay.value && !config.hideControls);
+				const shouldAutoplay = Boolean(autoplay.value && config.autoStart !== false && !config.hideControls);
 				iframeUrl = getYoutubeEmbedUrl(ytid, {
 					autoplay: shouldAutoplay,
 					startMuted: shouldStartMuted,
@@ -1057,7 +1063,7 @@ function getLanguageIframeUrl(languageUrl) {
 	const config = getYoutubeConfig();
 	const videoId = normalizeYoutubeVideoId(languageUrl) || languageUrl;
 	return getYoutubeEmbedUrl(videoId, {
-		autoplay: autoplay.value,
+		autoplay: autoplay.value && config.autoStart !== false,
 		startMuted: Boolean(config.startMuted),
 		hideControls: true,
 		noRelated: config.noRelated,
