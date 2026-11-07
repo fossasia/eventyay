@@ -173,8 +173,8 @@ export default {
 			return this.module.config.alternatives?.length > 0
 		},
 		streamAutoStart() {
-			const config = this.room?.currentStream?.config || this.module?.config || {}
-			return config.autoStart !== false
+			const currentStream = this.room?.currentStream
+			return (currentStream ? currentStream.config?.autoStart : this.module?.config?.autoStart) !== false
 		}
 	},
 	watch: {

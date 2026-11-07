@@ -175,8 +175,10 @@ const module = computed(() => {
 });
 
 function getEffectiveStreamAutoStart() {
-	const streamConfig = props.room?.currentStream?.config || module.value?.config || {};
-	return streamConfig.autoStart !== false;
+	const currentStream = props.room?.currentStream;
+	const moduleConfig = module.value?.config || {};
+	const streamConfig = currentStream?.config || {};
+	return (currentStream ? streamConfig.autoStart : moduleConfig.autoStart) !== false;
 }
 
 const autoplay = computed(() => store.getters.autoplay);
@@ -420,7 +422,7 @@ async function applyInterpretation(interpConfig) {
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
-				if (updateToken !== interpretationUpdateToken) return;
+				if (updateToken !== interpretationUpdateToken || !mainPlayerPaused.value) return;
 				pauseTranslationAudio();
 			}, 600);
 		}
@@ -552,7 +554,7 @@ function getVimeoConfig() {
 	const raw = currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig;
 	return {
 		...raw,
-		autoStart: raw.autoStart !== false,
+		autoStart: (currentStream ? streamConfig.autoStart : moduleConfig.autoStart) !== false,
 	};
 }
 
@@ -591,9 +593,11 @@ function getYoutubeConfig() {
 	const currentStream = streamType === STREAM_TYPE_YOUTUBE ? props.room?.currentStream : null;
 	const moduleConfig = module.value?.config || {};
 	const streamConfig = currentStream?.config || {};
-	return youtubePlaybackConfig(
-		currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig
-	);
+	const raw = currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig;
+	return youtubePlaybackConfig({
+		...raw,
+		autoStart: (currentStream ? streamConfig.autoStart : moduleConfig.autoStart) !== false,
+	});
 }
 
 function getYoutubeEmbedUrl(videoIdOrUrl, options = {}) {
