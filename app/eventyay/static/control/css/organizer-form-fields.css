@@ -1,18 +1,96 @@
 .organiser-form-fields .cfp-option-table {
+  table-layout: auto;
+  width: 100%;
   margin-bottom: 12px;
 }
 
-.organiser-form-fields .cfp-option-table thead th:first-child,
-.organiser-form-fields .cfp-option-table tbody th {
-  text-align: right;
+.organiser-form-fields .cfp-option-table thead th {
+  line-height: 1;
   vertical-align: middle;
-  font-weight: 600;
-  width: 30%;
-  padding-right: 8px;
+  text-align: center;
+}
+
+@media (min-width: 769px) {
+  .organiser-form-fields .cfp-option-table thead th:first-child,
+  .organiser-form-fields .cfp-option-table tbody th {
+    text-align: right;
+    vertical-align: middle;
+    font-weight: 600;
+    width: 30%;
+    padding-right: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .organiser-form-fields.cfp-forms-page .cfp-option-table tbody th {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+.organiser-form-fields .cfp-option-table thead th:last-child {
+  width: 140px;
+  text-align: right;
 }
 
 .organiser-form-fields .cfp-option-table tbody td {
   vertical-align: middle;
+}
+
+.organiser-form-fields .cfp-option-table tbody tr:first-child th,
+.organiser-form-fields .cfp-option-table tbody tr:first-child td {
+  border-top: none;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 110px;
+  margin: 0;
+}
+
+.organiser-form-fields.cfp-forms-page .cfp-option-table .required-status-wrapper::after {
+  display: block;
+  content: '\f0d7';
+  font-family: 'FontAwesome';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-dropdown {
+  display: inline-block;
+  width: 110px;
+  max-width: 110px;
+  height: 34px;
+  padding: 6px 26px 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: var(--size-border-radius);
+  text-align: center;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper[data-current="required"]::after {
+  color: var(--color-white);
+}
+
+.organiser-form-fields .cfp-option-table .required-status-wrapper[data-current="optional"]::after {
+  color: var(--color-text-muted);
+}
+
+.organiser-form-fields .cfp-option-table .required-status-dropdown:disabled {
+  opacity: 1;
+  cursor: not-allowed;
 }
 
 .organiser-form-fields .cfp-option-table a:not(.btn) {
@@ -20,20 +98,21 @@
   font-size: 16px;
 }
 
-.organiser-form-fields .toggle-switch {
-  width: 44px;
-  height: 24px;
+.organiser-form-fields .cfp-option-table td.text-right {
+  white-space: nowrap;
 }
 
-.organiser-form-fields .toggle-slider::before {
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
+.organiser-form-fields .cfp-option-table td.text-right .btn,
+.organiser-form-fields .cfp-option-table td.text-right a.btn {
+  margin: 0;
+  border-radius: var(--size-border-radius);
 }
 
-.organiser-form-fields .toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(20px);
+.organiser-form-fields .cfp-option-table td.text-right .btn + .btn,
+.organiser-form-fields .cfp-option-table td.text-right .btn + a.btn,
+.organiser-form-fields .cfp-option-table td.text-right a.btn + a.btn,
+.organiser-form-fields .cfp-option-table td.text-right a.btn + .btn {
+  margin-left: 4px;
 }
 
 .organiser-form-fields .organizer-request-feature-toggle {
@@ -47,7 +126,20 @@
 }
 
 .organiser-form-fields .organizer-request-feature-toggle .toggle-switch {
+  width: 44px;
+  height: 24px;
   flex: 0 0 auto;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle .toggle-slider::before {
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.organiser-form-fields .organizer-request-feature-toggle .toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
 }
 
 .organiser-form-fields .organizer-request-feature-toggle button {
@@ -64,7 +156,29 @@
   }
 }
 
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-before th,
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-before td {
+  border-top: 2px solid var(--color-primary);
+}
+
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-after th,
+.organiser-form-fields tr[dragsort-id].drag-indicator.insert-after td {
+  border-bottom: 2px solid var(--color-primary);
+}
+
 .organiser-form-fields tr.dragging th,
 .organiser-form-fields tr.dragging td {
-  background: var(--color-grey-lighter);
+  background-color: var(--color-grey-lighter);
+}
+
+.organiser-form-fields thead.drag-indicator.insert-after {
+  box-shadow: 0 2px var(--color-primary);
+}
+
+.organiser-form-fields .cfp-forms-new-field-actions {
+  margin-top: 0.5rem;
+}
+
+.organiser-form-fields .submit-group {
+  margin-top: 1rem;
 }

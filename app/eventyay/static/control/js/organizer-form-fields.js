@@ -11,7 +11,12 @@ function readCookie(name) {
  * @throws {Error} when the field setting cannot be saved
  */
 async function saveField(url, field, value) {
-  const token = readCookie('eventyay_csrftoken') || readCookie('csrftoken');
+  const token =
+    readCookie('eventyay_csrftoken') ||
+    readCookie('csrftoken') ||
+    readCookie('pretix_csrftoken') ||
+    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+    '';
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -79,47 +84,10 @@ function bindRow(row) {
 }
 
 function currentOrder(tbody) {
-  return Array.from(tbody.querySelectorAll('tr[data-sort-id]'))
-    .map((row) => row.dataset.sortId)
+  return Array.from(tbody.querySelectorAll('tr[dragsort-id], tr[data-sort-id]'))
+    .map((row) => row.getAttribute('dragsort-id') || row.dataset.sortId)
+    .filter(Boolean)
     .join(',');
-}
-
-function bindDrag(tbody) {
-  let dragged = null;
-
-  tbody.addEventListener('dragstart', (event) => {
-    const handle = event.target.closest('.dragsort-button');
-    if (!handle || !tbody.contains(handle)) {
-      return;
-    }
-    dragged = handle.closest('tr');
-    if (!dragged) {
-      return;
-    }
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', dragged.dataset.sortId || '');
-    dragged.classList.add('dragging');
-  });
-
-  tbody.addEventListener('dragover', (event) => {
-    if (!dragged) {
-      return;
-    }
-    event.preventDefault();
-    const target = event.target.closest('tr');
-    if (!target || target === dragged || !tbody.contains(target)) {
-      return;
-    }
-    const midpoint = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
-    tbody.insertBefore(dragged, event.clientY > midpoint ? target.nextSibling : target);
-  });
-
-  tbody.addEventListener('dragend', () => {
-    if (dragged) {
-      dragged.classList.remove('dragging');
-    }
-    dragged = null;
-  });
 }
 
 function bindSave(tbody) {
@@ -160,6 +128,5 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!tbody) {
     return;
   }
-  bindDrag(tbody);
   bindSave(tbody);
 });
