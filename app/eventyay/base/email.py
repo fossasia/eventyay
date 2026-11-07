@@ -34,10 +34,11 @@ from sendgrid.helpers.mail import Attachment, Bcc, Mail
 from eventyay.base.i18n import (
     LazyCurrencyNumber,
     LazyDate,
+    LazyEventDate,
+    LazyEventDateRange,
     LazyExpiresDate,
     LazyNumber,
 )
-from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Event
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import (
@@ -603,14 +604,21 @@ def get_combined_ticket_output_identifier(event: Event) -> str:
     return enabled_ids[0] if enabled_ids else 'pdf'
 
 
-def voucher_redemption_urls(event: Event, voucher_list: Sequence[str]) -> str:
-    """Clickable redemption links, one per voucher code."""
+def voucher_redeem_url(event: Event, code: str, subevent_id=None) -> str:
+    """Checkout link that applies this voucher code, on the voucher's date when it is limited to one."""
     from eventyay.multidomain.urlreverse import build_absolute_uri
 
+    url = f'{build_absolute_uri(event, "presale:event.redeem")}?voucher={quote(code)}'
+    if subevent_id:
+        url = f'{url}&subevent={subevent_id}'
+    return url
+
+
+def voucher_redemption_urls(event: Event, voucher_list: Sequence[str]) -> str:
+    """Clickable redemption links, one per voucher code."""
     links = []
     for code in voucher_list:
-        url = f'{build_absolute_uri(event, "presale:event.redeem")}?voucher={quote(code)}'
-        safe_url = escape(url)
+        safe_url = escape(voucher_redeem_url(event, code))
         links.append(f'<a href="{safe_url}">{safe_url}</a>')
     return '<br>'.join(links)
 
@@ -646,6 +654,78 @@ def render_download_tickets_pdf_button(event: Event, order) -> str:
     return f'<a href="{escape(url)}" class="button">{label}</a>'
 
 
+def event_public_url(event):
+    from eventyay.multidomain.urlreverse import build_absolute_uri
+
+    return build_absolute_uri(
+        event,
+        'presale:event.index',
+        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+    )
+
+
+def event_day(event, value):
+    return LazyEventDate(value.astimezone(ZoneInfo(event.settings.timezone)))
+
+
+def shared_event_placeholders():
+    """Event details offered with the same names and output in every email editor, whatever plugins are on."""
+    return [
+        SimpleFunctionalMailTextPlaceholder(
+            'event_name', ['event'], lambda event: event.name, lambda event: event.name, _('The event’s name')
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_url', ['event'], event_public_url, event_public_url, _('Link to the public event page')
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_dates',
+            ['event'],
+            LazyEventDateRange,
+            LazyEventDateRange,
+            _('The event’s dates, as shown on the event page'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_start_date',
+            ['event'],
+            lambda event: event_day(event, event.date_from),
+            lambda event: event_day(event, event.date_from),
+            _('The first day of the event'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_end_date',
+            ['event'],
+            lambda event: event_day(event, event.date_to or event.date_from),
+            lambda event: event_day(event, event.date_to or event.date_from),
+            _('The last day of the event'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_location',
+            ['event'],
+            lambda event: event.location or '',
+            lambda event: event.location or '',
+            _('The event’s venue or location'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'organizer_name',
+            ['event'],
+            lambda event: event.organizer.name,
+            lambda event: event.organizer.name,
+            _('The organizer’s name'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_contact_email',
+            ['event'],
+            lambda event: event.settings.contact_mail or '',
+            lambda event: event.settings.contact_mail or '',
+            _('The event’s contact email address'),
+        ),
+    ]
+
+
+def shared_event_placeholder_names():
+    return {placeholder.identifier for placeholder in shared_event_placeholders()}
+
+
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_mail_placeholders')
 def base_placeholders(sender: Event, **kwargs):
     from eventyay.multidomain.urlreverse import (
@@ -672,9 +752,7 @@ def base_placeholders(sender: Event, **kwargs):
         # `{event}` is the historical tickets placeholder; `{event_name}` is the
         # talk/Tiptap alias so both resolve to the event title in order emails.
         SimpleFunctionalMailTextPlaceholder('event', ['event'], lambda event: event.name, lambda event: event.name),
-        SimpleFunctionalMailTextPlaceholder(
-            'event_name', ['event'], lambda event: event.name, lambda event: event.name
-        ),
+        *shared_event_placeholders(),
         SimpleFunctionalMailTextPlaceholder(
             'event',
             ['event_or_subevent'],
@@ -924,6 +1002,16 @@ def base_placeholders(sender: Event, **kwargs):
             '68CYU2H6ZTP3WLK5',
         ),
         SimpleFunctionalMailTextPlaceholder(
+            'voucher_code', ['voucher'], lambda voucher: voucher.code, '68CYU2H6ZTP3WLK5', _('The voucher code')
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'voucher_redeem_url',
+            ['event', 'voucher'],
+            lambda event, voucher: voucher_redeem_url(event, voucher.code, voucher.subevent_id),
+            lambda event: voucher_redeem_url(event, '68CYU2H6ZTP3WLK5'),
+            _('Link that applies the voucher at checkout'),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
             'voucher_list',
             ['voucher_list'],
             format_voucher_list,
@@ -1056,40 +1144,3 @@ def base_placeholders(sender: Event, **kwargs):
         )
 
     return ph
-
-
-@receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_meetup_mail_placeholders')
-def meetup_placeholders(sender: Event, **kwargs):
-    """Placeholders only available for meetup events."""
-    from eventyay.multidomain.urlreverse import build_absolute_uri
-
-    if not is_meetup_event(sender):
-        return []
-    return [
-        SimpleFunctionalMailTextPlaceholder(
-            'organizer',
-            ['event'],
-            lambda event: event.organizer.name,
-            lambda event: event.organizer.name,
-        ),
-        SimpleFunctionalMailTextPlaceholder(
-            'event_url',
-            ['event'],
-            lambda event: build_absolute_uri(
-                event,
-                'presale:event.index',
-                kwargs={
-                    'event': event.slug,
-                    'organizer': event.organizer.slug,
-                },
-            ),
-            lambda event: build_absolute_uri(
-                event,
-                'presale:event.index',
-                kwargs={
-                    'event': event.slug,
-                    'organizer': event.organizer.slug,
-                },
-            ),
-        ),
-    ]

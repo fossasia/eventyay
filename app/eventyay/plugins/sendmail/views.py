@@ -242,7 +242,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
 
             try:
                 context_dict = build_email_preview_context(
-                    self.request.event, ['event', 'order', 'position_or_address']
+                    self.request.event, ['event', 'order', 'position_or_address'], shared_event_values=True
                 )
 
                 mail(
@@ -294,7 +294,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             for l in self.request.event.settings.locales:
                 with language(l, self.request.event.settings.region):
                     context_dict = build_email_preview_context(
-                        self.request.event, ['event', 'order', 'position_or_address']
+                        self.request.event, ['event', 'order', 'position_or_address'], shared_event_values=True
                     )
                     subject_val = form.cleaned_data.get('subject')
                     subject = nh3.clean(subject_val.localize(l), tags=set()) if subject_val else ''
@@ -985,7 +985,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
 
             for l in event.settings.locales:
                 with language(l, event.settings.region):
-                    context_dict = build_email_preview_context(event, base_placeholders)
+                    context_dict = build_email_preview_context(event, base_placeholders, shared_event_values=True)
 
                     subject_text = subject.localize(l) if subject else ''
                     if not str(subject_text).strip():
@@ -1303,7 +1303,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
 
             try:
                 context_dict = build_email_preview_context(
-                    event, ['event', 'user', 'team']
+                    event, ['event', 'user', 'team'], shared_event_values=True
                 )
 
                 mail(
@@ -1334,7 +1334,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
         self.output = {}
         for l in event.settings.locales:
             with language(l, event.settings.region):
-                context_dict = build_email_preview_context(event, ['event', 'user', 'team'])
+                context_dict = build_email_preview_context(event, ['event', 'user', 'team'], shared_event_values=True)
 
                 subject_text = subject.localize(l) if subject else ''
                 if not str(subject_text).strip():
