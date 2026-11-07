@@ -139,6 +139,7 @@ export default {
 				usePluginStreams: false,
 				languageStreams: [],
 				loaded: false,
+				unsupported: false,
 				streamsLoadFailed: false,
 			},
 			typeComponents: markRaw({
@@ -240,6 +241,11 @@ export default {
 					this.$store,
 					this.config.id
 				)
+				if (data && data.unsupported) {
+					this.interpretationAdmin.unsupported = true
+					return
+				}
+				this.interpretationAdmin.unsupported = false
 				this.interpretationAdmin.usePluginStreams = Boolean(
 					data.use_plugin_language_streams
 				)
