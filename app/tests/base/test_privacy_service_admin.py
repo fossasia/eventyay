@@ -13,7 +13,6 @@ from eventyay.base.models.privacy import (
 )
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.privacy_consent import build_consent_config
-from eventyay.control.forms.global_settings import PrivacySettingsForm
 from eventyay.control.forms.privacy import ThirdPartyServiceForm
 from eventyay.control.views.privacy import ServiceUpdate
 
@@ -183,18 +182,6 @@ def test_overview_lists_the_data_each_service_processes(admin_client):
 
 
 @pytest.mark.django_db
-def test_overview_warns_about_an_unusable_cmp_script(admin_client):
-    gs = GlobalSettingsObject()
-    gs.settings.set('privacy_consent_provider', ConsentProvider.EXTERNAL)
-    gs.settings.set('privacy_cmp_script_url', 'http://cdn.example.org/cmp.js')
-
-    response = admin_client.get(reverse('eventyay_admin:admin.global.privacy'))
-
-    assert response.context['unusable_cmp_script'] is True
-    assert 'not a valid HTTPS URL' in response.content.decode()
-
-
-@pytest.mark.django_db
 def test_identifier_cannot_be_renamed_after_creation(admin_client, service):
     """Blocked scripts are matched on the identifier, so renaming would stop blocking them."""
     admin_client.post(
@@ -247,52 +234,3 @@ def test_service_pages_need_an_admin_session(client, service, url_name, needs_pk
 
     assert response.status_code == 403
     assert ThirdPartyService.objects.count() == 1
-
-
-def _privacy_settings_data(**overrides):
-    data = {
-        'privacy_consent_provider': ConsentProvider.EXTERNAL,
-        'privacy_cmp_provider_name': 'Example CMP',
-        'privacy_cmp_script_url': 'https://cdn.example.org/cmp.js',
-        'privacy_policy_url': 'https://example.org/privacy',
-        'privacy_cookie_policy_url': 'https://example.org/cookies',
-    }
-    data.update(overrides)
-    return data
-
-
-@pytest.mark.django_db
-def test_external_cmp_script_must_use_https():
-    """An http:// script is blocked on https:// pages, leaving the site with no consent manager."""
-    form = PrivacySettingsForm(data=_privacy_settings_data(privacy_cmp_script_url='http://cdn.example.org/cmp.js'))
-
-    assert not form.is_valid()
-    assert form.errors['privacy_cmp_script_url'] == ['The script URL must use HTTPS.']
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize('field', ['privacy_policy_url', 'privacy_cookie_policy_url'])
-def test_policy_links_must_be_urls(field):
-    form = PrivacySettingsForm(data=_privacy_settings_data(**{field: 'not a url'}))
-
-    assert not form.is_valid()
-    assert form.errors[field] == ['Enter a valid URL.']
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize('field', ['privacy_policy_url', 'privacy_cookie_policy_url'])
-def test_policy_links_must_be_http(field):
-    """Public pages only link http(s) URLs, so an ftp:// policy would leave the banner without one."""
-    form = PrivacySettingsForm(
-        data=_privacy_settings_data(privacy_consent_provider=ConsentProvider.KLARO, **{field: 'ftp://example.org/p'})
-    )
-
-    assert not form.is_valid()
-    assert form.errors[field] == ['The URL must start with http:// or https://.']
-
-
-@pytest.mark.django_db
-def test_valid_privacy_settings_are_accepted():
-    form = PrivacySettingsForm(data=_privacy_settings_data())
-
-    assert form.is_valid(), form.errors

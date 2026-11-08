@@ -44,9 +44,9 @@ def published_services(settings):
     Services that are published in the Klaro configuration.
 
     Only these can ever be consented to: strictly necessary services, plus
-    enabled services whose category an administrator has switched on. Content
-    gated on any other service stays blocked, because Klaro never reports
-    consent for a service it does not know about.
+    enabled services whose category an administrator has switched on. Anything
+    gated on consent must check against this set, otherwise it waits on a
+    service Klaro does not know about and stays blocked forever.
     """
     return ThirdPartyService.objects.filter(enabled=True).filter(
         Q(category=ConsentCategory.NECESSARY) | Q(category__in=enabled_consent_categories(settings))
