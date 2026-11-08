@@ -1,0 +1,25 @@
+# .github/workflows/approval-labels-trigger.yml
+#
+# Fires when a review is submitted or dismissed on a pull request.
+# It does nothing itself: reviews on fork PRs only get a read-only token, so the
+# labelling is done by approval-labels.yml, which listens for this run to finish
+# (workflow_run) and gets a write token. Keep the `name` below in sync with
+# `workflows:` in approval-labels.yml.
+
+name: Approval labels trigger
+
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          REVIEW_ACTION: ${{ github.event.action }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Review ${REVIEW_ACTION} on PR #${PR_NUMBER}"
