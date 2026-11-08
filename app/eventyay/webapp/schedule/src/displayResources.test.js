@@ -73,8 +73,11 @@ test('resolveAbsoluteUrl leaves safe absolute URLs unchanged', () => {
 	assert.equal(resolveAbsoluteUrl(null, 'https://eventyay.com/demo/'), null)
 })
 
-test('resolveAbsoluteUrl rejects unsafe schemes like javascript and data', () => {
+test('resolveAbsoluteUrl rejects unsafe schemes like javascript and data including whitespace and control chars', () => {
 	assert.equal(resolveAbsoluteUrl('javascript:alert(1)', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl('  javascript:alert(1)', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl('java\tscript:alert(1)', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl('\njavascript:alert(1)', 'https://eventyay.com/demo/'), '')
 	assert.equal(resolveAbsoluteUrl('javascript:void(0)', 'https://eventyay.com/demo/'), '')
 	assert.equal(resolveAbsoluteUrl('data:text/html;base64,PHNjcmlwdD4=', 'https://eventyay.com/demo/'), '')
 	assert.equal(resolveAbsoluteUrl('vbscript:msgbox("hello")', 'https://eventyay.com/demo/'), '')
