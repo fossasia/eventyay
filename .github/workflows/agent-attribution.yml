@@ -4,12 +4,14 @@
 # and ensures proper attribution in the PR description and an "ai-assisted" label.
 #
 # pull_request_target runs in the context of the base branch and gets a write-capable
-# GITHUB_TOKEN so fork PRs can receive attribution labels and description updates safely.
+# GITHUB_TOKEN so fork PRs can receive attribution labels and description updates.
+# It is safe only because the checkout below uses the base branch: the script that
+# runs is never taken from the pull request, and PR text is only read as data.
 
 name: Agent Attribution
 
 on:
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] checkout uses the base branch only; no PR code runs
     types: [opened, ready_for_review, synchronize, reopened, edited]
     branches: [dev, main]
   workflow_dispatch:
@@ -36,6 +38,8 @@ jobs:
       (github.event.pull_request.state == 'open' &&
        (github.event.pull_request.base.ref == 'dev' || github.event.pull_request.base.ref == 'main'))
     steps:
+      # SECURITY: never add `ref:` pointing at the pull request head here. With
+      # pull_request_target and a write token, that would run fork code with write access.
       - uses: actions/checkout@v7
         with:
           persist-credentials: false

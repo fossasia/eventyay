@@ -36,6 +36,7 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 1. **PR Authoring**: When creating or assisting a PR with AI, include attribution at the end of the PR description:
    `Created with <Model> in <Harness/IDE>, run from <Environment>.`
    (e.g., `Created with Claude Opus 4.6 in Claude Code` or `Created with Gemini in Antigravity`).
+   Name only the tools you actually used; leave out a model or harness you do not know rather than guessing.
 2. **PR Reviews**: When reviewing a PR with AI (inline comments, review summaries, or change requests), include attribution at the end of the review comment or summary:
    `Reviewed with <Model> in <Harness/IDE>, run from <Environment>.`
    (e.g., `Reviewed with Claude Opus 4.6 in Claude Code` or `Reviewed with Gemini in Antigravity`).

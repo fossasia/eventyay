@@ -9,7 +9,6 @@ Apply matching scoped rules in `.github/instructions/*.md` for each edited file.
 - Keep completions conservative and aligned with nearby code patterns.
 - Prefer minimal, local edits over speculative refactors.
 - If context is unclear, avoid guessing new architecture and defer to existing project conventions.
-- When creating PRs with Copilot, append attribution: `Created with <Model> in GitHub Copilot`.
-- When reviewing PRs with Copilot, append attribution: `Reviewed with <Model> in GitHub Copilot`.
+- Follow the AI Attribution Rules in `agents.md` when creating or reviewing PRs.
 
 Do not duplicate or override project rules in this file. Use `agents.md` as the single source of truth.

@@ -16,5 +16,5 @@ those changes are needed for the same fix. -->
 
 <!-- Describe the tests or manual checks you ran and the observed results. -->
 
-<!-- If you used an agent, end with the model and harness that did the work. -->
-<!-- E.g.: Created with Claude Opus 4.6 in Claude Code, run from Antigravity. -->
+<!-- If you used an agent, end with the model and harness that did the work,
+in the form: Created with <Model> in <Harness>, run from <Environment>. -->
