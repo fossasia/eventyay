@@ -117,6 +117,37 @@ def test_service_privacy_policy_must_be_an_http_url(url):
 
 
 @pytest.mark.django_db
+def test_comma_separated_cookie_names_are_split():
+    """Saved as one line, "_ga, _gid" would match no cookie and clear nothing."""
+    form = ThirdPartyServiceForm(data=_service_data(cookie_names='  _ga, _gid\n\n^_ga_.{1,3}\n'))
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['cookie_names'] == '_ga\n_gid\n^_ga_.{1,3}'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('line', ['^_ga_(', '_ga, ^_ga_(', '^(?P<id>_ga_)', '^(?i)_ga', '^(?>_ga)', '^_ga.*+'])
+def test_cookie_pattern_a_browser_rejects_is_refused(line):
+    """Klaro compiles ^ entries with new RegExp and does not catch the error."""
+    form = ThirdPartyServiceForm(data=_service_data(cookie_names=line))
+
+    assert not form.is_valid()
+    assert 'is not a valid regular expression' in form.errors['cookie_names'][0]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'pattern',
+    ['^_ga_', '^_ga_.{1,3}', r'^_pk_(id|ses)\.', '^(?:_ga|_gid)$', '^_ga(?!_x)', r'^_ga\(?x', '^_ga[(?]x', '^_ga[*+]+'],
+)
+def test_cookie_pattern_a_browser_accepts_is_kept(pattern):
+    form = ThirdPartyServiceForm(data=_service_data(cookie_names=pattern))
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['cookie_names'] == pattern
+
+
+@pytest.mark.django_db
 def test_classified_service_cannot_lose_its_category(admin_client, service):
     """Blanking the category would drop the service from the banner, so visitors could never allow it."""
     response = admin_client.post(
