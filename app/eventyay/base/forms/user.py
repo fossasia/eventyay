@@ -79,6 +79,19 @@ class UserSettingsForm(forms.ModelForm):
         self.fields['email'].required = False
         self.fields['email'].disabled = True
         self.fields['wikimedia_username'].disabled = True
+        for fname in ('locale', 'timezone'):
+            if fname in self.fields:
+                existing_classes = self.fields[fname].widget.attrs.get('class', '').split()
+                if 'form-control' not in existing_classes:
+                    existing_classes.append('form-control')
+                self.fields[fname].widget.attrs.update(
+                    {
+                        'class': ' '.join(existing_classes),
+                        'data-searchable-select': '',
+                        'data-search-placeholder': _('Search'),
+                        'data-empty-text': _('No results'),
+                    }
+                )
         if self.user.auth_backend != 'native':
             del self.fields['old_pw']
             del self.fields['new_pw']
