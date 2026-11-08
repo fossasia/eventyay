@@ -1,8 +1,9 @@
 import moment from 'moment-timezone'
 import {translate} from './i18n.js'
 import { getVideoEmbedUrl } from './videoEmbed.js'
+import { normalizeDisplayResources } from './displayResources.js'
 
-export { getVideoEmbedUrl }
+export { getVideoEmbedUrl, normalizeDisplayResources }
 
 export function getLocalizedString (string) {
 	if (!string) return ''

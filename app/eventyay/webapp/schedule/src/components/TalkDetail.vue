@@ -154,7 +154,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl, getVideoEmbedUrl, isTalkSchedulePending, tentativeSessionText as pendingSessionNote, pageStatusRange } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl, getVideoEmbedUrl, isTalkSchedulePending, tentativeSessionText as pendingSessionNote, pageStatusRange, normalizeDisplayResources } from '../utils'
 import ListPagination from './ListPagination.vue'
 import MarkdownContent from './MarkdownContent.vue'
 import DetailBackNav from './DetailBackNav.vue'
@@ -416,20 +416,7 @@ export default {
 		},
 		displayResources() {
 			const resources = this.effectiveApiContent?.resources ?? this.resolvedTalk?.resources ?? []
-			return resources.map(r => {
-				const resPath = r.resource || r.link
-				if (resPath) {
-					const cleanPath = resPath.split(/[?#]/)[0]
-					if (cleanPath.toLowerCase().endsWith('.pdf') && !resPath.includes('#')) {
-						return {
-							...r,
-							resource: r.resource ? `${r.resource}#resource` : undefined,
-							link: r.link ? `${r.link}#resource` : undefined
-						}
-					}
-				}
-				return r
-			})
+			return normalizeDisplayResources(resources)
 		},
 		talkExportOptions() {
 			if (this.exportsDisabled || this.isSchedulePending) return []
