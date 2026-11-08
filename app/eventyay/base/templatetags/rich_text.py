@@ -30,6 +30,7 @@ except ImportError:
 from i18nfield.strings import LazyI18nString
 
 from eventyay.common.views.redirect import safelink as sl
+from eventyay.helpers.placeholders import escape_stray_braces
 
 register = template.Library()
 
@@ -197,6 +198,12 @@ VOUCHER_EMAIL_PREVIEW_CONTEXT = 'voucher'
 
 _VOUCHER_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'voucher_list', 'name')
 
+# Query value the team composer adds to the shared preview URL. Team mails are sent with these
+# parameters, so {name}, {email} and {all_submissions_url} preview as the receiving team member.
+TEAM_EMAIL_PREVIEW_CONTEXT = 'team'
+
+_TEAM_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'user', 'team')
+
 
 def _preview_placeholder_context(html_body: str) -> list[str]:
     """Base preview context, plus voucher placeholders when the body uses them.
@@ -220,9 +227,12 @@ def _preview_parameters(html_body: str, preview_context: str | None) -> list[str
 
     ``voucher`` is the bulk-voucher form. It always includes ``voucher_list``,
     so ``{url}`` samples the event shop the same way delivery does.
+    ``team`` is the team composer, the only editor whose mails carry a ``user``.
     """
     if preview_context == VOUCHER_EMAIL_PREVIEW_CONTEXT:
         return list(_VOUCHER_PREVIEW_PARAMETERS)
+    if preview_context == TEAM_EMAIL_PREVIEW_CONTEXT:
+        return list(_TEAM_PREVIEW_PARAMETERS)
     return _preview_placeholder_context(html_body)
 
 
@@ -243,7 +253,7 @@ def expand_email_preview_placeholders(
 
     with language(resolved_locale, event.settings.region):
         context_dict = build_email_preview_context(event, _preview_parameters(html_body, preview_context))
-        expanded = html_body.format_map(context_dict)
+        expanded = escape_stray_braces(html_body).format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
 

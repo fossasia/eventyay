@@ -15,3 +15,11 @@
 .user-action-form[aria-busy="true"] button.btn-dropdown-link {
     cursor: progress;
 }
+
+.admin-users-table .btn-group.open > .dropdown-menu {
+    z-index: 1060;
+    margin: 0;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+}
