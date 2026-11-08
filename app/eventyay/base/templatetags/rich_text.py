@@ -244,7 +244,7 @@ def expand_email_preview_placeholders(
 
     with language(resolved_locale, event.settings.region):
         context_dict = build_email_preview_context(event, _preview_parameters(html_body, preview_context))
-        context_dict.update(extra_context or {})
+        context_dict.update({key: html.escape(str(value)) for key, value in (extra_context or {}).items()})
         expanded = html_body.format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
