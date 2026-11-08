@@ -34,7 +34,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin, event_per
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
 from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
-from eventyay.plugins.sendmail.link_lists import add_rows, create_link_list, parse_link_list
+from eventyay.plugins.sendmail.link_lists import add_rows, create_link_list, missing_columns, parse_link_list
 from eventyay.plugins.sendmail.mixins import (
     CopyDraftMixin,
     QueryFilterOrderingMixin,
@@ -152,11 +152,12 @@ class LinkListRowsAddView(LinkListMixin, View):
             parsed = parse_link_list(upload)
         except ValidationError as error:
             return JsonResponse({'error': ' '.join(error.messages)}, status=400)
-        if not set(parsed.columns) & set(link_list.columns):
+        missing = missing_columns(link_list, parsed)
+        if missing:
             return JsonResponse(
                 {
-                    'error': str(_('The file has none of the columns of this list: {columns}.')).format(
-                        columns=', '.join(link_list.columns)
+                    'error': str(_('The file is missing these columns of the list: {columns}.')).format(
+                        columns=', '.join(missing)
                     )
                 },
                 status=400,
@@ -294,7 +295,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 context_dict = build_email_preview_context(
                     self.request.event, ['event', 'order', 'position_or_address']
                 )
-                context_dict.update(form.link_list_sample())
+                context_dict.update(form.link_list_example())
 
                 mail(
                     email=test_email,

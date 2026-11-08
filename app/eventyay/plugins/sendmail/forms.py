@@ -451,6 +451,10 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         link_list = self.cleaned_data.get('link_list') if hasattr(self, 'cleaned_data') else None
         return link_list.sample_values() if link_list else {}
 
+    def link_list_example(self):
+        """Made-up values for test emails, so no real row is shown to an address it may later go to someone else."""
+        return {name: f'[{name}]' for name in self.link_list_sample()}
+
     def link_list_name_for_upload(self):
         return (self.cleaned_data.get('link_list_name') or '').strip() or default_list_name(
             self.files.get(self.add_prefix('link_list_file'))
