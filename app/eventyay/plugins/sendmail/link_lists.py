@@ -20,8 +20,11 @@ class ParsedLinkList:
     rows: list = field(default_factory=list)
 
 
+COLUMN_KEY_MAX_LENGTH = 90
+
+
 def column_key(header, index):
-    key = re.sub(r'[^a-z0-9]+', '_', (header or '').strip().lower()).strip('_')
+    key = re.sub(r'[^a-z0-9]+', '_', (header or '').strip().lower()).strip('_')[:COLUMN_KEY_MAX_LENGTH].strip('_')
     return key or f'column_{index + 1}'
 
 
@@ -41,16 +44,23 @@ def parse_link_list(upload):
             key = f'{key}_{index + 1}'
         keys.append(key)
     rows = []
-    for record in reader:
-        values = {key: (record.get(header) or '').strip() for key, header in zip(keys, reader.fieldnames)}
-        rows.append(values)
+    for record in reader.reader:
+        cells = [(cell or '').strip() for cell in record]
+        rows.append({key: cells[index] if index < len(cells) else '' for index, key in enumerate(keys)})
     if not rows:
         raise ValidationError(_('The file has no rows below the column names.'))
     return ParsedLinkList(columns=keys, rows=rows)
 
 
+def missing_columns(link_list, parsed):
+    """Saved columns of the list that an uploaded file does not have."""
+    return [column for column in link_list.columns if column not in parsed.columns]
+
+
+@transaction.atomic
 def add_rows(link_list, rows):
     """Append rows to a list, skipping empty rows and rows the list already holds; returns (added, skipped)."""
+    MailLinkList.objects.select_for_update().filter(pk=link_list.pk).first()
     seen = {tuple(sorted(row.items())) for row in link_list.rows.values_list('values', flat=True)}
     position = link_list.rows.aggregate(last=Max('position'))['last'] or 0
     new_rows = []
