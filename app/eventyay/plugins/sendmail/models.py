@@ -401,6 +401,10 @@ class EmailQueue(models.Model):
                 self.save(update_fields=['scheduled_at'])
             return False
 
+        if self.link_list_id and self.link_list.shortfall(self.get_recipient_emails()):
+            message = _('The link list "{name}" has too few unused rows for these recipients. Add rows and send again.')
+            raise SendMailException(message.format(name=self.link_list.name), already_logged=True)
+
         subject = LazyI18nString(self.subject)
         message = LazyI18nString(self.message)
 
