@@ -466,7 +466,6 @@ class AdminDashboard(AdminContextMixin, AdministratorPermissionRequiredMixin, Te
             'admin_dashboard_health', lambda: check_dependencies() is None, 60,
         )
         ctx.update(cached_activity_context(self.request.GET.get('range', '30d')))
-        ctx['last_updated'] = now()
         dashboard_cards(ctx)
         return ctx
 
@@ -683,7 +682,6 @@ class AdminAnalytics(AdministratorPermissionRequiredMixin, TemplateView):
             ctx.update(report_context(metric, self.request.GET.get('page')))
             return ctx
         ctx.update(cached_activity_context(self.request.GET.get('range', '30d')))
-        ctx['last_updated'] = now()
         if metric:
             ctx['activity_charts'] = [chart for chart in ctx['activity_charts'] if chart['key'] == metric]
             if not ctx['activity_charts']:

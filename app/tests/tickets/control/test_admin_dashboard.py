@@ -531,7 +531,7 @@ def test_admin_all_time_activity_is_cached(dashboard_admin, settings, mocker, ro
         assert response.status_code == 200
         assert response.context['activity_range'] == 'all'
         assert len(response.context['activity_charts']) == 4
-        assert 'Rendered at' in response.content.decode()
+        assert 'Last updated' in response.content.decode()
     assert aggregate.call_count == 1
     dashboard_admin.post(reverse('eventyay_admin:admin.dashboard'), {'action': 'refresh'})
     assert dashboard_admin.get(url).status_code == 200

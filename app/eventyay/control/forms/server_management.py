@@ -41,7 +41,10 @@ class StreamingEventChoiceField(forms.ModelChoiceField):
 class VideoStreamingSelectionForm(forms.Form):
     """Select the event and optional stream managed by a platform administrator."""
     event = StreamingEventChoiceField(
-        queryset=Event.objects.none(), required=False, label=_('Event'),
+        queryset=Event.objects.none(),
+        required=False,
+        empty_label=None,
+        label=_('Event'),
         widget=Select2(attrs={
             'data-model-select2': 'event',
             'data-select2-url': reverse_lazy('control:events.typeahead'),
@@ -53,8 +56,25 @@ class VideoStreamingSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         """Validate any selected event while rendering only the selected option."""
         super().__init__(*args, **kwargs)
+        event_id = None
+        if self.is_bound and self.data:
+            event_id = self.data.get('event')
+        elif 'event' in self.initial:
+            event_id = self.initial.get('event')
+
+        if hasattr(event_id, 'pk'):
+            event_id = event_id.pk
+
         with scopes_disabled():
-            self.fields['event'].queryset = Event.objects.select_related('organizer').order_by('pk')
+            if event_id:
+                try:
+                    self.fields['event'].queryset = (
+                        Event.objects.filter(pk=event_id).select_related('organizer')
+                    )
+                except (ValueError, TypeError):
+                    self.fields['event'].queryset = Event.objects.none()
+            else:
+                self.fields['event'].queryset = Event.objects.none()
         self.fields['event'].widget.choices = self.fields['event'].choices
 
 
