@@ -273,7 +273,7 @@ class EmailQueue(models.Model):
         MailLinkList,
         null=True,
         blank=True,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name='emails',
         verbose_name=_('Link list'),
     )

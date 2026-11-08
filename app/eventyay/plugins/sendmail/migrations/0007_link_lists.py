@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='emailqueue',
             name='link_list',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='emails', to='sendmail.maillinklist', verbose_name='Link list'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='emails', to='sendmail.maillinklist', verbose_name='Link list'),
         ),
         migrations.CreateModel(
             name='MailLinkListRow',
