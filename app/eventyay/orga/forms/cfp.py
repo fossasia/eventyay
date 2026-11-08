@@ -462,7 +462,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 for choice in self.fields['variant'].choices
                 if choice[0] != TalkQuestionVariant.VIDEO
             ]
-        
+
         self.fields['dependency_question'].queryset = TalkQuestion.all_objects.filter(
             event=event,
             variant__in=(
@@ -471,7 +471,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 TalkQuestionVariant.MULTIPLE,
             ),
         )
-        
+
         if instance and instance.pk:
             self.fields['dependency_question'].queryset = (
                 self.fields['dependency_question'].queryset.exclude(pk=instance.pk)
@@ -484,7 +484,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             self.fields['dependency_question'].queryset = (
                 self.fields['dependency_question'].queryset.filter(target=self.initial['target'])
             )
-        
+
         self.fields['dependency_values'].required = False
 
     def clean_variant(self):
@@ -520,13 +520,19 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
     def clean_dependency_values(self):
         if self.is_bound:
-            return self.data.getlist(self.add_prefix('dependency_values'))
-        return self.cleaned_data.get('dependency_values')
+            values = self.data.getlist(self.add_prefix('dependency_values'))
+        else:
+            values = self.cleaned_data.get('dependency_values')
+        if not values:
+            return []
+        if isinstance(values, str):
+            values = [values]
+        return [v for v in values if v is not None and str(v).strip() != '']
 
     def clean_dependency_question(self):
         dep = self.cleaned_data.get('dependency_question')
         if dep:
-            seen_ids = {self.instance.pk} if self.instance else set()
+            seen_ids = {self.instance.pk} if self.instance and self.instance.pk else set()
             while dep:
                 if dep.pk in seen_ids:
                     raise forms.ValidationError(_('Circular dependency between questions detected.'))
@@ -552,25 +558,69 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 'options_replace',
                 forms.ValidationError(_('You cannot replace options without uploading new ones.')),
             )
-        
-        dependency_question = d.get('dependency_question')
+
+        question = d.get('dependency_question')
         dependency_values = d.get('dependency_values')
         target = d.get('target')
-        
-        if dependency_question and not dependency_values:
+
+        if dependency_values:
+            dependency_values = [v for v in dependency_values if v is not None and str(v).strip() != '']
+
+        if question and not dependency_values:
             self.add_error('dependency_values', _('This field is required.'))
-        
-        if dependency_question and target and dependency_question.target != target:
+
+        if question and target and question.target != target:
             self.add_error(
                 'dependency_question',
                 forms.ValidationError(
                     _('The dependency field must have the same field type (per proposal/per speaker) as this field.')
                 ),
             )
-        
-        if not dependency_question:
+
+        if question and dependency_values:
+            if question.variant in (
+                TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.MULTIPLE,
+            ):
+                valid_option_ids = set(question.options.values_list('id', flat=True))
+                if not valid_option_ids:
+                    self.add_error(
+                        'dependency_values',
+                        forms.ValidationError(_('The selected dependency question has no choices.')),
+                    )
+                else:
+                    clean_dep_values = []
+                    for val in dependency_values:
+                        try:
+                            val_id = int(val)
+                        except (ValueError, TypeError):
+                            self.add_error(
+                                'dependency_values',
+                                forms.ValidationError(_('Selected choice is not valid.')),
+                            )
+                            break
+                        if val_id not in valid_option_ids:
+                            self.add_error(
+                                'dependency_values',
+                                forms.ValidationError(_('Selected choice does not belong to the dependency question.')),
+                            )
+                            break
+                        clean_dep_values.append(str(val_id))
+                    else:
+                        d['dependency_values'] = clean_dep_values
+            elif question.variant == TalkQuestionVariant.BOOLEAN:
+                valid_bool_values = {'True', 'False'}
+                if not all(str(val) in valid_bool_values for val in dependency_values):
+                    self.add_error(
+                        'dependency_values',
+                        forms.ValidationError(_('Selected choice is not valid.')),
+                    )
+                else:
+                    d['dependency_values'] = [str(val) for val in dependency_values]
+
+        if not question:
             d['dependency_values'] = []
-        
+
         return d
 
     def option_key(self, option: LazyI18nString) -> str:

@@ -1221,6 +1221,91 @@ def test_upload_options_matches_stored_translation_format(
 
 
 @pytest.mark.django_db
+def test_question_form_dependency_choice_validation(event):
+    """Validate dependency choice IDs directly against question options and guard missing IDs."""
+    with scope(event=event):
+        parent_choice_q = Question.objects.create(
+            event=event,
+            question='Dietary restriction',
+            variant='choices',
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        opt1 = parent_choice_q.options.create(answer='Gluten-free', position=1)
+        opt2 = parent_choice_q.options.create(answer='Nut allergy', position=2)
+
+        # Valid choice option ID
+        data = {
+            'target': 'submission',
+            'question_0': 'Severe allergy details',
+            'variant': 'string',
+            'question_required': QuestionRequired.OPTIONAL,
+            'dependency_question': parent_choice_q.pk,
+            'dependency_values': [str(opt1.pk)],
+        }
+        form = TalkQuestionForm(event=event, data=data)
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['dependency_values'] == [str(opt1.pk)]
+
+        # Multiple valid choice option IDs
+        data['dependency_values'] = [str(opt1.pk), str(opt2.pk)]
+        form = TalkQuestionForm(event=event, data=data)
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['dependency_values'] == [str(opt1.pk), str(opt2.pk)]
+
+        # Non-existent choice option ID
+        data['dependency_values'] = [str(opt1.pk), '999999']
+        form = TalkQuestionForm(event=event, data=data)
+        assert not form.is_valid()
+        assert 'dependency_values' in form.errors
+
+        # Invalid non-integer choice format
+        data['dependency_values'] = ['not-an-id']
+        form = TalkQuestionForm(event=event, data=data)
+        assert not form.is_valid()
+        assert 'dependency_values' in form.errors
+
+        # Missing / empty choice IDs
+        data['dependency_values'] = ['', '   ']
+        form = TalkQuestionForm(event=event, data=data)
+        assert not form.is_valid()
+        assert 'dependency_values' in form.errors
+
+        # Dependency question with no choices available
+        parent_empty_q = Question.objects.create(
+            event=event,
+            question='Empty choices',
+            variant='choices',
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        data['dependency_question'] = parent_empty_q.pk
+        data['dependency_values'] = ['1']
+        form = TalkQuestionForm(event=event, data=data)
+        assert not form.is_valid()
+        assert 'dependency_values' in form.errors
+
+        # Boolean parent question
+        parent_bool_q = Question.objects.create(
+            event=event,
+            question='Do you require accommodation?',
+            variant='boolean',
+            target='submission',
+            question_required=QuestionRequired.OPTIONAL,
+        )
+        data['dependency_question'] = parent_bool_q.pk
+        data['dependency_values'] = ['True']
+        form = TalkQuestionForm(event=event, data=data)
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['dependency_values'] == ['True']
+
+        data['dependency_values'] = ['invalid_bool']
+        form = TalkQuestionForm(event=event, data=data)
+        assert not form.is_valid()
+        assert 'dependency_values' in form.errors
+
+
+@pytest.mark.django_db
 def test_track_list_sorting(orga_client, event):
     url = event.cfp.urls.tracks
     with scope(event=event):
