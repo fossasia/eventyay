@@ -1,0 +1,58 @@
+# .github/workflows/changes-requested-label.yml
+#
+# Keeps the "changes requested" label in sync with pull-request reviews.
+#
+# How it works:
+#   - When any reviewer submits a review with state CHANGES_REQUESTED, the label
+#     is added to the PR.
+#   - When the reviewer later approves or their review is dismissed, and no other
+#     reviewer still has a CHANGES_REQUESTED review, the label is removed.
+#   - A later COMMENTED review does not cancel a CHANGES_REQUESTED review.
+#
+# Reuses the "Approval labels trigger" workflow for the pull_request_review event.
+# That split is needed because review events on fork PRs only get a read-only
+# token. This workflow checks out the default branch for its script and only reads
+# reviews through the API.
+#
+# Manual run: Actions -> Changes requested label -> Run workflow, with a PR number.
+
+name: Changes requested label
+
+on:
+  workflow_run:
+    workflows: ["Approval labels trigger"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: PR number to relabel
+        required: true
+        type: string
+
+permissions:
+  contents: read       # check out the default branch for the script
+  pull-requests: write # read reviews and add/remove labels
+
+concurrency:
+  group: changes-requested-label-${{ github.event.workflow_run.head_repository.full_name || 'manual' }}-${{ github.event.workflow_run.head_branch || inputs.pr-number }}
+  cancel-in-progress: false
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { runChangesRequestedLabel } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/changes-requested-label-lib.mjs`
+            );
+            await runChangesRequestedLabel({
+              github,
+              context,
+              core,
+            });
