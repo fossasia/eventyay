@@ -24,21 +24,25 @@ export function normalizeDisplayResources (resources = []) {
 
 /**
  * Resolves a resource URL to an absolute URL.
+ * Preserves all absolute schemes (HTTP, HTTPS, FTP, SFTP, etc.).
  * Path-relative URLs are resolved against the full event URL (including any subpath).
  * Root-relative URLs are resolved against the origin.
  */
 export function resolveAbsoluteUrl (url, eventUrl = '') {
 	if (!url) return url
-	if (/^https?:\/\//i.test(url)) return url
+	if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//i.test(url)) return url
 	try {
 		const windowOrigin = (typeof window !== 'undefined' && window.location?.origin) || 'http://localhost'
 		const base = new URL(eventUrl || '/', windowOrigin)
 		if (url.startsWith('/')) {
 			return new URL(url, base.origin).href
 		}
-		const basePath = base.href.replace(/\/?$/, '/')
-		return new URL(url, basePath).href
-	} catch {
+		if (!base.pathname.endsWith('/')) {
+			base.pathname += '/'
+		}
+		return new URL(url, base).href
+	} catch (error) {
+		console.error('Failed to resolve absolute resource URL', { url, eventUrl, error })
 		return url
 	}
 }

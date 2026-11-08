@@ -65,6 +65,8 @@ test('normalizeDisplayResources leaves non-PDF resources untouched', () => {
 test('resolveAbsoluteUrl leaves absolute URLs unchanged', () => {
 	assert.equal(resolveAbsoluteUrl('https://example.com/slides.pdf', 'https://eventyay.com/demo/'), 'https://example.com/slides.pdf')
 	assert.equal(resolveAbsoluteUrl('http://example.com/doc.pdf', 'https://eventyay.com/demo/'), 'http://example.com/doc.pdf')
+	assert.equal(resolveAbsoluteUrl('ftp://ftp.example.com/slides.pdf', 'https://eventyay.com/demo/'), 'ftp://ftp.example.com/slides.pdf')
+	assert.equal(resolveAbsoluteUrl('sftp://files.example.com/data.tar.gz', 'https://eventyay.com/demo/'), 'sftp://files.example.com/data.tar.gz')
 	assert.equal(resolveAbsoluteUrl('', 'https://eventyay.com/demo/'), '')
 	assert.equal(resolveAbsoluteUrl(null, 'https://eventyay.com/demo/'), null)
 })
@@ -81,6 +83,10 @@ test('resolveAbsoluteUrl resolves path-relative URLs against subpath eventUrl', 
 	assert.equal(
 		resolveAbsoluteUrl('files/presentation.pptx', 'https://eventyay.com/e/my-event/'),
 		'https://eventyay.com/e/my-event/files/presentation.pptx'
+	)
+	assert.equal(
+		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/democon?preview=1'),
+		'https://eventyay.com/democon/uploads/slides.pdf'
 	)
 })
 
