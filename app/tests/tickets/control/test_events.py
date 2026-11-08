@@ -1037,6 +1037,7 @@ class EventsTest(SoupTest):
             assert ev.settings.locale == 'de'
 
     def test_create_event_searchable_timezone(self):
+        """Verify that the event creation wizard timezone selector is searchable and persists selection."""
         doc = self.post_doc(
             '/control/events/add',
             {

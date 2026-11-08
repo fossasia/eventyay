@@ -173,6 +173,9 @@ const initSearchableSelect = function(select) {
     syncLabel()
   }
 
+  /**
+   * Filter list options by matching the search query against label and value text.
+   */
   const applyFilter = function() {
     const rawQuery = search.value.trim()
     const query = normalize(rawQuery)
