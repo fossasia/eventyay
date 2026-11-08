@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-admin-rooms-new
 	.ui-page-header
-		bunt-icon-button(@click="$router.replace({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h1 {{ $t('New room') }}
 			template(v-if="chosenProvider")  : {{ $t(chosenProvider.label) }}
 	.provider-disabled-warning(v-if="type && !chosenProvider")

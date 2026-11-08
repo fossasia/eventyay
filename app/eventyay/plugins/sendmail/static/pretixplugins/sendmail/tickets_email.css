@@ -712,4 +712,23 @@ form.mail-templates-info-dialog__card {
   }
 }
 
+@media (max-width: 991px) {
+  .mail-template-system-form .form-group {
+    flex-direction: column;
+  }
 
+  .mail-template-system-form .form-group > .col-md-3,
+  .mail-template-system-form .form-group > .col-md-9 {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mail-template-system-form .form-group > label.col-md-3 {
+    text-align: start;
+    margin-bottom: 6px;
+  }
+
+  .mail-template-system-form .form-group:has(> .col-md-9 > .checkbox) > label.col-md-3 {
+    display: none;
+  }
+}

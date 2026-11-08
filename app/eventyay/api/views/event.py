@@ -6,13 +6,10 @@ import django_filters
 import jwt
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.db.models import ProtectedError, Q
-from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils.crypto import get_random_string
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -42,7 +39,6 @@ from eventyay.api.serializers.event import (
     EventSerializer as ApiEventSerializer,
 )
 from eventyay.api.serializers.rooms import EventSerializer as RoomsEventSerializer
-from eventyay.api.utils import get_protocol
 from eventyay.api.views import ConditionalListView
 from eventyay.base.models import Device, Organizer, SubEvent, TaxRule, TeamAPIToken, User
 from eventyay.base.models.event import Event
@@ -50,7 +46,6 @@ from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.payment import ManualPayment
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
-from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.dicts import merge_dicts
 from eventyay.presale.style import regenerate_css
 from eventyay.presale.views.organizer import filter_qs_by_attr
@@ -680,124 +675,6 @@ class EventThemeView(APIView):
                 'error happened when trying to get theme data of event: ' + kwargs['event_id'],
                 status=503,
             )
-
-
-class CreateEventView(APIView):
-    authentication_classes = []  # disables authentication
-    permission_classes = []
-
-    @staticmethod
-    def post(request, *args, **kwargs) -> JsonResponse:
-        payload = CreateEventView.get_payload_from_token(request)
-
-        # check if user has permission to create event
-        if payload.get('has_permission'):
-            secret = get_random_string(length=64)
-            config = {
-                'JWT_secrets': [
-                    {
-                        'issuer': 'any',
-                        'audience': 'eventyay',
-                        'secret': secret,
-                    }
-                ]
-            }
-
-            titles = request.data.get('title') or {}
-            locale = request.data.get('locale')
-
-            title_values = [value for value in titles.values() if value]
-            title_default = title_values[0] if title_values else ''
-
-            title = titles.get(locale) or titles.get('en') or title_default
-
-            traits_payload = request.data.get('traits') or {}
-            if not isinstance(traits_payload, dict):
-                raise ValidationError('Traits must be provided as an object.')
-
-            attendee_trait_grants = traits_payload.get('attendee', '')
-            if attendee_trait_grants and not isinstance(attendee_trait_grants, str):
-                raise ValidationError('Attendee traits must be a string')
-
-            trait_grants = {
-                'admin': ['admin'],
-                'attendee': ([attendee_trait_grants] if attendee_trait_grants else ['attendee']),
-                'scheduleuser': [],
-            }
-
-            for trait_name, role_name in VIDEO_TRAIT_ROLE_MAP.items():
-                trait_value = traits_payload.get(trait_name, '')
-                if trait_value:
-                    if not isinstance(trait_value, str):
-                        raise ValidationError(f"Trait '{trait_name}' must be a string value.")
-                    trait_grants[role_name] = [trait_value]
-
-            # if event already exists, update it, otherwise create a new event
-            event_id = request.data.get('id')
-            domain_path = '{}{}/{}'.format(
-                settings.DOMAIN_PATH,
-                settings.BASE_PATH,
-                request.data.get('id'),
-            )
-            try:
-                if not event_id:
-                    raise ValidationError('Event ID is required')
-                if Event.objects.filter(id=event_id).exists():
-                    event = Event.objects.get(id=event_id)
-                    event.title = title
-                    event.domain = domain_path
-                    event.locale = request.data.get('locale') or 'en'
-                    event.timezone = request.data.get('timezone') or 'UTC'
-                    event.trait_grants = trait_grants
-                    event.save()
-                else:
-                    event = Event.objects.create(
-                        id=event_id,
-                        title=title,
-                        domain=domain_path,
-                        locale=request.data.get('locale') or 'en',
-                        timezone=request.data.get('timezone') or 'UTC',
-                        config=config,
-                        trait_grants=trait_grants,
-                    )
-                # Legacy eventyay-talk schedule connection is removed; video gets configured elsewhere.
-                site_url = settings.SITE_URL
-                protocol = get_protocol(site_url)
-                event.domain = f'{protocol}://{domain_path}'
-                return JsonResponse(model_to_dict(event, exclude=['roles']), status=201)
-            except IntegrityError as e:
-                logger.error('Database integrity error while saving event: %s', e)
-                return JsonResponse(
-                    {'error': 'An event with this ID already exists or database constraint violated'},
-                    status=400,
-                )
-            except ValidationError as e:
-                logger.error('Validation error while saving event: %s', e)
-                return JsonResponse({'error': str(e)}, status=400)
-            except Exception as e:
-                logger.error('Unexpected error creating event: %s', e)
-                return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
-        else:
-            return JsonResponse(
-                {'error': 'Event cannot be created due to missing permission'},
-                status=403,
-            )
-
-    @staticmethod
-    def get_payload_from_token(request):
-        auth_header = get_authorization_header(request).split()
-        if auth_header and auth_header[0].lower() == b'bearer':
-            if len(auth_header) == 1:
-                raise exceptions.AuthenticationFailed('Invalid token header. No credentials provided.')
-            elif len(auth_header) > 2:
-                raise exceptions.AuthenticationFailed('Invalid token header. Token string should not contain spaces.')
-        try:
-            payload = jwt.decode(auth_header[1], settings.SECRET_KEY, algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed('Token has expired')
-        except jwt.DecodeError:
-            raise exceptions.AuthenticationFailed('Invalid token')
-        return payload
 
 
 class UserFavouriteView(APIView):
