@@ -1,0 +1,9 @@
+{% extends 'eventyay_common/auth/base.html' %}
+{% load i18n %}
+{% block content %}
+  <section class="organizer-request-success">
+    <h1>{% trans 'Request received' %}</h1>
+    <p>{% trans 'Thank you for your request. We will review it within a few business days.' %}</p>
+    <p>{% trans 'We will send updates to the email address you provided.' %}</p>
+  </section>
+{% endblock %}
