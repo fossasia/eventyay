@@ -18,4 +18,8 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Review ${{ github.event.action }} on PR #${{ github.event.pull_request.number }}"
+      - env:
+          REVIEW_ACTION: ${{ github.event.action }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Review ${REVIEW_ACTION} on PR #${PR_NUMBER}"
