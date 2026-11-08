@@ -14,7 +14,9 @@
 #
 # Runs after "Approval labels trigger" (review submitted / dismissed). That split is
 # needed because review events on fork PRs only get a read-only token. This workflow
-# never checks out or runs PR code; it only reads reviews through the API.
+# never checks out or runs PR code: it checks out the default branch (workflow_run
+# always runs there) for .github/scripts/approval-labels-lib.mjs and only reads
+# reviews through the API. Logic is tested in approval-labels-lib.test.mjs.
 #
 # Manual run: Actions -> Approval labels -> Run workflow, with a PR number (backfill).
 # Labels are only recalculated on review events, so if a reviewer's repo permission
@@ -34,7 +36,8 @@ on:
         type: string
 
 permissions:
-  pull-requests: write # enough to read reviews and add/remove labels
+  contents: read       # check out the default branch for the script
+  pull-requests: write # read reviews and add/remove labels
 
 concurrency:
   group: approval-labels-${{ github.event.workflow_run.head_repository.full_name || 'manual' }}-${{ github.event.workflow_run.head_branch || inputs.pr-number }}
@@ -48,122 +51,21 @@ jobs:
   label:
     runs-on: ubuntu-latest
     steps:
+      # Default branch only (workflow_run always uses it); never the PR head.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
       - uses: actions/github-script@v9
         with:
           script: |
-            const { owner, repo } = context.repo;
-            const REQUIRED = Number(process.env.REQUIRED_APPROVALS);
-            const PREFIX = process.env.LABEL_PREFIX;
-            const WRITE_ROLES = ['admin', 'maintain', 'write'];
-
-            // 1. Find the PR(s) to update.
-            let prNumbers = [];
-            if (context.eventName === 'workflow_dispatch') {
-              const n = Number(context.payload.inputs['pr-number']);
-              if (!Number.isInteger(n) || n <= 0) {
-                core.setFailed(`Invalid PR number: ${context.payload.inputs['pr-number']}`);
-                return;
-              }
-              prNumbers = [n];
-            } else {
-              const run = context.payload.workflow_run;
-              // Filled for same-repo PRs; empty for forks.
-              prNumbers = (run.pull_requests ?? [])
-                .filter(p => p.base.repo.id === run.repository.id)
-                .map(p => p.number);
-              if (prNumbers.length === 0 && run.head_repository) {
-                const prs = await github.paginate(github.rest.pulls.list, {
-                  owner, repo, state: 'open',
-                  head: `${run.head_repository.owner.login}:${run.head_branch}`,
-                  per_page: 100,
-                });
-                prNumbers = prs.map(p => p.number);
-              }
-            }
-            if (prNumbers.length === 0) {
-              core.info('No open pull request found for this run, nothing to do');
-              return;
-            }
-
-            // Permission lookups are cached across PRs in this run.
-            const permCache = new Map();
-            const hasWriteAccess = async username => {
-              if (!permCache.has(username)) {
-                try {
-                  const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
-                    owner, repo, username,
-                  });
-                  // role_name distinguishes "maintain"; the legacy `permission`
-                  // field reports maintain as "write".
-                  const role = data.role_name ?? data.permission;
-                  permCache.set(username, WRITE_ROLES.includes(role) || WRITE_ROLES.includes(data.permission));
-                } catch (error) {
-                  if (error.status !== 404) throw error;
-                  permCache.set(username, false); // not a collaborator
-                }
-              }
-              return permCache.get(username);
-            };
-
-            const syncPr = async n => {
-              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: n });
-              if (pr.state !== 'open') {
-                core.info(`#${n} is ${pr.state}, skipping`);
-                return;
-              }
-
-              // 2. Latest decisive review per reviewer (reviews come oldest first).
-              const reviews = await github.paginate(github.rest.pulls.listReviews, {
-                owner, repo, pull_number: n, per_page: 100,
-              });
-              const latest = new Map();
-              for (const r of reviews) {
-                if (!r.user || r.user.login === pr.user.login) continue;
-                if (['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) {
-                  latest.set(r.user.login, r.state);
-                }
-              }
-
-              // 3. Count approvals from people with write access.
-              const approvers = [];
-              for (const [login, state] of latest) {
-                if (state === 'APPROVED' && await hasWriteAccess(login)) approvers.push(login);
-              }
-              const count = approvers.length;
-              core.info(`#${n}: ${count} qualifying approval(s) [${approvers.join(', ')}]`);
-
-              // 4. Sync labels: exactly one "approvals: k/N" label while 0 < k < N.
-              const wanted = count > 0 && count < REQUIRED ? `${PREFIX}${count}/${REQUIRED}` : null;
-              const current = pr.labels.map(l => l.name);
-              const managed = new RegExp(`^${PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\d+/${REQUIRED}$`);
-
-              // Add the new label first so a failure never leaves the PR with none.
-              if (wanted && !current.includes(wanted)) {
-                await github.rest.issues.addLabels({ owner, repo, issue_number: n, labels: [wanted] });
-                core.info(`#${n}: added "${wanted}"`);
-              }
-              for (const name of current) {
-                if (managed.test(name) && name !== wanted) {
-                  try {
-                    await github.rest.issues.removeLabel({ owner, repo, issue_number: n, name });
-                    core.info(`#${n}: removed "${name}"`);
-                  } catch (error) {
-                    if (error.status !== 404) throw error; // already gone
-                  }
-                }
-              }
-            };
-
-            // One failing PR must not stop the others from being synced.
-            const failed = [];
-            for (const n of prNumbers) {
-              try {
-                await syncPr(n);
-              } catch (error) {
-                core.error(`#${n}: ${error.message}`);
-                failed.push(n);
-              }
-            }
-            if (failed.length) {
-              core.setFailed(`Could not sync approval labels for: ${failed.map(n => `#${n}`).join(', ')}`);
-            }
+            const { runApprovalLabels } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/approval-labels-lib.mjs`
+            );
+            await runApprovalLabels({
+              github,
+              context,
+              core,
+              required: Number(process.env.REQUIRED_APPROVALS),
+              prefix: process.env.LABEL_PREFIX,
+            });
