@@ -1239,17 +1239,17 @@ class ProductBundle(models.Model):
     @staticmethod
     def clean_count(count):
         """
-        Validate that the bundle count is a positive integer.
+        Validate that the bundle count is a non-negative integer.
 
         :param count: The bundle count to validate.
-        :raises ValidationError: If count is None, not an int, a boolean, zero, or negative.
+        :raises ValidationError: If count is None, not an int, a boolean, or negative.
         """
         if count is None:
             raise ValidationError(_('The count cannot be empty.'))
         if isinstance(count, bool) or not isinstance(count, int):
             raise ValidationError(_('The count must be an integer.'))
-        if count <= 0:
-            raise ValidationError(_('The count needs to be greater than zero.'))
+        if count < 0:
+            raise ValidationError(_('The count needs to be equal to or greater than zero.'))
 
 
 class Question(LoggedModel):

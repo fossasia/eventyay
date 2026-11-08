@@ -1,46 +1,31 @@
+import datetime
 import time
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest import mock
 
 import pytest
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.dispatch import Signal
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 
-from eventyay.base import entitlements
 from eventyay.base.models import (
     CartPosition,
     InvoiceAddress,
     Order,
     OrderPosition,
+    Product as Item,
+    ProductAddOn as ItemAddOn,
+    ProductBundle as ItemBundle,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Question,
     QuestionOption,
     Quota,
 )
-from eventyay.base.models import (
-    Product as Item,
-)
-from eventyay.base.models import (
-    ProductAddOn as ItemAddOn,
-)
-from eventyay.base.models import (
-    ProductBundle as ItemBundle,
-)
-from eventyay.base.models import (
-    ProductCategory as ItemCategory,
-)
-from eventyay.base.models import (
-    ProductVariation as ItemVariation,
-)
 from eventyay.base.models.orders import OrderFee
 
-
-@pytest.fixture(autouse=True)
-def allow_all_entitlements(monkeypatch):
-    """Ignore installed plan plugins so tests do not depend on the organizer's plan."""
-    monkeypatch.setattr(entitlements, 'entitlement_check', Signal())
+UTC = datetime.timezone.utc
 
 
 @pytest.fixture
@@ -414,12 +399,13 @@ def test_item_detail_bundles(token_client, organizer, event, team, item, categor
     """Test retrieving product detail includes nested bundle representations."""
     with scopes_disabled():
         i = event.products.create(name='Included thing', default_price=2)
-        item.bundles.create(bundled_product=i, count=1, designated_price=2)
+        b = item.bundles.create(bundled_product=i, count=1, designated_price=2)
     res = dict(TEST_ITEM_RES)
 
     res['id'] = item.pk
     res['bundles'] = [
         {
+            'id': b.pk,
             'bundled_product': i.pk,
             'bundled_variation': None,
             'count': 1,
@@ -430,7 +416,7 @@ def test_item_detail_bundles(token_client, organizer, event, team, item, categor
         '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk)
     )
     assert resp.status_code == 200
-    assert res['bundles'] == resp.data['bundles']
+    assert res == resp.data
 
 
 @pytest.mark.django_db
@@ -1007,6 +993,7 @@ def test_item_create_with_bundle_negative_count(token_client, organizer, event, 
 @pytest.mark.django_db
 def test_product_bundle_clean_count_validation():
     """Test ProductBundle.clean_count domain validation rules directly."""
+    ItemBundle.clean_count(0)
     ItemBundle.clean_count(1)
     ItemBundle.clean_count(10)
 
@@ -1031,12 +1018,8 @@ def test_product_bundle_clean_count_validation():
     assert 'The count must be an integer.' in str(excinfo.value)
 
     with pytest.raises(DjangoValidationError) as excinfo:
-        ItemBundle.clean_count(0)
-    assert 'The count needs to be greater than zero.' in str(excinfo.value)
-
-    with pytest.raises(DjangoValidationError) as excinfo:
         ItemBundle.clean_count(-1)
-    assert 'The count needs to be greater than zero.' in str(excinfo.value)
+    assert 'The count needs to be equal to or greater than zero.' in str(excinfo.value)
 
 
 @pytest.mark.django_db
@@ -1126,7 +1109,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
     assert resp.status_code == 400
     assert (
         resp.content.decode()
-        == '{"bundles":["Updating add-ons, bundles, or variations via PATCH/PUT is not supported. Please use '
+        == '{"non_field_errors":["Updating add-ons, bundles, or variations via PATCH/PUT is not supported. Please use '
         'the dedicated nested endpoint."]}'
     )
 
@@ -1546,18 +1529,62 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     assert resp.status_code == 400
     assert resp.content.decode() == '{"non_field_errors":["The bundled product must not have bundles on its own."]}'
 
+    # Second POST of the same pair is rejected
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
             'bundled_product': item3.pk,
             'bundled_variation': None,
-            'count': 0,
+            'count': 1,
             'designated_price': '1.50',
         },
         format='json',
     )
     assert resp.status_code == 400
-    assert 'count' in resp.content.decode()
+    assert resp.content.decode() == '{"non_field_errors":["The product already contains this bundled product."]}'
+
+    # Same product with two different variations is allowed, but duplicate variation is rejected
+    with scopes_disabled():
+        var_item = event.products.create(name='Var Product', default_price=10, has_variations=True)
+        var1 = var_item.variations.create(value='Size S', default_price=10)
+        var2 = var_item.variations.create(value='Size M', default_price=10)
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        {
+            'bundled_product': var_item.pk,
+            'bundled_variation': var1.pk,
+            'count': 1,
+            'designated_price': '2.00',
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        {
+            'bundled_product': var_item.pk,
+            'bundled_variation': var2.pk,
+            'count': 1,
+            'designated_price': '2.00',
+        },
+        format='json',
+    )
+    assert resp.status_code == 201
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
+        {
+            'bundled_product': var_item.pk,
+            'bundled_variation': var1.pk,
+            'count': 1,
+            'designated_price': '2.00',
+        },
+        format='json',
+    )
+    assert resp.status_code == 400
+    assert resp.content.decode() == '{"non_field_errors":["The product already contains this bundled product."]}'
 
 
 @pytest.mark.django_db
@@ -1579,6 +1606,18 @@ def test_bundles_update(token_client, organizer, event, item, bundle):
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk),
         {
             'count': 0,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    with scopes_disabled():
+        a = ItemBundle.objects.get(pk=bundle.pk)
+    assert a.count == 0
+
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk),
+        {
+            'count': -1,
         },
         format='json',
     )
