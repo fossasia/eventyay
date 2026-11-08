@@ -1,6 +1,5 @@
-import datetime
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from unittest import mock
 
@@ -25,7 +24,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.orders import OrderFee
 
-UTC = datetime.timezone.utc
+UTC = timezone.utc
 
 
 @pytest.fixture
