@@ -15,7 +15,7 @@ def team(organizer):
 
 @pytest.fixture
 @scopes_disabled()
-def token_client(team):
+def token_client(team, allow_all_entitlements):
     client = APIClient()
     token = team.tokens.create(name='Foo')
     client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
