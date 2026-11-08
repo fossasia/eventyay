@@ -16,7 +16,7 @@
 
 {% block content %}
     <h1>{% trans "Events" %}</h1>
-    {% if events|length == 0 and not filter_form.filtered %}
+    {% if show_personal_empty_state %}
         {% url 'eventyay_common:events.add' as create_event_url %}
         {% trans "No events yet" as empty_title %}
         {% trans "You currently do not have access to any events. Create one to get started." as empty_description %}
@@ -34,21 +34,22 @@
     {% else %}
         
         <ul class="nav nav-tabs events-overview-tabs">
-            <li role="presentation" {% if filter_form.status.value|join:"," == "live" %}class="active"{% endif %}>
-                <a href="?{% url_replace request 'status' 'live' 'tab' 'live' %}">{% trans "Live" %}</a>
+            <li role="presentation" {% if active_event_tab == 'live' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' 'live' 'tab' 'live' 'page' '' %}">{% trans "Live" %}</a>
             </li>
-            <li role="presentation" {% if filter_form.status.value|join:"," == "draft" %}class="active"{% endif %}>
-                <a href="?{% url_replace request 'status' 'draft' 'tab' 'draft' %}">{% trans "Draft" %}</a>
+            <li role="presentation" {% if active_event_tab == 'draft' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' 'draft' 'tab' 'draft' 'page' '' %}">{% trans "Draft" %}</a>
             </li>
-            <li role="presentation" {% if filter_form.status.value|join:"," == "past" %}class="active"{% endif %}>
-                <a href="?{% url_replace request 'status' 'past' 'tab' 'past' %}">{% trans "Past" %}</a>
+            <li role="presentation" {% if active_event_tab == 'past' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' 'past' 'tab' 'past' 'page' '' %}">{% trans "Past" %}</a>
             </li>
-            <li role="presentation" {% if not filter_form.status.value or filter_form.status.value|length != 1 %}class="active"{% endif %}>
-                <a href="?{% url_replace request 'status' '' 'tab' 'all' %}">{% trans "All" %}</a>
+            <li role="presentation" {% if active_event_tab == 'all' %}class="active"{% endif %}>
+                <a href="?{% url_replace request 'status' '' 'tab' 'all' 'page' '' %}">{% trans "All" %}</a>
             </li>
         </ul>
         <div class="advanced-filter-search" data-advanced-filter-search>
             <form class="filter-form advanced-filter-search-form" action="" method="get">
+                <input type="hidden" name="tab" value="{{ active_event_tab }}" data-events-overview-tab>
                 <div class="advanced-filter-search-bar">
                     <div class="input-group advanced-filter-search-query-group">
                         <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search events…' %}" aria-label="{% trans 'Search events…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
@@ -69,7 +70,7 @@
                             <span class="fa fa-filter" aria-hidden="true"></span>
                             {% trans "Filter" %}
                         </button>
-                        <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                        <a href="{{ request.path }}?tab={{ active_event_tab }}" class="btn btn-default btn-clear-filter" data-events-overview-clear aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
                             <span class="fa fa-eraser" aria-hidden="true"></span>
                             <span class="sr-only">{% trans "Clear filters" %}</span>
                         </a>
@@ -157,7 +158,7 @@
                     </td>
                     <td data-label="{% trans 'Organizer' %}">{{ e.organizer }}</td>
                     
-                    <td data-label="{% trans 'Start date' %}">
+                    <td class="events-overview-date" data-label="{% trans 'Start date' %}">
                         {% if e.has_subevents %}
                             {{ e.min_from|default_if_none:""|date:"SHORT_DATE_FORMAT" }}
                         {% else %}
@@ -165,7 +166,7 @@
                         {% endif %}
                     </td>
                     
-                    <td data-label="{% trans 'End date' %}">
+                    <td class="events-overview-date" data-label="{% trans 'End date' %}">
                         {% if e.settings.show_date_to and e.date_to %}
                             {% if e.has_subevents %}
                                 {{ e.max_fromto|default_if_none:e.max_from|default_if_none:e.max_to|default_if_none:""|date:"SHORT_DATE_FORMAT" }}
@@ -206,8 +207,10 @@
                             <li><span>{% trans "Withdrawn:" %}</span> <span>{{ e.session_counts.withdrawn }}</span></li>
                             <li><span>{% trans "Canceled:" %}</span> <span>{{ e.session_counts.canceled }}</span></li>
                         </ul>
-                        <a href="#session-stats-{{ e.pk }}" class="quotabox-more stats-dropdown-toggle" data-toggle="collapse" title="{% trans 'More session stats' %}" aria-expanded="false">
-                            <span class="fa fa-chevron-down"></span>
+                        <a href="#session-stats-{{ e.pk }}" class="quotabox-more stats-dropdown-toggle collapsed" data-toggle="collapse" title="{% trans 'More session stats' %}" aria-expanded="false" aria-controls="session-stats-{{ e.pk }}">
+                            <i class="fa fa-caret-right stats-arrow stats-arrow-collapsed" aria-hidden="true"></i>
+                            <i class="fa fa-caret-down stats-arrow stats-arrow-expanded" aria-hidden="true"></i>
+                            <span class="sr-only">{% trans "More session stats" %}</span>
                         </a>
                     </td>
                     
@@ -224,8 +227,10 @@
                             <li><span>{% trans "Withdrawn:" %}</span> <span>{{ e.speaker_counts.withdrawn }}</span></li>
                             <li><span>{% trans "Canceled:" %}</span> <span>{{ e.speaker_counts.canceled }}</span></li>
                         </ul>
-                        <a href="#speaker-stats-{{ e.pk }}" class="quotabox-more stats-dropdown-toggle" data-toggle="collapse" title="{% trans 'More speaker stats' %}" aria-expanded="false">
-                            <span class="fa fa-chevron-down"></span>
+                        <a href="#speaker-stats-{{ e.pk }}" class="quotabox-more stats-dropdown-toggle collapsed" data-toggle="collapse" title="{% trans 'More speaker stats' %}" aria-expanded="false" aria-controls="speaker-stats-{{ e.pk }}">
+                            <i class="fa fa-caret-right stats-arrow stats-arrow-collapsed" aria-hidden="true"></i>
+                            <i class="fa fa-caret-down stats-arrow stats-arrow-expanded" aria-hidden="true"></i>
+                            <span class="sr-only">{% trans "More speaker stats" %}</span>
                         </a>
                     </td>
                     
