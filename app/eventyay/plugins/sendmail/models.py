@@ -165,12 +165,8 @@ class MailLinkList(models.Model):
                 with transaction.atomic():
                     row = self.rows.select_for_update().filter(assigned_email=email).first()
                     if row is None:
-                        row = (
-                            self.rows.select_for_update(skip_locked=True)
-                            .filter(assigned_email__isnull=True)
-                            .order_by('position', 'pk')
-                            .first()
-                        )
+                        unused = self.rows.filter(assigned_email__isnull=True).order_by('position', 'pk')
+                        row = unused.select_for_update(skip_locked=True).first() or unused.select_for_update().first()
                         if row is None:
                             return None
                         row.assigned_email = email
