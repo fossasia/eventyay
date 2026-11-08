@@ -81,7 +81,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						.downloads(v-if="displayResources.length > 0")
 							hr
 							h4 {{ t.downloads }}
-							a.download(v-for="{resource, description} of displayResources", :href="resource", target="_blank")
+							a.download(v-for="{resource, link, description} of displayResources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
 								svg.download-icon(viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; flex-shrink: 0; opacity: 0.7;")
 									path(d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71")
 									path(d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71")
@@ -152,7 +152,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 </template>
 
 <script>
-import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl, getVideoEmbedUrl } from '../utils'
+import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl, getVideoEmbedUrl, resolveAbsoluteUrl, normalizeDisplayResources } from '../utils'
 import { renderEventyayRichText } from '../utils/eventyayRichText'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
@@ -201,17 +201,7 @@ export default {
 			const obj = this.modalContent?.contentObject
 			if (!obj) return []
 			const resources = obj.apiContent?.resources ?? obj.resources ?? []
-			return resources.map(r => {
-				const resPath = r.resource || r.link
-				if (resPath && resPath.toLowerCase().endsWith('.pdf')) {
-					return {
-						...r,
-						resource: r.resource ? `${r.resource}#resource` : undefined,
-						link: r.link ? `${r.link}#resource` : undefined
-					}
-				}
-				return r
-			})
+			return normalizeDisplayResources(resources)
 		},
 		talkQrcodesUrl() {
 			const id = this.modalContent?.contentObject?.id
@@ -342,6 +332,9 @@ export default {
 		},
 		close () {
 			this.$refs.modal?.close()
+		},
+		getAbsoluteResourceUrl (resource) {
+			return resolveAbsoluteUrl(resource, this.eventUrl)
 		},
 		handleSpeakerClick (speaker, event) {
 			this.$emit('showSpeaker', speaker, event)
