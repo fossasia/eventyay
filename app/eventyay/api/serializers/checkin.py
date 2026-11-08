@@ -66,7 +66,7 @@ class CheckinListSerializer(I18nAwareModelSerializer):
         full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
         full_data.update(data)
 
-        for product in full_data.get('limit_products'):
+        for product in full_data.get('limit_products') or []:
             if event != product.event:
                 raise ValidationError(_('One or more products do not belong to this event.'))
 
