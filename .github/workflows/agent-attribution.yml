@@ -1,0 +1,64 @@
+# .github/workflows/agent-attribution.yml
+#
+# Detects AI models and harnesses used to author PRs (matching the t3code convention)
+# and ensures proper attribution in the PR description and an "ai-assisted" label.
+#
+# pull_request_target runs in the context of the base branch and gets a write-capable
+# GITHUB_TOKEN so fork PRs can receive attribution labels and description updates safely.
+
+name: Agent Attribution
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, synchronize, reopened, edited]
+    branches: [dev, main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to check or update attribution
+        required: true
+        type: number
+
+concurrency:
+  group: agent-attribution-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  attribute:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.state == 'open' &&
+       (github.event.pull_request.base.ref == 'dev' || github.event.pull_request.base.ref == 'main'))
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (context.eventName === 'workflow_dispatch') {
+              const prNumber = Number(context.payload.inputs.pr_number);
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              context.payload.pull_request = {
+                number: prNumber,
+                state: data.state,
+                base: { ref: data.base.ref },
+              };
+            }
+
+            const { runAgentAttribution } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/agent-attribution-lib.mjs`
+            );
+            await runAgentAttribution({ github, context, core });

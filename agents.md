@@ -62,6 +62,7 @@ Before submitting changes:
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
+5. If submitting a PR, include attribution at the end of the PR description (e.g. `Created with <Model> in <Harness/IDE>`).
 
 ## Context Index (`.agents/context/`)
 
