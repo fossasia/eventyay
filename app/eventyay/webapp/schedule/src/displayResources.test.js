@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeDisplayResources } from './displayResources.js'
+import { normalizeDisplayResources, resolveAbsoluteUrl } from './displayResources.js'
 
 test('normalizeDisplayResources handles empty or invalid inputs', () => {
 	assert.deepEqual(normalizeDisplayResources(), [])
@@ -60,4 +60,37 @@ test('normalizeDisplayResources leaves non-PDF resources untouched', () => {
 	assert.equal(result[0].resource, undefined)
 	assert.equal(result[1].resource, 'https://example.com/notes.docx')
 	assert.equal(result[2].resource, 'https://example.com/podcast.mp3')
+})
+
+test('resolveAbsoluteUrl leaves absolute URLs unchanged', () => {
+	assert.equal(resolveAbsoluteUrl('https://example.com/slides.pdf', 'https://eventyay.com/demo/'), 'https://example.com/slides.pdf')
+	assert.equal(resolveAbsoluteUrl('http://example.com/doc.pdf', 'https://eventyay.com/demo/'), 'http://example.com/doc.pdf')
+	assert.equal(resolveAbsoluteUrl('', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl(null, 'https://eventyay.com/demo/'), null)
+})
+
+test('resolveAbsoluteUrl resolves path-relative URLs against subpath eventUrl', () => {
+	assert.equal(
+		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/democon/'),
+		'https://eventyay.com/democon/uploads/slides.pdf'
+	)
+	assert.equal(
+		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/democon'),
+		'https://eventyay.com/democon/uploads/slides.pdf'
+	)
+	assert.equal(
+		resolveAbsoluteUrl('files/presentation.pptx', 'https://eventyay.com/e/my-event/'),
+		'https://eventyay.com/e/my-event/files/presentation.pptx'
+	)
+})
+
+test('resolveAbsoluteUrl resolves root-relative URLs against origin', () => {
+	assert.equal(
+		resolveAbsoluteUrl('/media/uploads/slides.pdf', 'https://eventyay.com/democon/'),
+		'https://eventyay.com/media/uploads/slides.pdf'
+	)
+	assert.equal(
+		resolveAbsoluteUrl('/static/doc.pdf', 'https://custom.domain.org/nested/path/'),
+		'https://custom.domain.org/static/doc.pdf'
+	)
 })

@@ -1,9 +1,9 @@
 import moment from 'moment-timezone'
 import {translate} from './i18n.js'
 import { getVideoEmbedUrl } from './videoEmbed.js'
-import { normalizeDisplayResources } from './displayResources.js'
+import { normalizeDisplayResources, resolveAbsoluteUrl } from './displayResources.js'
 
-export { getVideoEmbedUrl, normalizeDisplayResources }
+export { getVideoEmbedUrl, normalizeDisplayResources, resolveAbsoluteUrl }
 
 export function getLocalizedString (string) {
 	if (!string) return ''
@@ -185,17 +185,6 @@ export function resolveScheduleApiBase ({ baseUrl = '', apiUrl = '', remoteApiUr
 export function parseBooleanAnswer (value) {
 	if (typeof value === 'boolean') return value
 	return ['true', '1', 'yes'].includes(String(value).toLowerCase())
-}
-
-export function resolveAbsoluteUrl (url, eventUrl = '') {
-	if (!url) return url
-	if (/^https?:\/\//i.test(url)) return url
-	try {
-		const origin = new URL(eventUrl || '/', window.location.origin).origin
-		return new URL(url, origin).href
-	} catch {
-		return url
-	}
 }
 
 export function buildQrcodesUrl (eventUrl, kind, code) {

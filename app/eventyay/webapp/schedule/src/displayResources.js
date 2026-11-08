@@ -21,3 +21,24 @@ export function normalizeDisplayResources (resources = []) {
 		return r
 	})
 }
+
+/**
+ * Resolves a resource URL to an absolute URL.
+ * Path-relative URLs are resolved against the full event URL (including any subpath).
+ * Root-relative URLs are resolved against the origin.
+ */
+export function resolveAbsoluteUrl (url, eventUrl = '') {
+	if (!url) return url
+	if (/^https?:\/\//i.test(url)) return url
+	try {
+		const windowOrigin = (typeof window !== 'undefined' && window.location?.origin) || 'http://localhost'
+		const base = new URL(eventUrl || '/', windowOrigin)
+		if (url.startsWith('/')) {
+			return new URL(url, base.origin).href
+		}
+		const basePath = base.href.replace(/\/?$/, '/')
+		return new URL(url, basePath).href
+	} catch {
+		return url
+	}
+}
