@@ -114,6 +114,7 @@
 						span.accordion-title {{ $t('Playback settings') }}
 						i.mdi(:class="stream.showAdvanced ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
 					.advanced-switches(v-if="stream.showAdvanced")
+						bunt-switch(name="autoStart", v-model="stream.config.autoStart", :label="$t('Autostart stream')")
 						bunt-switch(name="startMuted", v-model="stream.config.startMuted", :label="$t('Start muted')")
 						template(v-if="stream.stream_type === 'youtube'")
 							bunt-switch(name="enablePrivacyEnhancedMode", v-model="stream.config.enablePrivacyEnhancedMode", :label="$t('Enable No-Cookies')")
@@ -516,6 +517,7 @@ export default defineComponent({
 				start_time: start_time ? this.parseDateTime(start_time) : null,
 				end_time: end_time ? this.parseDateTime(end_time) : null,
 				config: {
+					autoStart: config.autoStart !== false,
 					enablePrivacyEnhancedMode: !!config.enablePrivacyEnhancedMode,
 					loop: !!config.loop,
 					modestBranding: !!config.modestBranding,
@@ -607,6 +609,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_YOUTUBE,
 						url: ytModule.config.ytid,
 						config: {
+							autoStart: ytModule.config.autoStart !== false,
 							enablePrivacyEnhancedMode: ytModule.config.enablePrivacyEnhancedMode,
 							loop: ytModule.config.loop,
 							modestBranding: ytModule.config.modestBranding,
@@ -624,6 +627,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_VIMEO,
 						url: vimeoModule.config.url,
 						config: {
+							autoStart: vimeoModule.config.autoStart !== false,
 							startMuted: vimeoModule.config.startMuted,
 							dnt: vimeoModule.config.dnt,
 							loop: vimeoModule.config.loop,
@@ -640,6 +644,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_HLS,
 						url: nativeModule.config.hls_url,
 						config: {
+							autoStart: nativeModule.config.autoStart !== false,
 							startMuted: nativeModule.config.startMuted,
 						},
 					}),
@@ -851,6 +856,7 @@ export default defineComponent({
 						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 						ytid,
 					}
+					if (primary.config.autoStart !== undefined) config.autoStart = primary.config.autoStart !== false
 					if (primary.config.enablePrivacyEnhancedMode) config.enablePrivacyEnhancedMode = true
 					if (primary.config.loop) config.loop = true
 					if (primary.config.modestBranding) config.modestBranding = true
@@ -869,6 +875,7 @@ export default defineComponent({
 						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 						url: primary.url,
 					}
+					if (primary.config.autoStart !== undefined) config.autoStart = primary.config.autoStart !== false
 					if (primary.config.startMuted) config.startMuted = true
 					if (primary.config.dnt) config.dnt = true
 					if (primary.config.loop) config.loop = true
@@ -887,6 +894,7 @@ export default defineComponent({
 						config: {
 							playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 							hls_url: primary.url,
+							autoStart: primary.config.autoStart !== false,
 							startMuted: !!primary.config?.startMuted,
 						},
 					})
@@ -961,6 +969,7 @@ export default defineComponent({
 						start_time: stream.start_time ? stream.start_time.toISOString() : null,
 						end_time: stream.end_time ? stream.end_time.toISOString() : null,
 						config: {
+							autoStart: stream.config?.autoStart !== false,
 							enablePrivacyEnhancedMode: stream.config?.enablePrivacyEnhancedMode,
 							loop: stream.config?.loop,
 							modestBranding: stream.config?.modestBranding,
