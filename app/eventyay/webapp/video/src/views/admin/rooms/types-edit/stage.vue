@@ -158,6 +158,9 @@
 							:roomId="roomId"
 							:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
 							:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
+							:fallbackEntries="pluginLanguageStreamEntries"
+							:interpreter="interpretationConfig.interpreter"
+							:autoPopulateWhep="interpretationConfig.interpreter === 'voxbento'"
 						)
 						p.stream-interpretation-hint
 							| {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
@@ -212,6 +215,9 @@
 				:roomId="roomId"
 				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
 				:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
+				:fallbackEntries="pluginLanguageStreamEntries"
+				:interpreter="interpretationConfig.interpreter"
+				:autoPopulateWhep="interpretationConfig.interpreter === 'voxbento'"
 			)
 			.tool-section.skeleton-provider-layout(v-else-if="interpretationConfig.room_enabled && interpretationConfig.interpreter && interpretationConfig.interpreter !== 'voxbento' && interpretationConfig.interpreter !== 'manual' && interpretationConfig.interpreter !== 'none'")
 				.tool-section-header
@@ -346,6 +352,11 @@ export default defineComponent({
 				this.interpretationConfig.interpreter = 'manual'
 			}
 			this.interpretationPutError = null
+		},
+		'interpretationConfig.interpreter'(val) {
+			if (this.interpretationAdmin) {
+				this.interpretationAdmin.interpreter = val
+			}
 		}
 	},
 	methods: {
@@ -402,6 +413,9 @@ export default defineComponent({
 						translation_model: data.translation_model || ''
 					}
 					this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
+					if (this.interpretationAdmin) {
+						this.interpretationAdmin.interpreter = interpreter
+					}
 					this._lastFetchRoomId = fetchingRoomId
 					this.syncStatus = 'ready'
 				} else {
@@ -978,6 +992,10 @@ export default defineComponent({
 							credentials: 'include',
 						})
 						if (!res.ok) await failSave(res, 'update', i)
+						const saved = await res.json().catch(() => null)
+						if (saved?.config?.language_streams) {
+							stream.config.language_streams = cloneLanguageStreamEntries(saved.config.language_streams)
+						}
 					} else {
 						const res = await fetch(baseUrl, {
 							method: 'POST',
@@ -986,8 +1004,11 @@ export default defineComponent({
 							credentials: 'include',
 						})
 						if (!res.ok) await failSave(res, 'create', i)
-						const saved = await res.json()
-						stream.id = saved.id
+						const saved = await res.json().catch(() => null)
+						if (saved?.id) stream.id = saved.id
+						if (saved?.config?.language_streams) {
+							stream.config.language_streams = cloneLanguageStreamEntries(saved.config.language_streams)
+						}
 					}
 				}
 			} else {

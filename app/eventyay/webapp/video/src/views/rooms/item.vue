@@ -305,10 +305,37 @@ export default {
 			if (!this.ccEnabled) return null
 			const lang = this.pluginLanguages.find(l => l.language === this.selectedCcLanguage)
 			if (!lang?.caption_ws_url) return null
+			if (lang.is_schedule_stream) {
+				return lang.caption_ws_url
+			}
 			// VoxBento caption WS is public; do not require listenerToken (often unavailable with OAuth-only).
 			if (this.listenerToken) {
-				const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
-				return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
+				let isTrusted = false
+				let captionHost = null
+				try {
+					captionHost = new URL(lang.caption_ws_url, window.location.href).host
+				} catch (e) {
+					console.warn('Failed to parse caption WebSocket URL:', lang.caption_ws_url, e)
+				}
+
+				let apiHost = null
+				try {
+					const apiUrl = this.room?.id
+						? interpretationApiUrl(this.$store, this.room.id)
+						: window.location.href
+					apiHost = new URL(apiUrl, window.location.href).host
+				} catch (e) {
+					console.warn('Failed to parse interpretation API URL:', e)
+				}
+
+				if (captionHost && apiHost && captionHost === apiHost) {
+					isTrusted = true
+				}
+
+				if (isTrusted) {
+					const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
+					return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
+				}
 			}
 			return lang.caption_ws_url
 		},
@@ -359,7 +386,12 @@ export default {
 			immediate: true
 		},
 		'room.currentStream': {
-			handler: 'initializeLanguages'
+			handler: 'initializeLanguages',
+			deep: true
+		},
+		'room.upcomingStream': {
+			handler: 'initializeLanguages',
+			deep: true
 		},
 		'room.interpretation_language_streams': {
 			handler: 'initializeLanguages'
@@ -491,6 +523,9 @@ export default {
 		},
 		initializeLanguages() {
 			this.pluginLanguages = pluginLanguageStreams(this.room)
+			if (!this.pluginLanguages.some(l => l.language === this.selectedCcLanguage && l.caption_ws_url)) {
+				this.selectedCcLanguage = firstCaptionLanguage(this.pluginLanguages) || 'Original'
+			}
 			this.clearStaleTranslation()
 		},
 		getLanguageForTranslation(translationConfig, languages) {
