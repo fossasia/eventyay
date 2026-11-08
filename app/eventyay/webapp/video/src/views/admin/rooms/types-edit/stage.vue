@@ -168,19 +168,20 @@
 				i.mdi.mdi-plus(aria-hidden="true")
 				span {{ $t('Add scheduled streams') }}
 
-		.tool-section(v-if="!creating && showPluginLanguageStreams && syncStatus === 'loading'")
+		.tool-section(v-if="!creating && isInterpretationPluginAvailable && syncStatus === 'loading'")
 			.tool-section-header
 				h3 {{ $t('Caption settings') }}
 			bunt-progress-circular(size="small")
 
-		.tool-section(v-if="!creating && showPluginLanguageStreams && syncStatus === 'error'")
+		.tool-section(v-if="!creating && isInterpretationPluginAvailable && syncStatus === 'error'")
 			.tool-section-header
 				h3 {{ $t('Caption settings') }}
 				p.subtitle {{ $t('Live translations and transcripts are provided by the eventyay-interpretation plugin.') }}
 			.interpretation-error-banner
 				i.mdi.mdi-alert-circle-outline(aria-hidden="true")
 				span.error-text {{ interpretationPutError || $t('Could not load interpretation settings. Please try again.') }}
-				bunt-button.btn-retry(@click="fetchInterpretationConfig(true)") {{ $t('Retry') }}
+				bunt-button.btn-retry(@click="fetchInterpretationConfig(true)", :disabled="cooldownRemaining > 0")
+					| {{ cooldownRemaining > 0 ? $t('Wait ({n}s)', { n: cooldownRemaining }) : $t('Retry') }}
 
 		.tool-section(v-if="isInterpretationFeatureAvailable")
 			.tool-section-header
@@ -301,6 +302,10 @@ export default defineComponent({
 			interpretationConfig: { room_enabled: false, interpreter: '', translation_model: '' },
 			availableInterpreters: [],
 			interpretationPutError: null,
+			cooldownRemaining: 0,
+			_cooldownInterval: null,
+			_isFetchingConfig: false,
+			_fetchConfigPromise: null,
 			_lastFetchRoomId: null,
 			_fetchInterpretationSeq: 0,
 			schedulesLoaded: false,
@@ -330,10 +335,13 @@ export default defineComponent({
 			return inferPlaybackModeFromStreams(this.streams) === PLAYBACK_MODE_SCHEDULE_DRIVEN
 		},
 		showPluginLanguageStreams() {
+			if (this.interpretationConfig?.room_enabled) {
+				return true
+			}
 			if (this.config?.interpretation_use_plugin_streams !== undefined) {
 				return Boolean(this.config.interpretation_use_plugin_streams)
 			}
-			if (this.interpretationAdmin?.usePluginStreams !== undefined) {
+			if (this.interpretationAdmin?.usePluginStreams != null) {
 				return Boolean(this.interpretationAdmin.usePluginStreams)
 			}
 			const injected = typeof window !== 'undefined' ? (window.eventyay || window.venueless) : null
@@ -341,6 +349,20 @@ export default defineComponent({
 				return Boolean(injected.interpretation.usePluginStreams)
 			}
 			return false
+		},
+		isInterpretationPluginAvailable() {
+			if (this.creating) return false
+			if (this.$store.state.world?.interpretation?.isEnabled !== undefined) {
+				return Boolean(this.$store.state.world.interpretation.isEnabled)
+			}
+			const injected = typeof window !== 'undefined' ? (window.eventyay || window.venueless) : null
+			if (injected?.interpretation?.isEnabled !== undefined) {
+				return Boolean(injected.interpretation.isEnabled)
+			}
+			if (Array.isArray(injected?.plugins)) {
+				return injected.plugins.some(p => p.includes('interpretation'))
+			}
+			return true
 		},
 		isInterpretationFeatureAvailable() {
 			return !this.creating && this.syncStatus === 'ready'
@@ -379,17 +401,16 @@ export default defineComponent({
 	created() {
 		this.initStreams()
 	},
+	beforeUnmount() {
+		this.clearCooldownTimer()
+	},
 	watch: {
-		showPluginLanguageStreams: {
-			immediate: true,
-			handler() {
-				this.fetchInterpretationConfig()
-			}
-		},
 		roomId: {
 			immediate: true,
-			handler() {
-				this.fetchInterpretationConfig()
+			handler(newId) {
+				if (newId) {
+					this.fetchInterpretationConfig()
+				}
 			}
 		},
 		'interpretationConfig.room_enabled'(enabled) {
@@ -401,7 +422,7 @@ export default defineComponent({
 		'$store.state.world': {
 			handler(newWorld) {
 				if (newWorld) {
-					if (this.syncStatus === 'loading' || this.syncStatus === 'error' || !this._lastFetchRoomId) {
+					if ((this.syncStatus === 'loading' || !this._lastFetchRoomId) && this.cooldownRemaining <= 0) {
 						this.fetchInterpretationConfig()
 					}
 					if (!this.schedulesLoaded || this.schedulesLoading) {
@@ -412,6 +433,24 @@ export default defineComponent({
 		}
 	},
 	methods: {
+		startCooldownTimer(seconds) {
+			this.clearCooldownTimer()
+			this.cooldownRemaining = Math.max(1, Math.round(seconds))
+			this._cooldownInterval = setInterval(() => {
+				this.cooldownRemaining--
+				if (this.cooldownRemaining <= 0) {
+					this.clearCooldownTimer()
+					this.interpretationPutError = this.$t('Cooldown period complete. Please click Retry.')
+				}
+			}, 1000)
+		},
+		clearCooldownTimer() {
+			if (this._cooldownInterval) {
+				clearInterval(this._cooldownInterval)
+				this._cooldownInterval = null
+			}
+			this.cooldownRemaining = 0
+		},
 		usableLanguageStreamCount(stream) {
 			return (stream.config?.language_streams || []).filter(isUsableLanguageStreamEntry).length
 		},
@@ -425,21 +464,21 @@ export default defineComponent({
 				this.syncStatus = 'unsupported'
 				return
 			}
-			if (!this.showPluginLanguageStreams) {
-				this._lastFetchRoomId = null
-				this.syncStatus = 'unsupported'
-				return
-			}
 			if (!this.roomId) return
+
+			if (this.cooldownRemaining > 0) return
+
 			if (!force && this._lastFetchRoomId === this.roomId && (this.syncStatus === 'ready' || this.syncStatus === 'unsupported')) return
 
-			if (force && this.interpretationAdmin?.reload) {
-				this.interpretationAdmin.reload()
+			if (this._isFetchingConfig) {
+				return this._fetchConfigPromise
 			}
 
+			this._isFetchingConfig = true
 			const fetchingRoomId = this.roomId
 			const url = interpretationApiUrl(this.$store, fetchingRoomId, 'config/')
 			if (!url) {
+				this._isFetchingConfig = false
 				if (this.$store.state.world) {
 					this._lastFetchRoomId = null
 					this.syncStatus = 'unsupported'
@@ -454,71 +493,75 @@ export default defineComponent({
 			this.syncStatus = 'loading'
 			this.interpretationPutError = null
 
-			try {
-				const headers = await interpretationAuthHeaders()
-				headers['Cache-Control'] = 'no-store'
-				const response = await fetch(url, {
-					headers,
-					credentials: 'include',
-				})
+			this._fetchConfigPromise = (async () => {
+				try {
+					const headers = await interpretationAuthHeaders()
+					headers['Cache-Control'] = 'no-store'
+					const response = await fetch(url, {
+						headers,
+						credentials: 'include',
+					})
 
-				if (fetchSeq !== this._fetchInterpretationSeq) return
+					if (fetchSeq !== this._fetchInterpretationSeq) return
 
-				if (!response.ok) {
-					this._lastFetchRoomId = null
-					if (response.status === 404) {
-						this.syncStatus = 'unsupported'
+					if (!response.ok) {
+						this._lastFetchRoomId = null
+						if (response.status === 404) {
+							this.syncStatus = 'unsupported'
+							return
+						}
+						const errData = await response.json().catch(() => ({}))
+						if (fetchSeq !== this._fetchInterpretationSeq) return
+						const detail = apiErrorDetail(errData) || apiErrorMessage(errData, '') || response.statusText
+						if (response.status === 429) {
+							const retryAfterHeader = response.headers.get('Retry-After')
+							const retrySeconds = parseInt(retryAfterHeader, 10) || 60
+							this.startCooldownTimer(retrySeconds)
+							this.interpretationPutError = this.$t('Request throttled due to too many requests. Please wait {seconds}s and click Retry.', { seconds: retrySeconds })
+						} else {
+							this.interpretationPutError = detail || this.$t('Could not load interpretation settings')
+						}
+						this.syncStatus = 'error'
 						return
 					}
-					const errData = await response.json().catch(() => ({}))
-					if (fetchSeq !== this._fetchInterpretationSeq) return
-					const detail = apiErrorDetail(errData) || apiErrorMessage(errData, '') || response.statusText
-					if (response.status === 429) {
-						this.interpretationPutError = this.$t('Request throttled due to too many requests. Please wait a moment and click Retry.')
+
+					// discard response if stale or the user navigated to a different room mid-flight
+					if (fetchSeq !== this._fetchInterpretationSeq || fetchingRoomId !== this.roomId) return
+
+					const data = await response.json()
+					if (fetchSeq !== this._fetchInterpretationSeq || fetchingRoomId !== this.roomId) return
+
+					if (data.ui_sync_supported) {
+						let interpreter = data.interpreter === 'none' ? '' : (data.interpreter || '')
+						const roomEnabled = Boolean(data.room_enabled)
+						if (!interpreter || interpreter === 'none') {
+							interpreter = 'manual'
+						}
+						this.interpretationConfig = {
+							room_enabled: roomEnabled,
+							interpreter,
+							translation_model: data.translation_model || ''
+						}
+						this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
+						this._lastFetchRoomId = fetchingRoomId
+						this.syncStatus = 'ready'
 					} else {
-						this.interpretationPutError = detail || this.$t('Could not load interpretation settings')
+						this._lastFetchRoomId = null
+						this.syncStatus = 'unsupported'
 					}
-					this.syncStatus = 'error'
-					return
-				}
-
-				// discard response if stale or the user navigated to a different room mid-flight
-				if (fetchSeq !== this._fetchInterpretationSeq || fetchingRoomId !== this.roomId) return
-
-				// discard if plugin streams were disabled while the request was in-flight
-				if (!this.showPluginLanguageStreams) return
-
-				const data = await response.json()
-				if (fetchSeq !== this._fetchInterpretationSeq || fetchingRoomId !== this.roomId) return
-
-				if (data.ui_sync_supported) {
-					let interpreter = data.interpreter === 'none' ? '' : (data.interpreter || '')
-					const roomEnabled = Boolean(data.room_enabled)
-					if (!interpreter || interpreter === 'none') {
-						interpreter = 'manual'
-					}
-					this.interpretationConfig = {
-						room_enabled: roomEnabled,
-						interpreter,
-						translation_model: data.translation_model || ''
-					}
-					this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
-					this._lastFetchRoomId = fetchingRoomId
-					this.syncStatus = 'ready'
-					if (this.interpretationAdmin?.streamsLoadFailed && this.interpretationAdmin?.reload) {
-						this.interpretationAdmin.reload()
-					}
-				} else {
+				} catch (err) {
+					if (fetchSeq !== this._fetchInterpretationSeq) return
+					console.warn('Failed to fetch interpretation config:', err)
 					this._lastFetchRoomId = null
-					this.syncStatus = 'unsupported'
+					this.syncStatus = 'error'
+					this.interpretationPutError = err.message || this.$t('Network error while loading interpretation settings')
+				} finally {
+					this._isFetchingConfig = false
+					this._fetchConfigPromise = null
 				}
-			} catch (err) {
-				if (fetchSeq !== this._fetchInterpretationSeq) return
-				console.warn('Failed to fetch interpretation config:', err)
-				this._lastFetchRoomId = null
-				this.syncStatus = 'error'
-				this.interpretationPutError = err.message || this.$t('Network error while loading interpretation settings')
-			}
+			})()
+
+			return this._fetchConfigPromise
 		},
 		async saveInterpretationConfig(targetRoomId) {
 			if (this.syncStatus !== 'ready') return

@@ -151,6 +151,8 @@ export default {
 				reload: () => this.loadInterpretationLanguageStreams(),
 			},
 			_loadStreamsSeq: 0,
+			_isLoadingStreams: false,
+			_loadStreamsPromise: null,
 		}
 	},
 	async created() {
@@ -244,7 +246,7 @@ export default {
 	watch: {
 		'$store.state.world': {
 			handler(newWorld) {
-				if (newWorld && (!this.interpretationAdmin.loaded || this.interpretationAdmin.streamsLoadFailed)) {
+				if (newWorld && !this.interpretationAdmin.loaded && !this.interpretationAdmin.loading && !this.interpretationAdmin.streamsLoadFailed) {
 					this.loadInterpretationLanguageStreams()
 				}
 			}
@@ -260,52 +262,62 @@ export default {
 	methods: {
 		async loadInterpretationLanguageStreams() {
 			if (this.creating || !this.config?.id) return
+			if (this._isLoadingStreams) return this._loadStreamsPromise
+			this._isLoadingStreams = true
+
 			const seq = ++this._loadStreamsSeq
 			const targetRoomId = this.config.id
 			this.interpretationAdmin.loading = true
 			this.interpretationAdmin.loaded = false
 			this.interpretationAdmin.streamsLoadFailed = false
-			try {
-				const data = await fetchInterpretationLanguageStreams(
-					this.$store,
-					targetRoomId
-				)
-				if (seq !== this._loadStreamsSeq || targetRoomId !== this.config?.id) return
-				if (data && data.unsupported) {
-					this.interpretationAdmin.unsupported = true
-					this.interpretationAdmin.usePluginStreams = false
-					this.interpretationAdmin.languageStreams = []
-					this.interpretationAdmin.streamsLoadFailed = false
-				} else if (data && data.use_plugin_language_streams !== undefined) {
-					this.interpretationAdmin.unsupported = false
-					this.interpretationAdmin.usePluginStreams = Boolean(
-						data.use_plugin_language_streams
+
+			this._loadStreamsPromise = (async () => {
+				try {
+					const data = await fetchInterpretationLanguageStreams(
+						this.$store,
+						targetRoomId
 					)
-					this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
-					if (this.interpretationAdmin.usePluginStreams) {
-						this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
-							data.language_streams
+					if (seq !== this._loadStreamsSeq || targetRoomId !== this.config?.id) return
+					if (data && data.unsupported) {
+						this.interpretationAdmin.unsupported = true
+						this.interpretationAdmin.usePluginStreams = false
+						this.interpretationAdmin.languageStreams = []
+						this.interpretationAdmin.streamsLoadFailed = false
+					} else if (data && data.use_plugin_language_streams !== undefined) {
+						this.interpretationAdmin.unsupported = false
+						this.interpretationAdmin.usePluginStreams = Boolean(
+							data.use_plugin_language_streams
 						)
+						this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
+						if (this.interpretationAdmin.usePluginStreams) {
+							this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
+								data.language_streams
+							)
+						}
 					}
+				} catch (error) {
+					if (seq !== this._loadStreamsSeq || targetRoomId !== this.config?.id) return
+					console.warn('interpretation language streams unavailable', error)
+					this.interpretationAdmin.streamsLoadFailed = true
+					const fallbackUseStreams = Boolean(
+						this.interpretationAdmin.usePluginStreams ??
+						this.config.interpretation_use_plugin_streams ??
+						(typeof window !== 'undefined' && (window.eventyay?.interpretation?.usePluginStreams ?? window.venueless?.interpretation?.usePluginStreams)) ??
+						false
+					)
+					this.interpretationAdmin.usePluginStreams = fallbackUseStreams
+					this.interpretationAdmin.languageStreams = []
+				} finally {
+					if (seq === this._loadStreamsSeq && targetRoomId === this.config?.id) {
+						this.interpretationAdmin.loading = false
+						this.interpretationAdmin.loaded = true
+					}
+					this._isLoadingStreams = false
+					this._loadStreamsPromise = null
 				}
-			} catch (error) {
-				if (seq !== this._loadStreamsSeq || targetRoomId !== this.config?.id) return
-				console.warn('interpretation language streams unavailable', error)
-				this.interpretationAdmin.streamsLoadFailed = true
-				const fallbackUseStreams = Boolean(
-					this.interpretationAdmin.usePluginStreams ??
-					this.config.interpretation_use_plugin_streams ??
-					(typeof window !== 'undefined' && (window.eventyay?.interpretation?.usePluginStreams ?? window.venueless?.interpretation?.usePluginStreams)) ??
-					false
-				)
-				this.interpretationAdmin.usePluginStreams = fallbackUseStreams
-				this.interpretationAdmin.languageStreams = []
-			} finally {
-				if (seq === this._loadStreamsSeq && targetRoomId === this.config?.id) {
-					this.interpretationAdmin.loading = false
-					this.interpretationAdmin.loaded = true
-				}
-			}
+			})()
+
+			return this._loadStreamsPromise
 		},
 		async save({ openScheduleAfterCreate = false, streamScheduleDraft = null } = {}) {
 			this.error = null

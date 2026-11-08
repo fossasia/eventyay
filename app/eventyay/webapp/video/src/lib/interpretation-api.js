@@ -161,17 +161,11 @@ export async function fetchListenerToken(store, roomId) {
 }
 
 export async function interpretationAuthHeaders(json = false) {
-	let authHeader = null
-	if (api?._config?.token) {
-		authHeader = `Bearer ${api._config.token}`
-	} else if (api?._config?.clientId) {
-		authHeader = `Client ${api._config.clientId}`
-	}
 	const headers = { Accept: 'application/json' }
 	if (json) headers['Content-Type'] = 'application/json'
-	if (authHeader) headers.Authorization = authHeader
-	if (json && typeof document !== 'undefined') {
-		const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	if (typeof document !== 'undefined') {
+		const match = document.cookie.match(/(?:^|; )eventyay_csrftoken=([^;]+)/) ||
+			document.cookie.match(/(?:^|; )csrftoken=([^;]+)/)
 		if (match) headers['X-CSRFToken'] = match[1]
 	}
 	return headers
