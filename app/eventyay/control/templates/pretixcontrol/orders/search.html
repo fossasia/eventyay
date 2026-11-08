@@ -24,4 +24,5 @@
 {% endblock %}
 {% block custom_header %}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
 {% endblock %}

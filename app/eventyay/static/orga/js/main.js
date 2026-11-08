@@ -300,3 +300,7 @@ onReady(() => {
   initFeedbackBulkActions()
   initConfirmSubmit()
 })
+
+if (typeof window !== 'undefined') {
+  window.showOrgaConfirmDialog = showOrgaConfirmDialog
+}
