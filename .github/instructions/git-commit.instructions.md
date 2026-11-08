@@ -24,3 +24,4 @@ applyTo: "**"
 - Only work inside this repository.
 - All changes must be self-contained; do not depend on code in external forks or unmerged upstream branches. You may reference issues for context, but the PR itself must be reviewable and workable on its own in this repo.
 - If an AI coding agent or model was used to create or assist the PR, include attribution at the end of the PR description in the format: `Created with <Model> in <Harness/IDE>, run from <Environment>.` (e.g. `Created with Claude Opus 4.6 in Claude Code` or `Created with Gemini in Antigravity`).
+- If an AI coding agent was used to review a PR (inline comment or review summary), include attribution at the end of the review in the format: `Reviewed with <Model> in <Harness/IDE>, run from <Environment>.`

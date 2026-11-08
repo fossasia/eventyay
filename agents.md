@@ -31,6 +31,15 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 5. Namespaces: use `eventyay.*` imports for new code; do not introduce new `pretix.*`, `pretalx.*`, or `venueless.*` imports.
 6. ORM efficiency: prefer `select_related` and `prefetch_related` to avoid N+1 queries.
 
+## AI Attribution Rules
+
+1. **PR Authoring**: When creating or assisting a PR with AI, include attribution at the end of the PR description:
+   `Created with <Model> in <Harness/IDE>, run from <Environment>.`
+   (e.g., `Created with Claude Opus 4.6 in Claude Code` or `Created with Gemini in Antigravity`).
+2. **PR Reviews**: When reviewing a PR with AI (inline comments, review summaries, or change requests), include attribution at the end of the review comment or summary:
+   `Reviewed with <Model> in <Harness/IDE>, run from <Environment>.`
+   (e.g., `Reviewed with Claude Opus 4.6 in Claude Code` or `Reviewed with Gemini in Antigravity`).
+
 ## File-Scoped Standards
 
 Always apply the matching scoped rule file before editing:
@@ -62,7 +71,8 @@ Before submitting changes:
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
-5. If submitting a PR, include attribution at the end of the PR description (e.g. `Created with <Model> in <Harness/IDE>`).
+5. If submitting a PR, include attribution at the end of the PR description (`Created with <Model> in <Harness/IDE>`).
+6. If reviewing a PR with AI, include attribution at the end of the review comment (`Reviewed with <Model> in <Harness/IDE>`).
 
 ## Context Index (`.agents/context/`)
 

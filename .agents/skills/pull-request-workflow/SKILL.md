@@ -17,6 +17,7 @@ Use this skill when preparing changes for review, responding to feedback, and fi
 4. Write a concise commit message that states what changed.
 5. Prepare a clear PR description with context, test evidence, and risk notes.
 6. Address reviewer comments with concrete follow-up commits.
+7. When creating or reviewing PRs using AI, include attribution at the end (`Created with <Model> in <Harness/IDE>` or `Reviewed with <Model> in <Harness/IDE>`).
 
 ## Guardrails
 

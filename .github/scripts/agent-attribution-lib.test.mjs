@@ -15,9 +15,22 @@ test('parseExistingAttribution parses t3code style line', () => {
   const parsed = parseExistingAttribution(`Some text\n\n${line}`);
   assert.deepEqual(parsed, {
     raw: line,
+    action: 'Created',
     model: 'Claude Opus 5.5',
     harness: 'Claude Code',
     environment: 'T3 Code',
+  });
+});
+
+test('parseExistingAttribution parses review attribution line', () => {
+  const line = 'Reviewed with Gemini 2.0 Flash in Antigravity.';
+  const parsed = parseExistingAttribution(`Review feedback\n\n${line}`);
+  assert.deepEqual(parsed, {
+    raw: line,
+    action: 'Reviewed',
+    model: 'Gemini 2.0 Flash',
+    harness: 'Antigravity',
+    environment: undefined,
   });
 });
 
@@ -26,6 +39,7 @@ test('parseExistingAttribution parses without run from', () => {
   const parsed = parseExistingAttribution(`Body\n\n${line}`);
   assert.deepEqual(parsed, {
     raw: line,
+    action: 'Created',
     model: 'Composer',
     harness: 'Cursor',
     environment: undefined,

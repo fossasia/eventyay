@@ -5,7 +5,7 @@
 // and ensures the "ai-assisted" label is applied.
 
 export const AI_LABEL = 'ai-assisted';
-export const ATTRIBUTION_PATTERN = /Created with ([\w\s.-]+?) in ([\w\s.-]+?)(?:,\s*run from ([\w\s.-]+?))?\s*\.?$/im;
+export const ATTRIBUTION_PATTERN = /(Created|Reviewed) with ([\w\s.-]+?) in ([\w\s.-]+?)(?:,\s*run from ([\w\s.-]+?))?\s*\.?$/im;
 
 export const KNOWN_MODELS = [
   { name: 'Claude Opus 4.6', regex: /\bclaude[- ](?:opus[- ])?4\.6\b/i },
@@ -46,9 +46,10 @@ export function parseExistingAttribution(text) {
   if (!match) return null;
   return {
     raw: match[0].trim(),
-    model: match[1]?.trim(),
-    harness: match[2]?.trim(),
-    environment: match[3]?.trim(),
+    action: match[1]?.trim(),
+    model: match[2]?.trim(),
+    harness: match[3]?.trim(),
+    environment: match[4]?.trim(),
   };
 }
 
@@ -95,12 +96,12 @@ export function detectAgentDetails(texts) {
   return null;
 }
 
-// Formats attribution line following t3code style: "Created with <Model> in <Harness>, run from <Environment>."
-export function formatAttributionLine({ model, harness, environment }) {
+// Formats attribution line following t3code style: "<Action> with <Model> in <Harness>, run from <Environment>."
+export function formatAttributionLine({ action = 'Created', model, harness, environment }) {
   if (environment) {
-    return `Created with ${model} in ${harness}, run from ${environment}.`;
+    return `${action} with ${model} in ${harness}, run from ${environment}.`;
   }
-  return `Created with ${model} in ${harness}.`;
+  return `${action} with ${model} in ${harness}.`;
 }
 
 // Appends the attribution line to PR body if not already present.
