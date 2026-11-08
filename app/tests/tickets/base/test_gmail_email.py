@@ -2,15 +2,18 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
+from celery.exceptions import Retry
 from django.core.mail import EmailMessage
 from django.test import override_settings
-from django.utils.timezone import localdate
+from django.urls import reverse
+from django.utils.timezone import localdate, now
 
 from eventyay.base.gmail.backend import GmailAPIEmail
 from eventyay.base.gmail.crypto import decrypt_value, encrypt_value
 from eventyay.base.gmail.errors import GmailDailyLimitError, GmailRateLimitError
 from eventyay.base.gmail.models import GmailOAuthCredential
 from eventyay.base.gmail.oauth import fetch_sender_email
+from eventyay.base.models import Event, Organizer
 
 
 @pytest.mark.django_db
@@ -75,8 +78,10 @@ def test_classify_http_error():
     _, _, _, HttpError = require_google_api_dependencies()
     
     class FakeResponse:
+        # HttpError reads resp.reason while building its message.
         def __init__(self, status):
             self.status = status
+            self.reason = ''
             
     resp = FakeResponse(429)
     content = json.dumps({'error': {'errors': [{'reason': 'rateLimitExceeded'}], 'message': 'Rate limit'}}).encode('utf-8')
@@ -129,7 +134,8 @@ def test_mail_send_task_retries_on_gmail_rate_limit():
         mock_backend.send_messages.side_effect = GmailRateLimitError("Rate limited")
         mock_backend.retry_countdown = 60
         
-        with patch.object(mail_send_task, 'retry') as mock_retry:
+        # Celery's retry() raises Retry to reschedule the task.
+        with patch.object(mail_send_task, 'retry', side_effect=Retry()) as mock_retry, pytest.raises(Retry):
             mail_send_task(
                 to=['user@example.com'],
                 subject='Test',
@@ -137,22 +143,26 @@ def test_mail_send_task_retries_on_gmail_rate_limit():
                 html=None,
                 sender='sender@example.com',
             )
-            mock_retry.assert_called_once()
-            args, kwargs = mock_retry.call_args
-            assert 'countdown' in kwargs
+        mock_retry.assert_called_once()
+        assert 'countdown' in mock_retry.call_args.kwargs
 
 
 @pytest.mark.django_db
 def test_gmail_oauth_views_require_admin(client):
-    response = client.get('/control/global/settings/gmail/connect')
+    response = client.get(reverse('eventyay_admin:admin.global.gmail.connect'))
     assert response.status_code == 302
-    assert '/control/login' in response.url
+    assert response.url.startswith(reverse('auth.login'))
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_event_gmail_oauth_views_require_permission(client):
-    response = client.get('/control/event/organizer/event/settings/gmail/connect')
+    organizer = Organizer.objects.create(name='Dummy', slug='dummy')
+    event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy', date_from=now())
+    response = client.get(
+        reverse('common:event.gmail.connect', kwargs={'organizer': organizer.slug, 'event': event.slug})
+    )
     assert response.status_code == 302
-    assert '/control/login' in response.url
+    assert response.url.startswith(reverse('auth.login'))
 
 
 @pytest.mark.django_db
