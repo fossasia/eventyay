@@ -32,27 +32,60 @@ on:
 permissions:
   contents: read       # check out the default branch for the script
   pull-requests: write # read reviews and add/remove labels
-
-concurrency:
-  group: changes-requested-label-${{ github.event.workflow_run.head_repository.full_name || 'manual' }}-${{ github.event.workflow_run.head_branch || inputs.pr-number }}
-  cancel-in-progress: false
+  issues: write        # manage labels on issues/PRs
+  actions: read        # read trigger workflow run logs to resolve PR number
 
 jobs:
-  label:
+  resolve-targets:
     runs-on: ubuntu-latest
+    outputs:
+      pr_numbers: ${{ steps.resolve.outputs.pr_numbers }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - id: resolve
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { resolvePrNumbers } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/changes-requested-label-lib.mjs`
+            );
+            const prNumbers = await resolvePrNumbers({ github, context });
+            if (prNumbers === null) {
+              core.setFailed(`Invalid PR number: ${context.payload.inputs?.['pr-number']}`);
+              return;
+            }
+            core.setOutput('pr_numbers', JSON.stringify(prNumbers));
+
+  label:
+    needs: resolve-targets
+    if: ${{ needs.resolve-targets.outputs.pr_numbers != '[]' && needs.resolve-targets.outputs.pr_numbers != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJson(needs.resolve-targets.outputs.pr_numbers) }}
+    concurrency:
+      group: changes-requested-label-${{ matrix.pr_number }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
         with:
           script: |
-            const { runChangesRequestedLabel } = await import(
+            const { syncSinglePr } = await import(
               `${process.env.GITHUB_WORKSPACE}/.github/scripts/changes-requested-label-lib.mjs`
             );
-            await runChangesRequestedLabel({
+            await syncSinglePr({
               github,
               context,
               core,
+              prNumber: Number(process.env.PR_NUMBER),
             });
