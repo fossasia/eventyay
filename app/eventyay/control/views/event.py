@@ -958,6 +958,10 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
 
         link_list_id = self.request.GET.get('link_list') or ''
         if link_list_id.isdigit():
+            if not self.request.user.has_event_permission(
+                self.request.organizer, self.request.event, 'can_change_orders', request=self.request
+            ):
+                return {}
             link_list = MailLinkList.objects.filter(event=self.request.event, pk=link_list_id).first()
             return link_list.sample_values() if link_list else {}
         try:
