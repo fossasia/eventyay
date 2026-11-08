@@ -7,7 +7,7 @@ const initUserSearch = () => {
     let select = document.querySelector("#id_email")
     if (!select) select = document.querySelector("#id_invite-email")
     if (!select) select = document.querySelector("#id_speaker-email")
-    if (!select) return
+    if (!select || select.closest("#new_speaker_section")) return
 
     const usersByEmail = new Map()
     const toChoice = (user) => ({
