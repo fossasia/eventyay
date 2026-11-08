@@ -62,16 +62,25 @@ test('normalizeDisplayResources leaves non-PDF resources untouched', () => {
 	assert.equal(result[2].resource, 'https://example.com/podcast.mp3')
 })
 
-test('resolveAbsoluteUrl leaves absolute URLs unchanged', () => {
+test('resolveAbsoluteUrl leaves safe absolute URLs unchanged', () => {
 	assert.equal(resolveAbsoluteUrl('https://example.com/slides.pdf', 'https://eventyay.com/demo/'), 'https://example.com/slides.pdf')
 	assert.equal(resolveAbsoluteUrl('http://example.com/doc.pdf', 'https://eventyay.com/demo/'), 'http://example.com/doc.pdf')
 	assert.equal(resolveAbsoluteUrl('ftp://ftp.example.com/slides.pdf', 'https://eventyay.com/demo/'), 'ftp://ftp.example.com/slides.pdf')
 	assert.equal(resolveAbsoluteUrl('sftp://files.example.com/data.tar.gz', 'https://eventyay.com/demo/'), 'sftp://files.example.com/data.tar.gz')
+	assert.equal(resolveAbsoluteUrl('mailto:speaker@example.com', 'https://eventyay.com/demo/'), 'mailto:speaker@example.com')
+	assert.equal(resolveAbsoluteUrl('tel:+1234567890', 'https://eventyay.com/demo/'), 'tel:+1234567890')
 	assert.equal(resolveAbsoluteUrl('', 'https://eventyay.com/demo/'), '')
 	assert.equal(resolveAbsoluteUrl(null, 'https://eventyay.com/demo/'), null)
 })
 
-test('resolveAbsoluteUrl resolves path-relative URLs against subpath eventUrl', () => {
+test('resolveAbsoluteUrl rejects unsafe schemes like javascript and data', () => {
+	assert.equal(resolveAbsoluteUrl('javascript:alert(1)', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl('javascript:void(0)', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl('data:text/html;base64,PHNjcmlwdD4=', 'https://eventyay.com/demo/'), '')
+	assert.equal(resolveAbsoluteUrl('vbscript:msgbox("hello")', 'https://eventyay.com/demo/'), '')
+})
+
+test('resolveAbsoluteUrl resolves path-relative URLs against subpath eventUrl or origin for API paths', () => {
 	assert.equal(
 		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/democon/'),
 		'https://eventyay.com/democon/uploads/slides.pdf'
@@ -87,6 +96,10 @@ test('resolveAbsoluteUrl resolves path-relative URLs against subpath eventUrl', 
 	assert.equal(
 		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/democon?preview=1'),
 		'https://eventyay.com/democon/uploads/slides.pdf'
+	)
+	assert.equal(
+		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/api/v1/events/democon/'),
+		'https://eventyay.com/uploads/slides.pdf'
 	)
 })
 

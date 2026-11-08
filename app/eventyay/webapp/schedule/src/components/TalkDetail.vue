@@ -194,6 +194,7 @@ export default {
 		isWipPreview: { default: false },
 		exportsDisabled: { default: false },
 		remoteApiUrl: { default: null },
+		eventUrl: { default: '' },
 	},
 	props: {
 		talk: Object,
@@ -580,7 +581,8 @@ export default {
 			await this.goToStarrersPage(1)
 		},
 		getAbsoluteResourceUrl(resource) {
-			return resolveAbsoluteUrl(resource, this.baseUrl)
+			const base = this.eventUrl || this.baseUrl || ''
+			return resolveAbsoluteUrl(resource, base)
 		},
 		getFileExtensionLabel(path) {
 			if (!path) return this.$t('Resource')

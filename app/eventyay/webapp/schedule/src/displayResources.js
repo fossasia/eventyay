@@ -22,19 +22,30 @@ export function normalizeDisplayResources (resources = []) {
 	})
 }
 
+const UNSAFE_SCHEMES = new Set(['javascript', 'data', 'vbscript'])
+
 /**
  * Resolves a resource URL to an absolute URL.
- * Preserves all absolute schemes (HTTP, HTTPS, FTP, SFTP, etc.).
+ * Preserves all safe absolute schemes (HTTP, HTTPS, FTP, SFTP, mailto, etc.).
+ * Rejects unsafe schemes such as javascript: to prevent script execution.
  * Path-relative URLs are resolved against the full event URL (including any subpath).
+ * If the provided base URL points to an API path, resolves against its origin instead.
  * Root-relative URLs are resolved against the origin.
  */
 export function resolveAbsoluteUrl (url, eventUrl = '') {
 	if (!url) return url
-	if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//i.test(url)) return url
+	const schemeMatch = String(url).match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/i)
+	if (schemeMatch) {
+		const scheme = schemeMatch[1].toLowerCase()
+		if (UNSAFE_SCHEMES.has(scheme)) {
+			return ''
+		}
+		return url
+	}
 	try {
 		const windowOrigin = (typeof window !== 'undefined' && window.location?.origin) || 'http://localhost'
 		const base = new URL(eventUrl || '/', windowOrigin)
-		if (url.startsWith('/')) {
+		if (url.startsWith('/') || /\/api(\/|$)/i.test(base.pathname)) {
 			return new URL(url, base.origin).href
 		}
 		if (!base.pathname.endsWith('/')) {
