@@ -7,6 +7,11 @@
 .modern-dashboard #event-nav {
   margin-bottom: 0
 }
+.modern-dashboard #event-nav .navigation-title h2 {
+  margin: 0;
+  padding-top: 8px;
+  color: var(--td-text, #555)
+}
 .dashboard-header-extra {
   font-size: 16px;
   margin-top: 8px;
