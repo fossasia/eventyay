@@ -437,6 +437,20 @@ class QueuedMail(PretalxModel):
             if sig and sig.strip().startswith('-- '):
                 sig = sig.strip()[3:].strip()
         body_md = compile_email_body(self.text)
+        testmode_banner = None
+        if event:
+            if event.private_testmode_talks_enabled:
+                testmode_banner = _(
+                    'The talks feature is in test mode, only team member administrators and invited speaker '
+                    'can view this page.'
+                )
+            elif event.settings.get('talks_testmode', False, as_type=bool):
+                testmode_banner = _(
+                    'Talk pages are currently in test mode. Please do not treat schedules or submissions as final, '
+                    'as they may change or be removed without notice.'
+                )
+
+        talks_in_testmode = bool(testmode_banner)
         html_context = {
             'body': body_md,
             'event': event,
@@ -445,6 +459,8 @@ class QueuedMail(PretalxModel):
             'rtl': is_rtl(self.locale),
             'subject': self.subject,
             'signature': sig,
+            'talks_in_testmode': talks_in_testmode,
+            'testmode_banner': testmode_banner,
         }
         return get_template('mail/mailwrapper.html').render(html_context)
 
@@ -456,11 +472,26 @@ class QueuedMail(PretalxModel):
                 str(event.settings.get('mail_text_signature') or '')
                 or event.mail_settings.get('signature', '')
             ) or None
+        text = self.text
+        if event:
+            banner_text = None
+            if event.private_testmode_talks_enabled:
+                banner_text = _(
+                    'The talks feature is in test mode, only team member administrators and invited speaker '
+                    'can view this page.'
+                )
+            elif event.settings.get('talks_testmode', False, as_type=bool):
+                banner_text = _(
+                    'Talk pages are currently in test mode. Please do not treat schedules or submissions as final, '
+                    'as they may change or be removed without notice.'
+                )
+            if banner_text:
+                text = f'[{banner_text}]\n\n{text}'
         if not sig:
-            return self.text
+            return text
         if not sig.strip().startswith('-- '):
             sig = f'-- \n{sig}'
-        return f'{self.text}\n{sig}'
+        return f'{text}\n{sig}'
 
     @cached_property
     def prefixed_subject(self):

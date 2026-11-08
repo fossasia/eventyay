@@ -1,6 +1,6 @@
 debug = true
 
-# For development, we just store emails as files.
+# Keep development emails local; configure SMTP explicitly in local settings.
 email_backend = 'eventyay.base.email.FileSavedEmailBackend'
 
 allowed_hosts = ['*']

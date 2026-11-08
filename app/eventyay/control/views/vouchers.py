@@ -1,4 +1,5 @@
 import io
+from urllib.parse import quote_plus
 
 from defusedcsv import csv
 from django.conf import settings
@@ -23,12 +24,11 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     ListView,
-    TemplateView,
     UpdateView,
     View,
 )
 
-from eventyay.base.models import CartPosition, LogEntry, OrderPosition, Voucher
+from eventyay.base.models import CartPosition, LogEntry, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
@@ -39,6 +39,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import voucher_form_class
 from eventyay.control.views import PaginationMixin
 from eventyay.helpers.models import modelcopy
+from eventyay.multidomain.urlreverse import build_absolute_uri
 
 
 class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
@@ -110,6 +111,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
 
         headers = [
             _('Voucher code'),
+            _('Voucher link'),
             _('Valid until'),
             _('Product'),
             _('Reserve quota'),
@@ -125,7 +127,12 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         ]
         writer.writerow(headers)
 
+        base_url = build_absolute_uri(self.request.event, 'presale:event.redeem')
+
         for v in Voucher.annotate_budget_used_orders(self.get_filtered_queryset()):
+            url = f'{base_url}?voucher={quote_plus(v.code)}'
+            if v.subevent_id and v.subevent and v.subevent.event_id == self.request.event.pk and v.subevent.active:
+                url += f'&subevent={v.subevent_id}'
             if v.limit_products.exists() or v.limit_variations.exists():
                 parts = [str(p) for p in v.limit_products.all()]
                 parts += ['%s – %s' % (str(var.product), str(var)) for var in v.limit_variations.all()]
@@ -141,6 +148,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
                 prod = _('Any product')
             row = [
                 v.code,
+                url,
                 v.valid_until.isoformat() if v.valid_until else '',
                 prod,
                 _('Yes') if v.block_quota else _('No'),
@@ -526,11 +534,18 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['code_length'] = settings.ENTROPY['voucher_code']
+        ctx['max_codes'] = VoucherRNG.MAX_CODES
+        ctx['max_prefix_length'] = VoucherRNG.get_max_prefix_length()
         return ctx
 
 
 class VoucherRNG(EventPermissionRequiredMixin, View):
     permission = 'can_change_vouchers'
+    MAX_CODES = 1_000
+
+    @staticmethod
+    def get_max_prefix_length() -> int:
+        return Voucher._meta.get_field('code').max_length - settings.ENTROPY['voucher_code']
 
     def get(self, request, *args, **kwargs):
         codes = set()
@@ -539,7 +554,14 @@ class VoucherRNG(EventPermissionRequiredMixin, View):
         except ValueError:  # NOQA
             return HttpResponseBadRequest()
 
-        prefix = request.GET.get('prefix')
+        if num < 0 or num > self.MAX_CODES:
+            # The codes are generated inside the request, so time and memory
+            # grow with ``num``.
+            return HttpResponseBadRequest()
+
+        prefix = request.GET.get('prefix', '')
+        if len(prefix) > self.get_max_prefix_length():
+            return HttpResponseBadRequest()
         while len(codes) < num:
             new_codes = set()
             for i in range(min(num - len(codes), 500)):  # Work around SQLite's SQLITE_MAX_VARIABLE_NUMBER

@@ -11,8 +11,8 @@
 </template>
 <script>
 import moment from 'lib/timetravelMoment'
-import { mapState } from 'vuex'
 import api from 'lib/api'
+import { secondsUntilStart } from 'store/streamPolling'
 
 export default {
 	name: 'UpcomingStreamCountdown',
@@ -28,14 +28,10 @@ export default {
 			timeUntilStart: 0,
 			countdownInterval: null,
 			fetching: false,
-			tickOffsetSeconds: 0
+			applyingStart: false
 		}
 	},
 	computed: {
-		...mapState(['now']),
-		effectiveNow() {
-			return moment(this.now).add(this.tickOffsetSeconds, 'seconds')
-		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC'
 		},
@@ -54,15 +50,11 @@ export default {
 			return `${minutes}:${String(seconds).padStart(2, '0')}`
 		},
 		formattedStartTime() {
-			if (!this.upcomingStream) return ''
-			return moment(this.upcomingStream.start_time).format('HH:mm')
+			if (!this.upcomingStream?.start_time) return ''
+			return moment(this.upcomingStream.start_time).tz(this.eventTimezone).format('h:mm A')
 		}
 	},
 	watch: {
-		now() {
-			this.tickOffsetSeconds = 0
-			this.updateCountdown()
-		},
 		room: {
 			handler: 'fetchNextStream',
 			immediate: true
@@ -71,12 +63,14 @@ export default {
 			this.startCountdownTimer()
 		},
 		'room.upcomingStream'(stream) {
+			if (stream === this.upcomingStream) return
 			if (this.isStreamUpcoming(stream)) {
 				this.upcomingStream = stream
 				this.updateCountdown()
-			} else {
-				this.clearStream()
+				return
 			}
+			this.upcomingStream = null
+			this.timeUntilStart = 0
 		}
 	},
 	created() {
@@ -92,7 +86,7 @@ export default {
 	methods: {
 		getTickIntervalMs() {
 			if (!this.upcomingStream) return 5000
-			return document.visibilityState === 'visible' ? 1000 : 5000
+			return document.visibilityState === 'visible' ? 250 : 5000
 		},
 		startCountdownTimer() {
 			const intervalMs = this.getTickIntervalMs()
@@ -100,7 +94,6 @@ export default {
 				clearInterval(this.countdownInterval)
 			}
 			this.countdownInterval = setInterval(() => {
-				this.tickOffsetSeconds += intervalMs / 1000
 				this.updateCountdown()
 			}, intervalMs)
 		},
@@ -110,11 +103,20 @@ export default {
 		},
 		isStreamUpcoming(stream) {
 			if (!stream || !stream.start_time) return false
-			const startTime = moment(stream.start_time)
-			return startTime.isAfter(this.effectiveNow)
+			return secondsUntilStart(stream.start_time, moment.now()) > 0
+		},
+		syncUpcoming(stream) {
+			this.upcomingStream = stream
+			if (!this.room?.id) return
+			this.$store.commit('setRoomUpcomingStream', {
+				roomId: this.room.id,
+				stream,
+				startsAt: stream?.start_time || null,
+			})
+			this.$store.dispatch('scheduleStreamBoundary', this.room.id)
 		},
 		clearStream() {
-			this.upcomingStream = null
+			this.syncUpcoming(null)
 			this.timeUntilStart = 0
 		},
 		async fetchNextStream() {
@@ -137,11 +139,11 @@ export default {
 				const headers = { Accept: 'application/json' }
 				if (authHeader) headers.Authorization = authHeader
 
-				const response = await fetch(url, { headers, credentials: 'include' })
+				const response = await fetch(url, { headers, credentials: 'include', cache: 'no-store' })
 				if (response.ok) {
 					const stream = await response.json()
 					if (this.isStreamUpcoming(stream)) {
-						this.upcomingStream = stream
+						this.syncUpcoming(stream)
 						this.updateCountdown()
 					} else {
 						this.clearStream()
@@ -150,24 +152,53 @@ export default {
 					this.clearStream()
 				}
 			} catch (error) {
+				console.warn('Failed to load the next scheduled stream', error)
 				this.clearStream()
 			} finally {
 				this.fetching = false
 			}
 		},
-		updateCountdown() {
+		async updateCountdown() {
 			if (!this.upcomingStream) {
 				this.timeUntilStart = 0
 				return
 			}
-			const startTime = moment(this.upcomingStream.start_time)
-			const now = this.effectiveNow
-			this.timeUntilStart = Math.max(0, startTime.diff(now, 'seconds'))
+			const nowMs = moment.now()
+			const remaining = secondsUntilStart(this.upcomingStream.start_time, nowMs)
+			if (remaining == null) {
+				this.timeUntilStart = 0
+				return
+			}
+			this.timeUntilStart = remaining
 
-			if (this.timeUntilStart === 0 || !this.isStreamUpcoming(this.upcomingStream)) {
-				this.clearStream()
-				if (!this.fetching) {
-					this.fetchNextStream()
+			if (remaining === 0) {
+				if (this.applyingStart) return
+				this.applyingStart = true
+				const started = this.upcomingStream
+				const roomId = this.room?.id
+				const endMs = started?.end_time ? Date.parse(started.end_time) : NaN
+				const stillActive = !Number.isFinite(endMs) || endMs > nowMs
+				this.upcomingStream = null
+				this.timeUntilStart = 0
+				try {
+					if (started?.url && stillActive && roomId) {
+						try {
+							await this.$store.dispatch('fetchCurrentStream', roomId)
+						} catch (error) {
+							console.warn('Failed to load the current scheduled stream', error)
+						}
+						const room = this.$store.state.rooms?.find(item => item.id === roomId)
+						if (!room?.currentStream?.url) {
+							this.$store.commit('setRoomCurrentStream', { roomId, stream: started })
+							this.$store.dispatch('scheduleStreamBoundary', roomId)
+						}
+					}
+					this.clearStream()
+					if (!this.fetching) {
+						this.fetchNextStream()
+					}
+				} finally {
+					this.applyingStart = false
 				}
 			}
 		}

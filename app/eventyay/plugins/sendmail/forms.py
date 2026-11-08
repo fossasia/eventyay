@@ -218,6 +218,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
             '.jpg',
             '.gif',
             '.jpeg',
+            '.webp',
             '.pdf',
             '.txt',
             '.docx',
@@ -1102,7 +1103,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         label=_('Attachment'),
         required=False,
         ext_whitelist=(
-            '.png', '.jpg', '.gif', '.jpeg', '.pdf', '.txt', '.docx', '.svg', '.pptx',
+            '.png', '.jpg', '.gif', '.jpeg', '.webp', '.pdf', '.txt', '.docx', '.svg', '.pptx',
             '.ppt', '.doc', '.xlsx', '.xls', '.jfif', '.heic', '.heif', '.pages', '.bmp',
             '.tif', '.tiff',
         ),

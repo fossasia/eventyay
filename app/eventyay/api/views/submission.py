@@ -59,6 +59,7 @@ from eventyay.base.services.talkimport import import_submission_records
 from eventyay.common import exceptions
 from eventyay.common.auth import TokenAuthentication
 from eventyay.common.exceptions import SubmissionError
+from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.talk_rules.submission import (
     questions_for_user,
     speaker_profiles_for_user,
@@ -77,6 +78,7 @@ class AddSpeakerSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     name = serializers.CharField(required=True, allow_blank=False)
     locale = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    biography = serializers.CharField(required=False, allow_blank=True)
 
 
 class RemoveSpeakerSerializer(serializers.Serializer):
@@ -431,7 +433,28 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         submission = self.get_object()
-        submission.add_speaker(email=data['email'], name=data.get('name'), locale=data.get('locale'))
+
+        if submission.event.cfp.require_biography:
+            provided_bio = data.get('biography')
+            if provided_bio and is_empty_rich_text(provided_bio):
+                provided_bio = None
+
+            user = User.objects.filter(email__iexact=data['email']).first()
+            profile = user.event_profile(submission.event) if user else None
+
+            final_biography = provided_bio if provided_bio else (profile.biography if profile else '')
+            if is_empty_rich_text(final_biography):
+                return Response({'biography': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update data so we don't pass empty rich text to add_speaker
+            data['biography'] = provided_bio
+
+        submission.add_speaker(
+            email=data['email'],
+            name=data.get('name'),
+            locale=data.get('locale'),
+            biography=data.get('biography')
+        )
         submission.refresh_from_db()
         return Response(SubmissionOrgaSerializer(submission).data)
 

@@ -275,7 +275,7 @@ def subevent_select2(request, **kwargs):
         page = 1
 
     qf = Q(name__icontains=i18ncomp(query)) | Q(location__icontains=query)
-    tz = request.event.timezone
+    tz = ZoneInfo(request.event.settings.timezone)
 
     dt = None
     for f in get_format('DATE_INPUT_FORMATS'):
@@ -320,7 +320,7 @@ def quotas_select2(request, **kwargs):
         page = 1
 
     qf = Q(name__icontains=query) | Q(subevent__name__icontains=i18ncomp(query))
-    tz = request.event.timezone
+    tz = ZoneInfo(request.event.settings.timezone)
 
     dt = None
     for f in get_format('DATE_INPUT_FORMATS'):
@@ -448,7 +448,7 @@ def checkinlist_select2(request, **kwargs):
     except ValueError:
         pass
     else:
-        tz = request.event.timezone
+        tz = ZoneInfo(request.event.settings.timezone)
         if dt and request.event.has_subevents:
             dt_start = make_aware(datetime.combine(dt.date(), time(hour=0, minute=0, second=0)), tz)
             dt_end = make_aware(datetime.combine(dt.date(), time(hour=23, minute=59, second=59)), tz)
@@ -502,7 +502,7 @@ def productvarquota_select2(request, **kwargs):
             except ValueError:
                 pass
             else:
-                tz = request.event.timezone
+                tz = ZoneInfo(request.event.settings.timezone)
                 if dt and request.event.has_subevents:
                     dt_start = make_aware(
                         datetime.combine(dt.date(), time(hour=0, minute=0, second=0)),

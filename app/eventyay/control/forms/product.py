@@ -18,6 +18,7 @@ from django.utils.translation import (
 from django.utils.translation import (
     pgettext_lazy,
 )
+from django_scopes import scope
 from django_scopes.forms import (
     SafeModelChoiceField,
     SafeModelMultipleChoiceField,
@@ -46,6 +47,9 @@ from eventyay.helpers.models import modelcopy
 from eventyay.helpers.money import change_decimal_field
 
 
+FREE_PRICE_FIELDS = ('free_price', 'free_price_min', 'free_price_max')
+
+
 def effective_free_price_min(default_price, free_price_min):
     """Match checkout pricing: minimum is the higher of default and configured minimum."""
     if default_price is None and free_price_min is None:
@@ -65,11 +69,27 @@ def clean_free_price_bounds(cleaned_data, form=None):
         cleaned_data['free_price_max'] = None
         return
 
+    errors = {}
+    free_price_min = cleaned_data.get('free_price_min')
+    if free_price_min is not None and free_price_min < 0:
+        msg = _('The minimum price must not be negative.')
+        if form is not None:
+            form.add_error('free_price_min', msg)
+        else:
+            errors['free_price_min'] = [msg]
+
+    free_price_max = cleaned_data.get('free_price_max')
+    if free_price_max is not None and free_price_max < 0:
+        msg = _('The maximum price must not be negative.')
+        if form is not None:
+            form.add_error('free_price_max', msg)
+        else:
+            errors['free_price_max'] = [msg]
+
     effective_min = effective_free_price_min(
         cleaned_data.get('default_price'),
         cleaned_data.get('free_price_min'),
     )
-    free_price_max = cleaned_data.get('free_price_max')
     if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
         msg = _(
             'Maximum price must be greater than or equal to the effective minimum '
@@ -78,7 +98,29 @@ def clean_free_price_bounds(cleaned_data, form=None):
         if form is not None:
             form.add_error('free_price_max', msg)
         else:
-            raise forms.ValidationError({'free_price_max': [msg]})
+            errors.setdefault('free_price_max', []).append(msg)
+
+    if errors:
+        raise forms.ValidationError(errors)
+
+
+def copy_sanitized_free_price_bounds(target, source):
+    """Copy free-price configuration from source to target, clearing negative bounds."""
+    target.free_price = source.free_price
+    if source.free_price:
+        target.free_price_min = (
+            source.free_price_min
+            if source.free_price_min is not None and source.free_price_min >= 0
+            else None
+        )
+        target.free_price_max = (
+            source.free_price_max
+            if source.free_price_max is not None and source.free_price_max >= 0
+            else None
+        )
+    else:
+        target.free_price_min = None
+        target.free_price_max = None
 
 
 def clean_default_price(value):
@@ -353,6 +395,8 @@ class ProductCreateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         kwargs['initial'].setdefault('admission', True)
         super().__init__(*args, **kwargs)
+        if not getattr(self.instance, 'event_id', None) and not getattr(self.instance, 'event', None):
+            self.instance.event = self.event
 
         self.fields['category'].queryset = self.instance.event.categories.all()
         self.fields['category'].widget = Select2(
@@ -382,6 +426,46 @@ class ProductCreateForm(I18nModelForm):
             empty_label=_('Do not copy'),
             required=False,
         )
+
+        copy_from = None
+        if self.is_bound:
+            prefix_key = self.add_prefix('copy_from')
+            if prefix_key in self.data:
+                copy_from = self.data.get(prefix_key)
+            elif 'copy_from' in self.data:
+                copy_from = self.data.get('copy_from')
+            elif self.initial:
+                copy_from = self.initial.get('copy_from')
+        elif self.initial:
+            copy_from = self.initial.get('copy_from')
+
+        if copy_from:
+            source = None
+            if isinstance(copy_from, Product):
+                source = copy_from
+            else:
+                try:
+                    with scope(organizer=self.event.organizer):
+                        source = self.event.products.filter(pk=copy_from).first()
+                except (ValueError, TypeError, OverflowError):
+                    source = None
+
+            if source:
+                self.initial['free_price'] = source.free_price
+                if source.free_price:
+                    self.initial['free_price_min'] = (
+                        source.free_price_min
+                        if source.free_price_min is not None and source.free_price_min >= 0
+                        else None
+                    )
+                    self.initial['free_price_max'] = (
+                        source.free_price_max
+                        if source.free_price_max is not None and source.free_price_max >= 0
+                        else None
+                    )
+                else:
+                    self.initial['free_price_min'] = None
+                    self.initial['free_price_max'] = None
         if self.event.tax_rules.exists():
             self.fields['tax_rule'].required = True
 
@@ -424,7 +508,10 @@ class ProductCreateForm(I18nModelForm):
                 required=False,
             )
 
-    def save(self, *args, **kwargs):
+    def _has_free_price_changes(self):
+        return any(f in self.changed_data for f in FREE_PRICE_FIELDS)
+
+    def save(self, commit=True, *args, **kwargs):
         if self.cleaned_data.get('copy_from'):
             fields = (
                 'description',
@@ -438,9 +525,6 @@ class ProductCreateForm(I18nModelForm):
                 'max_per_order',
                 'generate_tickets',
                 'checkin_attention',
-                'free_price',
-                'free_price_min',
-                'free_price_max',
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
@@ -454,6 +538,8 @@ class ProductCreateForm(I18nModelForm):
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
+            if not self._has_free_price_changes():
+                copy_sanitized_free_price_bounds(self.instance, self.cleaned_data['copy_from'])
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
@@ -481,7 +567,7 @@ class ProductCreateForm(I18nModelForm):
             self.instance.tax_rule = tax_rule
 
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
-        instance = super().save(*args, **kwargs)
+        instance = super().save(commit=commit, *args, **kwargs)
 
         if not self.event.has_subevents and not self.cleaned_data.get('has_variations'):
             if (
@@ -576,7 +662,40 @@ class ProductCreateForm(I18nModelForm):
             elif tax_rule_rate is not None and not tax_rule_name:
                 self.add_error('tax_rule_name', _('Please enter a tax name.'))
 
-        clean_free_price_bounds(cleaned_data)
+        clean_free_price_bounds(cleaned_data, form=self)
+
+        if cleaned_data.get('copy_from') and not self._has_free_price_changes():
+            source = cleaned_data['copy_from']
+            if source.free_price:
+                source_min = (
+                    source.free_price_min
+                    if source.free_price_min is not None and source.free_price_min >= 0
+                    else None
+                )
+                source_max = (
+                    source.free_price_max
+                    if source.free_price_max is not None and source.free_price_max >= 0
+                    else None
+                )
+                cleaned_data['free_price'] = True
+                cleaned_data['free_price_min'] = source_min
+                cleaned_data['free_price_max'] = source_max
+
+                default_price = cleaned_data.get('default_price')
+                if default_price is not None and source_max is not None and default_price > source_max:
+                    self.add_error(
+                        'copy_from',
+                        _('The selected product’s maximum price is lower than the entered default price.'),
+                    )
+                if source_min is not None and source_max is not None and source_min > source_max:
+                    self.add_error(
+                        'copy_from',
+                        _('The selected product’s maximum price is lower than its configured minimum price.'),
+                    )
+            else:
+                cleaned_data['free_price'] = False
+                cleaned_data['free_price_min'] = None
+                cleaned_data['free_price_max'] = None
 
         return cleaned_data
 

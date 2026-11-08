@@ -24,12 +24,13 @@ class MySessionsView(LoginRequiredMixin, PaginationMixin, ListView):
 
     def get_queryset(self):
         from django_scopes import scopes_disabled
+
         user = self.request.user
         with scopes_disabled():
             qs = (
-                Submission.objects
-                .filter(speakers__email__iexact=user.email)
+                Submission.objects.filter(speakers__email__iexact=user.email)
                 .select_related('event', 'event__organizer', 'submission_type')
+                .prefetch_related('speakers')
                 .order_by('-event__date_from')
             )
 

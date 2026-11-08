@@ -1,6 +1,7 @@
 import datetime as dt
 
 import pytest
+import vobject
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -46,6 +47,18 @@ def test_slot_string(slot, room):
 def test_slot_build_empty_ical(slot):
     slot.room = None
     assert not slot.build_ical(None)
+
+
+@pytest.mark.django_db
+def test_slot_build_ical_description_is_plain_text(slot):
+    with scope(event=slot.submission.event):
+        slot.submission.abstract = '<p>First paragraph &amp; more.</p><p>Second paragraph.</p>'
+        calendar = vobject.iCalendar()
+        slot.build_ical(calendar)
+
+    description = calendar.vevent.description.value
+    assert description == 'First paragraph & more.\n\nSecond paragraph.'
+    assert '<' not in calendar.serialize()
 
 
 @pytest.mark.django_db
@@ -117,3 +130,37 @@ def test_slot_warning_when_speaker_overbooked(
             warnings[1]["message"]
             == "Jane Speaker is scheduled for another session at the same time."
         )
+
+
+@pytest.mark.django_db
+def test_speaker_overlap_warning_when_slot_contains_another(slot, other_slot):
+    """A later slot that ends at the same time as an earlier one still conflicts.
+
+    The earlier comparison missed this shape, so a session moved to before 9:00
+    could contain another session and lose the speaker warning.
+    """
+    with scope(event=slot.event):
+        start = slot.local_start.replace(hour=7, minute=0, second=0, microsecond=0)
+        slot.start = start
+        slot.end = start + dt.timedelta(hours=2)
+        slot.save()
+        other_slot.start = start + dt.timedelta(hours=1)
+        other_slot.end = slot.end
+        other_slot.submission.speakers.add(slot.submission.speakers.first())
+        other_slot.save()
+
+        for talk in (slot, other_slot):
+            warnings = talk.schedule.get_talk_warnings(talk)
+            assert any(
+                warning["message"].endswith("at the same time.") for warning in warnings
+            )
+
+        by_pk = {
+            talk.pk: warnings
+            for talk, warnings in slot.schedule.get_all_talk_warnings().items()
+        }
+        for talk_pk in (slot.pk, other_slot.pk):
+            assert any(
+                warning["message"].endswith("at the same time.")
+                for warning in by_pk[talk_pk]
+            )

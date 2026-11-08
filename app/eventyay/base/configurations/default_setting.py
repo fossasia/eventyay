@@ -928,8 +928,8 @@ DEFAULT_SETTINGS = {
             label=_('Event languages'),
             help_text=_(
                 'Users will be able to use eventyay in these languages, and you will be able to provide all texts in '
-                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-                "event's default language instead."
+                'these languages. Drag and drop selected languages to reorder them — the first language (bold border) '
+                "is used as your event's default language."
             ),
         ),
     },
@@ -1572,7 +1572,10 @@ DEFAULT_SETTINGS = {
         'form_class': forms.BooleanField,
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
-            label=_('Contact form'),
+            label=_('Enable attendees to contact organizers'),
+            help_text=_(
+                'This option enables a contact form that attendees can use to contact an organizer.'
+            ),
             required=False,
         ),
     },
@@ -2281,7 +2284,7 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Social media image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
                 'This image is used as a preview when sharing your event link on social media. '
@@ -2292,7 +2295,7 @@ Your {event} team"""
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2302,14 +2305,14 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             required=False,
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_('We will show your logo with a maximal height and width of 2.5 cm.'),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2619,13 +2622,13 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Start page header background image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_('Displayed as the background image on the public start page.'),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },

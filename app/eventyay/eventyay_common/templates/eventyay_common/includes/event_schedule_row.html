@@ -1,4 +1,5 @@
 {% load i18n bootstrap3 %}
+{% load timezone %}
 <div class="form-group{% if date_from_form.errors or date_to_form.errors or timezone_form.errors %} has-error{% endif %}">
     <div class="col-md-9 col-md-offset-3">
         <div class="event-schedule-row">
@@ -18,10 +19,21 @@
             {% endif %}
             <div class="event-schedule-col event-schedule-col-timezone">
                 <label class="event-schedule-label" for="{{ timezone_form.id_for_label }}">
-                    {% trans "Timezone" %}
+                    {% if show_timezone_display %}{{ timezone_form.label }}{% else %}{% trans "Timezone" %}{% endif %}
                 </label>
                 {% bootstrap_field timezone_form layout="inline" show_label=False form_group_class="" %}
             </div>
+            {% if show_timezone_display %}
+                <div class="event-schedule-col event-schedule-col-timezone-display">
+                    <label class="event-schedule-label" for="{{ timezone_form.id_for_label }}-display">
+                        {% trans "Timezone" %}
+                    </label>
+                    <output id="{{ timezone_form.id_for_label }}-display"
+                            class="form-control-static region-timezone-display"
+                            data-region-timezone-display
+                            data-region-timezone-source="{{ timezone_form.id_for_label }}">{{ timezone_form.value|timezone_display }}</output>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>

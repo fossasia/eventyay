@@ -334,7 +334,6 @@ def test_event_create_with_clone(token_client, organizer, event, meta_prop):
             'date_from': '2018-12-27T10:00:00Z',
             'date_to': '2018-12-28T10:00:00Z',
             'date_admission': None,
-            'is_public': False,
             'presale_start': None,
             'presale_end': None,
             'location': None,
@@ -350,7 +349,8 @@ def test_event_create_with_clone(token_client, organizer, event, meta_prop):
     with scopes_disabled():
         cloned_event = Event.objects.get(organizer=organizer.pk, slug='2030')
         assert cloned_event.plugins == 'eventyay.plugins.ticketoutputpdf'
-        assert cloned_event.is_public is False
+        # is_public is no longer settable via the API; a clone stays public by default.
+        assert cloned_event.is_public is True
         assert cloned_event.testmode
         assert (
             organizer.events.get(slug='2030')

@@ -18,6 +18,10 @@ import {
 	nextStreamPollDelay,
 	shouldStopAfterTransientErrors,
 	streamPollJitter,
+	streamIsActive,
+	earliestFutureMs,
+	keepLocalStreamOverEmptyServer,
+	streamStartsInFuture,
 	usesHttpStreamFallback,
 } from './streamPolling'
 
@@ -62,6 +66,7 @@ export default new Vuex.Store({
 		autoplayUserSetting: !localStorage.disableAutoplay ? null : localStorage.disableAutoplay !== 'true',
 		stageStreamCollapsed: false,
 		streamPollInterval: null,
+		streamBoundaryTimer: null,
 		streamVisibilityHandler: null,
 		streamPollingErrorCount: 0,
 		streamPollingRetryDelay: STREAM_POLL_BASE_DELAY,
@@ -154,6 +159,17 @@ export default new Vuex.Store({
 		setUserLocale(state, locale) {
 			state.userLocale = locale
 		},
+		clearRoomFatalError(state, roomId) {
+			if (!roomId) return
+			if (state.roomFatalErrors?.[roomId]) {
+				const updated = {...state.roomFatalErrors}
+				delete updated[roomId]
+				state.roomFatalErrors = updated
+			}
+			if (state.fatalError?.roomId === roomId) {
+				state.fatalError = null
+			}
+		},
 		updateStageStreamCollapsed(state, stageStreamCollapsed) {
 			state.stageStreamCollapsed = stageStreamCollapsed
 		},
@@ -178,6 +194,9 @@ export default new Vuex.Store({
 		},
 		setStreamPollInterval(state, streamPollInterval) {
 			state.streamPollInterval = streamPollInterval
+		},
+		setStreamBoundaryTimer(state, streamBoundaryTimer) {
+			state.streamBoundaryTimer = streamBoundaryTimer
 		},
 		resetStreamPollingBackoff(state) {
 			state.streamPollingErrorCount = 0
@@ -312,18 +331,24 @@ export default new Vuex.Store({
 				case 'server.fatal': {
 					const roomId = state.activeRoom?.id ?? null
 					const errorWithContext = {...error, roomId}
-					state.fatalError = errorWithContext
 					if (roomId) {
 						state.roomFatalErrors = {
 							...state.roomFatalErrors,
 							[roomId]: errorWithContext
 						}
+					} else {
+						state.fatalError = errorWithContext
 					}
 					break
 				}
 				}
 				// TODO handle generic fatal error?
 			})
+		},
+		reconnect() {
+			if (api) {
+				api.reconnect()
+			}
 		},
 		async updateUser({state, dispatch}, update) {
 			await api.call('user.update', update)
@@ -338,7 +363,7 @@ export default new Vuex.Store({
 			// Use Object.assign so Vue's reactivity proxy tracks the updated key
 			state.user = Object.assign({}, state.user, {show_publicly: newValue})
 		},
-		async fetchCurrentStream({state, getters, commit}, roomId) {
+		async fetchCurrentStream({state, getters, commit, dispatch}, roomId) {
 			if (!roomId) return
 			const room = state.rooms?.find(r => r.id === roomId)
 			if (!room) return
@@ -353,14 +378,24 @@ export default new Vuex.Store({
 			const headers = { Accept: 'application/json' }
 			if (authHeader) headers.Authorization = authHeader
 
-			const response = await fetch(url, { headers, credentials: 'include' })
+			const response = await fetch(url, { headers, credentials: 'include', cache: 'no-store' })
 			if (!response.ok && response.status !== 404) {
 				const error = new Error(`Failed to fetch current stream: ${response.status}`)
 				error.status = response.status
 				throw error
 			}
 
-			const currentStream = response.status === 404 ? null : await response.json()
+			let currentStream = response.status === 404 ? null : await response.json()
+			const nowMs = moment.now()
+			if (currentStream && !streamIsActive(currentStream, nowMs)) {
+				currentStream = null
+			}
+			// A slot that just started locally must survive a cached "nothing is live"
+			// response, but only for the cache window. A later 404 is a real stop.
+			if (keepLocalStreamOverEmptyServer(room.currentStream, currentStream, nowMs)) {
+				dispatch('scheduleStreamBoundary', roomId)
+				return
+			}
 			const streamId = currentStream?.id || null
 			const previousStreamId = room.currentStream?.id || null
 			const previousStreamUrl = room.currentStream?.url || null
@@ -369,6 +404,7 @@ export default new Vuex.Store({
 			const previousConfig = JSON.stringify(room.currentStream?.config || {})
 			const currentConfig = JSON.stringify(currentStream?.config || {})
 			if (
+				room.currentStream === undefined ||
 				previousStreamId !== streamId ||
 				previousStreamUrl !== currentStreamUrl ||
 				previousConfig !== currentConfig
@@ -378,6 +414,49 @@ export default new Vuex.Store({
 			if (state.lastKnownStreamId !== streamId) {
 				commit('setLastKnownStreamId', streamId)
 			}
+			dispatch('scheduleStreamBoundary', roomId)
+		},
+		scheduleStreamBoundary({state, commit, dispatch}, roomId) {
+			if (state.streamBoundaryTimer) {
+				clearTimeout(state.streamBoundaryTimer)
+				commit('setStreamBoundaryTimer', null)
+			}
+			if (!roomId || state.activeRoom?.id !== roomId) return
+			const room = state.rooms?.find(r => r.id === roomId)
+			const nowMs = moment.now()
+			const at = earliestFutureMs([
+				room?.currentStream?.end_time,
+				room?.upcomingStream?.start_time,
+			], nowMs)
+			if (at == null) return
+			const delay = Math.min(Math.max(at - nowMs + 250, 250), 2147483647)
+			commit('setStreamBoundaryTimer', setTimeout(() => {
+				dispatch('applyStreamBoundary', roomId)
+			}, delay))
+		},
+		async applyStreamBoundary({state, commit, dispatch}, roomId) {
+			commit('setStreamBoundaryTimer', null)
+			if (!state.activeRoom || state.activeRoom.id !== roomId) return
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+			const nowMs = moment.now()
+			if (streamIsActive(room.upcomingStream, nowMs)) {
+				commit('setRoomCurrentStream', {roomId, stream: room.upcomingStream})
+			} else if (room.currentStream && !streamIsActive(room.currentStream, nowMs)) {
+				commit('setRoomCurrentStream', {roomId, stream: null})
+			}
+			try {
+				await dispatch('fetchCurrentStream', roomId)
+			} catch (error) {
+				logOperational({
+					action: 'stream.poll',
+					outcome: 'failure',
+					backend: 'live',
+					error_code: 'boundary',
+					status: typeof error?.status === 'number' ? error.status : undefined,
+				})
+				dispatch('scheduleStreamBoundary', roomId)
+			}
 		},
 		refreshStreamPolling({state, dispatch}) {
 			if (state.activeRoom?.id) {
@@ -386,10 +465,6 @@ export default new Vuex.Store({
 		},
 		startStreamPolling({state, commit, dispatch}, roomId) {
 			dispatch('stopStreamPolling')
-
-			if (!usesHttpStreamFallback(state.connected)) {
-				return
-			}
 
 			const scheduleNext = (delay) => {
 				commit('setStreamPollInterval', setTimeout(tick, delay))
@@ -403,9 +478,12 @@ export default new Vuex.Store({
 					}
 					return
 				}
+				dispatch('fetchCurrentStream', roomId).catch((error) => {
+					logOperational({action: 'stream.poll', outcome: 'failure', backend: 'live', error_code: 'visibility', status: typeof error?.status === 'number' ? error.status : undefined})
+				})
 				// tick() exits without rescheduling while the tab is hidden; restart
 				// fallback polling when the tab becomes visible again.
-				if (!state.connected) {
+				if (!state.connected && !state.streamPollInterval) {
 					scheduleNext(STREAM_POLL_BASE_DELAY)
 				}
 			}
@@ -448,12 +526,30 @@ export default new Vuex.Store({
 
 			commit('setStreamVisibilityHandler', onVisibilityChange)
 			document.addEventListener('visibilitychange', onVisibilityChange)
-			scheduleNext(streamPollJitter(0))
+			if (usesHttpStreamFallback(state.connected)) {
+				scheduleNext(streamPollJitter(0))
+				return
+			}
+			// The socket does not carry the current slot on join, so load it once.
+			const retryConnectedFetch = () => {
+				dispatch('fetchCurrentStream', roomId).catch((error) => {
+					logOperational({action: 'stream.poll', outcome: 'failure', backend: 'live', error_code: isPermanentStreamPollError(error) ? 'permanent' : 'transient', status: typeof error?.status === 'number' ? error.status : undefined})
+					if (isPermanentStreamPollError(error)) return
+					commit('incrementStreamPollingErrorCount')
+					if (shouldStopAfterTransientErrors(state.streamPollingErrorCount)) return
+					commit('setStreamPollInterval', setTimeout(retryConnectedFetch, 3000))
+				})
+			}
+			retryConnectedFetch()
 		},
 		stopStreamPolling({state, commit}) {
 			if (state.streamPollInterval) {
 				clearTimeout(state.streamPollInterval)
 				commit('setStreamPollInterval', null)
+			}
+			if (state.streamBoundaryTimer) {
+				clearTimeout(state.streamBoundaryTimer)
+				commit('setStreamBoundaryTimer', null)
 			}
 			if (state.streamVisibilityHandler) {
 				document.removeEventListener('visibilitychange', state.streamVisibilityHandler)
@@ -616,24 +712,44 @@ export default new Vuex.Store({
 			if (!state.activeRoom) return
 			const room = state.rooms.find(r => r.id === state.activeRoom.id)
 			if (!room) return
+			const nowMs = moment.now()
+			if (stream && streamStartsInFuture(stream, nowMs)) {
+				commit('setRoomUpcomingStream', {
+					roomId: room.id,
+					stream,
+					startsAt: stream.start_time || null,
+				})
+				dispatch('scheduleStreamBoundary', room.id)
+				return
+			}
+			if (stream && !streamIsActive(stream, nowMs)) {
+				if (!room.currentStream || room.currentStream.id === stream.id) {
+					commit('setRoomCurrentStream', { roomId: room.id, stream: null })
+					commit('setLastKnownStreamId', null)
+				}
+				dispatch('scheduleStreamBoundary', room.id)
+				return
+			}
 			const streamId = stream?.id || null
 			commit('setRoomCurrentStream', { roomId: room.id, stream })
 			commit('setLastKnownStreamId', streamId)
+			dispatch('scheduleStreamBoundary', room.id)
 			if (reload && usesHttpStreamFallback(state.connected)) {
 				dispatch('fetchCurrentStream', room.id).catch(() => {
 					// Stream refresh failures are non-critical
 				})
 			}
 		},
-		'api::room.stream.will_change'({state, commit}, {stream, starts_at}) {
+		'api::room.stream.will_change'({state, commit, dispatch}, {stream, starts_at}) {
 			if (!state.activeRoom) return
 			const room = state.rooms.find(r => r.id === state.activeRoom.id)
 			if (!room) return
 			commit('setRoomUpcomingStream', {
 				roomId: room.id,
 				stream,
-				startsAt: starts_at
+				startsAt: starts_at || stream?.start_time || null,
 			})
+			dispatch('scheduleStreamBoundary', room.id)
 		}
 	},
 	modules: {

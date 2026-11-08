@@ -14814,7 +14814,7 @@ msgstr "मेरे प्रस्ताव"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "वक्ता का ईमेल"
 
 #: eventyay/common/templates/common/base.html:189

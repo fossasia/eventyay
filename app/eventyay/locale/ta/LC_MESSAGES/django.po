@@ -14935,7 +14935,7 @@ msgstr "என் முன்மொழிவுகள்"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "வகுப்பாளர் மின்னஞ்சல்"
 
 #: eventyay/common/templates/common/base.html:189

@@ -223,3 +223,37 @@ export function resolveLanguageOptions(configLocales) {
 	}
 	return locales
 }
+
+export function resolveCurrentLanguage(availableLanguages, preferredLanguage) {
+	const langs = Array.isArray(availableLanguages) && availableLanguages.length > 0
+		? availableLanguages
+		: locales
+	const raw = preferredLanguage || 'en'
+	const candidate = String(raw).replaceAll('_', '-').toLowerCase()
+
+	// 1. Exact match
+	const exact = langs.find(l => l && l.code && l.code.toLowerCase() === candidate)
+	if (exact) return exact.code
+
+	// 2. Progressively shorter subtags (e.g. zh-hant-hk -> zh-hant)
+	const parts = candidate.split('-')
+	for (let i = parts.length - 1; i > 1; i--) {
+		const subtag = parts.slice(0, i).join('-')
+		const subtagMatch = langs.find(l => l && l.code && l.code.toLowerCase() === subtag)
+		if (subtagMatch) return subtagMatch.code
+	}
+
+	// 3. Exact base language match
+	const base = parts[0]
+	const baseExact = langs.find(l => l && l.code && l.code.toLowerCase() === base)
+	if (baseExact) return baseExact.code
+
+	// 4. Any variant starting with base prefix
+	const prefixMatch = langs.find(l => l && l.code && l.code.toLowerCase().startsWith(`${base}-`))
+	if (prefixMatch) return prefixMatch.code
+
+	const en = langs.find(l => l && l.code && l.code.toLowerCase() === 'en')
+	if (en) return en.code
+
+	return langs[0]?.code || 'en'
+}

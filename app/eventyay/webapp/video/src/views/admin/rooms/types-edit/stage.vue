@@ -72,7 +72,7 @@
 				.fields-grid.datetime-grid(v-if="isScheduledMode")
 					.field-group
 						label.field-label
-							| {{ $t('Start date & time') }} ({{ eventTimezone }})
+							| {{ $t('Start date & time') }} ({{ eventTimezoneLabel }})
 							span.required-star *
 						.input-wrapper.datetime-wrapper
 							input.datetime-input(
@@ -85,7 +85,7 @@
 
 					.field-group
 						label.field-label
-							| {{ $t('End date & time') }} ({{ eventTimezone }})
+							| {{ $t('End date & time') }} ({{ eventTimezoneLabel }})
 							span.required-star *
 						.input-wrapper.datetime-wrapper
 							input.datetime-input(
@@ -98,7 +98,7 @@
 
 					.timezone-hint
 						i.mdi.mdi-clock-outline(aria-hidden="true")
-						| {{ $t('All times shown in the event timezone') }} ({{ eventTimezone }}).
+						| {{ $t('All times shown in the event timezone') }} ({{ eventTimezoneLabel }}).
 
 				.single-stream-scheduled-hint(v-if="streams.length === 1 && isScheduledMode")
 					span {{ $t('This stage has a scheduled time window.') }}
@@ -114,6 +114,7 @@
 						span.accordion-title {{ $t('Playback settings') }}
 						i.mdi(:class="stream.showAdvanced ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
 					.advanced-switches(v-if="stream.showAdvanced")
+						bunt-switch(name="autoStart", v-model="stream.config.autoStart", :label="$t('Autostart stream')")
 						bunt-switch(name="startMuted", v-model="stream.config.startMuted", :label="$t('Start muted')")
 						template(v-if="stream.stream_type === 'youtube'")
 							bunt-switch(name="enablePrivacyEnhancedMode", v-model="stream.config.enablePrivacyEnhancedMode", :label="$t('Enable No-Cookies')")
@@ -137,6 +138,29 @@
 										v-model="stream.config.password"
 										:placeholder="$t('Stream password')"
 									)
+
+				.stream-interpretation-settings(v-if="isScheduledMode && interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'manual' || interpretationConfig.interpreter === 'voxbento')")
+					button.accordion-header.sub-accordion(
+						type="button"
+						@click="stream.showInterpretation = !stream.showInterpretation"
+						:aria-expanded="String(stream.showInterpretation)"
+					)
+						span.accordion-title
+							| {{ $t('Interpretation channels for this stream') }}
+							span.channels-badge(v-if="usableLanguageStreamCount(stream) > 0")
+								| {{ usableLanguageStreamCount(stream) }}
+						i.mdi(:class="stream.showInterpretation ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
+					.stream-interpretation-body(v-if="stream.showInterpretation")
+						LanguageAudioSourceList(
+							:title="$t('Interpretation channels for this stream')"
+							:subtitle="$t('Add multi-language audio or video interpretation channels specifically for this stream.')"
+							:entries="stream.config.language_streams"
+							:roomId="roomId"
+							:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
+							:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
+						)
+						p.stream-interpretation-hint
+							| {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
 
 		.scheduled-actions-footer(v-if="isScheduledMode")
 			bunt-button.btn-add-another(@click="addScheduledStream")
@@ -163,14 +187,13 @@
 						| {{ $t('Interpretation Provider') }}
 						span.required-star *
 					.custom-interpreter-select
-						select.interpreter-select(v-model="interpretationConfig.interpreter", :class="{'has-error': interpretationPutError || availableInterpreters.length === 0}", :disabled="availableInterpreters.length === 0")
-							option(v-if="availableInterpreters.length === 0" value="" disabled hidden) {{ $t('No providers connected') }}
+						select.interpreter-select(v-model="interpretationConfig.interpreter", :class="{'has-error': interpretationPutError}")
+							option(v-if="selectableInterpreters.length === 0" value="" disabled hidden) {{ $t('No providers available') }}
 							option(v-else value="" disabled hidden) {{ $t('Select a provider') }}
-							option(v-for="provider in availableInterpreters" :key="provider.id" :value="provider.id") {{ provider.label }}
+							option(v-for="provider in selectableInterpreters" :key="provider.id" :value="provider.id") {{ provider.label }}
 						i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
 					.field-error(v-if="interpretationPutError") {{ interpretationPutError }}
-					.field-error(v-else-if="availableInterpreters.length === 0") {{ $t('No interpretation providers are currently connected to this event. Please connect one in the Plugin Settings first.') }}
-			.info-alert(v-if="interpretationConfig.room_enabled")
+			.info-alert(v-if="interpretationConfig.room_enabled && interpretationConfig.interpreter === 'voxbento'")
 				i.mdi.mdi-information(aria-hidden="true")
 				span
 					| {{ $t('Note: To manage advanced settings like LLM choices, API key management, and streaming languages, visit the') }} 
@@ -178,15 +201,19 @@
 					| .
 
 		.interpretation-plugin-language-streams(v-if="showPluginLanguageStreams && isInterpretationFeatureAvailable")
+			.info-alert.warning(v-if="interpretationAdmin && interpretationAdmin.streamsLoadFailed")
+				i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+				span {{ $t('Failed to load interpretation channels. Changes cannot be saved until reloaded successfully.') }}
 			LanguageAudioSourceList(
-				v-if="interpretationConfig.room_enabled && interpretationConfig.interpreter === 'voxbento'"
-				:title="$t('Interpretation channels')"
+				v-else-if="interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'voxbento' || interpretationConfig.interpreter === 'manual')"
+				:title="isScheduledMode ? $t('Default interpretation channels (room fallback)') : $t('Interpretation channels')"
+				:subtitle="isScheduledMode ? $t('These channels will be used whenever a stream schedule does not define its own specific interpretation channels.') : ''"
 				:entries="pluginLanguageStreamEntries"
 				:roomId="roomId"
 				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
-				:translationModelSetup="!!interpretationConfig.translation_model"
+				:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
 			)
-			.tool-section.skeleton-provider-layout(v-else-if="interpretationConfig.room_enabled && interpretationConfig.interpreter && interpretationConfig.interpreter !== 'voxbento' && interpretationConfig.interpreter !== 'none'")
+			.tool-section.skeleton-provider-layout(v-else-if="interpretationConfig.room_enabled && interpretationConfig.interpreter && interpretationConfig.interpreter !== 'voxbento' && interpretationConfig.interpreter !== 'manual' && interpretationConfig.interpreter !== 'none'")
 				.tool-section-header
 					h3 {{ $t('Interpretation channels') }}
 					p.subtitle {{ $t('Configuration layout is specific to the selected service.') }}
@@ -215,8 +242,11 @@ import moment from 'moment-timezone'
 import api from 'lib/api'
 import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
+import { readApiErrorMessage } from 'lib/apiErrorMessage'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
+import { cloneLanguageStreamEntries, serializeLanguageStreamEntry } from 'lib/interpretation-language-streams'
+import { isUsableLanguageStreamEntry } from '../../../../interpretation-streams'
 import mixin from './mixin'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from 'lib/validators'
 import { parseVimeoUrl } from 'lib/vimeo'
@@ -267,6 +297,9 @@ export default defineComponent({
 		eventTimezone() {
 			return this.$store.state.world?.timezone || this.$store.state.userTimezone || moment.tz.guess() || 'UTC'
 		},
+		eventTimezoneLabel() {
+			return this.eventTimezone.replace(/_/g, ' ')
+		},
 		isScheduledMode() {
 			return inferPlaybackModeFromStreams(this.streams) === PLAYBACK_MODE_SCHEDULE_DRIVEN
 		},
@@ -278,6 +311,18 @@ export default defineComponent({
 		},
 		pluginLanguageStreamEntries() {
 			return this.interpretationAdmin?.languageStreams ?? []
+		},
+		selectableInterpreters() {
+			this.$store.state.userLocale
+			const list = [
+				{ id: 'manual', label: this.$t('Manual / Custom Streams') }
+			]
+			for (const p of this.availableInterpreters) {
+				if (p.id !== 'none' && p.id !== 'manual') {
+					list.push(p)
+				}
+			}
+			return list
 		},
 	},
 	created() {
@@ -295,9 +340,18 @@ export default defineComponent({
 			handler() {
 				this.fetchInterpretationConfig()
 			}
+		},
+		'interpretationConfig.room_enabled'(enabled) {
+			if (enabled && (!this.interpretationConfig.interpreter || this.interpretationConfig.interpreter === 'none')) {
+				this.interpretationConfig.interpreter = 'manual'
+			}
+			this.interpretationPutError = null
 		}
 	},
 	methods: {
+		usableLanguageStreamCount(stream) {
+			return (stream.config?.language_streams || []).filter(isUsableLanguageStreamEntry).length
+		},
 		async fetchInterpretationConfig() {
 			if (this.creating) {
 				this.syncStatus = 'unsupported'
@@ -337,9 +391,14 @@ export default defineComponent({
 
 				const data = await response.json()
 				if (data.ui_sync_supported) {
+					let interpreter = data.interpreter === 'none' ? '' : (data.interpreter || '')
+					const roomEnabled = Boolean(data.room_enabled)
+					if (!interpreter || interpreter === 'none') {
+						interpreter = 'manual'
+					}
 					this.interpretationConfig = {
-						room_enabled: data.room_enabled,
-						interpreter: data.interpreter === 'none' ? '' : (data.interpreter || ''),
+						room_enabled: roomEnabled,
+						interpreter,
 						translation_model: data.translation_model || ''
 					}
 					this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
@@ -367,7 +426,7 @@ export default defineComponent({
 			
 			const payload = {
 				room_enabled: this.interpretationConfig.room_enabled,
-				interpreter: this.interpretationConfig.interpreter
+				interpreter: this.interpretationConfig.interpreter || (this.interpretationConfig.room_enabled ? 'manual' : 'none')
 			}
 			
 			try {
@@ -435,6 +494,7 @@ export default defineComponent({
 			config = {},
 		} = {}) {
 			const self = this
+			const rawLanguageStreams = config.language_streams || config.languageUrls || []
 			const stream = reactive({
 				...createDefaultStream(stream_type),
 				id,
@@ -443,6 +503,7 @@ export default defineComponent({
 				start_time: start_time ? this.parseDateTime(start_time) : null,
 				end_time: end_time ? this.parseDateTime(end_time) : null,
 				config: {
+					autoStart: config.autoStart !== false,
 					enablePrivacyEnhancedMode: !!config.enablePrivacyEnhancedMode,
 					loop: !!config.loop,
 					modestBranding: !!config.modestBranding,
@@ -453,8 +514,10 @@ export default defineComponent({
 					showInfo: !!config.showInfo,
 					dnt: !!config.dnt,
 					password: config.password ? String(config.password).trim() : '',
+					language_streams: cloneLanguageStreamEntries(rawLanguageStreams),
 				},
 				showAdvanced: false,
+				showInterpretation: false,
 			})
 
 			Object.defineProperty(stream, 'plainStartTime', {
@@ -532,6 +595,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_YOUTUBE,
 						url: ytModule.config.ytid,
 						config: {
+							autoStart: ytModule.config.autoStart !== false,
 							enablePrivacyEnhancedMode: ytModule.config.enablePrivacyEnhancedMode,
 							loop: ytModule.config.loop,
 							modestBranding: ytModule.config.modestBranding,
@@ -549,6 +613,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_VIMEO,
 						url: vimeoModule.config.url,
 						config: {
+							autoStart: vimeoModule.config.autoStart !== false,
 							startMuted: vimeoModule.config.startMuted,
 							dnt: vimeoModule.config.dnt,
 							loop: vimeoModule.config.loop,
@@ -565,6 +630,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_HLS,
 						url: nativeModule.config.hls_url,
 						config: {
+							autoStart: nativeModule.config.autoStart !== false,
 							startMuted: nativeModule.config.startMuted,
 						},
 					}),
@@ -724,7 +790,7 @@ export default defineComponent({
 
 			if (this.syncStatus === 'ready') {
 				const interpreter = this.interpretationConfig.interpreter
-				const validIds = this.availableInterpreters.map(p => p.id)
+				const validIds = this.selectableInterpreters.map(p => p.id)
 				if (this.interpretationConfig.room_enabled && (!interpreter || interpreter === 'none')) {
 					this.interpretationPutError = this.$t('An interpreter must be selected to enable interpretation for this room.')
 					isValid = false
@@ -776,6 +842,7 @@ export default defineComponent({
 						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 						ytid,
 					}
+					if (primary.config.autoStart !== undefined) config.autoStart = primary.config.autoStart !== false
 					if (primary.config.enablePrivacyEnhancedMode) config.enablePrivacyEnhancedMode = true
 					if (primary.config.loop) config.loop = true
 					if (primary.config.modestBranding) config.modestBranding = true
@@ -794,6 +861,7 @@ export default defineComponent({
 						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 						url: primary.url,
 					}
+					if (primary.config.autoStart !== undefined) config.autoStart = primary.config.autoStart !== false
 					if (primary.config.startMuted) config.startMuted = true
 					if (primary.config.dnt) config.dnt = true
 					if (primary.config.loop) config.loop = true
@@ -812,6 +880,7 @@ export default defineComponent({
 						config: {
 							playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 							hls_url: primary.url,
+							autoStart: primary.config.autoStart !== false,
 							startMuted: !!primary.config?.startMuted,
 						},
 					})
@@ -855,11 +924,11 @@ export default defineComponent({
 					})
 					if (!res.ok && res.status !== 404) {
 						logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'delete_failed', status: res.status})
-						const text = await res.text().catch(() => '')
-						console.warn('Failed to delete stream schedule:', scheduleId, text)
+						const errorMessage = await readApiErrorMessage(res, res.statusText || 'Bad Request')
+						console.warn('Failed to delete stream schedule:', scheduleId, errorMessage)
 						remainingDeletions.push(scheduleId)
 						this.deletedScheduleIds = remainingDeletions
-						throw new Error(`Failed to delete stream schedule: ${text || res.statusText}`)
+						throw new Error(`Failed to delete stream schedule: ${errorMessage}`)
 					}
 				} catch (err) {
 					if (!remainingDeletions.includes(scheduleId)) {
@@ -872,6 +941,11 @@ export default defineComponent({
 			this.deletedScheduleIds = []
 
 			if (this.isScheduledMode) {
+				const failSave = async (res, verb, index) => {
+					logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
+					const errorMessage = await readApiErrorMessage(res)
+					throw new Error(`Failed to ${verb} stream schedule ${index + 1}: ${errorMessage}`)
+				}
 				for (let i = 0; i < this.streams.length; i++) {
 					const stream = this.streams[i]
 					const payload = {
@@ -881,6 +955,7 @@ export default defineComponent({
 						start_time: stream.start_time ? stream.start_time.toISOString() : null,
 						end_time: stream.end_time ? stream.end_time.toISOString() : null,
 						config: {
+							autoStart: stream.config?.autoStart !== false,
 							enablePrivacyEnhancedMode: stream.config?.enablePrivacyEnhancedMode,
 							loop: stream.config?.loop,
 							modestBranding: stream.config?.modestBranding,
@@ -891,6 +966,7 @@ export default defineComponent({
 							showInfo: stream.config?.showInfo,
 							dnt: stream.config?.dnt,
 							password: stream.config?.password || undefined,
+							language_streams: (stream.config?.language_streams || []).map(serializeLanguageStreamEntry),
 						},
 					}
 
@@ -901,11 +977,7 @@ export default defineComponent({
 							body: JSON.stringify(payload),
 							credentials: 'include',
 						})
-						if (!res.ok) {
-							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
-							const text = await res.text()
-							throw new Error(`Failed to update stream schedule ${i + 1}: ${text}`)
-						}
+						if (!res.ok) await failSave(res, 'update', i)
 					} else {
 						const res = await fetch(baseUrl, {
 							method: 'POST',
@@ -913,11 +985,7 @@ export default defineComponent({
 							body: JSON.stringify(payload),
 							credentials: 'include',
 						})
-						if (!res.ok) {
-							logOperational({action: 'stream.schedule', outcome: 'failure', backend: 'stream_schedule', error_code: 'save_failed', status: res.status})
-							const text = await res.text()
-							throw new Error(`Failed to create stream schedule ${i + 1}: ${text}`)
-						}
+						if (!res.ok) await failSave(res, 'create', i)
 						const saved = await res.json()
 						stream.id = saved.id
 					}
@@ -1252,6 +1320,25 @@ export default defineComponent({
 			.password-group
 				margin-top: 6px
 				max-width: 380px
+
+		.stream-interpretation-settings
+			margin-top: 12px
+			border-top: 1px solid $clr-grey-100
+			padding-top: 10px
+			.channels-badge
+				margin-left: 8px
+				padding: 2px 7px
+				font-size: 11px
+				font-weight: 600
+				border-radius: 10px
+				background: var(--clr-primary, #1e88e5)
+				color: #ffffff
+			.stream-interpretation-body
+				margin-top: 12px
+			.stream-interpretation-hint
+				margin-top: 8px
+				font-size: 12px
+				color: $clr-secondary-text-light
 
 	.scheduled-actions-footer
 		display: flex

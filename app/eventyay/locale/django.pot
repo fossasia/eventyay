@@ -13265,7 +13265,7 @@ msgstr ""
 
 #: eventyay/common/templates/common/base.html:175
 #: eventyay/common/templates/common/fragment_header_user.html:121
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr ""
 
 #: eventyay/common/templates/common/base.html:189

@@ -230,8 +230,14 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
 };
 
 const buildFormUrl = function(form) {
-    const url = form.getAttribute('action') || window.location.pathname;
-    const query = new URLSearchParams(new FormData(form)).toString();
+    const action = form.getAttribute('action');
+    const url = action || window.location.pathname;
+    const params = new URLSearchParams(new FormData(form));
+    const currentSort = new URLSearchParams(window.location.search).get('sort');
+    if (!action && currentSort && !params.has('sort')) {
+        params.set('sort', currentSort);
+    }
+    const query = params.toString();
     if (!query) {
         return url;
     }
@@ -282,7 +288,13 @@ const handleClearFilter = function(event) {
         }));
     });
 
-    fetchAndReplace(url, true, form);
+    const clearUrl = new URL(url, window.location.href);
+    const tabInput = form.querySelector('input[name="tab"][data-events-overview-tab]');
+    if (tabInput && tabInput.value) {
+        clearUrl.searchParams.set('tab', tabInput.value);
+    }
+
+    fetchAndReplace(clearUrl.pathname + clearUrl.search, true, form);
 };
 
 const handlePaginationClick = function(event) {
@@ -321,6 +333,26 @@ const handleSortClick = function(event) {
     const formInTab = tabPane ? tabPane.querySelector('form') : null;
     const defaultForm = getFilterForms()[0] || null;
     fetchAndReplace(url, true, formInTab || tabPane || defaultForm);
+};
+
+const syncSelectedEventTab = function(tabId) {
+    if (!tabId) {
+        return;
+    }
+
+    document.querySelectorAll('input[name="tab"][data-events-overview-tab]').forEach(function(input) {
+        input.value = tabId;
+    });
+
+    document.querySelectorAll('a[data-events-overview-clear]').forEach(function(link) {
+        const href = link.getAttribute('href');
+        if (!href) {
+            return;
+        }
+        const nextUrl = new URL(href, window.location.href);
+        nextUrl.searchParams.set('tab', tabId);
+        link.setAttribute('href', nextUrl.pathname + nextUrl.search);
+    });
 };
 
 const setActiveTabUI = function(tabId) {
@@ -374,6 +406,9 @@ const handleTabClick = function(event) {
     event.preventDefault();
 
     setActiveTabUI(tabParam);
+    if (tabLink.closest('.events-overview-tabs')) {
+        syncSelectedEventTab(tabParam);
+    }
 
     const activeTab = document.getElementById(tabParam);
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || null;
@@ -384,7 +419,12 @@ const handleTabClick = function(event) {
 const handlePopState = function() {
     const url = new URL(window.location.href, window.location.origin);
     const tabParam = url.searchParams.get('tab');
-    if (tabParam) {
+    if (document.querySelector('.events-overview-tabs')) {
+        const status = url.searchParams.get('status');
+        const resolvedTab = tabParam || (status === 'draft' || status === 'past' || status === 'live' ? status : 'live');
+        setActiveTabUI(resolvedTab);
+        syncSelectedEventTab(resolvedTab);
+    } else if (tabParam) {
         setActiveTabUI(tabParam);
     }
     const tabPane = tabParam ? document.getElementById(tabParam) : null;

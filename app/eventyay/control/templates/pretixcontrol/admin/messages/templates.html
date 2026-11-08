@@ -12,7 +12,7 @@
 
 {% block content %}
   <h1>{% translate "Email templates" %}</h1>
-  <p class='text-muted'>{% translate "Read-only list of platform email templates." %}</p>
+  <p class='text-muted'>{% translate "Platform email templates and available customization pages." %}</p>
 
   <div class='table-responsive'>
     <table class='table mt-4 table-flip tickets-table'>
@@ -29,7 +29,11 @@
           <tr>
             <td class='list-name-cell'>
               <strong>
-                <a href='{% url "eventyay_admin:admin.messages.template_detail" role=tpl.key %}'>{{ tpl.name }}</a>
+                {% if tpl.url %}
+                  <a href='{{ tpl.url }}'>{{ tpl.name }}</a>
+                {% else %}
+                  <a href='{% url "eventyay_admin:admin.messages.template_detail" role=tpl.key %}'>{{ tpl.name }}</a>
+                {% endif %}
               </strong>
             </td>
             <td class='list-meta'>{{ tpl.category }}</td>

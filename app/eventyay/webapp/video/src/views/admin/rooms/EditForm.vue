@@ -48,8 +48,8 @@
 							.setting-control
 								bunt-switch(name="force_join", v-model="config.force_join")
 
-			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
-			sidebar-addons(v-if="inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')", :config="config", :modules="modules", :creating="creating")
+			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id] && !isProviderDisabled", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
+			sidebar-addons(v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')", :config="config", :modules="modules", :creating="creating")
 			.danger-zone(v-if="!creating && hasPermission('room:delete')")
 				h3 {{ $t('Danger Zone') }}
 				template(v-if="config.has_linked_sessions")
@@ -83,6 +83,7 @@ import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
 import ROOM_TYPES, { inferType, isChatChannel } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
+import { MODULE_TYPE_TO_PROVIDER, isVideoProviderDisabled } from 'lib/video-providers'
 import Stage from './types-edit/stage'
 import ChannelBBB from './types-edit/channel-bbb'
 import ChannelJanus from './types-edit/channel-janus'
@@ -161,6 +162,19 @@ export default {
 				acc[module.type] = module
 				return acc
 			}, {})
+		},
+		isProviderDisabled() {
+			const videoProviders = this.$store.state.world?.video_providers || window.eventyay?.video_providers
+			if (!videoProviders) return false
+			const modules = this.config?.modules || this.config?.module_config || []
+			for (const m of modules) {
+				const type = typeof m === 'string' ? m : m?.type
+				const providerId = MODULE_TYPE_TO_PROVIDER[type]
+				if (providerId && isVideoProviderDisabled(providerId, videoProviders)) {
+					return true
+				}
+			}
+			return false
 		},
 		inferredType() {
 			return inferType(this.config)

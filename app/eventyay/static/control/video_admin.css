@@ -401,3 +401,55 @@
     font-weight: 500;
     border-radius: 6px;
 }
+
+/* Provider Table & Limit Form Styles */
+.col-provider-name {
+    width: 45%;
+}
+
+.col-provider-status {
+    width: 35%;
+}
+
+.col-provider-actions {
+    width: 20%;
+}
+
+.provider-media {
+    margin: 0;
+}
+
+.provider-media-icon {
+    padding-right: 12px;
+    vertical-align: middle;
+}
+
+.provider-title {
+    margin: 0 0 4px;
+    font-weight: 600;
+}
+
+.provider-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.provider-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.provider-toggle-wrap .toggle-status-label {
+    font-size: 13px;
+}
+
+.provider-help-block {
+    margin: 4px 0 0;
+    font-size: 11px;
+}
+
+.video-limit-input {
+    max-width: 200px;
+}
