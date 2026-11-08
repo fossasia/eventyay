@@ -1,7 +1,10 @@
+from types import SimpleNamespace
+
 import pytest
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
+from eventyay.api.serializers.mail import MailTemplateSerializer
 from eventyay.base.models import MailTemplate, Team
 from eventyay.mail.context import get_malformed_placeholders, get_used_placeholders
 
@@ -80,3 +83,33 @@ def test_mail_template_form_accepts_braces_but_not_mistyped_placeholders(orga_cl
     else:
         assert str(template.subject) == 'Old subject'
         assert 'Invalid placeholder syntax' in response.content.decode()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('value', 'error'),
+    [
+        (REVIEW_SUBJECT, None),
+        ('TEST {} {event_name} See you there :}', None),
+        ('Volunteer briefing {draft', None),
+        ('Volunteer briefing for {event_name', 'Invalid placeholder syntax'),
+        ('Volunteer briefing for { event_name }', 'Invalid placeholder syntax'),
+        ('Volunteer briefing for {invalidplaceholder}', 'Unknown placeholder'),
+    ],
+)
+def test_mail_template_api_accepts_braces_but_not_mistyped_placeholders(event, value, error):
+    with scope(event=event):
+        template = MailTemplate.objects.create(event=event, subject='Old subject', text='Hello')
+        serializer = MailTemplateSerializer(
+            template,
+            data={'subject': value, 'text': value},
+            partial=True,
+            context={'request': SimpleNamespace(event=event)},
+        )
+        is_valid = serializer.is_valid()
+    if error is None:
+        assert is_valid, serializer.errors
+    else:
+        assert not is_valid
+        assert set(serializer.errors) == {'subject', 'text'}
+        assert error in str(serializer.errors['subject'][0])
