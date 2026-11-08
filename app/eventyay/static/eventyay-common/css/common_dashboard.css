@@ -7,6 +7,11 @@
 .modern-dashboard #event-nav {
   margin-bottom: 0
 }
+.modern-dashboard #event-nav .navigation-title h2 {
+  margin: 0;
+  padding-top: 8px;
+  color: var(--td-text, #555)
+}
 .dashboard-header-extra {
   font-size: 16px;
   margin-top: 8px;
@@ -3516,7 +3521,12 @@ h4.od-subchart {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px
+  gap: 8px;
+  flex-wrap: wrap
+}
+.od-tool-head .od-badge {
+  white-space: nowrap;
+  flex-shrink: 0
 }
 .od-tool-head h3 {
   margin: 0;
