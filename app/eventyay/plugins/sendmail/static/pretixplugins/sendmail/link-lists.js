@@ -8,24 +8,52 @@ const columnKey = (header, index) => {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
+        .slice(0, 90)
+        .replace(/_+$/g, '')
     return key || `column_${index + 1}`
 }
 
-const unquote = (value) => value.trim().replace(/^"|"$/g, '')
+const splitCsvLine = (line, delimiter) => {
+    const cells = []
+    let cell = ''
+    let quoted = false
+    for (let index = 0; index < line.length; index += 1) {
+        const char = line[index]
+        if (quoted) {
+            if (char === '"' && line[index + 1] === '"') {
+                cell += '"'
+                index += 1
+            } else if (char === '"') {
+                quoted = false
+            } else {
+                cell += char
+            }
+        } else if (char === '"') {
+            quoted = true
+        } else if (char === delimiter) {
+            cells.push(cell.trim())
+            cell = ''
+        } else {
+            cell += char
+        }
+    }
+    cells.push(cell.trim())
+    return cells
+}
 
 const readListFile = (text) => {
     const lines = text.split(/\r\n|\n|\r/).filter((line) => line.trim())
     const firstLine = lines[0] || ''
-    const delimiter = [';', ',', '\t'].find((candidate) => firstLine.includes(candidate)) || ','
+    const delimiter = [';', ','].find((candidate) => firstLine.includes(candidate)) || ','
     const keys = []
-    firstLine.split(delimiter).forEach((header, index) => {
-        let key = columnKey(unquote(header), index)
+    splitCsvLine(firstLine, delimiter).forEach((header, index) => {
+        let key = columnKey(header, index)
         while (keys.includes(key)) {
             key = `${key}_${index + 1}`
         }
         keys.push(key)
     })
-    const firstRow = (lines[1] || '').split(delimiter).map(unquote)
+    const firstRow = splitCsvLine(lines[1] || '', delimiter)
     const sample = Object.fromEntries(keys.map((key, index) => [`list_${key}`, firstRow[index] || '']))
     return { names: keys.map((key) => `list_${key}`), sample }
 }
@@ -202,6 +230,7 @@ const post = async (panel, url, body) => {
         updateCounts(panel, data)
         return data
     } catch (error) {
+        console.error('Adding rows to the link list failed', url, error)
         setStatus(panel, dialog.dataset.errorLabel, true)
         return null
     }
