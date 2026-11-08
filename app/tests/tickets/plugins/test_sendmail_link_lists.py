@@ -10,6 +10,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product, Team, User
+from eventyay.common.exceptions import SendMailException
 from eventyay.plugins.sendmail.forms import MailForm
 from eventyay.plugins.sendmail.link_lists import add_rows, create_link_list, parse_link_list
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, MailLinkList
@@ -103,28 +104,59 @@ def test_each_address_keeps_its_own_row(event, link_list):
         assert link_list.shortfall(['ali@example.com', 'john@example.com', 'mia@example.com']) == 2
 
 
+def _queue(event, order, link_list, emails):
+    queued = EmailQueue.objects.create(
+        event=event,
+        composing_for=ComposingFor.ATTENDEES,
+        subject={'en': 'Your discount'},
+        message={'en': 'Use {list_link} with code {list_code}'},
+        link_list=link_list,
+    )
+    for email in emails:
+        EmailQueueToUser.objects.create(mail=queued, email=email, orders=[order.pk])
+    return queued
+
+
 @pytest.mark.django_db
 def test_sending_gives_each_recipient_their_row(event, order, link_list):
     djmail.outbox = []
     with scopes_disabled():
-        queued = EmailQueue.objects.create(
-            event=event,
-            composing_for=ComposingFor.ATTENDEES,
-            subject={'en': 'Your discount'},
-            message={'en': 'Use {list_link} with code {list_code}'},
-            link_list=link_list,
-        )
-        for email in ('ali@example.com', 'sara@example.com', 'john@example.com'):
-            EmailQueueToUser.objects.create(mail=queued, email=email, orders=[order.pk])
-
-        queued.send(async_send=False)
-        unsent = list(queued.recipients.filter(sent=False))
+        _queue(event, order, link_list, ('ali@example.com', 'sara@example.com')).send(async_send=False)
 
     sent_links = ('https://p.test/a', 'https://p.test/b')
     links = sorted(link for message in djmail.outbox for link in sent_links if link in message.body)
-    assert len(djmail.outbox) == 2
     assert links == ['https://p.test/a', 'https://p.test/b']
-    assert len(unsent) == 1 and unsent[0].error
+
+
+@pytest.mark.django_db
+def test_nothing_is_sent_when_the_list_is_too_short(event, order, link_list):
+    djmail.outbox = []
+    with scopes_disabled():
+        queued = _queue(event, order, link_list, ('ali@example.com', 'sara@example.com', 'john@example.com'))
+
+        with pytest.raises(SendMailException):
+            queued.send(async_send=False)
+
+        assert link_list.counts()['used'] == 0
+    assert djmail.outbox == []
+
+
+@pytest.mark.django_db
+def test_deleting_a_list_keeps_the_queued_email(event, order, link_list):
+    with scopes_disabled():
+        queued = _queue(event, order, link_list, ('ali@example.com',))
+        link_list.delete()
+        queued.refresh_from_db()
+
+    assert queued.link_list_id is None
+
+
+def test_repeated_and_long_headers_keep_their_own_values():
+    parsed = parse_link_list(_csv(f'Link,Link,{"x" * 150}\na,b,c\n'))
+
+    assert parsed.columns[:2] == ['link', 'link_2']
+    assert len(parsed.columns[2]) <= 90
+    assert list(parsed.rows[0].values()) == ['a', 'b', 'c']
 
 
 @pytest.mark.django_db
@@ -164,10 +196,11 @@ def test_dialog_adds_rows_from_a_csv(logged_in_client, event, link_list):
 
 
 @pytest.mark.django_db
-def test_dialog_rejects_a_csv_without_the_list_columns(logged_in_client, event, link_list):
-    response = logged_in_client.post(_rows_url(event, link_list), {'file': _csv('seat\n12A\n')})
+def test_dialog_rejects_a_csv_missing_any_list_column(logged_in_client, event, link_list):
+    response = logged_in_client.post(_rows_url(event, link_list), {'file': _csv('link\nhttps://p.test/c\n')})
 
     assert response.status_code == 400
+    assert 'code' in response.json()['error']
 
 
 @pytest.mark.django_db
@@ -200,3 +233,25 @@ def test_editor_preview_fills_in_a_row_of_the_chosen_list(logged_in_client, even
 
     assert 'https://p.test/a' in saved.json()['html']
     assert '12A' in unsaved.json()['html']
+
+
+@pytest.mark.django_db
+def test_editor_preview_escapes_list_values(logged_in_client, event):
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/editor/email-preview'
+    sample = urlencode({'link_list_sample': json.dumps({'list_link': '<img src=x onerror=alert(1)>'})})
+
+    response = logged_in_client.post(
+        f'{url}?{sample}', data='{"html": "<p>{list_link}</p>"}', content_type='application/json'
+    )
+
+    assert '<img' not in response.json()['html']
+    assert '&lt;img' in response.json()['html']
+
+
+@pytest.mark.django_db
+def test_test_emails_show_made_up_list_values(event, link_list):
+    with scopes_disabled():
+        form = MailForm(event=event, data={'subject_0': 'Hi', 'text_0': '{list_link}', 'link_list': link_list.pk})
+        form.is_valid()
+
+        assert form.link_list_example() == {'list_link': '[list_link]', 'list_code': '[list_code]'}
