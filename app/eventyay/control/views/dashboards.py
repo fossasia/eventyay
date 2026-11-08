@@ -438,7 +438,12 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_eve
         return None
 
     with scope(event=event):
-        admission_qs = OrderPosition.objects.filter(order__event=event, product__admission=True)
+        # canceled=False is spelled out even though OrderPosition.objects already
+        # excludes canceled positions, so the intent is clear: a single canceled
+        # ticket in a still-paid order must not count as an attendee or revenue.
+        admission_qs = OrderPosition.objects.filter(
+            order__event=event, product__admission=True, canceled=False
+        )
         if subevent:
             admission_qs = admission_qs.filter(subevent=subevent)
 
@@ -449,7 +454,7 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_eve
 
         if subevent:
             total_revenue = OrderPosition.objects.filter(
-                order__event=event, subevent=subevent, order__status=Order.STATUS_PAID
+                order__event=event, subevent=subevent, order__status=Order.STATUS_PAID, canceled=False
             ).aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
         else:
             total_revenue = Order.objects.filter(event=event, status=Order.STATUS_PAID).aggregate(
