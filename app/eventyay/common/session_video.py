@@ -6,7 +6,8 @@ import re
 
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
@@ -19,8 +20,12 @@ from eventyay.base.models import (
 )
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
 
+
 SESSION_VIDEO_IMPORT_KEY = 'session_video'
 _IMPORTED_VIDEO_SPLIT_RE = re.compile(r'[,;]\s*(?=https?://)', re.IGNORECASE)
+# Each edit-form row is its own POST field. Stay far under Django's
+# DATA_UPLOAD_MAX_NUMBER_FIELDS so a long list still saves.
+SESSION_VIDEO_URL_LIMIT = 20
 
 
 def session_videos_enabled(event) -> bool:
@@ -109,6 +114,7 @@ def _create_session_video_question(event):
 
 
 def _deactivate_extra_session_video_fields(questions, keep):
+    """Deactivate all session video questions except the one to keep."""
     extras = [q for q in questions if q.pk != keep.pk and q.active]
     for extra in extras:
         extra.active = False
@@ -121,6 +127,7 @@ def ensure_session_video_question(event):
 
 
 def get_submission_video_answer(submission):
+    """Return the Answer object for the canonical session video question, if any."""
     question = get_session_video_question(submission.event, create=False)
     if not question:
         return None
@@ -133,6 +140,7 @@ def get_submission_video_answer(submission):
 
 
 def get_submission_video_urls(submission) -> list[str]:
+    """Return the list of stored video URLs for the submission."""
     if not session_videos_enabled(submission.event):
         return []
     answer = get_submission_video_answer(submission)
@@ -166,6 +174,11 @@ def set_submission_video_urls(
             raise ValueError(gettext('Please enter a valid YouTube, Vimeo, or Wikimedia Commons URL.'))
         seen.add(raw)
         cleaned.append(raw)
+
+    if len(cleaned) > SESSION_VIDEO_URL_LIMIT:
+        raise ValueError(
+            gettext('You can add at most %(limit)s video links.') % {'limit': SESSION_VIDEO_URL_LIMIT}
+        )
 
     stored = '\n'.join(cleaned)
     if not session_videos_enabled(submission.event):
@@ -276,6 +289,7 @@ def prefetch_submission_video_urls(queryset, event):
 
 
 def video_urls_from_prefetched_submission(submission) -> list[str]:
+    """Return the list of video URLs using prefetched answers if available."""
     if not session_videos_enabled(submission.event):
         return []
     answers = getattr(submission, '_session_video_answers', None)
@@ -287,4 +301,5 @@ def video_urls_from_prefetched_submission(submission) -> list[str]:
 
 
 def video_url_from_prefetched_submission(submission) -> str:
+    """Return stored video URLs as newline-joined string using prefetched answers."""
     return '\n'.join(video_urls_from_prefetched_submission(submission))
