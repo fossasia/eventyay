@@ -1,10 +1,10 @@
 import i18next from 'i18next'
-import {createVueGettextRuntime} from '../../i18n/vue-runtime.js'
+import {createVueI18nRuntime} from '../../i18n/vue-runtime.js'
 
-const runtime = createVueGettextRuntime({
+const runtime = createVueI18nRuntime({
 	domain: 'schedule',
 	i18next,
-	localeLoaders: import.meta.glob('../../../locale/*/LC_MESSAGES/schedule.po'),
+	localeLoaders: import.meta.glob('../../locales/*.json'),
 })
 
 await runtime.init({lng: 'en'})
