@@ -1,15 +1,23 @@
 from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core import mail as djmail
 from django.test import override_settings
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from rest_framework.test import APIClient
 
-from eventyay.base.models import Team, TeamInvite, User
-from eventyay.base.services.teams import TeamInviteError, invite_to_team, process_team_invites
+from eventyay.base.models import Event, Organizer, Team, TeamInvite, User
+from eventyay.base.services.teams import (
+    TeamInviteError,
+    get_team_invitation_url,
+    invite_to_team,
+    process_team_invites,
+    send_team_invite,
+)
+from eventyay.helpers.urls import build_absolute_uri
 
 
 @pytest.fixture(autouse=True)
@@ -32,6 +40,29 @@ def invitee(db):
     return User.objects.create_user(email='invitee@example.org', password='invitepass123', locale='en')
 
 
+@pytest.fixture
+def invitation_organizer():
+    """Organizer used by invitation-link tests. Kept separate from the shared organizer fixture."""
+    created = Organizer.objects.create(name='Test Org', slug='test-org')
+    with scope(organizer=created):
+        yield created
+
+
+@pytest.fixture
+@scopes_disabled()
+def api_team(organizer):
+    return Team.objects.create(organizer=organizer, name='Test-Team', can_change_teams=True)
+
+
+@pytest.fixture
+@scopes_disabled()
+def token_client(api_team, allow_all_entitlements):
+    client = APIClient()
+    token = api_team.tokens.create(name='Foo')
+    client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+    return client
+
+
 def _invite(team, email, django_capture_on_commit_callbacks):
     with scopes_disabled(), django_capture_on_commit_callbacks(execute=True):
         return invite_to_team(team, email)
@@ -39,6 +70,143 @@ def _invite(team, email, django_capture_on_commit_callbacks):
 
 def _invite_url(invite):
     return reverse('eventyay_common:auth.invite', kwargs={'token': invite.token})
+
+
+def _create_event(invitation_organizer, slug, plugins='teamshifts'):
+    return Event.objects.create(
+        organizer=invitation_organizer,
+        name=slug,
+        slug=slug,
+        date_from=now(),
+        plugins=plugins,
+    )
+
+
+@pytest.fixture
+def teamshifts_installed():
+    pytest.importorskip('teamshifts')
+
+
+# Invitation links
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_standard_team(invitation_organizer):
+    team = Team.objects.create(organizer=invitation_organizer, name='Admin Team', teamshifts_role='')
+    url = get_team_invitation_url(team)
+    assert url.endswith(f'/common/organizer/test-org/team/{team.pk}')
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('role', ['coordinator', 'lead'])
+def test_get_team_invitation_url_single_event_links_to_event_dashboard(
+    invitation_organizer, teamshifts_installed, role
+):
+    event = _create_event(invitation_organizer, 'conf')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Shifts Team', teamshifts_role=role, all_events=True
+    )
+    url = get_team_invitation_url(team)
+    assert url.endswith(f'/teamshifts/event/test-org/{event.slug}/')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_limited_team_links_to_its_event(invitation_organizer, teamshifts_installed):
+    _create_event(invitation_organizer, 'other')
+    event = _create_event(invitation_organizer, 'mine')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Lead Team', teamshifts_role='lead', all_events=False
+    )
+    team.limit_events.add(event)
+    url = get_team_invitation_url(team)
+    assert url.endswith('/teamshifts/event/test-org/mine/')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_multiple_events_links_to_common_dashboard(invitation_organizer):
+    _create_event(invitation_organizer, 'one')
+    _create_event(invitation_organizer, 'two')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Shifts Team', teamshifts_role='coordinator', all_events=True
+    )
+    assert get_team_invitation_url(team) == build_absolute_uri('eventyay_common:dashboard')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_single_eligible_event_among_several_links_to_it(
+    invitation_organizer, teamshifts_installed
+):
+    _create_event(invitation_organizer, 'plain', plugins='')
+    _create_event(invitation_organizer, 'shifts')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Shifts Team', teamshifts_role='lead', all_events=True
+    )
+    assert get_team_invitation_url(team).endswith('/teamshifts/event/test-org/shifts/')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_no_teamshifts_event_links_to_common_dashboard(invitation_organizer):
+    _create_event(invitation_organizer, 'plain', plugins='')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Shifts Team', teamshifts_role='coordinator', all_events=True
+    )
+    assert get_team_invitation_url(team) == build_absolute_uri('eventyay_common:dashboard')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_ignores_events_outside_team_scope(invitation_organizer):
+    _create_event(invitation_organizer, 'outside')
+    inside = _create_event(invitation_organizer, 'inside', plugins='')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Lead Team', teamshifts_role='lead', all_events=False
+    )
+    team.limit_events.add(inside)
+    assert get_team_invitation_url(team) == build_absolute_uri('eventyay_common:dashboard')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_unavailable_plugin_route_links_to_common_dashboard(invitation_organizer):
+    _create_event(invitation_organizer, 'conf')
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Lead Team', teamshifts_role='lead', all_events=True
+    )
+    with patch(
+        'eventyay.base.services.teams.build_absolute_uri',
+        side_effect=[NoReverseMatch('Plugin not installed'), 'http://localhost/common/'],
+    ):
+        assert get_team_invitation_url(team) == 'http://localhost/common/'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('all_events', [True, False])
+def test_get_team_invitation_url_unsaved_teamshifts_team_links_to_common_dashboard(invitation_organizer, all_events):
+    team = Team(organizer=invitation_organizer, name='Unsaved', teamshifts_role='lead', all_events=all_events)
+    assert get_team_invitation_url(team) == build_absolute_uri('eventyay_common:dashboard')
+
+
+@pytest.mark.django_db
+def test_get_team_invitation_url_standard_team_no_pk(invitation_organizer):
+    mock_team = MagicMock(organizer=invitation_organizer, teamshifts_role='', pk=None)
+    url = get_team_invitation_url(mock_team)
+    assert url.endswith('/common/organizer/test-org/teams')
+
+
+# Sending invitations
+
+
+@pytest.mark.django_db
+def test_send_team_invite_links_to_invitation_page(invitation_organizer, user):
+    djmail.outbox = []
+    team = Team.objects.create(
+        organizer=invitation_organizer, name='Shifts Team', teamshifts_role='coordinator', all_events=True
+    )
+    invite = team.invites.create(email=user.email, user=user)
+
+    assert send_team_invite(invite) is True
+
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].subject == 'Invitation to join the “Shifts Team” team for “Test Org”'
+    assert invite.invitation_url in djmail.outbox[0].body
 
 
 @pytest.mark.django_db
@@ -67,6 +235,17 @@ def test_inviting_new_email_sends_account_invitation(helpers_team, django_captur
 
 
 @pytest.mark.django_db
+def test_duplicate_open_invite_is_rejected(helpers_team, invitee, django_capture_on_commit_callbacks):
+    _invite(helpers_team, invitee.email, django_capture_on_commit_callbacks)
+
+    with scopes_disabled(), pytest.raises(TeamInviteError):
+        invite_to_team(helpers_team, invitee.email)
+
+
+# API tests
+
+
+@pytest.mark.django_db
 def test_api_invite_for_existing_user_does_not_add_member(
     organizer, helpers_team, invitee, django_capture_on_commit_callbacks, allow_all_entitlements
 ):
@@ -88,11 +267,26 @@ def test_api_invite_for_existing_user_does_not_add_member(
 
 
 @pytest.mark.django_db
-def test_duplicate_open_invite_is_rejected(helpers_team, invitee, django_capture_on_commit_callbacks):
-    _invite(helpers_team, invitee.email, django_capture_on_commit_callbacks)
+def test_invite_new_user_sends_invitation_link(
+    token_client, organizer, api_team, django_capture_on_commit_callbacks
+):
+    with django_capture_on_commit_callbacks(execute=True):
+        resp = token_client.post(
+            f'/api/v1/organizers/{organizer.slug}/teams/{api_team.pk}/invites/',
+            {'email': 'newperson@example.org'},
+        )
 
-    with scopes_disabled(), pytest.raises(TeamInviteError):
-        invite_to_team(helpers_team, invitee.email)
+    assert resp.status_code == 201
+    with scopes_disabled():
+        invite = api_team.invites.get()
+    assert invite.email == 'newperson@example.org'
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].to == ['newperson@example.org']
+    invite_url = build_absolute_uri('eventyay_common:auth.invite', kwargs={'token': invite.token})
+    assert invite_url in djmail.outbox[0].body
+
+
+# Accepting and declining
 
 
 @pytest.mark.django_db
@@ -128,7 +322,9 @@ def test_recipient_declines_invitation(client, helpers_team, invitee, django_cap
 
 
 @pytest.mark.django_db
-def test_other_account_cannot_accept_invitation(client, helpers_team, invitee, user, django_capture_on_commit_callbacks):
+def test_other_account_cannot_accept_invitation(
+    client, helpers_team, invitee, user, django_capture_on_commit_callbacks
+):
     invite = _invite(helpers_team, invitee.email, django_capture_on_commit_callbacks)
     client.force_login(user)
 
@@ -138,19 +334,6 @@ def test_other_account_cannot_accept_invitation(client, helpers_team, invitee, u
     invite.refresh_from_db()
     assert invite.state == TeamInvite.State.PENDING
     assert not helpers_team.members.filter(pk=user.pk).exists()
-
-
-@pytest.mark.django_db
-def test_expired_invitation_cannot_be_accepted(client, helpers_team, invitee, django_capture_on_commit_callbacks):
-    invite = _invite(helpers_team, invitee.email, django_capture_on_commit_callbacks)
-    TeamInvite.objects.filter(pk=invite.pk).update(expires=now() - timedelta(minutes=1))
-    client.force_login(invitee)
-
-    response = client.post(_invite_url(invite), {'action': 'accept'})
-
-    assert response.status_code == 410
-    assert 'has expired' in response.content.decode()
-    assert not helpers_team.members.filter(pk=invitee.pk).exists()
 
 
 @pytest.mark.django_db
@@ -196,6 +379,22 @@ def test_dashboard_lists_unbound_invite_for_matching_email(client, helpers_team,
     response = client.get(reverse('eventyay_common:dashboard'))
 
     assert response.content.decode().count('You have been invited to join “Helpers” for “Test Event”.') == 1
+
+
+# Expiry and reminders
+
+
+@pytest.mark.django_db
+def test_expired_invitation_cannot_be_accepted(client, helpers_team, invitee, django_capture_on_commit_callbacks):
+    invite = _invite(helpers_team, invitee.email, django_capture_on_commit_callbacks)
+    TeamInvite.objects.filter(pk=invite.pk).update(expires=now() - timedelta(minutes=1))
+    client.force_login(invitee)
+
+    response = client.post(_invite_url(invite), {'action': 'accept'})
+
+    assert response.status_code == 410
+    assert 'has expired' in response.content.decode()
+    assert not helpers_team.members.filter(pk=invitee.pk).exists()
 
 
 @pytest.mark.django_db
@@ -247,6 +446,9 @@ def test_organizer_can_send_new_invitation_after_expiry(
     assert len(djmail.outbox) == 1
 
 
+# Organizer pages
+
+
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_organizer_team_page_shows_invite_states(organizer_client, organizer, helpers_team, invitee):
@@ -291,6 +493,9 @@ def test_organizer_team_page_shows_invite_states(organizer_client, organizer, he
     assert 'Accepted' in renamed_row
     other_row = content.split('accepted@example.org', 1)[1].split('</tr>', 1)[0]
     assert 'Accepted' not in other_row
+
+
+# Message templates
 
 
 @pytest.mark.django_db
