@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 from django_scopes import scope, scopes_disabled
@@ -6,6 +7,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.api.serializers.mail import MailTemplateSerializer
 from eventyay.base.models import MailTemplate, Team
+from eventyay.helpers.placeholders import escape_stray_braces, find_malformed_placeholders, find_placeholder_names
 from eventyay.mail.context import get_malformed_placeholders, get_used_placeholders
 
 # The subject from the #6251 review recording.
@@ -39,6 +41,37 @@ def test_used_placeholders_treat_stray_braces_as_text():
 def test_malformed_placeholders_checks_every_language():
     text = LazyI18nString({'en': 'Hi { name }, {draft', 'de': 'Hallo {name'})
     assert get_malformed_placeholders(text, {'name': None}) == ['{ name }', '{name']
+
+
+def test_excessive_format_width_is_never_evaluated():
+    template = '{event_name:>99999} {other:>1000000000}'
+    with mock.patch('eventyay.helpers.placeholders.format', create=True, side_effect=AssertionError) as evaluate:
+        assert find_placeholder_names(template) == []
+        assert find_malformed_placeholders(template, {'event_name'}) == ['{event_name:>99999}']
+        assert escape_stray_braces(template) == '{{event_name:>99999}} {{other:>1000000000}}'
+    evaluate.assert_not_called()
+
+
+def test_escape_stray_braces_rewrites_markdown_escaped_names():
+    assert escape_stray_braces('{join\\_online\\_event:>5} {{a\\_b}}') == '{join_online_event:>5} {{a\\_b}}'
+
+
+@pytest.mark.django_db
+def test_markdown_escaped_placeholder_is_saved_and_expanded(orga_client, event):
+    with scope(event=event):
+        template = MailTemplate.objects.create(event=event, subject='Old subject', text='Hello')
+    response = orga_client.post(
+        template.urls.edit,
+        {'subject_0': 'About {event\\_name}', 'text_0': 'Welcome to {event\\_name}'},
+        follow=True,
+        secure=True,
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        template.refresh_from_db()
+        mail = template.to_mail(user='speaker@example.org', event=event, commit=False)
+    assert 'About Test Event' in mail.subject
+    assert mail.text == 'Welcome to Test Event'
 
 
 @pytest.mark.django_db

@@ -12,6 +12,8 @@ TEMPLATE_TOKEN = re.compile(
 # What follows a stray "{" when a placeholder was mistyped: "{ event_name }", "{event_name!x}", or
 # "{event_name" with the closing brace missing.
 ATTEMPTED_PLACEHOLDER = re.compile(r'\s*(?P<name>' + IDENTIFIER + r')(?:[^{}\s]*\s*\})?')
+# A format spec is user input and format() allocates its width, so five digits or more is never evaluated.
+EXCESSIVE_FORMAT_NUMBER = re.compile(r'\d{5,}')
 
 
 def is_placeholder(match: re.Match[str]) -> bool:
@@ -20,6 +22,8 @@ def is_placeholder(match: re.Match[str]) -> bool:
     format_spec = match.group('format_spec')
     if format_spec is None:
         return True
+    if EXCESSIVE_FORMAT_NUMBER.search(format_spec):
+        return False
     # Mail context values are strings, so a spec a string cannot take (e.g. "{note: see below}")
     # would raise ValueError in format_map. Such text is not a placeholder.
     try:
@@ -34,13 +38,17 @@ def escape_stray_braces(template: str) -> str:
 
     Organizers type braces as plain text (``"{"``, ``{}``, ``See you :}``). ``str.format_map`` raises
     ``ValueError`` on those, so they are escaped here and render literally. Placeholders with a valid
-    format spec, such as ``{name:>5}``, are kept.
+    format spec, such as ``{name:>5}``, are kept. Markdown-escaped names such as ``{join\\_online\\_event}``
+    are rewritten to the name ``format_map`` looks up.
     """
 
     def replace(match: re.Match[str]) -> str:
         token = match.group()
-        if len(token) == 2 or is_placeholder(match):
+        if len(token) == 2:
             return token
+        if is_placeholder(match):
+            name = match.group('name')
+            return '{' + name.replace('\\_', '_') + token[len(name) + 1 :]
         if len(token) == 1:
             return token * 2
         return '{{' + token[1:-1] + '}}'
