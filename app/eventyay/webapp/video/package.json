@@ -83,7 +83,7 @@
     "vite": "^8.3.6",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-pwa": "^1.3.0",
-    "vue-eslint-parser": "^10.4.1"
+    "vue-eslint-parser": "^10.4.2"
   },
   "overrides": {
     "@humanfs/node": "^0.16.8",
