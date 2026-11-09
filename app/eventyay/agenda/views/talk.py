@@ -54,6 +54,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.cfp.views.event import EventPageMixin
+from eventyay.common.text.rich_text import rich_text_to_preview_text
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
@@ -414,6 +415,12 @@ class TalkView(TalkMixin, TemplateView):
                 event=localize_event_text(self.request.event.name),
             )
         )
+
+    @context
+    @cached_property
+    def submission_meta_description(self) -> str:
+        text = localize_event_text(self.submission_description)
+        return rich_text_to_preview_text(text, max_chars=200)
 
     @context
     @cached_property

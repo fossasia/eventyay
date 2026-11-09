@@ -1,4 +1,5 @@
 import datetime as dt
+import html
 
 import pytest
 from django.utils import formats
@@ -35,6 +36,63 @@ def test_can_see_talk(client, event, slot):
         assert 'fa-edit' not in content  # edit btn
         assert 'fa-video' not in content  # do not record
         assert '<iframe' not in content  # test plugin not active
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_strips_html_and_truncates(client, event, slot):
+    long_tail = ' Join us for deep learning insights.' * 15
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        slot.submission.abstract = (
+            '<p>This is a <strong>keynote</strong> talk about Python &amp; AI.</p>'
+            '<p>Visit <a href="https://eventyay.com">Eventyay</a> to learn &nbsp; more!'
+            f'{long_tail}</p>'
+        )
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+
+    # Extract meta and og description tag content attributes
+    assert '<meta name="description" content="' in content
+    assert '<meta property="og:description" content="' in content
+    meta_tag = content.split('<meta name="description" content="', 1)[1].split('"', 1)[0]
+    og_tag = content.split('<meta property="og:description" content="', 1)[1].split('"', 1)[0]
+
+    # Verify both meta descriptions match and are truncated to <= 200 chars ending with …
+    assert meta_tag == og_tag
+    assert len(html.unescape(meta_tag)) == 200
+    assert meta_tag.endswith('…')
+    assert meta_tag.startswith('This is a keynote talk about Python &amp; AI. Visit Eventyay to learn more!')
+
+    # Confirm raw HTML tags and entities like <p>, <strong>, &nbsp; do not appear
+    assert '<p>' not in meta_tag
+    assert '<strong>' not in meta_tag
+    assert '&nbsp;' not in meta_tag
+
+    # Confirm the visible session description in noscript remains the full untruncated HTML
+    assert html.escape(slot.submission.abstract) in content
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_quotes_and_attribute_escaping(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        slot.submission.abstract = (
+            '<p>A session on "AI & Machine Learning" with <a href="https://example.com">links</a>.</p>'
+        )
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+
+    expected_content = 'A session on &quot;AI &amp; Machine Learning&quot; with links.'
+    assert f'<meta name="description" content="{expected_content}">' in content
+    assert f'<meta property="og:description" content="{expected_content}">' in content
 
 
 @pytest.mark.django_db

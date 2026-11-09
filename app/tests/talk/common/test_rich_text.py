@@ -1,6 +1,10 @@
 import pytest
 
-from eventyay.common.text.rich_text import is_empty_rich_text, rich_text_to_plain_text
+from eventyay.common.text.rich_text import (
+    is_empty_rich_text,
+    rich_text_to_plain_text,
+    rich_text_to_preview_text,
+)
 
 
 @pytest.mark.parametrize(
@@ -73,3 +77,75 @@ def test_is_empty_rich_text(value, expected):
 )
 def test_rich_text_to_plain_text(value, expected):
     assert rich_text_to_plain_text(value) == expected
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        (None, ''),
+        ('', ''),
+        ('   ', ''),
+        ('Plain text description', 'Plain text description'),
+        ('<p>Simple paragraph</p>', 'Simple paragraph'),
+        ('<p>First</p><p>Second</p>', 'First Second'),
+        ('<p>Line 1<br>Line 2<br/>Line 3</p>', 'Line 1 Line 2 Line 3'),
+        ('<p>Text with <strong>bold</strong> and <em>italic</em>.</p>', 'Text with bold and italic.'),
+        ('<div><p><span>Deeply <em>nested</em> text</span></p></div>', 'Deeply nested text'),
+        ('<p>Visit <a href="https://example.com/very/long/url">Eventyay</a> today!</p>', 'Visit Eventyay today!'),
+        ('<ul><li>Item 1</li><li>Item 2</li></ul>', 'Item 1 Item 2'),
+        ('<ol><li>First</li><li>Second</li></ol>', 'First Second'),
+        ('<table><tr><td>Topic</td><td>Speaker</td></tr></table>', 'Topic Speaker'),
+        ('<p>Entities: &amp; &lt; &gt; &quot; &#39; &nbsp; done</p>', 'Entities: & < > " \' done'),
+        ('<p>Unclosed <b>nested tags', 'Unclosed nested tags'),
+        ('<p>Hi</p><script>alert("x")</script><style>p { color: red; }</style>', 'Hi'),
+        ('<script>alert("hello")</script>', ''),
+        ('<style>body { background: black; }</style>', ''),
+        ('Exploring std::vector<T> with Eventyay', 'Exploring std::vector<T> with Eventyay'),
+        ('<p>Multiple   spaces   and\nnewlines</p>', 'Multiple spaces and newlines'),
+    ),
+)
+def test_rich_text_to_preview_text(value, expected):
+    assert rich_text_to_preview_text(value) == expected
+
+
+def test_rich_text_to_preview_text_truncation():
+    # Text shorter than max_chars remains untouched
+    assert rich_text_to_preview_text('<p>Short text</p>', max_chars=200) == 'Short text'
+
+    # Exactly 200 characters remains untouched without ellipsis
+    exact_text = 'A' * 200
+    assert rich_text_to_preview_text(f'<p>{exact_text}</p>', max_chars=200) == exact_text
+
+    # 250 characters truncated cleanly to 200 ending with …
+    long_raw = '<p>' + ('B' * 250) + '</p>'
+    truncated = rich_text_to_preview_text(long_raw, max_chars=200)
+    assert len(truncated) == 200
+    assert truncated.endswith('…')
+    assert truncated == ('B' * 199) + '…'
+
+    # Custom max_chars
+    custom_raw = '<p>' + ('C' * 100) + '</p>'
+    custom_truncated = rich_text_to_preview_text(custom_raw, max_chars=50)
+    assert len(custom_truncated) == 50
+    assert custom_truncated == ('C' * 49) + '…'
+
+
+def test_rich_text_to_preview_text_early_cutoff_preserves_accuracy():
+    # 50,000 characters input stops early without runaway parsing
+    prefix = '<p>Important session summary here. </p>'
+    massive_body = '<p>' + ('Extra information words. ' * 2000) + '</p>'
+    result = rich_text_to_preview_text(prefix + massive_body, max_chars=200)
+    assert len(result) == 200
+    assert result.startswith('Important session summary here.')
+    assert result.endswith('…')
+
+
+def test_rich_text_to_preview_text_early_cutoff_nested_script_style():
+    # Very large script and style blocks are discarded completely and never trigger false cutoff
+    huge_script = '<script>' + ('var x = 1; ' * 5000) + '</script>'
+    huge_style = '<style>' + ('body { margin: 0; } ' * 5000) + '</style>'
+    body = '<p>Visible text after large script and style blocks.</p>'
+    result = rich_text_to_preview_text(huge_script + huge_style + body, max_chars=200)
+    assert result == 'Visible text after large script and style blocks.'
+    assert 'var x' not in result
+    assert 'margin' not in result

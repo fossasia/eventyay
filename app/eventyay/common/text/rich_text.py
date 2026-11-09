@@ -7,11 +7,11 @@ import re
 from html.parser import HTMLParser
 
 from django.utils.html import strip_tags
+from django.utils.text import Truncator
+
 
 # Zero-width / format characters that look empty but survive str.strip().
-_INVISIBLE_CHARS_RE = re.compile(
-    '[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff\u00ad]'
-)
+_INVISIBLE_CHARS_RE = re.compile('[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff\u00ad]')
 # Block tags produced by the rich-text editor, which always wraps content in them.
 # Text without any of them is treated as plain text, even if it mentions inline tags like <a>.
 _RICH_TEXT_TAG_RE = re.compile(
@@ -148,3 +148,74 @@ def rich_text_to_plain_text(value) -> str:
         else:
             lines.append(line.strip())
     return _EXTRA_BLANK_LINES_RE.sub('\n\n', '\n'.join(lines)).strip()
+
+
+_PREVIEW_TAG_RE = re.compile(
+    r'</?(?:p|br|div|h[1-6]|ul|ol|li|blockquote|pre|table|thead|tbody|tr|td|th|a|script|style)(?:\s[^<>]*)?/?>',
+    re.IGNORECASE,
+)
+
+
+class PreviewTextHTMLParser(HTMLParser):
+    """Collect single-line plain text from rich-text HTML for metadata previews."""
+
+    def __init__(self, max_collect: int | None = None):
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.skip_depth: int = 0
+        self.max_collect: int | None = max_collect
+        self.collected_chars: int = 0
+        self.stopped_early: bool = False
+
+    def _append_space(self) -> None:
+        if self.parts and not self.parts[-1].endswith(' '):
+            self.parts.append(' ')
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in SKIPPED_TAGS:
+            self.skip_depth += 1
+            return
+        if self.skip_depth > 0:
+            return
+        if tag in BLOCK_TAGS or tag in LIST_TAGS or tag in ('li', 'br'):
+            self._append_space()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in SKIPPED_TAGS:
+            if self.skip_depth > 0:
+                self.skip_depth -= 1
+            return
+        if self.skip_depth > 0:
+            return
+        if tag in BLOCK_TAGS or tag in LIST_TAGS or tag in ('li', 'tr', 'td', 'th'):
+            self._append_space()
+
+    def handle_data(self, data: str) -> None:
+        if self.skip_depth > 0:
+            return
+        self.parts.append(data)
+        self.collected_chars += len(data)
+        if self.max_collect is not None and self.collected_chars >= self.max_collect:
+            self.stopped_early = True
+            raise StopIteration
+
+
+def rich_text_to_preview_text(value: str | None, max_chars: int = 200) -> str:
+    """Convert rich-text HTML or plain text into a single-line preview truncated to max_chars."""
+    if value is None:
+        return ''
+    value = str(value)
+    if not _PREVIEW_TAG_RE.search(value):
+        clean_text = ' '.join(value.replace('\xa0', ' ').split())
+        return Truncator(clean_text).chars(max_chars, truncate='…')
+
+    parser = PreviewTextHTMLParser(max_collect=max_chars * 2 if max_chars else None)
+    try:
+        parser.feed(value)
+        parser.close()
+    except StopIteration:
+        pass
+
+    text = ''.join(parser.parts).replace('\xa0', ' ')
+    clean_text = ' '.join(text.split())
+    return Truncator(clean_text).chars(max_chars, truncate='…')
