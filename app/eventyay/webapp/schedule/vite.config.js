@@ -3,7 +3,6 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import BuntpapierStylus from 'buntpapier/stylus.js'
-import {createGettextPlugin} from '../i18n/vite-plugin.js'
 import {stableChunkBase} from '../stable-chunk-name.js'
 
 const dirname = import.meta.dirname
@@ -30,7 +29,7 @@ export default defineConfig({
 		fs: {
 			allow: [
 				path.resolve(dirname),
-				path.resolve(dirname, '../../locale'),
+				path.resolve(dirname, '../locales'),
 				path.resolve(dirname, '../i18n'),
 			]
 		},
@@ -41,7 +40,6 @@ export default defineConfig({
 		__SERVER_FORWARD_CONSOLE__: 'false',
 	},
 	plugins: [
-		createGettextPlugin('schedule'),
 		vue({
 			template: {
 				compilerOptions: {
