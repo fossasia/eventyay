@@ -1,0 +1,71 @@
+# .github/workflows/approval-labels.yml
+#
+# Keeps the "approvals: 1/3" and "approvals: 2/3" labels in sync with the number of
+# approvals a PR has from people with write access to the repo.
+#
+# How it counts:
+#   - For each reviewer, only their latest APPROVED / CHANGES_REQUESTED / DISMISSED
+#     review counts (a later plain comment does not cancel an approval).
+#   - The reviewer must currently have write, maintain or admin permission.
+#   - 0 approvals  -> both labels removed
+#     1 approval   -> "approvals: 1/3"
+#     2 approvals  -> "approvals: 2/3"
+#     3 or more    -> both labels removed (the PR has all required approvals)
+#
+# Runs after "Approval labels trigger" (review submitted / dismissed). That split is
+# needed because review events on fork PRs only get a read-only token. This workflow
+# never checks out or runs PR code: it checks out the default branch (workflow_run
+# always runs there) for .github/scripts/approval-labels-lib.mjs and only reads
+# reviews through the API. Logic is tested in approval-labels-lib.test.mjs.
+#
+# Manual run: Actions -> Approval labels -> Run workflow, with a PR number (backfill).
+# Labels are only recalculated on review events, so if a reviewer's repo permission
+# changes later, run it manually for affected PRs.
+
+name: Approval labels
+
+on:
+  workflow_run:
+    workflows: ["Approval labels trigger"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: PR number to relabel
+        required: true
+        type: string
+
+permissions:
+  contents: read       # check out the default branch for the script
+  pull-requests: write # read reviews and add/remove labels
+
+concurrency:
+  group: approval-labels-${{ github.event.workflow_run.head_repository.full_name || 'manual' }}-${{ github.event.workflow_run.head_branch || inputs.pr-number }}
+  cancel-in-progress: false
+
+env:
+  REQUIRED_APPROVALS: "3"
+  LABEL_PREFIX: "approvals: " # labels are "approvals: 1/3", "approvals: 2/3"
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      # Default branch only (workflow_run always uses it); never the PR head.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { runApprovalLabels } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/approval-labels-lib.mjs`
+            );
+            await runApprovalLabels({
+              github,
+              context,
+              core,
+              required: Number(process.env.REQUIRED_APPROVALS),
+              prefix: process.env.LABEL_PREFIX,
+            });
