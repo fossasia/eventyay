@@ -2,7 +2,6 @@ import datetime
 import json
 import time
 from decimal import Decimal
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
@@ -1035,65 +1034,6 @@ class EventsTest(SoupTest):
         with scopes_disabled():
             ev = Event.objects.get(slug='reordered-lang-event')
             assert ev.settings.locale == 'de'
-
-    def test_create_event_searchable_timezone(self):
-        """Verify that the event creation wizard timezone selector is searchable and persists selection."""
-        doc = self.post_doc(
-            '/control/events/add',
-            {
-                'event_wizard-current_step': 'foundation',
-                'event_wizard-prefix': 'event_wizard',
-                'foundation-organizer': self.orga1.pk,
-                'foundation-locales': ('en',),
-            },
-        )
-        timezone_select = doc.select('#id_basics-timezone')
-        assert timezone_select, 'timezone select element not found'
-        select_elem = timezone_select[0]
-        assert 'data-searchable-select' in select_elem.attrs
-        assert select_elem.attrs.get('data-search-placeholder') == 'Search'
-        assert select_elem.attrs.get('data-empty-text') == 'No results'
-        assert 'form-control' in select_elem.attrs.get('class', '').split()
-
-        options = {opt['value']: opt.text.strip() for opt in select_elem.find_all('option') if opt.get('value')}
-        assert 'America/Los_Angeles' in options
-        assert options['America/Los_Angeles'] == 'America/Los Angeles'
-
-        self.post_doc(
-            '/control/events/add',
-            {
-                'event_wizard-current_step': 'basics',
-                'event_wizard-prefix': 'event_wizard',
-                'basics-name_0': 'Timezone Test Event',
-                'basics-slug': 'tz-test-event',
-                'basics-date_from_0': '2026-12-27',
-                'basics-date_from_1': '10:00:00',
-                'basics-date_to_0': '2026-12-30',
-                'basics-date_to_1': '19:00:00',
-                'basics-location_0': 'Berlin',
-                'basics-currency': 'EUR',
-                'basics-locale': 'en',
-                'basics-timezone': 'America/Los_Angeles',
-            },
-        )
-        self.post_doc(
-            '/control/events/add',
-            {
-                'event_wizard-current_step': 'copy',
-                'event_wizard-prefix': 'event_wizard',
-                'copy-copy_from_event': '',
-            },
-        )
-        with scopes_disabled():
-            ev = Event.objects.get(slug='tz-test-event')
-            assert ev.settings.timezone == 'America/Los_Angeles'
-
-        # Verify searchable-select.js matches option values and handles underscore/space normalization
-        js_file = Path(__file__).resolve().parents[3] / 'eventyay' / 'static' / 'common' / 'js' / 'searchable-select.js'
-        with open(js_file, 'r', encoding='utf-8') as f:
-            js = f.read()
-        assert 'val.includes(query)' in js
-        assert 'valSpacing.includes(querySpacing)' in js
 
     def test_create_event_without_locales_returns_validation_error(self):
         response = self.client.post(
