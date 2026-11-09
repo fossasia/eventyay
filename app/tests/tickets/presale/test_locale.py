@@ -1,5 +1,6 @@
-import subprocess
 from pathlib import Path
+
+import polib
 
 from django.conf import settings
 from django.test import Client, TestCase
@@ -173,10 +174,7 @@ def ensure_hausa_catalog():
     po_path = locale_dir / 'django.po'
     mo_path = locale_dir / 'django.mo'
     if not mo_path.exists() or mo_path.stat().st_mtime < po_path.stat().st_mtime:
-        subprocess.run(
-            ['msgfmt', '--check-format', '-o', str(mo_path), str(po_path)],
-            check=True,
-        )
+        polib.pofile(str(po_path)).save_as_mofile(str(mo_path))
     translation_catalog_exists.cache_clear()
 
 
