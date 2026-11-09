@@ -81,6 +81,17 @@ window.addEventListener("focus", () => {
 });
 
 window.addEventListener("keydown", (e) => {
+  const target = e.target;
+  if (
+    target instanceof Element &&
+    (target.isContentEditable ||
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT")
+  ) {
+    return;
+  }
+
   if (!hoveredMap) {
     const hoveredEl =
       typeof document.querySelector === "function"
@@ -92,18 +103,21 @@ window.addEventListener("keydown", (e) => {
   }
   if (!hoveredMap) return;
   if (e.ctrlKey || e.metaKey) {
-    if (typeof hoveredMap._cancelPendingZoom === "function") {
-      hoveredMap._cancelPendingZoom();
-    }
+    let zoomAction = null;
     if (isZoomInKey(e)) {
-      e.preventDefault();
-      hoveredMap.zoomIn();
+      zoomAction = () => hoveredMap.zoomIn();
     } else if (isZoomOutKey(e)) {
-      e.preventDefault();
-      hoveredMap.zoomOut();
+      zoomAction = () => hoveredMap.zoomOut();
     } else if (e.key === "0" || e.code === "Digit0" || e.code === "Numpad0") {
+      zoomAction = () => hoveredMap.setZoom(DEFAULT_ZOOM);
+    }
+
+    if (zoomAction) {
       e.preventDefault();
-      hoveredMap.setZoom(DEFAULT_ZOOM);
+      if (typeof hoveredMap._cancelPendingZoom === "function") {
+        hoveredMap._cancelPendingZoom();
+      }
+      zoomAction();
     }
   }
 });
@@ -148,9 +162,6 @@ function initMap(grp) {
   let rafId = null;
   let isInternalZoom = false;
 
-  /**
-   * Cancel any scheduled animation frame and clear pending zoom state.
-   */
   function cancelPendingZoom() {
     if (rafId) {
       cancelAnimationFrame(rafId);
@@ -168,9 +179,6 @@ function initMap(grp) {
     }
   });
 
-  /**
-   * Apply the queued zoom target around the designated container point.
-   */
   function applyZoom() {
     if (pendingZoom !== null && pendingPoint !== null) {
       const targetZ = pendingZoom;
@@ -285,9 +293,6 @@ function initMap(grp) {
   maps.push(map);
 }
 
-/**
- * Initialize all public venue maps on the page.
- */
 function initGeoMaps() {
   if (typeof L === "undefined") {
     console.warn("Leaflet is not available, public venue maps were not initialized.");
