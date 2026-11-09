@@ -348,10 +348,11 @@ def _save_meetup_header_image(event, header_image, crop_box=None):
 
 
 def set_meetup_privacy(event, is_private: bool, is_clone: bool = False):
-    """Configure meetup visibility flags for public or private operation."""
+    """
+    Configure meetup visibility flags for public or private operation.
+    Preserves the event's publication state (live, tickets_published).
+    """
     with transaction.atomic():
-        event.live = False if is_clone else True
-        event.tickets_published = False if is_clone else True
         event.private_testmode = False
         event.is_public = not is_private
         event.startpage_visible = not is_private
@@ -359,7 +360,7 @@ def set_meetup_privacy(event, is_private: bool, is_clone: bool = False):
             event.startpage_featured = False
         event.settings.set('private_testmode_tickets', False)
         event.settings.set('meta_noindex', is_private)
-        event.save(update_fields=['live', 'tickets_published', 'private_testmode', 'is_public', 'startpage_visible', 'startpage_featured'])
+        event.save(update_fields=['private_testmode', 'is_public', 'startpage_visible', 'startpage_featured'])
 
 
 def provision_meetup_event(
@@ -379,6 +380,14 @@ def provision_meetup_event(
     is_clone=False,
 ):
     event.settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
+    if not is_clone:
+        event.live = True
+        event.tickets_published = True
+        event.save(update_fields=['live', 'tickets_published'])
+    else:
+        event.live = False
+        event.tickets_published = False
+        event.save(update_fields=['live', 'tickets_published'])
     set_meetup_privacy(event, is_private=is_private, is_clone=is_clone)
 
     if frontpage_text is not None:

@@ -1,5 +1,7 @@
 import datetime
 from decimal import Decimal
+from types import SimpleNamespace
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -7,7 +9,8 @@ from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Team
+from eventyay.api.serializers.event import CloneEventSerializer
+from eventyay.base.models import Event, Team
 
 
 @pytest.fixture
@@ -73,7 +76,6 @@ def test_clone_view_post_success(organizer_client, event, clone_url, user, team)
     response = organizer_client.post(clone_url, payload, follow=True)
     assert response.status_code == 200, response.content
 
-    from eventyay.base.models import Event
     cloned_event = Event.objects.get(slug='cloned-event')
 
     assert str(cloned_event.name) == 'Cloned Event'
@@ -135,7 +137,6 @@ def test_clone_view_post_selective_clone(organizer_client, event, clone_url):
     response = organizer_client.post(clone_url, payload, follow=True)
     assert response.status_code == 200, response.content
 
-    from eventyay.base.models import Event
     cloned_event = Event.objects.get(slug='cloned-event-2')
 
     assert str(cloned_event.name) == 'Cloned Event 2'
@@ -149,3 +150,72 @@ def test_clone_view_post_selective_clone(organizer_client, event, clone_url):
         # Products and tax rules should not be cloned since clone_ticketing_data is not set
         assert cloned_event.tax_rules.count() == 0
         assert cloned_event.products.count() == 0
+
+
+@pytest.mark.django_db
+def test_clone_event_serializer_preserves_explicit_testmode(event):
+    with scopes_disabled():
+        event.live = True
+        event.tickets_published = True
+        event.talks_published = True
+        event.testmode = False
+        event.save()
+
+    data = {
+        'name': {'en': 'API Cloned Event Testmode True'},
+        'slug': 'api-clone-testmode-true',
+        'date_from': '2028-12-27T10:00:00Z',
+        'date_to': '2028-12-28T10:00:00Z',
+        'currency': 'EUR',
+        'locale': 'en',
+        'locales': ['en'],
+        'testmode': True,
+    }
+    with scopes_disabled(), patch.object(Event, 'copy_data_from'):
+        request = SimpleNamespace(organizer=event.organizer)
+        serializer = CloneEventSerializer(
+            data=data,
+            context={'request': request, 'organizer': event.organizer, 'event': event.slug},
+        )
+        assert serializer.is_valid(), serializer.errors
+        cloned = serializer.save(organizer=event.organizer)
+
+        assert cloned.testmode is True
+        assert cloned.live is False
+        assert cloned.tickets_published is False
+        assert cloned.talks_published is False
+        assert cloned.private_testmode is False
+
+
+@pytest.mark.django_db
+def test_clone_event_serializer_resets_testmode_when_omitted(event):
+    with scopes_disabled():
+        event.live = True
+        event.tickets_published = True
+        event.talks_published = True
+        event.testmode = True
+        event.save()
+
+    data = {
+        'name': {'en': 'API Cloned Event Testmode Omitted'},
+        'slug': 'api-clone-testmode-omitted',
+        'date_from': '2028-12-27T10:00:00Z',
+        'date_to': '2028-12-28T10:00:00Z',
+        'currency': 'EUR',
+        'locale': 'en',
+        'locales': ['en'],
+    }
+    with scopes_disabled(), patch.object(Event, 'copy_data_from'):
+        request = SimpleNamespace(organizer=event.organizer)
+        serializer = CloneEventSerializer(
+            data=data,
+            context={'request': request, 'organizer': event.organizer, 'event': event.slug},
+        )
+        assert serializer.is_valid(), serializer.errors
+        cloned = serializer.save(organizer=event.organizer)
+
+        assert cloned.testmode is False
+        assert cloned.live is False
+        assert cloned.tickets_published is False
+        assert cloned.talks_published is False
+        assert cloned.private_testmode is False
