@@ -376,7 +376,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
     def _set_field_placeholders(self, fn, base_parameters):
         """Validate placeholders without rendering the long help-text list (drawer covers that)."""
         phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
     def __init__(self, *args, **kwargs):
         event = self.event = kwargs.pop('event')
@@ -1097,7 +1097,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
     def clean_emails(self):
         updated_emails = [
@@ -1266,6 +1266,10 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
             for field_name in ('teams', 'subject', 'message'):
                 self.fields[field_name].required = False
 
+        phs = [f'{{{p}}}' for p in placeholder_names]
+        self.fields['subject'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+        self.fields['message'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+
     @cached_property
     def grouped_placeholders(self):
         placeholders = self.valid_placeholders
@@ -1393,8 +1397,8 @@ class TicketMailTemplateForm(I18nModelForm):
             locales=locales,
         )
         phs = [f'{{{p}}}' for p in placeholder_names]
-        self.fields['subject'].validators.append(PlaceholderValidator(phs))
-        self.fields['text'].validators.append(PlaceholderValidator(phs))
+        self.fields['subject'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+        self.fields['text'].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
         reply_to_field = self.fields['reply_to']
         self.fields['reply_to'] = forms.EmailField(

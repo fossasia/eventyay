@@ -71,6 +71,7 @@ from eventyay.celery_app import app
 from eventyay.common.mail import get_reply_to_address
 from eventyay.consts import SizeKey
 from eventyay.helpers.http import smtp_reachable
+from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.ical import get_ical
 
@@ -194,7 +195,7 @@ def mail(
         if is_tiptap_email_html(content_plain):
             # Editor bodies are HTML; the text/plain part needs its own rendering.
             body_plain = email_html_to_plain_text(content_plain)
-        subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
+        subject = escape_stray_braces(str(subject)).format_map(TolerantDict(_stringify_mail_context(context)))
         sender = sender or (event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL) or settings.DEFAULT_FROM_EMAIL
         sender_email_raw = sender
         if event:
@@ -773,7 +774,7 @@ def render_mail(template, context):
             string_context = _stringify_mail_context(context)
             if is_tiptap_email_html(body):
                 string_context = _html_mail_context(string_context)
-            body = body.format_map(TolerantDict(string_context))
+            body = escape_stray_braces(body).format_map(TolerantDict(string_context))
             body = expand_email_variable_chips(body, string_context)
     else:
         tpl = get_template(template)
