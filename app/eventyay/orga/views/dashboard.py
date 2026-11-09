@@ -465,9 +465,14 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
 
             scheduled_sessions_count = 0
             if getattr(event, 'current_schedule', None):
-                scheduled_sessions_count = event.current_schedule.talks.filter(
-                    start__isnull=False, room__isnull=False, is_visible=True, submission__isnull=False
-                ).count()
+                # Released schedules keep the slots of sessions deleted afterwards.
+                scheduled_sessions_count = (
+                    event.current_schedule.talks.filter(
+                        start__isnull=False, room__isnull=False, is_visible=True, submission__isnull=False
+                    )
+                    .exclude(submission__state=SubmissionStates.DELETED)
+                    .count()
+                )
 
             speakers_count = event.speakers.count()
         

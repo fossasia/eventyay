@@ -156,6 +156,15 @@ def test_build_data_excludes_deleted_submission_with_released_slot(slot):
 
 
 @pytest.mark.django_db
+def test_dashboard_scheduled_count_excludes_deleted_submission(orga_client, slot):
+    event = slot.schedule.event
+    assert orga_client.get(event.orga_urls.base).context['at_a_glance']['scheduled_sessions'] == 1
+    with scope(event=event):
+        slot.submission.remove()
+    assert orga_client.get(event.orga_urls.base).context['at_a_glance']['scheduled_sessions'] == 0
+
+
+@pytest.mark.django_db
 def test_reviewer_track_limits_apply_to_deleted_submissions(review_client, review_user, event, track, other_track):
     with scope(event=event):
         review_user.teams.first().limit_tracks.add(track)
