@@ -137,10 +137,6 @@ const pushOrder = (parentElement) => {
     });
 
     const orderValue = ids.join(",");
-    const formOrderInput = document.getElementById("organiser-form-order-value") || document.querySelector('input[name="order"]');
-    if (formOrderInput) {
-        formOrderInput.value = orderValue;
-    }
 
     if (url) {
         const data = new URLSearchParams();
@@ -175,8 +171,8 @@ const pushOrder = (parentElement) => {
             .catch((err) => {
                 console.error("Failed to save new item order", err);
                 const message = typeof window.gettext === "function"
-                    ? window.gettext("The question order could not be saved. Reload the page and try again.")
-                    : "The question order could not be saved. Reload the page and try again.";
+                    ? window.gettext("The new order could not be saved. Reload the page and try again.")
+                    : "The new order could not be saved. Reload the page and try again.";
                 window.alert(message);
                 throw err;
             });
@@ -230,11 +226,7 @@ const initDragsort = () => {
         const stop = dragStart(el);
         if (!stop) return;  // Exit early if dragStart couldn't find a valid parent
 
-        let dropped = false;
-        const dropHandler = (dropEvt) => {
-            dropEvt.preventDefault();
-            dropped = true;
-        };
+        const dropHandler = (dropEvt) => dropEvt.preventDefault();
         el.parentElement.addEventListener("drop", dropHandler, { once: true });
 
         const dragEndHandler = (dragEvt) => {
@@ -244,7 +236,7 @@ const initDragsort = () => {
             document.querySelector("body").classList.remove("dragging");
 
             const { closest, intent } = stop();
-            if (dropped && closest && closest !== el) {
+            if (closest && closest !== el) {
                 if (intent === INTENT_AFTER) {
                     closest.insertAdjacentElement("afterend", el);
                 } else {

@@ -83,24 +83,6 @@ function bindRow(row) {
   });
 }
 
-function currentOrder(tbody) {
-  return Array.from(tbody.querySelectorAll('tr[dragsort-id], tr[data-sort-id]'))
-    .map((row) => row.getAttribute('dragsort-id') || row.dataset.sortId)
-    .filter(Boolean)
-    .join(',');
-}
-
-function bindSave(tbody) {
-  const form = document.getElementById('organiser-form-order');
-  const input = document.getElementById('organiser-form-order-value');
-  if (!form || !input) {
-    return;
-  }
-  form.addEventListener('submit', () => {
-    input.value = currentOrder(tbody);
-  });
-}
-
 function bindOrganizerRequestFeatureToggle() {
   const form = document.getElementById('organizer-request-feature-toggle');
   const toggle = document.getElementById('organizer-request-enabled');
@@ -124,9 +106,4 @@ function bindOrganizerRequestFeatureToggle() {
 document.addEventListener('DOMContentLoaded', () => {
   bindOrganizerRequestFeatureToggle();
   document.querySelectorAll('[data-organiser-field]').forEach(bindRow);
-  const tbody = document.querySelector('.organiser-form-fields tbody');
-  if (!tbody) {
-    return;
-  }
-  bindSave(tbody);
 });
