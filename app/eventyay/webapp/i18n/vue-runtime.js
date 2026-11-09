@@ -1,16 +1,19 @@
 import {shallowRef} from 'vue'
-import {createGettextRuntime} from './runtime.js'
+import {createI18nRuntime} from './runtime.js'
 import {subscribeLocale} from './locale.js'
 
-export function createVueGettextRuntime(options) {
+export function createVueI18nRuntime(options) {
 	const localeRevision = shallowRef(0)
 	subscribeLocale(() => {
 		localeRevision.value += 1
 	})
-	return createGettextRuntime({
+	return createI18nRuntime({
 		...options,
 		track() {
 			void localeRevision.value
 		},
 	})
 }
+
+export const createVueGettextRuntime = createVueI18nRuntime
+
