@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps<{
   title: string
@@ -84,6 +84,8 @@ function cancel() {
   close()
   emit('cancel')
 }
+
+onBeforeUnmount(close)
 
 defineExpose({ show, close })
 </script>
