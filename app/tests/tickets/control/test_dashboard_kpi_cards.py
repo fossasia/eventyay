@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import (
+    Checkin,
     CheckinList,
     Event,
     Order,
@@ -131,22 +132,27 @@ def test_kpi_cards_values_and_links(client, env):
 def test_kpi_checkin_counts_distinct_positions(client, env):
     event = env['event']
     with scope(organizer=env['organizer'], event=event):
-        for code in ('PAID01', 'PAID02'):
+        paid = [
             OrderPosition.objects.create(order=_order(event, code), product=env['product'], price=25)
+            for code in ('PAID01', 'PAID02')
+        ]
         # Pending positions are excluded (include_pending defaults to False).
         OrderPosition.objects.create(
             order=_order(event, 'PEND01', status=Order.STATUS_PENDING), product=env['product'], price=25
         )
         # Two overlapping lists cover the same positions; summing per list would give 4.
-        CheckinList.objects.create(event=event, name='List A', all_products=True)
-        CheckinList.objects.create(event=event, name='List B', all_products=True)
+        list_a = CheckinList.objects.create(event=event, name='List A', all_products=True)
+        list_b = CheckinList.objects.create(event=event, name='List B', all_products=True)
+        # One attendee scanned at both lists is still one person checked in.
+        for cl in (list_a, list_b):
+            Checkin.objects.create(position=paid[0], list=cl, type=Checkin.TYPE_ENTRY)
 
     client.force_login(env['user'])
     response = client.get(_url(env))
     kpi = response.context['at_a_glance']
     assert kpi['checkin_total'] == 2
-    assert kpi['checked_in'] == 0
-    assert re.search(r'td-kpi-value">\s*0\s*/\s*2\s*<', _kpi_section(response.content.decode()))
+    assert kpi['checked_in'] == 1
+    assert re.search(r'td-kpi-value">\s*1\s*/\s*2\s*<', _kpi_section(response.content.decode()))
 
 
 @pytest.mark.django_db
