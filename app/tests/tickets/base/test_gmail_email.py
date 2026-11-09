@@ -1,12 +1,19 @@
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from celery.exceptions import Retry
+from django.core.mail import EmailMessage
 from django.test import override_settings
+from django.urls import reverse
+from django.utils.timezone import localdate, now
 
+from eventyay.base.gmail.backend import GmailAPIEmail
 from eventyay.base.gmail.crypto import decrypt_value, encrypt_value
+from eventyay.base.gmail.errors import GmailDailyLimitError, GmailRateLimitError
 from eventyay.base.gmail.models import GmailOAuthCredential
 from eventyay.base.gmail.oauth import fetch_sender_email
+from eventyay.base.models import Event, Organizer
 
 
 @pytest.mark.django_db
@@ -71,8 +78,10 @@ def test_classify_http_error():
     _, _, _, HttpError = require_google_api_dependencies()
     
     class FakeResponse:
+        # HttpError reads resp.reason while building its message.
         def __init__(self, status):
             self.status = status
+            self.reason = ''
             
     resp = FakeResponse(429)
     content = json.dumps({'error': {'errors': [{'reason': 'rateLimitExceeded'}], 'message': 'Rate limit'}}).encode('utf-8')
@@ -125,7 +134,8 @@ def test_mail_send_task_retries_on_gmail_rate_limit():
         mock_backend.send_messages.side_effect = GmailRateLimitError("Rate limited")
         mock_backend.retry_countdown = 60
         
-        with patch.object(mail_send_task, 'retry') as mock_retry:
+        # Celery's retry() raises Retry to reschedule the task.
+        with patch.object(mail_send_task, 'retry', side_effect=Retry()) as mock_retry, pytest.raises(Retry):
             mail_send_task(
                 to=['user@example.com'],
                 subject='Test',
@@ -133,19 +143,63 @@ def test_mail_send_task_retries_on_gmail_rate_limit():
                 html=None,
                 sender='sender@example.com',
             )
-            mock_retry.assert_called_once()
-            args, kwargs = mock_retry.call_args
-            assert 'countdown' in kwargs
+        mock_retry.assert_called_once()
+        assert 'countdown' in mock_retry.call_args.kwargs
 
 
 @pytest.mark.django_db
 def test_gmail_oauth_views_require_admin(client):
-    response = client.get('/control/global/settings/gmail/connect')
+    response = client.get(reverse('eventyay_admin:admin.global.gmail.connect'))
     assert response.status_code == 302
-    assert '/control/login' in response.url
+    assert response.url.startswith(reverse('auth.login'))
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_event_gmail_oauth_views_require_permission(client):
-    response = client.get('/control/event/organizer/event/settings/gmail/connect')
+    organizer = Organizer.objects.create(name='Dummy', slug='dummy')
+    event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy', date_from=now())
+    response = client.get(
+        reverse('common:event.gmail.connect', kwargs={'organizer': organizer.slug, 'event': event.slug})
+    )
     assert response.status_code == 302
-    assert '/control/login' in response.url
+    assert response.url.startswith(reverse('auth.login'))
+
+
+@pytest.mark.django_db
+@override_settings(GMAIL_DAILY_SEND_LIMIT=10)
+def test_gmail_daily_limit_falls_back_to_alternate_backend():
+    credential = GmailOAuthCredential.objects.create(
+        sender_email='organizer@example.com',
+        encrypted_refresh_token=encrypt_value('refresh'),
+        daily_send_count=10,
+        daily_send_count_date=localdate(),
+    )
+    fallback = MagicMock()
+    fallback.send_messages.return_value = 1
+    email = EmailMessage(subject='Test', body='Test body', to=['user@example.com'])
+
+    assert GmailAPIEmail(credential, fallback_backend=fallback).send_messages([email]) == 1
+    fallback.send_messages.assert_called_once_with([email])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('limit', 'error'),
+    [
+        ('daily', GmailDailyLimitError),
+        ('rate', GmailRateLimitError),
+    ],
+)
+@override_settings(GMAIL_DAILY_SEND_LIMIT=10)
+def test_gmail_limit_without_fallback_raises_limit_error(limit, error):
+    credential = GmailOAuthCredential.objects.create(
+        sender_email='organizer@example.com',
+        encrypted_refresh_token=encrypt_value('refresh'),
+        daily_send_count=10 if limit == 'daily' else 0,
+        daily_send_count_date=localdate(),
+    )
+    email = EmailMessage(subject='Test', body='Test body', to=['user@example.com'])
+
+    with patch.object(GmailOAuthCredential, 'rate_limit_exceeded', return_value=limit == 'rate'):
+        with pytest.raises(error, match='organizer@example.com'):
+            GmailAPIEmail(credential).send_messages([email])
