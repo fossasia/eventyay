@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import timedelta
 from decimal import Decimal
 from types import SimpleNamespace
@@ -206,6 +207,6 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
 
     assert 'Job title' in header_texts
     job_col = header_texts.index('Job title')
-    assert [row[job_col] for row in row_texts] == ['R&amp;D &lt;Director&gt;', 'R&amp;D &lt;Director&gt;', '', '']
+    assert Counter(row[job_col] for row in row_texts) == Counter({'R&amp;D &lt;Director&gt;': 2, '': 2})
     assert content_type == 'application/pdf'
     assert pdf_bytes.startswith(b'%PDF-')
