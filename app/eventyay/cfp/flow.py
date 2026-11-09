@@ -81,7 +81,7 @@ FIELD_STEP_MAP = {
 
 FIELD_DEFAULTS = {
     'title': {
-        'label': _('Proposal title'),
+        'label': _('Title'),
         'help_text': '',
     },
     'submission_type': {

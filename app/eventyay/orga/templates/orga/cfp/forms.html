@@ -138,7 +138,7 @@
                         <tr dragsort-id="title">
                             <th>
                                 <div class="font-weight-bold">{% translate "Title" %}</div>
-                                <div class="small text-muted font-weight-normal mt-1">{{ field_labels.title|default:_("Proposal title") }}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ field_labels.title|default:_("Title") }}</div>
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
@@ -165,7 +165,7 @@
                             </td>
                             <td class="text-center">{{ field_counts.title }}</td>
                             <td class="text-right">
-                                <a href="{% url 'orga:cfp.field.settings' organizer=request.event.organizer.slug event=request.event.slug field='title' %}" class="btn btn-sm btn-default" title="{% translate 'Settings' %}" aria-label="{% translate 'Settings for Proposal title' %}">
+                                <a href="{% url 'orga:cfp.field.settings' organizer=request.event.organizer.slug event=request.event.slug field='title' %}" class="btn btn-sm btn-default" title="{% translate 'Settings' %}" aria-label="{% translate 'Settings for Title' %}">
                                     <i class="fa fa-cog"></i>
                                 </a>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">

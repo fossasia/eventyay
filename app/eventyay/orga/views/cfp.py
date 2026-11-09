@@ -1,3 +1,4 @@
+import copy
 import http
 import json
 import logging
@@ -36,6 +37,7 @@ from eventyay.base.models import (
     Track,
     normalize_field_order,
 )
+from eventyay.base.models.cfp import default_fields
 from eventyay.cfp.flow import FIELD_STEP_MAP, CfPFlow, get_field_default, get_flow_field_entry
 from eventyay.common.forms import I18nFormSet
 from eventyay.common.language import get_language_choices_native_with_ui_name
@@ -1068,12 +1070,18 @@ class CfPBuiltinFieldSettings(EventPermissionRequired, FormView):
         if field_entry:
             field_entry.pop('label', None)
             field_entry.pop('help_text', None)
+            field_entry.pop('required', None)
+            field_entry.pop('request', None)
 
         with transaction.atomic():
             if field_key == 'avatar':
                 event.cfp.settings['cfp_enable_gravatar'] = True
+            if field_key in default_fields():
+                if event.cfp.fields is None:
+                    event.cfp.fields = default_fields()
+                event.cfp.fields[field_key] = copy.deepcopy(default_fields()[field_key])
             event.cfp.settings['flow'] = config
-            event.cfp.save(update_fields=['settings'])
+            event.cfp.save(update_fields=['settings', 'fields'])
             event.__dict__.pop('cfp_flow', None)
 
         self.request.event.cfp.log_action(

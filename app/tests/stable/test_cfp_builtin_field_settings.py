@@ -3,10 +3,13 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.translation import override
 from django_scopes import scopes_disabled
 
+from eventyay.base.models.cfp import default_fields
 from eventyay.cfp.flow import FIELD_DEFAULTS, FIELD_STEP_MAP, CfPFlow, ProfileStep, get_field_default
 from eventyay.orga.forms.cfp import CfPBuiltinFieldSettingsForm, CfPSettingsForm
+from eventyay.submission.forms.submission import InfoForm
 
 
 @pytest.fixture(autouse=True)
@@ -728,6 +731,136 @@ def test_builtin_field_settings_unrelated_steps_not_rewritten(event):
     assert isinstance(profile_fields, dict)
     assert profile_fields['biography']['label']['en'] == 'Notes'
     assert profile_fields['biography']['label']['de'] == 'Notes'
+
+
+def test_default_field_label_is_title_not_proposal_title():
+    """Verify default field label for title is Title rather than Proposal title."""
+    assert str(FIELD_DEFAULTS['title']['label']) == 'Title'
+    assert get_field_default('title', 'label', 'en') == 'Title'
+
+
+def test_public_cfp_form_localized_label_and_help_text_with_identical_translations(event):
+    """Verify public CfP form displays localized strings and honors intentional same-as-English translations."""
+    event.locale_array = 'en,de'
+    event.save()
+    event.__dict__.pop('locales', None)
+
+    en_idx = [l[0] for l in settings.LANGUAGES].index('en')
+    de_idx = [l[0] for l in settings.LANGUAGES].index('de')
+
+    post_data = {
+        f'label_{en_idx}': 'Notes',
+        f'label_{de_idx}': 'Notes',
+        f'help_text_{en_idx}': 'Organizer notes in English',
+        f'help_text_{de_idx}': 'Organisator Notizen auf Deutsch',
+    }
+    form = CfPBuiltinFieldSettingsForm(event=event, field_key='notes', data=post_data)
+    assert form.is_valid(), form.errors
+    form.save()
+
+    event.cfp.refresh_from_db()
+    flow_fields = event.cfp.settings.get('flow', {}).get('steps', {}).get('info', {}).get('fields', [])
+
+    with override('en'):
+        public_form_en = InfoForm(event=event, field_configuration=flow_fields)
+        en_label = str(public_form_en.fields['notes'].label)
+        en_help = str(public_form_en.fields['notes'].help_text)
+        assert en_label == 'Notes'
+        assert "{'en':" not in en_label
+        assert 'Organizer notes in English' in en_help
+        assert "{'en':" not in en_help
+
+    with override('de'):
+        public_form_de = InfoForm(event=event, field_configuration=flow_fields)
+        de_label = str(public_form_de.fields['notes'].label)
+        de_help = str(public_form_de.fields['notes'].help_text)
+        # Should preserve the intentional 'Notes' rather than reverting to gettext 'Notizen'
+        assert de_label == 'Notes'
+        assert "{'en':" not in de_label
+        assert 'Organisator Notizen auf Deutsch' in de_help
+        assert "{'en':" not in de_help
+
+
+def test_public_cfp_form_explicitly_empty_help_text_clears_field_help(event):
+    """Verify explicitly setting empty help text on a field clears the help text on the public form."""
+    event.locale_array = 'en'
+    event.save()
+    event.__dict__.pop('locales', None)
+
+    en_idx = [l[0] for l in settings.LANGUAGES].index('en')
+    post_data = {
+        f'label_{en_idx}': 'Custom Notes',
+        f'help_text_{en_idx}': '',
+    }
+    form = CfPBuiltinFieldSettingsForm(event=event, field_key='notes', data=post_data)
+    assert form.is_valid(), form.errors
+    form.save()
+
+    event.cfp.refresh_from_db()
+    flow_fields = event.cfp.settings.get('flow', {}).get('steps', {}).get('info', {}).get('fields', [])
+
+    public_form = InfoForm(event=event, field_configuration=flow_fields)
+    assert public_form.fields['notes'].help_text == ''
+
+
+def test_builtin_field_settings_reset_to_default_restores_all_configuration_keys(organizer_client, event):
+    """Verify Reset to default restores label, help_text, required, and speaker photo configurations."""
+    # Modify original field configuration in event.cfp.fields
+    event.cfp.fields['title']['visibility'] = 'optional'
+    event.cfp.fields['avatar']['visibility'] = 'required'
+    event.cfp.settings['cfp_enable_gravatar'] = False
+    # Set custom keys in flow
+    event.cfp.settings['flow'] = {
+        'steps': {
+            'info': {
+                'fields': [{'key': 'title', 'label': {'en': 'Custom Title'}, 'help_text': {'en': 'Custom Help'}, 'required': False}]
+            },
+            'profile': {
+                'fields': [{'key': 'avatar', 'label': {'en': 'Custom Photo'}, 'help_text': {'en': 'Custom Photo Help'}, 'required': True}]
+            }
+        }
+    }
+    event.cfp.save(update_fields=['settings', 'fields'])
+
+    # Reset title
+    title_url = reverse(
+        'orga:cfp.field.settings',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'field': 'title'},
+    )
+    res_title = organizer_client.post(title_url, {'action': 'reset'})
+    assert res_title.status_code == 302
+
+    event.cfp.refresh_from_db()
+    flow_config = event.cfp.settings.get('flow', {})
+    title_field = next((f for f in flow_config.get('steps', {}).get('info', {}).get('fields', []) if f.get('key') == 'title'), None)
+    assert title_field is not None
+    assert 'label' not in title_field
+    assert 'help_text' not in title_field
+    assert 'required' not in title_field
+    assert 'request' not in title_field
+    assert event.cfp.fields['title'] == default_fields()['title']
+    assert event.cfp.fields['title']['visibility'] == 'required'
+
+    # Reset avatar (speaker photo)
+    avatar_url = reverse(
+        'orga:cfp.field.settings',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'field': 'avatar'},
+    )
+    res_avatar = organizer_client.post(avatar_url, {'action': 'reset'})
+    assert res_avatar.status_code == 302
+
+    event.cfp.refresh_from_db()
+    flow_config = event.cfp.settings.get('flow', {})
+    avatar_field = next((f for f in flow_config.get('steps', {}).get('profile', {}).get('fields', []) if f.get('key') == 'avatar'), None)
+    assert avatar_field is not None
+    assert 'label' not in avatar_field
+    assert 'help_text' not in avatar_field
+    assert 'required' not in avatar_field
+    assert 'request' not in avatar_field
+    assert event.cfp.enable_gravatar is True
+    assert event.cfp.fields['avatar'] == default_fields()['avatar']
+    assert event.cfp.fields['avatar']['visibility'] == 'optional'
+
 
 
 
