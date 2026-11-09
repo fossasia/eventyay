@@ -12,7 +12,6 @@ import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
 import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
-import { interpretationRouting } from 'lib/interpretation-api'
 import {
 	STREAM_POLL_BASE_DELAY,
 	isPermanentStreamPollError,
@@ -118,23 +117,23 @@ export default new Vuex.Store({
 			}, {})
 		},
 		eventRouting(state) {
-			return interpretationRouting(state)
-		},
-		isInterpretationEnabled(state) {
-			if (typeof window !== 'undefined') {
-				if (Array.isArray(window.eventyay?.plugins)) {
-					const hasPlugin = window.eventyay.plugins.some(p => p.includes('interpretation'))
-					if (!hasPlugin) return false
-				}
-				if (!window.eventyay?.interpretationUrl || window.eventyay?.interpretationUrl === '/missing-url-registration/') {
-					return false
-				}
-				if (window.eventyay?.interpretation?.isEnabled !== undefined) {
-					return Boolean(window.eventyay.interpretation.isEnabled)
-				}
-				return true
+			const organizer = state.world?.organizer_slug
+			const event = state.world?.slug || state.world?.id
+			if (organizer && organizer !== 'default' && event) {
+				return { organizer, event }
 			}
-			return Boolean(state.world?.interpretation?.isEnabled)
+			if (typeof window !== 'undefined') {
+				const pathParts = window.location.pathname.split('/').filter(Boolean)
+				if (pathParts.length >= 2) {
+					return { organizer: pathParts[0], event: pathParts[1] }
+				}
+			}
+			return { organizer: null, event: null }
+		},
+		isInterpretationEnabled() {
+			const hasPlugin = window.eventyay?.plugins?.some(p => p.includes('interpretation')) || false
+			const hasValidUrl = window.eventyay?.interpretationUrl && window.eventyay.interpretationUrl !== '/missing-url-registration/'
+			return Boolean(hasPlugin && hasValidUrl)
 		},
 	},
 	mutations: {
