@@ -96,6 +96,99 @@ def test_talk_meta_description_quotes_and_attribute_escaping(client, event, slot
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_fallback_empty_abstract(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        slot.submission.abstract = ''
+        slot.submission.description = 'Public description used as fallback when abstract is empty.'
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = 'Public description used as fallback when abstract is empty.'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_fallback_html_only_abstract(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        slot.submission.abstract = '<p></p><div><span>   </span></div>'
+        slot.submission.description = '<p>Public description used when abstract is only HTML tags.</p>'
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = 'Public description used when abstract is only HTML tags.'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_fallback_whitespace_only_abstract(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        slot.submission.abstract = '   \n\t   '
+        slot.submission.description = 'Public description used when abstract is whitespace.'
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = 'Public description used when abstract is whitespace.'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_fallback_both_empty(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        slot.submission.abstract = '<p></p>'
+        slot.submission.description = '   '
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    expected = f'The session “{slot.submission.title}” at {event.name}'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_talk_meta_description_visibility_restrictions_respected(client, event, slot):
+    with scope(event=event):
+        event.talks_published = True
+        event.save()
+        fields = dict(event.cfp.fields)
+        fields['abstract'] = dict(fields.get('abstract', {}))
+        fields['abstract']['public'] = False
+        fields['description'] = dict(fields.get('description', {}))
+        fields['description']['public'] = False
+        event.cfp.fields = fields
+        event.cfp.save()
+        slot.submission.abstract = 'Secret confidential abstract.'
+        slot.submission.description = 'Secret confidential description.'
+        slot.submission.save()
+    response = client.get(slot.submission.urls.public, follow=True)
+    assert response.status_code == 200
+    content = response.text
+    assert 'Secret confidential' not in content
+    expected = f'The session “{slot.submission.title}” at {event.name}'
+    assert f'<meta name="description" content="{expected}">' in content
+    assert f'<meta property="og:description" content="{expected}">' in content
+
+
+@pytest.mark.django_db
 def test_can_see_talk_with_iframe(client, event, slot):
     event.plugins = 'tests'
     event.save()

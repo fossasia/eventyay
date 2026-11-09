@@ -149,3 +149,92 @@ def test_rich_text_to_preview_text_early_cutoff_nested_script_style():
     assert result == 'Visible text after large script and style blocks.'
     assert 'var x' not in result
     assert 'margin' not in result
+
+
+def test_rich_text_to_preview_text_whitespace_cutoff():
+    # Large whitespace prefixes followed by > 200 visible characters
+    whitespace_prefix = '   \n\t   ' * 200
+    visible_body = '<p>' + ('Visible session text. ' * 20) + '</p>'
+    result = rich_text_to_preview_text(whitespace_prefix + visible_body, max_chars=200)
+    assert len(result) == 200
+    assert result.startswith('Visible session text.')
+    assert result.endswith('…')
+
+    # Many whitespace-only HTML nodes before visible content
+    empty_nodes = '<p>  \n\t </p><div>  </div><span>  </span>' * 50
+    result_nodes = rich_text_to_preview_text(empty_nodes + visible_body, max_chars=200)
+    assert len(result_nodes) == 200
+    assert result_nodes.startswith('Visible session text.')
+    assert result_nodes.endswith('…')
+
+    # A single extremely large text node
+    huge_text_node = '<p>' + ('Z' * 100000) + '</p>'
+    result_huge = rich_text_to_preview_text(huge_text_node, max_chars=200)
+    assert len(result_huge) == 200
+    assert result_huge == ('Z' * 199) + '…'
+
+    # Normal description that does not require truncation
+    normal_text = '<p>A standard short session description.</p>'
+    assert rich_text_to_preview_text(normal_text, max_chars=200) == 'A standard short session description.'
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        ('**bold text**', 'bold text'),
+        ('*italic text*', 'italic text'),
+        ('[Eventyay Platform](https://eventyay.com)', 'Eventyay Platform'),
+        ('`sys.py`', 'sys.py'),
+        (
+            'Mixed text with **bold**, [Eventyay](https://eventyay.com), and `sys.py`.',
+            'Mixed text with bold, Eventyay, and sys.py.',
+        ),
+        ('Exploring std::vector<T> with Eventyay', 'Exploring std::vector<T> with Eventyay'),
+        ('if (a < b)', 'if (a < b)'),
+        ('Check __init__.py in Python packages', 'Check __init__.py in Python packages'),
+        (
+            'Technical in Markdown: **Python** with __init__.py and std::vector<T>',
+            'Technical in Markdown: Python with __init__.py and std::vector<T>',
+        ),
+    ),
+)
+def test_rich_text_to_preview_text_markdown_and_technical(value, expected):
+    assert rich_text_to_preview_text(value) == expected
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        ('<strong>only bold</strong>', 'only bold'),
+        ('<em>only italic</em>', 'only italic'),
+        ('<span>only span</span>', 'only span'),
+        ('<span>Deeply <strong><em>nested</em></strong> tags</span>', 'Deeply nested tags'),
+        ('<span class="badge" data-id="123">Inline with attributes</span>', 'Inline with attributes'),
+        (
+            '<a href="https://example.com" target="_blank" rel="noopener">Anchor with attributes</a>',
+            'Anchor with attributes',
+        ),
+        ('Technical text: if (a < b) and std::vector<T>', 'Technical text: if (a < b) and std::vector<T>'),
+        (
+            '<p>Mixed block and <strong>inline</strong> HTML with std::vector<T></p>',
+            'Mixed block and inline HTML with std::vector<T>',
+        ),
+    ),
+)
+def test_rich_text_to_preview_text_inline_html(value, expected):
+    assert rich_text_to_preview_text(value) == expected
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        ('Hello\u200bWorld\ufeff!', 'HelloWorld!'),
+        ('Bidi\u202aLTR\u202bRLO\u202ctest', 'BidiLTRRLOtest'),
+        ('Ordinary Unicode: Café, résumé, naïve', 'Ordinary Unicode: Café, résumé, naïve'),
+        ('Emoji: 🎉 🚀 🐍', 'Emoji: 🎉 🚀 🐍'),
+        ('Hindi: नमस्ते दुनिया और Eventyay', 'Hindi: नमस्ते दुनिया और Eventyay'),
+        ('<p>Hindi: नमस्ते <strong>दुनिया</strong> \u200b🎉</p>', 'Hindi: नमस्ते दुनिया 🎉'),
+    ),
+)
+def test_rich_text_to_preview_text_invisible_chars_and_unicode(value, expected):
+    assert rich_text_to_preview_text(value) == expected

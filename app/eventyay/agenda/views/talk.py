@@ -419,8 +419,22 @@ class TalkView(TalkMixin, TemplateView):
     @context
     @cached_property
     def submission_meta_description(self) -> str:
-        text = localize_event_text(self.submission_description)
-        return rich_text_to_preview_text(text, max_chars=200)
+        candidates = []
+        if self.request.event.cfp.public_abstract and self.submission.abstract:
+            candidates.append(self.submission.abstract)
+        if self.request.event.cfp.public_description and self.submission.description:
+            candidates.append(self.submission.description)
+
+        for candidate in candidates:
+            preview = rich_text_to_preview_text(localize_event_text(candidate), max_chars=200)
+            if preview:
+                return preview
+
+        fallback = _('The session “{title}” at {event}').format(
+            title=localize_event_text(self.submission.title),
+            event=localize_event_text(self.request.event.name),
+        )
+        return rich_text_to_preview_text(fallback, max_chars=200)
 
     @context
     @cached_property

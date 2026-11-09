@@ -9,6 +9,8 @@ from html.parser import HTMLParser
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 
+from eventyay.base.templatetags.rich_text import compile_markdown
+
 
 # Zero-width / format characters that look empty but survive str.strip().
 _INVISIBLE_CHARS_RE = re.compile('[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff\u00ad]')
@@ -150,10 +152,134 @@ def rich_text_to_plain_text(value) -> str:
     return _EXTRA_BLANK_LINES_RE.sub('\n\n', '\n'.join(lines)).strip()
 
 
-_PREVIEW_TAG_RE = re.compile(
-    r'</?(?:p|br|div|h[1-6]|ul|ol|li|blockquote|pre|table|thead|tbody|tr|td|th|a|script|style)(?:\s[^<>]*)?/?>',
+VALID_HTML_TAGS = frozenset(
+    {
+        'a',
+        'abbr',
+        'address',
+        'area',
+        'article',
+        'aside',
+        'audio',
+        'b',
+        'base',
+        'bdi',
+        'bdo',
+        'blockquote',
+        'body',
+        'br',
+        'button',
+        'canvas',
+        'caption',
+        'cite',
+        'code',
+        'col',
+        'colgroup',
+        'data',
+        'datalist',
+        'dd',
+        'del',
+        'details',
+        'dfn',
+        'dialog',
+        'div',
+        'dl',
+        'dt',
+        'em',
+        'embed',
+        'fieldset',
+        'figcaption',
+        'figure',
+        'footer',
+        'form',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'head',
+        'header',
+        'hgroup',
+        'hr',
+        'html',
+        'i',
+        'iframe',
+        'img',
+        'input',
+        'ins',
+        'kbd',
+        'label',
+        'legend',
+        'li',
+        'link',
+        'main',
+        'map',
+        'mark',
+        'math',
+        'menu',
+        'meta',
+        'meter',
+        'nav',
+        'noscript',
+        'object',
+        'ol',
+        'optgroup',
+        'option',
+        'output',
+        'p',
+        'picture',
+        'pre',
+        'progress',
+        'q',
+        'rp',
+        'rt',
+        'ruby',
+        's',
+        'samp',
+        'script',
+        'search',
+        'section',
+        'select',
+        'slot',
+        'small',
+        'source',
+        'span',
+        'strong',
+        'style',
+        'sub',
+        'summary',
+        'sup',
+        'svg',
+        'table',
+        'tbody',
+        'td',
+        'template',
+        'textarea',
+        'tfoot',
+        'th',
+        'thead',
+        'time',
+        'title',
+        'tr',
+        'track',
+        'u',
+        'ul',
+        'var',
+        'video',
+        'wbr',
+    }
+)
+
+_HTML_TAG_RE = re.compile(
+    r'</?(?:' + '|'.join(sorted(VALID_HTML_TAGS, key=len, reverse=True)) + r')(?:\s[^<>]*)?/?>',
     re.IGNORECASE,
 )
+_MARKDOWN_RE = re.compile(
+    r'(\*\*|~~|`|\[[^\]]+\]\([^)]+\)|^#{1,6}\s+|(?:\A|\s)\*(?!\s)[^\*\n]+(?<!\s)\*(?:\s|\Z|[.,!?;:])|^[\*\-\+]\s+|^\d+\.\s+|^>\s+)',
+    re.MULTILINE,
+)
+_DUNDER_RE = re.compile(r'(?<!\w)__([a-zA-Z0-9_]+)__(?!\w)')
 
 
 class PreviewTextHTMLParser(HTMLParser):
@@ -166,12 +292,35 @@ class PreviewTextHTMLParser(HTMLParser):
         self.max_collect: int | None = max_collect
         self.collected_chars: int = 0
         self.stopped_early: bool = False
+        self.needs_space: bool = False
 
     def _append_space(self) -> None:
-        if self.parts and not self.parts[-1].endswith(' '):
-            self.parts.append(' ')
+        if self.parts and not self.needs_space:
+            self.needs_space = True
+
+    def _emit_text(self, text: str) -> None:
+        if not text:
+            return
+        if self.needs_space:
+            if self.parts:
+                self.parts.append(' ')
+                self.collected_chars += 1
+            self.needs_space = False
+
+        remaining = (self.max_collect - self.collected_chars) if self.max_collect is not None else None
+        if remaining is not None and len(text) >= remaining:
+            self.parts.append(text[:remaining])
+            self.collected_chars += remaining
+            self.stopped_early = True
+            raise StopIteration
+
+        self.parts.append(text)
+        self.collected_chars += len(text)
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag not in VALID_HTML_TAGS:
+            self.handle_data(self.get_starttag_text() or f'<{tag}>')
+            return
         if tag in SKIPPED_TAGS:
             self.skip_depth += 1
             return
@@ -181,6 +330,9 @@ class PreviewTextHTMLParser(HTMLParser):
             self._append_space()
 
     def handle_endtag(self, tag: str) -> None:
+        if tag not in VALID_HTML_TAGS:
+            self.handle_data(f'</{tag}>')
+            return
         if tag in SKIPPED_TAGS:
             if self.skip_depth > 0:
                 self.skip_depth -= 1
@@ -193,11 +345,34 @@ class PreviewTextHTMLParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self.skip_depth > 0:
             return
-        self.parts.append(data)
-        self.collected_chars += len(data)
-        if self.max_collect is not None and self.collected_chars >= self.max_collect:
-            self.stopped_early = True
-            raise StopIteration
+        data = _INVISIBLE_CHARS_RE.sub('', data)
+        if not data:
+            return
+
+        if self.max_collect is not None:
+            remaining = self.max_collect - self.collected_chars
+            if remaining <= 0:
+                self.stopped_early = True
+                raise StopIteration
+            stripped_l = data.lstrip()
+            max_needed = remaining * 2 + 100
+            if len(stripped_l) > max_needed:
+                had_lead = data[:1].isspace()
+                data = (' ' if had_lead else '') + stripped_l[:max_needed]
+
+        words = data.split()
+        if not words:
+            if self.parts and any(c.isspace() for c in data):
+                self.needs_space = True
+            return
+        if data[0].isspace():
+            self._append_space()
+        for i, word in enumerate(words):
+            if i > 0:
+                self._append_space()
+            self._emit_text(word)
+        if data[-1].isspace():
+            self._append_space()
 
 
 def rich_text_to_preview_text(value: str | None, max_chars: int = 200) -> str:
@@ -205,8 +380,15 @@ def rich_text_to_preview_text(value: str | None, max_chars: int = 200) -> str:
     if value is None:
         return ''
     value = str(value)
-    if not _PREVIEW_TAG_RE.search(value):
-        clean_text = ' '.join(value.replace('\xa0', ' ').split())
+
+    if _HTML_TAG_RE.search(value):
+        pass
+    elif _MARKDOWN_RE.search(value):
+        protected = _DUNDER_RE.sub(r'\_\\_\1\_\\_', value)
+        value = compile_markdown(protected)
+    elif '<' not in value and '&' not in value:
+        clean = _INVISIBLE_CHARS_RE.sub('', value).replace('\xa0', ' ')
+        clean_text = ' '.join(clean.split())
         return Truncator(clean_text).chars(max_chars, truncate='…')
 
     parser = PreviewTextHTMLParser(max_collect=max_chars * 2 if max_chars else None)
@@ -217,5 +399,6 @@ def rich_text_to_preview_text(value: str | None, max_chars: int = 200) -> str:
         pass
 
     text = ''.join(parser.parts).replace('\xa0', ' ')
-    clean_text = ' '.join(text.split())
+    clean_text = _INVISIBLE_CHARS_RE.sub('', text)
+    clean_text = ' '.join(clean_text.split())
     return Truncator(clean_text).chars(max_chars, truncate='…')
