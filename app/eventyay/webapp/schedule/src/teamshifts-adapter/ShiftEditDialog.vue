@@ -1,7 +1,7 @@
 <template lang="pug">
 dialog.pretalx-modal.shift-edit-modal(ref="modal", :aria-labelledby="titleId", @click="onBackdrop", @cancel.prevent="cancel")
 	.dialog-inner(@click.stop="")
-		button.close-button(type="button", aria-label="Close dialog", @click="cancel") ✕
+		button.close-button(type="button", :aria-label="$t('Close dialog')", @click="cancel") ✕
 		h3(:id="titleId") {{ $t('Edit shift') }}
 		p.shift-edit-error(v-if="error") {{ error }}
 		form(@submit.prevent="submit")
