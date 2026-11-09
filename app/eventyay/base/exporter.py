@@ -17,7 +17,7 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, KNOWN_TYPES
 from eventyay.base.models import Event
 
 
-SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '\t', '\r')
+SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '\t', '\r', '\n', '＝', '＋', '－', '＠')
 NUMERIC_TEXT_RE = re.compile(r'^-?[0-9,.]+$')
 
 
@@ -206,7 +206,7 @@ class ListExporter(BaseExporter):
             if isinstance(line, self.ProgressSetTotal):
                 total = line.total
                 continue
-            ws.append([excel_safe(val) if not isinstance(val, KNOWN_TYPES) else val for val in line])
+            ws.append([excel_safe(val) for val in line])
             if total:
                 counter += 1
                 if counter % max(10, total // 100) == 0:

@@ -7,6 +7,7 @@ import pytest
 from django.utils import timezone, translation
 from django_scopes import scope
 
+from eventyay.base.exporter import neutralize_spreadsheet_formula
 from eventyay.base.exporters.orderlist import OrderListExporter
 from eventyay.base.models import InvoiceAddress, Order, OrderPosition, Product
 from eventyay.plugins.checkinlists.exporters import CSVCheckinList, PDFCheckinList
@@ -140,6 +141,8 @@ def test_csv_checkin_list_exports_job_title_and_respects_column_selection(event)
     job_idx = headers.index('Job title')
     assert [row[job_idx] for row in default_rows[1:]] == ['DevOps Lead', 'DevOps Lead']
     assert 'Job title' not in filtered_rows[0]
+    assert neutralize_spreadsheet_formula('＝1+1') == "'＝1+1"
+    assert neutralize_spreadsheet_formula('\n=1+1') == "'\n=1+1"
 
 
 @pytest.mark.django_db
