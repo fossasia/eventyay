@@ -306,6 +306,7 @@ export default defineComponent({
 			_cooldownInterval: null,
 			_isFetchingConfig: false,
 			_fetchConfigPromise: null,
+			_fetchingConfigRoomId: null,
 			_lastFetchRoomId: null,
 			_fetchInterpretationSeq: 0,
 			schedulesLoaded: false,
@@ -422,7 +423,7 @@ export default defineComponent({
 		'$store.state.world': {
 			handler(newWorld) {
 				if (newWorld) {
-					if ((this.syncStatus === 'loading' || !this._lastFetchRoomId) && this.cooldownRemaining <= 0) {
+					if (this.syncStatus === 'loading' && this.cooldownRemaining <= 0) {
 						this.fetchInterpretationConfig()
 					}
 					if (!this.schedulesLoaded || this.schedulesLoading) {
@@ -470,15 +471,17 @@ export default defineComponent({
 
 			if (!force && this._lastFetchRoomId === this.roomId && (this.syncStatus === 'ready' || this.syncStatus === 'unsupported')) return
 
-			if (this._isFetchingConfig) {
+			if (this._isFetchingConfig && this._fetchingConfigRoomId === this.roomId) {
 				return this._fetchConfigPromise
 			}
 
 			this._isFetchingConfig = true
+			this._fetchingConfigRoomId = this.roomId
 			const fetchingRoomId = this.roomId
 			const url = interpretationApiUrl(this.$store, fetchingRoomId, 'config/')
 			if (!url) {
 				this._isFetchingConfig = false
+				this._fetchingConfigRoomId = null
 				if (this.$store.state.world) {
 					this._lastFetchRoomId = null
 					this.syncStatus = 'unsupported'
@@ -556,8 +559,11 @@ export default defineComponent({
 					this.syncStatus = 'error'
 					this.interpretationPutError = err.message || this.$t('Network error while loading interpretation settings')
 				} finally {
-					this._isFetchingConfig = false
-					this._fetchConfigPromise = null
+					if (fetchSeq === this._fetchInterpretationSeq) {
+						this._isFetchingConfig = false
+						this._fetchConfigPromise = null
+						this._fetchingConfigRoomId = null
+					}
 				}
 			})()
 

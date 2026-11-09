@@ -153,6 +153,7 @@ export default {
 			_loadStreamsSeq: 0,
 			_isLoadingStreams: false,
 			_loadStreamsPromise: null,
+			_loadingStreamsRoomId: null,
 		}
 	},
 	async created() {
@@ -262,11 +263,14 @@ export default {
 	methods: {
 		async loadInterpretationLanguageStreams() {
 			if (this.creating || !this.config?.id) return
-			if (this._isLoadingStreams) return this._loadStreamsPromise
+			const targetRoomId = this.config.id
+			if (this._isLoadingStreams && this._loadingStreamsRoomId === targetRoomId) {
+				return this._loadStreamsPromise
+			}
 			this._isLoadingStreams = true
+			this._loadingStreamsRoomId = targetRoomId
 
 			const seq = ++this._loadStreamsSeq
-			const targetRoomId = this.config.id
 			this.interpretationAdmin.loading = true
 			this.interpretationAdmin.loaded = false
 			this.interpretationAdmin.streamsLoadFailed = false
@@ -308,12 +312,15 @@ export default {
 					this.interpretationAdmin.usePluginStreams = fallbackUseStreams
 					this.interpretationAdmin.languageStreams = []
 				} finally {
-					if (seq === this._loadStreamsSeq && targetRoomId === this.config?.id) {
-						this.interpretationAdmin.loading = false
-						this.interpretationAdmin.loaded = true
+					if (seq === this._loadStreamsSeq) {
+						if (targetRoomId === this.config?.id) {
+							this.interpretationAdmin.loading = false
+							this.interpretationAdmin.loaded = true
+						}
+						this._isLoadingStreams = false
+						this._loadStreamsPromise = null
+						this._loadingStreamsRoomId = null
 					}
-					this._isLoadingStreams = false
-					this._loadStreamsPromise = null
 				}
 			})()
 
