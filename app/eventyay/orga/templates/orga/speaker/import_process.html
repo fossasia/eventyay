@@ -54,22 +54,7 @@
 
   <form method='post' data-import-task data-import-task-long>
     {% csrf_token %}
-    {% for field in form %}
-      <div class='form-group row'>
-        <label class='col-md-3 col-form-label text-md-right' for='{{ field.id_for_label }}'>
-          {{ field.label }}{% if field.field.required %} *{% endif %}
-        </label>
-        <div class='col-md-9'>
-          {{ field }}
-          {% if field.help_text %}
-            <small class='form-text text-muted'>{{ field.help_text }}</small>
-          {% endif %}
-          {% for error in field.errors %}
-            <div class='invalid-feedback d-block'>{{ error }}</div>
-          {% endfor %}
-        </div>
-      </div>
-    {% endfor %}
+    {% include 'orga/includes/import_mapping_fields.html' %}
     <div class='form-group row'>
       <div class='col-md-9 offset-md-3'>
         <button type='submit' class='btn btn-success btn-lg'>

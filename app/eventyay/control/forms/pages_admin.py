@@ -22,9 +22,9 @@ from eventyay.common.forms.fields import I18nRichTextFormField
 DEFAULT_PAGE_LOCALE = 'en'
 
 # Slugs that expose editable rich-text page content in addition to a footer link.
-CONTENT_PAGE_SLUGS = ('terms', 'privacy', 'pricing', 'support')
+CONTENT_PAGE_SLUGS = ('terms', 'privacy', 'support')
 # Slugs handled by the default-page tab (Documentation is an external link only).
-DEFAULT_PAGE_SLUGS = ('terms', 'privacy', 'pricing', 'documentation', 'support')
+DEFAULT_PAGE_SLUGS = ('terms', 'privacy', 'documentation', 'support')
 
 # Every i18n settings key that stores per-locale page content across all tabs.
 # Used by the locale-remove endpoint to wipe content for a dropped locale globally.
@@ -42,14 +42,12 @@ ALL_PAGE_I18N_KEYS = (
     'startpage_feature_4_title', 'startpage_feature_4_text',
     'footer_page_terms_text',
     'footer_page_privacy_text',
-    'footer_page_pricing_text',
     'footer_page_support_text',
 )
 
 PAGE_TITLES = {
     'terms': _('Terms'),
     'privacy': _('Privacy'),
-    'pricing': _('Pricing'),
     'documentation': _('Documentation'),
     'support': _('Support'),
 }
@@ -348,7 +346,7 @@ class GlobalBannerContentForm(PageContentSettingsForm):
 
 
 class DefaultPageContentForm(PageContentSettingsForm):
-    """Editor for a single default page (Terms, Privacy, Pricing, Support, Documentation)."""
+    """Editor for a single default page (Terms, Privacy, Support, Documentation)."""
 
     def __init__(self, *args, slug=None, **kwargs):
         if slug not in DEFAULT_PAGE_SLUGS:

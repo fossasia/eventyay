@@ -371,10 +371,11 @@ export default {
 		},
 		formatEventDateTime(value) {
 			const timezoneLabel = this.eventTimezone
+			const timezoneDisplay = timezoneLabel.replace(/_/g, ' ')
 			if (!this.showTimes) {
 				return value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY')
 			}
-			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY HH:mm')} (${timezoneLabel})`
+			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY HH:mm')} (${timezoneDisplay})`
 		},
 		async fetchEventMeta() {
 			if (!config?.api?.base) return

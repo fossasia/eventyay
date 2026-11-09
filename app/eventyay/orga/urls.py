@@ -3,7 +3,6 @@ from django.views.generic.base import RedirectView
 
 from eventyay.orga.views import (
     auth,
-    cards,
     cfp,
     dashboard,
     event,
@@ -61,6 +60,11 @@ urlpatterns = [
                     'speakers/',
                     organizer.OrganizerSpeakerList.as_view(),
                     name='organizer.speakers',
+                ),
+                path(
+                    'teams/',
+                    RedirectView.as_view(pattern_name='eventyay_common:organizer.teams', permanent=False, query_string=True),
+                    name='organizer.teams',
                 ),
             ]
         ),
@@ -206,11 +210,6 @@ urlpatterns = [
                     'submissions/new',
                     submission.SubmissionContent.as_view(),
                     name='submissions.create',
-                ),
-                path(
-                    'submissions/cards/',
-                    cards.SubmissionCards.as_view(),
-                    name='submissions.cards',
                 ),
                 path(
                     'submissions/feed/',
@@ -380,6 +379,7 @@ urlpatterns = [
                     name='event.speaker_autocomplete',
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
+                path('speakers/new/', speaker.SpeakerCreate.as_view(), name='speakers.create'),
                 path(
                     'speakers/<code>/',
                     include(

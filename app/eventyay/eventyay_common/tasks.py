@@ -21,6 +21,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.decimal import round_decimal
 from eventyay.base.models.vouchers import InvoiceVoucher
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.base.signals import is_legacy_billing_collection_disabled
 from eventyay.helpers.stripe_utils import (
     confirm_payment_intent,
     process_auto_billing_charge_stripe,
@@ -35,6 +36,15 @@ from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
 
 logger = logging.getLogger(__name__)
+
+MONTHLY_INVOICE_SUBJECT = '{month} invoice for {event}'
+MONTHLY_INVOICE_TEXT = (
+    'Dear {name},\n\n'
+    'Thank you for using our services! '
+    'Please find attached for a summary of your invoice for {month}.\n\n'
+    'Best regards,\n'
+    'EventYay Team'
+)
 
 
 @shared_task(bind=True, max_retries=5, default_retry_delay=60)  # Retries up to 5 times with a 60-second delay
@@ -174,6 +184,12 @@ def monthly_billing_collect(self):
 
         ticket_rate = Decimal('0.00')
         for organizer in Organizer.objects.all():
+            if is_legacy_billing_collection_disabled(organizer):
+                logger.info(
+                    'Skipping legacy monthly billing for organizer %s because an external collector owns billing',
+                    organizer.slug,
+                )
+                continue
             organizer_billing = OrganizerBillingModel.objects.filter(organizer=organizer).first()
             invoice_voucher = organizer_billing.invoice_voucher if organizer_billing else None
             total_voucher_discount = Decimal('0.00')
@@ -182,6 +198,9 @@ def monthly_billing_collect(self):
                 collect_billing_response = collect_billing_invoice(event, last_month_date, ticket_rate, invoice_voucher)
                 if collect_billing_response.status:
                     total_voucher_discount += collect_billing_response.voucher_discount
+                    if invoice_voucher:
+                        # Count the discount right away so the next event sees the remaining budget.
+                        invoice_voucher.budget_used += collect_billing_response.voucher_discount
 
             if total_voucher_discount > 0:
                 # Invoice voucher is used, update redeemed count
@@ -266,6 +285,12 @@ def process_auto_billing_charge():
         last_month_date = (first_day_of_current_month - relativedelta(months=1)).date()
         pending_invoices = BillingInvoice.objects.filter(Q(monthly_bill=last_month_date) & Q(status='n'))
         for invoice in pending_invoices:
+            if is_legacy_billing_collection_disabled(invoice.organizer):
+                logger.info(
+                    'Skipping legacy automatic charge for organizer %s because an external collector owns billing',
+                    invoice.organizer.slug,
+                )
+                continue
             if invoice.final_ticket_fee > 0:
                 billing_settings = OrganizerBillingModel.objects.filter(organizer_id=invoice.organizer_id).first()
                 if not billing_settings or not billing_settings.stripe_customer_id:
@@ -340,12 +365,14 @@ def calculate_ticket_fee(
     def _apply_voucher(
         ticket_fee: Decimal, voucher_discount: Decimal, invoice_voucher: InvoiceVoucher
     ) -> Tuple[Decimal, Decimal]:
-        final_ticket_fee = invoice_voucher.calculate_price(original_price=ticket_fee, event=event)
+        final_ticket_fee = invoice_voucher.calculate_price(
+            original_price=ticket_fee, max_discount=invoice_voucher.remaining_budget(), event=event
+        )
         voucher_discount = ticket_fee - final_ticket_fee
         return final_ticket_fee, voucher_discount
 
     def _is_voucher_valid_for_event(invoice_voucher: InvoiceVoucher, event: Event) -> bool:
-        if not invoice_voucher or not invoice_voucher.is_active():
+        if not invoice_voucher or not invoice_voucher.is_active() or not invoice_voucher.applies_to_platform_fees:
             return False
 
         # If voucher is not limited to specific events, it's valid for all
@@ -419,13 +446,10 @@ def billing_invoice_notification(self):
             continue
         month_name = invoice.monthly_bill.strftime('%B')
         # Send email to organizer with invoice pdf
-        mail_subject = f'{month_name} invoice for {invoice.event.name}'
-        mail_content = (
-            f'Dear {organizer_billing.primary_contact_name},\n\n'
-            f'Thank you for using our services! '
-            f'Please find attached for a summary of your invoice for {month_name}.\n\n'
-            f'Best regards,\n'
-            f'EventYay Team'
+        mail_subject = MONTHLY_INVOICE_SUBJECT.format(month=month_name, event=invoice.event.name)
+        mail_content = MONTHLY_INVOICE_TEXT.format(
+            name=organizer_billing.primary_contact_name,
+            month=month_name,
         )
 
         billing_invoice_send_email(mail_subject, mail_content, invoice, organizer_billing)

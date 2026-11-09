@@ -343,6 +343,46 @@ def test_orga_can_see_review(orga_client, review):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "aggregate_method, values, expected",
+    (
+        ("median", (1, 1, 5), 1),
+        ("mean", (1, 1, 5), 2.3),
+        ("median", (1, 2, 5, 8), 3.5),
+        ("mean", (1, 2, 5, 8), 4),
+    ),
+)
+def test_dashboard_independent_score_aggregation(
+    orga_client, submission, other_submission, aggregate_method, values, expected
+):
+    event = submission.event
+    with scope(event=event):
+        event.review_settings["aggregate_method"] = aggregate_method
+        event.save(update_fields=["review_settings"])
+        ordinary_score = event.score_categories.first().scores.get(value=1)
+        category = ReviewScoreCategory.objects.create(
+            event=event, name="Relevance", is_independent=True
+        )
+        scores = {
+            value: ReviewScore.objects.create(category=category, value=value)
+            for value in set(values)
+        }
+        for index, value in enumerate(values):
+            user = User.objects.create_user(email=f"reviewer{index}@example.org")
+            review = Review.objects.create(user=user, submission=submission)
+            review.scores.add(ordinary_score, scores[value])
+            review.save()
+
+    response = orga_client.get(event.orga_urls.reviews)
+
+    assert response.status_code == 200
+    submissions = {item.pk: item for item in response.context["submissions"]}
+    assert submissions[submission.pk].independent_scores == [expected]
+    assert submissions[submission.pk].current_score == 1
+    assert submissions[other_submission.pk].independent_scores == [None]
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("sort", ("count", "-count", "score", "-score"))
 def test_reviewer_can_see_dashboard(
     review_client,

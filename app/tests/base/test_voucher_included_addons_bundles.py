@@ -11,6 +11,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import CartPosition, Event, Organizer, Quota, Voucher
 from eventyay.base.models.product import Product, ProductAddOn, ProductBundle, ProductCategory
 from eventyay.base.services.cart import CartManager
+from eventyay.base.services.pricing import get_price
 
 CART_ID = 'voucher-included-test'
 
@@ -95,6 +96,25 @@ def test_addons_charged_without_option(setup):
         cm.commit()
         addon = cp.addons.get(is_bundled=False)
         assert addon.price == Decimal('12.00')
+
+
+def test_all_addons_included_frees_products_from_addon_category(setup):
+    event, ticket, workshop, _ = setup
+    with scopes_disabled():
+        voucher = event.vouchers.create(code='ADDONPRICE', product=ticket, all_addons_included=True)
+        cp = _add_ticket(event, ticket, voucher)
+        assert get_price(workshop, addon_to=cp).gross == Decimal('0.00')
+
+
+def test_all_addons_included_does_not_free_non_addon_products(setup):
+    event, ticket, _, transport = setup
+    with scopes_disabled():
+        vip = Product.objects.create(event=event, name='VIP', default_price=Decimal('500.00'))
+        voucher = event.vouchers.create(code='NOTADDON', product=ticket, all_addons_included=True)
+        cp = _add_ticket(event, ticket, voucher)
+        assert get_price(vip, addon_to=cp).gross == Decimal('500.00')
+        assert get_price(ticket, addon_to=cp).gross == Decimal('23.00')
+        assert get_price(transport, addon_to=cp).gross == Decimal('2.50')
 
 
 def test_apply_voucher_later_frees_existing_addons_and_bundles(setup):

@@ -369,7 +369,7 @@ def _handle_file_upload(data, user, auth):
     except CachedFile.DoesNotExist:
         raise BaseValidationError('The submitted file ID "{fid}" was not found.'.format(fid=data))
 
-    allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'application/pdf')
+    allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf')
     if cf.type not in allowed_types:
         raise BaseValidationError(
             'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
@@ -1051,7 +1051,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
         except CachedFile.DoesNotExist:
             raise BaseValidationError('The submitted file ID "{fid}" was not found.'.format(fid=data))
 
-        allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'application/pdf')
+        allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf')
         if cf.type not in allowed_types:
             raise BaseValidationError(
                 'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)

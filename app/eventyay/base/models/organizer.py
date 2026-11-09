@@ -40,6 +40,17 @@ from .auth import User
 
 logger = logging.getLogger(__name__)
 
+TEAM_INVITE_SUBJECT = _('You have been invited to an organizer team')
+TEAM_INVITE_TEXT = _(
+    """Hi!
+You have been invited to the {name} event organizer team - Please click here to accept:
+
+{invitation_link}
+
+See you there,
+The {organizer} team"""
+)
+
 
 class TeamPermissionError(PermissionDenied):
     """Raised when team access permission checks fail to preserve administrator access."""
@@ -160,8 +171,8 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         base = '{base_path}/orga/organizer/{self.slug}/'
         settings = '{base_path}/orga/organizer/{self.slug}/settings/'
         delete = '{settings}delete'
-        teams = '{base}teams/'
-        new_team = '{teams}new'
+        teams = '{base_path}/common/organizer/{self.slug}/teams'
+        new_team = '{base_path}/common/organizer/{self.slug}/team/add'
         user_search = '{base}api/users'
 
     @transaction.atomic
@@ -652,8 +663,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this team."""
 
+        base_path = settings.BASE_PATH
         base = '{self.organizer.orga_urls.teams}?team={self.pk}&section=permissions'
-        delete = '{self.organizer.orga_urls.base}team/{self.pk}/delete/'
+        delete = '{base_path}/common/organizer/{self.organizer.slug}/team/{self.pk}/delete'
 
 
 class TeamInvite(models.Model):
@@ -690,20 +702,12 @@ class TeamInvite(models.Model):
         from eventyay.base.models.mail import QueuedMail
 
         invitation_link = self.invitation_url
-        invitation_text = _(
-            """Hi!
-You have been invited to the {name} event organizer team - Please click here to accept:
-
-{invitation_link}
-
-See you there,
-The {organizer} team"""
-        ).format(
+        invitation_text = str(TEAM_INVITE_TEXT).format(
             name=str(self.team.name),
             invitation_link=invitation_link,
             organizer=str(self.team.organizer.name),
         )
-        invitation_subject = _('You have been invited to an organizer team')
+        invitation_subject = TEAM_INVITE_SUBJECT
 
         mail = QueuedMail.objects.create(
             to=self.email,

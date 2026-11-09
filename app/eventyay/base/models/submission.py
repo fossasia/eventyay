@@ -28,6 +28,7 @@ from eventyay.common.exceptions import SubmissionError
 from eventyay.common.language import LANGUAGE_NAMES
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
+from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import EventUrls
 from eventyay.submission.constants import AUTO_DRAFT_TITLE
@@ -396,7 +397,9 @@ class Submission(GenerateCode, PretalxModel):
                 self.event.active_review_phase and self.event.active_review_phase.speakers_can_change_submissions
             )
         if self.state == SubmissionStates.DRAFT:
-            return self.cfp_open
+            return self.cfp_open or bool(
+                self.access_code and (not self.access_code.valid_until or now() < self.access_code.valid_until)
+            )
         return self.state in SubmissionStates.accepted_states
 
     @property
@@ -1130,9 +1133,9 @@ class Submission(GenerateCode, PretalxModel):
                 },
             )
 
-        if biography:
+        if biography and not is_empty_rich_text(biography):
             profile = SpeakerProfile.objects.get(user=speaker, event=self.event)
-            if not profile.biography:
+            if is_empty_rich_text(profile.biography):
                 profile.biography = biography
                 profile.save(update_fields=['biography'])
 
@@ -1318,9 +1321,11 @@ def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
     event_id = instance.event_id
     if not event_id:
         return
-    if not TalkSlot.objects.filter(
-        submission_id=instance.pk,
-        schedule__version__isnull=False,
-    ).exists():
-        return
+
+    with scope(event=instance.event):
+        if not TalkSlot.objects.filter(
+            submission_id=instance.pk,
+            schedule__version__isnull=False,
+        ).exists():
+            return
     bump_schedule_cache_version_on_commit(event_id)

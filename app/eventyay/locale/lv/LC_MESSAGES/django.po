@@ -14961,7 +14961,7 @@ msgstr "Mani priekšlikumi"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "Runātāja e-pasts"
 
 #: eventyay/common/templates/common/base.html:189

@@ -78,15 +78,17 @@ export default {
 				: (rect?.width || this.$el?.clientWidth || 200)
 
 			const startingPosition = Math.random()
-			const targetPosition = (this.direction === 'vertical' ? 0.5 : 1) * Math.max(0.7, Math.random()) * overlaySize
+			const targetPosition = (this.direction === 'vertical' ? 0.75 : 1) * Math.max(0.85, Math.random()) * overlaySize
 			element.style['background-image'] = nativeEmojiToStyle(emoji)['background-image']
 			element.style[this.direction === 'vertical' ? 'left' : 'top'] = `calc(${startingPosition * 100}% - 28px)`
 			const axis = this.direction === 'vertical' ? 'Y' : 'X'
 			const animation = element.animate([
-				{opacity: 1, transform: `translate${axis}(0px)`},
-				{opacity: 0, transform: `translate${axis}(-${targetPosition}px)`}
+				{opacity: 1, transform: `translate${axis}(0px)`, offset: 0},
+				{opacity: 1, offset: 0.65},
+				{opacity: 0, transform: `translate${axis}(-${targetPosition}px)`, offset: 1}
 			], {
-				duration: 1200 + 500 * Math.random()
+				duration: 1800 + 600 * Math.random(),
+				easing: 'ease-out'
 			})
 			animation.onfinish = () => {
 				// onfinish seems to get called twice sometimes?

@@ -34,7 +34,6 @@ def test_user_can_access_url(orga_client, logged_in, url, template_patch):
         ("mails.outbox.list", 200, 404),
         ("submissions.list", 200, 200),
         ("submissions.create", 200, 404),
-        ("submissions.cards", 200, 404),
         ("speakers.list", 200, 200),
         ("speakers.information.list", 200, 404),
         ("speakers.information.create", 200, 404),

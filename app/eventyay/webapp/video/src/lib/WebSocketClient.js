@@ -28,12 +28,50 @@ class WebSocketClient extends EventEmitter {
 	}
 
 	connect() {
+		this._normalClose = false
+		this._createSocket()
+	}
+
+	reconnect() {
+		this._normalClose = false
+		if (this._reconnectTimeout) {
+			clearTimeout(this._reconnectTimeout)
+			this._reconnectTimeout = null
+		}
+		if (this._joinTimeout) {
+			clearTimeout(this._joinTimeout)
+			this._joinTimeout = null
+		}
+		if (this._socket && this._socket.readyState !== WebSocket.CLOSED) {
+			const oldSocket = this._socket
+			try {
+				oldSocket.close()
+			} catch (err) {
+				logOperational({action: 'ws.error', outcome: 'failure', backend: 'live', error_code: 'socket_close_failed'})
+			}
+		}
+		if (this._openRequests) {
+			for (const id of Object.keys(this._openRequests)) {
+				const req = this._openRequests[id]
+				delete this._openRequests[id]
+				if (!req) continue
+				if (req.timeout) clearTimeout(req.timeout)
+				req.deferred?.reject(new Error('WebSocket connection reconnecting'))
+			}
+		}
+		this.emit('reconnecting')
 		this._createSocket()
 	}
 
 	close() {
 		this._normalClose = true
-		this._socket.close()
+		if (this._reconnectTimeout) {
+			clearTimeout(this._reconnectTimeout)
+			this._reconnectTimeout = null
+		}
+		if (this._socket) {
+			this._socket.close()
+		}
 		clearTimeout(this._joinTimeout)
 	}
 
@@ -54,8 +92,9 @@ class WebSocketClient extends EventEmitter {
 			data
 		]
 		this._send(JSON.stringify(payload))
-		setTimeout(() => {
-			if (this._openRequests[id]) {
+		const req = this._openRequests[id]
+		req.timeout = setTimeout(() => {
+			if (this._openRequests[id] === req) {
 				const timeoutedRequest = this._popPendingRequest(id)
 				timeoutedRequest.deferred.reject(new Error('call timed out'))
 				if (name !== 'event.client_log') {
@@ -70,13 +109,15 @@ class WebSocketClient extends EventEmitter {
 	// INTERNALS
 	// ===========================================================================
 	_createSocket() {
-		this._socket = new WebSocket(this._url)
+		const socket = new WebSocket(this._url)
+		this._socket = socket
 		this.socketState = 'connecting' // 'closed', 'open', 'connecting'
 		this._pingState = {
 			latestPong: 0
 		}
-		this.normalClose = false
-		this._socket.addEventListener('open', () => {
+		this._normalClose = false
+		socket.addEventListener('open', () => {
+			if (this._socket !== socket) return
 			this.emit('open')
 			this.socketState = 'open'
 			logOperational({action: 'ws.connect', outcome: 'success', backend: 'live'})
@@ -86,23 +127,41 @@ class WebSocketClient extends EventEmitter {
 			}, this._config.joinTimeout)
 		})
 
-		this._socket.addEventListener('close', (event) => {
+		socket.addEventListener('close', (event) => {
+			if (this._socket !== socket) return
 			this.socketState = 'closed'
 			this.emit('closed', event.code)
 			if (event.code && event.code !== 1000 && event.code !== 1001) {
 				logOperational({action: 'ws.close', outcome: 'failure', backend: 'live', error_code: 'abnormal_close', status: event.code})
 			}
+			if (this._openRequests) {
+				for (const id of Object.keys(this._openRequests)) {
+					const req = this._openRequests[id]
+					delete this._openRequests[id]
+					if (!req) continue
+					if (req.timeout) clearTimeout(req.timeout)
+					req.deferred?.reject(new Error('WebSocket connection closed'))
+				}
+			}
 			if (!this._normalClose) {
-				setTimeout(() => {
+				if (this._reconnectTimeout) clearTimeout(this._reconnectTimeout)
+				this._reconnectTimeout = setTimeout(() => {
+					this._reconnectTimeout = null
 					this.emit('reconnecting')
 					this._createSocket()
 				}, this._config.reconnectDelay)
 			}
 		})
-		this._socket.addEventListener('message', this._processMessage.bind(this))
+		socket.addEventListener('message', (event) => {
+			if (this._socket !== socket) return
+			this._processMessage(event)
+		})
 		this._openRequests = {} // save deferred promises from requests waiting for reponse
 		this._nextRequestIndex = 1 // autoincremented message id
-		this._joinTimeout = null
+		if (this._joinTimeout) {
+			clearTimeout(this._joinTimeout)
+			this._joinTimeout = null
+		}
 	}
 
 	_send(payload) {
@@ -191,7 +250,11 @@ class WebSocketClient extends EventEmitter {
 
 	_popPendingRequest(id) {
 		const req = this._openRequests[id]
-		this._openRequests[id] = undefined
+		delete this._openRequests[id]
+		if (req?.timeout) {
+			clearTimeout(req.timeout)
+			req.timeout = null
+		}
 		return req
 	}
 

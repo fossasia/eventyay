@@ -135,7 +135,7 @@ If you use AI tools to help with changes, follow the instructions in [`.github/i
 
 1. **Link every PR to a GitHub issue.** Use GitHub’s closing keywords in the **PR description** (not the title), for example: `Fixes #123`.
 2. **Keep PRs reviewable in less than a day.** Break large work into smaller issues and smaller PRs.
-3. **Design changes:** Add screenshots or a short video so reviewers can see the UI or visual impact.
+3. **Show your change working:** Add a short screencast video, especially for UI changes. See [Automated checks on pull requests](#automated-checks-on-pull-requests).
 4. **Copilot:** Enable GitHub Copilot on your account when possible; this repo can auto-trigger Copilot reviews, which speeds up feedback.
 5. **Reviewers:** Do not tag reviewers repeatedly; the PR will be reviewed in turn.
 6. **Issues:** Avoid picking up issues that are already assigned to someone else unless you coordinate with them.
@@ -143,6 +143,13 @@ If you use AI tools to help with changes, follow the instructions in [`.github/i
 8. **Large or long-running work:** Open a **draft** pull request early so direction is visible and others are less likely to duplicate effort.
 
 **Workflow:** Push your branch to your fork, open a Pull Request against `dev`, and respond to review feedback.
+
+### Automated checks on pull requests
+
+Some rules are enforced automatically by workflows in `.github/workflows/`:
+
+- **Screencast videos.** When a reviewer adds the `needs-screencast` label, please add a short screencast video showing your change working, as a comment or in the PR description (drag in a video file, or link YouTube, Loom or Vimeo). Screenshots do not count. Without a video, the PR is closed after **72 hours**, with a reminder after 48 hours.
+- **New contributors.** Until you have **3 merged PRs** anywhere in the FOSSASIA organisation, your PRs get the `new-contributor` label and an automatic screencast request (draft PRs only once marked "Ready for review"). You can have at most **3 open PRs** at a time across FOSSASIA; additional PRs are closed automatically and can be reopened once one of your other PRs is merged or closed. Focus on getting one PR through review before starting the next.
 
 ## Further reading
 

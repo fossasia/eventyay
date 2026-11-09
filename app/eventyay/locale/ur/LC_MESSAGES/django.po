@@ -15013,7 +15013,7 @@ msgstr "میری تجاویز"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "مقرر کا ای میل"
 
 #: eventyay/common/templates/common/base.html:189

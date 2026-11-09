@@ -54,9 +54,22 @@
                     </div>
                     <button id="change-card-btn">Use a different card</button>
                     <div id="payment-element"></div>
+                    <div class="alert alert-info" id="automatic-billing-consent">
+                        <strong>{% trans "Automatic invoice payments" %}</strong>
+                        <p>
+                            {% blocktrans trimmed %}
+                                By saving this payment method, you authorize Eventyay to
+                                automatically charge it for future organizer invoices while
+                                automatic payments remain enabled. Invoice totals can vary based
+                                on your plan, add-ons, ticket fees, usage, refunds, adjustments
+                                and applicable taxes. Where supported by your billing integration,
+                                automatic payments are managed separately from subscriptions.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
                     <div class="form-group submit-group">
                         <button type="button" class="btn btn-primary btn-save" id="save-payment-information">
-                            {% trans "Save" %}
+                            {% trans "Save and enable automatic payments" %}
                         </button>
                         <button type="button" class="btn btn-primary btn-save" id="back-btn">
                             {% trans "Back" %}

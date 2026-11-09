@@ -76,7 +76,15 @@
         </div>
 
         <div class="pfv-form-section">
-          <div class="pfv-form-section-title">3. {% trans "Scope" %}</div>
+          <div class="pfv-form-section-title">3. {% trans "Applies to" %}</div>
+          {% bootstrap_field form.applies_to_platform_fees layout='horizontal' %}
+          {% for plugin_form in plugin_forms %}
+            {% bootstrap_form plugin_form layout='horizontal' %}
+          {% endfor %}
+        </div>
+
+        <div class="pfv-form-section">
+          <div class="pfv-form-section-title">4. {% trans "Scope" %}</div>
           {% bootstrap_field form.scope_type layout='horizontal' %}
           <div id="scope-events" style="display:none;">
             {% bootstrap_field form.event_effect layout='horizontal' %}
@@ -87,7 +95,7 @@
         </div>
 
         <div class="pfv-form-section">
-          <div class="pfv-form-section-title">4. {% trans "Additional Settings" %}</div>
+          <div class="pfv-form-section-title">5. {% trans "Additional Settings" %}</div>
           {% bootstrap_field form.allow_partial_usage layout='horizontal' %}
         </div>
 
@@ -110,7 +118,7 @@
           </div>
           <div class="pfv-info-notice" style="margin-top: 20px; font-size: 13px; padding: 10px;">
             <i class="fa fa-info-circle"></i>
-            {% trans "Platform fee vouchers are automatically applied when billing organizers." %}
+            {% trans "Ticket platform fee vouchers are applied when billing organizers. Plan and add-on vouchers are entered by organizers at checkout." %}
           </div>
         </div>
 
@@ -122,7 +130,7 @@
           </div>
           <div class="pfv-help-item">
             <i class="fa fa-check text-success"></i>
-            <div>{% trans "Only applies to the platform fee amount" %}</div>
+            <div>{% trans "Can discount ticket platform fees, plans, and add-ons" %}</div>
           </div>
           <div class="pfv-help-item">
             <i class="fa fa-check text-success"></i>

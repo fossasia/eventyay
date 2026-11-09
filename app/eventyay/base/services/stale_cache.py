@@ -66,7 +66,7 @@ def unwrap_api_cache_payload(cached):
     return cached, None
 
 
-def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_context=''):
+def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_context='', ttl_for_value=None):
     cached = cache_get(hot_key)
     if cached is not None:
         return deserialize_none_sentinel(cached)
@@ -80,7 +80,24 @@ def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_cont
             return deserialize_none_sentinel(stale)
         raise
 
-    store_hot_and_stale(hot_key, stale_key, value if value is not None else NONE_SENTINEL, hot_ttl, stale_ttl)
+    stored_ttl = hot_ttl
+    if ttl_for_value is not None:
+        try:
+            stored_ttl = ttl_for_value(value)
+        except _DB_ERRORS as exc:
+            # The fresh value is already loaded. A TTL lookup must not discard it
+            # for an older stale entry, which can be a slot that has already ended.
+            logger.warning('TTL lookup failed for %s: %s', log_context or hot_key, exc)
+            stored_ttl = hot_ttl
+    if not stored_ttl or stored_ttl < 1:
+        stored_ttl = 1
+    store_hot_and_stale(
+        hot_key,
+        stale_key,
+        value if value is not None else NONE_SENTINEL,
+        stored_ttl,
+        stale_ttl,
+    )
     return value
 
 
@@ -104,21 +121,24 @@ _bump_on_commit_local = threading.local()
 
 
 def bump_schedule_cache_version_on_commit(event_id):
-    """Bump at most once per event per database transaction."""
+    """Bump at most once per event per database transaction.
+
+    Every call registers its own callback, because a rolled back transaction
+    drops its callbacks. Only the first callback of a commit bumps the version.
+    """
     pending = getattr(_bump_on_commit_local, 'pending', None)
     if pending is None:
         pending = set()
         _bump_on_commit_local.pending = pending
-    if event_id in pending:
-        return
     pending.add(event_id)
     transaction.on_commit(lambda: _flush_schedule_cache_bump(event_id))
 
 
 def _flush_schedule_cache_bump(event_id):
     pending = getattr(_bump_on_commit_local, 'pending', None)
-    if pending is not None:
-        pending.discard(event_id)
+    if pending is None or event_id not in pending:
+        return
+    pending.discard(event_id)
     bump_schedule_cache_version(event_id)
 
 

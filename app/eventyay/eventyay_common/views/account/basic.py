@@ -98,8 +98,6 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        messages.success(self.request, _('Your changes have been saved.'))
-
         data = {}
         for k in form.changed_data:
             if k not in ('old_pw', 'new_pw_repeat', 'clear_profile_picture'):
@@ -144,6 +142,17 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         self.request.user.log_action('eventyay.user.settings.changed', user=self.request.user, data=data)
 
         update_session_auth_hash(self.request, self.request.user)
+
+        # Confirm only now that everything has been saved. Entering only the current
+        # password does not change anything, so it is not confirmed as a change.
+        password_changed = 'new_pw' in form.changed_data
+        settings_changed = set(form.changed_data) - {'old_pw', 'new_pw', 'new_pw_repeat'}
+        if password_changed:
+            messages.success(self.request, _('Your password has been changed successfully.'))
+        if settings_changed:
+            messages.success(self.request, _('Your changes have been saved.'))
+        elif not password_changed:
+            messages.info(self.request, _('No changes were made.'))
 
         new_locale = form.cleaned_data.get('locale')
         if new_locale:

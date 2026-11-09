@@ -14750,7 +14750,7 @@ msgstr "నా ప్రతిపాదనలు"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker names"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "ప్రసంగకుల పేర్లు"
 
 #: eventyay/common/templates/common/base.html:189

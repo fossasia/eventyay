@@ -16,6 +16,7 @@ from eventyay.base.models import User
 from eventyay.common.image import validate_image
 from eventyay.control.forms import SingleLanguageWidget
 from eventyay.helpers.image_optimize import optimize_uploaded_image
+from eventyay.helpers.timezone import format_timezone_name
 
 
 class UserSettingsForm(forms.ModelForm):
@@ -56,7 +57,7 @@ class UserSettingsForm(forms.ModelForm):
         widget=forms.PasswordInput(),
     )
     timezone = forms.ChoiceField(
-        choices=((a, a) for a in common_timezones),
+        choices=((a, format_timezone_name(a)) for a in common_timezones),
         label=_('Default timezone'),
         help_text=_(
             'Only used for views that are not bound to an event. For all '
@@ -150,7 +151,7 @@ class UserSettingsForm(forms.ModelForm):
 
             try:
                 result = optimize_uploaded_image(pic, 'profile_picture', crop_box)
-                base_name, _ = os.path.splitext(pic.name)
+                base_name = os.path.splitext(pic.name)[0]
                 pic = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),
@@ -175,10 +176,13 @@ class UserSettingsForm(forms.ModelForm):
         password1 = cleaned_data.get('new_pw')
         old_pw = cleaned_data.get('old_pw')
 
-        if not self.requires_password_reset and password1 and not old_pw:
-            raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
+        # A wrong current password already has its own error on the field, so only
+        # ask for it when it was left empty, and show that next to the field too.
+        if not self.requires_password_reset and password1 and not old_pw and not self.has_error('old_pw'):
+            self.add_error('old_pw', forms.ValidationError(self.error_messages['pw_current'], code='pw_current'))
 
-        if password1:
+        # The form is bound to the logged-in user, so only change the password once it is valid.
+        if password1 and not self.errors:
             self.instance.set_password(password1)
 
         return cleaned_data

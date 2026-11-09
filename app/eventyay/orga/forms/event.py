@@ -5,6 +5,7 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from django_scopes.forms import SafeModelMultipleChoiceField
 from i18nfield.fields import I18nFormField, I18nTextarea
 from i18nfield.forms import I18nFormMixin, I18nFormSetMixin, I18nModelForm
@@ -506,10 +507,14 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
-        if not event or not event.get_feature_flag('use_tracks'):
+        has_tracks = False
+        if event:
+            with scope(event=event):
+                has_tracks = event.tracks.exists()
+                if has_tracks:
+                    self.fields['limit_tracks'].queryset = event.tracks.all()
+        if not has_tracks:
             self.fields.pop('limit_tracks')
-        else:
-            self.fields['limit_tracks'].queryset = event.tracks.all()
         ids = self.data.get(self.prefix + '-new_scores')
         self.new_label_ids = ids.strip(',').split(',') if ids else []
         for label_id in self.new_label_ids:

@@ -14,9 +14,9 @@
 
 {% block title %}
     {% if messages %}
-        {{ messages|join:" " }} ::
+        {{ messages|join:" " }} -
     {% endif %}
-    {% block pagetitle %}{{ event.name|event_localize }}{% endblock %}
+    {% block pagetitle %}{% endblock %}
 {% endblock %}
 
 {% block custom_header %}

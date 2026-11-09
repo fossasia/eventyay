@@ -25,9 +25,10 @@
 			.filter-group(v-if="availableLanguages.length > 1")
 				.dropdown-wrapper
 					button.filter-btn(@click="toggleDropdown('language')", :class="{'active': selectedLanguages.length}")
-						svg.filter-icon(viewBox="0 0 24 24", fill="currentColor", aria-hidden="true")
-							path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
-							path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
+						svg.filter-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+							circle(cx="12", cy="12", r="10")
+							line(x1="2", y1="12", x2="22", y2="12")
+							path(d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z")
 						span.btn-label {{ t.language }}
 						span.filter-dot(v-if="selectedLanguages.length")
 					.dropdown-menu(v-if="openDropdown === 'language'")
@@ -117,8 +118,8 @@
 						| {{ getLocalizedString(session.title) }}
 						span.separator(v-if="s_idx < speaker.sessions.length - 1") ,&nbsp;
 	.speakers-details(v-else-if="filteredSpeakers.length && activeViewMode === 'details'")
-		.featured-speakers-grid(ref="featuredSpeakersGrid")
-			.featured-speaker-stack(v-for="(column, colIndex) in featuredColumns", :key="colIndex")
+		.featured-speakers-grid(ref="featuredSpeakersGrid", :style="featuredGridStyle")
+			.featured-speaker-stack(v-for="(column, columnIndex) in featuredColumns", :key="columnIndex")
 				.featured-speaker-column(v-for="speaker in column", :key="speaker.code")
 					details.featured-speaker-card
 						summary.featured-speaker-summary
@@ -134,8 +135,10 @@
 									svg(viewBox="0 0 24 24")
 										path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 								.caption.text-center
-									h4 {{ speaker.name || t.speaker_fallback }}
-									p.speaker-role-caption(v-if="speaker.speaker_role") {{ speaker.speaker_role }}
+									h4.speaker-name-caption
+										span.speaker-clamp {{ speaker.name || t.speaker_fallback }}
+									p.speaker-role-caption
+										span.speaker-clamp {{ speaker.speaker_role }}
 									markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 							.featured-speaker-social-row
 								speaker-social-links(:links="speaker.social_links", alignment="flex-start")
@@ -188,6 +191,7 @@ import ListPagination from './ListPagination.vue'
 import MarkdownContent from './MarkdownContent'
 import SpeakerSocialLinks from './SpeakerSocialLinks.vue'
 import { logOperational } from '../operationalLog.js'
+import { getLanguageNativeLabel } from '../../../i18n/index.js'
 
 function normalizeLocaleCode (code) {
 	if (!code || typeof code !== 'string') return null
@@ -405,15 +409,19 @@ export default {
 			if (this.featuredOnly) return this.resolvedTotalPages > 1
 			return !this.usesLocalSpeakers && this.resolvedTotalPages > 1
 		},
+		featuredColumnCapacity() {
+			const available = this.speakersGridWidth || (window.innerWidth >= 768 ? Math.min(window.innerWidth - 32, 1140) : 400)
+			if (available >= 960) return 4
+			if (available >= 720) return 3
+			if (available >= 480) return 2
+			return 1
+		},
+		featuredGridStyle() {
+			return {'--speaker-columns': this.featuredColumnCapacity}
+		},
 		featuredColumns() {
 			const speakers = this.filteredSpeakers
-			const available = this.speakersGridWidth || (window.innerWidth >= 768 ? Math.min(window.innerWidth - 32, 1140) : 400)
-			
-			let count = 1
-			if (available >= 960) count = 4
-			else if (available >= 720) count = 3
-			else if (available >= 480) count = 2
-
+			const count = this.featuredColumnCapacity
 			const columnCount = Math.min(count, Math.max(speakers.length, 1))
 			const columns = Array.from({length: columnCount}, () => [])
 			speakers.forEach((speaker, index) => {
@@ -641,13 +649,7 @@ export default {
 		},
 		formatLanguageLabel(code) {
 			if (!code) return ''
-			try {
-				const locale = document.documentElement.lang || 'en'
-				const displayNames = new Intl.DisplayNames([locale], { type: 'language' })
-				return displayNames.of(code) || code
-			} catch (e) {
-				return code.toString().trim().toLowerCase().replace(/_/g, '-')
-			}
+			return getLanguageNativeLabel(code) || code
 		},
 		clearAllFilters() {
 			this.searchQuery = ''
@@ -1072,19 +1074,23 @@ export default {
 			box-sizing: border-box
 
 		.featured-speaker-stack
-			display: flex
-			flex-direction: column
-			gap: 18px
 			flex: 1 1 0
 			min-width: 0
 			max-width: 400px
+			display: flex
+			flex-direction: column
+			gap: 18px
 
 		.featured-speaker-column
-			width: 100%
-			max-width: 100%
+			min-width: 0
+			display: flex
 
 		.featured-speaker-card
 			margin: 0
+			width: 100%
+			box-sizing: border-box
+			display: flex
+			flex-direction: column
 			border-radius: 6px
 			overflow: hidden
 			background: $clr-white
@@ -1109,17 +1115,28 @@ export default {
 					display: block
 				.caption
 					padding: 10px 6px 12px
-					h4
+					h4.speaker-name-caption
 						margin: 8px 0 0
 						color: $clr-primary-text-light
 						font-size: 20px
 						font-weight: 500
 						line-height: 1.3
+						height: calc(20px * 1.3)
+						min-height: calc(20px * 1.3)
+						overflow: hidden
 					.speaker-role-caption
 						margin: 3px 0 0
 						color: $clr-secondary-text-light
 						font-size: 14px
 						line-height: 1.3
+						height: calc(14px * 1.3)
+						min-height: calc(14px * 1.3)
+						overflow: hidden
+					.speaker-clamp
+						display: block
+						white-space: nowrap
+						overflow: hidden
+						text-overflow: ellipsis
 					.featured-speaker-preview-bio
 						margin: 4px 0 0
 						color: $clr-secondary-text-light
@@ -1139,6 +1156,20 @@ export default {
 									margin-top: 0
 								&:last-child
 									margin-bottom: 0
+
+		.featured-speaker-summary:hover .thumbnail .caption,
+		.featured-speaker-summary:focus-within .thumbnail .caption,
+		.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption
+			h4.speaker-name-caption,
+			.speaker-role-caption
+				height: auto
+				overflow: visible
+				background: $clr-white
+			.speaker-clamp
+				white-space: normal
+				overflow: visible
+				text-overflow: clip
+				overflow-wrap: anywhere
 
 		.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
 			display: block
@@ -1251,6 +1282,9 @@ export default {
 			cursor: pointer
 			&:hover
 				text-decoration: underline
+	&:not(.is-embedded)
+		.speakers-details .featured-speaker-stack
+			max-width: calc((100% - (18px * (var(--speaker-columns, 4) - 1))) / var(--speaker-columns, 4))
 	.speaker-card
 		display: flex
 		align-items: flex-start

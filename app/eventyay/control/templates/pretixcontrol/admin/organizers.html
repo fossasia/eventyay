@@ -64,6 +64,12 @@
                 </strong></td>
                 <td>{{ o.slug }}</td>
 			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="2" class="text-muted">
+					{% trans "No organizers found." %}
+				</td>
+			</tr>
 			{% endfor %}
 		</tbody>
 	</table>

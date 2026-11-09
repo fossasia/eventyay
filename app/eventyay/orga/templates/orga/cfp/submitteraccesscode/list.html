@@ -30,11 +30,12 @@
         </div>
     </dialog>
     <div class="table-responsive-sm">
+        {% with has_tracks=request.event.tracks.exists %}
         <table class="table table-sm table-flip table-sticky" id="access-codes">
             <thead>
                 <tr>
                     <th>{% translate "Code" %}</th>
-                    {% if request.event|get_feature_flag:"use_tracks" %}
+                    {% if has_tracks %}
                         <th>{% translate "Track" %}</th>
                     {% endif %}
                     <th>{% translate "Session type" %}</th>
@@ -46,7 +47,7 @@
                 {% for code in access_code_list %}
                     <tr>
                         <td data-label="{% translate 'Code' %}">{{ code.code|copyable }}</td>
-                        {% if request.event|get_feature_flag:"use_tracks" %}
+                        {% if has_tracks %}
                             <td data-label="{% translate 'Track' %}">
                                 {% if code.track %}
                                     <a href="{{ code.track.urls.base }}">{{ code.track.name }}</a>
@@ -88,6 +89,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endwith %}
     </div>
 
     {% include "orga/includes/pagination.html" %}

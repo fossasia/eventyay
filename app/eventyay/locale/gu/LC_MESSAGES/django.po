@@ -14707,7 +14707,7 @@ msgstr "મારા પ્રસ્તાવો"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "વક્તાનું ઈમેલ"
 
 #: eventyay/common/templates/common/base.html:189

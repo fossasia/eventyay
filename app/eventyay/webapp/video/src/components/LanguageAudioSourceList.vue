@@ -5,14 +5,27 @@
 			i.mdi.mdi-translate.header-icon(aria-hidden="true")
 			.header-text
 				h4 {{ title }}
-				p.header-subtitle {{ $t('Add multi-language audio or video interpretation channels for attendees.') }}
-		bunt-button.btn-add-entry(@click="addEntry")
-			i.mdi.mdi-plus(aria-hidden="true")
-			span {{ $t('Add another language') }}
+				p.header-subtitle {{ subtitle || $t('Add multi-language audio or video interpretation channels for attendees.') }}
+				p.header-warning(v-if="!translationModelSetup")
+					i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+					span {{ $t('No translation model configured. Please set up a model first.') }}
+		.header-actions
+			bunt-button.btn-add-entry(@click="addEntry", :disabled="disabled")
+				i.mdi.mdi-plus(aria-hidden="true")
+				span {{ $t('Add another language') }}
+			router-link.btn-settings-link(
+				v-if="settingsRoute"
+				:to="settingsRoute"
+				:title="$t('Manage Interpretation')"
+			)
+				i.mdi.mdi-cog(aria-hidden="true")
 
 	.empty-state(v-if="entries.length === 0")
 		i.mdi.mdi-translate-off(aria-hidden="true")
 		p {{ $t('No interpretation channels added yet. Click "Add another language" above to add one.') }}
+		bunt-button.btn-add-entry(v-if="!title", :disabled="disabled", @click="addEntry")
+			i.mdi.mdi-plus(aria-hidden="true")
+			span {{ $t('Add another language') }}
 
 	.entries-container(v-else)
 		.language-url-entry(v-for="(entry, index) in entries" :key="index")
@@ -23,6 +36,7 @@
 				button.btn-delete-entry(
 					type="button"
 					:title="$t('Remove Channel')"
+					:disabled="disabled"
 					@click="removeEntry(index)"
 				)
 					i.mdi.mdi-trash-can-outline(aria-hidden="true")
@@ -34,20 +48,21 @@
 						span.required-star *
 					.custom-select-wrapper
 						i.mdi.mdi-earth.select-icon(aria-hidden="true")
-						select.custom-select(v-model="entry.language")
+						select.custom-select(v-model="entry.language", :disabled="disabled")
 							option(value="" disabled) {{ $t('Select language') }}
 							option(v-for="opt in languageOptions" :key="opt.id" :value="opt.id") {{ opt.label }}
 						i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
 
 				.field-group.source-field
 					label.field-label
-						| {{ $t('Audio / Video Source (YouTube or WHEP)') }}
+						| {{ $t('Audio / Video Source (YouTube, WHEP, or WHIP)') }}
 						span.required-star *
 					.input-wrapper
 						input.text-input(
 							type="text"
 							v-model="entry.url"
-							:placeholder="$t('YouTube URL/ID or WHEP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
+							:placeholder="$t('YouTube URL/ID, WHEP, or WHIP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
+							:disabled="disabled"
 							@blur="normalizeEntry(entry)"
 							@input="syncLegacyField(entry)"
 						)
@@ -56,9 +71,15 @@
 				bunt-switch(
 					name="use_video",
 					v-model="entry.use_video",
-					:label="$t('Use video from this interpretation channel')",
+					:disabled="disabled",
+					:label="$t('Use audio and captions from this interpretation channel')",
 					:hint="$t('If enabled, attendees see both video and audio from this channel. If disabled, attendees hear the audio while watching the main video.')"
 				)
+
+		.list-actions-bar(v-if="!title")
+			bunt-button.btn-add-entry(:disabled="disabled", @click="addEntry")
+				i.mdi.mdi-plus(aria-hidden="true")
+				span {{ $t('Add another language') }}
 </template>
 
 <script>
@@ -75,6 +96,26 @@ export default {
 		title: {
 			type: String,
 			default: '',
+		},
+		subtitle: {
+			type: String,
+			default: '',
+		},
+		roomId: {
+			type: [String, Number],
+			default: null,
+		},
+		settingsRoute: {
+			type: Object,
+			default: null,
+		},
+		translationModelSetup: {
+			type: Boolean,
+			default: true,
+		},
+		disabled: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {
@@ -145,6 +186,18 @@ export default {
 					margin: 2px 0 0 0
 					font-size: 13px
 					color: $clr-secondary-text-light
+				.header-warning
+					display: flex
+					align-items: center
+					gap: 4px
+					margin: 4px 0 0 0
+					font-size: 13px
+					color: $clr-danger
+		.header-actions
+			display: flex
+			align-items: center
+			gap: 12px
+
 		.btn-add-entry
 			themed-button-secondary()
 			font-size: 13px
@@ -154,6 +207,23 @@ export default {
 			display: inline-flex
 			align-items: center
 			gap: 6px
+
+		.btn-settings-link
+			display: inline-flex
+			align-items: center
+			justify-content: center
+			width: 38px
+			height: 38px
+			border-radius: 6px
+			background-color: $clr-grey-100
+			color: $clr-grey-700
+			text-decoration: none
+			transition: background-color 0.2s ease, color 0.2s ease
+			&:hover
+				background-color: $clr-grey-200
+				color: var(--clr-primary)
+			i
+				font-size: 20px
 
 	.empty-state
 		display: flex
@@ -223,6 +293,12 @@ export default {
 				&:hover
 					color: $clr-danger
 					background-color: rgba($clr-danger, 0.08)
+				&:disabled
+					opacity: 0.5
+					cursor: not-allowed
+					&:hover
+						color: $clr-grey-500
+						background-color: transparent
 
 		.entry-fields-grid
 			display: grid

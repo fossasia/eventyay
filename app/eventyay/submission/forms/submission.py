@@ -121,7 +121,7 @@ class InfoForm(
     def _set_track(self, instance=None):
         if 'track' in self.fields:
             if (
-                not self.event.get_feature_flag('use_tracks')
+                not self.event.tracks.exists()
                 or instance
                 and instance.state != SubmissionStates.SUBMITTED
             ):
@@ -236,7 +236,7 @@ class InfoForm(
         if image and 'image' in self.files:
             try:
                 result = optimize_uploaded_image(image, 'image', None)
-                base_name, _ = os.path.splitext(image.name)
+                base_name = os.path.splitext(image.name)[0]
                 image = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),
@@ -249,6 +249,9 @@ class InfoForm(
 
     def clean(self):
         cleaned_data = super().clean()
+
+        if 'submission_type' in self.fields and not cleaned_data.get('submission_type') and not self.has_error('submission_type'):
+            self.add_error('submission_type', forms.ValidationError(_('This field is required.'), code='required_step_field'))
 
         if self.not_strict and not self.draft_save:
             self._validate_required_step_fields(cleaned_data)

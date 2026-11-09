@@ -93,6 +93,8 @@ hours                          In case of the waiting list, the number of hours 
 product                        In case of the waiting list, the product that has become available
 voucher_list                   When sending out vouchers in bulk, this will be replaced with the list of
                                vouchers
+voucher_url                    When sending out vouchers in bulk, this will be replaced with the URL
+                               that applies each voucher
 ============================== ===============================================================================
 
 The different e-mails are explained in the following:

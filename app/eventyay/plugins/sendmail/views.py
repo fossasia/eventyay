@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 
 import nh3
 from django.conf import settings
@@ -9,27 +10,32 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.html import escape
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from django.views.generic import CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View
 
+from eventyay.base.entitlements import check_entitlement, record_usage
 from eventyay.base.i18n import language
 from i18nfield.strings import LazyI18nString
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.event import Event
+from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.orders import OrderPosition
-from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.mail import expand_email_variable_chips, mail
 from eventyay.base.templatetags.rich_text import (
+    TEAM_EMAIL_PREVIEW_CONTEXT,
     build_email_preview_context,
     compile_email_body,
 )
 from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin, event_permission_required
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
-from eventyay.helpers.timezone import format_scheduled_datetime
+from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
+from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import (
     CopyDraftMixin,
@@ -50,6 +56,17 @@ from .forms import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def preview_validation_error(form) -> JsonResponse:
+    # mail-preview.js inserts these as HTML, and messages can echo user input such as an invalid placeholder.
+    errors = {}
+    for name, field_errors in form.errors.items():
+        field = form.fields.get(name)
+        label = field.label if field and field.label else name
+        errors[str(escape(label))] = [str(escape(error)) for error in field_errors]
+    return JsonResponse({'success': False, 'error': True, 'errors': errors}, status=400)
+
 
 @event_permission_required('can_change_orders')
 def attendees_select2(request, **kwargs):
@@ -217,7 +234,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         return super().form_invalid(form)
 
     def form_valid(self, form):
@@ -298,7 +315,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                     subject = nh3.clean(subject_val.localize(l), tags=set()) if subject_val else ''
                     if not subject.strip():
                         subject = str(_('Example Subject for {event_name}'))
-                    preview_subject = nh3.clean(subject.format_map(context_dict), tags=set())
+                    preview_subject = nh3.clean(escape_stray_braces(subject).format_map(context_dict), tags=set())
                     text_val = form.cleaned_data.get('text')
                     message = text_val.localize(l) if text_val else ''
                     if not str(message).strip():
@@ -310,7 +327,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                             )
                         )
                     message_preview = expand_email_variable_chips(
-                        message.format_map(context_dict), dict(context_dict)
+                        escape_stray_braces(message).format_map(context_dict), dict(context_dict)
                     )
                     preview_text = compile_email_body(message_preview)
 
@@ -333,6 +350,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
         scheduled_at = form.cleaned_data.get('scheduled_at')
         draft_id = self.request.POST.get('draft_id') or getattr(self, 'draft_id', None)
 
+        is_existing_draft = False
         qm = None
         if draft_id:
             qm = EmailQueue.objects.filter(
@@ -341,6 +359,8 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 composing_for=ComposingFor.ATTENDEES,
                 is_draft=True,
             ).first()
+            if qm:
+                is_existing_draft = True
 
         subject_val = form.cleaned_data['subject'].data if hasattr(form.cleaned_data['subject'], 'data') else form.cleaned_data['subject']
         message_val = form.cleaned_data['text'].data if hasattr(form.cleaned_data['text'], 'data') else form.cleaned_data['text']
@@ -354,7 +374,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             qm.reply_to = form.cleaned_data.get('reply_to') or self._get_reply_to_for_bulk_email() or ''
             qm.bcc = form.cleaned_data.get('bcc') or self.request.event.settings.get('mail_bcc') or ''
             qm.scheduled_at = scheduled_at
-            qm.is_draft = is_draft
+            qm.is_draft = True
             qm.save()
 
             qmf, created = EmailQueueFilter.objects.get_or_create(mail=qm)
@@ -384,7 +404,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 bcc=form.cleaned_data.get('bcc') or self.request.event.settings.get('mail_bcc') or '',
                 composing_for=ComposingFor.ATTENDEES,
                 scheduled_at=scheduled_at,
-                is_draft=is_draft,
+                is_draft=True,
             )
 
             EmailQueueFilter.objects.create(
@@ -406,12 +426,13 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
 
         qm.populate_to_users()
 
-        if not is_draft and not qm.recipients.filter(email__isnull=False).exclude(email='').exists():
-            if not draft_id:
+        unique_recipients = qm.get_recipient_emails()
+        if not is_draft and not unique_recipients:
+            if not is_existing_draft:
                 qm.delete()
             else:
                 qm.is_draft = True
-                qm.save()
+                qm.save(update_fields=['is_draft'])
             form.add_error(None, _('There are no valid email addresses for the selected recipients.'))
             messages.error(
                 self.request,
@@ -433,8 +454,50 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 organizer=self.request.event.organizer.slug,
             )
 
+        recipients_count = len(unique_recipients)
+
+        with transaction.atomic():
+            Organizer.objects.select_for_update().filter(pk=self.request.event.organizer_id).first()
+
+            decision = check_entitlement(
+                self.request.event.organizer,
+                'email.bulk.monthly',
+                event=self.request.event,
+                quantity=recipients_count,
+            )
+            if not decision.allowed:
+                if not is_existing_draft:
+                    qm.delete()
+                else:
+                    qm.is_draft = True
+                    qm.save(update_fields=['is_draft'])
+                error_msg = decision.message or _(
+                    'You have reached the limit for sending bulk emails on your plan.'
+                )
+                form.add_error(None, error_msg)
+                messages.error(self.request, error_msg)
+                return self.form_invalid(form)
+
+            qm.is_draft = False
+            qm.save(update_fields=['is_draft'])
+            log_event('mail', 'mail.enqueue', OUTCOME_SUCCESS, event_id=getattr(qm.event, 'pk', None), object_id=qm.pk)
+            record_usage(
+                self.request.event.organizer,
+                'email.bulk.monthly',
+                quantity=recipients_count,
+                unit='emails',
+                source_type='ticket_bulk_email',
+                source_id=str(qm.pk),
+                idempotency_key=f'ticket_bulk_mail_{qm.pk}',
+                event=self.request.event,
+            )
+
+            if scheduled_at:
+                transaction.on_commit(
+                    lambda: send_queued_mail.apply_async(args=[self.request.event.pk, qm.pk], eta=scheduled_at)
+                )
+
         if scheduled_at:
-            send_queued_mail.apply_async(args=[self.request.event.pk, qm.pk], eta=scheduled_at)
             self.request.event.log_action(
                 'eventyay.sendmail.scheduled',
                 user=self.request.user,
@@ -444,7 +507,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
                     datetime=format_scheduled_datetime(self.request.event, scheduled_at),
-                    timezone=self.request.event.timezone,
+                    timezone=format_timezone_name(self.request.event.timezone),
                 )
             )
         else:
@@ -901,7 +964,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -944,7 +1007,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                         subject_text = str(_('Example Subject for {event_name}'))
                     try:
                         subject_preview = nh3.clean(
-                            subject_text.format_map(context_dict),
+                            escape_stray_braces(subject_text).format_map(context_dict),
                             tags=set(),
                         )
                     except KeyError as e:
@@ -956,7 +1019,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                         message_text = str(sample_body)
                     try:
                         message_preview = expand_email_variable_chips(
-                            message_text.format_map(context_dict),
+                            escape_stray_braces(message_text).format_map(context_dict),
                             dict(context_dict),
                         )
                     except KeyError as e:
@@ -1213,6 +1276,11 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
         ctx['draft_id'] = getattr(self, 'draft_id', self.request.POST.get('draft_id', None))
         ctx['recipient_count'] = getattr(self, 'recipient_count', 0)
         ctx['is_draft'] = bool(ctx['draft_id'])
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
+        )
+        ctx['email_preview_url'] = f'{preview_url}?{urlencode({"context": TEAM_EMAIL_PREVIEW_CONTEXT})}'
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -1229,7 +1297,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
 
     def form_invalid(self, form):
         if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': True}, status=400)
+            return preview_validation_error(form)
         messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
@@ -1293,7 +1361,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                     subject_text = str(_('Example Subject for {event_name}'))
                 try:
                     subject_preview = nh3.clean(
-                        subject_text.format_map(context_dict),
+                        escape_stray_braces(subject_text).format_map(context_dict),
                         tags=set(),
                     )
                 except KeyError as e:
@@ -1311,7 +1379,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                     )
                 try:
                     message_preview = expand_email_variable_chips(
-                        message_text.format_map(context_dict),
+                        escape_stray_braces(message_text).format_map(context_dict),
                         dict(context_dict),
                     )
                 except KeyError as e:
@@ -1349,9 +1417,17 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
         recipients_list = []
         try:
             preview_recipients = form.get_recipient_preview(user=user)
+            seen_emails = set()
             for r in preview_recipients:
+                raw_email = r.get('email')
+                if not raw_email:
+                    continue
+                norm_email = raw_email.strip().lower()
+                if not norm_email or norm_email in seen_emails:
+                    continue
+                seen_emails.add(norm_email)
                 recipients_list.append({
-                    "email": r['email'],
+                    "email": norm_email,
                     "team": None,
                     "orders": [],
                     "positions": [],
@@ -1365,12 +1441,14 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
             return self.form_invalid(form)
 
         if not recipients_list and not is_draft:
+            form.add_error(None, _('There are no valid recipients for the selected teams.'))
             messages.error(self.request, _('There are no valid recipients for the selected teams.'))
             return self.form_invalid(form)
 
         scheduled_at = form.cleaned_data.get('scheduled_at')
         draft_id = self.request.POST.get('draft_id') or getattr(self, 'draft_id', None)
 
+        is_existing_draft = False
         mail_instance = None
         if draft_id:
             mail_instance = EmailQueue.objects.filter(
@@ -1379,6 +1457,8 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 composing_for=ComposingFor.TEAMS,
                 is_draft=True,
             ).first()
+            if mail_instance:
+                is_existing_draft = True
 
         subject_val = subject.data if hasattr(subject, 'data') else subject
         message_val = message.data if hasattr(message, 'data') else message
@@ -1395,7 +1475,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
             mail_instance.reply_to = reply_to_val
             mail_instance.bcc = bcc_val
             mail_instance.scheduled_at = scheduled_at
-            mail_instance.is_draft = is_draft
+            mail_instance.is_draft = True
             mail_instance.save()
 
             qmf, created = EmailQueueFilter.objects.get_or_create(mail=mail_instance)
@@ -1418,7 +1498,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 bcc=bcc_val,
                 attachments=attachment_ids,
                 scheduled_at=scheduled_at,
-                is_draft=is_draft,
+                is_draft=True,
             )
 
             EmailQueueFilter.objects.create(
@@ -1452,6 +1532,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 error=rec["error"]
             )
             for rec in recipients_list
+            if rec.get("email") and rec["email"].strip()
         ]
         if recipient_objs:
             EmailQueueToUser.objects.bulk_create(recipient_objs)
@@ -1470,8 +1551,61 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 organizer=event.organizer.slug,
             )
 
+        unique_recipients = mail_instance.get_recipient_emails()
+        if not is_draft and not unique_recipients:
+            if not is_existing_draft:
+                mail_instance.delete()
+            else:
+                mail_instance.is_draft = True
+                mail_instance.save(update_fields=['is_draft'])
+            form.add_error(None, _('There are no valid recipients for the selected teams.'))
+            messages.error(self.request, _('There are no valid recipients for the selected teams.'))
+            return self.form_invalid(form)
+
+        recipients_count = len(unique_recipients)
+
+        with transaction.atomic():
+            Organizer.objects.select_for_update().filter(pk=event.organizer_id).first()
+
+            decision = check_entitlement(
+                event.organizer,
+                'email.bulk.monthly',
+                event=event,
+                quantity=recipients_count,
+            )
+            if not decision.allowed:
+                if not is_existing_draft:
+                    mail_instance.delete()
+                else:
+                    mail_instance.is_draft = True
+                    mail_instance.save(update_fields=['is_draft'])
+                error_msg = decision.message or _(
+                    'You have reached the limit for sending bulk emails on your plan.'
+                )
+                form.add_error(None, error_msg)
+                messages.error(self.request, error_msg)
+                return self.form_invalid(form)
+
+            mail_instance.is_draft = False
+            mail_instance.save(update_fields=['is_draft'])
+            log_event('mail', 'mail.enqueue', OUTCOME_SUCCESS, event_id=getattr(mail_instance.event, 'pk', None), object_id=mail_instance.pk)
+            record_usage(
+                event.organizer,
+                'email.bulk.monthly',
+                quantity=recipients_count,
+                unit='emails',
+                source_type='ticket_bulk_email',
+                source_id=str(mail_instance.pk),
+                idempotency_key=f'ticket_bulk_mail_{mail_instance.pk}',
+                event=event,
+            )
+
+            if scheduled_at:
+                transaction.on_commit(
+                    lambda: send_queued_mail.apply_async(args=[event.pk, mail_instance.pk], eta=scheduled_at)
+                )
+
         if scheduled_at:
-            send_queued_mail.apply_async(args=[event.pk, mail_instance.pk], eta=scheduled_at)
             event.log_action(
                 'eventyay.sendmail.scheduled',
                 user=user,
@@ -1481,7 +1615,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
                     datetime=format_scheduled_datetime(event, scheduled_at),
-                    timezone=event.timezone,
+                    timezone=format_timezone_name(event.timezone),
                 )
             )
         else:

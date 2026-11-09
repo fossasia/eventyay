@@ -15171,7 +15171,7 @@ msgstr "Мои предложения"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "Электронная почта спикера"
 
 #: eventyay/common/templates/common/base.html:189

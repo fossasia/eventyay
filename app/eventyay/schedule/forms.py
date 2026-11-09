@@ -12,6 +12,7 @@ from eventyay.common.forms.mixins import ReadOnlyFlag
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlTimeInput
 from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.base.models.room import rooms_for_talk_assignment, validate_talk_slot_room
+from eventyay.helpers.timezone import format_timezone_name
 
 
 class AvailabilitiesFormMixin(forms.Form):
@@ -74,7 +75,7 @@ class AvailabilitiesFormMixin(forms.Form):
         if self.event and 'availabilities' in self.fields:
             self.fields['availabilities'].help_text += ' ' + str(
                 _('Please note that all times are in the event timezone, {tz}.')
-            ).format(tz=self.event.timezone)
+            ).format(tz=format_timezone_name(self.event.timezone))
             if isinstance(self.instance, Room):
                 self.fields['availabilities'].help_text += ' ' + str(
                     _(

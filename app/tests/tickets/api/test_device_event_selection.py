@@ -21,6 +21,7 @@ def test_choose_between_events(device_client, device):
             name='Event',
             slug='e1',
             live=True,
+            tickets_published=True,
             date_from=datetime(2020, 1, 10, 14, 0, tzinfo=tz),
             date_to=datetime(2020, 1, 10, 15, 0, tzinfo=tz),
         )
@@ -29,6 +30,7 @@ def test_choose_between_events(device_client, device):
             name='Event',
             slug='e2',
             live=True,
+            tickets_published=True,
             date_from=datetime(2020, 1, 10, 16, 0, tzinfo=tz),
             date_to=datetime(2020, 1, 10, 17, 0, tzinfo=tz),
         )
@@ -39,6 +41,7 @@ def test_choose_between_events(device_client, device):
             name='Event',
             slug='tomorrow',
             live=True,
+            tickets_published=True,
             date_from=datetime(2020, 1, 11, 15, 0, tzinfo=tz),
             date_to=datetime(2020, 1, 11, 16, 0, tzinfo=tz),
         )
@@ -109,6 +112,7 @@ def test_choose_between_subevents(device_client, device):
             name='Event',
             slug='e1',
             live=True,
+            tickets_published=True,
             date_from=datetime(2020, 1, 10, 14, 0, tzinfo=tz),
             has_subevents=True,
         )
@@ -210,6 +214,7 @@ def test_require_gate(device_client, device):
             name='Event',
             slug='e1',
             live=True,
+            tickets_published=True,
             date_from=datetime(2020, 1, 10, 14, 0, tzinfo=tz),
             has_subevents=True,
         )

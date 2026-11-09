@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
@@ -738,52 +737,6 @@ class GlobalTicketingSettingsForm(SettingsForm):
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
-                # Stripe for ticket payments
-                (
-                    'payment_stripe_connect_client_id',
-                    forms.CharField(
-                        label=_('Client ID'),
-                        required=False,
-                        help_text=_('Stripe Connect client ID for ticket payments via the Stripe plugin.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_connect_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_live_'),),
-                        help_text=_('Live publishable key for ticket payments via the Stripe plugin.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_connect_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Live)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
-                        help_text=_('Live secret key for ticket payments via the Stripe plugin.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_connect_test_publishable_key',
-                    forms.CharField(
-                        label=_('Publishable key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator('pk_test_'),),
-                        help_text=_('Test publishable key for ticket payments via the Stripe plugin.'),
-                    ),
-                ),
-                (
-                    'payment_stripe_connect_test_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Secret key (Test)'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
-                        help_text=_('Test secret key for ticket payments via the Stripe plugin.'),
-                    ),
-                ),
-
                 # PayPal
                 (
                     'payment_paypal_connect_client_id',
@@ -835,13 +788,6 @@ class GlobalTicketingSettingsForm(SettingsForm):
 
         responses = register_global_settings.send(self)
         payment_gateway_fields = [
-            # Stripe for Ticket Payments
-            'payment_stripe_connect_client_id',
-            'payment_stripe_connect_publishable_key',
-            'payment_stripe_connect_secret_key',
-            'payment_stripe_connect_test_publishable_key',
-            'payment_stripe_connect_test_secret_key',
-
             # PayPal
             'payment_paypal_connect_client_id',
             'payment_paypal_connect_secret_key',
