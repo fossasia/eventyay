@@ -29,7 +29,7 @@
 			)
 				.stream-card-header
 					.header-left
-						span.drag-handle(v-if="streams.length > 1", title="Drag to reorder") :::
+						span.drag-handle(v-if="streams.length > 1", :title="$t('Drag to reorder')") :::
 						span.stream-title {{ $t('Stream') }} {{ index + 1 }}
 					button.btn-delete-stream(
 						v-if="streams.length > 1 || isScheduledMode"
