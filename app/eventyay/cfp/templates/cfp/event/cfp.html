@@ -7,6 +7,7 @@
 {% load rich_text %}
 {% load rules %}
 {% load safelink %}
+{% load timezone %}
 
 {% load presale_locale %}
 {% block header_tabs %}
@@ -28,11 +29,11 @@
             <p>
                 <strong>
                     {% if cfp.is_open %}
-                        {% blocktranslate with deadline=cfp.max_deadline|date:"SHORT_DATETIME_FORMAT" timezone=request.timezone until_string=cfp.max_deadline|timeuntil trimmed %}
+                        {% blocktranslate with deadline=cfp.max_deadline|date:"SHORT_DATETIME_FORMAT" timezone=request.timezone|timezone_display until_string=cfp.max_deadline|timeuntil trimmed %}
                             You can enter proposals until {{ deadline }} ({{ timezone }}), {{ until_string }} from now.
                         {% endblocktranslate %}
                     {% else %}
-                        {% blocktranslate with deadline=cfp.max_deadline|date:"SHORT_DATETIME_FORMAT" timezone=request.timezone trimmed %}
+                        {% blocktranslate with deadline=cfp.max_deadline|date:"SHORT_DATETIME_FORMAT" timezone=request.timezone|timezone_display trimmed %}
                             This Call for Papers closed on {{ deadline }} ({{ timezone }}).
                         {% endblocktranslate %}
                     {% endif %}

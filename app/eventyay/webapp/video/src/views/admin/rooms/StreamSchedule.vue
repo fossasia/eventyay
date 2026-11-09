@@ -7,8 +7,10 @@
 	template(v-else)
 		.interpretation-plugin-language-streams(v-if="roomId && showPluginLanguageStreams")
 			LanguageAudioSourceList(
-				:title="$t('Interpretation source')"
+				:title="$t('Interpretation channels')"
 				:entries="pluginLanguageStreamEntries"
+				:roomId="roomId"
+				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
 			)
 			p.plugin-language-streams-hint {{ $t('Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.') }}
 		.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules && streamSchedules.length > 0")
@@ -16,7 +18,7 @@
 				.info
 					.title {{ schedule.title || $t('Untitled Stream') }}
 					.url {{ schedule.url }}
-					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezone }})
+					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezoneLabel }})
 					.type {{ schedule.stream_type }}
 				.actions
 					bunt-icon-button(@click="editSchedule(schedule)") pencil
@@ -33,16 +35,24 @@
 					bunt-input(name="title", v-model="formData.title", :label="$t('Title (optional)')", :placeholder="$t('e.g., Day 1 Stream, Keynotes')")
 					bunt-input(name="url", v-model="formData.url", :label="$t('Stream URL')", :validation="v$.formData.url", required, :placeholder="$t('https://youtube.com/watch?v=...')")
 					.datetime-field
-						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezone }})
+						label.datetime-label {{ $t('Start Time') }} ({{ eventTimezoneLabel }})
 						input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
 						.error-message(v-if="v$.formData.start_time.$error") {{ $t('Start time is required') }}
 					.datetime-field
-						label.datetime-label {{ $t('End Time') }} ({{ eventTimezone }})
+						label.datetime-label {{ $t('End Time') }} ({{ eventTimezoneLabel }})
 						input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
 						.error-message(v-if="v$.formData.end_time.$error") {{ $t('End time is required') }}
 					.timezone-hint
-						i {{ $t('All times in') }} {{ eventTimezone }}
+						i {{ $t('All times in') }} {{ eventTimezoneLabel }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", :label="$t('Stream Type')", :options="streamTypeOptions", option-value="id", option-label="label", :validation="v$.formData.stream_type")
+					.stream-schedule-interpretation-channels(v-if="showPluginLanguageStreams")
+						LanguageAudioSourceList(
+							:title="$t('Interpretation channels for this stream')"
+							:subtitle="$t('Add multi-language audio or video interpretation channels specifically for this stream.')"
+							:entries="formData.config.language_streams"
+							:roomId="roomId"
+						)
+						p.schedule-interpretation-hint {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -59,6 +69,7 @@ import { readApiErrorMessage } from 'lib/apiErrorMessage';
 import Prompt from 'components/Prompt';
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
+import { cloneLanguageStreamEntries, serializeLanguageStreamEntry } from 'lib/interpretation-language-streams';
 
 export default {
 	name: 'StreamSchedule',
@@ -101,7 +112,9 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: {},
+				config: {
+					language_streams: [],
+				},
 			},
 		};
 	},
@@ -121,6 +134,9 @@ export default {
 		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC';
+		},
+		eventTimezoneLabel() {
+			return this.eventTimezone.replace(/_/g, ' ');
 		},
 		plainStartTime: {
 			get() {
@@ -215,6 +231,7 @@ export default {
 				stream_type: this.formData.stream_type,
 				config: {
 					...this.formData.config,
+					language_streams: (this.formData.config?.language_streams || []).map(serializeLanguageStreamEntry),
 				},
 			};
 		},
@@ -226,6 +243,7 @@ export default {
 			try {
 				const draft = JSON.parse(savedDraft);
 				const tz = this.eventTimezone || 'UTC';
+				const rawLanguageStreams = draft.config?.language_streams || draft.config?.languageUrls || [];
 				return {
 					title: draft.title || '',
 					url: draft.url || '',
@@ -234,6 +252,7 @@ export default {
 					stream_type: draft.stream_type || 'youtube',
 					config: {
 						...(draft.config || {}),
+						language_streams: cloneLanguageStreamEntries(rawLanguageStreams),
 					},
 				};
 			} catch (error) {
@@ -311,6 +330,8 @@ export default {
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
 			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
+			const rawLanguageStreams = config.language_streams || config.languageUrls || [];
+			config.language_streams = cloneLanguageStreamEntries(rawLanguageStreams);
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.stream_type === 'youtube' ? toYoutubeWatchUrl(schedule.url) : schedule.url,
@@ -329,7 +350,9 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: {},
+				config: {
+					language_streams: [],
+				},
 			};
 			this.saveError = null;
 			this.v$.$reset();
@@ -603,6 +626,14 @@ export default {
 			color: $clr-grey-600
 			i
 				font-style: italic
+		.stream-schedule-interpretation-channels
+			margin-top: 16px
+			padding-top: 16px
+			border-top: border-separator()
+			.schedule-interpretation-hint
+				margin-top: 8px
+				font-size: 12px
+				color: $clr-grey-600
 		.form-error
 			color: $clr-danger
 			font-size: 14px

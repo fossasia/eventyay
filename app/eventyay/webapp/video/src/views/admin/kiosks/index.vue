@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-admin-kiosk
 	.ui-page-header
-		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h2 {{ $t('Kiosks') }}
 		.actions
 			bunt-link-button.btn-create(:to="{name: 'admin:kiosks:new'}") {{ $t('Create a new kiosk') }}
