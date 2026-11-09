@@ -511,15 +511,20 @@ def get_dashboard_kpi_context(request, subevent, can_view_orders, can_change_eve
     }
 
 
-def get_dashboard_sales_context(request, subevent, can_view_orders):
+def get_dashboard_sales_context(request, subevent, can_view_orders, can_change_items):
     """Build the "Sales and capacity" table data for the tickets dashboard.
 
     One row per quota (quotas carry the capacity and availability), showing the
     quota's products, ordered/paid/pending counts, remaining availability,
-    capacity and a status. All numbers come from a single ``QuotaAvailability``
-    computation (``full_results=True``) so we reuse the canonical quota maths
-    instead of recomputing it. ``full_results`` cannot be combined with
-    ``allow_cache``, so this computes fresh.
+    capacity and a status. Each row's numbers come from a single
+    ``QuotaAvailability`` computation (``full_results=True``) so we reuse the
+    canonical quota maths instead of recomputing it. ``full_results`` cannot be
+    combined with ``allow_cache``, so this computes fresh.
+
+    The totals row is a separate ``OrderPosition`` count over the positions the
+    rows cover, each counted once even when it falls in several quotas.
+    Capacity and remaining have no total, since overlapping quotas cannot be
+    added up.
 
     Status maps the ``Quota.AVAILABILITY_*`` result (and ``closed``) the same way
     as ``pretixcontrol/items/fragment_quota_availability.html``:
@@ -530,6 +535,9 @@ def get_dashboard_sales_context(request, subevent, can_view_orders):
     * AVAILABILITY_ORDERED -> sold out, pending orders (orange)
     * AVAILABILITY_GONE -> sold out (red)
 
+    Quota detail links are only set when the user may change items, which the
+    quota detail view requires; otherwise the template renders plain text.
+
     Returns ``None`` when the user may not view orders (so the template skips the
     section) and sets ``has_quotas`` False for a meaningful empty state.
     """
@@ -537,19 +545,18 @@ def get_dashboard_sales_context(request, subevent, can_view_orders):
     if not can_view_orders:
         return None
 
-    def orders_url(product_id=None, status=None):
+    def orders_url(product_id, status, subevent_id=None):
+        """Order list URL filtered to one product, status and (optional) date."""
         url = reverse(
             'control:event.orders',
             kwargs={'organizer': event.organizer.slug, 'event': event.slug},
         )
         params = []
-        if subevent:
-            params.append(f'subevent={subevent.pk}')
-        if product_id is not None:
-            params.append(f'product={product_id}')
-        if status is not None:
-            params.append(f'status={status}')
-        return url + ('?' + '&'.join(params) if params else '')
+        if subevent_id is not None:
+            params.append(f'subevent={subevent_id}')
+        params.append(f'product={product_id}')
+        params.append(f'status={status}')
+        return url + '?' + '&'.join(params)
 
     with scope(event=event):
         # Quotas are per-date; only filter by the selected date when one is
@@ -579,13 +586,15 @@ def get_dashboard_sales_context(request, subevent, can_view_orders):
             qa.compute()
 
         rows = []
-        # Collect the union of products/variations across the shown quotas so
-        # the totals can be computed over DISTINCT order positions. Summing the
-        # per-quota rows would double-count any product that is in more than one
-        # quota, and capacity/remaining cannot be added meaningfully across
-        # overlapping quotas at all.
-        all_product_ids = set()
-        all_variation_ids = set()
+        # Totals cover exactly the positions the rows count, each once. A
+        # position belongs to a quota when its date matches the quota's date
+        # (no date for an event-level quota) and its product or variation is
+        # in the quota -- the same rule QuotaAvailability._compute_orders uses.
+        # Building the filter per quota keeps each quota's date scope, so a
+        # product sold on a date without a matching quota is not counted.
+        # Summing the rows instead would double-count products in several
+        # quotas.
+        totals_scope = Q()
 
         for q in quotas:
             paid = qa.count_paid_orders.get(q, 0)
@@ -606,28 +615,42 @@ def get_dashboard_sales_context(request, subevent, can_view_orders):
 
             # Single-product quotas can link counts to the filtered order list;
             # otherwise point at the quota detail, which breaks down its orders.
-            quota_url = reverse(
-                'control:event.products.quotas.show',
-                kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'quota': q.pk},
+            # The quota detail view requires can_change_items, so without it
+            # there is no link (the template then shows plain text).
+            quota_url = (
+                reverse(
+                    'control:event.products.quotas.show',
+                    kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'quota': q.pk},
+                )
+                if can_change_items
+                else None
             )
             single_product = (
                 q.prefetched_products[0]
                 if len(q.prefetched_products) == 1 and not q.prefetched_variations
                 else None
             )
-            # An event-level quota (subevent=None) counts only null-subevent
-            # positions. When a specific date is selected, the order list can't
-            # express "null-subevent only", so its counts would not match the
-            # row -- fall back to the quota detail for that case.
-            event_level_with_date = subevent and q.subevent_id is None
-            if single_product is not None and not event_level_with_date:
-                ordered_url = orders_url(product_id=single_product.pk)
-                paid_url = orders_url(product_id=single_product.pk, status='p')
-                pending_url = orders_url(product_id=single_product.pk, status='n')
+            # An event-level quota in a series (subevent=None) counts only
+            # positions without a date, which the order list cannot filter
+            # for, so its counts would not match -- use the quota detail.
+            event_level_in_series = event.has_subevents and q.subevent_id is None
+            if single_product is not None and not event_level_in_series:
+                # Scope to the quota's own date so the list matches the row,
+                # even when no dashboard date is selected. "Ordered" is paid
+                # or pending, the order list's 'np' filter.
+                pid, sid = single_product.pk, q.subevent_id
+                ordered_url = orders_url(pid, 'np', sid)
+                paid_url = orders_url(pid, 'p', sid)
+                pending_url = orders_url(pid, 'n', sid)
             else:
                 ordered_url = paid_url = pending_url = quota_url
 
-            product_names = [str(p) for p in q.prefetched_products if not p.variation_count]
+            # List a product by name unless this quota links specific
+            # variations of it, in which case list those variations instead.
+            products_with_linked_vars = {v.product_id for v in q.prefetched_variations}
+            product_names = [
+                str(p) for p in q.prefetched_products if not p.variation_count or p.pk not in products_with_linked_vars
+            ]
             product_names += [f'{v.product} – {v}' for v in q.prefetched_variations]
 
             rows.append(
@@ -649,27 +672,28 @@ def get_dashboard_sales_context(request, subevent, can_view_orders):
                 }
             )
 
-            all_product_ids.update(p.pk for p in q.prefetched_products)
-            all_variation_ids.update(v.pk for v in q.prefetched_variations)
+            product_ids = [p.pk for p in q.prefetched_products]
+            variation_ids = [v.pk for v in q.prefetched_variations]
+            if product_ids or variation_ids:
+                items = Q(variation_id__isnull=True, product_id__in=product_ids) | Q(variation_id__in=variation_ids)
+                date = Q(subevent_id=q.subevent_id) if q.subevent_id else Q(subevent__isnull=True)
+                totals_scope |= date & items
 
-        # Totals over DISTINCT positions (a product may be in several quotas).
         # Capacity and remaining are intentionally omitted ('n/a'): they cannot
         # be summed across overlapping quotas without overstating the event.
         total_paid = total_pending = 0
-        if all_product_ids or all_variation_ids:
-            positions = OrderPosition.objects.filter(order__event=event)
-            if subevent:
-                positions = positions.filter(Q(subevent=subevent) | Q(subevent__isnull=True))
-            positions = positions.filter(
-                # Match whole-product positions (no variation) for products in a
-                # quota, OR specific variations. This mirrors
-                # QuotaAvailability._compute_orders and avoids counting
-                # out-of-quota variations of a product that a quota restricts.
-                Q(Q(variation_id__isnull=True) & Q(product_id__in=all_product_ids))
-                | Q(variation_id__in=all_variation_ids)
+        if totals_scope:
+            # canceled=False is explicit (OrderPosition.objects already excludes
+            # them) so a canceled ticket in a paid order is never counted.
+            totals = (
+                OrderPosition.objects.filter(order__event=event, canceled=False)
+                .filter(totals_scope)
+                .aggregate(
+                    paid=Count('pk', filter=Q(order__status=Order.STATUS_PAID)),
+                    pending=Count('pk', filter=Q(order__status=Order.STATUS_PENDING)),
+                )
             )
-            total_paid = positions.filter(order__status=Order.STATUS_PAID).count()
-            total_pending = positions.filter(order__status=Order.STATUS_PENDING).count()
+            total_paid, total_pending = totals['paid'], totals['pending']
 
     return {
         'rows': rows,
@@ -686,6 +710,7 @@ def get_dashboard_sales_context(request, subevent, can_view_orders):
 
 
 def event_index(request, organizer, event):
+    """Tickets dashboard for one event, optionally scoped to a selected date."""
     subevent = None
     if request.GET.get('subevent', '') != '' and request.event.has_subevents:
         i = request.GET.get('subevent', '')
@@ -761,7 +786,12 @@ def event_index(request, organizer, event):
         request, subevent, can_view_orders, can_change_event_settings
     )
 
-    ctx['sales_capacity'] = get_dashboard_sales_context(request, subevent, can_view_orders)
+    ctx['sales_capacity'] = get_dashboard_sales_context(
+        request,
+        subevent,
+        can_view_orders,
+        request.user.has_event_permission(request.organizer, request.event, 'can_change_items', request=request),
+    )
 
     ctx['has_overpaid_orders'] = (
         can_view_orders

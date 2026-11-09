@@ -26,14 +26,14 @@
           {% for row in sales_capacity.rows %}
             <tr>
               <td class="td-st-name">
-                <a href="{{ row.quota_url }}">{{ row.name }}</a>
+                {% if row.quota_url %}<a href="{{ row.quota_url }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}
                 {% if row.products %}
                   <div class="td-muted">{{ row.products|join:', ' }}</div>
                 {% endif %}
               </td>
-              <td class="td-st-count"><a href="{{ row.ordered_url }}">{{ row.ordered }}</a></td>
-              <td class="td-st-count"><a href="{{ row.paid_url }}">{{ row.paid }}</a></td>
-              <td class="td-st-count"><a href="{{ row.pending_url }}">{{ row.pending }}</a></td>
+              <td class="td-st-count">{% if row.ordered_url %}<a href="{{ row.ordered_url }}">{{ row.ordered }}</a>{% else %}{{ row.ordered }}{% endif %}</td>
+              <td class="td-st-count">{% if row.paid_url %}<a href="{{ row.paid_url }}">{{ row.paid }}</a>{% else %}{{ row.paid }}{% endif %}</td>
+              <td class="td-st-count">{% if row.pending_url %}<a href="{{ row.pending_url }}">{{ row.pending }}</a>{% else %}{{ row.pending }}{% endif %}</td>
               <td class="td-st-count">
                 {% if row.remaining == None %}<span aria-label="{% trans 'Unlimited' %}">&infin;</span>{% else %}{{ row.remaining }}{% endif %}
               </td>
