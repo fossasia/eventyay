@@ -68,9 +68,10 @@
                 <div id="mail-language-tabs" class="mb-3" hidden></div>
                 <fieldset>
                     {{ form.subject.as_field_group }}
+                    {% url 'control:event.editor.email.preview' organizer=request.event.organizer.slug event=request.event.slug as default_email_preview_url %}
                     <div class="mail-editor-tabs"
                          data-email-preview-wrapper
-                         data-email-preview-url="{% url 'control:event.editor.email.preview' organizer=request.event.organizer.slug event=request.event.slug %}">
+                         data-email-preview-url="{{ email_preview_url|default:default_email_preview_url }}">
                         <div class="mail-editor-mode-tabs" role="tablist" aria-label="{% translate 'Message view' %}">
                             <button type="button" class="mail-editor-mode-tab active"
                                     role="tab" aria-selected="true" aria-controls="mail-message-edit"

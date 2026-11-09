@@ -61,6 +61,7 @@ from eventyay.celery_app import app
 from eventyay.common.mail import get_reply_to_address
 from eventyay.consts import SizeKey
 from eventyay.helpers.http import smtp_reachable
+from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.ical import get_ical
 
@@ -181,7 +182,7 @@ def mail(
                 context.update({'invoice_name': '', 'invoice_company': ''})
         renderer = ClassicMailRenderer(None)
         content_plain = body_plain = render_mail(template, context)
-        subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
+        subject = render_placeholder_string(subject, context)
         sender = sender or (event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL) or settings.DEFAULT_FROM_EMAIL
         sender_email_raw = sender
         if event:
@@ -736,13 +737,17 @@ def expand_email_variable_chips(body: str, context: dict[str, str]) -> str:
     return _DATA_VARIABLE_CHIP_RE.sub(replace_chip, body)
 
 
+def render_placeholder_string(template, context) -> str:
+    """Resolve ``{placeholder}`` slots the same way queued mail and live sending do."""
+    source = '' if template is None else str(template)
+    string_context = _stringify_mail_context(context)
+    rendered = escape_stray_braces(source).format_map(TolerantDict(string_context))
+    return expand_email_variable_chips(rendered, string_context)
+
+
 def render_mail(template, context):
     if isinstance(template, LazyI18nString):
-        body = str(template)
-        if context:
-            string_context = _stringify_mail_context(context)
-            body = body.format_map(TolerantDict(string_context))
-            body = expand_email_variable_chips(body, string_context)
+        body = render_placeholder_string(template, context) if context else str(template)
     else:
         tpl = get_template(template)
         body = tpl.render(context)

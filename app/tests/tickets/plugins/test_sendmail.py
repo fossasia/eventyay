@@ -1759,6 +1759,20 @@ def test_resolve_queued_mail_text_keeps_unbalanced_braces():
         )
         == 'Hi {name} {'
     )
+    assert resolve_queued_mail_text('Hello {event.name}', {'event': 'Conf'}) == 'Hello {event.name}'
+    assert (
+        resolve_queued_mail_text(
+            'Hi {name}',
+            {'name': '<img src="https://evil.test/x">'},
+            escape_text=True,
+        )
+        == 'Hi &lt;img src=&quot;https://evil.test/x&quot;&gt;'
+    )
+    assert '<img' in resolve_queued_mail_text(
+        'QR {ticket_qr}',
+        {'ticket_qr': '<img src="data:image/png;base64,aa">'},
+        escape_text=True,
+    )
 
 
 @pytest.mark.django_db

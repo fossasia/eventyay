@@ -11,6 +11,8 @@ const select2RenderedList = (select) => {
     return sibling.querySelector(".select2-selection__rendered")
 }
 
+const selectedValues = (select) => Array.from(select.selectedOptions).map((option) => option.value).join("\0")
+
 // Select2 only emits jQuery events and toggles option.selected as a property,
 // so native listeners never see a change. Watch the visible selection chips
 // instead and dispatch a bubbling native change for mail-recipients.
@@ -21,7 +23,11 @@ const bindSelect2NativeChange = (root) => {
         if (!rendered) return false
         if (observed.has(select)) return true
         observed.add(select)
+        let lastValues = selectedValues(select)
         new MutationObserver(() => {
+            const nextValues = selectedValues(select)
+            if (nextValues === lastValues) return
+            lastValues = nextValues
             select.dispatchEvent(new Event("change", { bubbles: true }))
         }).observe(rendered, { childList: true })
         return true

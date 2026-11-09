@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.timezone import now
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -380,7 +381,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
     def _set_field_placeholders(self, fn, base_parameters):
         """Validate placeholders without rendering the long help-text list (drawer covers that)."""
         phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
     def __init__(self, *args, **kwargs):
         event = self.event = kwargs.pop('event')
@@ -1028,15 +1029,26 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
         # Sent mail is read-only, so resolved names are display-only. Editable
         # Outbox fields keep stored placeholders so Save cannot persist one
         # recipient's values for everyone else.
+        resolved_for_email = None
         if self.read_only and self.recipient_objects:
             recipient = self.recipient_objects[0]
+            resolved_for_email = recipient.email
+            contexts = {}
+
+            def context_factory():
+                locale = get_language() or ''
+                if locale not in contexts:
+                    contexts[locale] = self.instance.placeholder_context(recipient)
+                return contexts[locale]
+
             subject_initial = resolve_queued_mail_i18n(
                 subject_initial,
-                context_factory=lambda: self.instance.placeholder_context(recipient),
+                context_factory=context_factory,
             )
             text_initial = resolve_queued_mail_i18n(
                 text_initial,
-                context_factory=lambda: self.instance.placeholder_context(recipient),
+                context_factory=context_factory,
+                escape_text=True,
             )
 
         self.fields['subject'] = I18nFormField(
@@ -1046,6 +1058,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             locales=list(allowed_locales),
             initial=subject_initial,
         )
+        if resolved_for_email and len(self.recipient_objects) > 1:
+            self.fields['subject'].help_text = _(
+                'Placeholders are filled in for {email}. Each other recipient received their own values.'
+            ).format(email=resolved_for_email)
         self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
@@ -1072,7 +1088,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
     def clean_emails(self):
         updated_emails = [
@@ -1241,6 +1257,10 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
             for field_name in ('teams', 'subject', 'message'):
                 self.fields[field_name].required = False
 
+        phs = [f'{{{p}}}' for p in placeholder_names]
+        self.fields['subject'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+        self.fields['message'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+
     @cached_property
     def grouped_placeholders(self):
         placeholders = self.valid_placeholders
@@ -1368,8 +1388,8 @@ class TicketMailTemplateForm(I18nModelForm):
             locales=locales,
         )
         phs = [f'{{{p}}}' for p in placeholder_names]
-        self.fields['subject'].validators.append(PlaceholderValidator(phs))
-        self.fields['text'].validators.append(PlaceholderValidator(phs))
+        self.fields['subject'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+        self.fields['text'].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
         reply_to_field = self.fields['reply_to']
         self.fields['reply_to'] = forms.EmailField(

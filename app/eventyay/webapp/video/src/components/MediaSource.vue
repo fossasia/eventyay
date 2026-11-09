@@ -24,6 +24,14 @@
 			.error-title {{ $t('Connection Failed') }}
 			.error-subtitle {{ iframeError && iframeError.message ? iframeError.message : $t('We could not connect to the video conference server, sorry.') }}
 			bunt-button.btn-retry(v-if="!background", @click="retryIframe") {{ $t('Retry Connection') }}
+	button.vimeo-chromeless-play-control(
+		v-if="showVimeoPlayControl",
+		type="button",
+		:aria-label="$t('Play video')",
+		@click="playVimeoPlayer"
+	)
+		.play-icon-circle
+			.mdi.mdi-play
 	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
@@ -158,9 +166,6 @@ function applyInterpretationVolume(vol) {
 		}
 	}
 }
-const autoplay = computed(() => store.getters.autoplay);
-const mainPlayerPaused = ref(!autoplay.value);
-
 const module = computed(() => {
 	if (!props.room) return null;
 	return props.room.modules.find((m) =>
@@ -176,6 +181,16 @@ const module = computed(() => {
 		].includes(m.type)
 	);
 });
+
+function getEffectiveStreamAutoStart() {
+	const currentStream = props.room?.currentStream;
+	const moduleConfig = module.value?.config || {};
+	const streamConfig = currentStream?.config || {};
+	return (currentStream ? streamConfig.autoStart : moduleConfig.autoStart) !== false;
+}
+
+const autoplay = computed(() => store.getters.autoplay);
+const mainPlayerPaused = ref(!(autoplay.value && getEffectiveStreamAutoStart()));
 
 const isRoomDisabled = computed(() => {
 	if (!props.room) return false;
@@ -415,7 +430,7 @@ async function applyInterpretation(interpConfig) {
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
-				if (updateToken !== interpretationUpdateToken) return;
+				if (updateToken !== interpretationUpdateToken || !mainPlayerPaused.value) return;
 				pauseTranslationAudio();
 			}, 600);
 		}
@@ -436,6 +451,7 @@ async function applyInterpretation(interpConfig) {
 onMounted(async () => {
 	window.addEventListener('message', onWindowMessage);
 	if (!props.room) return;
+	resetMainPlayerPaused();
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
 	await applyInterpretation(activeInterpretation.value);
@@ -538,12 +554,37 @@ function subscribeToVimeoPlayerEvents() {
 	}
 }
 
+const showVimeoPlayControl = computed(() => {
+	if (!iframeEl.value || props.background || shouldUseLivestream.value) return false;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+	const isVimeo = streamType === STREAM_TYPE_VIMEO || module.value?.type === 'livestream.vimeo';
+	if (!isVimeo) return false;
+	const config = getVimeoConfig();
+	return Boolean(config.hideControls && mainPlayerPaused.value);
+});
+
+function playVimeoPlayer() {
+	if (!iframeEl.value?.contentWindow) return;
+	try {
+		subscribeToVimeoPlayerEvents();
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ method: 'play' }),
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to start Vimeo playback:', error);
+	}
+}
+
 function getVimeoConfig() {
 	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const currentStream = streamType === STREAM_TYPE_VIMEO ? props.room?.currentStream : null;
+	const moduleConfig = module.value?.config || {};
+	const streamConfig = currentStream?.config || {};
+	const raw = currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig;
 	return {
-		...(currentStream?.config || {}),
-		...(module.value?.config || {}),
+		...raw,
+		autoStart: (currentStream ? streamConfig.autoStart : moduleConfig.autoStart) !== false,
 	};
 }
 
@@ -565,6 +606,7 @@ function muteYouTubePlayer() {
 
 function youtubePlaybackConfig(config = {}) {
 	return {
+		autoStart: config.autoStart !== false,
 		startMuted: Boolean(config.startMuted),
 		enablePrivacyEnhancedMode: Boolean(config.enablePrivacyEnhancedMode),
 		loop: Boolean(config.loop),
@@ -581,9 +623,11 @@ function getYoutubeConfig() {
 	const currentStream = streamType === STREAM_TYPE_YOUTUBE ? props.room?.currentStream : null;
 	const moduleConfig = module.value?.config || {};
 	const streamConfig = currentStream?.config || {};
-	return youtubePlaybackConfig(
-		currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig
-	);
+	const raw = currentStream ? { ...moduleConfig, ...streamConfig } : moduleConfig;
+	return youtubePlaybackConfig({
+		...raw,
+		autoStart: (currentStream ? streamConfig.autoStart : moduleConfig.autoStart) !== false,
+	});
 }
 
 function getYoutubeEmbedUrl(videoIdOrUrl, options = {}) {
@@ -690,7 +734,7 @@ function onMainPlayerPlaybackChanged(isPlaying) {
 }
 
 function resetMainPlayerPaused() {
-	mainPlayerPaused.value = !autoplay.value;
+	mainPlayerPaused.value = !(autoplay.value && getEffectiveStreamAutoStart());
 }
 
 function onTranslationIframeLoaded() {
@@ -707,6 +751,8 @@ function onTranslationIframeLoaded() {
 	}
 	if (mainPlayerPaused.value) {
 		pauseYouTubeTranslationIframe();
+	} else {
+		resumeTranslationAudio();
 	}
 }
 
@@ -871,7 +917,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				const shouldStartMuted = Boolean(
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
-				const shouldAutoplay = Boolean(autoplay.value);
+				const shouldAutoplay = Boolean(autoplay.value && config.autoStart !== false);
 				iframeUrl = getVimeoEmbedUrl(vimeoUrl, {
 					autoplay: shouldAutoplay,
 					startMuted: shouldStartMuted,
@@ -915,7 +961,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				const shouldStartMuted = Boolean(
 					mute || config.startMuted || hasAudioOnlyInterpretation()
 				);
-				const shouldAutoplay = Boolean(autoplay.value && !config.hideControls);
+				const shouldAutoplay = Boolean(autoplay.value && config.autoStart !== false && !config.hideControls);
 				iframeUrl = getYoutubeEmbedUrl(ytid, {
 					autoplay: shouldAutoplay,
 					startMuted: shouldStartMuted,
@@ -1056,8 +1102,10 @@ function getLanguageIframeUrl(languageUrl) {
 	if (!languageUrl) return null;
 	const config = getYoutubeConfig();
 	const videoId = normalizeYoutubeVideoId(languageUrl) || languageUrl;
+	const activeStreamConfig = props.room?.currentStream?.config || module.value?.config || {};
+	const shouldAutoplay = autoplay.value && activeStreamConfig.autoStart !== false && config.autoStart !== false;
 	return getYoutubeEmbedUrl(videoId, {
-		autoplay: autoplay.value,
+		autoplay: shouldAutoplay,
 		startMuted: Boolean(config.startMuted),
 		hideControls: true,
 		noRelated: config.noRelated,
@@ -1253,4 +1301,37 @@ iframe.iframe-media-source
 	&.size-tiny, &.background
 		.offline-card, .error-card
 			display: none
+.c-media-source .vimeo-chromeless-play-control
+	position: fixed
+	display: flex
+	align-items: center
+	justify-content: center
+	z-index: 100
+	background: transparent
+	border: none
+	cursor: pointer
+	padding: 0
+	margin: 0
+	width: 72px
+	height: 72px
+	border-radius: 50%
+	&:not(.size-tiny):not(.background)
+		top: calc(var(--mediasource-placeholder-top, 104px) + 0.5 * var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh)))
+		left: calc(var(--mediasource-placeholder-left, var(--sidebar-width)) + 0.5 * var(--mediasource-placeholder-width, 100vw))
+		transform: translate(-50%, -50%)
+	.play-icon-circle
+		width: 72px
+		height: 72px
+		border-radius: 50%
+		background: rgba(0, 0, 0, 0.7)
+		color: #ffffff
+		display: flex
+		align-items: center
+		justify-content: center
+		font-size: 40px
+		transition: transform 0.2s ease, background 0.2s ease
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4)
+	&:hover .play-icon-circle, &:focus-visible .play-icon-circle
+		background: rgba(0, 0, 0, 0.9)
+		transform: scale(1.1)
 </style>

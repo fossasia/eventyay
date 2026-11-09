@@ -1,6 +1,6 @@
 import logging
-import re
 from collections import defaultdict
+from html import escape as html_escape
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -17,9 +17,8 @@ from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.mail import (
     SendMailException as MailTransportError,
-    TolerantDict,
-    expand_email_variable_chips,
     mail,
+    render_placeholder_string,
 )
 from eventyay.common.exceptions import SendMailException
 from eventyay.mail.context import get_mail_context
@@ -27,29 +26,33 @@ from eventyay.mail.context import get_mail_context
 
 logger = logging.getLogger(__name__)
 
+# These placeholders are intentional HTML. Everything else is text and must be
+# escaped before it is placed into the sent-mail editor, which parses HTML.
+HTML_MAIL_PLACEHOLDERS = frozenset({
+    'download_tickets_pdf',
+    'join_online_event',
+    'order_qr',
+    'payment_info',
+    'ticket_qr',
+    'voucher_list',
+    'voucher_url',
+})
 
-def resolve_queued_mail_text(text, context: dict | None) -> str:
+
+def resolve_queued_mail_text(text, context: dict | None, *, escape_text: bool = False) -> str:
     """Replace ``{placeholder}`` tokens and Tiptap chips using a mail context."""
     if text is None:
         return ''
-    string_context = {key: '' if value is None else str(value) for key, value in (context or {}).items()}
-    source = str(text)
-    try:
-        resolved = source.format_map(TolerantDict(string_context))
-    except ValueError:
-        parts = []
-        cursor = 0
-        for match in re.finditer(r'\{([A-Za-z_][A-Za-z0-9_]*)\}', source):
-            parts.append(source[cursor:match.start()])
-            key = match.group(1)
-            parts.append(string_context[key] if key in string_context else match.group(0))
-            cursor = match.end()
-        parts.append(source[cursor:])
-        resolved = ''.join(parts)
-    return expand_email_variable_chips(resolved, string_context)
+    prepared = context
+    if escape_text:
+        prepared = {
+            key: value if key in HTML_MAIL_PLACEHOLDERS else html_escape('' if value is None else str(value), quote=True)
+            for key, value in (context or {}).items()
+        }
+    return render_placeholder_string(text, prepared)
 
 
-def resolve_queued_mail_i18n(value, context: dict | None = None, *, context_factory=None):
+def resolve_queued_mail_i18n(value, context: dict | None = None, *, context_factory=None, escape_text: bool = False):
     """Resolve placeholders in each locale of a ``LazyI18nString``."""
     if not value:
         return value
@@ -59,10 +62,10 @@ def resolve_queued_mail_i18n(value, context: dict | None = None, *, context_fact
         for locale, text in data.items():
             with language(locale):
                 locale_context = context_factory() if context_factory else context
-                resolved[locale] = resolve_queued_mail_text(text, locale_context)
+                resolved[locale] = resolve_queued_mail_text(text, locale_context, escape_text=escape_text)
         return LazyI18nString(resolved)
     locale_context = context_factory() if context_factory else context
-    return LazyI18nString(resolve_queued_mail_text(value, locale_context))
+    return LazyI18nString(resolve_queued_mail_text(value, locale_context, escape_text=escape_text))
 
 
 class TicketMailTemplate(models.Model):
@@ -424,6 +427,8 @@ class EmailQueue(models.Model):
 
     def placeholder_context(self, recipient=None, email: str | None = None):
         """Build the placeholder context for one queued recipient, or the first."""
+        if recipient is None and email and email.strip():
+            recipient = self.recipients.filter(email__iexact=email.strip()).order_by('id').first()
         recipient = recipient or self.recipients.order_by('id').first()
         if not recipient:
             return None
