@@ -620,6 +620,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """Initialize expert filter form with dynamic fields, choices, and searchable dropdowns."""
         super().__init__(*args, **kwargs)
         del self.fields['query']
         del self.fields['question']
