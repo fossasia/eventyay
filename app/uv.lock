@@ -899,11 +899,11 @@ wheels = [
 
 [[package]]
 name = "django-i18nfield"
-version = "1.11.0"
+version = "1.12.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b0/42/655f7a255247c72f35158f3da51168a4a05b0eaaa1d84a0f356e9620cecb/django_i18nfield-1.11.0.tar.gz", hash = "sha256:0b5ce5fd6d01134c872587cc08ff45ba60de91e826170480769c241ff93636aa", size = 16716, upload-time = "2025-09-02T12:22:37.217Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/bc/ec665977e0758728a7f9baaefa13fb1c7320945fab6c0df67091288c4ff1/django_i18nfield-1.12.0.tar.gz", hash = "sha256:a40cfa67ea066bf42bafb6794dceb9d8c32dd9b6f599427a9bd3934ced44882a", size = 17258, upload-time = "2026-11-03T09:37:18.444Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/0f/2326bcebdb24a73e8b05d4f12cd7a2b13890356f7c98511cd3214045fc42/django_i18nfield-1.11.0-py3-none-any.whl", hash = "sha256:0cd84a6e8db83810cc935eae4c19c5244ac26f2ff5e781cb680ce37e2104f625", size = 15285, upload-time = "2025-09-02T12:22:36.136Z" },
+    { url = "https://files.pythonhosted.org/packages/23/da/335e958b6efee753ce487d3649dc8db23aab38943a168a807b340f1eaac1/django_i18nfield-1.12.0-py3-none-any.whl", hash = "sha256:33dc17974f764c5cae6b28ed2bab82562b401e113753ffc8712a2f9c78a3a48b", size = 15780, upload-time = "2026-11-03T09:37:17.279Z" },
 ]
 
 [[package]]
