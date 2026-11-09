@@ -104,6 +104,14 @@ test('resolveAbsoluteUrl resolves path-relative URLs against subpath eventUrl or
 		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/api/v1/events/democon/'),
 		'https://eventyay.com/uploads/slides.pdf'
 	)
+	assert.equal(
+		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/events/api/'),
+		'https://eventyay.com/events/api/uploads/slides.pdf'
+	)
+	assert.equal(
+		resolveAbsoluteUrl('uploads/slides.pdf', 'https://eventyay.com/events/api-summit/'),
+		'https://eventyay.com/events/api-summit/uploads/slides.pdf'
+	)
 })
 
 test('resolveAbsoluteUrl resolves root-relative URLs against origin', () => {

@@ -24,13 +24,17 @@ export function normalizeDisplayResources (resources = []) {
 
 const SAFE_SCHEMES = new Set(['http:', 'https:', 'ftp:', 'ftps:', 'sftp:', 'mailto:', 'tel:'])
 
+function isApiEndpoint (pathname) {
+	return /^(?:\/[a-z]{2}(?:-[a-z]{2,4})?)?\/api(?:\/|$)/i.test(pathname)
+}
+
 /**
  * Resolves a resource URL to an absolute URL.
  * Preserves all safe absolute schemes (HTTP, HTTPS, FTP, SFTP, mailto, etc.).
  * Rejects unsafe schemes such as javascript: to prevent script execution,
  * including obfuscated schemes with leading whitespace or embedded ASCII control characters.
  * Path-relative URLs are resolved against the full event URL (including any subpath).
- * If the provided base URL points to an API path, resolves against its origin instead.
+ * If the provided base URL points to an actual API endpoint (e.g. /api/v1/...), resolves against its origin instead.
  * Root-relative URLs are resolved against the origin.
  */
 export function resolveAbsoluteUrl (url, eventUrl = '') {
@@ -52,7 +56,7 @@ export function resolveAbsoluteUrl (url, eventUrl = '') {
 	try {
 		const windowOrigin = (typeof window !== 'undefined' && window.location?.origin) || 'http://localhost'
 		const base = new URL(eventUrl || '/', windowOrigin)
-		if (sanitized.startsWith('/') || /\/api(\/|$)/i.test(base.pathname)) {
+		if (sanitized.startsWith('/') || isApiEndpoint(base.pathname)) {
 			const resolved = new URL(sanitized, base.origin)
 			return SAFE_SCHEMES.has(resolved.protocol.toLowerCase()) ? resolved.href : ''
 		}
