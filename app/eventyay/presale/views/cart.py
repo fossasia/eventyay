@@ -66,6 +66,8 @@ except InvalidCacheBackendError:
 
 class CartActionMixin:
     def _rate_limit_response(self):
+        """Return the rate-limit response in the format requested by the client."""
+
         message = _(error_messages['voucher_rate_limited'])
         if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
             response = JsonResponse(
@@ -606,6 +608,8 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
     template_name = 'pretixpresale/event/voucher.html'
 
     def _rate_limit_response(self, request):
+        """Return the event-page rate-limit response with retry metadata."""
+
         response = render(
             request,
             '429.html',

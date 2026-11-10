@@ -1191,6 +1191,8 @@ class GiftCardPayment(BasePaymentProvider):
     priority = 10
 
     def _rate_limit_response(self, request: HttpRequest) -> HttpResponse:
+        """Return a retryable response when gift-card attempts are rate limited."""
+
         response = render(
             request,
             '429.html',

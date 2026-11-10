@@ -74,6 +74,8 @@ class CartError(Exception):
 
 
 class VoucherError(CartError):
+    """Raised when a voucher cannot be applied to a cart."""
+
     pass
 
 
@@ -171,6 +173,8 @@ VOUCHER_RATE_LIMIT_WINDOW = settings.VOUCHER_RATE_LIMIT_WINDOW
 
 
 def _voucher_rate_limit_networks():
+    """Return configured trusted proxy networks, ignoring malformed entries."""
+
     networks = []
     for network in settings.VOUCHER_RATE_LIMIT_TRUSTED_PROXIES:
         try:
@@ -181,6 +185,8 @@ def _voucher_rate_limit_networks():
 
 
 def _parse_forwarded_ip(value):
+    """Parse a forwarded client address, including common host-port forms."""
+
     value = value.strip()
     try:
         return ipaddress.ip_address(value)
@@ -196,6 +202,8 @@ def _parse_forwarded_ip(value):
 
 
 def _voucher_rate_limit_key(request):
+    """Build the event-scoped voucher rate-limit key for a request."""
+
     client_ip = request.META.get('REMOTE_ADDR')
     try:
         remote_ip = ipaddress.ip_address(client_ip)
@@ -222,6 +230,8 @@ def _voucher_rate_limit_key(request):
 
 
 def _increment_voucher_counter(key):
+    """Atomically increment a voucher-failure counter and recover expired keys."""
+
     if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
         return 1
     try:
@@ -233,6 +243,8 @@ def _increment_voucher_counter(key):
 
 
 def reserve_voucher_attempt(request):
+    """Reserve one failed voucher attempt unless the request is rate limited."""
+
     key = _voucher_rate_limit_key(request)
     if not key:
         return None, True
@@ -246,6 +258,8 @@ def reserve_voucher_attempt(request):
 
 
 def release_voucher_attempt(key):
+    """Undo a previously reserved voucher attempt after successful redemption."""
+
     if not key:
         return
     try:
