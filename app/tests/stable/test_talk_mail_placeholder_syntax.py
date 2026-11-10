@@ -43,6 +43,11 @@ def test_malformed_placeholders_checks_every_language():
     assert get_malformed_placeholders(text, {'name': None}) == ['{ name }', '{name']
 
 
+def test_malformed_placeholders_are_reported_once():
+    text = LazyI18nString({'en': 'Hi { name }, see you { name }', 'de': 'Hallo { name }, {name'})
+    assert get_malformed_placeholders(text, {'name': None}) == ['{ name }', '{name']
+
+
 def test_excessive_format_width_is_never_evaluated():
     template = '{event_name:>99999} {other:>1000000000}'
     with mock.patch('eventyay.helpers.placeholders.format', create=True, side_effect=AssertionError) as evaluate:

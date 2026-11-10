@@ -68,15 +68,15 @@ def get_malformed_placeholders(text, valid_placeholders):
     if not text:
         return []
     if isinstance(text, str):
-        return find_malformed_placeholders(text, set(valid_placeholders))
-    if getattr(text, 'data', None):
+        malformed = find_malformed_placeholders(text, set(valid_placeholders))
+    elif getattr(text, 'data', None):
         return get_malformed_placeholders(text.data, valid_placeholders)
-    if isinstance(text, dict):
-        malformed = []
-        for lang in text.values():
-            malformed += get_malformed_placeholders(lang, valid_placeholders)
-        return malformed
-    return []
+    elif isinstance(text, dict):
+        malformed = [token for lang in text.values() for token in get_malformed_placeholders(lang, valid_placeholders)]
+    else:
+        return []
+    # The same typo repeated in the text or in several languages is reported once.
+    return list(dict.fromkeys(malformed))
 
 
 def get_all_reviews(submission):
