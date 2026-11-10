@@ -38,7 +38,10 @@ from eventyay.base.services.cart import (
     apply_voucher,
     clear_cart,
     error_messages,
+    is_voucher_rate_limited,
+    record_voucher_failure,
     remove_cart_position,
+    VOUCHER_RATE_LIMIT_WINDOW,
 )
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.views.tasks import AsyncAction
@@ -372,7 +375,23 @@ class CartApplyVoucher(EventViewMixin, CartActionMixin, AsyncAction, View):
     def get_success_message(self, value):
         return _('We applied the voucher to as many products in your cart as we could.')
 
+    def _rate_limit_response(self):
+        message = _(error_messages['voucher_rate_limited'])
+        if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
+            response = JsonResponse(
+                {'redirect': self.get_error_url(), 'success': False, 'message': str(message)},
+                status=429,
+            )
+        else:
+            messages.error(self.request, message)
+            response = redirect(self.get_error_url())
+            response.status_code = 429
+        response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+        return response
+
     def post(self, request, *args, **kwargs):
+        if is_voucher_rate_limited(request):
+            return self._rate_limit_response()
         if 'voucher' in request.POST:
             return self.do(
                 self.request.event.id,
@@ -386,6 +405,16 @@ class CartApplyVoucher(EventViewMixin, CartActionMixin, AsyncAction, View):
                 return JsonResponse({'redirect': self.get_error_url()})
             else:
                 return redirect(self.get_error_url())
+
+    def error(self, exception):
+        is_cart_error = isinstance(exception, CartError) or (
+            isinstance(exception, dict) and exception.get('exc_type') in self.known_errortypes
+        )
+        if is_cart_error:
+            record_voucher_failure(self.request)
+            if is_voucher_rate_limited(self.request):
+                return self._rate_limit_response()
+        return super().error(exception)
 
 
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
@@ -626,12 +655,20 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         from eventyay.base.services.cart import error_messages
 
+        if is_voucher_rate_limited(request):
+            response = redirect(self.get_index_url())
+            response.status_code = 429
+            response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+            messages.error(request, _(error_messages['voucher_rate_limited']))
+            return response
+
         err = None
         v = request.GET.get('voucher')
 
         if v:
             v = v.strip()
             if len(v) > MAX_VOUCHER_CODE_LENGTH:
+                record_voucher_failure(request)
                 messages.error(request, error_messages['voucher_invalid_length'])
                 return redirect(self.get_index_url())
             try:
@@ -693,6 +730,13 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
             pass
 
         if err:
+            record_voucher_failure(request)
+            if is_voucher_rate_limited(request):
+                response = redirect(self.get_index_url())
+                response.status_code = 429
+                response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+                messages.error(request, _(error_messages['voucher_rate_limited']))
+                return response
             messages.error(request, _(err))
             return redirect(self.get_index_url())
 

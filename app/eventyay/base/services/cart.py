@@ -1,3 +1,5 @@
+import hashlib
+import logging
 from collections import Counter, defaultdict, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
@@ -5,6 +7,8 @@ from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from celery.exceptions import MaxRetriesExceededError
+from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, transaction
 from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
@@ -46,6 +50,7 @@ from eventyay.base.signals import validate_cart_addons
 from eventyay.base.templatetags.rich_text import rich_text
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.celery_app import app
+from eventyay.helpers.http import get_client_ip
 from eventyay.presale.signals import (
     checkout_confirm_messages,
     fee_calculation_for_cart,
@@ -63,6 +68,9 @@ class CartError(Exception):
             msg = _(msg)
         super().__init__(msg)
         log_event('tickets', 'cart.error', OUTCOME_FAILURE, error_code='cart_error')
+
+
+logger = logging.getLogger(__name__)
 
 
 error_messages = {
@@ -103,6 +111,7 @@ error_messages = {
     ),
     'voucher_invalid': _('This voucher code is not known in our database.'),
     'voucher_invalid_length': _('This voucher code has an invalid length.'),
+    'voucher_rate_limited': _('Too many invalid voucher attempts. Please try again later.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
         'This voucher code is currently locked since it is already contained in a cart. This '
@@ -153,6 +162,39 @@ error_messages = {
 }
 
 MAX_VOUCHER_CODE_LENGTH = Voucher._meta.get_field('code').max_length
+VOUCHER_RATE_LIMIT_MAX = getattr(settings, 'VOUCHER_RATE_LIMIT_MAX', 5)
+VOUCHER_RATE_LIMIT_WINDOW = getattr(settings, 'VOUCHER_RATE_LIMIT_WINDOW', 600)
+
+
+def _voucher_rate_limit_key(request):
+    client_ip = get_client_ip(request)
+    event = getattr(request, 'event', None)
+    if not client_ip or not event:
+        return None
+    value = f'{event.pk}:{client_ip}'.encode()
+    return f'voucher_redeem_fail:{hashlib.sha256(value).hexdigest()}'
+
+
+def is_voucher_rate_limited(request):
+    key = _voucher_rate_limit_key(request)
+    if not key:
+        return False
+    try:
+        return int(cache.get(key, 0) or 0) >= VOUCHER_RATE_LIMIT_MAX
+    except Exception:
+        logger.exception('Could not read voucher rate limit; allowing request')
+        return False
+
+
+def record_voucher_failure(request):
+    key = _voucher_rate_limit_key(request)
+    if not key:
+        return
+    try:
+        if not cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
+            cache.incr(key)
+    except Exception:
+        logger.exception('Could not record voucher rate limit; allowing request')
 
 
 class CartManager:
