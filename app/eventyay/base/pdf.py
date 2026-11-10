@@ -1,5 +1,4 @@
 import copy
-import hashlib
 import itertools
 import json
 import logging
@@ -11,20 +10,20 @@ import uuid
 from collections import OrderedDict
 from functools import partial
 from io import BytesIO
+from zoneinfo import ZoneInfo
 
 from arabic_reshaper import ArabicReshaper
 from babel.numbers import get_currency_symbol
 from bidi.algorithm import get_display
 from django.conf import settings
-from django.utils import translation
 from django.contrib.staticfiles import finders
 from django.dispatch import receiver
+from django.utils import translation
 from django.utils.formats import date_format
 from django.utils.html import conditional_escape
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from pypdf import PdfReader
-from zoneinfo import ZoneInfo
 from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode.qr import QrCodeWidget
 from reportlab.graphics.shapes import Drawing
@@ -47,6 +46,7 @@ from eventyay.base.signals import layout_image_variables, layout_text_variables
 from eventyay.base.templatetags.money import money_filter
 from eventyay.base.templatetags.phone_format import phone_format
 from eventyay.presale.style import get_fonts
+
 
 logger = logging.getLogger(__name__)
 
@@ -837,6 +837,11 @@ class Renderer:
                 pass
             self.background_file = None
             self.bg_pdf = PdfReader(BytesIO(self.bg_bytes), strict=False)
+            from pypdf import PdfWriter
+
+            writer = PdfWriter()
+            writer.add_page(self.bg_pdf.pages[0])
+            self.bg_pdf = writer
             correct_page_media_box(self.bg_pdf.pages[0])
         else:
             self.bg_bytes = None
@@ -861,7 +866,7 @@ class Renderer:
             pdfmetrics.registerFont(TTFont('NotoSansDevanagari', finders.find('fonts/NotoSansDevanagari-Regular.ttf')))
             pdfmetrics.registerFont(TTFont('NotoSansDevanagari B', finders.find('fonts/NotoSansDevanagari-Bold.ttf')))
         except (FileNotFoundError, OSError) as exc:
-            logger.warning("Failed to register fallback fonts: %s", exc)
+            logger.warning('Failed to register fallback fonts: %s', exc)
 
         # Optional multilingual fonts (CJK, Korean, Thai, Hebrew)
         multilingual_fonts = [
@@ -877,8 +882,6 @@ class Renderer:
                     pdfmetrics.registerFont(TTFont(font_name, font_file))
             except (FileNotFoundError, OSError, TypeError, ValueError) as exc:
                 logger.warning('Failed to register %s font: %s', label, exc)
-
-
 
         for family, styles in get_fonts().items():
             pdfmetrics.registerFont(TTFont(family, finders.find(styles['regular']['truetype'])))
@@ -1151,17 +1154,17 @@ class Renderer:
                 target_locale = translation.get_language()
                 target_locale = target_locale[:2] if target_locale else 'en'
                 sym = get_currency_symbol(ev.currency, locale=target_locale)
-            
+
             if sym and sym != ev.currency and sym in text_content and not font_supports_text(font, sym):
                 text_content = re.sub(
                     r'(?<=\d)(\s*)' + re.escape(sym) + r'(?![a-zA-Z])',
-                    lambda m: (m.group(1) if m.group(1) else '\u00A0') + ev.currency,
-                    text_content
+                    lambda m: (m.group(1) if m.group(1) else '\u00a0') + ev.currency,
+                    text_content,
                 )
                 text_content = re.sub(
                     r'(?<![a-zA-Z])' + re.escape(sym) + r'(\s*)(?=\d)',
-                    lambda m: ev.currency + (m.group(1) if m.group(1) else '\u00A0'),
-                    text_content
+                    lambda m: ev.currency + (m.group(1) if m.group(1) else '\u00a0'),
+                    text_content,
                 )
 
         font, text_content = resolve_textarea_font(font, text_content)
@@ -1198,7 +1201,9 @@ class Renderer:
 
         arabic_pattern = re.compile(r'([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+)')
         devanagari_pattern = re.compile(r'([\u0900-\u097F]+)')
-        cjk_pattern = re.compile(r'([\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]+)')
+        cjk_pattern = re.compile(
+            r'([\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]+)'
+        )
         korean_pattern = re.compile(r'([\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]+)')
         thai_pattern = re.compile(r'([\u0E00-\u0E7F]+)')
         hebrew_pattern = re.compile(r'([\u0590-\u05FF\uFB1D-\uFB4F]+)')
@@ -1255,14 +1260,17 @@ class Renderer:
             canvas.showPage()
 
     def merge_foreground_buffer(self, buffer):
+        from pypdf import PdfWriter
+
         buffer.seek(0)
         fg_pdf = PdfReader(buffer, strict=False)
+        writer = PdfWriter(clone_from=fg_pdf)
         if not self.bg_pdf:
-            return list(fg_pdf.pages)
+            return list(writer.pages)
         bg_page = self.bg_pdf.pages[0]
-        for page in fg_pdf.pages:
+        for page in writer.pages:
             page.merge_page(bg_page, over=False)
-        return list(fg_pdf.pages)
+        return list(writer.pages)
 
     def render_background(self, buffer, title=_('Ticket')):
         if settings.PDFTK:
