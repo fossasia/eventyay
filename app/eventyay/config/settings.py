@@ -1251,6 +1251,8 @@ SESSION_COOKIE_HTTPONLY = True
 # TODO: Remove. We always use Nginx or we are even behind CloudFlare,
 # so trusting X-Forwarded-For is a must, if we want to get real client IP.
 TRUST_X_FORWARDED_FOR = True
+VOUCHER_RATE_LIMIT_MAX = 10
+VOUCHER_RATE_LIMIT_WINDOW = 300
 
 WSGI_APPLICATION = 'eventyay.config.wsgi.application'
 ASGI_APPLICATION = 'eventyay.config.asgi.application'

@@ -580,6 +580,9 @@ var shared_methods = {
         }
     },
     buy_error_callback: function (xhr, data) {
+        if (this.show_rate_limit_error(xhr)) {
+            return;
+        }
         if (xhr.status === 405 && typeof xhr.responseURL !== "undefined") {
             // Likely a redirect!
             var recovered = eventRootFromCartAddUrl(xhr.responseURL);
@@ -594,12 +597,27 @@ var shared_methods = {
         this.$root.overlay.frame_loading = false;
     },
     buy_check_error_callback: function (xhr, data) {
+        if (this.show_rate_limit_error(xhr)) {
+            return;
+        }
         if (xhr.status == 200 || (xhr.status >= 400 && xhr.status < 500)) {
             this.$root.overlay.error_message = strings['cart_error'];
             this.$root.overlay.frame_loading = false;
         } else {
             this.async_task_timeout = window.setTimeout(this.buy_check, 1000);
         }
+    },
+    show_rate_limit_error: function (xhr) {
+        var contentType = xhr.getResponseHeader("Content-Type") || "";
+        if (xhr.status !== 429 || contentType.indexOf("application/json") === -1) {
+            return false;
+        }
+        var response = JSON.parse(xhr.responseText);
+        if (!response.rate_limited || !response.redirect || !response.message) {
+            return false;
+        }
+        this.buy_callback(response);
+        return true;
     },
     buy_callback: function (data) {
         if (data.redirect) {
@@ -620,7 +638,7 @@ var shared_methods = {
             if (data.success === false) {
                 url = url.replace(/checkout\/start/g, "");
                 this.$root.overlay.error_message = data.message;
-                if (data.has_cart) {
+                if (data.has_cart || data.rate_limited) {
                     this.$root.overlay.error_url_after = url;
                 }
                 this.$root.overlay.frame_loading = false;

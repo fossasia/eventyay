@@ -42,7 +42,12 @@ from eventyay.base.models import (
 )
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.reldate import RelativeDateField, RelativeDateWrapper
-from eventyay.base.services.cart import get_fees
+from eventyay.base.services.cart import (
+    error_messages,
+    get_fees,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
+)
 from eventyay.base.settings import SettingsSandbox
 from eventyay.base.signals import register_payment_providers
 from eventyay.base.templatetags.money import money_filter
@@ -1263,9 +1268,15 @@ class GiftCardPayment(BasePaymentProvider):
         if not gift_card_code:
             messages.error(request, _('Please enter a gift card code.'))
             return
+
+        voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+        if not allowed:
+            messages.error(request, _(error_messages['voucher_rate_limited']))
+            return
         
         try:
             gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
+            release_voucher_attempt(voucher_attempt_key)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1332,6 +1343,7 @@ class GiftCardPayment(BasePaymentProvider):
             else:
                 messages.error(request, _('This gift card is not known.'))
         except GiftCard.MultipleObjectsReturned:
+            release_voucher_attempt(voucher_attempt_key)
             messages.error(
                 request,
                 _(
@@ -1354,8 +1366,14 @@ class GiftCardPayment(BasePaymentProvider):
             messages.error(request, _('Please enter a gift card code.'))
             return
 
+        voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+        if not allowed:
+            messages.error(request, _(error_messages['voucher_rate_limited']))
+            return
+
         try:
             gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
+            release_voucher_attempt(voucher_attempt_key)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1388,6 +1406,7 @@ class GiftCardPayment(BasePaymentProvider):
             else:
                 messages.error(request, _('This gift card is not known.'))
         except GiftCard.MultipleObjectsReturned:
+            release_voucher_attempt(voucher_attempt_key)
             messages.error(
                 request,
                 _(

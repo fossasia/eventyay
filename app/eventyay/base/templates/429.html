@@ -1,0 +1,12 @@
+{% extends 'error.html' %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans 'Too many requests' %}{% endblock %}
+{% block content %}
+  <div class="error-details">
+    <h1>{% trans 'Too many requests' %}</h1>
+    <p>{{ message }}</p>
+    <p class="links"><a href="{{ continue_url }}">{% trans 'Continue' %}</a></p>
+    <img src="{% static 'pretixbase/img/eventyay-logo.svg' %}" class="logo"/>
+  </div>
+{% endblock %}

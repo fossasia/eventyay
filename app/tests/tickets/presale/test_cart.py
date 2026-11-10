@@ -1,5 +1,6 @@
 import datetime
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
 
@@ -34,7 +35,10 @@ from eventyay.base.models.product import (
 from eventyay.base.services.cart import (
     CartError,
     CartManager,
+    VOUCHER_RATE_LIMIT_MAX,
     error_messages,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
     update_tax_rates,
 )
 from tests.testutils.scope import classscope
@@ -2271,22 +2275,60 @@ class CartTest(CartTestMixin, TestCase):
         }
     )
     def test_voucher_rate_limit_counts_failures(self):
-        from eventyay.base.services.cart import (
-            VOUCHER_RATE_LIMIT_MAX,
-            is_voucher_rate_limited,
-            record_voucher_failure,
-        )
-
         cache.clear()
         request = RequestFactory().get('/')
         request.event = self.event
         request.META['REMOTE_ADDR'] = '192.0.2.1'
-        self.assertFalse(is_voucher_rate_limited(request))
         for _ in range(VOUCHER_RATE_LIMIT_MAX):
-            record_voucher_failure(request)
-        self.assertFalse(is_voucher_rate_limited(request))
-        record_voucher_failure(request)
-        self.assertTrue(is_voucher_rate_limited(request))
+            _, allowed = reserve_voucher_attempt(request)
+            self.assertTrue(allowed)
+        self.assertFalse(reserve_voucher_attempt(request)[1])
+        cache.clear()
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-reservations',
+            }
+        }
+    )
+    def test_voucher_rate_limit_reserves_before_lookup(self):
+        cache.clear()
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            results = list(executor.map(reserve_voucher_attempt, [request] * 20))
+        reservations = [key for key, allowed in results if allowed]
+        self.assertEqual(len(reservations), VOUCHER_RATE_LIMIT_MAX)
+
+        for key in reservations:
+            release_voucher_attempt(key)
+        self.assertTrue(reserve_voucher_attempt(request)[1])
+        cache.clear()
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-cart-post',
+            }
+        }
+    )
+    def test_voucher_rate_limit_returns_429_on_11th_add_attempt(self):
+        cache.clear()
+        url = '/%s/%s/cart/add' % (self.orga.slug, self.event.slug)
+        payload = {'item_%d' % self.ticket.id: '1', '_voucher_code': 'not-a-voucher'}
+
+        for _ in range(VOUCHER_RATE_LIMIT_MAX):
+            self.client.post(url, payload)
+
+        response = self.client.post(url + '?ajax=1', payload)
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response['Retry-After'], '300')
+        self.assertIn('Too many invalid voucher attempts', response.json()['message'])
         cache.clear()
 
     def test_voucher_quota_empty(self):
