@@ -66,15 +66,23 @@ const isZoomOutKey = (e) =>
   e.code === "Minus" ||
   e.code === "NumpadSubtract";
 
+function getHoveredElement() {
+  try {
+    if (typeof document.querySelector === "function") {
+      return document.querySelector(".public-geodata-group:hover");
+    }
+  } catch {
+    // Ignore DOMExceptions in environments that do not support :hover pseudo-selectors
+  }
+  return null;
+}
+
 window.addEventListener("blur", () => {
   hoveredMap = null;
 });
 
 window.addEventListener("focus", () => {
-  const hoveredEl =
-    typeof document.querySelector === "function"
-      ? document.querySelector(".public-geodata-group:hover")
-      : null;
+  const hoveredEl = getHoveredElement();
   if (hoveredEl && hoveredEl._leaflet_map) {
     hoveredMap = hoveredEl._leaflet_map;
   }
@@ -93,10 +101,7 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (!hoveredMap) {
-    const hoveredEl =
-      typeof document.querySelector === "function"
-        ? document.querySelector(".public-geodata-group:hover")
-        : null;
+    const hoveredEl = getHoveredElement();
     if (hoveredEl && hoveredEl._leaflet_map) {
       hoveredMap = hoveredEl._leaflet_map;
     }
@@ -186,7 +191,7 @@ function initMap(grp) {
       cancelPendingZoom();
       isInternalZoom = true;
       try {
-        map.setZoomAround(targetP, targetZ);
+        map.setZoomAround(targetP, targetZ, { animate: false });
       } finally {
         isInternalZoom = false;
       }
