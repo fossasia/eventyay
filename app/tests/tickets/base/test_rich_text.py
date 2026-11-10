@@ -92,14 +92,6 @@ def test_editor_html_plain_text_and_editor_load_are_not_linked():
     assert email_body_to_editor_html(html) == html
 
 
-@pytest.mark.django_db
-def test_expand_email_preview_placeholders_links_url_samples(event):
-    html = '<p><span data-variable="url" class="tiptap-placeholder-chip">{url}</span></p>'
-    result = expand_email_preview_placeholders(html, event, base_parameters=['event', 'order'])
-    assert '{url}' not in result
-    assert '<a href="http' in result
-
-
 def test_compile_email_body_compiles_legacy_inline_html():
     """Legacy Markdown bodies with inline tags must still be compiled."""
     result = compile_email_body('Hello<br>world')

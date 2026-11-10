@@ -367,9 +367,6 @@ def is_placeholder_html_sample(sample) -> bool:
     return isinstance(sample, SafeString)
 
 
-PREVIEW_URL_SAMPLE_RE = re.compile(r'^https?://\S+$')
-
-
 def build_email_preview_context(event, base_parameters: list[str]):
     """Build sendmail preview context, keeping HTML placeholder samples intact."""
     from django.utils.translation import gettext
@@ -395,10 +392,6 @@ def build_email_preview_context(event, base_parameters: list[str]):
             context_dict[key] = str(sample)
         elif key in MARKDOWN_PLACEHOLDERS:
             context_dict[key] = markdown_compile_email(str(sample))
-        elif PREVIEW_URL_SAMPLE_RE.match(str(sample).strip()):
-            # Sent emails turn URLs into links (see linkify_email_html); show them the same way.
-            url = html.escape(str(sample).strip())
-            context_dict[key] = f'<a href="{url}" target="_blank" rel="noopener noreferrer">{url}</a>'
         else:
             context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict
