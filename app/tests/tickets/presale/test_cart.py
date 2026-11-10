@@ -2284,6 +2284,8 @@ class CartTest(CartTestMixin, TestCase):
         self.assertFalse(is_voucher_rate_limited(request))
         for _ in range(VOUCHER_RATE_LIMIT_MAX):
             record_voucher_failure(request)
+        self.assertFalse(is_voucher_rate_limited(request))
+        record_voucher_failure(request)
         self.assertTrue(is_voucher_rate_limited(request))
         cache.clear()
 
