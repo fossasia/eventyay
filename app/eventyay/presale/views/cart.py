@@ -33,6 +33,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.services.cart import (
     CartError,
+    MAX_VOUCHER_CODE_LENGTH,
     add_products_to_cart,
     apply_voucher,
     clear_cart,
@@ -630,6 +631,9 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
 
         if v:
             v = v.strip()
+            if len(v) > MAX_VOUCHER_CODE_LENGTH:
+                messages.error(request, error_messages['voucher_invalid_length'])
+                return redirect(self.get_index_url())
             try:
                 self.voucher = Voucher.objects.get(code__iexact=v, event=request.event)
                 if self.voucher.redeemed >= self.voucher.max_usages:

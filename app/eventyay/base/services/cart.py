@@ -102,6 +102,7 @@ error_messages = {
         'The entered price exceeds the permitted maximum. The price range is %(min)s to %(max)s %(currency)s.'
     ),
     'voucher_invalid': _('This voucher code is not known in our database.'),
+    'voucher_invalid_length': _('This voucher code has an invalid length.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
         'This voucher code is currently locked since it is already contained in a cart. This '
@@ -150,6 +151,8 @@ error_messages = {
     'one_ticket_per_user': _('Only one ticket per user is allowed for a product in your cart. You already have a ticket.'),
     'one_ticket_per_user_cart': _('Only one ticket per user is allowed for this product. Quantity has been adjusted to 1.'),
 }
+
+MAX_VOUCHER_CODE_LENGTH = Voucher._meta.get_field('code').max_length
 
 
 class CartManager:
@@ -635,8 +638,11 @@ class CartManager:
     def apply_voucher(self, voucher_code: str):
         if self._operations:
             raise CartError('Applying a voucher to the whole cart should not be combined with other operations.')
+        voucher_code = voucher_code.strip()
+        if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
+            raise CartError(error_messages['voucher_invalid_length'])
         try:
-            voucher = self.event.vouchers.get(code__iexact=voucher_code.strip())
+            voucher = self.event.vouchers.get(code__iexact=voucher_code)
         except Voucher.DoesNotExist:
             raise CartError(error_messages['voucher_invalid'])
         voucher_use_diff = Counter()
@@ -728,8 +734,11 @@ class CartManager:
             voucher = None
 
             if i.get('voucher'):
+                voucher_code = i['voucher'].strip()
+                if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
+                    raise CartError(error_messages['voucher_invalid_length'])
                 try:
-                    voucher = self.event.vouchers.get(code__iexact=i.get('voucher').strip())
+                    voucher = self.event.vouchers.get(code__iexact=voucher_code)
                 except Voucher.DoesNotExist:
                     raise CartError(error_messages['voucher_invalid'])
                 else:

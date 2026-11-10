@@ -2247,6 +2247,20 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             self.assertFalse(CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists())
 
+    def test_voucher_invalid_length(self):
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '1',
+                '_voucher_code': 'A' * 256,
+            },
+            follow=True,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('invalid length', doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            self.assertFalse(CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists())
+
     def test_voucher_quota_empty(self):
         self.quota_tickets.size = 0
         self.quota_tickets.save()
