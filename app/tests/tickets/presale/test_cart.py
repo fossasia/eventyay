@@ -3,6 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from bs4 import BeautifulSoup
 from django.core.cache import cache
@@ -36,6 +37,8 @@ from eventyay.base.services.cart import (
     CartError,
     CartManager,
     VOUCHER_RATE_LIMIT_MAX,
+    VOUCHER_RATE_LIMIT_WINDOW,
+    _increment_voucher_counter,
     _voucher_rate_limit_key,
     error_messages,
     release_voucher_attempt,
@@ -2284,6 +2287,23 @@ class CartTest(CartTestMixin, TestCase):
             _, allowed = reserve_voucher_attempt(request)
             self.assertTrue(allowed)
         self.assertFalse(reserve_voucher_attempt(request)[1])
+        cache.clear()
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-touch',
+            }
+        }
+    )
+    def test_voucher_rate_limit_refreshes_expiry_after_increment(self):
+        cache.clear()
+        key = 'voucher-rate-limit-touch-key'
+        cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW)
+        with patch.object(cache, 'incr', return_value=2), patch.object(cache, 'touch') as touch:
+            self.assertEqual(_increment_voucher_counter(key), 2)
+        touch.assert_called_once_with(key, timeout=VOUCHER_RATE_LIMIT_WINDOW)
         cache.clear()
 
     @override_settings(

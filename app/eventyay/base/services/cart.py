@@ -235,11 +235,14 @@ def _increment_voucher_counter(key):
     if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
         return 1
     try:
-        return cache.incr(key)
+        count = cache.incr(key)
     except ValueError:
         if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
             return 1
-        return cache.incr(key)
+        count = cache.incr(key)
+    if not cache.touch(key, timeout=VOUCHER_RATE_LIMIT_WINDOW):
+        cache.add(key, count, timeout=VOUCHER_RATE_LIMIT_WINDOW)
+    return count
 
 
 def reserve_voucher_attempt(request):
