@@ -155,3 +155,24 @@ def test_editor_html_mail_escapes_untrusted_values():
     # Values render as text unless they are explicitly trusted HTML.
     assert '<p>&lt;strong&gt;Admin&lt;/strong&gt; &amp; Co</p>' in html
     assert qr in html
+
+
+@pytest.mark.django_db
+def test_editor_html_mail_links_url_placeholders(env):
+    djmail.outbox = []
+    event, user, organizer = env
+    template = LazyI18nString('<p>You can view your order here:<br>{url}</p>')
+    url = 'https://example.com/ccc/30c3/order/ABC12/secret/'
+    mail('dummy@dummy.dummy', 'Subject', template, {'url': url}, event)
+
+    message = djmail.outbox[0]
+    html_part = message.alternatives[0][0]
+    if not isinstance(html_part, str):  # multipart/related when images are inlined
+        html_part = next(p for p in html_part.walk() if p.get_content_type() == 'text/html')
+        html_part = html_part.get_payload(decode=True).decode(html_part.get_content_charset() or 'utf-8')
+    html = html_part
+    # The URL is a clickable link in the HTML part ...
+    assert re.search(rf'<a href="{re.escape(url)}"[^>]*>{re.escape(url)}</a>', html)
+    # ... and stays a bare URL in the text/plain part.
+    assert url in message.body
+    assert '<a ' not in message.body

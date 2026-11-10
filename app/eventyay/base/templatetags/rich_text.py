@@ -270,20 +270,47 @@ def expand_email_preview_placeholders(
         return expand_email_variable_chips(expanded, dict(context_dict))
 
 
-def compile_email_body(source: str) -> str:
+def compile_email_body(source: str, *, linkify: bool = True) -> str:
     """Render an email body fragment as HTML.
 
     Plain-text and legacy Markdown bodies are compiled with
     ``markdown_compile_email``.  Content that is already HTML (for example from
-    the Tiptap email editor) is sanitized and returned.
+    the Tiptap email editor) is sanitized and returned, with bare URLs turned
+    into links unless ``linkify`` is ``False``.
     """
     if not source:
         return source
     source = str(source)
     if is_tiptap_email_html(source):
         from eventyay.common.sanitizers import sanitize_email_html
-        return sanitize_email_html(source)
+        html_body = sanitize_email_html(source)
+        return linkify_email_html(html_body) if linkify else html_body
     return markdown_compile_email(source)
+
+
+def _new_links_only(callback):
+    """Apply a linkify callback to links created by linkify, not to the author's own links."""
+
+    def wrapped(attrs, new=False):
+        return callback(attrs, new) if new else attrs
+
+    return wrapped
+
+
+def linkify_email_html(html_body: str) -> str:
+    """Turn bare URLs and email addresses in editor email HTML into links.
+
+    Placeholder values such as ``{url}`` are inserted as escaped text, so without
+    this the order, cancel and voucher links in editor emails are not clickable.
+    Links the author added in the editor are left unchanged.
+    """
+    linker = bleach.Linker(
+        url_re=URL_RE,
+        email_re=EMAIL_RE,
+        callbacks=[_new_links_only(cb) for cb in DEFAULT_CALLBACKS + [abslink_callback]],
+        parse_email=True,
+    )
+    return linker.linkify(html_body)
 
 
 def email_body_to_editor_html(source: str) -> str:
@@ -297,7 +324,7 @@ def email_body_to_editor_html(source: str) -> str:
         return source
     source = str(source)
     if is_tiptap_email_html(source):
-        return compile_email_body(source)
+        return compile_email_body(source, linkify=False)
     return markdown_compile_email(source, preserve_line_breaks=True)
 
 
@@ -308,7 +335,7 @@ def email_html_to_plain_text(html_body: str) -> str:
     dropped because their data URIs are useless in plain text.
     """
     return html_to_markdown(
-        compile_email_body(html_body),
+        compile_email_body(html_body, linkify=False),
         strip=['img'],
         bullets='*',
         escape_underscores=False,
@@ -340,6 +367,9 @@ def is_placeholder_html_sample(sample) -> bool:
     return isinstance(sample, SafeString)
 
 
+PREVIEW_URL_SAMPLE_RE = re.compile(r'^https?://\S+$')
+
+
 def build_email_preview_context(event, base_parameters: list[str]):
     """Build sendmail preview context, keeping HTML placeholder samples intact."""
     from django.utils.translation import gettext
@@ -365,6 +395,10 @@ def build_email_preview_context(event, base_parameters: list[str]):
             context_dict[key] = str(sample)
         elif key in MARKDOWN_PLACEHOLDERS:
             context_dict[key] = markdown_compile_email(str(sample))
+        elif PREVIEW_URL_SAMPLE_RE.match(str(sample).strip()):
+            # Sent emails turn URLs into links (see linkify_email_html); show them the same way.
+            url = html.escape(str(sample).strip())
+            context_dict[key] = f'<a href="{url}" target="_blank" rel="noopener noreferrer">{url}</a>'
         else:
             context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict

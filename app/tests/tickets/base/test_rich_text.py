@@ -7,6 +7,7 @@ from eventyay.base.models import Event, Organizer
 from eventyay.base.templatetags.rich_text import (
     compile_email_body,
     email_body_to_editor_html,
+    email_html_to_plain_text,
     expand_email_preview_placeholders,
     is_tiptap_email_html,
     markdown_compile_email,
@@ -61,6 +62,42 @@ def test_email_body_to_editor_html_keeps_line_breaks():
 def test_email_body_to_editor_html_keeps_editor_html():
     html = '<p>Hello<br>World</p>'
     assert email_body_to_editor_html(html) == compile_email_body(html)
+
+
+def test_compile_email_body_links_bare_urls_in_editor_html():
+    """Placeholder values such as {url} are inserted as text; the sent email must link them."""
+    html = '<p>View your order:<br>\nhttps://example.com/order/ABC/secret/?a=1&amp;b=2</p>'
+    assert compile_email_body(html) == (
+        '<p>View your order:<br>\n'
+        '<a href="https://example.com/order/ABC/secret/?a=1&amp;b=2" rel="noopener" target="_blank">'
+        'https://example.com/order/ABC/secret/?a=1&amp;b=2</a></p>'
+    )
+
+
+def test_compile_email_body_links_bare_email_addresses_in_editor_html():
+    html = '<p>Questions? Write to help@example.org</p>'
+    assert compile_email_body(html) == (
+        '<p>Questions? Write to <a href="mailto:help@example.org">help@example.org</a></p>'
+    )
+
+
+def test_compile_email_body_keeps_author_links_unchanged():
+    html = '<p><a href="https://example.com/x">Open your order</a></p>'
+    assert compile_email_body(html) == html
+
+
+def test_editor_html_plain_text_and_editor_load_are_not_linked():
+    html = '<p>View your order:<br>\nhttps://example.com/order/ABC/</p>'
+    assert email_html_to_plain_text(html) == 'View your order:  \nhttps://example.com/order/ABC/'
+    assert email_body_to_editor_html(html) == html
+
+
+@pytest.mark.django_db
+def test_expand_email_preview_placeholders_links_url_samples(event):
+    html = '<p><span data-variable="url" class="tiptap-placeholder-chip">{url}</span></p>'
+    result = expand_email_preview_placeholders(html, event, base_parameters=['event', 'order'])
+    assert '{url}' not in result
+    assert '<a href="http' in result
 
 
 def test_compile_email_body_compiles_legacy_inline_html():
