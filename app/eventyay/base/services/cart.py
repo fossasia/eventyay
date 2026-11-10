@@ -162,8 +162,8 @@ error_messages = {
 }
 
 MAX_VOUCHER_CODE_LENGTH = Voucher._meta.get_field('code').max_length
-VOUCHER_RATE_LIMIT_MAX = getattr(settings, 'VOUCHER_RATE_LIMIT_MAX', 5)
-VOUCHER_RATE_LIMIT_WINDOW = getattr(settings, 'VOUCHER_RATE_LIMIT_WINDOW', 600)
+VOUCHER_RATE_LIMIT_MAX = getattr(settings, 'VOUCHER_RATE_LIMIT_MAX', 10)
+VOUCHER_RATE_LIMIT_WINDOW = getattr(settings, 'VOUCHER_RATE_LIMIT_WINDOW', 300)
 
 
 def _voucher_rate_limit_key(request):
@@ -180,7 +180,7 @@ def is_voucher_rate_limited(request):
     if not key:
         return False
     try:
-        return int(cache.get(key, 0) or 0) >= VOUCHER_RATE_LIMIT_MAX
+        return int(cache.get(key, 0) or 0) > VOUCHER_RATE_LIMIT_MAX
     except Exception:
         logger.exception('Could not read voucher rate limit; allowing request')
         return False
@@ -192,7 +192,10 @@ def record_voucher_failure(request):
         return
     try:
         if not cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
-            cache.incr(key)
+            try:
+                cache.incr(key)
+            except ValueError:
+                cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW)
     except Exception:
         logger.exception('Could not record voucher rate limit; allowing request')
 
