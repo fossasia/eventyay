@@ -19,7 +19,8 @@ from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.core.cache.backends.redis import RedisCache as DjangoRedisCache
 from django.http import HttpResponse
 from django.test import RequestFactory, override_settings
-from redis.exceptions import ResponseError
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import NoPermissionError, ResponseError
 
 from eventyay.middleware import block_404
 from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
@@ -403,9 +404,11 @@ def _make_identity_request(identity_kind: str, path: str = f'{_API_PATH_PREFIX}v
 @pytest.fixture(autouse=True)
 def _reset_block404_redis_flags():
     block_404._redis_state.expire_nx_supported = None
+    block_404._redis_state.expire_acl_denied = False
     block_404._redis_state.missing_client_warned = False
     yield
     block_404._redis_state.expire_nx_supported = None
+    block_404._redis_state.expire_acl_denied = False
     block_404._redis_state.missing_client_warned = False
 
 
@@ -452,8 +455,24 @@ class _FutureDjangoRedisCache(DjangoRedisCache):
             self.get_backend_timeout(timeout),
         )
 
+    def set(self, key, value, timeout=DEFAULT_TIMEOUT, version=None):
+        self._backend_impl.set(
+            self.make_and_validate_key(key, version=version),
+            value,
+            self.get_backend_timeout(timeout),
+        )
+
     def incr(self, key, delta=1, version=None):
         return self._backend_impl.incr(self.make_and_validate_key(key, version=version), delta)
+
+    def touch(self, key, timeout=DEFAULT_TIMEOUT, version=None):
+        return self._backend_impl.touch(
+            self.make_and_validate_key(key, version=version),
+            self.get_backend_timeout(timeout),
+        )
+
+    def delete(self, key, version=None):
+        return self._backend_impl.delete(self.make_and_validate_key(key, version=version))
 
 
 class TestBlock404MiddlewareRedis:
@@ -541,17 +560,21 @@ class TestBlock404MiddlewareRedis:
         middleware_404 = Block404Middleware(_make_get_response(404))
         assert middleware_404(request).status_code == 404
         assert client.expire(made_key, 25)
+        before_404_ttl = client.ttl(made_key)
 
         assert middleware_404(_make_identity_request('user')).status_code == 404
         assert client.get(made_key) == b'2'
-        assert 0 < client.ttl(made_key) <= 25
+        after_404_ttl = client.ttl(made_key)
+        assert before_404_ttl - 2 <= after_404_ttl <= before_404_ttl
 
         client.set(made_key, Block404Middleware.MAX_404_PER_MINUTE, ex=25)
         middleware_200 = Block404Middleware(_make_get_response(200))
         for _ in range(3):
+            before_429_ttl = client.ttl(made_key)
             blocked = middleware_200(_make_identity_request('user'))
+            after_429_ttl = client.ttl(made_key)
             assert blocked.status_code == 429
-            assert 0 < client.ttl(made_key) <= 25
+            assert before_429_ttl - 2 <= after_429_ttl <= before_429_ttl
 
     def test_increment_uses_transactional_pipeline_without_exists(self, fakeredis_cache, monkeypatch):
         """_increment must use MULTI/EXEC INCR + EXPIRE NX without calling EXISTS."""
@@ -610,7 +633,7 @@ class TestBlock404MiddlewareRedis:
         assert any(r.levelno == logging.WARNING and 'Failed to increment' in r.message for r in caplog.records)
 
     def test_corrupted_non_integer_value_deletes_key_and_recovers(self, fakeredis_cache, caplog):
-        """A non-integer counter value fails open once, deletes the corrupt key, and recovers on the next 404."""
+        """A non-integer counter value resets cleanly to 1 with TTL, logs a warning, and keeps counting."""
         request = _make_identity_request('user')
         key = Block404Middleware._cache_key(request)
         made_key = fakeredis_cache.make_and_validate_key(key)
@@ -622,11 +645,19 @@ class TestBlock404MiddlewareRedis:
             first = middleware(request)
 
         assert first.status_code == 404
-        assert client.get(made_key) is None
+        assert client.get(made_key) == b'1'
+        assert 0 < client.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
         assert any(r.levelno == logging.WARNING for r in caplog.records)
 
         second = middleware(_make_identity_request('user'))
         assert second.status_code == 404
+        assert client.get(made_key) == b'2'
+        assert 0 < client.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+
+        # Raw unpickled garbage in Redis must also not raise UnpicklingError on cache.get().
+        client.set(made_key, 'raw-unpickled-garbage', ex=60)
+        third = middleware(_make_identity_request('user'))
+        assert third.status_code == 404
         assert client.get(made_key) == b'1'
         assert 0 < client.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
 
@@ -721,3 +752,245 @@ class TestBlock404MiddlewareRedis:
             warnings = [r for r in caplog.records if r.levelno == logging.WARNING and '_cache.get_client' in r.message]
             assert len(warnings) == 1
             assert middleware(_make_identity_request('user')).status_code == 429
+
+    @pytest.mark.parametrize('exc', [RedisConnectionError('Redis down'), OSError('Socket closed')])
+    def test_redis_outage_on_initial_lookup_fails_open(self, fakeredis_cache, monkeypatch, caplog, exc):
+        """Redis/socket errors on the initial cache.get() must log a warning and pass through cleanly."""
+
+        def broken_get(self, key, default=None, version=None):
+            raise exc
+
+        monkeypatch.setattr(DjangoRedisCache, 'get', broken_get)
+
+        middleware = Block404Middleware(_make_get_response(200))
+        with caplog.at_level(logging.WARNING, logger=block_404.__name__):
+            response = middleware(_make_identity_request('user'))
+
+        assert response.status_code == 200
+        assert any(r.levelno == logging.WARNING and 'Failed to read 404 counter' in r.message for r in caplog.records)
+
+    def test_fallback_malformed_counter_resets_and_continues_throttling(self, fakeredis_cache, monkeypatch, caplog):
+        """Non-integer counters on the cache.add/incr fallback path must reset rather than disabling throttling."""
+        monkeypatch.setattr(redis.Redis, 'info', lambda self, section=None: {'redis_version': '6.2.14'})
+        request = _make_identity_request('user')
+        key = Block404Middleware._cache_key(request)
+        made_key = fakeredis_cache.make_and_validate_key(key)
+        client = fakeredis_cache._cache.get_client(made_key, write=True)
+        client.set(made_key, b'not-an-int', ex=60)
+
+        middleware = Block404Middleware(_make_get_response(404))
+        with caplog.at_level(logging.WARNING, logger=block_404.__name__):
+            first = middleware(_make_identity_request('user'))
+
+        assert first.status_code == 404
+        assert client.get(made_key) == b'1'
+        assert 0 < client.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+        assert any(r.levelno == logging.WARNING and 'Resetting malformed' in r.message for r in caplog.records)
+
+        for _ in range(Block404Middleware.MAX_404_PER_MINUTE - 1):
+            assert middleware(_make_identity_request('user')).status_code == 404
+        assert middleware(_make_identity_request('user')).status_code == 429
+
+    def test_execution_time_expire_nx_error_does_not_double_count_first_404(self, fakeredis_cache, monkeypatch, caplog):
+        """If INCR commits before EXPIRE NX rejects during EXEC, do not re-increment via cache.incr."""
+        monkeypatch.setattr(
+            redis.Redis,
+            'info',
+            lambda self, section=None: (_ for _ in ()).throw(ResponseError('NOPERM')),
+        )
+        request = _make_identity_request('user')
+        key = Block404Middleware._cache_key(request)
+        made_key = fakeredis_cache.make_and_validate_key(key)
+        client = fakeredis_cache._cache.get_client(made_key, write=True)
+
+        orig_execute = redis.client.Pipeline.execute
+
+        def commit_incr_then_fail_expire(self, raise_on_error=True):
+            assert raise_on_error is False
+            # Simulate INCR committing without TTL and EXPIRE ... NX returning an execution error.
+            new_count = client.incr(made_key)
+            return [new_count, ResponseError("ERR wrong number of arguments for 'expire' command")]
+
+        monkeypatch.setattr(redis.client.Pipeline, 'execute', commit_incr_then_fail_expire)
+
+        middleware = Block404Middleware(_make_get_response(404))
+        with caplog.at_level(logging.ERROR, logger=block_404.__name__):
+            resp1 = middleware(_make_identity_request('user'))
+
+        assert resp1.status_code == 404
+        assert client.get(made_key) == b'1'
+        assert 0 < client.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+        assert block_404._redis_state.expire_nx_supported is False
+        assert len([r for r in caplog.records if r.levelno == logging.ERROR]) == 1
+
+        monkeypatch.setattr(redis.client.Pipeline, 'execute', orig_execute)
+        resp2 = middleware(_make_identity_request('user'))
+        assert resp2.status_code == 404
+        assert client.get(made_key) == b'2'
+
+    def test_expire_acl_denial_falls_back_without_losing_throttling_or_ttl_repair(
+        self, fakeredis_cache, monkeypatch, caplog
+    ):
+        """When Redis ACL denies EXPIRE, throttling and TTL repair must keep working via SET EX / cache.add/incr."""
+        monkeypatch.setattr(redis.Redis, 'info', lambda self, section=None: {'redis_version': '7.0.15'})
+        request = _make_identity_request('user')
+        key = Block404Middleware._cache_key(request)
+        made_key = fakeredis_cache.make_and_validate_key(key)
+        client = fakeredis_cache._cache.get_client(made_key, write=True)
+        orig_expire = redis.Redis.expire
+
+        def noperm_pipeline_execute(self, raise_on_error=True):
+            raise NoPermissionError(
+                f'Command # 2 (EXPIRE {made_key} 60 NX) of pipeline caused error: '
+                "this user has no permissions to run the 'expire' command"
+            )
+
+        def noperm_direct_expire(self, name, time, nx=False, xx=False, gt=False, lt=False):
+            if isinstance(self, redis.client.Pipeline):
+                return orig_expire(self, name, time, nx=nx, xx=xx, gt=gt, lt=lt)
+            raise NoPermissionError("this user has no permissions to run the 'expire' command")
+
+        monkeypatch.setattr(redis.client.Pipeline, 'execute', noperm_pipeline_execute)
+        monkeypatch.setattr(redis.Redis, 'expire', noperm_direct_expire)
+
+        middleware_404 = Block404Middleware(_make_get_response(404))
+        with caplog.at_level(logging.ERROR, logger=block_404.__name__):
+            for _ in range(Block404Middleware.MAX_404_PER_MINUTE + 1):
+                middleware_404(_make_identity_request('user'))
+
+        error_msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR]
+        assert len(error_msgs) == 1
+        assert 'Redis ACL denies EXPIRE' in error_msgs[0]
+        assert block_404._redis_state.expire_acl_denied is True
+        assert block_404._redis_state.expire_nx_supported is True
+        assert 0 < client.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+        assert Block404Middleware(_make_get_response(200))(_make_identity_request('user')).status_code == 429
+
+        # Stuck TTL: -1 key under -expire ACL must be repaired via SET EX XX without using EXPIRE.
+        ip_request = _make_identity_request('ip')
+        ip_key = Block404Middleware._cache_key(ip_request)
+        made_ip_key = fakeredis_cache.make_and_validate_key(ip_key)
+        client.set(made_ip_key, Block404Middleware.MAX_404_PER_MINUTE)
+        assert client.ttl(made_ip_key) == -1
+
+        blocked = Block404Middleware(_make_get_response(200))(ip_request)
+        assert blocked.status_code == 429
+        assert client.get(made_ip_key) == str(Block404Middleware.MAX_404_PER_MINUTE).encode()
+        assert 0 < client.ttl(made_ip_key) <= Block404Middleware.WINDOW_SECONDS
+
+        # Active TTL must not be extended or prematurely shortened when EXPIRE is denied by ACL.
+        client.set(made_ip_key, Block404Middleware.MAX_404_PER_MINUTE, ex=25, xx=True)
+        before_acl_ttl = client.ttl(made_ip_key)
+        blocked_again = Block404Middleware(_make_get_response(200))(_make_identity_request('ip'))
+        after_acl_ttl = client.ttl(made_ip_key)
+        assert blocked_again.status_code == 429
+        assert before_acl_ttl - 2 <= after_acl_ttl <= before_acl_ttl
+
+        # Also verify execution-time EXPIRE ACL failure preserves committed INCR and repairs TTL.
+        block_404._redis_state.expire_acl_denied = False
+        token_req = _make_identity_request('token')
+        made_token = fakeredis_cache.make_and_validate_key(Block404Middleware._cache_key(token_req))
+
+        def commit_incr_then_noperm_expire(self, raise_on_error=True):
+            assert raise_on_error is False
+            new_count = client.incr(made_token)
+            return [
+                new_count,
+                NoPermissionError(
+                    f'Command # 2 (EXPIRE {made_token} 60 NX) of pipeline caused error: '
+                    "this user has no permissions to run the 'expire' command"
+                ),
+            ]
+
+        monkeypatch.setattr(redis.client.Pipeline, 'execute', commit_incr_then_noperm_expire)
+        assert middleware_404(token_req).status_code == 404
+        assert client.get(made_token) == b'1'
+        assert 0 < client.ttl(made_token) <= Block404Middleware.WINDOW_SECONDS
+
+    def test_missing_private_cache_attr_repairs_ttl_less_counter_without_sliding_ttl(self):
+        """Without _cache.get_client, TTL-less counters must still expire via a non-sliding guard."""
+        server = fakeredis.FakeServer()
+        key_prefix = f'test-404-{uuid.uuid4().hex}'
+        future_cfg = {
+            'default': {
+                'BACKEND': f'{_FutureDjangoRedisCache.__module__}.{_FutureDjangoRedisCache.__qualname__}',
+                'LOCATION': 'redis://localhost:6379/0',
+                'KEY_PREFIX': key_prefix,
+                'OPTIONS': {
+                    'connection_class': fakeredis.FakeRedisConnection,
+                    'server': server,
+                },
+            }
+        }
+
+        with override_settings(CACHES=future_cfg):
+            cache = caches[Block404Middleware.CACHE_ALIAS]
+            req_mid = _make_identity_request('user')
+            key_mid = Block404Middleware._cache_key(req_mid)
+            made_mid = cache.make_and_validate_key(key_mid)
+            raw_client = cache._backend_impl.get_client(made_mid, write=True)
+
+            try:
+                # Mid-window TTL: -1 key gains a TTL on increment without sliding on further 404s.
+                raw_client.set(made_mid, 15)
+                assert raw_client.ttl(made_mid) == -1
+                assert Block404Middleware(_make_get_response(404))(req_mid).status_code == 404
+                assert raw_client.get(made_mid) == b'16'
+                assert 0 < raw_client.ttl(made_mid) <= Block404Middleware.WINDOW_SECONDS
+
+                raw_client.expire(made_mid, 25)
+                before_mid_ttl = raw_client.ttl(made_mid)
+                assert Block404Middleware(_make_get_response(404))(_make_identity_request('user')).status_code == 404
+                after_mid_ttl = raw_client.ttl(made_mid)
+                assert before_mid_ttl - 2 <= after_mid_ttl <= before_mid_ttl
+
+                # Blocked TTL: -1 key gains a TTL on 429 and does not extend on repeated 429 polls.
+                req_ip = _make_identity_request('ip')
+                key_ip = Block404Middleware._cache_key(req_ip)
+                made_ip = cache.make_and_validate_key(key_ip)
+                raw_client.set(made_ip, Block404Middleware.MAX_404_PER_MINUTE)
+                assert raw_client.ttl(made_ip) == -1
+
+                middleware_200 = Block404Middleware(_make_get_response(200))
+                assert middleware_200(req_ip).status_code == 429
+                assert 0 < raw_client.ttl(made_ip) <= Block404Middleware.WINDOW_SECONDS
+
+                raw_client.expire(made_ip, 25)
+                for _ in range(3):
+                    before_guard_ttl = raw_client.ttl(made_ip)
+                    assert middleware_200(_make_identity_request('ip')).status_code == 429
+                    after_guard_ttl = raw_client.ttl(made_ip)
+                    assert before_guard_ttl - 2 <= after_guard_ttl <= before_guard_ttl
+            finally:
+                keys = list(raw_client.scan_iter(match=f'{key_prefix}:*'))
+                if keys:
+                    raw_client.delete(*keys)
+
+    @pytest.mark.parametrize(
+        'error_msg',
+        [
+            'Command # 2 (EXPIRE :1:404_counter:user:138 60 NX) of pipeline caused error: '
+            "READONLY You can't write against a read only replica.",
+            'Command # 2 (EXPIRE :1:404_counter:user:138 60 NX) of pipeline caused error: '
+            'OOM command not allowed when used memory > maxmemory.',
+            'EXECABORT Transaction discarded because of previous errors.',
+        ],
+    )
+    def test_transient_expire_error_does_not_disable_expire_nx(self, fakeredis_cache, monkeypatch, caplog, error_msg):
+        """Transient READONLY/OOM/EXECABORT errors echoing NX must fail open without disabling EXPIRE ... NX."""
+        monkeypatch.setattr(redis.Redis, 'info', lambda self, section=None: {'redis_version': '7.0.15'})
+        monkeypatch.setattr(
+            redis.client.Pipeline,
+            'execute',
+            lambda self, raise_on_error=True: (_ for _ in ()).throw(ResponseError(error_msg)),
+        )
+
+        middleware = Block404Middleware(_make_get_response(404))
+        with caplog.at_level(logging.WARNING, logger=block_404.__name__):
+            response = middleware(_make_identity_request('user'))
+
+        assert response.status_code == 404
+        assert block_404._redis_state.expire_nx_supported is True
+        assert block_404._redis_state.expire_acl_denied is False
+        assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert any(r.levelno == logging.WARNING and 'Failed to increment' in r.message for r in caplog.records)
