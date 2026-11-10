@@ -165,7 +165,8 @@ export default {
 			order: 'desc',
 			loading: false,
 			debouncedSearch: null,
-			currentRequestId: 0
+			currentRequestId: 0,
+			lastFetchedSearch: ''
 		}
 	},
 	computed: {
@@ -199,12 +200,14 @@ export default {
 	},
 	created() {
 		this.debouncedSearch = debounce(() => {
+			if (this.searchScope !== 'all') return
 			this.currentPage = 1
 			this.fetchEntries()
 		}, 300)
 		this.ensureConnectedAndFetch()
 	},
 	beforeUnmount() {
+		this.currentRequestId++
 		if (this.debouncedSearch) {
 			this.debouncedSearch.cancel()
 		}
@@ -229,22 +232,30 @@ export default {
 			if (this.debouncedSearch) {
 				this.debouncedSearch.cancel()
 			}
-			if (this.search.trim()) {
+			// Invalidate any in-flight request initiated under the old scope/search
+			this.currentRequestId++
+			const needsRefresh = Boolean(this.search.trim() || this.lastFetchedSearch || this.loading)
+			if (needsRefresh) {
 				this.currentPage = 1
-				this.fetchEntries()
+				return this.fetchEntries()
+			} else {
+				this.loading = false
 			}
 		},
 		toggleSort() {
+			if (this.debouncedSearch) this.debouncedSearch.cancel()
 			this.order = this.order === 'desc' ? 'asc' : 'desc'
 			this.currentPage = 1
 			this.fetchEntries()
 		},
 		onPageSizeChange() {
+			if (this.debouncedSearch) this.debouncedSearch.cancel()
 			this.currentPage = 1
 			this.fetchEntries()
 		},
 		goToPage(page) {
 			if (page < 1 || page > this.totalPages || page === this.currentPage) return
+			if (this.debouncedSearch) this.debouncedSearch.cancel()
 			this.currentPage = page
 			this.fetchEntries()
 		},
@@ -272,15 +283,17 @@ export default {
 					page_size: this.pageSize,
 					order: this.order
 				}
-				if (this.searchScope === 'all' && this.search.trim()) {
-					payload.search = this.search.trim()
-					payload.search_term = this.search.trim()
+				const activeSearch = (this.searchScope === 'all' && this.search.trim()) ? this.search.trim() : ''
+				if (activeSearch) {
+					payload.search = activeSearch
+					payload.search_term = activeSearch
 				}
 				const res = await api.call('event.auditlog.list', payload)
 				if (this.currentRequestId !== requestId) return
 
 				const results = res?.results || []
 				this.entries = results
+				this.lastFetchedSearch = activeSearch
 				this.totalRecords = Number(res?.total != null ? res.total : results.length)
 				const calculatedPages = Math.max(1, Math.ceil((this.totalRecords || 0) / this.pageSize))
 				this.totalPages = Number(res?.total_pages != null ? res.total_pages : calculatedPages)
@@ -289,6 +302,7 @@ export default {
 				if (this.currentRequestId === requestId) {
 					console.error('Failed to fetch audit log entries', e)
 					this.entries = []
+					this.lastFetchedSearch = ''
 					this.totalRecords = 0
 					this.totalPages = 1
 				}
