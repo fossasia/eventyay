@@ -171,6 +171,10 @@ export default {
 		},
 		hasAlternativeStreams() {
 			return this.module.config.alternatives?.length > 0
+		},
+		streamAutoStart() {
+			const currentStream = this.room?.currentStream
+			return (currentStream ? currentStream.config?.autoStart : this.module?.config?.autoStart) !== false
 		}
 	},
 	watch: {
@@ -184,6 +188,9 @@ export default {
 				if (newId !== oldId || newUrl !== oldUrl) {
 					if (newStream && newStream.stream_type === STREAM_TYPE_HLS) {
 						this.offline = false
+						const shouldAutoStart = Boolean(this.autoplay && (newStream.config?.autoStart !== false))
+						this.playing = shouldAutoStart
+						this.playbackRequested = shouldAutoStart
 					}
 					this.$nextTick(() => {
 						this.initializePlayer()
@@ -195,8 +202,9 @@ export default {
 		}
 	},
 	created() {
-		this.playing = this.autoplay
-		this.playbackRequested = this.autoplay
+		const shouldAutoStart = Boolean(this.autoplay && this.streamAutoStart)
+		this.playing = shouldAutoStart
+		this.playbackRequested = shouldAutoStart
 		if (localStorage[`livestream.native.alternative:${this.room.id}`]) {
 			this.chosenAlternative = localStorage[`livestream.native.alternative:${this.room.id}`]
 		}
@@ -377,7 +385,9 @@ export default {
 				this.player?.startLoad()
 				// force live edge after unpausing
 				// TODO make this less yarring
-				this.$refs.video.currentTime = this.$refs.video.buffered.end(this.$refs.video.buffered.length - 1)
+				if (this.$refs.video.buffered?.length > 0) {
+					this.$refs.video.currentTime = this.$refs.video.buffered.end(this.$refs.video.buffered.length - 1)
+				}
 			} else {
 				this.playbackRequested = false
 				this.$refs.video.pause()
