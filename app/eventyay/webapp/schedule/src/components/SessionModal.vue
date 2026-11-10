@@ -205,11 +205,16 @@ export default {
 				const resPath = r.resource || r.link
 				if (resPath) {
 					const cleanPath = resPath.split(/[?#]/)[0]
-					if (cleanPath.toLowerCase().endsWith('.pdf') && !resPath.includes('#')) {
+					if (cleanPath.toLowerCase().endsWith('.pdf')) {
+						const appendHash = (url) => {
+							if (!url) return undefined
+							const baseAndQuery = url.split('#')[0]
+							return `${baseAndQuery}#resource`
+						}
 						return {
 							...r,
-							resource: r.resource ? `${r.resource}#resource` : undefined,
-							link: r.link ? `${r.link}#resource` : undefined
+							resource: appendHash(r.resource),
+							link: appendHash(r.link)
 						}
 					}
 				}
