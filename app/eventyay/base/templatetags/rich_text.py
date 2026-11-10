@@ -270,47 +270,20 @@ def expand_email_preview_placeholders(
         return expand_email_variable_chips(expanded, dict(context_dict))
 
 
-def compile_email_body(source: str, *, linkify: bool = True) -> str:
+def compile_email_body(source: str) -> str:
     """Render an email body fragment as HTML.
 
     Plain-text and legacy Markdown bodies are compiled with
     ``markdown_compile_email``.  Content that is already HTML (for example from
-    the Tiptap email editor) is sanitized and returned, with bare URLs turned
-    into links unless ``linkify`` is ``False``.
+    the Tiptap email editor) is sanitized and returned.
     """
     if not source:
         return source
     source = str(source)
     if is_tiptap_email_html(source):
         from eventyay.common.sanitizers import sanitize_email_html
-        html_body = sanitize_email_html(source)
-        return linkify_email_html(html_body) if linkify else html_body
+        return linkify_email_html(sanitize_email_html(source))
     return markdown_compile_email(source)
-
-
-def _new_links_only(callback):
-    """Apply a linkify callback to links created by linkify, not to the author's own links."""
-
-    def wrapped(attrs, new=False):
-        return callback(attrs, new) if new else attrs
-
-    return wrapped
-
-
-def linkify_email_html(html_body: str) -> str:
-    """Turn bare URLs and email addresses in editor email HTML into links.
-
-    Placeholder values such as ``{url}`` are inserted as escaped text, so without
-    this the order, cancel and voucher links in editor emails are not clickable.
-    Links the author added in the editor are left unchanged.
-    """
-    linker = bleach.Linker(
-        url_re=URL_RE,
-        email_re=EMAIL_RE,
-        callbacks=[_new_links_only(cb) for cb in DEFAULT_CALLBACKS + [abslink_callback]],
-        parse_email=True,
-    )
-    return linker.linkify(html_body)
 
 
 def email_body_to_editor_html(source: str) -> str:
@@ -324,7 +297,7 @@ def email_body_to_editor_html(source: str) -> str:
         return source
     source = str(source)
     if is_tiptap_email_html(source):
-        return compile_email_body(source, linkify=False)
+        return compile_email_body(source)
     return markdown_compile_email(source, preserve_line_breaks=True)
 
 
@@ -334,8 +307,10 @@ def email_html_to_plain_text(html_body: str) -> str:
     Produces Markdown, like legacy plain-text bodies. Images (QR codes) are
     dropped because their data URIs are useless in plain text.
     """
+    from eventyay.common.sanitizers import sanitize_email_html
+
     return html_to_markdown(
-        compile_email_body(html_body, linkify=False),
+        sanitize_email_html(html_body),
         strip=['img'],
         bullets='*',
         escape_underscores=False,
@@ -395,6 +370,16 @@ def build_email_preview_context(event, base_parameters: list[str]):
         else:
             context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict
+
+
+def linkify_email_html(html_body):
+    """Link bare URLs in editor HTML, e.g. {url} values, as markdown_compile_email does."""
+    return bleach.Linker(
+        url_re=URL_RE,
+        email_re=EMAIL_RE,
+        callbacks=DEFAULT_CALLBACKS + [abslink_callback],
+        parse_email=True,
+    ).linkify(html_body)
 
 
 # TODO: Implement nh3 equivalent
