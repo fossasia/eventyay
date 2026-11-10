@@ -151,21 +151,26 @@ class DraftRemindersForm(MailTemplateForm):
         kwargs = ['event', 'submission', 'user']
         return get_available_placeholders(event=self.event, kwargs=kwargs)
 
+    def get_recipients(self):
+        """Return one ``(submission, speaker)`` pair per reminder that will be sent."""
+        submissions = Submission.all_objects.filter(
+            state=SubmissionStates.DRAFT, event=self.event
+        ).prefetch_related('speakers')
+        return [(submission, user) for submission in submissions for user in submission.speakers.all()]
+
     def save(self, *args, **kwargs):
         template = self.instance
-        submissions = Submission.all_objects.filter(state=SubmissionStates.DRAFT, event=self.event)
         mail_count = 0
-        for submission in submissions:
-            for user in submission.speakers.all():
-                template.to_mail(
-                    user=user,
-                    event=self.event,
-                    locale=submission.get_email_locale(user.locale),
-                    context_kwargs={'submission': submission, 'user': user},
-                    skip_queue=True,
-                    commit=False,
-                )
-                mail_count += 1
+        for submission, user in self.get_recipients():
+            template.to_mail(
+                user=user,
+                event=self.event,
+                locale=submission.get_email_locale(user.locale),
+                context_kwargs={'submission': submission, 'user': user},
+                skip_queue=True,
+                commit=False,
+            )
+            mail_count += 1
 
         return mail_count
 

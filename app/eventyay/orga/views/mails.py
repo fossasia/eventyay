@@ -1,4 +1,5 @@
 import json
+import uuid
 
 import nh3
 from django.contrib import messages
@@ -14,7 +15,7 @@ from django.views.generic import FormView, ListView, TemplateView, View
 from django_context_decorator import context
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.entitlements import check_entitlement
+from eventyay.base.entitlements import check_entitlement, record_usage
 from eventyay.base.models.mail import MailTemplate, QueuedMail, get_prefixed_subject
 from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.exceptions import SendMailException
@@ -851,7 +852,36 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.base
 
     def form_valid(self, form):
+        event = self.request.event
+        recipients_count = len(form.get_recipients())
+        if recipients_count:
+            decision = check_entitlement(
+                event.organizer,
+                'email.bulk.monthly',
+                event=event,
+                quantity=recipients_count,
+            )
+            if not decision.allowed:
+                error_msg = decision.message or _(
+                    'You have reached the limit for sending bulk emails on your plan.'
+                )
+                form.add_error(None, error_msg)
+                return self.form_invalid(form)
+
         result = form.save()
+        if result:
+            # Reminders are sent without being stored, so each send is its own usage source.
+            source_id = uuid.uuid4().hex
+            record_usage(
+                event.organizer,
+                'email.bulk.monthly',
+                quantity=result,
+                unit='emails',
+                source_type='bulk_email',
+                source_id=source_id,
+                idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
+                event=event,
+            )
         messages.success(
             self.request,
             _('{count} emails have been sent.').format(count=result),

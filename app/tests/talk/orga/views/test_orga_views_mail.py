@@ -4,11 +4,13 @@ from unittest.mock import patch
 
 import pytest
 from django.core import mail as djmail
+from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.entitlements import EntitlementDecision
 from eventyay.base.models import MailTemplate, MailTemplateRoles, QueuedMail
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.orga.forms.mails import MailDetailForm, WriteSessionMailForm
 
 
@@ -1492,4 +1494,88 @@ def test_draft_to_outbox_denied_by_entitlement(orga_client, event, mail):
         )
 
 
+def _draft_reminders_url(event):
+    return reverse(
+        "orga:mails.compose.draft_reminders",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
 
+
+@pytest.mark.django_db
+def test_draft_reminders_denied_by_entitlement(orga_client, event, speaker, submission):
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.save()
+    djmail.outbox = []
+
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(
+            allowed=False,
+            reason_code="tier_limit_exceeded",
+            message="Monthly email limit reached for this plan.",
+        ),
+    ) as mock_check, patch("eventyay.orga.views.mails.record_usage") as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            follow=True,
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 200
+    assert (
+        "Monthly email limit reached for this plan."
+        in response.context["form"].non_field_errors()
+    )
+    mock_check.assert_called_once_with(
+        event.organizer,
+        "email.bulk.monthly",
+        event=event,
+        quantity=1,
+    )
+    mock_record.assert_not_called()
+    assert djmail.outbox == []
+
+
+@pytest.mark.django_db
+def test_draft_reminders_record_bulk_mail_usage(orga_client, event, speaker, submission):
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.save()
+    djmail.outbox = []
+
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(allowed=True),
+    ), patch("eventyay.orga.views.mails.record_usage") as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            follow=True,
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 200
+    assert len(djmail.outbox) == 1
+    mock_record.assert_called_once()
+    args, kwargs = mock_record.call_args
+    assert args == (event.organizer, "email.bulk.monthly")
+    assert kwargs["quantity"] == 1
+    assert kwargs["unit"] == "emails"
+    assert kwargs["event"] == event
+    assert kwargs["idempotency_key"].startswith("bulk_mail_draft_reminders_")
+
+
+@pytest.mark.django_db
+def test_draft_reminders_without_drafts_skip_entitlement(orga_client, event, submission):
+    with patch("eventyay.orga.views.mails.check_entitlement") as mock_check, patch(
+        "eventyay.orga.views.mails.record_usage"
+    ) as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            follow=True,
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 200
+    mock_check.assert_not_called()
+    mock_record.assert_not_called()
