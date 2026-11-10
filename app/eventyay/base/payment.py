@@ -17,7 +17,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.dispatch import receiver
 from django.forms import Form
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
 from django.template.loader import get_template
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
@@ -47,6 +48,7 @@ from eventyay.base.services.cart import (
     get_fees,
     release_voucher_attempt,
     reserve_voucher_attempt,
+    VOUCHER_RATE_LIMIT_WINDOW,
 )
 from eventyay.base.settings import SettingsSandbox
 from eventyay.base.signals import register_payment_providers
@@ -1188,6 +1190,19 @@ class GiftCardPayment(BasePaymentProvider):
     verbose_name = _('Gift card')
     priority = 10
 
+    def _rate_limit_response(self, request: HttpRequest) -> HttpResponse:
+        response = render(
+            request,
+            '429.html',
+            {
+                'message': _(error_messages['voucher_rate_limited']),
+                'continue_url': request.path,
+            },
+            status=429,
+        )
+        response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+        return response
+
     @property
     def settings_form_fields(self):
         f = super().settings_form_fields
@@ -1271,8 +1286,7 @@ class GiftCardPayment(BasePaymentProvider):
 
         voucher_attempt_key, allowed = reserve_voucher_attempt(request)
         if not allowed:
-            messages.error(request, _(error_messages['voucher_rate_limited']))
-            return
+            return self._rate_limit_response(request)
         
         try:
             gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
@@ -1368,8 +1382,7 @@ class GiftCardPayment(BasePaymentProvider):
 
         voucher_attempt_key, allowed = reserve_voucher_attempt(request)
         if not allowed:
-            messages.error(request, _(error_messages['voucher_rate_limited']))
-            return
+            return self._rate_limit_response(request)
 
         try:
             gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)

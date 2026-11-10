@@ -36,6 +36,7 @@ from eventyay.base.services.cart import (
     CartError,
     CartManager,
     VOUCHER_RATE_LIMIT_MAX,
+    _voucher_rate_limit_key,
     error_messages,
     release_voucher_attempt,
     reserve_voucher_attempt,
@@ -2308,6 +2309,32 @@ class CartTest(CartTestMixin, TestCase):
             release_voucher_attempt(key)
         self.assertTrue(reserve_voucher_attempt(request)[1])
         cache.clear()
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=('10.0.0.0/8', '203.0.113.0/24'))
+    def test_voucher_rate_limit_uses_client_from_trusted_proxy_chain(self):
+        first = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.99, 192.0.2.1, 203.0.113.8')
+        first.event = self.event
+        first.META['REMOTE_ADDR'] = '10.0.0.2'
+        spoofed = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.55, 192.0.2.1, 203.0.113.8')
+        spoofed.event = self.event
+        spoofed.META['REMOTE_ADDR'] = '10.0.0.2'
+        second_client = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.99, 192.0.2.2, 203.0.113.8')
+        second_client.event = self.event
+        second_client.META['REMOTE_ADDR'] = '10.0.0.2'
+
+        self.assertEqual(_voucher_rate_limit_key(first), _voucher_rate_limit_key(spoofed))
+        self.assertNotEqual(_voucher_rate_limit_key(first), _voucher_rate_limit_key(second_client))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=('10.0.0.0/8',))
+    def test_voucher_rate_limit_ignores_forwarded_header_from_untrusted_peer(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='192.0.2.1')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '198.51.100.25'
+        direct_request = RequestFactory().get('/')
+        direct_request.event = self.event
+        direct_request.META['REMOTE_ADDR'] = '198.51.100.25'
+
+        self.assertEqual(_voucher_rate_limit_key(request), _voucher_rate_limit_key(direct_request))
 
     @override_settings(
         CACHES={

@@ -1,4 +1,5 @@
 import hashlib
+import ipaddress
 from collections import Counter, defaultdict, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
@@ -167,10 +168,25 @@ VOUCHER_RATE_LIMIT_WINDOW = settings.VOUCHER_RATE_LIMIT_WINDOW
 
 def _voucher_rate_limit_key(request):
     client_ip = request.META.get('REMOTE_ADDR')
-    if settings.TRUST_X_FORWARDED_FOR:
+    try:
+        remote_ip = ipaddress.ip_address(client_ip)
+    except (TypeError, ValueError):
+        remote_ip = None
+
+    trusted_proxy_networks = tuple(
+        ipaddress.ip_network(network, strict=False) for network in settings.VOUCHER_RATE_LIMIT_TRUSTED_PROXIES
+    )
+    if remote_ip and any(remote_ip in network for network in trusted_proxy_networks):
         forwarded_for = request.headers.get('x-forwarded-for')
         if forwarded_for:
-            client_ip = forwarded_for.rsplit(',', 1)[-1].strip() or client_ip
+            try:
+                for forwarded_ip in reversed(forwarded_for.split(',')):
+                    parsed_ip = ipaddress.ip_address(forwarded_ip.strip())
+                    if not any(parsed_ip in network for network in trusted_proxy_networks):
+                        client_ip = str(parsed_ip)
+                        break
+            except ValueError:
+                pass
     event = getattr(request, 'event', None)
     if not client_ip or not event:
         return None

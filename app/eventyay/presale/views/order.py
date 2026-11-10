@@ -21,6 +21,7 @@ from django.db.models.query import prefetch_related_objects
 from django.http import (
     FileResponse,
     Http404,
+    HttpResponseBase,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -580,6 +581,8 @@ class OrderPaymentStart(OrderProtectedActionMixin, EventViewMixin, OrderDetailMi
             del request.session[f'payment_change_{self.order.pk}']
         if isinstance(resp, str):
             return redirect(resp)
+        elif isinstance(resp, HttpResponseBase):
+            return resp
         elif resp is True:
             return redirect(self.get_confirm_url())
         else:
@@ -879,6 +882,8 @@ class OrderPayChangeMethod(OrderProtectedActionMixin, EventViewMixin, OrderDetai
                 resp = p['provider'].payment_prepare(request, newpayment)
                 if isinstance(resp, str):
                     return redirect(resp)
+                elif isinstance(resp, HttpResponseBase):
+                    return resp
                 elif resp is True:
                     return redirect(self.get_confirm_url(newpayment))
                 else:

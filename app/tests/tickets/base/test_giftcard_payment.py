@@ -91,9 +91,34 @@ def test_giftcard_rate_limit_blocks_lookup(event):
     assert cache.get(_voucher_rate_limit_key(request)) == VOUCHER_RATE_LIMIT_MAX
 
     with patch('eventyay.base.payment.get_cart', return_value=[]), \
-         patch('eventyay.base.payment.cart_session', return_value={'gift_cards': []}), \
-         patch('eventyay.base.payment.messages.error'):
-        provider.checkout_prepare(request, {'positions': []})
+         patch('eventyay.base.payment.cart_session', return_value={'gift_cards': []}):
+        response = provider.checkout_prepare(request, {'positions': []})
 
     accepted_gift_cards.get.assert_not_called()
+    assert response.status_code == 429
+    assert response['Retry-After'] == '300'
+    cache.clear()
+
+
+@pytest.mark.django_db
+@override_settings(CACHES={'default': {
+    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    'LOCATION': 'voucher-rate-limit-giftcard-payment-prepare',
+}})
+def test_giftcard_payment_prepare_returns_rate_limit_response(event):
+    cache.clear()
+    request = RequestFactory().post('/', {'giftcard': 'unknown-card'})
+    request.event = event
+    request.META['REMOTE_ADDR'] = '192.0.2.4'
+    provider = GiftCardPayment.__new__(GiftCardPayment)
+    provider.event = event
+    payment = MagicMock()
+    payment.order.positions.all.return_value = []
+    for _ in range(VOUCHER_RATE_LIMIT_MAX):
+        assert reserve_voucher_attempt(request)[1]
+
+    response = provider.payment_prepare(request, payment)
+
+    assert response.status_code == 429
+    assert response['Retry-After'] == '300'
     cache.clear()

@@ -130,6 +130,7 @@ class BaseSettings(_BaseSettings):
     sentry_dsn: str = ''
     instance_name: str = 'eventyay'
     auth_backends: Annotated[tuple[str, ...], Field(default_factory=lambda: DEFAULT_AUTH_BACKENDS)]
+    voucher_rate_limit_trusted_proxies: Annotated[tuple[str, ...], Field(default_factory=tuple)]
     obligatory_2fa: bool = False
     plugins_default: Annotated[tuple[str, ...], Field(default_factory=lambda: DEFAULT_PLUGINS)]
     plugins_exclude: Annotated[tuple[str, ...], Field(default_factory=tuple)]
@@ -1253,6 +1254,7 @@ SESSION_COOKIE_HTTPONLY = True
 TRUST_X_FORWARDED_FOR = True
 VOUCHER_RATE_LIMIT_MAX = 10
 VOUCHER_RATE_LIMIT_WINDOW = 300
+VOUCHER_RATE_LIMIT_TRUSTED_PROXIES = conf.voucher_rate_limit_trusted_proxies
 
 WSGI_APPLICATION = 'eventyay.config.wsgi.application'
 ASGI_APPLICATION = 'eventyay.config.asgi.application'
