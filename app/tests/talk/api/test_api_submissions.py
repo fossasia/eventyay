@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from django.dispatch import Signal
 from django_scopes import scope
 
 from eventyay.api.serializers.submission import (
@@ -10,7 +11,14 @@ from eventyay.api.serializers.submission import (
     TagSerializer,
     TrackSerializer,
 )
+from eventyay.base import entitlements
 from eventyay.base.models import SubmissionStates, TeamAPIToken
+
+
+@pytest.fixture
+def allow_all_entitlements(monkeypatch):
+    """Ignore installed plan plugins so API writes do not depend on the organizer's plan."""
+    monkeypatch.setattr(entitlements, 'entitlement_check', Signal())
 
 
 @pytest.mark.django_db
@@ -1587,7 +1595,7 @@ def test_remove_favourite_not_favourited(event, speaker_client, slot, speaker):
         assert not slot.submission.favourites.filter(user=speaker).exists()
 
 @pytest.mark.django_db
-def test_team_token_can_create_submission(client, event, submission_type):
+def test_team_token_can_create_submission(client, event, submission_type, allow_all_entitlements):
     from django_scopes import scope
     from eventyay.base.models import TeamAPIToken
     with scope(event=event):
