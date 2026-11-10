@@ -4,7 +4,7 @@ import pickle
 from django.core.cache import caches
 from django.core.cache.backends.redis import RedisCache as DjangoRedisCache
 from django.http import HttpResponse
-from redis.exceptions import RedisError, ResponseError
+from redis.exceptions import NoPermissionError, RedisError, ResponseError
 
 from eventyay.helpers.http import get_client_ip
 
@@ -26,15 +26,13 @@ def _get_redis_client(cache, made_key):
         return None
 
 
-def _safe_error_text(exc):
-    msg = str(exc)
-    marker = 'caused error:'
-    idx = msg.lower().find(marker)
-    return msg[idx + len(marker) :].strip() if idx != -1 else msg
-
-
 def _is_expire_nx_unsupported(exc):
-    detail = _safe_error_text(exc).lower()
+    if isinstance(exc, NoPermissionError):
+        return False
+    msg = str(exc).lower()
+    detail = msg.split('caused error:', 1)[1].strip() if 'caused error:' in msg else msg
+    if 'noperm' in detail or 'no permissions' in detail:
+        return False
     return any(
         token in detail
         for token in (
@@ -77,7 +75,7 @@ class Block404Middleware:
         try:
             count = int(cache.get(key) or 0)
         except _CACHE_ERRORS as exc:
-            logger.warning('Failed to read 404 counter: %s', _safe_error_text(exc))
+            logger.warning('Failed to read 404 counter: %s', type(exc).__name__)
             return self.get_response(request)
         except (ValueError, TypeError, pickle.UnpicklingError, EOFError):
             count = 0
@@ -86,7 +84,7 @@ class Block404Middleware:
             try:
                 self._ensure_ttl(cache, key)
             except _CACHE_ERRORS as exc:
-                logger.warning('Failed to ensure TTL on 404 counter: %s', _safe_error_text(exc))
+                logger.warning('Failed to ensure TTL on 404 counter: %s', type(exc).__name__)
             return self._too_many_requests_response()
 
         response = self.get_response(request)
@@ -97,7 +95,7 @@ class Block404Middleware:
         try:
             count = self._increment(cache, key)
         except _CACHE_ERRORS as exc:
-            logger.warning('Failed to increment 404 counter: %s', _safe_error_text(exc))
+            logger.warning('Failed to increment 404 counter: %s', type(exc).__name__)
             return response
 
         if count > self.MAX_404_PER_MINUTE:
@@ -123,7 +121,7 @@ class Block404Middleware:
     def _disable_expire_nx(cls, exc):
         if cls._expire_nx_supported:
             cls._expire_nx_supported = False
-            logger.warning('Redis EXPIRE NX unsupported (%s); falling back to cache.add/incr.', _safe_error_text(exc))
+            logger.warning('Redis EXPIRE NX unsupported (%s); falling back to cache.add/incr.', type(exc).__name__)
 
     @classmethod
     def _ensure_ttl(cls, cache, key):
