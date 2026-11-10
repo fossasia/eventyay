@@ -2326,6 +2326,30 @@ class CartTest(CartTestMixin, TestCase):
         self.assertNotEqual(_voucher_rate_limit_key(first), _voucher_rate_limit_key(second_client))
 
     @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=('10.0.0.0/8',))
+    def test_voucher_rate_limit_parses_forwarded_ip_with_port(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.99:8080, 10.0.0.2')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '10.0.0.2'
+
+        expected = RequestFactory().get('/')
+        expected.event = self.event
+        expected.META['REMOTE_ADDR'] = '198.51.100.99'
+
+        self.assertEqual(_voucher_rate_limit_key(request), _voucher_rate_limit_key(expected))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=('not-a-network', '10.0.0.0/8'))
+    def test_voucher_rate_limit_ignores_invalid_trusted_proxy_network(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.99, 10.0.0.2')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '10.0.0.2'
+
+        expected = RequestFactory().get('/')
+        expected.event = self.event
+        expected.META['REMOTE_ADDR'] = '198.51.100.99'
+
+        self.assertEqual(_voucher_rate_limit_key(request), _voucher_rate_limit_key(expected))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=('10.0.0.0/8',))
     def test_voucher_rate_limit_ignores_forwarded_header_from_untrusted_peer(self):
         request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='192.0.2.1')
         request.event = self.event

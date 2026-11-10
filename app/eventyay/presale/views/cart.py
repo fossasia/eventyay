@@ -682,11 +682,11 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
             voucher_attempt_key, allowed = reserve_voucher_attempt(request)
             if not allowed:
                 return self._rate_limit_response(request)
+            v = v.strip()
             if len(v) > MAX_VOUCHER_CODE_LENGTH:
                 voucher_failed = True
                 messages.error(request, error_messages['voucher_invalid_length'])
                 return redirect(self.get_index_url())
-            v = v.strip()
             try:
                 self.voucher = Voucher.objects.get(code__iexact=v, event=request.event)
                 if self.voucher.redeemed >= self.voucher.max_usages:

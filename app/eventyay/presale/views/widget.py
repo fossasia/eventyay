@@ -770,7 +770,7 @@ class WidgetAPIProductList(EventListMixin, View):
 
         self.voucher = None
         if 'voucher' in request.GET:
-            voucher_code = request.GET.get('voucher')
+            voucher_code = request.GET.get('voucher').strip()
             voucher_failed = False
             if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
                 data['error'] = error_messages['voucher_invalid_length']
@@ -778,7 +778,7 @@ class WidgetAPIProductList(EventListMixin, View):
                 voucher_failed = True
             else:
                 try:
-                    self.voucher = request.event.vouchers.get(code__iexact=voucher_code.strip())
+                    self.voucher = request.event.vouchers.get(code__iexact=voucher_code)
                 except Voucher.DoesNotExist:
                     data['error'] = error_messages['voucher_invalid']
                     fail = True

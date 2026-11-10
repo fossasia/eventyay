@@ -1,5 +1,6 @@
 import hashlib
 import ipaddress
+import logging
 from collections import Counter, defaultdict, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
@@ -54,6 +55,9 @@ from eventyay.presale.signals import (
     checkout_confirm_messages,
     fee_calculation_for_cart,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class CartError(Exception):
@@ -166,6 +170,31 @@ VOUCHER_RATE_LIMIT_MAX = settings.VOUCHER_RATE_LIMIT_MAX
 VOUCHER_RATE_LIMIT_WINDOW = settings.VOUCHER_RATE_LIMIT_WINDOW
 
 
+def _voucher_rate_limit_networks():
+    networks = []
+    for network in settings.VOUCHER_RATE_LIMIT_TRUSTED_PROXIES:
+        try:
+            networks.append(ipaddress.ip_network(network, strict=False))
+        except ValueError:
+            logger.warning('Ignoring invalid voucher rate-limit trusted proxy network: %s', network)
+    return tuple(networks)
+
+
+def _parse_forwarded_ip(value):
+    value = value.strip()
+    try:
+        return ipaddress.ip_address(value)
+    except ValueError:
+        if value.startswith('[') and ']:' in value:
+            value = value[1 : value.index(']:')]
+        elif value.count(':') == 1:
+            host, port = value.rsplit(':', 1)
+            if not port.isdigit():
+                raise
+            value = host
+        return ipaddress.ip_address(value)
+
+
 def _voucher_rate_limit_key(request):
     client_ip = request.META.get('REMOTE_ADDR')
     try:
@@ -173,20 +202,18 @@ def _voucher_rate_limit_key(request):
     except (TypeError, ValueError):
         remote_ip = None
 
-    trusted_proxy_networks = tuple(
-        ipaddress.ip_network(network, strict=False) for network in settings.VOUCHER_RATE_LIMIT_TRUSTED_PROXIES
-    )
+    trusted_proxy_networks = _voucher_rate_limit_networks()
     if remote_ip and any(remote_ip in network for network in trusted_proxy_networks):
         forwarded_for = request.headers.get('x-forwarded-for')
         if forwarded_for:
-            try:
-                for forwarded_ip in reversed(forwarded_for.split(',')):
-                    parsed_ip = ipaddress.ip_address(forwarded_ip.strip())
-                    if not any(parsed_ip in network for network in trusted_proxy_networks):
-                        client_ip = str(parsed_ip)
-                        break
-            except ValueError:
-                pass
+            for forwarded_ip in reversed(forwarded_for.split(',')):
+                try:
+                    parsed_ip = _parse_forwarded_ip(forwarded_ip)
+                except ValueError:
+                    break
+                if not any(parsed_ip in network for network in trusted_proxy_networks):
+                    client_ip = str(parsed_ip)
+                    break
     event = getattr(request, 'event', None)
     if not client_ip or not event:
         return None
@@ -710,9 +737,9 @@ class CartManager:
     def apply_voucher(self, voucher_code: str):
         if self._operations:
             raise CartError('Applying a voucher to the whole cart should not be combined with other operations.')
+        voucher_code = voucher_code.strip()
         if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
             raise VoucherError(error_messages['voucher_invalid_length'])
-        voucher_code = voucher_code.strip()
         try:
             voucher = self.event.vouchers.get(code__iexact=voucher_code)
         except Voucher.DoesNotExist:
@@ -806,10 +833,9 @@ class CartManager:
             voucher = None
 
             if i.get('voucher'):
-                voucher_code = i['voucher']
+                voucher_code = i['voucher'].strip()
                 if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
                     raise VoucherError(error_messages['voucher_invalid_length'])
-                voucher_code = voucher_code.strip()
                 try:
                     voucher = self.event.vouchers.get(code__iexact=voucher_code)
                 except Voucher.DoesNotExist:
