@@ -1065,7 +1065,7 @@ export default {
 
 		.featured-speakers-grid
 			display: flex
-			justify-content: flex-start
+			justify-content: center
 			align-items: flex-start
 			gap: 18px
 			width: 100%
@@ -1389,6 +1389,23 @@ export default {
 
 @media (max-width: 600px)
 	.c-speakers-list
+		&.is-embedded
+			padding: 0 16px
+			box-sizing: border-box
+			width: 100%
+			max-width: 100vw
+			overflow-x: hidden !important
+			.speakers-details
+				padding-left: 0
+				padding-right: 0
+			.featured-speakers-grid
+				width: 100%
+				max-width: 100%
+				gap: 12px
+			.featured-speaker-stack
+				max-width: 100%
+			.featured-speaker-card
+				max-width: 100%
 		.speakers-toolbar
 			padding: 6px 0 0
 			gap: 6px
