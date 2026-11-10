@@ -4,7 +4,8 @@ from datetime import timedelta
 from decimal import Decimal
 
 from bs4 import BeautifulSoup
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
@@ -2260,6 +2261,31 @@ class CartTest(CartTestMixin, TestCase):
         self.assertIn('invalid length', doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             self.assertFalse(CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists())
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-tests',
+            }
+        }
+    )
+    def test_voucher_rate_limit_counts_failures(self):
+        from eventyay.base.services.cart import (
+            VOUCHER_RATE_LIMIT_MAX,
+            is_voucher_rate_limited,
+            record_voucher_failure,
+        )
+
+        cache.clear()
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+        self.assertFalse(is_voucher_rate_limited(request))
+        for _ in range(VOUCHER_RATE_LIMIT_MAX):
+            record_voucher_failure(request)
+        self.assertTrue(is_voucher_rate_limited(request))
+        cache.clear()
 
     def test_voucher_quota_empty(self):
         self.quota_tickets.size = 0
