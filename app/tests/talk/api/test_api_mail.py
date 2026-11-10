@@ -176,6 +176,7 @@ def test_orga_can_update_mail_templates(
 def test_orga_update_mail_template_invalid_placeholder(
     client, orga_user_write_token, event, mail_template, field, value
 ):
+    """Unknown or mistyped placeholders are rejected and the template stays unchanged."""
     assert mail_template.subject != "newtesttemplate"
     response = client.patch(
         event.api_urls.mail_templates + f"{mail_template.pk}/",

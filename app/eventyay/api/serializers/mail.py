@@ -24,6 +24,7 @@ class MailTemplateSerializer(PretalxSerializer):
         return super().create(validated_data)
 
     def _validate_text(self, value):
+        """Reject mistyped and unknown placeholders for the template's role; other braces are plain text."""
         # Build a MailTemplate with the correct role so valid_placeholders
         # returns only the placeholders available in that role's mail context.
         # Without this, creating a NEW_SCHEDULE template via API would accept

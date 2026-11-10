@@ -426,6 +426,7 @@ class ComposeMailPreview(EventPermissionRequired, View):
     permission_required = 'base.send_queuedmail'
 
     def post(self, request, *args, **kwargs):
+        """Render the editor HTML with sample placeholder values, keeping stray braces as text."""
         try:
             data = json.loads(request.body)
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -521,6 +522,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         return super().form_invalid(form)
 
     def send_test_email(self, form):
+        """Send the composed mail with sample placeholder values to the address given in the form."""
         address = form.cleaned_data.get('test_email')
         if not address:
             form.add_error('test_email', _('Please enter an email address to send the test email to.'))
@@ -575,6 +577,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         return self.render_to_response(self.get_context_data(form=form))
 
     def form_valid(self, form):
+        """Send a test email, render a preview, save a draft or send the mails, depending on the button used."""
         action = self.request.POST.get('action')
         if action == 'test':
             return self.send_test_email(form)

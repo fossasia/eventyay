@@ -16,6 +16,7 @@ REVIEW_SUBJECT = 'TEST "{"    Chai ki Tapri "}"'
 
 @pytest.fixture
 def orga_client(client, user, event, settings):
+    """Client of a team member who can edit the event's mail templates."""
     settings.SITE_URL = 'https://testserver'
     settings.SITE_NETLOC = 'testserver'
     with scopes_disabled():
@@ -32,6 +33,7 @@ def orga_client(client, user, event, settings):
 
 
 def test_used_placeholders_treat_stray_braces_as_text():
+    """Only ``{placeholder}`` slots count as used, including Markdown-escaped names."""
     assert get_used_placeholders('TEST {} {event_name} {{name}} {join\\_online\\_event} See you :} {') == {
         'event_name',
         'join_online_event',
@@ -39,16 +41,19 @@ def test_used_placeholders_treat_stray_braces_as_text():
 
 
 def test_malformed_placeholders_checks_every_language():
+    """Mistyped placeholders are found in every language of an i18n string."""
     text = LazyI18nString({'en': 'Hi { name }, {draft', 'de': 'Hallo {name'})
     assert get_malformed_placeholders(text, {'name': None}) == ['{ name }', '{name']
 
 
 def test_malformed_placeholders_are_reported_once():
+    """A typo repeated in the text or across languages is reported once."""
     text = LazyI18nString({'en': 'Hi { name }, see you { name }', 'de': 'Hallo { name }, {name'})
     assert get_malformed_placeholders(text, {'name': None}) == ['{ name }', '{name']
 
 
 def test_excessive_format_width_is_never_evaluated():
+    """A format width of five or more digits is never passed to ``format()``."""
     template = '{event_name:>99999} {other:>1000000000}'
     with mock.patch('eventyay.helpers.placeholders.format', create=True, side_effect=AssertionError) as evaluate:
         assert find_placeholder_names(template) == []
@@ -58,11 +63,13 @@ def test_excessive_format_width_is_never_evaluated():
 
 
 def test_escape_stray_braces_rewrites_markdown_escaped_names():
+    """Markdown-escaped names are rewritten to the name ``format_map`` looks up."""
     assert escape_stray_braces('{join\\_online\\_event:>5} {{a\\_b}}') == '{join_online_event:>5} {{a\\_b}}'
 
 
 @pytest.mark.django_db
 def test_markdown_escaped_placeholder_is_saved_and_expanded(orga_client, event):
+    """A Markdown-escaped placeholder is saved and expanded like the plain one."""
     with scope(event=event):
         template = MailTemplate.objects.create(event=event, subject='Old subject', text='Hello')
     response = orga_client.post(
@@ -81,6 +88,7 @@ def test_markdown_escaped_placeholder_is_saved_and_expanded(orga_client, event):
 
 @pytest.mark.django_db
 def test_mail_template_renders_braces_as_text(event):
+    """``to_mail()`` sends stray braces as typed and still unescapes ``{{literal}}``."""
     with scope(event=event):
         template = MailTemplate.objects.create(
             event=event,
@@ -104,6 +112,7 @@ def test_mail_template_renders_braces_as_text(event):
     ],
 )
 def test_mail_template_form_accepts_braces_but_not_mistyped_placeholders(orga_client, event, subject, saved):
+    """The template form saves plain-text braces but rejects mistyped placeholders."""
     with scope(event=event):
         template = MailTemplate.objects.create(event=event, subject='Old subject', text='Hello')
     response = orga_client.post(
@@ -136,6 +145,7 @@ def test_mail_template_form_accepts_braces_but_not_mistyped_placeholders(orga_cl
     ],
 )
 def test_mail_template_api_accepts_braces_but_not_mistyped_placeholders(event, value, error):
+    """The mail template API accepts plain-text braces but rejects mistyped and unknown placeholders."""
     with scope(event=event):
         template = MailTemplate.objects.create(event=event, subject='Old subject', text='Hello')
         serializer = MailTemplateSerializer(

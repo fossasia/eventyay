@@ -44,7 +44,10 @@ def get_available_placeholders(event, kwargs):
 
 
 def get_used_placeholders(text):
-    # Braces that are not a {placeholder} slot are plain text, see escape_stray_braces().
+    """Return the placeholder names in a string, i18n string or dict of translations.
+
+    Braces that are not a ``{placeholder}`` slot are plain text, see ``escape_stray_braces()``.
+    """
     if not text:
         return set()
     if isinstance(text, str):

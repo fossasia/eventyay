@@ -92,8 +92,7 @@ class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         return grouped
 
     def _check_placeholders(self, text):
-        # Braces that are not a placeholder are sent as plain text, so only mistyped and unknown
-        # placeholders are errors.
+        """Reject mistyped and unknown placeholders; other braces are sent as plain text."""
         malformed = get_malformed_placeholders(text, self.valid_placeholders)
         if malformed:
             raise forms.ValidationError(
@@ -110,11 +109,13 @@ class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             raise forms.ValidationError(str(_('Unknown placeholder!')) + ' ' + warnings)
 
     def clean_subject(self):
+        """Validate the subject's placeholders."""
         text = self.cleaned_data['subject']
         self._check_placeholders(text)
         return text
 
     def clean_text(self):
+        """Validate the text's placeholders and reject empty links in each locale's preview."""
         text = self.cleaned_data['text']
         self._check_placeholders(text)
 

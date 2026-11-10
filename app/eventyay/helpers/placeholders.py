@@ -17,6 +17,7 @@ EXCESSIVE_FORMAT_NUMBER = re.compile(r'\d{5,}')
 
 
 def is_placeholder(match: re.Match[str]) -> bool:
+    """Return whether a ``{name}`` token is a slot ``format_map`` can fill with a string value."""
     if len(match.group()) <= 2:
         return False
     format_spec = match.group('format_spec')
@@ -43,6 +44,7 @@ def escape_stray_braces(template: str) -> str:
     """
 
     def replace(match: re.Match[str]) -> str:
+        """Keep escapes and placeholders (with their canonical name) and double every other brace."""
         token = match.group()
         if len(token) == 2:
             return token
