@@ -1,7 +1,7 @@
 <template lang="pug">
 dialog.pretalx-modal.assign-volunteer-modal(ref="modal", :aria-labelledby="titleId", @click="onBackdrop", @cancel.prevent="cancel")
 	.dialog-inner(@click.stop="")
-		button.close-button(type="button", aria-label="Close dialog", @click="cancel") ✕
+		button.close-button(type="button", :aria-label="$t('Close dialog')", @click="cancel") ✕
 		h3(:id="titleId") {{ $t('Assign volunteers') }}
 		p.assign-volunteer-error(v-if="error") {{ error }}
 		.assign-role(v-if="role")
