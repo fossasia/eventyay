@@ -18,7 +18,7 @@ from eventyay.base.models import Event
 
 
 SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '\t', '\r', '\n', '＝', '＋', '－', '＠')
-NUMERIC_TEXT_RE = re.compile(r'^-?[0-9,.]+$')
+NUMERIC_TEXT_RE = re.compile(r'^[+-]?[0-9,.]+$')
 
 
 def excel_safe(val):
@@ -31,14 +31,15 @@ def excel_safe(val):
     return val
 
 
-def neutralize_spreadsheet_formula(val: str | None) -> str:
-    """Prefix formula-like text with an apostrophe so CSV and XLSX viewers treat it as plain text."""
-    if not val:
-        return ''
+def neutralize_spreadsheet_formula(val):
+    """Prefix formula-like text with an apostrophe so CSV viewers treat it as plain text."""
+    if val is None or val == '':
+        return val
     text = str(val)
-    if text.startswith(SPREADSHEET_FORMULA_PREFIXES) and not NUMERIC_TEXT_RE.match(text):
+    stripped = text.lstrip()
+    if stripped.startswith(SPREADSHEET_FORMULA_PREFIXES) and not NUMERIC_TEXT_RE.match(stripped):
         return f"'{text}"
-    return text
+    return val
 
 
 class BaseExporter:
@@ -154,6 +155,14 @@ class ListExporter(BaseExporter):
     def get_filename(self):
         return 'export'
 
+    def _clean_csv_row(self, line):
+        return [
+            neutralize_spreadsheet_formula(localize(f))
+            if isinstance(f, Decimal)
+            else neutralize_spreadsheet_formula(f)
+            for f in line
+        ]
+
     def _render_csv(self, form_data, output_file=None, **kwargs):
         if output_file:
             if 'b' in output_file.mode:
@@ -165,7 +174,7 @@ class ListExporter(BaseExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 if total:
                     counter += 1
                     if counter % max(10, total // 100) == 0:
@@ -181,7 +190,7 @@ class ListExporter(BaseExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 if total:
                     counter += 1
                     if counter % max(10, total // 100) == 0:
@@ -295,7 +304,7 @@ class MultiSheetListExporter(ListExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 writer.writerow(line)
                 if total:
                     counter += 1
@@ -309,7 +318,7 @@ class MultiSheetListExporter(ListExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 writer.writerow(line)
                 if total:
                     counter += 1

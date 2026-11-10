@@ -29,7 +29,7 @@ UTC = datetime.timezone.utc
 from reportlab.lib.units import mm
 from reportlab.platypus import Flowable, Paragraph, Spacer, Table, TableStyle
 
-from eventyay.base.exporter import BaseExporter, ListExporter, neutralize_spreadsheet_formula
+from eventyay.base.exporter import BaseExporter, ListExporter
 from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.models import (
     Checkin,
@@ -749,7 +749,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             row.append(op.company or ia.company)
         if 'job_title' in columns:
             job_title = op.job_title or (op.addon_to.job_title or '' if op.addon_to else '')
-            row.append(neutralize_spreadsheet_formula(job_title))
+            row.append(job_title)
         if 'voucher' in columns:
             row.append(op.voucher.code if op.voucher else '')
         if 'order_date' in columns:

@@ -73,14 +73,20 @@ def test_order_list_export_orders_includes_job_title(event):
             if not isinstance(row, exporter.ProgressSetTotal)
         ]
 
-    headers = rows[0]
-    assert 'Job Title' in headers
-    assert headers.index('Job Title') == headers.index('Company') + 1
+        headers = rows[0]
+        assert 'Job Title' in headers
+        assert headers.index('Job Title') == headers.index('Company') + 1
 
-    rows_by_code = {row[headers.index('Order code')]: row for row in rows[1:]}
-    job_idx = headers.index('Job Title')
-    assert rows_by_code['ORD01'][job_idx] == 'Staff Engineer'
-    assert rows_by_code['ORD02'][job_idx] == "'=1+1"
+        rows_by_code = {row[headers.index('Order code')]: row for row in rows[1:]}
+        job_idx = headers.index('Job Title')
+        assert rows_by_code['ORD01'][job_idx] == 'Staff Engineer'
+        assert rows_by_code['ORD02'][job_idx] == '=1+1'
+
+        _, _, csv_content = exporter.render({'_format': 'orders:default', 'paid_only': True})
+        assert "'=1+1" in csv_content.decode()
+
+        _, _, xlsx_bytes = exporter.render({'_format': 'xlsx', 'paid_only': True})
+        assert xlsx_bytes.startswith(b'PK')
 
 
 @pytest.mark.django_db
@@ -134,15 +140,16 @@ def test_csv_checkin_list_exports_job_title_and_respects_column_selection(event)
             if not isinstance(row, exporter.ProgressSetTotal)
         ]
 
-    headers = default_rows[0]
-    assert 'Job title' in headers
-    assert headers.index('Job title') == headers.index('Company') + 1
+        headers = default_rows[0]
+        assert 'Job title' in headers
+        assert headers.index('Job title') == headers.index('Company') + 1
 
-    job_idx = headers.index('Job title')
-    assert [row[job_idx] for row in default_rows[1:]] == ['DevOps Lead', 'DevOps Lead']
-    assert 'Job title' not in filtered_rows[0]
-    assert neutralize_spreadsheet_formula('＝1+1') == "'＝1+1"
-    assert neutralize_spreadsheet_formula('\n=1+1') == "'\n=1+1"
+        job_idx = headers.index('Job title')
+        assert [row[job_idx] for row in default_rows[1:]] == ['DevOps Lead', 'DevOps Lead']
+        assert 'Job title' not in filtered_rows[0]
+
+        _, _, content = exporter.render({'list': checkin_list.pk, 'questions': [], '_format': 'default'})
+        assert 'Job title' in content.decode()
 
 
 @pytest.mark.django_db
@@ -213,3 +220,30 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
     assert Counter(row[job_col] for row in row_texts) == Counter({'R&amp;D &lt;Director&gt;': 2, '': 2})
     assert content_type == 'application/pdf'
     assert pdf_bytes.startswith(b'%PDF-')
+
+
+@pytest.mark.parametrize(
+    'val,expected',
+    [
+        (None, None),
+        ('', ''),
+        ('Senior Engineer', 'Senior Engineer'),
+        ('=1+1', "'=1+1"),
+        (' =1+1', "' =1+1"),
+        ('   @SUM(A1:A10)', "'   @SUM(A1:A10)"),
+        ('+10', '+10'),
+        ('+10.50', '+10.50'),
+        ('-10', '-10'),
+        ('-10.50', '-10.50'),
+        ('+1+1', "'+1+1"),
+        ('-1+1', "'-1+1"),
+        ('＝1+1', "'＝1+1"),
+        ('＋1+1', "'＋1+1"),
+        ('\n=1+1', "'\n=1+1"),
+        ('\t@command', "'\t@command"),
+        ('|pipe', "'|pipe"),
+        ('%percent', "'%percent"),
+    ],
+)
+def test_neutralize_spreadsheet_formula(val, expected):
+    assert neutralize_spreadsheet_formula(val) == expected
