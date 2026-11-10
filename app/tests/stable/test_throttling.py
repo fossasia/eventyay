@@ -6,6 +6,7 @@ Uses LocMemCache isolation (override_settings) to ensure throttle state never
 bleeds between tests and that the tests can run without a running Redis instance.
 """
 
+import logging
 import os
 import uuid
 
@@ -19,6 +20,7 @@ from django.test import RequestFactory, override_settings
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis.exceptions import ResponseError
 
+from eventyay.middleware import block_404
 from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
 
 
@@ -543,35 +545,52 @@ class TestBlock404MiddlewareRedis:
     def test_transient_errors_fail_open_and_corrupted_counter_resets(self, fakeredis_cache, monkeypatch, caplog):
         mw_404 = Block404Middleware(_make_get_response(404))
 
-        # Transient EXPIRE pipeline errors must fail open without disabling EXPIRE ... NX.
-        for msg in (
-            'Command # 2 (EXPIRE :1:404_counter:ip:198.51.100.42 60 NX) of pipeline caused error: '
-            "READONLY You can't write against a replica.",
-            'Command # 2 (EXPIRE :1:404_counter:ip:198.51.100.42 60 NX) of pipeline caused error: '
-            'OOM command not allowed.',
-            'Command # 2 (EXPIRE :1:404_counter:ip:198.51.100.42 60 NX) of pipeline caused error: '
-            'this user has no permissions.',
-        ):
+        with caplog.at_level(logging.WARNING, logger=block_404.__name__):
+            # Transient EXPIRE pipeline errors must fail open without disabling EXPIRE ... NX.
+            caplog.clear()
+            for msg in (
+                'Command # 2 (EXPIRE :1:404_counter:ip:198.51.100.42 60 NX) of pipeline caused error: '
+                "READONLY You can't write against a replica.",
+                'Command # 2 (EXPIRE :1:404_counter:ip:198.51.100.42 60 NX) of pipeline caused error: '
+                'OOM command not allowed.',
+                'Command # 2 (EXPIRE :1:404_counter:ip:198.51.100.42 60 NX) of pipeline caused error: '
+                'this user has no permissions.',
+            ):
+                with monkeypatch.context() as mp:
+                    mp.setattr(
+                        redis.client.Pipeline,
+                        'execute',
+                        lambda self, raise_on_error=True, m=msg: (_ for _ in ()).throw(ResponseError(m)),
+                    )
+                    assert mw_404(_make_identity_request('ip')).status_code == 404
+                    assert Block404Middleware._expire_nx_supported is True
+
+            incr_warnings = [
+                r.getMessage()
+                for r in caplog.records
+                if r.name == block_404.__name__ and r.levelno == logging.WARNING
+            ]
+            assert len(incr_warnings) == 3
+            assert all(m.startswith('Failed to increment 404 counter:') for m in incr_warnings)
+            assert all('198.51.100.42' not in m for m in incr_warnings)
+
+            # Redis outage on initial lookup fails open and emits the cache-read warning without client IP.
+            caplog.clear()
             with monkeypatch.context() as mp:
                 mp.setattr(
-                    redis.client.Pipeline,
-                    'execute',
-                    lambda self, raise_on_error=True, m=msg: (_ for _ in ()).throw(ResponseError(m)),
+                    DjangoRedisCache,
+                    'get',
+                    lambda self, key, default=None, version=None: (_ for _ in ()).throw(RedisConnectionError('down')),
                 )
-                assert mw_404(_make_identity_request('ip')).status_code == 404
-                assert Block404Middleware._expire_nx_supported is True
+                assert Block404Middleware(_make_get_response(200))(_make_identity_request('ip')).status_code == 200
 
-        # Redis outage on initial lookup fails open without logging client IP.
-        with monkeypatch.context() as mp:
-            mp.setattr(
-                DjangoRedisCache,
-                'get',
-                lambda self, key, default=None, version=None: (_ for _ in ()).throw(RedisConnectionError('down')),
-            )
-            assert Block404Middleware(_make_get_response(200))(_make_identity_request('ip')).status_code == 200
-
-        assert caplog.records
-        assert all('198.51.100.42' not in r.getMessage() for r in caplog.records)
+            read_warnings = [
+                r.getMessage()
+                for r in caplog.records
+                if r.name == block_404.__name__ and r.levelno == logging.WARNING
+            ]
+            assert read_warnings == ['Failed to read 404 counter: down']
+            assert '198.51.100.42' not in read_warnings[0]
 
         # Corrupted non-integer counter resets cleanly on both pipeline and fallback paths.
         req = _make_identity_request('user')
