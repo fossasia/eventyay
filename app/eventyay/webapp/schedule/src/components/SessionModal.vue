@@ -353,7 +353,9 @@ export default {
 				return resolveAbsoluteUrl(resource, this.eventUrl)
 			}
 			try {
-				const base = this.eventUrl ? (this.eventUrl.endsWith('/') ? this.eventUrl : `${this.eventUrl}/`) : window.location.origin
+				const origin = window.location.origin
+				const eventBase = this.eventUrl ? new URL(this.eventUrl, origin).href : origin
+				const base = eventBase.endsWith('/') ? eventBase : `${eventBase}/`
 				return new URL(resource, base).href
 			} catch {
 				return resolveAbsoluteUrl(resource, this.eventUrl)
