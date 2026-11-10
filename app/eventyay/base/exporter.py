@@ -12,6 +12,7 @@ from django.utils.formats import localize
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, KNOWN_TYPES
 
 from eventyay.base.models import Event
@@ -202,6 +203,14 @@ class ListExporter(BaseExporter):
                 output.getvalue().encode('utf-8'),
             )
 
+    def _clean_xlsx_cell(self, ws, val):
+        val = excel_safe(val)
+        if isinstance(val, str) and val.startswith('='):
+            cell = WriteOnlyCell(ws, value=val)
+            cell.data_type = 's'
+            return cell
+        return val
+
     def _render_xlsx(self, form_data, output_file=None):
         wb = Workbook(write_only=True)
         ws = wb.create_sheet()
@@ -215,7 +224,7 @@ class ListExporter(BaseExporter):
             if isinstance(line, self.ProgressSetTotal):
                 total = line.total
                 continue
-            ws.append([excel_safe(val) for val in line])
+            ws.append([self._clean_xlsx_cell(ws, val) for val in line])
             if total:
                 counter += 1
                 if counter % max(10, total // 100) == 0:
@@ -344,7 +353,7 @@ class MultiSheetListExporter(ListExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                ws.append([excel_safe(val) for val in line])
+                ws.append([self._clean_xlsx_cell(ws, val) for val in line])
                 if total:
                     counter += 1
                     if counter % max(10, total // 100) == 0:

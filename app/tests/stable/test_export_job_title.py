@@ -88,6 +88,16 @@ def test_order_list_export_orders_includes_job_title(event):
         _, _, xlsx_bytes = exporter.render({'_format': 'xlsx', 'paid_only': True})
         assert xlsx_bytes.startswith(b'PK')
 
+        import io
+        import openpyxl
+
+        wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
+        ws = wb['Orders']
+        ord02_row = next(r for r in ws.iter_rows(values_only=False) if r[headers.index('Order code')].value == 'ORD02')
+        job_cell = ord02_row[job_idx]
+        assert job_cell.data_type == 's'
+        assert job_cell.value == '=1+1'
+
 
 @pytest.mark.django_db
 def test_csv_checkin_list_exports_job_title_and_respects_column_selection(event):
