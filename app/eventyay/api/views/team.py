@@ -22,7 +22,7 @@ from eventyay.base.models.organizer import (
     TeamPermissionError,
     check_access_permissions,
 )
-from eventyay.base.services.teams import check_full_admin_limit
+from eventyay.base.services.teams import TeamInviteError, invite_to_team
 
 
 class TeamInviteCreateSerializer(serializers.Serializer):
@@ -99,18 +99,17 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         input_serializer.is_valid(raise_exception=True)
         email = input_serializer.validated_data['email']
 
-        if team.members.filter(email__iexact=email).exists():
-            raise exceptions.ValidationError('This user is already a member of the team.')
-        if team.invites.filter(email__iexact=email).exists():
-            raise exceptions.ValidationError('This user has already been invited to the team.')
-
         with transaction.atomic():
-            decision = check_full_admin_limit(team, email=email)
-            if not decision.allowed:
-                raise exceptions.ValidationError(decision.message)
-
-            invite = TeamInvite.objects.create(team=team, email=email)
-            transaction.on_commit(lambda: invite.send())
+            try:
+                invite = invite_to_team(
+                    team,
+                    email,
+                    invited_by=request.user if request.user.is_authenticated else None,
+                    locale=request.LANGUAGE_CODE,
+                    log_kwargs={'person': request.user, 'orga': True},
+                )
+            except TeamInviteError as e:
+                raise exceptions.ValidationError(str(e))
 
         output_serializer = TeamInviteSerializer(invite, context=self.get_serializer_context())
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
