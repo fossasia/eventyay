@@ -1,17 +1,17 @@
 /* global ENV_DEVELOPMENT */
 import i18next from 'i18next'
 import config from 'config'
-import {createVueGettextRuntime} from '../../i18n/vue-runtime.js'
+import {createVueI18nRuntime} from '../../i18n/vue-runtime.js'
 import {notifyLocaleChange, toDjangoLanguage} from '../../i18n/index.js'
 
 export default i18next
 export {notifyLocaleChange}
 
 export const LANGUAGE_COOKIE_NAME = 'eventyay_language'
-const runtime = createVueGettextRuntime({
+const runtime = createVueI18nRuntime({
 	domain: 'video',
 	i18next,
-	localeLoaders: import.meta.glob('../../../locale/*/LC_MESSAGES/video.po'),
+	localeLoaders: import.meta.glob('../../locales/*.json'),
 	debug: ENV_DEVELOPMENT,
 	warnOnMissing: Boolean(ENV_DEVELOPMENT),
 	extraPlugins: [
