@@ -20,6 +20,7 @@ from eventyay.base.models import (
     Order,
     Organizer,
     Quota,
+    SeatingPlan,
     Team,
     User,
     WaitingListEntry,
@@ -47,6 +48,39 @@ class EventTestMixin:
         t = Team.objects.create(organizer=self.orga, can_change_event_settings=True)
         t.members.add(self.user)
         t.limit_events.add(self.event)
+
+
+class SeatingPlanFrameTest(EventTestMixin, TestCase):
+    @scopes_disabled()
+    def setUp(self):
+        super().setUp()
+        self.plan = SeatingPlan.objects.create(organizer=self.orga, name='Hall', layout='{}')
+        self.event_url = f'/{self.orga.slug}/{self.event.slug}'
+        self.event.tickets_published = True
+
+    def test_event_seating_plan_frame(self):
+        self.event.seating_plan = self.plan
+        self.event.save()
+
+        response = self.client.get(f'{self.event_url}/seatingframe/')
+
+        self.assertContains(response, f'action="{self.event_url}/cart/add?')
+
+    def test_subevent_seating_plan_frame(self):
+        self.event.has_subevents = True
+        self.event.save()
+        with scopes_disabled():
+            subevent = self.event.subevents.create(
+                name='First date',
+                date_from=self.event.date_from,
+                active=True,
+                seating_plan=self.plan,
+            )
+
+        response = self.client.get(f'{self.event_url}/{subevent.pk}/seatingframe/')
+
+        self.assertContains(response, f'action="{self.event_url}/cart/add?')
+        self.assertContains(response, f'name="subevent" value="{subevent.pk}"')
 
 
 class EventMiddlewareTest(EventTestMixin, SoupTest):
