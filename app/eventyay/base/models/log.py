@@ -92,6 +92,11 @@ class LogEntry(models.Model):
         return self.user
 
     @property
+    def person_id(self):
+        # Matches ActivityLog.person_id for receivers of the activitylog_* signals.
+        return self.user_id
+
+    @property
     def timestamp(self):
         return self.datetime
 

@@ -227,4 +227,14 @@ def test_talk_dashboard_session_type_actions_are_not_proposals(orga_client, orga
 
     content = response.content.decode()
     assert "Recent talk activity" in content
+    assert str(LOG_NAMES["eventyay.submission_type.update"]) in content
     assert "td-activity-badge type-session" not in content
+
+
+@pytest.mark.django_db
+def test_log_entry_exposes_person_id_like_activity_log(event, submission, orga_user):
+    """Receivers written for ActivityLog can read person_id from a LogEntry too."""
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=submission, action_type="eventyay.submission.create")
+        log_entry.user = orga_user
+        assert log_entry.person_id == orga_user.pk
