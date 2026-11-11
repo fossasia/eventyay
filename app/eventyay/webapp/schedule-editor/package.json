@@ -11,8 +11,8 @@
     "lint:eslint": "eslint src --ext .js,.ts,.vue",
     "lint:stylelint": "stylelint \"**/*.styl\"",
     "lint:tsc": "tsc --noEmit",
-    "i18n:extract": "node ../i18n/extract.mjs extract --domain schedule-editor",
     "test:i18n": "node --test \"../i18n/*.test.js\"",
+    "i18n:extract": "node ../i18n/extract.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "analyze": "ANALYZE=true npm run build",
     "prepublishOnly": "npm run build"
@@ -21,13 +21,13 @@
   "main": "dist/schedule-editor.common.js",
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
-    "i18next": "^26.7.1",
+    "i18next": "^27.0.1",
     "lodash": "^4.18.1",
     "markdown-it": "^15.0.3",
     "moment": "^2.31.0",
     "moment-timezone": "^0.6.6",
     "process": "^0.11.10",
-    "vue": "^3.5.44",
+    "vue": "^3.5.45",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -52,7 +52,7 @@
     "stylelint-stylus": "^1.0.0",
     "stylus": "^0.64.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-checker": "^0.14.5",
     "vue-tsc": "^3.3.14"
