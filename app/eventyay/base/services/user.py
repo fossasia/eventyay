@@ -16,6 +16,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.eventyay_common.utils import encode_email
 from eventyay.features.live.channels import GROUP_USER
+from eventyay.features.live.exceptions import ConsumerException
 from eventyay.base.models import AuditLog
 from eventyay.base.models.auth import PRIVATE_PROFILE_KEYS, User, public_profile
 from eventyay.base.models.room import AnonymousInvite
@@ -906,10 +907,13 @@ def update_user(
 
     if data is not None:
         save_fields = []
-        if isinstance(data.get("profile"), dict):
+        if "profile" in data and not isinstance(data["profile"], dict):
+            raise ConsumerException("user.profile.invalid", "Profile must be an object.")
+        if "profile" in data:
             # Server-only keys are set from the ticket, never by the client.
             profile = {k: v for k, v in data["profile"].items() if k not in PRIVATE_PROFILE_KEYS}
-            profile.update({k: v for k, v in (user.profile or {}).items() if k in PRIVATE_PROFILE_KEYS})
+            stored = user.profile if isinstance(user.profile, dict) else {}
+            profile.update({k: v for k, v in stored.items() if k in PRIVATE_PROFILE_KEYS})
             data = {**data, "profile": profile}
         if "profile" in data and data["profile"] != user.profile:
             AuditLog.objects.create(
