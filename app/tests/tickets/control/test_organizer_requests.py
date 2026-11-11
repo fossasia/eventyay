@@ -236,6 +236,9 @@ def test_admin_can_approve_from_list(client, application, admin):
     assert response.status_code == 302
     application.refresh_from_db()
     assert application.status == 'approved'
+    assert application.organizer is not None
+    assert application.organizer.name == 'Example'
+    assert application.organizer.slug == 'example-community'
     assert application.organizer_name == 'Example'
     assert application.slug == 'example-community'
 

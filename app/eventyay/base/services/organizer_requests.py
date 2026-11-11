@@ -28,6 +28,8 @@ def notify(email: str, subject: str, body: str) -> None:
         mail(email, subject, 'pretixcontrol/email/organizer_request.txt', {'body': body})
     except SendMailException:
         logger.exception('Could not send organiser request notification')
+    except Exception:
+        logger.exception('Could not queue organiser request notification')
 
 
 def notify_approval(
@@ -65,6 +67,8 @@ def notify_approval(
         )
     except SendMailException:
         logger.exception('Could not send organiser request approval to %s', application.email)
+    except Exception:
+        logger.exception('Could not queue organiser request approval to %s', application.email)
     else:
         logger.info('Submitted organiser request approval for delivery to %s', application.email)
 
