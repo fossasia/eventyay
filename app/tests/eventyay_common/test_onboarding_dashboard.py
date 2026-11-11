@@ -179,6 +179,38 @@ def test_quick_action_icons_never_render_untoned(organizer_client, event):
         assert 'background:' in declarations, f'the {tone} icon tone renders unstyled'
 
 
+def test_talks_dashboard_text_uses_global_colours():
+    """The Talks dashboard takes its text colours from the global stylesheet (#6280).
+
+    ``stats.js`` moves the analytics filter menu to ``<body>``, outside
+    ``.td-dashboard``, so the menu rules must use the global variables directly.
+    """
+    path = finders.find('eventyay-common/css/common_dashboard.css')
+    assert path, 'eventyay-common/css/common_dashboard.css was not found by the static files finders'
+    css = Path(path).read_text(encoding='utf-8')
+
+    tokens = _declarations_for(css, '.td-dashboard')
+    assert re.search(r'--td-text:\s*var\(--color-text\)', tokens)
+    assert re.search(r'--td-muted:\s*var\(--color-text-muted\)', tokens)
+
+    menu_head = _declarations_for(css, '.td-analytics-multi-menu-head')
+    assert re.search(r'(?<![-\w])color:\s*var\(--color-text-muted\)', menu_head)
+    menu_option = _declarations_for(css, '.td-analytics-multi-option')
+    assert re.search(r'(?<![-\w])color:\s*var\(--color-text\)', menu_option)
+
+    # Card titles and numbers are secondary text, so they use the muted grey (#6280 review).
+    for selector in (
+        '.td-kpi-label',
+        '.td-kpi-value',
+        '.td-action-title',
+        '.td-action-count',
+        '.td-upcoming-small',
+        '.td-upcoming-large',
+    ):
+        declarations = _declarations_for(css, selector)
+        assert re.search(r'(?<![-\w])color:\s*var\(--td-muted\)', declarations), f'{selector} should be muted grey'
+
+
 @pytest.mark.django_db
 def test_orders_empty_state(new_user_client):
     response = new_user_client.get(reverse('eventyay_common:orders'))
