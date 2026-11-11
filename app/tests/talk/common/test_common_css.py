@@ -1,11 +1,15 @@
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from django.contrib.staticfiles import finders
 from django.core.exceptions import ValidationError
+from django.template.loader import get_template
 from reportlab.pdfbase.ttfonts import TTFontFile
 
 from eventyay.common.text.css import validate_css
+from eventyay.presale.style import compile_scss
 
 
 @pytest.fixture
@@ -124,29 +128,74 @@ def test_open_sans_font_assets_exist_and_contain_eastern_european_glyphs():
 
 
 def test_open_sans_css_declarations():
-    static_dir = Path(__file__).resolve().parents[3] / 'eventyay' / 'static'
-    open_sans_css = (static_dir / 'common' / 'css' / 'open_sans.css').read_text(encoding='utf-8')
-    fonts_css = (static_dir / 'common' / 'css' / '_fonts.css').read_text(encoding='utf-8')
+    fonts_css_path = finders.find('common/css/_fonts.css')
+    assert fonts_css_path is not None
+    content = Path(fonts_css_path).read_text(encoding='utf-8')
 
-    for content, filename in [(open_sans_css, 'open_sans.css'), (fonts_css, '_fonts.css')]:
-        assert 'opensans_regular_macroman' not in content, f'{filename} still references macroman subset'
-        assert 'opensans_bold_macroman' not in content, f'{filename} still references macroman subset'
-        assert '../../fonts/OpenSans-Regular.ttf' in content
-        assert '../../fonts/OpenSans-Bold.ttf' in content
-        assert '../../fonts/OpenSans-Italic.ttf' in content
-        assert '../../fonts/OpenSans-BoldItalic.ttf' in content
-        assert 'font-display: swap' in content
+    assert 'macroman' not in content
+    assert '../../fonts/OpenSans-Regular.ttf' in content
+    assert '../../fonts/OpenSans-Bold.ttf' in content
+    assert '../../fonts/OpenSans-Italic.ttf' in content
+    assert '../../fonts/OpenSans-BoldItalic.ttf' in content
+    assert 'font-display: swap' in content
 
 
 def test_open_sans_stylesheet_included_in_templates():
-    eventyay_dir = Path(__file__).resolve().parents[3] / 'eventyay'
-    templates = [
-        eventyay_dir / 'presale' / 'templates' / 'pretixpresale' / 'base.html',
-        eventyay_dir / 'control' / 'templates' / 'pretixcontrol' / 'base.html',
-        eventyay_dir / 'eventyay_common' / 'templates' / 'eventyay_common' / 'base.html',
+    template_names = [
+        'pretixpresale/base.html',
+        'pretixcontrol/base.html',
+        'eventyay_common/base.html',
     ]
 
-    for tpl in templates:
-        assert tpl.is_file(), f'Template {tpl} does not exist'
-        content = tpl.read_text(encoding='utf-8')
-        assert 'common/css/open_sans.css' in content, f'open_sans.css not included in {tpl.name}'
+    for template_name in template_names:
+        template = get_template(template_name)
+        assert 'common/css/_fonts.css' in template.template.source, f'_fonts.css not included in {template_name}'
+
+
+def test_organizer_custom_primary_font_precedence_in_presale_template():
+    class DummySettings:
+        def __init__(self, data):
+            self._data = data
+
+        def get(self, key, default=None, **_kwargs):
+            return self._data.get(key, default)
+
+    organizer = SimpleNamespace(settings=DummySettings({'primary_font': 'Georgia'}))
+    compiled_css, _ = compile_scss(organizer)
+    assert ':root{--font-family:Georgia,' in compiled_css
+    assert '--font-family-title:Georgia,' in compiled_css
+
+    fonts_css_path = finders.find('common/css/_fonts.css')
+    assert fonts_css_path is not None
+    fonts_css = Path(fonts_css_path).read_text(encoding='utf-8')
+    assert ':where(:root)' in fonts_css
+    assert not fonts_css.lstrip().startswith(':root')
+    assert '\n:root' not in fonts_css
+
+    dummy_gso = SimpleNamespace(settings=DummySettings({}))
+    context = {
+        'css_file': '/media/pub/org/presale.1234.css',
+        'site_name': 'Eventyay',
+        'settings': SimpleNamespace(),
+        'django_settings': SimpleNamespace(INSTANCE_NAME='Eventyay', DEBUG=True),
+        'request': SimpleNamespace(
+            event=None,
+            organizer=SimpleNamespace(slug='org', name='Org'),
+            user=SimpleNamespace(is_authenticated=False),
+            resolver_match=None,
+            LANGUAGE_CODE='en',
+            path='/org/',
+            build_absolute_uri=lambda: 'https://example.com/org/',
+        ),
+    }
+
+    with (
+        patch('eventyay.base.settings.GlobalSettingsObject', return_value=dummy_gso),
+        patch('eventyay.base.templatetags.privacy_consent.GlobalSettingsObject', return_value=dummy_gso),
+    ):
+        presale_html = get_template('pretixpresale/base.html').render(context)
+        base_public_html = get_template('common/base_public.html').render(context)
+
+    assert presale_html.count('common/css/_fonts.css') == 1
+    assert base_public_html.count('common/css/_fonts.css') == 1
+    assert presale_html.index('/media/pub/org/presale.1234.css') < presale_html.index('common/css/_fonts.css')
