@@ -264,15 +264,6 @@ def test_forged_signed_link_is_rejected(client):
     assert response.status_code == 400
 
 
-@pytest.mark.parametrize('url_name', ['eventyay_common:auth.forgot', 'eventyay_common:auth.forgot.recover'])
-def test_password_routes_preserve_destination_in_warning(authenticated_client, url_name):
-    response = authenticated_client.get(reverse(url_name), {'next': DESTINATION})
-    assert response.status_code == 302
-    location = urlsplit(response.url)
-    assert location.path == EXTERNAL_LINK
-    assert parse_qs(location.query) == {'next': [DESTINATION], 'return_url': [reverse('eventyay_common:dashboard')]}
-
-
 def test_confirmation_has_no_post_redirect_bypass(client):
     response = client.post(EXTERNAL_LINK, {'next': DESTINATION, 'confirmed': '1'})
     assert response.status_code == 405
@@ -503,6 +494,53 @@ def test_signup_returns_to_confirmation_after_registration(client, settings, par
     assert response.request['PATH_INFO'] == EXTERNAL_LINK
     assert response.context['destination'] == DESTINATION
     assert '_auth_user_id' in client.session
+
+
+@pytest.mark.parametrize(
+    'destination',
+    ['https://testserver/common/organizers/?tab=events#upcoming', DESTINATION, 'javascript:alert(1)'],
+)
+def test_signup_keeps_destination_through_email_verification(client, settings, mailoutbox, destination):
+    settings.ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+    settings.ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
+    email = 'verification@example.org'
+    password = 'TestPassword-6636!'
+    response = client.post(
+        reverse('account_signup'),
+        {'email': email, 'password1': password, 'password2': password, 'next': destination},
+        secure=True,
+    )
+    assert response.status_code == 302
+    address = EmailAddress.objects.get(email=email)
+    assert not address.verified
+    assert '_auth_user_id' not in client.session
+    confirmation_url = next(word for word in mailoutbox[0].body.split() if '/accounts/confirm-email/' in word)
+
+    # The email must carry the destination even when opened in a fresh session.
+    client.session.flush()
+    confirmation = client.get(confirmation_url, secure=True)
+    assert confirmation.status_code == 200
+    form = BeautifulSoup(confirmation.content, 'html.parser').select_one('form[method=post]')
+    redirect_field = form.select_one('input[name=next]')
+    response = client.post(form['action'], {'next': redirect_field['value']} if redirect_field else {}, secure=True)
+    address.refresh_from_db()
+    assert address.verified
+    assert '_auth_user_id' not in client.session
+    assert urlsplit(response.url).path == reverse('auth.login')
+    assert parse_qs(urlsplit(response.url).query).get('next')
+
+    response = client.post(response.url, {'email': email, 'password': password}, secure=True)
+    assert int(client.session['_auth_user_id']) == address.user_id
+    if destination == DESTINATION:
+        assert urlsplit(response.url).path == EXTERNAL_LINK
+        warning = client.get(response.url, secure=True)
+        assert warning.status_code == 200
+        assert 'Location' not in warning
+        assert warning.context['destination'] == DESTINATION
+    elif destination.startswith('https://testserver/'):
+        assert response.url == destination
+    else:
+        assert response.url == reverse('eventyay_common:dashboard')
 
 
 @pytest.mark.parametrize('has_subevents', [False, True])

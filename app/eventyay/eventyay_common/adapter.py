@@ -1,8 +1,10 @@
 import time
+from urllib.parse import urlencode
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.core import context
 from allauth.core.exceptions import ImmediateHttpResponse
+from allauth.utils import get_request_param
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponseRedirect
@@ -10,12 +12,23 @@ from django.urls import reverse
 
 from eventyay.base.auth import SPAM_ACCOUNT_ERROR, get_auth_backends
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
+from eventyay.common.redirects import safe_redirect_url
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         pretix_auth_backends = get_auth_backends()
         return settings.EVENTYAY_REGISTRATION and 'native' in pretix_auth_backends
+
+    def get_email_confirmation_url(self, request: HttpRequest | None, emailconfirmation) -> str:
+        """Return to login with the validated destination after email verification."""
+        url = super().get_email_confirmation_url(request, emailconfirmation)
+        target = get_request_param(request, 'next')
+        if not request or not target:
+            return url
+        login_url = reverse('auth.login') + '?' + urlencode({'next': safe_redirect_url(request, target)})
+        separator = '&' if '?' in url else '?'
+        return url + separator + urlencode({'next': login_url})
 
     def pre_login(
         self,
