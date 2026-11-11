@@ -130,11 +130,17 @@ async def test_moderator_config_patch_denied_outside_call_settings(jitsi_chat_ro
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room, monkeypatch):
-    """A moderator's Jitsi change is saved; chat config and grants stay, and the reply hides the secret."""
+    """A moderator's Jitsi change is saved on top of the refreshed room; chat config and grants stay."""
     jitsi_chat_room.trait_grants = {"viewer": []}
     module, consumer = make_moderator_module(jitsi_chat_room)
     new_jitsi = {"type": "call.jitsi", "config": {"start_with_audio_muted": True}}
     evil_chat = {"type": "chat.native", "config": {"webhook_url": "https://attacker.example.invalid"}}
+    newer_chat = {"type": "chat.native", "config": {"webhook_url": "https://hooks.example.invalid/new", "webhook_hmac_secret": "n3w"}}
+
+    async def refresh():
+        jitsi_chat_room.module_config = copy.deepcopy([JITSI, newer_chat])
+
+    jitsi_chat_room.refresh_from_db_if_outdated = AsyncMock(side_effect=refresh)
 
     jitsi_chat_room.validate_mock.side_effect = lambda room, body, **kw: (
         {"module_config": body["module_config"]},
@@ -149,11 +155,11 @@ async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room
 
     jitsi_chat_room.refresh_from_db_if_outdated.assert_awaited_with()
     _, body = jitsi_chat_room.validate_mock.call_args[0]
-    assert body == {"module_config": [new_jitsi, CHAT]}
+    assert body == {"module_config": [new_jitsi, newer_chat]}
     assert jitsi_chat_room.validate_mock.call_args[1] == {"sanitize_interaction_modules": False}
     _, saved_room, saved_fields = save_room.call_args[0]
     assert saved_fields == ["module_config"]
-    assert saved_room.module_config == [new_jitsi, CHAT]
+    assert saved_room.module_config == [new_jitsi, newer_chat]
     assert saved_room.trait_grants == {"viewer": []}
     sent = consumer.send_success.call_args[0][0]
     chat = next(m for m in sent["module_config"] if m["type"] == "chat.native")
