@@ -1,9 +1,11 @@
+import random
 import pytest
 from io import BytesIO
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.datastructures import MultiValueDict
 from django_scopes import scope
+from eventyay.base.forms.user import UserSettingsForm
 from eventyay.submission.forms.submission import InfoForm
 from eventyay.person.forms.profile import SpeakerProfileForm
 from eventyay.base.models import Submission, User, SpeakerProfile, SubmissionType
@@ -141,5 +143,62 @@ def test_speaker_profile_form_clean_avatar_without_new_upload(user, event):
         
         form.is_valid()
         cleaned_avatar = form.cleaned_data.get('avatar')
-        
+
         assert cleaned_avatar == profile.avatar
+
+
+def _create_truncated_jpeg():
+    # Random noise keeps the encoded file large, so cutting it in half really truncates it.
+    # Django's ImageField only calls verify(), which accepts this file; decoding it fails later.
+    random.seed(1)
+    img = Image.new('RGB', (300, 300))
+    img.putdata([tuple(random.randint(0, 255) for _ in range(3)) for _ in range(300 * 300)])
+    buf = BytesIO()
+    img.save(buf, format='JPEG')
+    data = buf.getvalue()
+    return SimpleUploadedFile('broken.jpg', data[: len(data) // 2], content_type='image/jpeg')
+
+
+@pytest.mark.django_db
+def test_info_form_clean_image_with_truncated_jpeg(event):
+    with scope(event=event):
+        form = InfoForm(
+            event=event,
+            data={'title': 'Test submission', 'abstract': 'Test abstract', 'content_locale': 'en'},
+            files=MultiValueDict({'image': [_create_truncated_jpeg()]}),
+        )
+
+        assert form.is_valid() is False
+        assert 'image' in form.errors
+        assert 'Failed to process image' in str(form.errors['image'])
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_clean_avatar_with_truncated_jpeg(user, event):
+    with scope(event=event):
+        profile, _ = SpeakerProfile.objects.get_or_create(user=user, event=event)
+        form = SpeakerProfileForm(
+            user=user,
+            event=event,
+            instance=profile,
+            data={'name': 'Test User', 'email': user.email},
+            files=MultiValueDict({'avatar': [_create_truncated_jpeg()]}),
+        )
+
+        assert form.is_valid() is False
+        assert 'avatar' in form.errors
+        assert 'Failed to process image' in str(form.errors['avatar'])
+
+
+@pytest.mark.django_db
+def test_user_settings_form_clean_profile_picture_with_truncated_jpeg(user):
+    form = UserSettingsForm(
+        instance=user,
+        user=user,
+        data={'fullname': 'Test User', 'locale': 'en', 'timezone': 'UTC'},
+        files=MultiValueDict({'profile_picture': [_create_truncated_jpeg()]}),
+    )
+
+    assert form.is_valid() is False
+    assert 'profile_picture' in form.errors
+    assert 'Failed to process image' in str(form.errors['profile_picture'])

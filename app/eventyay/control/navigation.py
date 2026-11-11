@@ -12,6 +12,16 @@ from eventyay.control.signals import (
 )
 
 
+def global_nav_label_key(label) -> str:
+    """
+    Sort key for plugin entries in the global sidebar and the profile dropdown.
+
+    Both menus list the same plugin pages, so they must order them the same way
+    even when a plugin capitalizes the label differently in each signal.
+    """
+    return str(label).casefold()
+
+
 def _vouchers_nav_active(url) -> bool:
     return 'event.vouchers' in url.url_name or 'event.voucher' in url.url_name
 
@@ -513,7 +523,7 @@ def get_global_navigation(request):
         nav,
         sorted(
             sum((list(a[1]) for a in nav_global.send(request, request=request)), []),
-            key=lambda r: (1 if r.get('parent') else 0, r['label']),
+            key=lambda r: (1 if r.get('parent') else 0, global_nav_label_key(r['label'])),
         ),
     )
     return nav
@@ -651,6 +661,28 @@ def get_admin_navigation(request):
         )
     # --------------------------------------------------------------------------
 
+    organiser_children = [
+        {
+            'label': _('Organiser requests'),
+            'url': reverse('eventyay_admin:admin.organizer_requests'),
+            'active': (url.url_name or '').startswith('admin.organizer_requests'),
+        },
+        {
+            'label': _('Organiser forms'),
+            'url': reverse('eventyay_admin:admin.organizer_forms'),
+            'active': (url.url_name or '').startswith('admin.organizer_forms'),
+        },
+    ]
+    nav.append(
+        {
+            'label': _('Organisers'),
+            'url': reverse('eventyay_admin:admin.organizer_requests'),
+            'active': any(child['active'] for child in organiser_children),
+            'icon': 'group',
+            'children': organiser_children,
+        }
+    )
+
     platform_data_children = [
         {
             'label': _('Events'),
@@ -660,7 +692,7 @@ def get_admin_navigation(request):
         {
             'label': _('Organizers'),
             'url': reverse('eventyay_admin:admin.organizers'),
-            'active': 'organizers' in url.url_name,
+            'active': url.url_name == 'admin.organizers',
         },
         {
             'label': _('Attendees'),
@@ -746,13 +778,17 @@ def get_admin_navigation(request):
         'children': message_center_children,
     })
 
-    plugin_items = sum((list(a[1]) for a in nav_global.send(request, request=request)), [])
+    admin_nav_urls = {item['url'] for item in nav if 'url' in item}
     legacy_business_url = reverse('eventyay_admin:admin.global.business')
     vouchers_url = reverse('eventyay_admin:admin.vouchers')
+    admin_nav_urls.add(legacy_business_url)
+
+    plugin_items = sum((list(a[1]) for a in nav_global.send(request, request=request)), [])
     plugin_items = [
         {**item, 'parent': vouchers_url} if item.get('parent') == legacy_business_url else item
         for item in plugin_items
     ]
+    plugin_items = [item for item in plugin_items if item.get('parent') in admin_nav_urls]
     merge_in(
         nav,
         sorted(plugin_items, key=lambda r: (1 if r.get('parent') else 0, r.get('position', 100), r['label'])),
