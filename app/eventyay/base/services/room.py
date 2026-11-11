@@ -1,6 +1,8 @@
 import datetime as dt
+import copy
 import logging
 import sys
+from collections import Counter
 
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
@@ -33,10 +35,52 @@ from eventyay.base.services.stale_cache import (
 from eventyay.base.services.user import get_public_users
 from eventyay.base.services.video_entitlements import check_video_entitlements, filter_stream_by_entitlement
 from eventyay.base.signals import periodic_task
+from eventyay.core.permissions import Permission
 from eventyay.features.live.channels import GROUP_ROOM
 
 
 logger = logging.getLogger(__name__)
+
+# Call modules whose own settings a call moderator may change without full room-edit rights.
+MODERATED_CALL_MODULE_PERMISSIONS = {
+    "call.bigbluebutton": Permission.ROOM_BBB_MODERATE,
+    "call.janus": Permission.ROOM_JANUSCALL_MODERATE,
+    "call.jitsi": Permission.ROOM_JITSI_MODERATE,
+    "call.loungemesh": Permission.ROOM_LOUNGEMESH_MODERATE,
+    "channel.loungemesh": Permission.ROOM_LOUNGEMESH_MODERATE,
+}
+
+
+def strip_webhook_secrets(room_config):
+    """Return a copy of a serialized room config without chat webhook secrets."""
+    room_config = copy.deepcopy(room_config)
+    for module in room_config.get("module_config") or []:
+        config = module.get("config") if isinstance(module, dict) else None
+        if isinstance(config, dict):
+            config.pop("webhook_hmac_secret", None)
+    return room_config
+
+
+def restrict_module_config_patch(current_module_config, new_module_config, editable_types):
+    """
+    Limit a module_config patch to the settings of ``editable_types``.
+
+    Other modules keep their stored config. Returns None if modules are added or removed.
+    """
+    if not isinstance(new_module_config, list) or not all(
+        isinstance(m, dict) for m in new_module_config
+    ):
+        return None
+    current = [m for m in current_module_config or [] if isinstance(m, dict)]
+    if Counter(m.get("type") for m in new_module_config) != Counter(
+        m.get("type") for m in current
+    ):
+        return None
+    stored_by_type = {m.get("type"): m for m in current}
+    return [
+        m if m.get("type") in editable_types else copy.deepcopy(stored_by_type[m.get("type")])
+        for m in new_module_config
+    ]
 
 CURRENT_STREAM_MAX_CACHE_TTL = 60
 CURRENT_STREAM_STALE_CACHE_TTL = 3600
