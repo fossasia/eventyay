@@ -15,6 +15,8 @@ from eventyay.base.models import (
     LogEntry,
     QueuedMail,
     Review,
+    Room,
+    Schedule,
     SpeakerProfile,
     Submission,
     SubmissionComment,
@@ -291,6 +293,19 @@ def default_activitylog_object_link(sender: Event, activitylog: LogEntry, **kwar
         url = activitylog.content_object.orga_urls.base
         text = _('Speaker profile')
         link_text = escape(activitylog.content_object.user.get_display_name())
+    elif isinstance(activitylog.content_object, Schedule):
+        schedule = activitylog.content_object
+        text = _('Schedule')
+        if schedule.version:
+            url = schedule.urls.public
+            link_text = escape(schedule.version)
+        else:
+            url = schedule.event.orga_urls.schedule
+            link_text = _('Work in progress')
+    elif isinstance(activitylog.content_object, Room):
+        url = activitylog.content_object.urls.edit
+        text = _('Room')
+        link_text = escape(activitylog.content_object.name)
     elif isinstance(activitylog.content_object, Event):
         url = activitylog.content_object.orga_urls.base
         text = _('Event')

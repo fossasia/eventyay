@@ -168,6 +168,10 @@
                                     <span class="td-activity-badge type-review"><i class="fa fa-eye"></i> {% translate "Review" %}</span>
                                 {% elif "speaker" in log.action_type %}
                                     <span class="td-activity-badge type-speaker"><i class="fa fa-user"></i> {% translate "Speaker" %}</span>
+                                {% elif "submission" in log.action_type %}
+                                    <span class="td-activity-badge type-session"><i class="fa fa-file-text-o"></i> {% translate "Proposal" %}</span>
+                                {% elif "mail" in log.action_type %}
+                                    <span class="td-activity-badge type-default"><i class="fa fa-envelope-o"></i> {% translate "Email" %}</span>
                                 {% else %}
                                     <span class="td-activity-badge type-default"><i class="fa fa-circle"></i> {% translate "Log" %}</span>
                                 {% endif %}

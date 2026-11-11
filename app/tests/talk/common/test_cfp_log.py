@@ -2,7 +2,7 @@ import pytest
 from django_scopes import scope
 
 from eventyay.common.log_display import LOG_NAMES
-from eventyay.base.models.log import ActivityLog
+from eventyay.base.models.log import ActivityLog, LogEntry
 
 
 @pytest.fixture
@@ -56,3 +56,133 @@ def test_log_urls(
         activity_log.content_object = mail
         del activity_log.display_object
         assert mail.urls.base in activity_log.display_object
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "action_type",
+    (
+        "eventyay.submission.create",
+        "eventyay.submission.speakers.add",
+        "eventyay.mail.sent",
+        "eventyay.schedule.release",
+    ),
+)
+def test_log_entry_display_uses_talk_log_names(event, submission, action_type):
+    """Talk actions are stored as LogEntry and must render their readable name, not the raw key."""
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=submission, action_type=action_type)
+        assert log_entry.display() == LOG_NAMES[action_type]
+
+
+@pytest.mark.django_db
+def test_log_entry_display_unknown_action_falls_back_to_action_type(event, submission):
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=submission, action_type="foo.bar")
+        assert log_entry.display() == "foo.bar"
+
+
+@pytest.mark.django_db
+def test_log_entry_display_keeps_ticketing_names(event):
+    """Actions rendered by the ticketing log display keep their existing wording."""
+    with scope(event=event):
+        log_entry = LogEntry(
+            event=event, content_object=event, action_type="eventyay.event.plugins.enabled"
+        )
+        assert str(log_entry.display()) == "A plugin has been enabled."
+
+
+@pytest.mark.django_db
+def test_log_entry_display_object_links_talk_objects(event, submission, room, schedule):
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=submission, action_type="eventyay.submission.create")
+        assert submission.orga_urls.base in log_entry.display_object
+
+        log_entry = LogEntry(event=event, content_object=schedule, action_type="eventyay.schedule.release")
+        assert schedule.urls.public in log_entry.display_object
+        assert "Schedule(" not in log_entry.display_object
+
+        log_entry = LogEntry(event=event, content_object=room, action_type="eventyay.room.create")
+        assert room.urls.edit in log_entry.display_object
+
+
+@pytest.mark.django_db
+def test_talk_dashboard_activity_shows_readable_text(orga_client, orga_user, event, submission):
+    with scope(event=event):
+        submission.log_action("eventyay.submission.create", user=orga_user, orga=True)
+
+    response = orga_client.get(event.orga_urls.base, follow=True)
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Recent talk activity" in content
+    assert str(LOG_NAMES["eventyay.submission.create"]) in content
+    assert "eventyay.submission.create" not in content
+
+
+@pytest.mark.django_db
+def test_log_entry_display_maps_legacy_pretalx_action_types(event, submission):
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=submission, action_type="pretalx.submission.speakers.add")
+        assert log_entry.display() == LOG_NAMES["eventyay.submission.speakers.add"]
+
+
+@pytest.mark.django_db
+def test_log_entry_display_formats_templated_talk_names(event):
+    data = '{"name": "Old event", "slug": "old", "organiser": "Org"}'
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=event, action_type="eventyay.event.delete", data=data)
+        assert log_entry.display() == "The event Old event (old) by Org was deleted."
+
+
+@pytest.mark.django_db
+def test_log_entry_display_templated_name_with_missing_data_falls_back(event):
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=event, action_type="eventyay.event.delete", data="{}")
+        assert log_entry.display() == "eventyay.event.delete"
+
+
+@pytest.mark.django_db
+def test_log_entry_display_without_event(user):
+    log_entry = LogEntry(event=None, content_object=user, action_type="eventyay.user.password.update")
+    assert log_entry.display() == LOG_NAMES["eventyay.user.password.update"]
+
+
+@pytest.mark.django_db
+def test_log_entry_display_object_links_unreleased_schedule_to_editor(event):
+    with scope(event=event):
+        wip_schedule = event.wip_schedule
+        log_entry = LogEntry(event=event, content_object=wip_schedule, action_type="eventyay.schedule.update")
+        assert event.orga_urls.schedule in log_entry.display_object
+        assert "Work in progress" in log_entry.display_object
+
+
+@pytest.mark.django_db
+def test_log_entry_display_object_escapes_titles(event, submission):
+    with scope(event=event):
+        submission.title = "<script>alert(1)</script>"
+        log_entry = LogEntry(event=event, content_object=submission, action_type="eventyay.submission.create")
+        assert "<script>" not in log_entry.display_object
+        assert "&lt;script&gt;" in log_entry.display_object
+
+
+@pytest.mark.django_db
+def test_log_entry_display_object_without_content_object(event, submission):
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=submission, action_type="eventyay.submission.create")
+        log_entry.content_object = None
+        assert log_entry.display_object == ""
+
+
+@pytest.mark.django_db
+def test_talk_dashboard_activity_badges(orga_client, orga_user, event, submission):
+    with scope(event=event):
+        submission.log_action("eventyay.submission.create", user=orga_user, orga=True)
+        event.release_schedule("1.0", user=orga_user)
+
+    response = orga_client.get(event.orga_urls.base, follow=True)
+
+    content = response.content.decode()
+    assert "td-activity-badge type-session" in content
+    assert "td-activity-badge type-schedule" in content
+    assert "Schedule(" not in content
