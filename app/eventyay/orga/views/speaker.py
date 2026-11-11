@@ -278,12 +278,12 @@ class SpeakerSessionMixin:
         )
         if speaker := self.get_session_speaker():
             sessions = sessions.exclude(speakers=speaker)
-        return sessions.only('pk', 'title', 'code').order_by('title')
+        return sessions.order_by('title')
 
     @context
     @cached_property
     def existing_sessions(self):
-        return self.linkable_sessions()
+        return self.linkable_sessions().only('pk', 'title', 'code')
 
     @context
     @cached_property

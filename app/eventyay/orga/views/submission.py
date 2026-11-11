@@ -714,16 +714,17 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         if self.object and self.action == 'edit':
             return AddSpeakerInlineForm(event=self.request.event, require_name=True, submission=self.object)
 
+    @cached_property
+    def _pending_speaker_invitations(self):
+        return list(self.object.speaker_invitations.filter(status=SpeakerInvitationStates.PENDING))
+
     @context
     @cached_property
     def session_speakers(self):
         if not self.add_speaker_form:
             return []
         invitations = {
-            invitation.user_id: invitation
-            for invitation in self.object.speaker_invitations.filter(
-                status=SpeakerInvitationStates.PENDING, user__isnull=False
-            )
+            invitation.user_id: invitation for invitation in self._pending_speaker_invitations if invitation.user_id
         }
         return [
             {'user': speaker, 'invitation': invitations.get(speaker.pk)} for speaker in self.object.speakers.all()
@@ -734,10 +735,12 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     def pending_invitations(self):
         if not self.add_speaker_form:
             return []
-        speaker_ids = self.object.speakers.values_list('pk', flat=True)
-        return self.object.speaker_invitations.filter(status=SpeakerInvitationStates.PENDING).exclude(
-            user_id__in=speaker_ids
-        )
+        speaker_ids = {entry['user'].pk for entry in self.session_speakers}
+        return [
+            invitation
+            for invitation in self._pending_speaker_invitations
+            if invitation.user_id is None or invitation.user_id not in speaker_ids
+        ]
 
     @context
     @cached_property
