@@ -164,3 +164,14 @@ def test_voucher_url_chip_expands():
     )
 
     assert expanded == '<a href="https://shop.example/redeem/?voucher=ABC">link</a>'
+
+
+@pytest.mark.django_db
+def test_voucher_preview_keeps_voucher_html(event):
+    rendered = expand_email_preview_placeholders(
+        '<p>{voucher_list}</p><p>{voucher_url}</p>', event, preview_context='voucher'
+    )
+
+    assert '&lt;' not in rendered
+    assert '<span>68CYU2H6ZTP3WLK5<br>7MB94KKPVEPSMVF2</span>' in rendered
+    assert rendered.count('<a href=') == 2
