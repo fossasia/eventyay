@@ -1,9 +1,10 @@
 import django_filters
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models.auth import User
-from eventyay.base.models.submission import Submission
 from eventyay.base.models.review import Review
+from eventyay.base.models.submission import Submission
+
 
 with scopes_disabled():
 
@@ -31,12 +32,13 @@ with scopes_disabled():
             super().__init__(*args, **kwargs)
             event = getattr(kwargs.get("request"), "event", None)
             if event:
-                submissions = event.submissions.all()
-                self.filters["submission"].queryset = submissions
-                self.filters["user"].queryset = event.reviewers.all()
-                self.filters["speaker"].queryset = User.objects.filter(
-                    submissions__in=submissions
-                )
+                with scope(event=event):
+                    submissions = event.submissions.all()
+                    self.filters["submission"].queryset = submissions
+                    self.filters["user"].queryset = event.reviewers.all()
+                    self.filters["speaker"].queryset = User.objects.filter(
+                        submissions__in=submissions
+                    ).distinct()
 
         class Meta:
             model = Review

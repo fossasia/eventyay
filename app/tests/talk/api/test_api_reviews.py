@@ -5,7 +5,13 @@ import pytest
 from django_scopes import scope
 
 from eventyay.api.serializers.review import ReviewSerializer
-from eventyay.base.models import Answer, Review, ReviewScore, ReviewScoreCategory
+from eventyay.base.models import (
+    Answer,
+    Review,
+    ReviewScore,
+    ReviewScoreCategory,
+    Submission,
+)
 
 
 @pytest.fixture
@@ -189,6 +195,16 @@ def test_reviewer_can_filter_by_submission(
         event.active_review_phase.can_see_other_reviews = "always"
         event.active_review_phase.save()
     response = client.get(
+        event.api_urls.reviews,
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert content["count"] == 2
+
+    response = client.get(
         event.api_urls.reviews + f"?submission={review.submission.code}",
         follow=True,
         headers={"Authorization": f"Token {review_user_token.token}"},
@@ -197,6 +213,27 @@ def test_reviewer_can_filter_by_submission(
 
     assert response.status_code == 200
     assert len(content["results"]) == 1, content
+    returned = content["results"][0]
+    assert returned["submission"] == review.submission.code, content
+    assert returned["submission"] != other_review.submission.code, content
+
+    # Verify ?speaker= filter handles speakers with multiple submissions (guards .distinct()).
+    with scope(event=event):
+        speaker = review.submission.speakers.first()
+        Submission.objects.create(
+            event=event,
+            title="Second talk by same speaker",
+            submission_type=event.cfp.default_type,
+            content_locale="en",
+        ).speakers.add(speaker)
+        speaker_code = speaker.code
+
+    response = client.get(
+        event.api_urls.reviews + f"?speaker={speaker_code}",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    assert response.status_code == 200, response.text  # would be 500 without .distinct()
 
 
 @pytest.mark.django_db
@@ -549,3 +586,21 @@ def test_anonymous_cannot_delete_review(client, event, review):
     url = event.api_urls.reviews + f"{review.pk}/"
     response = client.delete(url)
     assert response.status_code == 404, response.text
+
+
+@pytest.mark.django_db
+def test_review_filter_rejects_submission_from_other_event(
+    client, review_user_token, event, other_event
+):
+    with scope(event=other_event):
+        foreign_sub = Submission.objects.create(
+            event=other_event,
+            title="Foreign Talk",
+            submission_type=other_event.cfp.default_type,
+        )
+    response = client.get(
+        event.api_urls.reviews + f"?submission={foreign_sub.code}",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    assert response.status_code == 400
