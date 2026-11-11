@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, UpdateView
 
@@ -62,7 +62,9 @@ class ServiceDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
     model = ThirdPartyService
     template_name = 'pretixcontrol/admin/privacy_service_delete.html'
     context_object_name = 'service'
-    success_url = reverse_lazy('eventyay_admin:admin.global.privacy')
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.global.privacy') + '#services'
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()

@@ -231,7 +231,17 @@ def test_admin_can_delete_a_service(admin_client, service):
     )
 
     assert response.status_code == 302
+    assert response['Location'] == reverse('eventyay_admin:admin.global.privacy') + '#services'
     assert not ThirdPartyService.objects.filter(pk=service.pk).exists()
+
+
+@pytest.mark.django_db
+def test_service_actions_have_accessible_names(admin_client, service):
+    response = admin_client.get(reverse('eventyay_admin:admin.global.privacy'))
+
+    html = response.content.decode()
+    assert 'aria-label="Edit Google Analytics"' in html
+    assert 'aria-label="Delete Google Analytics"' in html
 
 
 @pytest.mark.django_db
