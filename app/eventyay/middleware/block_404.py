@@ -189,7 +189,7 @@ class Block404Middleware:
                 if isinstance(exc, ResponseError) and 'not an integer' not in str(exc).lower():
                     raise
                 cache.delete(key)
-        cache.set(key, 1, timeout=cls.WINDOW_SECONDS)
+        cache.add(key, 1, timeout=cls.WINDOW_SECONDS)
         return 1
 
     @classmethod

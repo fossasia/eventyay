@@ -542,6 +542,21 @@ class TestBlock404MiddlewareRedis:
         assert client.get(made_ip) == b'1'
         assert Block404Middleware._expire_nx_supported is False
 
+        # Exhausting fallback retries must not overwrite a concurrent counter via cache.set().
+        token_key = Block404Middleware._cache_key(_make_identity_request('token'))
+        made_token = fakeredis_cache.make_and_validate_key(token_key)
+        client.set(made_token, 12, ex=60)
+        incr_calls = {'n': 0}
+
+        def racy_incr(self, k, delta=1, version=None):
+            incr_calls['n'] += 1
+            raise ValueError('expired mid-race')
+
+        monkeypatch.setattr(DjangoRedisCache, 'incr', racy_incr)
+        assert Block404Middleware._fallback_incr(fakeredis_cache, token_key, client, made_token) == 1
+        assert incr_calls['n'] == 3
+        assert client.get(made_token) == b'12'
+
     def test_transient_errors_fail_open_and_corrupted_counter_resets(self, fakeredis_cache, monkeypatch, caplog):
         mw_404 = Block404Middleware(_make_get_response(404))
 
