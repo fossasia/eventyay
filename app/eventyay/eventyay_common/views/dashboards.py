@@ -39,9 +39,11 @@ from eventyay.base.models import (
     Quota,
     RequiredAction,
     SubEvent,
+    TeamInvite,
     Voucher,
 )
 from eventyay.base.meetup import is_meetup_event
+from eventyay.base.services.teams import get_team_invite_event_name
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
 from eventyay.control.signals import (
@@ -705,9 +707,22 @@ def rearrange(widgets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sorted(widgets, key=sort_key, reverse=True)
 
 
+def _pending_team_invites(user):
+    invites = list(
+        TeamInvite.objects.open()
+        .filter(user=user)
+        .select_related('team__organizer')
+        .order_by('expires')
+    )
+    for invite in invites:
+        invite.event_name = get_team_invite_event_name(invite.team)
+    return invites
+
+
 def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
     if user_needs_onboarding(request.user, request):
         ctx = build_onboarding_context(request)
+        ctx['pending_team_invites'] = _pending_team_invites(request.user)
         return render(request, 'eventyay_common/dashboard/dashboard.html', ctx)
 
     widgets = []
@@ -717,6 +732,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
     ctx = build_organiser_dashboard_context(request, annotated_event_query)
     ctx['widgets'] = rearrange(widgets)
     ctx['video_permission_dialog_id'] = VIDEO_PERMISSION_DIALOG_ID
+    ctx['pending_team_invites'] = _pending_team_invites(request.user)
     return render(request, 'eventyay_common/dashboard/dashboard.html', ctx)
 
 
