@@ -6,11 +6,13 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from django.contrib.auth.tokens import default_token_generator
+from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.test.utils import CaptureQueriesContext
 from django.urls import resolve, reverse
+from kombu.exceptions import OperationalError as BrokerError
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -252,6 +254,33 @@ def test_admin_can_reject_from_list(client, application, admin):
     assert application.status == 'rejected'
     assert application.reason == ''
 
+
+@pytest.mark.parametrize(('action', 'expected_status'), [
+    ('approve', 'approved'),
+    ('reject', 'rejected'),
+])
+def test_list_review_shows_warning_when_notification_cannot_be_queued(
+    client, application, admin, action, expected_status
+):
+    def review_then_fail(*args, **kwargs):
+        review_request(*args, **kwargs)
+        raise BrokerError('broker unavailable')
+
+    with patch(
+        'eventyay.control.views.organizer_requests.review_request',
+        side_effect=review_then_fail,
+    ):
+        response = client.post(
+            reverse('eventyay_admin:admin.organizer_requests'),
+            {'application_id': application.pk, 'action': action},
+        )
+
+    assert response.status_code == 302
+    application.refresh_from_db()
+    assert application.status == expected_status
+    messages = list(get_messages(response.wsgi_request))
+    assert any(message.level_tag == 'alert-warning' for message in messages)
+    assert any('notification could not be queued' in str(message) for message in messages)
 
 def test_list_actions_only_appear_for_pending_requests(client, application, admin):
     url = reverse('eventyay_admin:admin.organizer_requests')

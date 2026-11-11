@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from kombu.exceptions import OperationalError as BrokerError
 
 from eventyay.base.forms.organizer_request import validate_request_slug
 from eventyay.base.models import Organizer, OrganizerRequest, User
@@ -28,8 +29,9 @@ def notify(email: str, subject: str, body: str) -> None:
         mail(email, subject, 'pretixcontrol/email/organizer_request.txt', {'body': body})
     except SendMailException:
         logger.exception('Could not send organiser request notification')
-    except Exception:
+    except BrokerError:
         logger.exception('Could not queue organiser request notification')
+        raise
 
 
 def notify_approval(
@@ -67,24 +69,31 @@ def notify_approval(
         )
     except SendMailException:
         logger.exception('Could not send organiser request approval to %s', application.email)
-    except Exception:
+    except BrokerError:
         logger.exception('Could not queue organiser request approval to %s', application.email)
+        raise
     else:
         logger.info('Submitted organiser request approval for delivery to %s', application.email)
 
 
 def notify_submission(application: OrganizerRequest) -> None:
-    notify(
-        application.email,
-        _('Organiser request received'),
-        _('Thank you for your request. We will review it within a few business days.'),
-    )
+    try:
+        notify(
+            application.email,
+            _('Organiser request received'),
+            _('Thank you for your request. We will review it within a few business days.'),
+        )
+    except BrokerError:
+        logger.exception('Could not queue organiser request submission notification')
     review_url = absolute_url(reverse('eventyay_admin:admin.organizer_requests.detail', args=[application.pk]))
     body = _('A new organiser request is ready for review.\n\nReview: {url}').format(url=review_url)
     for email in User.objects.filter(
         Q(is_staff=True) | Q(is_superuser=True), is_active=True, is_spam=False
     ).values_list('email', flat=True):
-        notify(email, _('New organiser request'), body)
+        try:
+            notify(email, _('New organiser request'), body)
+        except BrokerError:
+            logger.exception('Could not queue new organiser request notification to %s', email)
 
 
 @transaction.atomic

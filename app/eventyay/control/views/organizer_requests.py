@@ -5,6 +5,7 @@ from django.db.models import Exists, OuterRef, Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext as _
 from django.views.generic import DetailView, ListView
+from kombu.exceptions import OperationalError as BrokerError
 
 from eventyay.base.forms.organizer_request import OrganizerRequestRejectForm, OrganizerRequestReviewForm
 from eventyay.base.models import OrganizerRequest, OrganizerRequestAnswer, User
@@ -51,6 +52,11 @@ class OrganizerRequestList(AdministratorPermissionRequiredMixin, ListView):
             messages.error(
                 request,
                 _('The email or short form was just used by another request. Please reload and try again.'),
+            )
+        except BrokerError:
+            messages.warning(
+                request,
+                _('The request was reviewed, but its notification could not be queued. Please contact the applicant manually.'),
             )
         else:
             messages.success(
@@ -101,6 +107,12 @@ class OrganizerRequestDetail(AdministratorPermissionRequiredMixin, DetailView):
                 form.add_error(
                     None, _('The email or short form was just used by another request. Please reload and try again.')
                 )
+            except BrokerError:
+                messages.warning(
+                    request,
+                    _('The request was reviewed, but its notification could not be queued. Please contact the applicant manually.'),
+                )
+                return redirect('eventyay_admin:admin.organizer_requests.detail', pk=self.object.pk)
             else:
                 messages.success(request, _('The request has been reviewed.'))
                 return redirect('eventyay_admin:admin.organizer_requests.detail', pk=self.object.pk)
