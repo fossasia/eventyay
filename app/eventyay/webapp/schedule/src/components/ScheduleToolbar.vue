@@ -70,9 +70,10 @@
 					:aria-label="languageGroup.title",
 					@click="toggleFilterDropdown(languageGroup.refKey)")
 					span.filter-title.filter-icon-title
-						svg.tb-icon(viewBox="0 0 24 24", fill="currentColor", aria-hidden="true")
-							path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
-							path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
+						svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+							circle(cx="12", cy="12", r="10")
+							line(x1="2", y1="12", x2="22", y2="12")
+							path(d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z")
 						span.filter-dot(v-if="selectedCount(languageGroup) > 0")
 				.filter-dropdown-menu(v-if="openFilterDropdowns[languageGroup.refKey]")
 					template(v-if="languageGroup.data.length")
@@ -225,7 +226,7 @@
 							svg.chevron-icon(:class="{open: tzOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								path(d="M6 9l6 6 6-6")
 						.tz-dropdown-menu(v-if="tzOpen")
-							.tz-section-label Pinned
+							.tz-section-label {{ t.pinned }}
 							.tz-option(
 								v-for="option in pinnedTimezones",
 								:key="option.id",
@@ -478,6 +479,9 @@ export default {
 				minutes: m.minutes || this.$t('min'),
 				list: this.$t('List'),
 				cal: this.$t('Calendar'),
+				pinned: m.pinned || this.$t('Pinned'),
+				local: m.local || this.$t('local'),
+				event: m.event || this.$t('event'),
 			}
 		},
 		timeDensityOptions() {
@@ -588,8 +592,8 @@ export default {
 				pinned.push({ id, label: `${id.replace(/_/g, ' ')} (${suffix})` })
 				seen.add(id)
 			}
-			addTimezone(this.userTimezone, 'local')
-			addTimezone(this.scheduleTimezone, 'event')
+			addTimezone(this.userTimezone, this.t.local)
+			addTimezone(this.scheduleTimezone, this.t.event)
 			return pinned
 		},
 		otherTimezones() {
@@ -2040,9 +2044,9 @@ export default {
 			fill: none
 		}
 		.language-filter-area svg.tb-icon {
-			fill: #111
+			fill: none
 			color: #111
-			stroke: none
+			stroke: #111
 		}
 		.sessions-toggle-label
 			display: none
