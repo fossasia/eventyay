@@ -165,3 +165,14 @@ async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room
     sent = consumer.send_success.call_args[0][0]
     chat = next(m for m in sent["module_config"] if m["type"] == "chat.native")
     assert "webhook_hmac_secret" not in chat["config"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bad_config", [[], "x", None])
+async def test_moderator_config_patch_rejects_non_object_module_config(jitsi_chat_room, bad_config):
+    """A moderated module's config must be an object, or later .get() calls would fail."""
+    module, consumer = make_moderator_module(jitsi_chat_room)
+    bad_jitsi = {"type": "call.jitsi", "config": bad_config}
+    await module.config_patch({"room": str(jitsi_chat_room.pk), "module_config": [bad_jitsi, CHAT]})
+    consumer.send_error.assert_awaited_once_with(code="config.invalid")
+    jitsi_chat_room.validate_mock.assert_not_called()

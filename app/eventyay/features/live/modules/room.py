@@ -712,7 +712,10 @@ class RoomModule(BaseModule):
         if 'module_config' in body:
             module_config = body['module_config']
             if not isinstance(module_config, list) or not all(
-                isinstance(module, dict) and isinstance(module.get('type'), str) for module in module_config
+                isinstance(module, dict)
+                and isinstance(module.get('type'), str)
+                and isinstance(module.get('config', {}), dict)
+                for module in module_config
             ):
                 log_event('video', 'room.config', OUTCOME_FAILURE, error_code='invalid', event_id=getattr(self.consumer.event, 'pk', None))
                 await self.consumer.send_error(code='config.invalid')
