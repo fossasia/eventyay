@@ -1065,7 +1065,7 @@ export default {
 
 		.featured-speakers-grid
 			display: flex
-			justify-content: center
+			justify-content: flex-start
 			align-items: flex-start
 			gap: 18px
 			width: 100%
@@ -1401,6 +1401,7 @@ export default {
 			.featured-speakers-grid
 				width: 100%
 				max-width: 100%
+				justify-content: center
 				gap: 12px
 			.featured-speaker-stack
 				max-width: 100%
