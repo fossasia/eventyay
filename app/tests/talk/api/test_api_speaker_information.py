@@ -387,7 +387,7 @@ def allow_all_entitlements(monkeypatch):
 
 @pytest.mark.django_db
 def test_orga_can_replace_speaker_information_resource(
-    client, event, settings, tmp_path, allow_all_entitlements
+    client, event, settings, tmp_path, allow_all_entitlements, django_capture_on_commit_callbacks
 ):
     settings.MEDIA_ROOT = tmp_path
     with scope(event=event):
@@ -412,15 +412,16 @@ def test_orga_can_replace_speaker_information_resource(
     assert response.status_code == 201, response.content
     file_id = response.json()["id"]
 
-    response = client.patch(
-        event.api_urls.speaker_information + f"{speaker_info.pk}/",
-        follow=True,
-        data=json.dumps({"resource": file_id}),
-        headers={
-            "Authorization": f"Token {team_token.token}",
-            "Content-Type": "application/json",
-        },
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.patch(
+            event.api_urls.speaker_information + f"{speaker_info.pk}/",
+            follow=True,
+            data=json.dumps({"resource": file_id}),
+            headers={
+                "Authorization": f"Token {team_token.token}",
+                "Content-Type": "application/json",
+            },
+        )
     assert response.status_code == 200, response.text
 
     with scope(event=event):

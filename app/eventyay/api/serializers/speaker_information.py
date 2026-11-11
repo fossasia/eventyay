@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from django.core.files.storage import default_storage
+from django.db import transaction
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 
 from eventyay.api.mixins import PretalxSerializer
@@ -13,6 +14,13 @@ from eventyay.base.models.type import SubmissionType
 
 
 logger = logging.getLogger(__name__)
+
+
+def delete_stored_file(name: str) -> None:
+    try:
+        default_storage.delete(name)
+    except OSError:
+        logger.error('Deleting file %s failed.', name)
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -68,8 +76,5 @@ class SpeakerInformationSerializer(FlexFieldsSerializerMixin, PretalxSerializer)
             instance.save(update_fields=("resource",))
 
             if old_resource_name:
-                try:
-                    default_storage.delete(old_resource_name)
-                except OSError:
-                    logger.error('Deleting file %s failed.', old_resource_name)
+                transaction.on_commit(lambda: delete_stored_file(old_resource_name))
         return instance
