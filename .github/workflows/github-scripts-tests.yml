@@ -8,11 +8,13 @@ on:
   pull_request:
     paths:
       - ".github/scripts/**"
+      - ".github/workflows/approval-labels*.yml"
       - ".github/workflows/github-scripts-tests.yml"
   push:
     branches: [dev, main]
     paths:
       - ".github/scripts/**"
+      - ".github/workflows/approval-labels*.yml"
       - ".github/workflows/github-scripts-tests.yml"
 
 permissions:
