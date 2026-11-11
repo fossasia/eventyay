@@ -422,7 +422,9 @@ def test_orga_can_replace_speaker_information_resource(
                 "Content-Type": "application/json",
             },
         )
-    assert response.status_code == 200, response.text
+        assert response.status_code == 200, response.text
+        # The old file is only deleted once the transaction commits.
+        assert default_storage.exists(old_name)
 
     with scope(event=event):
         speaker_info.refresh_from_db()
