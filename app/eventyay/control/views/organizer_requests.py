@@ -2,9 +2,10 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Exists, OuterRef, Prefetch
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext as _
 from django.views.generic import DetailView, ListView
+from kombu.exceptions import OperationalError as BrokerError
 
 from eventyay.base.forms.organizer_request import OrganizerRequestRejectForm, OrganizerRequestReviewForm
 from eventyay.base.models import OrganizerRequest, OrganizerRequestAnswer, User
@@ -21,6 +22,50 @@ class OrganizerRequestList(AdministratorPermissionRequiredMixin, ListView):
         return OrganizerRequest.objects.annotate(
             has_account=Exists(User.objects.filter(email__iexact=OuterRef('email')))
         )
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        if action not in ('approve', 'reject'):
+            return redirect('eventyay_admin:admin.organizer_requests')
+
+        try:
+            application_id = int(request.POST.get('application_id', ''))
+        except (TypeError, ValueError):
+            return redirect('eventyay_admin:admin.organizer_requests')
+
+        application = get_object_or_404(OrganizerRequest, pk=application_id)
+
+        try:
+            if action == 'approve':
+                review_request(
+                    application.pk,
+                    request.user,
+                    approve=True,
+                    organizer_name=application.organizer_name,
+                    slug=application.slug,
+                )
+            else:
+                review_request(application.pk, request.user, approve=False)
+        except ValidationError as exc:
+            messages.error(request, '; '.join(exc.messages))
+        except IntegrityError:
+            messages.error(
+                request,
+                _('The email or short form was just used by another request. Please reload and try again.'),
+            )
+        except BrokerError:
+            messages.warning(
+                request,
+                _('The request was reviewed, but its notification could not be queued. Please contact the applicant manually.'),
+            )
+        else:
+            messages.success(
+                request,
+                _('The request has been approved.') if action == 'approve'
+                else _('The request has been rejected.'),
+            )
+
+        return redirect('eventyay_admin:admin.organizer_requests')
 
 
 class OrganizerRequestDetail(AdministratorPermissionRequiredMixin, DetailView):
@@ -62,6 +107,12 @@ class OrganizerRequestDetail(AdministratorPermissionRequiredMixin, DetailView):
                 form.add_error(
                     None, _('The email or short form was just used by another request. Please reload and try again.')
                 )
+            except BrokerError:
+                messages.warning(
+                    request,
+                    _('The request was reviewed, but its notification could not be queued. Please contact the applicant manually.'),
+                )
+                return redirect('eventyay_admin:admin.organizer_requests.detail', pk=self.object.pk)
             else:
                 messages.success(request, _('The request has been reviewed.'))
                 return redirect('eventyay_admin:admin.organizer_requests.detail', pk=self.object.pk)
