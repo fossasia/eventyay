@@ -46,8 +46,9 @@ class SpeakerVoucherSettingsForm(forms.Form):
                 )
                 tag_choices += [(tag, tag) for tag in tags]
         self.fields['voucher_tag'].choices = tag_choices
-        # Required when enabled (validated in clean); hide the generic Optional marker.
+        # Required when enabled (validated in clean); show required marker, not Optional.
         self.fields['voucher_tag'].hide_optional = True
+        self.fields['voucher_tag'].one_required = True
 
     def clean(self):
         cleaned = super().clean()

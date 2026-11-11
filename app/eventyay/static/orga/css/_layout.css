@@ -3944,6 +3944,114 @@ button.btn-speaker-not-arrived {
   gap: 12px;
 }
 
+.speaker-vouchers-page {
+  max-width: 1100px;
+}
+
+.speaker-vouchers-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.speaker-vouchers-hero-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.speaker-vouchers-hero-copy h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.speaker-vouchers-hero-copy p {
+  margin-bottom: 0;
+  color: var(--color-text-muted, #6c757d);
+  max-width: 42rem;
+}
+
+.speaker-vouchers-hero-art {
+  position: relative;
+  width: 88px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.speaker-vouchers-ticket {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 40px;
+  border-radius: 8px;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.speaker-vouchers-ticket-back {
+  top: 0;
+  right: 18px;
+  background: var(--color-primary);
+  opacity: 0.55;
+  transform: rotate(-12deg);
+}
+
+.speaker-vouchers-ticket-front {
+  right: 0;
+  bottom: 0;
+  background: var(--color-primary);
+  transform: rotate(8deg);
+}
+
+.speaker-vouchers-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 20px;
+  align-items: start;
+}
+
+.speaker-vouchers-aside .card-body {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.speaker-vouchers-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.speaker-vouchers-steps li + li {
+  margin-top: 12px;
+}
+
+.speaker-vouchers-steps strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.speaker-vouchers-steps span {
+  color: var(--color-text-muted, #6c757d);
+  font-size: 0.925rem;
+}
+
+.speaker-vouchers-tips {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.speaker-vouchers-tips li + li {
+  margin-top: 8px;
+}
+
+.speaker-voucher-email-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .speaker-voucher-actions {
   display: flex;
   flex-wrap: wrap;
@@ -3976,6 +4084,16 @@ button.btn-speaker-not-arrived {
 
 .speaker-voucher-confirm-summary dd {
   margin: 0;
+}
+
+@media (max-width: 991px) {
+  .speaker-vouchers-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .speaker-vouchers-hero-art {
+    display: none;
+  }
 }
 
 .feedback-confirm-dialog-btn-cancel {

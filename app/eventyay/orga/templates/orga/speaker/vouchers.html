@@ -6,110 +6,182 @@
 {% block extra_title %}{% translate "Speaker Vouchers" %} :: {% endblock extra_title %}
 
 {% block content %}
-  <h2>{% translate "Speaker Vouchers" %}</h2>
-  <p>
-    {% blocktranslate trimmed %}
-      Configure free or discounted tickets for speakers. Select a voucher batch created in Tickets → Vouchers, then send individual codes to speakers.
-    {% endblocktranslate %}
-  </p>
-
-  {% if not has_voucher_batches %}
-    <div class="alert alert-info" role="status">
-      {% blocktranslate trimmed %}
-        This event has no voucher batch yet.
-      {% endblocktranslate %}
-      <a class="btn btn-default ml-2" href="{{ create_batch_url }}">
-        <i class="fa fa-plus" aria-hidden="true"></i>
-        {% translate "Create a voucher batch in Tickets →" %}
-      </a>
-    </div>
-  {% endif %}
-
-  <form method="post" class="form" id="speaker-voucher-settings-form"
-        data-saved-enabled="{{ voucher_settings.enabled|yesno:'true,false' }}"
-        data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}">
-    {% csrf_token %}
-    {% include "common/forms/errors.html" %}
-
-    <fieldset>
-      <legend>{% translate "Voucher batch" %}</legend>
-      {{ form.enabled.as_field_group }}
-      {{ form.voucher_tag.as_field_group }}
-      <div class="form-group row">
-        <div class="col-md-9 offset-md-3">
-          <p class="help-block mb-0">
-            <a href="{{ create_batch_url }}">
-              <i class="fa fa-plus" aria-hidden="true"></i>
-              {% translate "Create a new batch" %}
-            </a>
-          </p>
-        </div>
+  <div class="speaker-vouchers-page">
+    <header class="speaker-vouchers-hero">
+      <div class="speaker-vouchers-hero-copy">
+        <h2>{% translate "Speaker Vouchers" %}</h2>
+        <p>
+          {% blocktranslate trimmed %}
+            Configure free or discounted tickets for speakers. Select a voucher batch and send individual codes to speakers.
+          {% endblocktranslate %}
+        </p>
       </div>
+      <div class="speaker-vouchers-hero-art" aria-hidden="true">
+        <span class="speaker-vouchers-ticket speaker-vouchers-ticket-back">
+          <i class="fa fa-ticket"></i>
+        </span>
+        <span class="speaker-vouchers-ticket speaker-vouchers-ticket-front">
+          <i class="fa fa-microphone"></i>
+        </span>
+      </div>
+    </header>
 
-      {% if voucher_settings.voucher_tag %}
-        <div class="form-group row">
-          <label class="col-md-3 col-form-label">{% translate "Vouchers remaining" %}</label>
-          <div class="col-md-9">
-            <p class="form-control-plaintext{% if not summary.remaining %} text-danger{% endif %}">
-              {{ summary.remaining }} / {{ summary.total }}
-            </p>
-            <p class="text-muted mb-0">
-              {% blocktranslate trimmed with sent=summary.sent claimed=summary.claimed pending=summary.eligible_not_sent %}
-                {{ sent }} sent · {{ claimed }} claimed · {{ pending }} eligible speakers not sent yet
-              {% endblocktranslate %}
-            </p>
+    {% if not has_voucher_batches %}
+      <div class="alert alert-info" role="status">
+        {% blocktranslate trimmed %}
+          This event has no voucher batch yet.
+        {% endblocktranslate %}
+        <a class="btn btn-outline-primary btn-sm ml-2" href="{{ create_batch_url }}">
+          <i class="fa fa-plus" aria-hidden="true"></i>
+          {% translate "Create a voucher batch in Tickets →" %}
+        </a>
+      </div>
+    {% endif %}
+
+    <div class="speaker-vouchers-layout">
+      <div class="speaker-vouchers-main">
+        <form method="post" class="form" id="speaker-voucher-settings-form"
+              data-saved-enabled="{{ voucher_settings.enabled|yesno:'true,false' }}"
+              data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}">
+          {% csrf_token %}
+          {% include "common/forms/errors.html" %}
+
+          <section class="card mb-3">
+            <div class="card-header">
+              <strong>
+                <i class="fa fa-ticket fa-fw" aria-hidden="true"></i>
+                {% translate "Voucher batch" %}
+              </strong>
+            </div>
+            <div class="card-body">
+              {{ form.enabled.as_field_group }}
+              {{ form.voucher_tag.as_field_group }}
+              <div class="form-group row">
+                <div class="col-md-9 offset-md-3">
+                  <a class="btn btn-outline-primary btn-sm" href="{{ create_batch_url }}">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                    {% translate "Create a new batch" %}
+                  </a>
+                </div>
+              </div>
+
+              {% if voucher_settings.voucher_tag %}
+                <div class="form-group row mb-0">
+                  <label class="col-md-3 col-form-label">{% translate "Vouchers remaining" %}</label>
+                  <div class="col-md-9">
+                    <p class="form-control-plaintext{% if not summary.remaining %} text-danger{% endif %} mb-1">
+                      <strong>{{ summary.remaining }}</strong> / {{ summary.total }}
+                    </p>
+                    <p class="text-muted mb-0">
+                      {% blocktranslate trimmed with sent=summary.sent claimed=summary.claimed pending=summary.eligible_not_sent %}
+                        {{ sent }} sent · {{ claimed }} claimed · {{ pending }} eligible speakers not sent yet
+                      {% endblocktranslate %}
+                    </p>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </section>
+
+          <section class="card mb-3">
+            <div class="card-header">
+              <strong>
+                <i class="fa fa-envelope-o fa-fw" aria-hidden="true"></i>
+                {% translate "Email" %}
+              </strong>
+            </div>
+            <div class="card-body">
+              <div class="form-group row mb-0">
+                <label class="col-md-3 col-form-label">{% translate "Speaker voucher" %}</label>
+                <div class="col-md-9">
+                  <p class="form-control-plaintext mb-2">
+                    <strong>{{ email_preview.template.get_role_display }}</strong>
+                    — {{ email_preview.template.subject }}
+                  </p>
+                  <div class="speaker-voucher-email-actions">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="speaker-voucher-preview-btn">
+                      <i class="fa fa-eye" aria-hidden="true"></i>
+                      {% translate "Preview" %}
+                    </button>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ email_preview.template.urls.base }}">
+                      <i class="fa fa-pencil" aria-hidden="true"></i>
+                      {% translate "Edit template" %}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="submit-group">
+            <span></span>
+            <div class="speaker-voucher-actions">
+              <button type="submit" class="btn btn-outline-primary">
+                <i class="fa fa-save" aria-hidden="true"></i>
+                {% translate "Save" %}
+              </button>
+              <button type="button"
+                      class="btn btn-primary"
+                      id="speaker-voucher-send-btn"
+                      {% if send_blocker %}disabled aria-disabled="true"{% endif %}
+                      aria-describedby="speaker-voucher-send-hint speaker-voucher-dirty-hint">
+                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                {% translate "Send vouchers" %}
+              </button>
+              <p id="speaker-voucher-send-hint" class="text-muted mb-0 mt-2{% if not send_blocker %} d-none{% endif %}">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+                {{ send_blocker|default:'' }}
+              </p>
+              <p id="speaker-voucher-dirty-hint" class="text-muted mb-0 mt-2 d-none">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+                {% translate "Save your changes first." %}
+              </p>
+            </div>
           </div>
-        </div>
-      {% endif %}
-    </fieldset>
-
-    <fieldset>
-      <legend>{% translate "Email" %}</legend>
-      <div class="form-group row">
-        <label class="col-md-3 col-form-label">{% translate "Speaker voucher" %}</label>
-        <div class="col-md-9">
-          <p class="form-control-plaintext mb-1">
-            <strong>{{ email_preview.template.get_role_display }}</strong>
-            — {{ email_preview.template.subject }}
-          </p>
-          <p class="mb-0">
-            <button type="button" class="btn btn-default btn-sm" id="speaker-voucher-preview-btn">
-              {% translate "Preview" %}
-            </button>
-            <a class="btn btn-default btn-sm" href="{{ email_preview.template.urls.base }}">
-              {% translate "Edit template →" %}
-            </a>
-          </p>
-        </div>
+        </form>
       </div>
-    </fieldset>
 
-    <div class="submit-group">
-      <span></span>
-      <div class="speaker-voucher-actions text-right">
-        <button type="submit" class="btn btn-success">
-          <i class="fa fa-save" aria-hidden="true"></i>
-          {% translate "Save" %}
-        </button>
-        <button type="button"
-                class="btn btn-primary"
-                id="speaker-voucher-send-btn"
-                {% if send_blocker %}disabled aria-disabled="true"{% endif %}
-                aria-describedby="speaker-voucher-send-hint speaker-voucher-dirty-hint">
-          <i class="fa fa-paper-plane" aria-hidden="true"></i>
-          {% translate "Send vouchers" %}
-        </button>
-        <p id="speaker-voucher-send-hint" class="text-muted mb-0 mt-2{% if not send_blocker %} d-none{% endif %}">
-          <i class="fa fa-info-circle" aria-hidden="true"></i>
-          {{ send_blocker|default:'' }}
-        </p>
-        <p id="speaker-voucher-dirty-hint" class="text-muted mb-0 mt-2 d-none">
-          <i class="fa fa-info-circle" aria-hidden="true"></i>
-          {% translate "Save your changes first." %}
-        </p>
-      </div>
+      <aside class="speaker-vouchers-aside" aria-label="{% translate 'Help' %}">
+        <section class="card mb-3">
+          <div class="card-header">
+            <strong>{% translate "How it works" %}</strong>
+          </div>
+          <div class="card-body">
+            <ol class="speaker-vouchers-steps">
+              <li>
+                <strong>{% translate "Create a voucher batch" %}</strong>
+                <span>{% translate "Set up free or discounted tickets in Tickets → Vouchers." %}</span>
+              </li>
+              <li>
+                <strong>{% translate "Enable speaker vouchers" %}</strong>
+                <span>{% translate "Turn it on and select the batch." %}</span>
+              </li>
+              <li>
+                <strong>{% translate "Send vouchers" %}</strong>
+                <span>{% translate "Preview the email and send codes to your speakers." %}</span>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="card mb-3">
+          <div class="card-header">
+            <strong>
+              <i class="fa fa-lightbulb-o fa-fw" aria-hidden="true"></i>
+              {% translate "Tips" %}
+            </strong>
+          </div>
+          <div class="card-body">
+            <ul class="speaker-vouchers-tips">
+              <li>{% translate "Use a dedicated batch for speakers." %}</li>
+              <li>{% translate "Customize the email template for your event." %}</li>
+              <li>{% translate "Confirm the remaining code count before a bulk send." %}</li>
+            </ul>
+          </div>
+        </section>
+      </aside>
     </div>
-  </form>
+  </div>
 
   <form method="post" action="{{ request.event.orga_urls.speaker_vouchers_send }}" id="speaker-voucher-send-form" class="d-none">
     {% csrf_token %}
