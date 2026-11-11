@@ -1,4 +1,5 @@
 import pytest
+from django.http import QueryDict
 from django.apps import apps
 from django.utils.timezone import now
 from django_scopes import scope
@@ -102,3 +103,55 @@ def test_team_form_removes_teamshifts_role_when_submitted_role_was_deleted(organ
     team.refresh_from_db()
     assert team.teamshifts_role == ''
     assert team.limit_teamshifts_roles == []
+
+
+def _checkbox_post(event, *role_values):
+    data = QueryDict(mutable=True)
+    data.update({'name': 'Shifts Team', 'can_change_teams': 'on'})
+    data.setlist('limit_events', [str(event.pk)])
+    data.setlist('teamshifts_role', ['', *role_values])
+    return data
+
+
+@pytest.fixture
+def lead_team(organizer, event):
+    team = Team.objects.create(
+        organizer=organizer,
+        name='Shifts Team',
+        can_change_teams=True,
+        teamshifts_role='lead',
+        hide_teamshifts_emails=True,
+    )
+    team.limit_events.add(event)
+    return team
+
+
+@pytest.mark.django_db
+def test_unticking_all_teamshifts_checkboxes_removes_the_role(organizer, event, lead_team, teamshifts_installed):
+    form = TeamForm(organizer=organizer, instance=lead_team, data=_checkbox_post(event))
+    assert form.is_valid(), form.errors
+    form.save()
+
+    lead_team.refresh_from_db()
+    assert lead_team.teamshifts_role == ''
+    assert lead_team.hide_teamshifts_emails is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'submitted, expected',
+    (
+        (('coordinator',), 'coordinator'),
+        (('lead',), 'lead'),
+        (('coordinator', 'lead'), 'lead'),
+    ),
+)
+def test_ticked_teamshifts_checkbox_sets_the_role(organizer, event, lead_team, teamshifts_installed, submitted, expected):
+    data = _checkbox_post(event, *submitted)
+    data['all_teamshifts_roles'] = 'True'
+    form = TeamForm(organizer=organizer, instance=lead_team, data=data)
+    assert form.is_valid(), form.errors
+    form.save()
+
+    lead_team.refresh_from_db()
+    assert lead_team.teamshifts_role == expected
