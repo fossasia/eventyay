@@ -3945,7 +3945,7 @@ button.btn-speaker-not-arrived {
 }
 
 .speaker-vouchers-page {
-  max-width: 1100px;
+  width: 100%;
 }
 
 .speaker-vouchers-hero {
@@ -3969,7 +3969,6 @@ button.btn-speaker-not-arrived {
 .speaker-vouchers-hero-copy p {
   margin-bottom: 0;
   color: var(--color-text-muted, #6c757d);
-  max-width: 42rem;
 }
 
 .speaker-vouchers-hero-art {
@@ -4008,14 +4007,78 @@ button.btn-speaker-not-arrived {
 
 .speaker-vouchers-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
   align-items: start;
+  width: 100%;
+}
+
+.speaker-vouchers-main,
+.speaker-vouchers-aside {
+  min-width: 0;
 }
 
 .speaker-vouchers-aside .card-body {
   padding-top: 12px;
   padding-bottom: 12px;
+}
+
+.speaker-voucher-enable {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.speaker-voucher-toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.speaker-voucher-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.speaker-voucher-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--color-grey-light, #ced4da);
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+.speaker-voucher-toggle-slider::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.speaker-voucher-toggle input:checked + .speaker-voucher-toggle-slider {
+  background: var(--color-primary);
+}
+
+.speaker-voucher-toggle input:checked + .speaker-voucher-toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.speaker-voucher-toggle input:focus-visible + .speaker-voucher-toggle-slider {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .speaker-vouchers-steps {
@@ -4093,6 +4156,12 @@ button.btn-speaker-not-arrived {
 
   .speaker-vouchers-hero-art {
     display: none;
+  }
+}
+
+@media (min-width: 1400px) {
+  .speaker-vouchers-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
   }
 }
 

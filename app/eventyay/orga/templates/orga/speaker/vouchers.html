@@ -54,7 +54,25 @@
               </strong>
             </div>
             <div class="card-body">
-              {{ form.enabled.as_field_group }}
+              <div class="form-group row">
+                <label class="col-md-3 col-form-label" for="{{ form.enabled.id_for_label }}">
+                  {{ form.enabled.label }}
+                </label>
+                <div class="col-md-9">
+                  <div class="speaker-voucher-enable">
+                    <label class="speaker-voucher-toggle" for="{{ form.enabled.id_for_label }}">
+                      {{ form.enabled }}
+                      <span class="speaker-voucher-toggle-slider" aria-hidden="true"></span>
+                    </label>
+                    {% if form.enabled.help_text %}
+                      <p class="form-text text-muted mb-0">{{ form.enabled.help_text }}</p>
+                    {% endif %}
+                  </div>
+                  {% for error in form.enabled.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
               {{ form.voucher_tag.as_field_group }}
               <div class="form-group row">
                 <div class="col-md-9 offset-md-3">
