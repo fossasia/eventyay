@@ -837,7 +837,9 @@ class Renderer:
                 pass
             self.background_file = None
             # pypdf 7 only allows content changes on pages that belong to a writer.
-            self.bg_pdf = PdfWriter(clone_from=PdfReader(BytesIO(self.bg_bytes), strict=False))
+            reader = PdfReader(BytesIO(self.bg_bytes), strict=False)
+            self.bg_pdf = PdfWriter()
+            self.bg_pdf.add_page(reader.pages[0])
             correct_page_media_box(self.bg_pdf.pages[0])
         else:
             self.bg_bytes = None
