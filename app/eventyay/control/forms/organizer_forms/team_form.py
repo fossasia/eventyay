@@ -302,7 +302,7 @@ class TeamForm(forms.ModelForm):
             if not teamshifts_role:
                 # Access was removed: don't leave stale role scoping behind. The submitted roles
                 # are discarded, so a role that no longer exists must not block the removal.
-                self._errors.pop('limit_teamshifts_roles', None)
+                self.errors.pop('limit_teamshifts_roles', None)
                 data['all_teamshifts_roles'] = False
                 data['limit_teamshifts_roles'] = []
                 data['hide_teamshifts_emails'] = False
