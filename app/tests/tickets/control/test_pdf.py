@@ -32,3 +32,23 @@ def test_resize_background_pdf_uses_writer_owned_page(monkeypatch):
     assert float(page.mediabox.width) == pytest.approx(width_mm * mm)
     assert float(page.mediabox.height) == pytest.approx(height_mm * mm)
     assert 'background' in page.extract_text()
+
+def test_resize_background_pdf_returns_error_for_empty_pdf(monkeypatch):
+    from pypdf import PdfWriter
+
+    source = BytesIO()
+    PdfWriter().write(source)
+
+    view = BaseEditorView()
+    monkeypatch.setattr(
+        view,
+        'open_background_pdf',
+        lambda cached_file=None: BytesIO(source.getvalue()),
+    )
+
+    buffer, error = view._resize_background_pdf(100, 50)
+
+    assert buffer is None
+    assert error is not None
+    assert b'"status": "error"' in error.content
+

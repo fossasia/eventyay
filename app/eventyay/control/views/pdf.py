@@ -247,6 +247,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
         try:
             try:
                 reader = PdfReader(BytesIO(bg_file.read()))
+                page = reader.pages[0]
             finally:
                 bg_file.close()
 
@@ -255,7 +256,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             return None, JsonResponse({'status': 'error', 'error': _BACKGROUND_PDF_READ_ERROR})
 
         writer = PdfWriter()
-        writer.add_page(reader.pages[0])
+        writer.add_page(page)
         page = writer.pages[0]
         page.scale_to(width_mm * mm, height_mm * mm)
         buffer = BytesIO()
