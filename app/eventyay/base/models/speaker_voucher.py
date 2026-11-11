@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import Count, F, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
@@ -15,15 +16,41 @@ class SpeakerVoucherStatus(models.TextChoices):
 
 
 def usable_batch_vouchers(event, voucher_tag: str):
-    """Unused, unexpired vouchers in the given batch that are not yet assigned."""
+    """Unused, unexpired vouchers in the given batch that are not yet assigned.
+
+    Codes reserved in an active cart are excluded, matching RedeemView /
+    CartManager availability so we never email a code that redemption would reject.
+    """
     if not voucher_tag:
         return Voucher.objects.none()
-    return Voucher.objects.filter(
-        event=event,
-        tag=voucher_tag,
-        redeemed__lt=F('max_usages'),
-    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gte=now())).filter(
-        speaker_voucher_link__isnull=True,
+
+    from eventyay.base.models.orders import CartPosition
+
+    active_cart_reservations = (
+        CartPosition.objects.filter(
+            voucher_id=OuterRef('pk'),
+            event=event,
+            expires__gte=now(),
+        )
+        .order_by()
+        .values('voucher_id')
+        .annotate(c=Count('id'))
+        .values('c')
+    )
+    return (
+        Voucher.objects.filter(
+            event=event,
+            tag=voucher_tag,
+        )
+        .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=now()))
+        .filter(speaker_voucher_link__isnull=True)
+        .annotate(
+            cart_reserved=Coalesce(
+                Subquery(active_cart_reservations, output_field=IntegerField()),
+                0,
+            )
+        )
+        .filter(redeemed__lt=F('max_usages') - F('cart_reserved'))
     )
 
 

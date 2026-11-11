@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Sequence
 from typing import TypedDict
+from urllib.parse import urlencode
 
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -27,6 +28,7 @@ class SendResult(TypedDict):
     skipped_claimed: int
     skipped_no_email: int
     skipped_ineligible: int
+    skipped_unusable: int
     aborted_insufficient: bool
     needed: int
     available: int
@@ -43,7 +45,7 @@ class SpeakerSummaryCounts(TypedDict):
 
 def voucher_redeem_url(event: Event, code: str) -> str:
     redeem_base = build_absolute_uri(event, 'presale:event.redeem')
-    return f'{redeem_base}?voucher={code}'
+    return f'{redeem_base}?{urlencode({"voucher": code})}'
 
 
 def _has_email(profile: SpeakerProfile) -> bool:
@@ -127,15 +129,17 @@ def _send_voucher_email(
         'voucher_url': voucher_redeem_url(event, voucher.code),
     }
     try:
-        return template.to_mail(
+        mail = template.to_mail(
             user,
             event=event,
             locale=locale,
             context=context,
             context_kwargs={'event': event, 'user': user},
-            skip_queue=True,
+            skip_queue=False,
             commit=True,
         )
+        mail.send(requestor=requestor, synchronous=True)
+        return mail
     except SendMailException:
         logger.exception('Failed to send speaker voucher email to user %s', user.pk)
         return None
@@ -153,8 +157,9 @@ def allocate_and_send_vouchers(
 
     Behaviour per speaker:
     - No assignment → pick an unused voucher, create assignment, send email
-    - Assignment ``not_sent`` → retry email with the same code (no new voucher)
-    - Sent — not claimed → resend the same code
+    - Assignment ``not_sent`` with a usable code → retry email with the same code
+    - Sent — not claimed with a usable code → resend the same code
+    - Assignment whose code expired or was cancelled → replace with a new code, then send
     - Claimed → skip
     - No email / not eligible → skip
 
@@ -168,6 +173,7 @@ def allocate_and_send_vouchers(
         'skipped_claimed': 0,
         'skipped_no_email': 0,
         'skipped_ineligible': 0,
+        'skipped_unusable': 0,
         'aborted_insufficient': False,
         'needed': 0,
         'available': 0,
@@ -191,16 +197,17 @@ def allocate_and_send_vouchers(
 
     new_recipients: list[SpeakerProfile] = []
     retry_or_resend: list[tuple[SpeakerProfile, SpeakerVoucher]] = []
+    needs_replacement: list[tuple[SpeakerProfile, SpeakerVoucher]] = []
     for profile in profiles:
         if not _has_email(profile):
             result['skipped_no_email'] += 1
             continue
+        if profile.pk not in eligible_ids:
+            result['skipped_ineligible'] += 1
+            continue
 
         existing = existing_map.get(profile.pk)
         if existing is None:
-            if profile.pk not in eligible_ids:
-                result['skipped_ineligible'] += 1
-                continue
             new_recipients.append(profile)
             continue
 
@@ -208,9 +215,14 @@ def allocate_and_send_vouchers(
         if existing.status == SpeakerVoucherStatus.CLAIMED or existing.voucher.redeemed > 0:
             result['skipped_claimed'] += 1
             continue
+        # Expired/cancelled codes cannot be emailed; claim a replacement below.
+        # Active cart reservations do not block the assigned speaker from receiving their code.
+        if existing.voucher.valid_until is not None and existing.voucher.valid_until < now():
+            needs_replacement.append((profile, existing))
+            continue
         retry_or_resend.append((profile, existing))
 
-    result['needed'] = len(new_recipients)
+    result['needed'] = len(new_recipients) + len(needs_replacement)
     result['available'] = settings.batch_remaining_count()
 
     if not allow_partial and result['needed'] > result['available']:
@@ -218,7 +230,7 @@ def allocate_and_send_vouchers(
         return result
 
     newly_allocated: list[tuple[SpeakerProfile, SpeakerVoucher]] = []
-    if new_recipients:
+    if new_recipients or needs_replacement:
         try:
             with scope(event=event), transaction.atomic():
                 for profile in new_recipients:
@@ -226,7 +238,11 @@ def allocate_and_send_vouchers(
                         existing = SpeakerVoucher.objects.select_related('voucher').get(
                             speaker_profile=profile
                         )
-                        if existing.status != SpeakerVoucherStatus.CLAIMED:
+                        if existing.status == SpeakerVoucherStatus.CLAIMED or existing.voucher.redeemed > 0:
+                            continue
+                        if existing.voucher.valid_until is not None and existing.voucher.valid_until < now():
+                            needs_replacement.append((profile, existing))
+                        else:
                             retry_or_resend.append((profile, existing))
                         continue
                     voucher = _claim_next_voucher(settings)
@@ -253,9 +269,25 @@ def allocate_and_send_vouchers(
                             .first()
                         )
                         if existing and existing.status != SpeakerVoucherStatus.CLAIMED:
-                            retry_or_resend.append((profile, existing))
+                            if existing.voucher.valid_until is not None and existing.voucher.valid_until < now():
+                                needs_replacement.append((profile, existing))
+                            else:
+                                retry_or_resend.append((profile, existing))
                         continue
                     newly_allocated.append((profile, speaker_voucher))
+
+                for profile, assignment in list(needs_replacement):
+                    voucher = _claim_next_voucher(settings)
+                    if voucher is None:
+                        if not allow_partial:
+                            raise _InsufficientVouchers()
+                        result['skipped_unusable'] += 1
+                        continue
+                    assignment.voucher = voucher
+                    assignment.status = SpeakerVoucherStatus.NOT_SENT
+                    assignment.sent_at = None
+                    assignment.save(update_fields=['voucher', 'status', 'sent_at'])
+                    newly_allocated.append((profile, assignment))
         except _InsufficientVouchers:
             result['aborted_insufficient'] = True
             result['available'] = settings.batch_remaining_count()

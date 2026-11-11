@@ -1,22 +1,28 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import QueuedMail, SpeakerProfile, Voucher
+from eventyay.base.models import CartPosition, Product, QueuedMail, SpeakerProfile, Voucher
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.speaker_voucher import (
     SpeakerVoucher,
     SpeakerVoucherSettings,
     SpeakerVoucherStatus,
+    usable_batch_vouchers,
 )
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.base.services.speaker_vouchers import (
     allocate_and_send_vouchers,
     eligible_speaker_profiles,
     profiles_needing_voucher,
+    voucher_redeem_url,
 )
+from eventyay.common.exceptions import SendMailException
 
 
 @pytest.fixture
@@ -249,3 +255,93 @@ def test_orga_bulk_send_aborts_when_batch_empty(
     assert 'Not enough unused vouchers' in response.text
     with scope(event=event):
         assert SpeakerVoucher.objects.filter(event=event).count() == 0
+
+
+@pytest.mark.django_db
+def test_voucher_redeem_url_encodes_special_characters(event):
+    with scope(event=event):
+        url = voucher_redeem_url(event, 'A&B+C#1')
+    query = parse_qs(urlparse(url).query)
+    assert query['voucher'] == ['A&B+C#1']
+
+
+@pytest.mark.django_db
+def test_usable_batch_excludes_vouchers_reserved_in_cart(event, speaker_voucher_batch):
+    with scope(event=event):
+        product = Product.objects.create(event=event, name='Ticket', default_price=0, admission=True)
+        reserved = speaker_voucher_batch[0]
+        CartPosition.objects.create(
+            event=event,
+            cart_id='speaker-voucher-cart',
+            product=product,
+            price=0,
+            expires=now() + timedelta(minutes=30),
+            voucher=reserved,
+        )
+        usable_ids = set(usable_batch_vouchers(event, 'speakers').values_list('pk', flat=True))
+        assert reserved.pk not in usable_ids
+        assert usable_ids == {speaker_voucher_batch[1].pk, speaker_voucher_batch[2].pk}
+
+
+@pytest.mark.django_db
+def test_ineligible_speaker_with_assignment_is_not_resent(
+    event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        confirmed_submission.state = SubmissionStates.CANCELED
+        confirmed_submission.save(update_fields=['state'])
+        mails_before = QueuedMail.objects.filter(
+            event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER, sent__isnull=False
+        ).count()
+        result = allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assert result['skipped_ineligible'] == 1
+        assert result['resent'] == 0
+        assert result['sent'] == 0
+        assert (
+            QueuedMail.objects.filter(
+                event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER, sent__isnull=False
+            ).count()
+            == mails_before
+        )
+
+
+@pytest.mark.django_db
+def test_expired_assignment_is_replaced_before_retry(
+    event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        expired = speaker_voucher_batch[0]
+        expired.valid_until = now() - timedelta(days=1)
+        expired.save(update_fields=['valid_until'])
+        SpeakerVoucher.objects.create(
+            event=event,
+            speaker_profile=profile,
+            voucher=expired,
+            status=SpeakerVoucherStatus.NOT_SENT,
+        )
+        result = allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assert result['sent'] == 1
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assert assignment.voucher_id != expired.pk
+        assert assignment.status == SpeakerVoucherStatus.SENT
+        assert assignment.voucher.valid_until is None or assignment.voucher.valid_until >= now()
+
+
+@pytest.mark.django_db
+def test_failed_synchronous_send_leaves_assignment_not_sent(
+    event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        with patch(
+            'eventyay.base.models.mail.QueuedMail.send',
+            side_effect=SendMailException('smtp failed'),
+        ):
+            result = allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assert result['sent'] == 0
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assert assignment.status == SpeakerVoucherStatus.NOT_SENT
+        assert assignment.sent_at is None
