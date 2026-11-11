@@ -17,7 +17,7 @@ from django_scopes import scopes_disabled
 from eventyay.eventyay_common.utils import encode_email
 from eventyay.features.live.channels import GROUP_USER
 from eventyay.base.models import AuditLog
-from eventyay.base.models.auth import User
+from eventyay.base.models.auth import PRIVATE_PROFILE_KEYS, User, public_profile
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models.event import EventView
 from eventyay.base.models.orders import Order, OrderPosition
@@ -668,7 +668,7 @@ def get_public_users(
     return [
         dict(
             id=str(u["id"]),
-            profile=u["profile"],
+            profile=public_profile(u["profile"]),
             pretalx_id=u["pretalx_id"],
             deleted=u["deleted"],
             inactive=(
@@ -906,6 +906,11 @@ def update_user(
 
     if data is not None:
         save_fields = []
+        if isinstance(data.get("profile"), dict):
+            # Server-only keys are set from the ticket, never by the client.
+            profile = {k: v for k, v in data["profile"].items() if k not in PRIVATE_PROFILE_KEYS}
+            profile.update({k: v for k, v in (user.profile or {}).items() if k in PRIVATE_PROFILE_KEYS})
+            data = {**data, "profile": profile}
         if "profile" in data and data["profile"] != user.profile:
             AuditLog.objects.create(
                 event_id=event_id,
@@ -1294,7 +1299,7 @@ def list_users(
                 (
                     dict(
                         id=str(u["id"]),
-                        profile=u["profile"],
+                        profile=public_profile(u["profile"]),
                         pretalx_id=u["pretalx_id"],
                         inactive=u["last_login"] is None
                         or u["last_login"] < now() - timedelta(hours=36),

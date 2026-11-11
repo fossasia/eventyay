@@ -217,6 +217,14 @@ def display_name_sort_key(prefix: str = '') -> Lower:
     )
 
 
+# Profile keys only visible to admins (exposed via admin fields, not the public profile).
+PRIVATE_PROFILE_KEYS = frozenset({'contact_email'})
+
+
+def public_profile(profile):
+    return {k: v for k, v in (profile or {}).items() if k not in PRIVATE_PROFILE_KEYS}
+
+
 class User(
     PermissionsMixin,
     LoggingMixin,
@@ -1280,7 +1288,7 @@ the eventyay team"""
         # For performance reasons, it does not use this method directly.
         d = {
             "id": str(self.id),
-            "profile": self.profile,
+            "profile": public_profile(self.profile),
             "pretalx_id": self.pretalx_id,
             "deleted": self.deleted,
             "badges": (
