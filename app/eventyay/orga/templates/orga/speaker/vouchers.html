@@ -27,7 +27,8 @@
 
   <form method="post" class="form" id="speaker-voucher-settings-form"
         data-saved-enabled="{{ voucher_settings.enabled|yesno:'true,false' }}"
-        data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}">
+        data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}"
+        data-dirty-hint="{% translate 'Save your changes first.' %}">
     {% csrf_token %}
     {% include "common/forms/errors.html" %}
 

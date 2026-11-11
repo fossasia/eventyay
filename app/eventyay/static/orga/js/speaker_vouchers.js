@@ -32,7 +32,8 @@ if (settingsForm && sendBtn) {
             const icon = document.createElement("i")
             icon.className = "fa fa-info-circle"
             icon.setAttribute("aria-hidden", "true")
-            sendHint.append(icon, " Save your changes first.")
+            const dirtyHint = settingsForm.dataset.dirtyHint || "Save your changes first."
+            sendHint.append(icon, ` ${dirtyHint}`)
         } else if (sendBtn.dataset.serverBlocked === "true" && originalHint) {
             sendHint.classList.remove("d-none")
             sendHint.textContent = ""

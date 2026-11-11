@@ -137,7 +137,7 @@ def _send_voucher_email(
             commit=True,
         )
     except SendMailException:
-        logger.exception('Failed to send speaker voucher email to %s', user.email)
+        logger.exception('Failed to send speaker voucher email to user %s', user.pk)
         return None
 
 

@@ -841,15 +841,25 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
         user = sample_profile.user if sample_profile else self.request.user
         context = get_mail_context(event=event, user=user)
         context.update({'voucher_code': sample_code, 'voucher_url': sample_url})
-        subject = str(template.subject).format_map(defaultdict(str, context))
-        text = str(template.text).format_map(defaultdict(str, context))
+        raw_subject = str(template.subject)
+        raw_text = str(template.text)
+        try:
+            subject = raw_subject.format_map(defaultdict(str, context))
+            text = raw_text.format_map(defaultdict(str, context))
+            preview_note = _(
+                'This preview uses an example voucher code. Each speaker receives their own code.'
+            )
+        except (KeyError, IndexError, ValueError):
+            subject = raw_subject
+            text = raw_text
+            preview_note = _(
+                'This template could not be rendered for preview. Fix placeholders in the mail template.'
+            )
         return {
             'template': template,
             'subject': subject,
             'html': compile_email_body(text),
-            'sample_note': _(
-                'This preview uses an example voucher code. Each speaker receives their own code.'
-            ),
+            'sample_note': preview_note,
         }
 
     def get_context_data(self, **kwargs):
@@ -932,13 +942,27 @@ class SpeakerVoucherBulkSendView(EventPermissionRequired, View):
             )
 
         if result['aborted_insufficient']:
-            messages.error(
-                request,
-                _(
-                    'Not enough unused vouchers in this batch. '
-                    'Needed {needed}, but only {available} remain. Nothing was sent.'
-                ).format(needed=result['needed'], available=result['available']),
-            )
+            if result['sent']:
+                messages.error(
+                    request,
+                    _(
+                        'Not enough unused vouchers in this batch. '
+                        'Needed {needed}, but only {available} remain. '
+                        'Sent vouchers to {sent} speaker(s) before stopping.'
+                    ).format(
+                        needed=result['needed'],
+                        available=result['available'],
+                        sent=result['sent'],
+                    ),
+                )
+            else:
+                messages.error(
+                    request,
+                    _(
+                        'Not enough unused vouchers in this batch. '
+                        'Needed {needed}, but only {available} remain. Nothing was sent.'
+                    ).format(needed=result['needed'], available=result['available']),
+                )
             return redirect(event.orga_urls.speaker_vouchers)
 
         parts = []
@@ -949,6 +973,14 @@ class SpeakerVoucherBulkSendView(EventPermissionRequired, View):
                     'Sent vouchers to {count} speakers.',
                     result['sent'],
                 ).format(count=result['sent'])
+            )
+        if result['resent']:
+            parts.append(
+                ngettext(
+                    'Resent a voucher to {count} speaker.',
+                    'Resent vouchers to {count} speakers.',
+                    result['resent'],
+                ).format(count=result['resent'])
             )
         if not parts:
             messages.warning(request, _('No vouchers were sent.'))
