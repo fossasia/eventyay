@@ -105,6 +105,11 @@ Email Settings
 ``default_from_email``
     The default email address used in the ``From`` header for outgoing emails.
 
+``cors_allowed_origins``
+    Extra origins (list) allowed to call ``/api/v1/`` from another site, in addition to the
+    production check-in app. For local check-in app development use
+    ``["http://localhost:8085"]``. Can also be set via ``EVY_CORS_ALLOWED_ORIGINS``. Default: empty.
+
 Plugins & Modules
 ~~~~~~~~~~~~~~~~~
 

@@ -230,7 +230,7 @@ class SessionMiddleware(BaseSessionMiddleware):
                         expires=expires,
                         domain=get_cookie_domain(request),
                         path=settings.SESSION_COOKIE_PATH,
-                        secure=request.scheme == 'https',
+                        secure=request.scheme == 'https' or settings.SITE_URL.startswith('https://'),
                         httponly=settings.SESSION_COOKIE_HTTPONLY or None,
                     )
         return response
@@ -258,21 +258,16 @@ class CsrfViewMiddleware(BaseCsrfMiddleware):
         else:
             # Set the CSRF cookie even if it's already set, so we renew
             # the expiry timer.
-            # SameSite=None is only stored when the cookie is Secure. On plain HTTP
-            # keep Lax, which is what a browser would do if it rejected None.
-            secure = request.scheme == 'https'
-            samesite = settings.CSRF_COOKIE_SAMESITE
-            if samesite == 'None' and not secure:
-                samesite = 'Lax'
-            response.set_cookie(
+            set_cookie_without_samesite(
+                request,
+                response,
                 settings.CSRF_COOKIE_NAME,
                 request.META['CSRF_COOKIE'],
                 max_age=settings.CSRF_COOKIE_AGE,
                 domain=get_cookie_domain(request),
                 path=settings.CSRF_COOKIE_PATH,
-                secure=secure,
+                secure=request.scheme == 'https' or settings.SITE_URL.startswith('https://'),
                 httponly=settings.CSRF_COOKIE_HTTPONLY,
-                samesite=samesite,
             )
             # Content varies with the CSRF cookie, so set the Vary header.
             patch_vary_headers(response, ('Cookie',))

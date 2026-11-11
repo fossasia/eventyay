@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import django.conf.locale
 import importlib_metadata
+from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -118,6 +119,9 @@ class BaseSettings(_BaseSettings):
     email_use_tls: bool = True
     default_from_email: str = 'info@eventyay.com'
     allowed_hosts: list[str] = []
+    # Extra origins allowed to call /api/v1/ cross-site (e.g. a local check-in app
+    # "http://localhost:8085"). The production check-in app is always allowed.
+    cors_allowed_origins: list[str] = []
     # Used by "Talk" (pretalx). Not sure why it is named like this.
     core_modules: Annotated[tuple[str, ...], Field(default_factory=tuple)]
     # The MultiDomainMiddleware is depending on SITE_URL.
@@ -295,6 +299,7 @@ DATABASES = {
 
 _LIBRARY_APPS = (
     'bootstrap3',
+    'corsheaders',
     'channels',
     'compressor',
     'daphne',
@@ -405,6 +410,19 @@ CORE_MODULES = (
     )
 )
 
+# The check-in app calls /api/v1/ from another origin and sends Authorization,
+# so the browser preflights. Echo that origin. A wildcard would let any site
+# read API responses. Widget views set their own Access-Control-Allow-Origin,
+# and only on an unguessable cart namespace.
+# Keep the production origin in sync with CHECKIN_APP_PRODUCTION_URL.
+# Further origins (other front-ends, local development) are configured per
+# instance via ``cors_allowed_origins`` instead of being hardcoded here.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOWED_ORIGINS = ['https://access.eventyay.com', *conf.cors_allowed_origins]
+CORS_URLS_REGEX = r'^/api/v1/'
+CORS_ALLOW_HEADERS = [*default_headers, 'exhibitor']
+
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
 for entry_point in entry_points(group='pretalx.plugin'):
@@ -427,6 +445,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 _LIBRARY_MIDDLEWARES = (
     'eventyay.api.middleware.PrivateNetworkAccessMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'eventyay.base.middleware.LoadSheddingMiddleware',

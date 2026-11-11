@@ -188,7 +188,7 @@ class EventPermissionMiddleware:
         else:
             response = self.get_response(request)
 
-        if is_exempt and 'Access-Control-Allow-Origin' not in response:
+        if is_exempt and not request.path.startswith('/api/') and 'Access-Control-Allow-Origin' not in response:
             response['Access-Control-Allow-Origin'] = '*'
         return response
 
