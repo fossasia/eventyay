@@ -414,6 +414,21 @@ urlpatterns = [
                                 speaker.SpeakerToggleFeatured.as_view(),
                                 name='speakers.featured',
                             ),
+                            path(
+                                'voucher/send',
+                                speaker.SpeakerVoucherSendView.as_view(),
+                                name='speakers.voucher.send',
+                            ),
+                            path(
+                                'voucher/resend',
+                                speaker.SpeakerVoucherResendView.as_view(),
+                                name='speakers.voucher.resend',
+                            ),
+                            path(
+                                'voucher/cancel',
+                                speaker.SpeakerVoucherCancelView.as_view(),
+                                name='speakers.voucher.cancel',
+                            ),
                         ]
                     ),
                 ),

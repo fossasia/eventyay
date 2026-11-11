@@ -87,6 +87,13 @@
                         {% endif %}
                     </th>
                     <th>{% translate "Sessions" %}</th>
+                    {% if speaker_vouchers_enabled %}
+                        <th>
+                            {% translate "Voucher" %}
+                            <a href="{% querystring sort='voucher_sort' page=None %}" class="sort-link{% if current_sort == 'voucher_sort' %} sort-active{% endif %}" title="{% translate 'Sort by voucher status' %}" aria-label="{% translate 'Sort by voucher status' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                            <a href="{% querystring sort='-voucher_sort' page=None %}" class="sort-link{% if current_sort == '-voucher_sort' %} sort-active{% endif %}" title="{% translate 'Sort by voucher status (reverse)' %}" aria-label="{% translate 'Sort by voucher status (reverse)' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                        </th>
+                    {% endif %}
                     <th class="text-right">
                         {% translate "Arrival" %}
                         <a href="{% querystring sort='-has_arrived' page=None %}" class="sort-link{% if current_sort == '-has_arrived' %} sort-active{% endif %}" title="{% translate 'Sort arrived speakers first' %}" aria-label="{% translate 'Sort arrived speakers first' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
@@ -139,6 +146,51 @@
                                 <span class="text-muted">{% translate "No session" %}</span>
                             {% endif %}
                         </td>
+                        {% if speaker_vouchers_enabled %}
+                            <td class="speaker-voucher-cell">
+                                {% if profile.voucher_row_state == 'claimed' %}
+                                    <span class="badge badge-success">{% translate "Claimed" %}</span>
+                                {% elif profile.voucher_row_state == 'sent' %}
+                                    <span class="badge badge-info">{% translate "Sent — not claimed" %}</span>
+                                    {% if profile.voucher_assignment.sent_at %}
+                                        <div class="text-muted small">{{ profile.voucher_assignment.sent_at|date:"j M Y" }}</div>
+                                    {% endif %}
+                                    {% if can_update_speaker %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-default speaker-voucher-action"
+                                                data-action="resend"
+                                                data-url="{{ profile.orga_urls.voucher_resend }}"
+                                                data-speaker="{{ profile.user.get_display_name }}">
+                                            {% translate "Resend" %}
+                                        </button>
+                                    {% endif %}
+                                {% elif profile.voucher_row_state == 'withdrawn' %}
+                                    <span class="badge badge-warning">{% translate "Sent — session withdrawn" %}</span>
+                                    {% if profile.voucher_assignment.sent_at %}
+                                        <div class="text-muted small">{{ profile.voucher_assignment.sent_at|date:"j M Y" }}</div>
+                                    {% endif %}
+                                    {% if can_update_speaker %}
+                                        <form method="post" action="{{ profile.orga_urls.voucher_cancel }}?next={{ request.get_full_path|urlencode }}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-warning">{% translate "Cancel voucher" %}</button>
+                                        </form>
+                                    {% endif %}
+                                {% elif profile.voucher_row_state == 'not_sent' %}
+                                    <span class="badge badge-secondary">{% translate "Not sent" %}</span>
+                                    {% if can_update_speaker %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-default speaker-voucher-action"
+                                                data-action="send"
+                                                data-url="{{ profile.orga_urls.voucher_send }}"
+                                                data-speaker="{{ profile.user.get_display_name }}">
+                                            {% translate "Send" %}
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        {% endif %}
                         <td class="speaker-actions-cell text-right">
                             <div class="speaker-actions-wrap">
                             {% if profile.accepted_submission_count %}
@@ -173,7 +225,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6">{% translate "No submitters found." %}</td>
+                        <td colspan="{% if speaker_vouchers_enabled %}7{% else %}6{% endif %}">{% translate "No submitters found." %}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -182,5 +234,33 @@
 
     {% include "orga/includes/pagination.html" %}
     </div>
+
+    {% if speaker_vouchers_enabled %}
+        <form method="post" id="speaker-voucher-row-form" class="d-none">
+            {% csrf_token %}
+        </form>
+        <dialog id="speaker-voucher-row-confirm" class="orga-confirm-dialog" aria-labelledby="speaker-voucher-row-confirm-title">
+            <h4 id="speaker-voucher-row-confirm-title">{% translate "Send speaker voucher?" %}</h4>
+            <dl class="speaker-voucher-confirm-summary">
+                <dt>{% translate "Speaker" %}</dt>
+                <dd id="speaker-voucher-row-speaker"></dd>
+                <dt>{% translate "Vouchers used" %}</dt>
+                <dd id="speaker-voucher-row-used">1</dd>
+            </dl>
+            <div class="mail-preview mt-3">
+                <strong>{{ voucher_email_preview.subject }}</strong>
+                <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
+                <p class="text-muted mt-2 mb-0">{{ voucher_email_preview.sample_note }}</p>
+                <p class="mt-2 mb-0">
+                    <a href="{{ voucher_email_preview.template.urls.base }}">{% translate "Edit template →" %}</a>
+                </p>
+            </div>
+            <div class="orga-confirm-dialog-actions mt-3">
+                <button type="button" class="btn btn-default" id="speaker-voucher-row-cancel">{% translate "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" id="speaker-voucher-row-confirm-btn">{% translate "Send" %}</button>
+            </div>
+        </dialog>
+        <script type="module" src="{% static 'orga/js/speaker_list_vouchers.js' %}"></script>
+    {% endif %}
 
 {% endblock content %}

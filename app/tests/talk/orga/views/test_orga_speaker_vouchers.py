@@ -174,3 +174,63 @@ def test_orga_bulk_send_aborts_when_batch_empty(
     with scope(event=event):
         assert SpeakerVoucher.objects.filter(event=event).count() == 0
 
+
+@pytest.mark.django_db
+def test_speakers_list_hides_voucher_column_when_disabled(
+    orga_client, event, speaker, confirmed_submission
+):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert 'speaker-voucher-cell' not in response.text
+
+
+@pytest.mark.django_db
+def test_speakers_list_shows_voucher_column_when_enabled(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings
+):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert 'Not sent' in response.text
+    assert 'Send' in response.text
+
+
+@pytest.mark.django_db
+def test_orga_can_send_single_speaker_voucher(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        url = profile.orga_urls.voucher_send
+    response = orga_client.post(url, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        assert SpeakerVoucher.objects.filter(speaker_profile=profile, status=SpeakerVoucherStatus.SENT).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_resend_and_cancel_speaker_voucher(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        code = assignment.voucher.code
+
+    response = orga_client.post(profile.orga_urls.voucher_resend, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        assignment.refresh_from_db()
+        assert assignment.voucher.code == code
+
+    # Withdraw the confirmed session so Cancel is the UI action
+    with scope(event=event):
+        confirmed_submission.cancel(force=True)
+        assignment.voucher.refresh_from_db()
+
+    response = orga_client.post(profile.orga_urls.voucher_cancel, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        assignment.voucher.refresh_from_db()
+        assert assignment.voucher.valid_until is not None
+        assert assignment.logged_actions().filter(action_type='eventyay.speaker.voucher.cancelled').exists()
