@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -11,6 +12,7 @@ from django_otp.plugins.otp_static.models import StaticDevice
 
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.redirects import safe_redirect_url
+from eventyay.eventyay_common.views.auth import process_login
 from eventyay.multidomain.models import KnownDomain
 from eventyay.multidomain.urlreverse import eventreverse
 
@@ -301,3 +303,26 @@ def test_secure_warning_rejects_http_return_even_with_source_signature(client):
     )
     page = BeautifulSoup(response.content, 'html.parser')
     assert page.select_one('[data-external-link-cancel]')['href'] == reverse('presale:index')
+
+
+@pytest.mark.parametrize('destination', [INTERNAL, DESTINATION])
+@pytest.mark.parametrize('two_factor', [False, True])
+def test_explicit_login_destination_overrides_query_and_stale_social_state(client, user, rf, destination, two_factor):
+    user.require_2fa = two_factor
+    user.save(update_fields=['require_2fa'])
+    request = rf.post(reverse('auth.login') + '?' + urlencode({'next': '/common/organizers/'}), secure=True)
+    request.user = AnonymousUser()
+    request.session = client.session
+    request.session['socialauth_next_url'] = 'https://stale.example/'
+    target = safe_redirect_url(request, destination)
+
+    response = process_login(request, user, keep_logged_in=False, next_url=destination)
+
+    assert response.status_code == 302
+    if two_factor:
+        assert urlsplit(response.url).path == reverse('auth.login.2fa')
+        assert parse_qs(urlsplit(response.url).query)['next'] == [target]
+        assert '_auth_user_id' not in request.session
+    else:
+        assert response.url == target
+        assert int(request.session['_auth_user_id']) == user.pk
