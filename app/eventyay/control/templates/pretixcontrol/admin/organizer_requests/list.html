@@ -7,17 +7,40 @@
     <table class="table table-striped">
       <thead><tr>
         <th>{% trans 'Organiser' %}</th><th>{% trans 'Email' %}</th>
-        <th>{% trans 'Existing account' %}</th><th>{% trans 'Status' %}</th><th>{% trans 'Requested' %}</th>
+        <th>{% trans 'Existing account' %}</th><th>{% trans 'Status' %}</th><th>{% trans 'Requested' %}</th><th>{% trans 'Actions' %}</th>
       </tr></thead>
       <tbody>
         {% for application in applications %}
           <tr>
             <td><a href="{% url 'eventyay_admin:admin.organizer_requests.detail' pk=application.pk %}">{{ application.organizer_name }}</a></td>
             <td>{{ application.email }}</td><td>{{ application.has_account|yesno }}</td>
-            <td>{{ application.get_status_display }}</td><td>{{ application.created }}</td>
+            <td>
+              {% if application.status == 'pending' %}
+                <span class="label label-warning">{{ application.get_status_display }}</span>
+              {% elif application.status == 'approved' %}
+                <span class="label label-success">{{ application.get_status_display }}</span>
+              {% else %}
+                <span class="label label-danger">{{ application.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>{{ application.created }}</td>
+            <td>
+              {% if application.status == 'pending' %}
+                <form method="post" class="form-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="application_id" value="{{ application.pk }}">
+                  <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
+                    {% trans 'Approve' %}
+                  </button>
+                  <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">
+                    {% trans 'Reject' %}
+                  </button>
+                </form>
+              {% endif %}
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="5">{% trans 'No organiser requests yet.' %}</td></tr>
+          <tr><td colspan="6">{% trans 'No organiser requests yet.' %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

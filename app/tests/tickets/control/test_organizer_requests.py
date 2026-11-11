@@ -229,6 +229,54 @@ def test_admin_review_pages(client, application, admin):
     assert client.get(url).status_code == 200
 
 
+def test_admin_can_approve_from_list(client, application, admin):
+    url = reverse('eventyay_admin:admin.organizer_requests')
+    response = client.post(url, {'application_id': application.pk, 'action': 'approve'})
+
+    assert response.status_code == 302
+    application.refresh_from_db()
+    assert application.status == 'approved'
+    assert application.organizer_name == 'Example'
+    assert application.slug == 'example-community'
+
+
+def test_admin_can_reject_from_list(client, application, admin):
+    url = reverse('eventyay_admin:admin.organizer_requests')
+    response = client.post(url, {'application_id': application.pk, 'action': 'reject'})
+
+    assert response.status_code == 302
+    application.refresh_from_db()
+    assert application.status == 'rejected'
+    assert application.reason == ''
+
+
+def test_list_actions_only_appear_for_pending_requests(client, application, admin):
+    url = reverse('eventyay_admin:admin.organizer_requests')
+
+    response = client.get(url)
+    html = response.content.decode()
+    assert 'value="approve"' in html
+    assert 'value="reject"' in html
+
+    client.post(url, {'application_id': application.pk, 'action': 'reject'})
+
+    response = client.get(url)
+    html = response.content.decode()
+    assert 'value="approve"' not in html
+    assert 'value="reject"' not in html
+
+
+def test_non_admin_cannot_review_from_list(client, application):
+    client.force_login(User.objects.create_user('other@example.com'))
+    url = reverse('eventyay_admin:admin.organizer_requests')
+
+    response = client.post(url, {'application_id': application.pk, 'action': 'approve'})
+
+    assert response.status_code == 403
+    application.refresh_from_db()
+    assert application.status == 'pending'
+
+
 def test_non_admin_cannot_review(client, application):
     client.force_login(User.objects.create_user('other@example.com'))
     url = reverse('eventyay_admin:admin.organizer_requests.detail', args=[application.pk])
