@@ -5,11 +5,6 @@
 
 .events-table-wrapper {
     margin-top: 1rem;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 20px;
-    box-shadow: 0 1px 1px rgba(0,0,0,.05);
     overflow-x: auto;
 }
 
@@ -60,10 +55,16 @@
     color: #666;
 }
 
-.events-table-wrapper .event-name-text {
-    min-width: 0; /* Ensures flex item can shrink */
-    word-break: break-all;
-    overflow-wrap: break-word;
+.events-table-wrapper .event-name-text,
+.events-table-wrapper table.events-table > tbody > tr > td.event-name-col {
+    min-width: 0;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    hyphens: manual;
+}
+
+.events-table-wrapper .events-overview-date {
+    white-space: nowrap;
 }
 
 /* Table Cells */
@@ -101,6 +102,7 @@
     line-height: 1.15;
     font-size: 0.8em;
     color: #555;
+    font-weight: 400;
 }
 .events-table-wrapper .stats-list li {
     display: flex;
@@ -110,12 +112,12 @@
 }
 .events-table-wrapper .stats-list li span:first-child {
     color: #555;
+    font-weight: 400;
     margin-right: 8px;
-    font-weight: normal;
 }
 .events-table-wrapper .stats-list li span:last-child {
-    font-weight: normal;
     color: #555;
+    font-weight: 400;
 }
 
 /* Stats Dropdown */
@@ -124,8 +126,22 @@
     text-align: left;
     cursor: pointer;
     color: #555;
+    font-weight: 400;
     padding-top: 2px;
     font-size: 0.9em;
+}
+.events-table-wrapper .stats-arrow {
+    font-size: 14px;
+    line-height: 1;
+}
+.events-table-wrapper .stats-arrow-expanded {
+    display: none;
+}
+.events-table-wrapper .stats-dropdown-toggle:not(.collapsed) .stats-arrow-collapsed {
+    display: none;
+}
+.events-table-wrapper .stats-dropdown-toggle:not(.collapsed) .stats-arrow-expanded {
+    display: inline-block;
 }
 
 
@@ -147,7 +163,7 @@
 /* Responsive constraints */
 @media (max-width: 991px) {
     .events-table-wrapper {
-        padding: 10px;
+        padding: 0;
         border: none;
         background: transparent;
         box-shadow: none;
