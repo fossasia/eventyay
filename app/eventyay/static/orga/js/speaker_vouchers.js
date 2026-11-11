@@ -5,8 +5,15 @@ const sendBtn = document.getElementById("speaker-voucher-send-btn")
 const sendForm = document.getElementById("speaker-voucher-send-form")
 const sendHint = document.getElementById("speaker-voucher-send-hint")
 const dirtyHint = document.getElementById("speaker-voucher-dirty-hint")
+const sendStatus = document.getElementById("speaker-voucher-send-status")
 const confirmDialog = document.getElementById("speaker-voucher-confirm-dialog")
 const previewDialog = document.getElementById("speaker-voucher-email-preview")
+
+const hintText = (element) => {
+    if (!element) return ""
+    const textNode = element.querySelector(".speaker-voucher-hint-text")
+    return (textNode ? textNode.textContent : element.textContent).trim()
+}
 
 if (settingsForm && sendBtn) {
     const savedEnabled = settingsForm.dataset.savedEnabled === "true"
@@ -19,6 +26,15 @@ if (settingsForm && sendBtn) {
     const isDirty = () => currentEnabled() !== savedEnabled || currentTag() !== savedTag
 
     sendBtn.dataset.serverBlocked = sendBtn.disabled ? "true" : "false"
+
+    const announceSendStatus = (message) => {
+        if (!sendStatus) return
+        // Clear first so repeated identical messages are still announced.
+        sendStatus.textContent = ""
+        if (message) {
+            sendStatus.textContent = message
+        }
+    }
 
     const refreshSendButton = () => {
         const dirty = isDirty()
@@ -33,6 +49,14 @@ if (settingsForm && sendBtn) {
         if (sendHint) {
             // Server blocker only when form is clean; dirty hint takes priority.
             sendHint.classList.toggle("d-none", dirty || !serverBlocked)
+        }
+
+        if (dirty) {
+            announceSendStatus(hintText(dirtyHint))
+        } else if (serverBlocked) {
+            announceSendStatus(hintText(sendHint))
+        } else {
+            announceSendStatus("")
         }
     }
 

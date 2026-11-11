@@ -148,19 +148,24 @@
                         class="btn btn-primary"
                         id="speaker-voucher-send-btn"
                         {% if send_blocker %}disabled aria-disabled="true"{% endif %}
-                        aria-describedby="speaker-voucher-send-hint speaker-voucher-dirty-hint">
+                        aria-describedby="speaker-voucher-send-status">
                   <i class="fa fa-paper-plane" aria-hidden="true"></i>
                   {% translate "Send vouchers" %}
                 </button>
               </div>
               <p id="speaker-voucher-send-hint" class="text-muted speaker-voucher-actions-hint{% if not send_blocker %} d-none{% endif %}">
                 <i class="fa fa-info-circle" aria-hidden="true"></i>
-                {{ send_blocker|default:'' }}
+                <span class="speaker-voucher-hint-text">{{ send_blocker|default:'' }}</span>
               </p>
               <p id="speaker-voucher-dirty-hint" class="text-muted speaker-voucher-actions-hint d-none">
                 <i class="fa fa-info-circle" aria-hidden="true"></i>
-                {% translate "Save your changes first." %}
+                <span class="speaker-voucher-hint-text">{% translate "Save your changes first." %}</span>
               </p>
+              <div id="speaker-voucher-send-status"
+                   class="sr-only"
+                   role="status"
+                   aria-live="polite"
+                   aria-atomic="true">{% if send_blocker %}{{ send_blocker }}{% endif %}</div>
             </div>
           </div>
         </form>

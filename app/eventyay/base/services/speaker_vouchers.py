@@ -235,13 +235,16 @@ def allocate_and_send_vouchers(
                             raise _InsufficientVouchers()
                         break
                     try:
-                        speaker_voucher = SpeakerVoucher.objects.create(
-                            event=event,
-                            speaker_profile=profile,
-                            voucher=voucher,
-                            status=SpeakerVoucherStatus.NOT_SENT,
-                            sent_at=None,
-                        )
+                        # Nested atomic() creates a savepoint so IntegrityError does not
+                        # abort the outer allocation transaction on PostgreSQL.
+                        with transaction.atomic():
+                            speaker_voucher = SpeakerVoucher.objects.create(
+                                event=event,
+                                speaker_profile=profile,
+                                voucher=voucher,
+                                status=SpeakerVoucherStatus.NOT_SENT,
+                                sent_at=None,
+                            )
                     except IntegrityError:
                         # Concurrent request won the race for this speaker or voucher.
                         existing = (
@@ -275,7 +278,10 @@ def allocate_and_send_vouchers(
             action,
             person=requestor,
             orga=True,
-            data={'voucher_code': assignment.voucher.code, 'speaker': profile.user.email},
+            data={
+                'voucher_code': assignment.voucher.code,
+                'speaker_user_id': profile.user.pk if profile.user else None,
+            },
         )
         if was_already_sent:
             result['resent'] += 1
@@ -294,17 +300,18 @@ def cancel_speaker_voucher(speaker_voucher: SpeakerVoucher, *, requestor=None) -
     voucher = speaker_voucher.voucher
     voucher.valid_until = now()
     voucher.save(update_fields=['valid_until'])
+    speaker_user = (
+        speaker_voucher.speaker_profile.user
+        if speaker_voucher.speaker_profile
+        else None
+    )
     speaker_voucher.log_action(
         'eventyay.speaker.voucher.cancelled',
         person=requestor,
         orga=True,
         data={
             'voucher_code': voucher.code,
-            'speaker': (
-                speaker_voucher.speaker_profile.user.email
-                if speaker_voucher.speaker_profile and speaker_voucher.speaker_profile.user
-                else None
-            ),
+            'speaker_user_id': speaker_user.pk if speaker_user else None,
         },
     )
 
