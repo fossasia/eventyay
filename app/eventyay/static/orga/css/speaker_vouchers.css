@@ -228,6 +228,11 @@
   text-align: right;
 }
 
+dialog.orga-confirm-dialog:not([open]),
+dialog.speaker-voucher-confirm-dialog:not([open]) {
+  display: none;
+}
+
 .speaker-voucher-confirm-dialog {
   width: min(560px, 95vw);
 }

@@ -23,7 +23,11 @@ const handleCollapse = (controller, target) => {
 const setupCollapse = (element) => {
     const target = document.querySelector(element.getAttribute('data-target'))
     if (!target) return
-    element.addEventListener('click', () => handleCollapse(element, target))
+    element.addEventListener('click', (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        handleCollapse(element, target)
+    })
     if (target.classList.contains('show')) {
         makeCollapsed(element, target, false)
     }
