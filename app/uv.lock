@@ -269,15 +269,15 @@ wheels = [
 
 [[package]]
 name = "cbor2"
-version = "6.2.0.post2"
+version = "6.2.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cd/eb/e2ef5f241f15131babf4854032953b97c88b2c2700d7712a0ba8f57cbe81/cbor2-6.2.0.post2.tar.gz", hash = "sha256:3b08ba9f3a556186515000949d478e47e6d55322f9d86bdaef5b4e3d27d48298", size = 101466, upload-time = "2026-11-02T10:44:01.627Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1b/2f/bf52daccd1027ffdfad3f04ae1730383e5b406abb8a9a98963584dd39563/cbor2-6.2.1.tar.gz", hash = "sha256:086c1588bd407a46739da704b5ee7d15225dc998d9582a0519fc6c9a114b25f7", size = 102760, upload-time = "2026-11-07T00:27:29.111Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/cb/959cf9ad0fdd593fce5e13ab4b9558e0c66f803ebb3e31cd497319b2e7af/cbor2-6.2.0.post2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d0bedb969ace5134695c124e57fd5f929b7560149ecaa50c2e1621bfe725768a", size = 409892, upload-time = "2026-11-02T10:42:55.462Z" },
-    { url = "https://files.pythonhosted.org/packages/b2/6f/4f5d30b9b16874e7e616c551c98558fb53da83c2c9ed09830b9273310606/cbor2-6.2.0.post2-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:4243cbd63745508b0c6e927e08e224e01215bf8d72a0bd9db4528c048836e099", size = 454274, upload-time = "2026-11-02T10:42:56.825Z" },
-    { url = "https://files.pythonhosted.org/packages/20/5d/2b85458ab73728ab3a6240545fc1dee25146897a67b6bea3bfca84cccf29/cbor2-6.2.0.post2-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:1b3146a840c3adbf1b4fed5a200bf8f984d6af0a220e0326d714d12d1c1f223b", size = 465279, upload-time = "2026-11-02T10:42:58.253Z" },
-    { url = "https://files.pythonhosted.org/packages/88/59/b0f0cdc32cfec841c34e8a475a02650b98fa17973e1029a3245461af7b9c/cbor2-6.2.0.post2-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:31253b207ba86fa10ccee10796f35ad8650fddab1617e866b5bb23fe325220d5", size = 520968, upload-time = "2026-11-02T10:42:59.616Z" },
-    { url = "https://files.pythonhosted.org/packages/6b/11/d0f48aecd2e0111501788c50153f12c51eb3c999d77eddb185f452ec7ea1/cbor2-6.2.0.post2-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:cf00e8c193a91ee49430dbf2373b266d8f7cba43c6fe38249c933199eae2bad5", size = 532988, upload-time = "2026-11-02T10:43:00.962Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/19/0706d0331d02b57b89012b84836165662c40befba22494b1c98fb06481fc/cbor2-6.2.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:41810f070b8e3ee87392e89a00e276840947da9b30a98c72f0c03e07935b654a", size = 415161, upload-time = "2026-11-07T00:26:18.594Z" },
+    { url = "https://files.pythonhosted.org/packages/df/47/1b3ec198f0938340b0d2152414efd0d89b741f65dd4e257a3e9f5fa4cfdb/cbor2-6.2.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:830c54f5d6581bce628e0c9970f22f1b94069d123ba3c051192e9f3fd5154400", size = 460079, upload-time = "2026-11-07T00:26:19.895Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/ee/52232e48413d136c229e5a1be94839724e011a00ba287c5c133e1962c6da/cbor2-6.2.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:6a66bf0322d40534b3e8ff838cdaed345a6a707cabc447c8e4266d2b4f69d572", size = 470878, upload-time = "2026-11-07T00:26:21.31Z" },
+    { url = "https://files.pythonhosted.org/packages/da/c3/c68005844c90e4f41bd7ad8c83c293d6fa0457cd126461089fd8ca0d855a/cbor2-6.2.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:c1eb32463e716f29f12ade34b9573817ec9fef9f8c5f01e0fccf5894b30b1296", size = 526932, upload-time = "2026-11-07T00:26:22.797Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/1c/15068c104bf0d3dee3fa0e940a24b0d1b26b28ba6f2a2f26e2df3f350878/cbor2-6.2.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:438d082ba745cd87e2fecacf88e74b1cb8fc20d79f2c791a51cabf6c90abcbc9", size = 539291, upload-time = "2026-11-07T00:26:24.229Z" },
 ]
 
 [[package]]
@@ -2626,11 +2626,11 @@ wheels = [
 
 [[package]]
 name = "publicsuffixlist"
-version = "1.1.2.20261106"
+version = "1.1.2.20261107"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/93/58/25ba5f0cc8871ba7149211c6bc6ecc6ab6beabcb8079db45e8ca251e4159/publicsuffixlist-1.1.2.20261106.tar.gz", hash = "sha256:6688f0eb52baa4f07d196ef4d0410ea44aa3cc741283116a000f6a89a4d041b7", size = 106709, upload-time = "2026-11-06T10:43:25.408Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/10/1d/5e5a298fd7f70911054c3107a2f1a34c5392db31ed159c4d537fe4127b6b/publicsuffixlist-1.1.2.20261107.tar.gz", hash = "sha256:8dfd2ddfe3b14f16a18fc785ffd6986685b47c8ae3e9c09c7cb5ff8c240a9dd3", size = 106705, upload-time = "2026-11-07T09:56:33.878Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/92/4d99101c827c49e27f112e4c59fb55743e44bf6fad713e1e6428f654b542/publicsuffixlist-1.1.2.20261106-py3-none-any.whl", hash = "sha256:cda0b4c588b03f116bad6704fa46556739cb380a292cf3c5b9fdf58104239a95", size = 109471, upload-time = "2026-11-06T10:43:23.252Z" },
+    { url = "https://files.pythonhosted.org/packages/50/83/cd048836ffde199af911767d99979f65170e7cae1d20e403ceb454451e62/publicsuffixlist-1.1.2.20261107-py3-none-any.whl", hash = "sha256:1fe45aa1902b28c7ddf6f185644fb69acc5fa8134fe394d0fdf97b034a08c910", size = 109464, upload-time = "2026-11-07T09:56:32.855Z" },
 ]
 
 [[package]]
