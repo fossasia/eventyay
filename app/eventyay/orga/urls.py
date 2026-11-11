@@ -381,6 +381,16 @@ urlpatterns = [
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path('speakers/new/', speaker.SpeakerCreate.as_view(), name='speakers.create'),
                 path(
+                    'speakers/vouchers/',
+                    speaker.SpeakerVoucherSettingsView.as_view(),
+                    name='speakers.vouchers',
+                ),
+                path(
+                    'speakers/vouchers/send/',
+                    speaker.SpeakerVoucherBulkSendView.as_view(),
+                    name='speakers.vouchers.send',
+                ),
+                path(
                     'speakers/<code>/',
                     include(
                         [

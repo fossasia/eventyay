@@ -5,16 +5,54 @@ import logging
 from django import forms
 from django.db.models import Prefetch
 from django.utils.functional import cached_property
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import SubmissionStates, User
+from eventyay.base.models import SubmissionStates, User, Voucher
 from eventyay.common.social_links import format_social_links_for_csv
 from eventyay.common.text.phrases import phrases
 from eventyay.orga.forms.export import ExportForm
 
 
 logger = logging.getLogger(__name__)
+
+
+class SpeakerVoucherSettingsForm(forms.Form):
+    enabled = forms.BooleanField(
+        required=False,
+        label=_('Enable speaker vouchers'),
+        help_text=_('When enabled, organisers can send ticket vouchers to speakers with confirmed sessions.'),
+    )
+    voucher_tag = forms.ChoiceField(
+        required=False,
+        label=_('Voucher batch'),
+        help_text=_('Select the voucher batch (tag) created in Tickets → Vouchers.'),
+        widget=forms.Select,
+    )
+
+    def __init__(self, *args, event=None, **kwargs):
+        self.event = event
+        super().__init__(*args, **kwargs)
+
+        tag_choices = [('', _('— Select voucher batch —'))]
+        if event is not None:
+            with scopes_disabled():
+                tags = (
+                    Voucher.objects.filter(event=event)
+                    .exclude(tag='')
+                    .values_list('tag', flat=True)
+                    .distinct()
+                    .order_by('tag')
+                )
+                tag_choices += [(tag, tag) for tag in tags]
+        self.fields['voucher_tag'].choices = tag_choices
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('enabled') and not cleaned.get('voucher_tag'):
+            self.add_error('voucher_tag', _('Select a voucher batch when vouchers are enabled.'))
+        return cleaned
+
 
 
 class SpeakerExportForm(ExportForm):

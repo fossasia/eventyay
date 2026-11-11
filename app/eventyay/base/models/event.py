@@ -783,6 +783,8 @@ class Event(
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
         new_speaker = '{speakers}new/'
+        speaker_vouchers = '{speakers}vouchers/'
+        speaker_vouchers_send = '{speaker_vouchers}send/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         feedback_settings = '{settings}feedback/'

@@ -114,6 +114,7 @@ from .speaker_invitation import (
     SpeakerInvitationMailStates,
     SpeakerInvitationStates,
 )
+from .speaker_voucher import SpeakerVoucher, SpeakerVoucherSettings, SpeakerVoucherStatus
 from .submission import Submission, SubmissionFavourite, SubmissionStates
 from .systemlog import SystemLog
 from .tag import Tag
@@ -234,6 +235,9 @@ __all__ = [
     'SpeakerInvitationStates',
     'SpeakerProfile',
     'SpeakerSocialLink',
+    'SpeakerVoucher',
+    'SpeakerVoucherSettings',
+    'SpeakerVoucherStatus',
     'SubEvent',
     'SubEventProduct',
     'SubEventProductVariation',
