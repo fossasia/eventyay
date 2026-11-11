@@ -29,7 +29,7 @@
 			)
 				.stream-card-header
 					.header-left
-						span.drag-handle(v-if="streams.length > 1", title="Drag to reorder") :::
+						span.drag-handle(v-if="streams.length > 1", :title="$t('Drag to reorder')") :::
 						span.stream-title {{ $t('Stream') }} {{ index + 1 }}
 					button.btn-delete-stream(
 						v-if="streams.length > 1 || isScheduledMode"
@@ -114,6 +114,7 @@
 						span.accordion-title {{ $t('Playback settings') }}
 						i.mdi(:class="stream.showAdvanced ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true")
 					.advanced-switches(v-if="stream.showAdvanced")
+						bunt-switch(name="autoStart", v-model="stream.config.autoStart", :label="$t('Autostart stream')")
 						bunt-switch(name="startMuted", v-model="stream.config.startMuted", :label="$t('Start muted')")
 						template(v-if="stream.stream_type === 'youtube'")
 							bunt-switch(name="enablePrivacyEnhancedMode", v-model="stream.config.enablePrivacyEnhancedMode", :label="$t('Enable No-Cookies')")
@@ -157,6 +158,7 @@
 							:roomId="roomId"
 							:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
 							:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
+							:disabled="isLanguageStreamsDisabled"
 						)
 						p.stream-interpretation-hint
 							| {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
@@ -170,6 +172,15 @@
 			.tool-section-header
 				h3 {{ $t('Caption settings') }}
 			bunt-progress-circular(size="small")
+
+		.tool-section(v-if="!creating && showPluginLanguageStreams && syncStatus === 'error'")
+			.tool-section-header
+				h3 {{ $t('Caption settings') }}
+				p.subtitle {{ $t('Live translations and transcripts are provided by the eventyay-interpretation plugin.') }}
+			.interpretation-error-banner
+				i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+				span.error-text {{ interpretationPutError || $t('Could not load interpretation settings. Please try again.') }}
+				bunt-button.btn-retry(@click="fetchInterpretationConfig(true)") {{ $t('Retry') }}
 
 		.tool-section(v-if="isInterpretationFeatureAvailable")
 			.tool-section-header
@@ -200,18 +211,30 @@
 					| .
 
 		.interpretation-plugin-language-streams(v-if="showPluginLanguageStreams && isInterpretationFeatureAvailable")
-			.info-alert.warning(v-if="interpretationAdmin && interpretationAdmin.streamsLoadFailed")
-				i.mdi.mdi-alert-circle-outline(aria-hidden="true")
-				span {{ $t('Failed to load interpretation channels. Changes cannot be saved until reloaded successfully.') }}
-			LanguageAudioSourceList(
-				v-else-if="interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'voxbento' || interpretationConfig.interpreter === 'manual')"
-				:title="isScheduledMode ? $t('Default interpretation channels (room fallback)') : $t('Interpretation channels')"
-				:subtitle="isScheduledMode ? $t('These channels will be used whenever a stream schedule does not define its own specific interpretation channels.') : ''"
-				:entries="pluginLanguageStreamEntries"
-				:roomId="roomId"
-				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
-				:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
-			)
+			template(v-if="interpretationConfig.room_enabled && (interpretationConfig.interpreter === 'voxbento' || interpretationConfig.interpreter === 'manual')")
+				.tool-section.interpretation-channels-loading(v-if="isLanguageStreamsLoading")
+					.tool-section-header
+						h3 {{ isScheduledMode ? $t('Default interpretation channels (room fallback)') : $t('Interpretation channels') }}
+						p.subtitle {{ $t('Add multi-language audio or video interpretation channels for attendees.') }}
+					bunt-progress-circular(size="small")
+				.tool-section.interpretation-channels-error(v-else-if="isLanguageStreamsError")
+					.tool-section-header
+						h3 {{ isScheduledMode ? $t('Default interpretation channels (room fallback)') : $t('Interpretation channels') }}
+						p.subtitle {{ $t('Live translations and transcripts are provided by the eventyay-interpretation plugin.') }}
+					.interpretation-error-banner
+						i.mdi.mdi-alert-circle-outline(aria-hidden="true")
+						span.error-text {{ $t('Failed to load interpretation channels. Changes cannot be saved until reloaded successfully.') }}
+						bunt-button.btn-retry(@click="retryLanguageStreams") {{ $t('Retry') }}
+				LanguageAudioSourceList(
+					v-else-if="isLanguageStreamsReady"
+					:title="isScheduledMode ? $t('Default interpretation channels (room fallback)') : $t('Interpretation channels')"
+					:subtitle="isScheduledMode ? $t('These channels will be used whenever a stream schedule does not define its own specific interpretation channels.') : ''"
+					:entries="pluginLanguageStreamEntries"
+					:roomId="roomId"
+					:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
+					:translationModelSetup="interpretationConfig.interpreter === 'voxbento' ? !!interpretationConfig.translation_model : true"
+					:disabled="isLanguageStreamsDisabled"
+				)
 			.tool-section.skeleton-provider-layout(v-else-if="interpretationConfig.room_enabled && interpretationConfig.interpreter && interpretationConfig.interpreter !== 'voxbento' && interpretationConfig.interpreter !== 'manual' && interpretationConfig.interpreter !== 'none'")
 				.tool-section-header
 					h3 {{ $t('Interpretation channels') }}
@@ -239,9 +262,9 @@
 import { defineComponent, reactive } from 'vue'
 import moment from 'moment-timezone'
 import api from 'lib/api'
-import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
+import { interpretationRouting, interpretationApiUrl, interpretationAuthHeaders, apiErrorDetail } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
-import { readApiErrorMessage } from 'lib/apiErrorMessage'
+import { apiErrorMessage, readApiErrorMessage } from 'lib/apiErrorMessage'
 import Prompt from 'components/Prompt'
 import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import { cloneLanguageStreamEntries, serializeLanguageStreamEntry } from 'lib/interpretation-language-streams'
@@ -279,6 +302,10 @@ export default defineComponent({
 			availableInterpreters: [],
 			interpretationPutError: null,
 			_lastFetchRoomId: null,
+			_fetchInterpretationSeq: 0,
+			schedulesLoaded: false,
+			schedulesLoading: false,
+			_fetchSchedulesSeq: 0,
 		}
 	},
 	computed: {
@@ -303,13 +330,38 @@ export default defineComponent({
 			return inferPlaybackModeFromStreams(this.streams) === PLAYBACK_MODE_SCHEDULE_DRIVEN
 		},
 		showPluginLanguageStreams() {
-			return Boolean(this.config?.interpretation_use_plugin_streams)
+			if (this.config?.interpretation_use_plugin_streams !== undefined) {
+				return Boolean(this.config.interpretation_use_plugin_streams)
+			}
+			if (this.interpretationAdmin?.usePluginStreams !== undefined) {
+				return Boolean(this.interpretationAdmin.usePluginStreams)
+			}
+			const injected = typeof window !== 'undefined' ? (window.eventyay || window.venueless) : null
+			if (injected?.interpretation?.usePluginStreams !== undefined) {
+				return Boolean(injected.interpretation.usePluginStreams)
+			}
+			return false
 		},
 		isInterpretationFeatureAvailable() {
 			return !this.creating && this.syncStatus === 'ready'
 		},
 		pluginLanguageStreamEntries() {
 			return this.interpretationAdmin?.languageStreams ?? []
+		},
+		isLanguageStreamsLoading() {
+			if (!this.interpretationAdmin) return false
+			return Boolean(this.interpretationAdmin.loading || !this.interpretationAdmin.loaded)
+		},
+		isLanguageStreamsError() {
+			if (!this.interpretationAdmin) return false
+			return Boolean(this.interpretationAdmin.streamsLoadFailed && !this.interpretationAdmin.loading)
+		},
+		isLanguageStreamsReady() {
+			if (!this.interpretationAdmin) return true
+			return Boolean(this.interpretationAdmin.loaded && !this.interpretationAdmin.loading && !this.interpretationAdmin.streamsLoadFailed)
+		},
+		isLanguageStreamsDisabled() {
+			return Boolean(this.interpretationAdmin?.saving || this.isLanguageStreamsLoading)
 		},
 		selectableInterpreters() {
 			this.$store.state.userLocale
@@ -345,13 +397,30 @@ export default defineComponent({
 				this.interpretationConfig.interpreter = 'manual'
 			}
 			this.interpretationPutError = null
+		},
+		'$store.state.world': {
+			handler(newWorld) {
+				if (newWorld) {
+					if (this.syncStatus === 'loading' || this.syncStatus === 'error' || !this._lastFetchRoomId) {
+						this.fetchInterpretationConfig()
+					}
+					if (!this.schedulesLoaded || this.schedulesLoading) {
+						this.initStreams(true)
+					}
+				}
+			}
 		}
 	},
 	methods: {
 		usableLanguageStreamCount(stream) {
 			return (stream.config?.language_streams || []).filter(isUsableLanguageStreamEntry).length
 		},
-		async fetchInterpretationConfig() {
+		retryLanguageStreams() {
+			if (this.interpretationAdmin?.reload) {
+				this.interpretationAdmin.reload()
+			}
+		},
+		async fetchInterpretationConfig(force = false) {
 			if (this.creating) {
 				this.syncStatus = 'unsupported'
 				return
@@ -361,14 +430,31 @@ export default defineComponent({
 				this.syncStatus = 'unsupported'
 				return
 			}
-			if (!this.roomId || this._lastFetchRoomId === this.roomId) return
+			if (!this.roomId) return
+			if (!force && this._lastFetchRoomId === this.roomId && (this.syncStatus === 'ready' || this.syncStatus === 'unsupported')) return
+
+			if (force && this.interpretationAdmin?.reload) {
+				this.interpretationAdmin.reload()
+			}
 
 			const fetchingRoomId = this.roomId
+			const url = interpretationApiUrl(this.$store, fetchingRoomId, 'config/')
+			if (!url) {
+				if (this.$store.state.world) {
+					this._lastFetchRoomId = null
+					this.syncStatus = 'unsupported'
+				} else {
+					this.syncStatus = 'loading'
+					this.interpretationPutError = null
+				}
+				return
+			}
+
+			const fetchSeq = ++this._fetchInterpretationSeq
 			this.syncStatus = 'loading'
 			this.interpretationPutError = null
 
 			try {
-				const url = interpretationApiUrl(this.$store, fetchingRoomId, 'config/')
 				const headers = await interpretationAuthHeaders()
 				headers['Cache-Control'] = 'no-store'
 				const response = await fetch(url, {
@@ -376,19 +462,35 @@ export default defineComponent({
 					credentials: 'include',
 				})
 
+				if (fetchSeq !== this._fetchInterpretationSeq) return
+
 				if (!response.ok) {
 					this._lastFetchRoomId = null
-					this.syncStatus = 'unsupported'
+					if (response.status === 404) {
+						this.syncStatus = 'unsupported'
+						return
+					}
+					const errData = await response.json().catch(() => ({}))
+					if (fetchSeq !== this._fetchInterpretationSeq) return
+					const detail = apiErrorDetail(errData) || apiErrorMessage(errData, '') || response.statusText
+					if (response.status === 429) {
+						this.interpretationPutError = this.$t('Request throttled due to too many requests. Please wait a moment and click Retry.')
+					} else {
+						this.interpretationPutError = detail || this.$t('Could not load interpretation settings')
+					}
+					this.syncStatus = 'error'
 					return
 				}
 
-				// discard response if the user navigated to a different room mid-flight
-				if (fetchingRoomId !== this.roomId) return
+				// discard response if stale or the user navigated to a different room mid-flight
+				if (fetchSeq !== this._fetchInterpretationSeq || fetchingRoomId !== this.roomId) return
 
 				// discard if plugin streams were disabled while the request was in-flight
 				if (!this.showPluginLanguageStreams) return
 
 				const data = await response.json()
+				if (fetchSeq !== this._fetchInterpretationSeq || fetchingRoomId !== this.roomId) return
+
 				if (data.ui_sync_supported) {
 					let interpreter = data.interpreter === 'none' ? '' : (data.interpreter || '')
 					const roomEnabled = Boolean(data.room_enabled)
@@ -403,14 +505,19 @@ export default defineComponent({
 					this.availableInterpreters = (data.available_interpreters || []).filter(p => p.id !== 'none' && p.configured && !p.is_disconnected)
 					this._lastFetchRoomId = fetchingRoomId
 					this.syncStatus = 'ready'
+					if (this.interpretationAdmin?.streamsLoadFailed && this.interpretationAdmin?.reload) {
+						this.interpretationAdmin.reload()
+					}
 				} else {
 					this._lastFetchRoomId = null
 					this.syncStatus = 'unsupported'
 				}
 			} catch (err) {
+				if (fetchSeq !== this._fetchInterpretationSeq) return
 				console.warn('Failed to fetch interpretation config:', err)
 				this._lastFetchRoomId = null
-				this.syncStatus = 'unsupported'
+				this.syncStatus = 'error'
+				this.interpretationPutError = err.message || this.$t('Network error while loading interpretation settings')
 			}
 		},
 		async saveInterpretationConfig(targetRoomId) {
@@ -421,6 +528,9 @@ export default defineComponent({
 
 			this.interpretationPutError = null
 			const url = interpretationApiUrl(this.$store, roomId, 'config/')
+			if (!url) {
+				throw new Error(this.$t('Could not save caption settings: event routing could not be determined'))
+			}
 			const headers = await interpretationAuthHeaders(true)
 			
 			const payload = {
@@ -502,6 +612,7 @@ export default defineComponent({
 				start_time: start_time ? this.parseDateTime(start_time) : null,
 				end_time: end_time ? this.parseDateTime(end_time) : null,
 				config: {
+					autoStart: config.autoStart !== false,
 					enablePrivacyEnhancedMode: !!config.enablePrivacyEnhancedMode,
 					loop: !!config.loop,
 					modestBranding: !!config.modestBranding,
@@ -552,16 +663,36 @@ export default defineComponent({
 
 			return stream
 		},
-		async initStreams() {
+		async initStreams(force = false) {
 			if (!this.roomId) {
 				this.loadFromModuleConfig()
+				this.schedulesLoaded = true
 				return
 			}
+			if (!force && this.schedulesLoaded) return
+
+			const seq = ++this._fetchSchedulesSeq
 			this.loading = true
+			this.schedulesLoading = true
 			this.globalError = null
 			try {
 				const schedules = await this.fetchStreamSchedules()
-				if (schedules && schedules.length > 0) {
+				if (seq !== this._fetchSchedulesSeq) return
+
+				if (schedules === null) {
+					// Routing is unresolved (e.g. world still connecting)
+					if (this.$store.state.world) {
+						// World is loaded but routing still cannot resolve
+						this.loadFromModuleConfig()
+						this.schedulesLoaded = true
+						this.loading = false
+						this.schedulesLoading = false
+					}
+					// Keep loading true while waiting for world
+					return
+				}
+
+				if (schedules.length > 0) {
 					this.streams = schedules.map(s =>
 						this.createStreamItem({
 							id: s.id,
@@ -575,11 +706,17 @@ export default defineComponent({
 				} else {
 					this.loadFromModuleConfig()
 				}
+				this.schedulesLoaded = true
 			} catch (err) {
+				if (seq !== this._fetchSchedulesSeq) return
 				console.warn('Failed to load stream schedules, falling back to module config:', err)
 				this.loadFromModuleConfig()
+				this.schedulesLoaded = true
 			} finally {
-				this.loading = false
+				if (seq === this._fetchSchedulesSeq && this.schedulesLoaded) {
+					this.loading = false
+					this.schedulesLoading = false
+				}
 			}
 		},
 		loadFromModuleConfig() {
@@ -593,6 +730,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_YOUTUBE,
 						url: ytModule.config.ytid,
 						config: {
+							autoStart: ytModule.config.autoStart !== false,
 							enablePrivacyEnhancedMode: ytModule.config.enablePrivacyEnhancedMode,
 							loop: ytModule.config.loop,
 							modestBranding: ytModule.config.modestBranding,
@@ -610,6 +748,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_VIMEO,
 						url: vimeoModule.config.url,
 						config: {
+							autoStart: vimeoModule.config.autoStart !== false,
 							startMuted: vimeoModule.config.startMuted,
 							dnt: vimeoModule.config.dnt,
 							loop: vimeoModule.config.loop,
@@ -626,6 +765,7 @@ export default defineComponent({
 						stream_type: STREAM_TYPE_HLS,
 						url: nativeModule.config.hls_url,
 						config: {
+							autoStart: nativeModule.config.autoStart !== false,
 							startMuted: nativeModule.config.startMuted,
 						},
 					}),
@@ -635,16 +775,8 @@ export default defineComponent({
 			}
 		},
 		getApiBaseUrl(targetRoomId = this.roomId) {
-			const world = this.$store.state.world
-			let organizer = world?.organizer_slug
-			let event = world?.slug || world?.id
-			if (!organizer || organizer === 'default') {
-				const pathParts = window.location.pathname.split('/').filter(Boolean)
-				if (pathParts.length >= 2) {
-					organizer = pathParts[0]
-					event = pathParts[1]
-				}
-			}
+			const { organizer, event } = interpretationRouting(this.$store)
+			if (!organizer || !event || !targetRoomId) return null
 			return `/api/v1/organizers/${organizer}/events/${event}/rooms/${targetRoomId}/stream-schedules/`
 		},
 		getCsrfToken() {
@@ -654,6 +786,7 @@ export default defineComponent({
 		async fetchStreamSchedules() {
 			if (!this.roomId) return []
 			const url = this.getApiBaseUrl()
+			if (!url) return null
 			const authHeader = api._config.token
 				? `Bearer ${api._config.token}`
 				: api._config.clientId
@@ -755,6 +888,11 @@ export default defineComponent({
 			this.globalError = null
 			let isValid = true
 
+			if (this.schedulesLoading || (!this.creating && this.roomId && !this.schedulesLoaded)) {
+				this.globalError = this.$t('Stream schedules are still loading. Please wait.')
+				return false
+			}
+
 			this.streams.forEach((stream, index) => {
 				if (!stream.url || !stream.url.trim()) {
 					this.validationErrors[`${index}.url`] = this.$t('Stream URL is required')
@@ -837,6 +975,7 @@ export default defineComponent({
 						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 						ytid,
 					}
+					if (primary.config.autoStart !== undefined) config.autoStart = primary.config.autoStart !== false
 					if (primary.config.enablePrivacyEnhancedMode) config.enablePrivacyEnhancedMode = true
 					if (primary.config.loop) config.loop = true
 					if (primary.config.modestBranding) config.modestBranding = true
@@ -855,6 +994,7 @@ export default defineComponent({
 						playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 						url: primary.url,
 					}
+					if (primary.config.autoStart !== undefined) config.autoStart = primary.config.autoStart !== false
 					if (primary.config.startMuted) config.startMuted = true
 					if (primary.config.dnt) config.dnt = true
 					if (primary.config.loop) config.loop = true
@@ -873,6 +1013,7 @@ export default defineComponent({
 						config: {
 							playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 							hls_url: primary.url,
+							autoStart: primary.config.autoStart !== false,
 							startMuted: !!primary.config?.startMuted,
 						},
 					})
@@ -892,6 +1033,9 @@ export default defineComponent({
 			if (!roomId) return
 
 			const baseUrl = this.getApiBaseUrl(roomId)
+			if (!baseUrl) {
+				throw new Error(this.$t('Could not save stream schedules: event routing could not be determined'))
+			}
 			const authHeader = api._config.token
 				? `Bearer ${api._config.token}`
 				: api._config.clientId
@@ -947,6 +1091,7 @@ export default defineComponent({
 						start_time: stream.start_time ? stream.start_time.toISOString() : null,
 						end_time: stream.end_time ? stream.end_time.toISOString() : null,
 						config: {
+							autoStart: stream.config?.autoStart !== false,
 							enablePrivacyEnhancedMode: stream.config?.enablePrivacyEnhancedMode,
 							loop: stream.config?.loop,
 							modestBranding: stream.config?.modestBranding,
@@ -1444,6 +1589,28 @@ export default defineComponent({
 				text-decoration: underline
 				&:hover
 					color: darken(#bb0011, 15%)
+
+		.interpretation-error-banner
+			display: flex
+			align-items: center
+			gap: 10px
+			margin-top: 12px
+			padding: 10px 14px
+			background-color: rgba($clr-danger, 0.08)
+			border-left: 3px solid $clr-danger
+			border-radius: 4px
+			color: $clr-danger
+			font-size: 13px
+			i
+				font-size: 18px
+				flex-shrink: 0
+			.error-text
+				flex: 1
+			.btn-retry
+				themed-button-secondary()
+				padding: 4px 12px
+				font-size: 12px
+				flex-shrink: 0
 	
 	.interpretation-plugin-language-streams
 		margin-top: 24px
