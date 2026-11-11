@@ -127,8 +127,9 @@ def test_action_required_item(client, env, make, title, url_name, query, severit
     [(classes, card)] = _cards(section)
     assert severity in classes.split()
     assert f'<h3 class="td-action-title">{title}</h3>' in card
-    assert f'href="{_url(env, url_name)}{query}"' in card
-    assert 'class="td-action-btn"' in card
+    # Compare the button's full URL, so a malformed query string cannot pass.
+    [button_href] = re.findall(r'href="([^"]*)"\s+class="td-action-btn"', card)
+    assert button_href == f'{_url(env, url_name)}{query}'
 
 
 @pytest.mark.django_db
@@ -160,9 +161,11 @@ def test_action_required_notifications(client, env):
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_action_required_hidden(client, env):
-    # Nothing to do: no section at all.
+    # Nothing to do: no section, but the empty wrapper keeps the page padding unchanged.
     client.force_login(env['user'])
-    assert _section(client.get(_url(env)).content.decode()) is None
+    content = client.get(_url(env)).content.decode()
+    assert _section(content) is None
+    assert '<div class="td-dashboard p-0"></div>' in content
 
     # Without order permissions the items are not shown, so neither is the section.
     with scope(organizer=env['organizer'], event=env['event']):

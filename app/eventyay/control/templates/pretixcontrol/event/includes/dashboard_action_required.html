@@ -1,119 +1,119 @@
 {% load i18n %}
 {# Action required: one card per open issue, then system notifications. Same card styles as the talks dashboard. #}
 <section class="td-section" aria-labelledby="td-action-required-title">
-    <div class="td-section-heading">
-        <h2 id="td-action-required-title" class="td-section-title">
-            <span class="fa fa-exclamation-circle" aria-hidden="true"></span>
-            {% trans 'Action required' %}
-        </h2>
-    </div>
-    <div class="td-action-grid">
-        {% if has_overpaid_orders %}
-            <article class="td-action-card td-action-danger">
-                <div class="td-action-header">
-                    <span class="td-action-icon" aria-hidden="true"><span class="fa fa-exclamation-triangle"></span></span>
-                    <h3 class="td-action-title">{% trans 'Overpaid' %}</h3>
-                </div>
-                <p class="td-action-desc td-action-desc-full">
-                    {% blocktrans trimmed %}
-                        This event contains <strong>overpaid orders</strong>, for example due to duplicate payment attempts.
-                        You should review the cases and consider refunding the overpaid amount to the user.
-                    {% endblocktrans %}
-                </p>
-                <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=overpaid"
-                   class="td-action-btn">{% trans 'Show overpaid orders' %}</a>
-            </article>
-        {% endif %}
-        {% if has_pending_orders_with_full_payment %}
-            <article class="td-action-card td-action-danger">
-                <div class="td-action-header">
-                    <span class="td-action-icon" aria-hidden="true"><span class="fa fa-credit-card"></span></span>
-                    <h3 class="td-action-title">{% trans 'Pending (but fully paid)' %}</h3>
-                </div>
-                <p class="td-action-desc td-action-desc-full">
-                    {% blocktrans trimmed %}
-                        This event contains <strong>fully paid orders</strong> that are not marked as paid, probably
-                        because no quota was left at the time their payment arrived. You should review the cases and consider
-                        either refunding the customer or creating more space.
-                    {% endblocktrans %}
-                </p>
-                <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=pendingpaid"
-                   class="td-action-btn">{% trans 'Show affected orders' %}</a>
-            </article>
-        {% endif %}
-        {% if has_pending_refunds %}
-            <article class="td-action-card td-action-warning">
-                <div class="td-action-header">
-                    <span class="td-action-icon" aria-hidden="true"><span class="fa fa-undo"></span></span>
-                    <h3 class="td-action-title">{% trans 'Refunds' %}</h3>
-                </div>
-                <p class="td-action-desc td-action-desc-full">
-                    {% blocktrans trimmed %}
-                        This event contains <strong>pending refunds</strong> that you should take care of.
-                    {% endblocktrans %}
-                </p>
-                <a href="{% url 'control:event.orders.refunds' event=request.event.slug organizer=request.event.organizer.slug %}"
-                   class="td-action-btn">{% trans 'Show pending refunds' %}</a>
-            </article>
-        {% endif %}
-        {% if has_cancellation_requests %}
-            <article class="td-action-card td-action-warning">
-                <div class="td-action-header">
-                    <span class="td-action-icon" aria-hidden="true"><span class="fa fa-ban"></span></span>
-                    <h3 class="td-action-title">{% trans 'Cancellation requested' %}</h3>
-                </div>
-                <p class="td-action-desc td-action-desc-full">
-                    {% blocktrans trimmed %}
-                        This event contains <strong>requested cancellations</strong> that you should take care of.
-                    {% endblocktrans %}
-                </p>
-                <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=rc"
-                   class="td-action-btn">{% trans 'Show orders requesting cancellation' %}</a>
-            </article>
-        {% endif %}
-        {% if has_pending_approvals %}
-            <article class="td-action-card td-action-warning">
-                <div class="td-action-header">
-                    <span class="td-action-icon" aria-hidden="true"><span class="fa fa-hourglass-half"></span></span>
-                    <h3 class="td-action-title">{% trans 'Approval pending' %}</h3>
-                </div>
-                <p class="td-action-desc td-action-desc-full">
-                    {% blocktrans trimmed %}
-                        This event contains <strong>pending approvals</strong> that you should take care of.
-                    {% endblocktrans %}
-                </p>
-                <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=pa"
-                   class="td-action-btn">{% trans 'Show orders pending approval' %}</a>
-            </article>
-        {% endif %}
-        {% if actions %}
-            <article class="td-action-card td-action-danger td-action-notifications">
-                <div class="td-action-header">
-                    <span class="td-action-icon" aria-hidden="true"><span class="fa fa-bell"></span></span>
-                    <h3 id="td-notifications-title" class="td-action-title">
-                        {% trans 'Your attention is required to resolve the following issues' %}
-                    </h3>
-                </div>
-                <ul class="td-action-notification-list">
-                    {% for action in actions %}
-                        <li class="td-action-notification">
-                            <div class="td-action-notification-meta">
-                                <small class="text-muted">
-                                    <span class="fa fa-clock-o" aria-hidden="true"></span>
-                                    {{ action.datetime|date:'SHORT_DATETIME_FORMAT' }}
-                                </small>
-                                <form method="post" action="{% url 'control:event.requiredaction.discard' event=request.event.slug organizer=request.event.organizer.slug id=action.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-default btn-xs">{% trans 'Hide message' %}</button>
-                                </form>
-                            </div>
-                            <div class="td-action-notification-body">{{ action.display|safe }}</div>
-                        </li>
-                    {% endfor %}
-                </ul>
-                <a href="{% url 'control:event.requiredactions' event=request.event.slug organizer=request.event.organizer.slug %}"
-                   class="td-view-all-link" aria-describedby="td-notifications-title">{% trans 'Show more' %}</a>
-            </article>
-        {% endif %}
-    </div>
+  <div class="td-section-heading">
+    <h2 id="td-action-required-title" class="td-section-title">
+      <span class="fa fa-exclamation-circle" aria-hidden="true"></span>
+      {% trans 'Action required' %}
+    </h2>
+  </div>
+  <div class="td-action-grid">
+    {% if has_overpaid_orders %}
+      <article class="td-action-card td-action-danger">
+        <div class="td-action-header">
+          <span class="td-action-icon" aria-hidden="true"><span class="fa fa-exclamation-triangle"></span></span>
+          <h3 class="td-action-title">{% trans 'Overpaid' %}</h3>
+        </div>
+        <p class="td-action-desc td-action-desc-full">
+          {% blocktrans trimmed %}
+            This event contains <strong>overpaid orders</strong>, for example due to duplicate payment attempts.
+            You should review the cases and consider refunding the overpaid amount to the user.
+          {% endblocktrans %}
+        </p>
+        <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=overpaid"
+           class="td-action-btn">{% trans 'Show overpaid orders' %}</a>
+      </article>
+    {% endif %}
+    {% if has_pending_orders_with_full_payment %}
+      <article class="td-action-card td-action-danger">
+        <div class="td-action-header">
+          <span class="td-action-icon" aria-hidden="true"><span class="fa fa-credit-card"></span></span>
+          <h3 class="td-action-title">{% trans 'Pending (but fully paid)' %}</h3>
+        </div>
+        <p class="td-action-desc td-action-desc-full">
+          {% blocktrans trimmed %}
+            This event contains <strong>fully paid orders</strong> that are not marked as paid, probably
+            because no quota was left at the time their payment arrived. You should review the cases and consider
+            either refunding the customer or creating more space.
+          {% endblocktrans %}
+        </p>
+        <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=pendingpaid"
+           class="td-action-btn">{% trans 'Show affected orders' %}</a>
+      </article>
+    {% endif %}
+    {% if has_pending_refunds %}
+      <article class="td-action-card td-action-warning">
+        <div class="td-action-header">
+          <span class="td-action-icon" aria-hidden="true"><span class="fa fa-undo"></span></span>
+          <h3 class="td-action-title">{% trans 'Refunds' %}</h3>
+        </div>
+        <p class="td-action-desc td-action-desc-full">
+          {% blocktrans trimmed %}
+            This event contains <strong>pending refunds</strong> that you should take care of.
+          {% endblocktrans %}
+        </p>
+        <a href="{% url 'control:event.orders.refunds' event=request.event.slug organizer=request.event.organizer.slug %}"
+           class="td-action-btn">{% trans 'Show pending refunds' %}</a>
+      </article>
+    {% endif %}
+    {% if has_cancellation_requests %}
+      <article class="td-action-card td-action-warning">
+        <div class="td-action-header">
+          <span class="td-action-icon" aria-hidden="true"><span class="fa fa-ban"></span></span>
+          <h3 class="td-action-title">{% trans 'Cancellation requested' %}</h3>
+        </div>
+        <p class="td-action-desc td-action-desc-full">
+          {% blocktrans trimmed %}
+            This event contains <strong>requested cancellations</strong> that you should take care of.
+          {% endblocktrans %}
+        </p>
+        <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=rc"
+           class="td-action-btn">{% trans 'Show orders requesting cancellation' %}</a>
+      </article>
+    {% endif %}
+    {% if has_pending_approvals %}
+      <article class="td-action-card td-action-warning">
+        <div class="td-action-header">
+          <span class="td-action-icon" aria-hidden="true"><span class="fa fa-hourglass-half"></span></span>
+          <h3 class="td-action-title">{% trans 'Approval pending' %}</h3>
+        </div>
+        <p class="td-action-desc td-action-desc-full">
+          {% blocktrans trimmed %}
+            This event contains <strong>pending approvals</strong> that you should take care of.
+          {% endblocktrans %}
+        </p>
+        <a href="{% url 'control:event.orders' event=request.event.slug organizer=request.event.organizer.slug %}?status=pa"
+           class="td-action-btn">{% trans 'Show orders pending approval' %}</a>
+      </article>
+    {% endif %}
+    {% if actions %}
+      <article class="td-action-card td-action-danger td-action-notifications">
+        <div class="td-action-header">
+          <span class="td-action-icon" aria-hidden="true"><span class="fa fa-bell"></span></span>
+          <h3 id="td-notifications-title" class="td-action-title">
+            {% trans 'Your attention is required to resolve the following issues' %}
+          </h3>
+        </div>
+        <ul class="td-action-notification-list">
+          {% for action in actions %}
+            <li class="td-action-notification">
+              <div class="td-action-notification-meta">
+                <small class="text-muted">
+                  <span class="fa fa-clock-o" aria-hidden="true"></span>
+                  {{ action.datetime|date:'SHORT_DATETIME_FORMAT' }}
+                </small>
+                <form method="post" action="{% url 'control:event.requiredaction.discard' event=request.event.slug organizer=request.event.organizer.slug id=action.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-default btn-xs">{% trans 'Hide message' %}</button>
+                </form>
+              </div>
+              <div class="td-action-notification-body">{{ action.display|safe }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+        <a href="{% url 'control:event.requiredactions' event=request.event.slug organizer=request.event.organizer.slug %}"
+           class="td-view-all-link" aria-describedby="td-notifications-title">{% trans 'Show more' %}</a>
+      </article>
+    {% endif %}
+  </div>
 </section>

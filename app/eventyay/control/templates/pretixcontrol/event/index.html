@@ -36,10 +36,14 @@
     </div>
     {# Plugin output stays at the top of the dashboard, as the signal documents. #}
     {% eventsignal request.event "eventyay.control.signals.event_dashboard_top" request=request %}
+    {# The wrapper is always rendered so the page keeps the same side padding #}
+    {# (common_dashboard.css: body:has(.td-dashboard)) whether or not there are items. #}
     {% if has_overpaid_orders or has_pending_orders_with_full_payment or has_pending_refunds or has_cancellation_requests or has_pending_approvals or actions %}
         <div class="td-dashboard pt-0">
             {% include 'pretixcontrol/event/includes/dashboard_action_required.html' %}
         </div>
+    {% else %}
+        <div class="td-dashboard p-0"></div>
     {% endif %}
 
     {% if request.event.has_subevents %}
