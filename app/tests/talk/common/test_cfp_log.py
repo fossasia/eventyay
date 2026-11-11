@@ -238,3 +238,12 @@ def test_log_entry_exposes_person_id_like_activity_log(event, submission, orga_u
         log_entry = LogEntry(event=event, content_object=submission, action_type="eventyay.submission.create")
         log_entry.user = orga_user
         assert log_entry.person_id == orga_user.pk
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("data", ("null", "[]", '"text"'))
+def test_log_entry_display_templated_name_with_non_object_data_falls_back(event, data):
+    """Templated names fall back to the action key when the logged data is not a JSON object."""
+    with scope(event=event):
+        log_entry = LogEntry(event=event, content_object=event, action_type="eventyay.event.delete", data=data)
+        assert log_entry.display() == "eventyay.event.delete"

@@ -66,6 +66,7 @@ class LogEntry(models.Model):
         ordering = ('-datetime', '-id')
 
     def display(self):
+        """Return the readable message for this entry, falling back to the action key."""
         from ..signals import logentry_display
 
         for receiver, response in logentry_display.send(self.event, logentry=self):
@@ -93,7 +94,7 @@ class LogEntry(models.Model):
 
     @property
     def person_id(self):
-        # Matches ActivityLog.person_id for receivers of the activitylog_* signals.
+        """Match ActivityLog.person_id for receivers of the activitylog_* signals."""
         return self.user_id
 
     @property
@@ -147,6 +148,7 @@ class LogEntry(models.Model):
 
     @cached_property
     def display_object(self):
+        """Return an HTML reference to the logged object, or an empty string."""
         from . import (
             Event,
             Product,
