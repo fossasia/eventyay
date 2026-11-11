@@ -38,13 +38,22 @@ def test_restrict_patch_keeps_stored_config_of_other_modules():
         [JITSI],
         [JITSI, CHAT, {"type": "poll", "config": {}}],
         [JITSI, {"type": "question", "config": {}}],
+        [JITSI, {"type": [], "config": {}}],
         "not-a-list",
         None,
     ],
 )
 def test_restrict_patch_rejects_module_changes(new_modules):
-    """Adding, removing, or swapping modules is not a moderator action."""
+    """Adding, removing, swapping, or malformed modules are not a moderator action."""
     assert restrict_module_config_patch([JITSI, CHAT], new_modules, {"call.jitsi"}) is None
+
+
+def test_restrict_patch_keeps_each_duplicate_module():
+    """Stored modules sharing a type are restored in order, not collapsed."""
+    first = {"type": "poll", "config": {"active": True}}
+    second = {"type": "poll", "config": {"active": False}}
+    stub = {"type": "poll", "config": {}}
+    assert restrict_module_config_patch([first, second], [stub, stub], set()) == [first, second]
 
 
 def make_moderator_module(room):
@@ -113,11 +122,31 @@ async def test_moderator_config_patch_denied_outside_call_settings(jitsi_chat_ro
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room):
-    """A moderator's Jitsi change goes through; their chat webhook change is dropped."""
-    module, _ = make_moderator_module(jitsi_chat_room)
+async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room, monkeypatch):
+    """A moderator's Jitsi change is saved; chat config and grants stay, and the reply hides the secret."""
+    jitsi_chat_room.trait_grants = {"viewer": []}
+    module, consumer = make_moderator_module(jitsi_chat_room)
     new_jitsi = {"type": "call.jitsi", "config": {"start_with_audio_muted": True}}
     evil_chat = {"type": "chat.native", "config": {"webhook_url": "https://attacker.example.invalid"}}
+
+    jitsi_chat_room.validate_mock.side_effect = lambda room, body, **kw: (
+        {"module_config": body["module_config"]},
+        {"module_config"},
+    )
+    save_room = AsyncMock(side_effect=lambda event, room, fields, **kw: {"module_config": copy.deepcopy(room.module_config)})
+    monkeypatch.setattr(room_module, "save_room", save_room)
+    monkeypatch.setattr(room_module, "notify_event_change", AsyncMock())
+    module._verify_webhook_challenges = AsyncMock()
+
     await module.config_patch({"room": str(jitsi_chat_room.pk), "module_config": [new_jitsi, evil_chat]})
+
     _, body = jitsi_chat_room.validate_mock.call_args[0]
     assert body == {"module_config": [new_jitsi, CHAT]}
+    assert jitsi_chat_room.validate_mock.call_args[1] == {"sanitize_interaction_modules": False}
+    _, saved_room, saved_fields = save_room.call_args[0]
+    assert saved_fields == ["module_config"]
+    assert saved_room.module_config == [new_jitsi, CHAT]
+    assert saved_room.trait_grants == {"viewer": []}
+    sent = consumer.send_success.call_args[0][0]
+    chat = next(m for m in sent["module_config"] if m["type"] == "chat.native")
+    assert "webhook_hmac_secret" not in chat["config"]

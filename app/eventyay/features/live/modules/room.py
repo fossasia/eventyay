@@ -691,7 +691,8 @@ class RoomModule(BaseModule):
     )
     async def config_patch(self, body):
         """Handle live room configuration patch after validating module entitlements."""
-        if not await self._can_edit_full_room_config():
+        full_edit = await self._can_edit_full_room_config()
+        if not full_edit:
             module_config = (
                 restrict_module_config_patch(
                     self.room.module_config,
@@ -761,7 +762,7 @@ class RoomModule(BaseModule):
         old = await database_sync_to_async(serialize_room_config)(self.room)
         validated_data, update_fields = await database_sync_to_async(
             validate_room_config_patch
-        )(self.room, body)
+        )(self.room, body, sanitize_interaction_modules=full_edit)
         if validated_data is not None:
             for field in update_fields:
                 setattr(self.room, field, validated_data[field])
@@ -793,7 +794,7 @@ class RoomModule(BaseModule):
             # implicit participant-role permissions (chat, questions, polls, BBB/join, etc.) work.
             # Only upgrade viewer: [] rooms missing participant; trait-restricted rooms unchanged.
             # Skip when the client sent trait_grants so explicit viewer-only configs stay put.
-            if "module_config" in update_fields and "trait_grants" not in body:
+            if full_edit and "module_config" in update_fields and "trait_grants" not in body:
                 trait_grants = dict(self.room.trait_grants or {})
                 viewer_is_open = trait_grants.get("viewer") == []
                 if viewer_is_open and "participant" not in trait_grants:
@@ -818,7 +819,7 @@ class RoomModule(BaseModule):
                     fields=["sorting_priority"]
                 )
                 new = await database_sync_to_async(serialize_room_config)(self.room)
-            if not await self._can_edit_full_room_config():
+            if not full_edit:
                 new = strip_webhook_secrets(new)
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)

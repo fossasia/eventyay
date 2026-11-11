@@ -68,17 +68,19 @@ def restrict_module_config_patch(current_module_config, new_module_config, edita
     Other modules keep their stored config. Returns None if modules are added or removed.
     """
     if not isinstance(new_module_config, list) or not all(
-        isinstance(m, dict) for m in new_module_config
+        isinstance(m, dict) and isinstance(m.get("type"), str) for m in new_module_config
     ):
         return None
     current = [m for m in current_module_config or [] if isinstance(m, dict)]
-    if Counter(m.get("type") for m in new_module_config) != Counter(
+    if Counter(m["type"] for m in new_module_config) != Counter(
         m.get("type") for m in current
     ):
         return None
-    stored_by_type = {m.get("type"): m for m in current}
+    stored_by_type = {}
+    for m in current:
+        stored_by_type.setdefault(m.get("type"), []).append(m)
     return [
-        m if m.get("type") in editable_types else copy.deepcopy(stored_by_type[m.get("type")])
+        m if m["type"] in editable_types else copy.deepcopy(stored_by_type[m["type"]].pop(0))
         for m in new_module_config
     ]
 
@@ -296,7 +298,7 @@ async def get_viewers(event: Event, room: Room, *, include_private=False):
     return users
 
 
-def validate_room_config_patch(room, body):
+def validate_room_config_patch(room, body, sanitize_interaction_modules=True):
     """
     Validate a partial room config update in a sync DB context.
 
@@ -309,7 +311,8 @@ def validate_room_config_patch(room, body):
     )
     if "module_config" in body:
         _sanitize_jitsi_config(body["module_config"])
-        _sanitize_server_backed_interaction_modules(body["module_config"])
+        if sanitize_interaction_modules:
+            _sanitize_server_backed_interaction_modules(body["module_config"])
     return partial_validated_update(serializer, body)
 
 
