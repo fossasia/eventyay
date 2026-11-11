@@ -3944,6 +3944,40 @@ button.btn-speaker-not-arrived {
   gap: 12px;
 }
 
+.speaker-voucher-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px 12px;
+  max-width: 100%;
+}
+
+.speaker-voucher-actions > p {
+  flex-basis: 100%;
+  text-align: right;
+}
+
+.speaker-voucher-confirm-dialog {
+  width: min(560px, 95vw);
+}
+
+.speaker-voucher-confirm-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.speaker-voucher-confirm-summary dt {
+  font-weight: 600;
+  margin: 0;
+}
+
+.speaker-voucher-confirm-summary dd {
+  margin: 0;
+}
+
 .feedback-confirm-dialog-btn-cancel {
   margin-right: 12px;
   padding: 8px 16px;

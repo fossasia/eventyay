@@ -4,6 +4,7 @@ const settingsForm = document.getElementById("speaker-voucher-settings-form")
 const sendBtn = document.getElementById("speaker-voucher-send-btn")
 const sendForm = document.getElementById("speaker-voucher-send-form")
 const sendHint = document.getElementById("speaker-voucher-send-hint")
+const dirtyHint = document.getElementById("speaker-voucher-dirty-hint")
 const confirmDialog = document.getElementById("speaker-voucher-confirm-dialog")
 const previewDialog = document.getElementById("speaker-voucher-email-preview")
 
@@ -12,7 +13,6 @@ if (settingsForm && sendBtn) {
     const savedTag = settingsForm.dataset.savedVoucherTag || ""
     const enabledInput = settingsForm.querySelector("#id_enabled")
     const tagInput = settingsForm.querySelector("#id_voucher_tag")
-    const originalHint = sendHint ? sendHint.textContent.trim() : ""
 
     const currentEnabled = () => Boolean(enabledInput && enabledInput.checked)
     const currentTag = () => (tagInput ? tagInput.value : "")
@@ -22,27 +22,17 @@ if (settingsForm && sendBtn) {
 
     const refreshSendButton = () => {
         const dirty = isDirty()
-        const shouldDisable = dirty || sendBtn.dataset.serverBlocked === "true"
+        const serverBlocked = sendBtn.dataset.serverBlocked === "true"
+        const shouldDisable = dirty || serverBlocked
         sendBtn.disabled = shouldDisable
         sendBtn.setAttribute("aria-disabled", shouldDisable ? "true" : "false")
-        if (!sendHint) return
-        if (dirty) {
-            sendHint.classList.remove("d-none")
-            sendHint.textContent = ""
-            const icon = document.createElement("i")
-            icon.className = "fa fa-info-circle"
-            icon.setAttribute("aria-hidden", "true")
-            const dirtyHint = settingsForm.dataset.dirtyHint || "Save your changes first."
-            sendHint.append(icon, ` ${dirtyHint}`)
-        } else if (sendBtn.dataset.serverBlocked === "true" && originalHint) {
-            sendHint.classList.remove("d-none")
-            sendHint.textContent = ""
-            const icon = document.createElement("i")
-            icon.className = "fa fa-info-circle"
-            icon.setAttribute("aria-hidden", "true")
-            sendHint.append(icon, ` ${originalHint}`)
-        } else {
-            sendHint.classList.add("d-none")
+
+        if (dirtyHint) {
+            dirtyHint.classList.toggle("d-none", !dirty)
+        }
+        if (sendHint) {
+            // Server blocker only when form is clean; dirty hint takes priority.
+            sendHint.classList.toggle("d-none", dirty || !serverBlocked)
         }
     }
 

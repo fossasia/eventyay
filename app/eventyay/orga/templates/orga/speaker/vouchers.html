@@ -27,22 +27,23 @@
 
   <form method="post" class="form" id="speaker-voucher-settings-form"
         data-saved-enabled="{{ voucher_settings.enabled|yesno:'true,false' }}"
-        data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}"
-        data-dirty-hint="{% translate 'Save your changes first.' %}">
+        data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}">
     {% csrf_token %}
     {% include "common/forms/errors.html" %}
 
     <fieldset>
       <legend>{% translate "Voucher batch" %}</legend>
       {{ form.enabled.as_field_group }}
-      <div class="form-group">
-        {{ form.voucher_tag.as_field_group }}
-        <p class="help-block">
-          <a href="{{ create_batch_url }}">
-            <i class="fa fa-plus" aria-hidden="true"></i>
-            {% translate "Create a new batch" %}
-          </a>
-        </p>
+      {{ form.voucher_tag.as_field_group }}
+      <div class="form-group row">
+        <div class="col-md-9 offset-md-3">
+          <p class="help-block mb-0">
+            <a href="{{ create_batch_url }}">
+              <i class="fa fa-plus" aria-hidden="true"></i>
+              {% translate "Create a new batch" %}
+            </a>
+          </p>
+        </div>
       </div>
 
       {% if voucher_settings.voucher_tag %}
@@ -72,7 +73,7 @@
             — {{ email_preview.template.subject }}
           </p>
           <p class="mb-0">
-            <button type="button" class="btn btn-default btn-sm" id="speaker-voucher-preview-btn" data-toggle="modal" data-target="#speaker-voucher-email-preview">
+            <button type="button" class="btn btn-default btn-sm" id="speaker-voucher-preview-btn">
               {% translate "Preview" %}
             </button>
             <a class="btn btn-default btn-sm" href="{{ email_preview.template.urls.base }}">
@@ -84,22 +85,29 @@
     </fieldset>
 
     <div class="submit-group">
-      <button type="submit" class="btn btn-success">
-        <i class="fa fa-save" aria-hidden="true"></i>
-        {% translate "Save" %}
-      </button>
-      <button type="button"
-              class="btn btn-primary"
-              id="speaker-voucher-send-btn"
-              {% if send_blocker %}disabled aria-disabled="true"{% endif %}
-              aria-describedby="speaker-voucher-send-hint">
-        <i class="fa fa-paper-plane" aria-hidden="true"></i>
-        {% translate "Send vouchers" %}
-      </button>
-      <p id="speaker-voucher-send-hint" class="text-muted mt-2{% if not send_blocker %} d-none{% endif %}">
-        <i class="fa fa-info-circle" aria-hidden="true"></i>
-        {{ send_blocker|default:'' }}
-      </p>
+      <span></span>
+      <div class="speaker-voucher-actions text-right">
+        <button type="submit" class="btn btn-success">
+          <i class="fa fa-save" aria-hidden="true"></i>
+          {% translate "Save" %}
+        </button>
+        <button type="button"
+                class="btn btn-primary"
+                id="speaker-voucher-send-btn"
+                {% if send_blocker %}disabled aria-disabled="true"{% endif %}
+                aria-describedby="speaker-voucher-send-hint speaker-voucher-dirty-hint">
+          <i class="fa fa-paper-plane" aria-hidden="true"></i>
+          {% translate "Send vouchers" %}
+        </button>
+        <p id="speaker-voucher-send-hint" class="text-muted mb-0 mt-2{% if not send_blocker %} d-none{% endif %}">
+          <i class="fa fa-info-circle" aria-hidden="true"></i>
+          {{ send_blocker|default:'' }}
+        </p>
+        <p id="speaker-voucher-dirty-hint" class="text-muted mb-0 mt-2 d-none">
+          <i class="fa fa-info-circle" aria-hidden="true"></i>
+          {% translate "Save your changes first." %}
+        </p>
+      </div>
     </div>
   </form>
 
