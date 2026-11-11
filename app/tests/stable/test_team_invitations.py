@@ -382,10 +382,53 @@ def test_dashboard_hides_unbound_invite_for_matching_email(client, helpers_team,
 
 
 @pytest.mark.django_db
-def test_account_created_elsewhere_cannot_accept_unbound_invite(client, helpers_team, invitee):
+def test_matching_account_claims_unbound_invite_from_email_link(client, helpers_team, invitee):
+    with scopes_disabled():
+        invite = helpers_team.invites.create(email='Invitee@example.org', user=None)
+    client.force_login(invitee)
+
+    before = client.get(reverse('eventyay_common:dashboard'))
+    assert 'You have been invited to join “Helpers” for “Test Event”.' not in before.content.decode()
+
+    response = client.get(_invite_url(invite))
+    assert response.status_code == 200
+    assert 'Accept invitation' in response.content.decode()
+    invite.refresh_from_db()
+    assert invite.user == invitee
+    assert invite.state == TeamInvite.State.PENDING
+
+    after = client.get(reverse('eventyay_common:dashboard'))
+    assert 'You have been invited to join “Helpers” for “Test Event”.' in after.content.decode()
+
+    response = client.post(_invite_url(invite), {'action': 'accept'})
+    assert response.status_code == 302
+    with scopes_disabled():
+        assert helpers_team.members.filter(pk=invitee.pk).exists()
+        invite = TeamInvite.all_objects.get(pk=invite.pk)
+        assert invite.state == TeamInvite.State.ACCEPTED
+        assert invite.user == invitee
+
+
+@pytest.mark.django_db
+def test_matching_account_can_decline_unbound_invite_from_email_link(client, helpers_team, invitee):
     with scopes_disabled():
         invite = helpers_team.invites.create(email=invitee.email, user=None)
     client.force_login(invitee)
+
+    response = client.post(_invite_url(invite), {'action': 'decline'})
+
+    assert response.status_code == 302
+    invite.refresh_from_db()
+    assert invite.state == TeamInvite.State.DECLINED
+    assert invite.user == invitee
+    assert not helpers_team.members.filter(pk=invitee.pk).exists()
+
+
+@pytest.mark.django_db
+def test_other_account_cannot_claim_unbound_invite(client, helpers_team, invitee, user):
+    with scopes_disabled():
+        invite = helpers_team.invites.create(email=invitee.email, user=None)
+    client.force_login(user)
 
     assert client.get(_invite_url(invite)).status_code == 403
     assert client.post(_invite_url(invite), {'action': 'accept'}).status_code == 403
@@ -393,7 +436,7 @@ def test_account_created_elsewhere_cannot_accept_unbound_invite(client, helpers_
     invite.refresh_from_db()
     assert invite.state == TeamInvite.State.PENDING
     assert invite.user_id is None
-    assert not helpers_team.members.filter(pk=invitee.pk).exists()
+    assert not helpers_team.members.filter(pk=user.pk).exists()
 
 
 # Expiry and reminders

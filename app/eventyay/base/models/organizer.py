@@ -688,8 +688,8 @@ class TeamInvite(models.Model):
     :type email: str
     :param token: The secret required to redeem the invite
     :type token: str
-    :param user: The account the invite is bound to, set when the invitee already has an account
-        or registers through the invitation link
+    :param user: The account the invite is bound to, set when the invitee already has an account,
+        registers through the invitation link, or opens that link while logged in with the invited address
     :type user: User
     :param state: Whether the invite is pending, accepted, declined or expired
     :type state: str

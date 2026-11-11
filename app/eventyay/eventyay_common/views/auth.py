@@ -47,6 +47,7 @@ from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.teams import (
     TeamInviteError,
     accept_team_invite,
+    claim_unbound_invite,
     decline_team_invite,
     get_team_invitation_url,
     get_team_invite_event_name,
@@ -258,6 +259,7 @@ def invite(request: HttpRequest, token):
                 ),
             )
             return redirect('eventyay_common:dashboard')
+        claim_unbound_invite(inv, request.user)
         if not invite_belongs_to(inv, request.user):
             ctx['logout_url'] = f'{reverse("eventyay_common:auth.logout")}?next={quote(request.path)}'
             return render(request, 'eventyay_common/auth/invite_wrong_account.html', ctx, status=403)

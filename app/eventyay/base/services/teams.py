@@ -250,13 +250,43 @@ def get_team_invite_event_name(team) -> str:
     return str(team.organizer.name)
 
 
-def invite_belongs_to(invite, user) -> bool:
-    """Whether ``user`` is the intended recipient of ``invite``.
+def emails_match(left, right) -> bool:
+    return (left or '').strip().casefold() == (right or '').strip().casefold()
 
-    Unbound invites (no ``invite.user``) are not claimable by email match alone.
-    They become bound when the recipient registers through the invitation link.
+
+def invite_belongs_to(invite, user) -> bool:
+    """Whether ``user`` may answer ``invite`` from the emailed link.
+
+    A bound invite belongs only to ``invite.user``. An unbound invite can be
+    answered when the logged-in email matches ``invite.email``, because the
+    link proves access to that mailbox. The dashboard still lists only invites
+    that are already bound.
     """
-    return bool(invite.user_id) and invite.user_id == user.pk
+    if not user or not user.pk:
+        return False
+    if invite.user_id:
+        return invite.user_id == user.pk
+    return emails_match(invite.email, user.email)
+
+
+def claim_unbound_invite(invite, user):
+    """Bind an unbound invite to ``user`` when their email matches.
+
+    Opening the emailed link is enough to claim it. This does not accept the
+    invitation or grant team membership.
+    """
+    if invite.user_id is not None or not emails_match(invite.email, getattr(user, 'email', None)):
+        return invite
+    claimed = TeamInvite.all_objects.filter(
+        pk=invite.pk,
+        user__isnull=True,
+        state=TeamInvite.State.PENDING,
+    ).update(user=user)
+    if claimed:
+        invite.user = user
+    else:
+        invite.refresh_from_db(fields=['user'])
+    return invite
 
 
 def _format_invite_expiry(invite) -> str:
@@ -371,6 +401,8 @@ def _lock_open_invite(invite, user):
         raise TeamInviteError(_('This invitation has already been answered.'))
     if not invite_belongs_to(invite, user):
         raise TeamInviteError(_('This invitation was sent to a different email address.'))
+    if invite.user_id is None:
+        invite.user = user
     return invite
 
 
