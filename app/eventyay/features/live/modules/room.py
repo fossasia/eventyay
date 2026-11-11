@@ -770,7 +770,9 @@ class RoomModule(BaseModule):
                 setattr(self.room, field, validated_data[field])
 
             # Validate webhook URL via challenge verification when module_config changes
-            if "module_config" in update_fields:
+            # Restricted patches restore every non-moderated module from the stored config,
+            # so webhooks cannot have changed and need no re-verification.
+            if full_edit and "module_config" in update_fields:
                 try:
                     await self._verify_webhook_challenges(
                         old.get("module_config") or [],

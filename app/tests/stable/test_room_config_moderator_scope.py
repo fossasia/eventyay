@@ -137,7 +137,7 @@ async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room
     evil_chat = {"type": "chat.native", "config": {"webhook_url": "https://attacker.example.invalid"}}
     newer_chat = {"type": "chat.native", "config": {"webhook_url": "https://hooks.example.invalid/new", "webhook_hmac_secret": "n3w"}}
 
-    async def refresh():
+    async def refresh(*args, **kwargs):
         jitsi_chat_room.module_config = copy.deepcopy([JITSI, newer_chat])
 
     jitsi_chat_room.refresh_from_db_if_outdated = AsyncMock(side_effect=refresh)
@@ -161,6 +161,7 @@ async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room
     assert saved_fields == ["module_config"]
     assert saved_room.module_config == [new_jitsi, newer_chat]
     assert saved_room.trait_grants == {"viewer": []}
+    module._verify_webhook_challenges.assert_not_awaited()
     sent = consumer.send_success.call_args[0][0]
     chat = next(m for m in sent["module_config"] if m["type"] == "chat.native")
     assert "webhook_hmac_secret" not in chat["config"]
