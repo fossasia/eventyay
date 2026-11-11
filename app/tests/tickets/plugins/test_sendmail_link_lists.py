@@ -10,7 +10,6 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product, Team, User
-from eventyay.common.exceptions import SendMailException
 from eventyay.plugins.sendmail.forms import MailForm
 from eventyay.plugins.sendmail.link_lists import add_rows, create_link_list, parse_link_list
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, MailLinkList
@@ -134,11 +133,27 @@ def test_nothing_is_sent_when_the_list_is_too_short(event, order, link_list):
     with scopes_disabled():
         queued = _queue(event, order, link_list, ('ali@example.com', 'sara@example.com', 'john@example.com'))
 
-        with pytest.raises(SendMailException):
-            queued.send(async_send=False)
+        assert queued.send(async_send=False) is False
 
         assert link_list.counts()['used'] == 0
+        errors = set(queued.recipients.values_list('error', flat=True))
     assert djmail.outbox == []
+    assert len(errors) == 1
+    assert 'too few unused rows' in errors.pop()
+
+
+@pytest.mark.django_db
+def test_a_scheduled_email_short_of_rows_leaves_the_schedule(event, order, link_list):
+    with scopes_disabled():
+        queued = _queue(event, order, link_list, ('ali@example.com', 'sara@example.com', 'john@example.com'))
+        queued.scheduled_at = now() - datetime.timedelta(minutes=1)
+        queued.save(update_fields=['scheduled_at'])
+
+        assert queued.send(async_send=False) is False
+        queued.refresh_from_db()
+
+    assert queued.scheduled_at is None
+    assert queued.sent_at is None
 
 
 @pytest.mark.django_db
