@@ -1,3 +1,5 @@
+"""Tests for the tickets dashboard (control:event.index), one section per block below."""
+
 import re
 
 import pytest
@@ -55,6 +57,9 @@ def _header_extra(content):
     return match.group(1)
 
 
+# --- Page header -------------------------------------------------------------
+
+
 # The control middleware redirects to SITE_URL unless it matches the test client's host.
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
@@ -94,9 +99,7 @@ def test_header_preserves_component_link_navigation(client, env):
     assert 'navigation-button' in content
 
     # The Tickets entry must carry the "active" class on its anchor.
-    tickets_anchor = re.search(
-        r'<a[^>]*href="' + re.escape(tickets_url) + r'"[^>]*>', content
-    )
+    tickets_anchor = re.search(r'<a[^>]*href="' + re.escape(tickets_url) + r'"[^>]*>', content)
     assert tickets_anchor is not None, 'Tickets navigation anchor not found'
     anchor_tag = tickets_anchor.group(0)
     assert 'active' in anchor_tag
