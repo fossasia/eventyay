@@ -693,6 +693,8 @@ class RoomModule(BaseModule):
         """Handle live room configuration patch after validating module entitlements."""
         full_edit = await self._can_edit_full_room_config()
         if not full_edit:
+            # The cached room may be up to 30s old; merge against the current stored config.
+            await self.room.refresh_from_db_if_outdated()
             module_config = (
                 restrict_module_config_patch(
                     self.room.module_config,

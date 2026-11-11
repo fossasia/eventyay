@@ -56,6 +56,13 @@ def test_restrict_patch_keeps_each_duplicate_module():
     assert restrict_module_config_patch([first, second], [stub, stub], set()) == [first, second]
 
 
+def test_restrict_patch_cannot_reorder_modules():
+    """Submitted order is ignored; the stored order is kept."""
+    new_jitsi = {"type": "call.jitsi", "config": {"start_with_audio_muted": True}}
+    result = restrict_module_config_patch([JITSI, CHAT], [CHAT, new_jitsi], {"call.jitsi"})
+    assert result == [new_jitsi, CHAT]
+
+
 def make_moderator_module(room):
     """RoomModule for a user with only Jitsi moderate rights on ``room``."""
     allowed = {Permission.ROOM_JITSI_MODERATE}
@@ -140,6 +147,7 @@ async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room
 
     await module.config_patch({"room": str(jitsi_chat_room.pk), "module_config": [new_jitsi, evil_chat]})
 
+    jitsi_chat_room.refresh_from_db_if_outdated.assert_awaited_with()
     _, body = jitsi_chat_room.validate_mock.call_args[0]
     assert body == {"module_config": [new_jitsi, CHAT]}
     assert jitsi_chat_room.validate_mock.call_args[1] == {"sanitize_interaction_modules": False}

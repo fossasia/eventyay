@@ -65,7 +65,7 @@ def restrict_module_config_patch(current_module_config, new_module_config, edita
     """
     Limit a module_config patch to the settings of ``editable_types``.
 
-    Other modules keep their stored config. Returns None if modules are added or removed.
+    Other modules keep their stored config and the stored order. Returns None if modules are added or removed.
     """
     if not isinstance(new_module_config, list) or not all(
         isinstance(m, dict) and isinstance(m.get("type"), str) for m in new_module_config
@@ -76,12 +76,12 @@ def restrict_module_config_patch(current_module_config, new_module_config, edita
         m.get("type") for m in current
     ):
         return None
-    stored_by_type = {}
-    for m in current:
-        stored_by_type.setdefault(m.get("type"), []).append(m)
+    submitted_by_type = {}
+    for m in new_module_config:
+        submitted_by_type.setdefault(m["type"], []).append(m)
     return [
-        m if m["type"] in editable_types else copy.deepcopy(stored_by_type[m["type"]].pop(0))
-        for m in new_module_config
+        submitted_by_type[m["type"]].pop(0) if m["type"] in editable_types else copy.deepcopy(m)
+        for m in current
     ]
 
 CURRENT_STREAM_MAX_CACHE_TTL = 60
