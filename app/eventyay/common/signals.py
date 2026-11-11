@@ -15,7 +15,9 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event
 from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
-from eventyay.base.signals import resolve_app_for_module, check_plugin_active
+from eventyay.base.signals import activitylog_display as base_activitylog_display
+from eventyay.base.signals import activitylog_object_link as base_activitylog_object_link
+from eventyay.base.signals import check_plugin_active, resolve_app_for_module
 
 logger = logging.getLogger(__name__)
 
@@ -188,29 +190,11 @@ subclass of pretalx.common.exporter.BaseExporter
 
 As with all event plugin signals, the ``sender`` keyword argument will contain the event.
 """
-activitylog_display = EventPluginSignal()
-"""
-To display an instance of the ``ActivityLog`` model to a human user,
-``pretalx.common.signals.activitylog_display`` will be sent out with an ``activitylog``
-argument.
 
-The first received response that is not ``None`` will be used to display the log entry
-to the user. The receivers are expected to return plain (lazy) text.
-
-As with all event plugin signals, the ``sender`` keyword argument will contain the event.
-"""
-activitylog_object_link = EventPluginSignal()
-"""
-To display the relationship of an instance of the ``ActivityLog`` model to another model
-to a human user, ``pretalx.common.signals.activitylog_object_link`` will be sent out
-with an ``activitylog`` argument.
-
-The first received response that is not ``None`` will be used to display the related object
-to the user. The receivers are expected to return an HTML link as a string.
-Make sure that any user content in the HTML code you return is properly escaped!
-
-As with all event-plugin signals, the ``sender`` keyword argument will contain the event.
-"""
+# The activity log signals live in ``eventyay.base.signals``. They are re-exported here so
+# receivers connected through either module are called for both ``LogEntry`` and ``ActivityLog``.
+activitylog_display = base_activitylog_display
+activitylog_object_link = base_activitylog_object_link
 
 auth_html = django.dispatch.Signal()
 """

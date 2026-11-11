@@ -303,9 +303,11 @@ def default_activitylog_object_link(sender: Event, activitylog: LogEntry, **kwar
             url = schedule.event.orga_urls.schedule
             link_text = _('Work in progress')
     elif isinstance(activitylog.content_object, Room):
-        url = activitylog.content_object.urls.edit
+        room = activitylog.content_object
         text = _('Room')
-        link_text = escape(activitylog.content_object.name)
+        link_text = escape(room.name)
+        if not room.deleted:
+            url = room.urls.edit
     elif isinstance(activitylog.content_object, Event):
         url = activitylog.content_object.orga_urls.base
         text = _('Event')
