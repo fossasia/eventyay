@@ -5,7 +5,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 import visualizer from 'rollup-plugin-visualizer'
 import path from 'node:path'
 import eslint from 'vite-plugin-eslint'
-import {createGettextPlugin} from '../i18n/vite-plugin.js'
 import {stableChunkBase} from '../stable-chunk-name.js'
 
 const dirname = import.meta.dirname
@@ -79,7 +78,7 @@ export default defineConfig(({ mode }) => {
       fs: {
         allow: [
           path.resolve(dirname),
-          path.resolve(dirname, '../../locale'),
+          path.resolve(dirname, '../locales'),
           path.resolve(dirname, '../i18n'),
         ]
       },
@@ -98,7 +97,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       exportJanusGateway(),
       preloadVideoAppGraph(),
-      createGettextPlugin('video'),
       vue(),
       ReactivityTransform(),
       // Enable PWA only in production builds (avoid SW claim issues during dev)
