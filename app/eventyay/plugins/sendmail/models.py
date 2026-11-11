@@ -163,10 +163,12 @@ class MailLinkList(models.Model):
         for _attempt in range(2):
             try:
                 with transaction.atomic():
-                    row = self.rows.select_for_update().filter(assigned_email=email).first()
+                    if MailLinkList.objects.select_for_update().filter(pk=self.pk).only('pk').first() is None:
+                        return None
+                    row = self.rows.filter(assigned_email=email).first()
                     if row is None:
                         unused = self.rows.filter(assigned_email__isnull=True).order_by('position', 'pk')
-                        row = unused.select_for_update(skip_locked=True).first() or unused.select_for_update().first()
+                        row = unused.select_for_update().first()
                         if row is None:
                             return None
                         row.assigned_email = email
@@ -403,7 +405,11 @@ class EmailQueue(models.Model):
 
         if self.link_list_id and self.link_list.shortfall(self.get_recipient_emails()):
             message = _('The link list "{name}" has too few unused rows for these recipients. Add rows and send again.')
-            raise SendMailException(message.format(name=self.link_list.name), already_logged=True)
+            self.recipients.filter(sent=False).update(error=str(message.format(name=self.link_list.name)))
+            if self.scheduled_at is not None:
+                self.scheduled_at = None
+                self.save(update_fields=['scheduled_at'])
+            return False
 
         subject = LazyI18nString(self.subject)
         message = LazyI18nString(self.message)
