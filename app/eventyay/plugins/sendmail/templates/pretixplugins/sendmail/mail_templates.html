@@ -93,6 +93,23 @@
           </tr>
         {% endfor %}
 
+        {% for row in team_templates %}
+          <tr>
+            <td>
+              <a href="{{ row.view_url }}">
+                <span class="badge color-secondary">{{ row.label }}</span>
+              </a>
+              <span class="text-muted small">{% translate 'System template, read-only' %}</span>
+            </td>
+            <td>{{ row.subject }}</td>
+            <td class="text-right mail-templates-actions">
+              <a href="{{ row.view_url }}" class="btn btn-default" title="{% translate 'View' %}" aria-label="{% translate 'View' %}">
+                <i class="fa fa-eye" aria-hidden="true"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+
         {% for template in custom_templates %}
           <tr>
             <td>
