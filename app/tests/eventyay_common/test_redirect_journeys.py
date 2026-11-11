@@ -11,7 +11,9 @@ from django.urls import reverse
 from django_otp.plugins.otp_static.models import StaticDevice
 
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.views.redirect import safelink as base_safelink
 from eventyay.common.redirects import safe_redirect_url
+from eventyay.common.views.redirect import safelink as common_safelink
 from eventyay.eventyay_common.views.auth import process_login
 from eventyay.multidomain.models import KnownDomain
 from eventyay.multidomain.urlreverse import eventreverse
@@ -326,3 +328,18 @@ def test_explicit_login_destination_overrides_query_and_stale_social_state(clien
     else:
         assert response.url == target
         assert int(request.session['_auth_user_id']) == user.pk
+
+
+@pytest.mark.parametrize('link_builder', [base_safelink, common_safelink])
+def test_signed_link_entry_points_keep_destination_and_cancel_context(client, link_builder):
+    source = 'https://testserver/terms/?lang=en#privacy'
+    url = link_builder(DESTINATION, return_url=source)
+
+    response = client.get(url, secure=True, follow=True)
+
+    assert response.status_code == 200
+    assert response.request['PATH_INFO'] == WARNING
+    assert 'Location' not in response
+    page = BeautifulSoup(response.content, 'html.parser')
+    assert page.select_one('[data-external-link-continue]')['href'] == DESTINATION
+    assert page.select_one('[data-external-link-cancel]')['href'] == source

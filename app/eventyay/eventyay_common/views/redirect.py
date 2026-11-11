@@ -1,10 +1,9 @@
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_safe
 
-from eventyay.common.redirects import safe_return_url, validate_redirect_url
+from eventyay.common.redirects import is_internal_url, safe_return_url, validate_redirect_url
 
 
 @never_cache
@@ -13,9 +12,7 @@ def external_link(request: HttpRequest) -> HttpResponse:
     destination = validate_redirect_url(request, request.GET.get('next') or request.GET.get('redirect_url', ''))
     if not destination:
         return HttpResponseBadRequest('Invalid destination')
-    if url_has_allowed_host_and_scheme(
-        destination, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-    ):
+    if is_internal_url(request, destination):
         return HttpResponseRedirect(destination)
     return_url = safe_return_url(request, request.GET.get('return_url'), request.GET.get('return_origin'))
     response = render(

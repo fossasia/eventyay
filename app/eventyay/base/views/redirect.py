@@ -1,10 +1,9 @@
-import urllib.parse
-
 from django.core import signing
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 
 from eventyay.common.redirects import safe_redirect_url
+from eventyay.common.redirects import safelink as safelink
 
 
 def redir_view(request):
@@ -23,14 +22,3 @@ def redir_view(request):
     )
     r['X-Robots-Tag'] = 'noindex'
     return r
-
-
-def safelink(url, *, return_url: str | None = None, return_origin: str | None = None):
-    signer = signing.Signer(salt='safe-redirect')
-    target = reverse('redirect') + '?url=' + urllib.parse.quote(signer.sign(url))
-    params = {}
-    if return_url is not None:
-        params['return_url'] = return_url
-    if return_origin:
-        params['return_origin'] = return_origin
-    return target + ('&' + urllib.parse.urlencode(params) if params else '')

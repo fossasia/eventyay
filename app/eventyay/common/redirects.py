@@ -1,10 +1,17 @@
 import unicodedata
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import quote, urlencode, urlsplit
 
 from django.core import signing
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+
+
+def is_internal_url(request: HttpRequest, target: str) -> bool:
+    """Check the destination against the current request's host and scheme."""
+    return url_has_allowed_host_and_scheme(
+        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    )
 
 
 def validate_redirect_url(request: HttpRequest, target: str) -> str:
@@ -38,16 +45,17 @@ def safe_return_url(request: HttpRequest, target: str | None, origin_signature: 
     """Allow cancellation within this site or an origin attested by a rendered page."""
     fallback = reverse('presale:index')
     destination = validate_redirect_url(request, target or '')
-    if not destination or (request.is_secure() and urlsplit(destination).scheme == 'http'):
+    if not destination:
         return fallback
-    if urlsplit(destination).path in {
+    target_parts = urlsplit(destination)
+    if request.is_secure() and target_parts.scheme == 'http':
+        return fallback
+    if target_parts.path in {
         reverse('eventyay_common:external-link'),
         reverse('redirect'),
     }:
         return fallback
-    if url_has_allowed_host_and_scheme(
-        destination, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-    ):
+    if is_internal_url(request, destination):
         return destination
     try:
         origin = signing.loads(origin_signature or '', salt='external-link-return-origin')
@@ -56,7 +64,6 @@ def safe_return_url(request: HttpRequest, target: str | None, origin_signature: 
     if not isinstance(origin, str) or not validate_redirect_url(request, origin):
         return fallback
     source = urlsplit(origin)
-    target_parts = urlsplit(destination)
     source_port = source.port or (443 if source.scheme == 'https' else 80)
     target_port = target_parts.port or (443 if target_parts.scheme == 'https' else 80)
     if (source.scheme, source.hostname, source_port) == (
@@ -75,12 +82,22 @@ def safe_redirect_url(
     destination = validate_redirect_url(request, target or '')
     if not destination:
         return reverse('eventyay_common:dashboard')
-    if url_has_allowed_host_and_scheme(
-        destination, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-    ):
+    if is_internal_url(request, destination):
         return destination
     cancel = reverse('eventyay_common:dashboard') if return_url is None else return_url
     params = {'next': destination, 'return_url': safe_return_url(request, cancel, return_origin)}
     if return_origin:
         params['return_origin'] = return_origin
     return reverse('eventyay_common:external-link') + '?' + urlencode(params)
+
+
+def safelink(url: str, *, return_url: str | None = None, return_origin: str | None = None) -> str:
+    """Wrap a destination in a signed redirect link."""
+    signer = signing.Signer(salt='safe-redirect')
+    target = reverse('redirect') + '?url=' + quote(signer.sign(url))
+    params = {}
+    if return_url is not None:
+        params['return_url'] = return_url
+    if return_origin:
+        params['return_origin'] = return_origin
+    return target + ('&' + urlencode(params) if params else '')

@@ -1,9 +1,8 @@
 from django import template
 
 from eventyay.common.redirects import external_link_origin
+from eventyay.common.redirects import safelink as sl
 from eventyay.helpers.safedownload import get_token
-
-from ..views.redirect import safelink as sl
 
 
 register = template.Library()
