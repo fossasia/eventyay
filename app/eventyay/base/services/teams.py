@@ -251,10 +251,12 @@ def get_team_invite_event_name(team) -> str:
 
 
 def invite_belongs_to(invite, user) -> bool:
-    """Whether ``user`` is the intended recipient of ``invite``."""
-    if invite.user_id:
-        return invite.user_id == user.pk
-    return bool(user.email) and user.email.casefold() == (invite.email or '').casefold()
+    """Whether ``user`` is the intended recipient of ``invite``.
+
+    Unbound invites (no ``invite.user``) are not claimable by email match alone.
+    They become bound when the recipient registers through the invitation link.
+    """
+    return bool(invite.user_id) and invite.user_id == user.pk
 
 
 def _format_invite_expiry(invite) -> str:

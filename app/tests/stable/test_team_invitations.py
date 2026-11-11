@@ -370,7 +370,7 @@ def test_dashboard_lists_pending_invitations(client, helpers_team, invitee, djan
 
 
 @pytest.mark.django_db
-def test_dashboard_lists_unbound_invite_for_matching_email(client, helpers_team, invitee, user):
+def test_dashboard_hides_unbound_invite_for_matching_email(client, helpers_team, invitee, user):
     with scopes_disabled():
         helpers_team.invites.create(email='Invitee@example.org', user=None)
         helpers_team.invites.create(email=invitee.email, user=user)
@@ -378,7 +378,22 @@ def test_dashboard_lists_unbound_invite_for_matching_email(client, helpers_team,
 
     response = client.get(reverse('eventyay_common:dashboard'))
 
-    assert response.content.decode().count('You have been invited to join “Helpers” for “Test Event”.') == 1
+    assert 'You have been invited to join “Helpers” for “Test Event”.' not in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_account_created_elsewhere_cannot_accept_unbound_invite(client, helpers_team, invitee):
+    with scopes_disabled():
+        invite = helpers_team.invites.create(email=invitee.email, user=None)
+    client.force_login(invitee)
+
+    assert client.get(_invite_url(invite)).status_code == 403
+    assert client.post(_invite_url(invite), {'action': 'accept'}).status_code == 403
+
+    invite.refresh_from_db()
+    assert invite.state == TeamInvite.State.PENDING
+    assert invite.user_id is None
+    assert not helpers_team.members.filter(pk=invitee.pk).exists()
 
 
 # Expiry and reminders
