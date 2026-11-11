@@ -2,7 +2,7 @@ import logging
 from collections.abc import Sequence
 from typing import TypedDict
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
@@ -13,6 +13,7 @@ from eventyay.base.models.speaker_voucher import (
     SpeakerVoucher,
     SpeakerVoucherSettings,
     SpeakerVoucherStatus,
+    usable_batch_vouchers,
 )
 from eventyay.common.exceptions import SendMailException
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -31,9 +32,23 @@ class SendResult(TypedDict):
     available: int
 
 
+class SpeakerSummaryCounts(TypedDict):
+    sent: int
+    claimed: int
+    eligible_not_sent: int
+    eligible: int
+    remaining: int
+    total: int
+
+
 def voucher_redeem_url(event: Event, code: str) -> str:
     redeem_base = build_absolute_uri(event, 'presale:event.redeem')
     return f'{redeem_base}?voucher={code}'
+
+
+def _has_email(profile: SpeakerProfile) -> bool:
+    user = profile.user
+    return bool(user and (user.email or '').strip())
 
 
 def eligible_speaker_profiles(event: Event):
@@ -50,10 +65,20 @@ def eligible_speaker_profiles(event: Event):
 
 
 def profiles_needing_voucher(event: Event):
-    return eligible_speaker_profiles(event).filter(voucher_assignment__isnull=True)
+    """Eligible speakers who still need a first send or a retry of a failed send.
+
+    Includes profiles with no assignment and profiles whose assignment is still
+    ``not_sent`` (email failed after allocation). Excludes speakers without email.
+    """
+    return (
+        eligible_speaker_profiles(event)
+        .filter(Q(voucher_assignment__isnull=True) | Q(voucher_assignment__status=SpeakerVoucherStatus.NOT_SENT))
+        .exclude(user__email='')
+        .filter(user__email__isnull=False)
+    )
 
 
-def speaker_summary_counts(event: Event, settings: SpeakerVoucherSettings) -> dict[str, int]:
+def speaker_summary_counts(event: Event, settings: SpeakerVoucherSettings) -> SpeakerSummaryCounts:
     with scope(event=event):
         eligible_ids = set(eligible_speaker_profiles(event).values_list('pk', flat=True))
         assigned = SpeakerVoucher.objects.filter(event=event, speaker_profile_id__in=eligible_ids)
@@ -61,12 +86,12 @@ def speaker_summary_counts(event: Event, settings: SpeakerVoucherSettings) -> di
         claimed = assigned.filter(
             Q(status=SpeakerVoucherStatus.CLAIMED) | Q(voucher__redeemed__gt=0)
         ).distinct().count()
-        assigned_count = assigned.count()
-        not_sent_yet = len(eligible_ids) - assigned_count
+        # Count speakers who still need a successful send (no assignment or not_sent).
+        needing = profiles_needing_voucher(event).count()
     return {
         'sent': sent,
         'claimed': claimed,
-        'eligible_not_sent': max(not_sent_yet, 0),
+        'eligible_not_sent': needing,
         'eligible': len(eligible_ids),
         'remaining': settings.batch_remaining_count() if settings.voucher_tag else 0,
         'total': settings.batch_total_count() if settings.voucher_tag else 0,
@@ -81,12 +106,7 @@ def _claim_next_voucher(settings: SpeakerVoucherSettings) -> Voucher | None:
     """
     with scopes_disabled():
         return (
-            Voucher.objects.filter(
-                event=settings.event,
-                tag=settings.voucher_tag,
-                redeemed=0,
-                speaker_voucher_link__isnull=True,
-            )
+            usable_batch_vouchers(settings.event, settings.voucher_tag)
             .order_by('pk')
             .select_for_update(skip_locked=True, of=('self',))
             .first()
@@ -132,13 +152,15 @@ def allocate_and_send_vouchers(
     """Allocate voucher codes and send emails for selected speaker profiles.
 
     Behaviour per speaker:
-    - Not sent → pick an unused voucher from the batch, send email, status = sent
-    - Sent — not claimed → resend the same code, no new voucher allocated
+    - No assignment → pick an unused voucher, create assignment, send email
+    - Assignment ``not_sent`` → retry email with the same code (no new voucher)
+    - Sent — not claimed → resend the same code
     - Claimed → skip
     - No email / not eligible → skip
 
-    When ``allow_partial`` is False (default), if there are not enough unused
-    vouchers for all new recipients, nothing is sent.
+    When ``allow_partial`` is False (default), all new vouchers are claimed in one
+    transaction before any email is sent. If the batch cannot cover every new
+    recipient, the transaction rolls back and nothing is sent.
     """
     result: SendResult = {
         'sent': 0,
@@ -168,10 +190,9 @@ def allocate_and_send_vouchers(
         }
 
     new_recipients: list[SpeakerProfile] = []
-    resend_recipients: list[tuple[SpeakerProfile, SpeakerVoucher]] = []
+    retry_or_resend: list[tuple[SpeakerProfile, SpeakerVoucher]] = []
     for profile in profiles:
-        user = profile.user
-        if not user or not user.email:
+        if not _has_email(profile):
             result['skipped_no_email'] += 1
             continue
 
@@ -187,7 +208,7 @@ def allocate_and_send_vouchers(
         if existing.status == SpeakerVoucherStatus.CLAIMED or existing.voucher.redeemed > 0:
             result['skipped_claimed'] += 1
             continue
-        resend_recipients.append((profile, existing))
+        retry_or_resend.append((profile, existing))
 
     result['needed'] = len(new_recipients)
     result['available'] = settings.batch_remaining_count()
@@ -196,52 +217,76 @@ def allocate_and_send_vouchers(
         result['aborted_insufficient'] = True
         return result
 
-    for profile, existing in resend_recipients:
-        mail = _send_voucher_email(event, profile, existing.voucher, requestor=requestor)
+    newly_allocated: list[tuple[SpeakerProfile, SpeakerVoucher]] = []
+    if new_recipients:
+        try:
+            with scope(event=event), transaction.atomic():
+                for profile in new_recipients:
+                    if SpeakerVoucher.objects.filter(speaker_profile=profile).exists():
+                        existing = SpeakerVoucher.objects.select_related('voucher').get(
+                            speaker_profile=profile
+                        )
+                        if existing.status != SpeakerVoucherStatus.CLAIMED:
+                            retry_or_resend.append((profile, existing))
+                        continue
+                    voucher = _claim_next_voucher(settings)
+                    if voucher is None:
+                        if not allow_partial:
+                            raise _InsufficientVouchers()
+                        break
+                    try:
+                        speaker_voucher = SpeakerVoucher.objects.create(
+                            event=event,
+                            speaker_profile=profile,
+                            voucher=voucher,
+                            status=SpeakerVoucherStatus.NOT_SENT,
+                            sent_at=None,
+                        )
+                    except IntegrityError:
+                        # Concurrent request won the race for this speaker or voucher.
+                        existing = (
+                            SpeakerVoucher.objects.filter(speaker_profile=profile)
+                            .select_related('voucher')
+                            .first()
+                        )
+                        if existing and existing.status != SpeakerVoucherStatus.CLAIMED:
+                            retry_or_resend.append((profile, existing))
+                        continue
+                    newly_allocated.append((profile, speaker_voucher))
+        except _InsufficientVouchers:
+            result['aborted_insufficient'] = True
+            result['available'] = settings.batch_remaining_count()
+            return result
+
+    for profile, assignment in newly_allocated + retry_or_resend:
+        was_already_sent = assignment.status == SpeakerVoucherStatus.SENT
+        mail = _send_voucher_email(event, profile, assignment.voucher, requestor=requestor)
         if mail is None:
             continue
-        existing.status = SpeakerVoucherStatus.SENT
-        existing.sent_at = now()
-        existing.save(update_fields=['status', 'sent_at'])
-        existing.log_action(
-            'eventyay.speaker.voucher.resent',
+        assignment.status = SpeakerVoucherStatus.SENT
+        assignment.sent_at = now()
+        assignment.save(update_fields=['status', 'sent_at'])
+        action = (
+            'eventyay.speaker.voucher.resent'
+            if was_already_sent
+            else 'eventyay.speaker.voucher.sent'
+        )
+        assignment.log_action(
+            action,
             person=requestor,
             orga=True,
-            data={'voucher_code': existing.voucher.code, 'speaker': profile.user.email},
+            data={'voucher_code': assignment.voucher.code, 'speaker': profile.user.email},
         )
-        result['resent'] += 1
-
-    for profile in new_recipients:
-        with scope(event=event), transaction.atomic():
-            if SpeakerVoucher.objects.filter(speaker_profile=profile).exists():
-                continue
-            voucher = _claim_next_voucher(settings)
-            if voucher is None:
-                result['aborted_insufficient'] = True
-                break
-            speaker_voucher = SpeakerVoucher.objects.create(
-                event=event,
-                speaker_profile=profile,
-                voucher=voucher,
-                status=SpeakerVoucherStatus.NOT_SENT,
-                sent_at=None,
-            )
-
-        mail = _send_voucher_email(event, profile, voucher, requestor=requestor)
-        if mail is None:
-            continue
-        speaker_voucher.status = SpeakerVoucherStatus.SENT
-        speaker_voucher.sent_at = now()
-        speaker_voucher.save(update_fields=['status', 'sent_at'])
-        speaker_voucher.log_action(
-            'eventyay.speaker.voucher.sent',
-            person=requestor,
-            orga=True,
-            data={'voucher_code': voucher.code, 'speaker': profile.user.email},
-        )
-        result['sent'] += 1
+        if was_already_sent:
+            result['resent'] += 1
+        else:
+            result['sent'] += 1
 
     return result
+
+
+class _InsufficientVouchers(Exception):
+    """Internal signal to roll back a partial voucher allocation transaction."""
 
 
 def cancel_speaker_voucher(speaker_voucher: SpeakerVoucher, *, requestor=None) -> None:
@@ -274,7 +319,6 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
     except SpeakerVoucher.DoesNotExist:
         assignment = None
     confirmed_count = getattr(profile, 'confirmed_submission_count', None)
-    accepted_count = getattr(profile, 'accepted_submission_count', 0) or 0
     if confirmed_count is None:
         confirmed_count = profile.user.submissions.filter(
             event=profile.event, state=SubmissionStates.CONFIRMED

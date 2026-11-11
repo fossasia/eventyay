@@ -23,7 +23,7 @@ from eventyay.base.models import Answer, SpeakerProfile, User, Voucher
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.mail import MailTemplateRoles
-from eventyay.base.models.speaker_voucher import SpeakerVoucherSettings
+from eventyay.base.models.speaker_voucher import SpeakerVoucher, SpeakerVoucherSettings
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.speaker_vouchers import (
@@ -772,6 +772,18 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
     form_class = SpeakerVoucherSettingsForm
     permission_required = 'base.update_speakerprofile'
 
+    def has_permission(self):
+        # Do not allow event-access sessions to bypass organiser permission.
+        request = getattr(self, 'request', None)
+        if (
+            request
+            and hasattr(request, 'user')
+            and hasattr(request.user, 'has_active_staff_session')
+            and request.user.has_active_staff_session(request.session.session_key)
+        ):
+            return True
+        return super(PermissionRequired, self).has_permission()
+
     def get_success_url(self):
         return self.request.event.orga_urls.speaker_vouchers
 
@@ -792,16 +804,29 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
             'voucher_tag': settings_obj.voucher_tag,
         }
 
+    def _pending_send_counts(self, settings_obj):
+        """Return (recipient_count, new_vouchers_needed, remaining, remaining_after)."""
+        with scope(event=self.request.event):
+            recipients = list(profiles_needing_voucher(self.request.event))
+            new_needed = 0
+            for profile in recipients:
+                try:
+                    profile.voucher_assignment
+                except SpeakerVoucher.DoesNotExist:
+                    new_needed += 1
+            remaining = settings_obj.batch_remaining_count() if settings_obj.voucher_tag else 0
+        return len(recipients), new_needed, remaining, max(remaining - new_needed, 0)
+
     def _send_blocker(self, settings_obj):
         if not settings_obj.enabled:
             return _('Enable speaker vouchers and save before sending.')
         if not settings_obj.voucher_tag:
             return _('Select a voucher batch first.')
-        with scope(event=self.request.event):
-            if settings_obj.batch_remaining_count() == 0:
-                return _('All codes in this batch have been used. Add more codes in Tickets → Vouchers.')
-            if not profiles_needing_voucher(self.request.event).exists():
-                return _('Every eligible speaker already has a voucher.')
+        recipient_count, new_needed, remaining, _remaining_after = self._pending_send_counts(settings_obj)
+        if not recipient_count:
+            return _('Every eligible speaker already has a voucher.')
+        if new_needed and remaining < new_needed:
+            return _('All codes in this batch have been used. Add more codes in Tickets → Vouchers.')
         return None
 
     def _email_preview(self, settings_obj):
@@ -836,7 +861,9 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
             )
         with scope(event=self.request.event):
             summary = speaker_summary_counts(self.request.event, settings_obj)
-            recipients = list(profiles_needing_voucher(self.request.event))
+        recipient_count, vouchers_to_use, _remaining, remaining_after = self._pending_send_counts(
+            settings_obj
+        )
         create_batch_url = reverse(
             'control:event.vouchers.bulk',
             kwargs={
@@ -852,9 +879,9 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
                 'send_blocker': self._send_blocker(settings_obj),
                 'create_batch_url': create_batch_url,
                 'email_preview': self._email_preview(settings_obj),
-                'pending_recipient_count': len(recipients),
-                'vouchers_to_use': len(recipients),
-                'vouchers_remaining_after': max(summary['remaining'] - len(recipients), 0),
+                'pending_recipient_count': recipient_count,
+                'vouchers_to_use': vouchers_to_use,
+                'vouchers_remaining_after': remaining_after,
             }
         )
         return context
@@ -870,6 +897,18 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
 
 class SpeakerVoucherBulkSendView(EventPermissionRequired, View):
     permission_required = 'base.update_speakerprofile'
+
+    def has_permission(self):
+        # Do not allow event-access sessions to bypass organiser permission.
+        request = getattr(self, 'request', None)
+        if (
+            request
+            and hasattr(request, 'user')
+            and hasattr(request.user, 'has_active_staff_session')
+            and request.user.has_active_staff_session(request.session.session_key)
+        ):
+            return True
+        return super(PermissionRequired, self).has_permission()
 
     def post(self, request, *args, **kwargs):
         event = request.event

@@ -1,6 +1,8 @@
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.models import QueuedMail, SpeakerProfile, Voucher
@@ -45,12 +47,15 @@ def speaker_voucher_settings(event, speaker_voucher_batch):
 
 
 @pytest.mark.django_db
-def test_eligible_speakers_require_confirmed_session(event, speaker, submission, confirmed_submission):
+def test_eligible_speakers_require_confirmed_session(
+    event, speaker, submission, confirmed_submission, other_speaker, other_submission
+):
     with scope(event=event):
-        # `submission` is submitted; confirmed_submission uses same speaker and is confirmed
+        SpeakerProfile.objects.get_or_create(event=event, user=other_speaker)
         profiles = list(eligible_speaker_profiles(event))
         assert len(profiles) == 1
         assert profiles[0].user == speaker
+        assert other_speaker not in {p.user for p in profiles}
 
 
 @pytest.mark.django_db
@@ -65,7 +70,9 @@ def test_allocate_and_send_assigns_unique_vouchers(
         assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
         assert assignment.status == SpeakerVoucherStatus.SENT
         assert assignment.voucher.tag == 'speakers'
-        assert QueuedMail.objects.filter(event=event, sent__isnull=False).count() == 1
+        assert QueuedMail.objects.filter(
+            event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER, sent__isnull=False
+        ).count() == 1
 
 
 @pytest.mark.django_db
@@ -76,11 +83,47 @@ def test_resend_reuses_same_voucher(
         profile = speaker.event_profile(event)
         allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
         code = SpeakerVoucher.objects.get(speaker_profile=profile).voucher.code
+        mails_before = QueuedMail.objects.filter(
+            event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER, sent__isnull=False
+        ).count()
         result = allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
         assert result['resent'] == 1
         assert result['sent'] == 0
         assert SpeakerVoucher.objects.get(speaker_profile=profile).voucher.code == code
         assert SpeakerVoucher.objects.filter(speaker_profile=profile).count() == 1
+        assert (
+            QueuedMail.objects.filter(
+                event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER, sent__isnull=False
+            ).count()
+            == mails_before + 1
+        )
+
+
+@pytest.mark.django_db
+def test_not_sent_assignment_is_retried_without_new_voucher(
+    event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        voucher = speaker_voucher_batch[0]
+        SpeakerVoucher.objects.create(
+            event=event,
+            speaker_profile=profile,
+            voucher=voucher,
+            status=SpeakerVoucherStatus.NOT_SENT,
+        )
+        assert profiles_needing_voucher(event).filter(pk=profile.pk).exists()
+        remaining_before = speaker_voucher_settings.batch_remaining_count()
+        result = allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assert result['sent'] == 1
+        assert result['resent'] == 0
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assert assignment.voucher_id == voucher.pk
+        assert assignment.status == SpeakerVoucherStatus.SENT
+        assert speaker_voucher_settings.batch_remaining_count() == remaining_before
+        assert QueuedMail.objects.filter(
+            event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER, sent__isnull=False
+        ).exists()
 
 
 @pytest.mark.django_db
@@ -88,7 +131,6 @@ def test_insufficient_vouchers_sends_nothing(
     event, speaker, confirmed_submission, speaker_voucher_settings
 ):
     with scope(event=event):
-        # Only create settings pointing at an empty/missing batch
         speaker_voucher_settings.voucher_tag = 'empty-batch'
         speaker_voucher_settings.save(update_fields=['voucher_tag'])
         profile = speaker.event_profile(event)
@@ -99,6 +141,40 @@ def test_insufficient_vouchers_sends_nothing(
         assert not QueuedMail.objects.filter(
             event=event, template__role=MailTemplateRoles.SPEAKER_VOUCHER
         ).exists()
+
+
+@pytest.mark.django_db
+def test_expired_vouchers_are_not_available(event, speaker, confirmed_submission):
+    with scope(event=event):
+        settings_obj = SpeakerVoucherSettings.objects.create(
+            event=event,
+            enabled=True,
+            voucher_tag='speakers',
+        )
+        Voucher.objects.create(
+            event=event,
+            code='EXPIRED1',
+            tag='speakers',
+            max_usages=1,
+            redeemed=0,
+            valid_until=now() - timedelta(days=1),
+            price_mode='set',
+            value=Decimal('0.00'),
+        )
+        Voucher.objects.create(
+            event=event,
+            code='USED1',
+            tag='speakers',
+            max_usages=1,
+            redeemed=1,
+            price_mode='set',
+            value=Decimal('0.00'),
+        )
+        assert settings_obj.batch_remaining_count() == 0
+        profile = speaker.event_profile(event)
+        result = allocate_and_send_vouchers(event, settings_obj, [profile])
+        assert result['aborted_insufficient'] is True
+        assert SpeakerVoucher.objects.filter(event=event).count() == 0
 
 
 @pytest.mark.django_db
@@ -173,4 +249,3 @@ def test_orga_bulk_send_aborts_when_batch_empty(
     assert 'Not enough unused vouchers' in response.text
     with scope(event=event):
         assert SpeakerVoucher.objects.filter(event=event).count() == 0
-

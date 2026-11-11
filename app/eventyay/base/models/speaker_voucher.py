@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import F, Q
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
 
@@ -10,6 +12,19 @@ class SpeakerVoucherStatus(models.TextChoices):
     NOT_SENT = 'not_sent', _('Not sent')
     SENT = 'sent', _('Sent — not claimed')
     CLAIMED = 'claimed', _('Claimed')
+
+
+def usable_batch_vouchers(event, voucher_tag: str):
+    """Unused, unexpired vouchers in the given batch that are not yet assigned."""
+    if not voucher_tag:
+        return Voucher.objects.none()
+    return Voucher.objects.filter(
+        event=event,
+        tag=voucher_tag,
+        redeemed__lt=F('max_usages'),
+    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gte=now())).filter(
+        speaker_voucher_link__isnull=True,
+    )
 
 
 class SpeakerVoucherSettings(PretalxModel):
@@ -41,13 +56,8 @@ class SpeakerVoucherSettings(PretalxModel):
     def get_available_vouchers(self):
         if not self.voucher_tag:
             return Voucher.objects.none()
-        assigned_voucher_ids = SpeakerVoucher.objects.filter(event=self.event).values_list('voucher_id', flat=True)
         with scopes_disabled():
-            return Voucher.objects.filter(
-                event=self.event,
-                tag=self.voucher_tag,
-                redeemed=0,
-            ).exclude(pk__in=assigned_voucher_ids)
+            return usable_batch_vouchers(self.event, self.voucher_tag)
 
     def batch_total_count(self) -> int:
         if not self.voucher_tag:
