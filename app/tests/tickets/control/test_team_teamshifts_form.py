@@ -1,7 +1,7 @@
 import pytest
 from django.apps import apps
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope
 
 from eventyay.base.models import Event, Organizer, Team
 from eventyay.control.forms.organizer_forms.team_form import TeamForm
@@ -30,7 +30,7 @@ def event(organizer):
 
 @pytest.mark.django_db
 def test_team_form_can_remove_teamshifts_role(organizer, event, teamshifts_installed):
-    with scopes_disabled():
+    with scope(event=event):
         role = apps.get_model('teamshifts', 'TeamRole').objects.create(event=event, name='Stewards')
     team = Team.objects.create(
         organizer=organizer,
@@ -66,3 +66,39 @@ def test_team_form_can_remove_teamshifts_role(organizer, event, teamshifts_insta
     assert team.all_teamshifts_roles is False
     assert team.limit_teamshifts_roles == []
     assert team.hide_teamshifts_emails is False
+
+
+@pytest.mark.django_db
+def test_team_form_removes_teamshifts_role_when_submitted_role_was_deleted(organizer, event, teamshifts_installed):
+    with scope(event=event):
+        role = apps.get_model('teamshifts', 'TeamRole').objects.create(event=event, name='Stewards')
+    team = Team.objects.create(
+        organizer=organizer,
+        name='Shifts Team',
+        can_change_teams=True,
+        teamshifts_role='lead',
+        all_teamshifts_roles=False,
+        limit_teamshifts_roles=[role.pk],
+    )
+    team.limit_events.add(event)
+    stale_pk = role.pk
+    with scope(event=event):
+        role.delete()
+
+    form = TeamForm(
+        organizer=organizer,
+        instance=team,
+        data={
+            'name': 'Shifts Team',
+            'limit_events': [event.pk],
+            'can_change_teams': 'on',
+            'teamshifts_role': '',
+            'limit_teamshifts_roles': [stale_pk],
+        },
+    )
+    assert form.is_valid(), form.errors
+    form.save()
+
+    team.refresh_from_db()
+    assert team.teamshifts_role == ''
+    assert team.limit_teamshifts_roles == []
