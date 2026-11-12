@@ -2,6 +2,7 @@ import datetime
 import json
 from datetime import timedelta
 from decimal import Decimal
+from ipaddress import ip_network
 from unittest.mock import patch
 
 from bs4 import BeautifulSoup
@@ -35,6 +36,8 @@ from eventyay.base.models.product import (
 from eventyay.base.services.cart import (
     CartError,
     CartManager,
+    VoucherError,
+    VoucherRateLimitUnavailable,
     VOUCHER_RATE_LIMIT_BUCKET,
     VOUCHER_RATE_LIMIT_MAX,
     VOUCHER_RATE_LIMIT_WINDOW,
@@ -45,6 +48,7 @@ from eventyay.base.services.cart import (
     release_voucher_attempt,
     reserve_voucher_attempt,
     update_tax_rates,
+    _voucher_rate_limit_key,
     _voucher_bucket_keys,
 )
 from tests.testutils.scope import classscope
@@ -2272,6 +2276,26 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             self.assertFalse(CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists())
 
+    def test_oversized_add_to_cart_voucher_is_returned_to_ajax_caller(self):
+        response = self.client.post(
+            '/%s/%s/cart/add?ajax=1' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '1',
+                '_voucher_code': 'X' * 256,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('invalid length', response.json()['message'])
+
+    def test_oversized_cart_voucher_rejected_before_product_lookup(self):
+        manager = CartManager(event=self.event, cart_id=self.session_key)
+        with patch.object(manager, '_update_products_cache') as update_products:
+            with self.assertRaises(VoucherError):
+                manager.add_new_products(
+                    [{'product': self.ticket.pk, 'variation': None, 'count': 1, 'voucher': 'X' * 256}]
+                )
+        update_products.assert_not_called()
+
     @override_settings(
         CACHES={
             'default': {
@@ -2292,6 +2316,38 @@ class CartTest(CartTestMixin, TestCase):
         record_voucher_failure(request)
         self.assertTrue(is_voucher_rate_limited(request))
         cache.clear()
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
+    def test_voucher_rate_limit_uses_client_after_trusted_proxy_chain(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='203.0.113.8, 192.0.2.55, 10.0.0.2')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '10.0.0.1'
+        key = _voucher_rate_limit_key(request)
+
+        direct_request = RequestFactory().get('/')
+        direct_request.event = self.event
+        direct_request.META['REMOTE_ADDR'] = '192.0.2.55'
+        self.assertEqual(key, _voucher_rate_limit_key(direct_request))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
+    def test_voucher_rate_limit_ignores_forwarded_header_from_untrusted_peer(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.8')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.55'
+        key = _voucher_rate_limit_key(request)
+
+        direct_request = RequestFactory().get('/')
+        direct_request.event = self.event
+        direct_request.META['REMOTE_ADDR'] = '192.0.2.55'
+        self.assertEqual(key, _voucher_rate_limit_key(direct_request))
+
+    def test_voucher_rate_limit_fails_closed_when_cache_is_unavailable(self):
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+        with patch('eventyay.base.services.cart.cache.add', side_effect=ConnectionError):
+            with self.assertRaises(VoucherRateLimitUnavailable):
+                reserve_voucher_attempt(request)
 
     @override_settings(
         CACHES={

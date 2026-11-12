@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.core.cache import caches
 from django.core.cache.backends.base import InvalidCacheBackendError
 from django.db.models import Q
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import translation
 from django.utils.crypto import get_random_string
@@ -34,6 +34,8 @@ from eventyay.base.models import (
 from eventyay.base.services.cart import (
     CartError,
     MAX_VOUCHER_CODE_LENGTH,
+    VoucherError,
+    VoucherRateLimitUnavailable,
     add_products_to_cart,
     apply_voucher,
     clear_cart,
@@ -65,6 +67,23 @@ except InvalidCacheBackendError:
 
 
 class CartActionMixin:
+    def _reserve_voucher_attempt(self, request):
+        try:
+            return reserve_voucher_attempt(request), None
+        except VoucherRateLimitUnavailable:
+            message = _(error_messages['voucher_rate_limit_unavailable'])
+            if 'ajax' in request.GET or 'ajax' in request.POST:
+                response = JsonResponse(
+                    {'redirect': self.get_error_url(), 'success': False, 'message': str(message)},
+                    status=503,
+                )
+            else:
+                messages.error(request, message)
+                response = redirect(self.get_error_url())
+                response.status_code = 503
+            response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+            return None, response
+
     def _rate_limit_response(self):
         message = _(error_messages['voucher_rate_limited'])
         if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
@@ -209,9 +228,11 @@ class CartActionMixin:
             req_products.append(('%s' % self.request.POST['_voucher_product'], ('1',)))
             pass
 
+        self._voucher_validation_error = None
         raw_voucher = self.request.POST.get('_voucher_code')
         if raw_voucher is not None and len(raw_voucher) > MAX_VOUCHER_CODE_LENGTH:
             messages.error(self.request, error_messages['voucher_invalid_length'])
+            self._voucher_validation_error = error_messages['voucher_invalid_length']
             return
 
         products = []
@@ -227,9 +248,11 @@ class CartActionMixin:
             voucher = product.get('voucher')
             if voucher is not None and not isinstance(voucher, str):
                 messages.error(self.request, error_messages['voucher_invalid'])
+                self._voucher_validation_error = error_messages['voucher_invalid']
                 return
             if isinstance(voucher, str) and len(voucher) > MAX_VOUCHER_CODE_LENGTH:
                 messages.error(self.request, error_messages['voucher_invalid_length'])
+                self._voucher_validation_error = error_messages['voucher_invalid_length']
                 return
 
         for key, values in req_products:
@@ -238,6 +261,8 @@ class CartActionMixin:
                     product = self._product_from_post_value(key, value, self.request.POST.get('_voucher_code'))
                 except CartError as e:
                     messages.error(self.request, str(e))
+                    if isinstance(e, VoucherError):
+                        self._voucher_validation_error = str(e)
                     return
                 if product:
                     products.append(product)
@@ -246,9 +271,11 @@ class CartActionMixin:
             voucher = product.get('voucher')
             if voucher is not None and not isinstance(voucher, str):
                 messages.error(self.request, error_messages['voucher_invalid'])
+                self._voucher_validation_error = error_messages['voucher_invalid']
                 return
             if isinstance(voucher, str) and len(voucher) > MAX_VOUCHER_CODE_LENGTH:
                 messages.error(self.request, error_messages['voucher_invalid_length'])
+                self._voucher_validation_error = error_messages['voucher_invalid_length']
                 return
 
         if len(products) == 0:
@@ -413,14 +440,16 @@ def cart_session(request):
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
 class CartApplyVoucher(EventViewMixin, CartActionMixin, AsyncAction, View):
     task = apply_voucher
-    known_errortypes = ['CartError']
+    known_errortypes = ['CartError', 'VoucherError']
 
     def get_success_message(self, value):
         return _('We applied the voucher to as many products in your cart as we could.')
 
     def post(self, request, *args, **kwargs):
         if 'voucher' in request.POST:
-            voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            (voucher_attempt_key, allowed), response = self._reserve_voucher_attempt(request)
+            if response:
+                return response
             if not allowed:
                 return self._rate_limit_response()
             try:
@@ -495,7 +524,7 @@ class CartClear(EventViewMixin, CartActionMixin, AsyncAction, View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
     task = add_products_to_cart
-    known_errortypes = ['CartError']
+    known_errortypes = ['CartError', 'VoucherError']
 
     def get_success_url(self, value=None):
         kwargs = {}
@@ -565,11 +594,26 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
             cs = cart_session(request)
             widget_data = cs.get('widget_data', {})
 
+        posted_products = []
+        try:
+            raw_products = json.loads(request.POST.get('raw', '[]'))
+            if isinstance(raw_products, list):
+                posted_products = [product for product in raw_products if isinstance(product, dict)]
+        except ValueError:
+            pass
+        has_voucher_attempt = bool(request.POST.get('_voucher_code')) or any(
+            isinstance(product.get('voucher'), str) and product['voucher'] for product in posted_products
+        )
+        voucher_attempt_key = None
+        if has_voucher_attempt:
+            (voucher_attempt_key, allowed), response = self._reserve_voucher_attempt(request)
+            if response:
+                return response
+            if not allowed:
+                return self._rate_limit_response()
+
         products = self._products_from_post_data()
         if products:
-            self._voucher_attempt = any(
-                isinstance(product.get('voucher'), str) and product.get('voucher') for product in products
-            )
             # Check one ticket per user per product restriction at add-to-cart time
             email = self.cart_session.get('email')
             if email:
@@ -586,6 +630,7 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                         product_id__in=product_ids,
                     ).exists()
                     if exists:
+                        release_voucher_attempt(voucher_attempt_key)
                         if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
                             return JsonResponse(
                                 {
@@ -598,11 +643,6 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                             messages.error(self.request, _('Only one ticket per user is allowed for this product. You already have a ticket.'))
                             return redirect(self.get_error_url())
             
-            voucher_attempt_key = None
-            if self._voucher_attempt:
-                voucher_attempt_key, allowed = reserve_voucher_attempt(request)
-                if not allowed:
-                    return self._rate_limit_response()
             try:
                 return self.do(
                     self.request.event.id,
@@ -618,6 +658,18 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                 release_voucher_attempt(voucher_attempt_key)
                 raise
         else:
+            if getattr(self, '_voucher_validation_error', None):
+                if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
+                    return JsonResponse(
+                        {
+                            'redirect': self.get_error_url(),
+                            'success': False,
+                            'message': str(self._voucher_validation_error),
+                        },
+                        status=400,
+                    )
+                return redirect(self.get_error_url())
+            release_voucher_attempt(voucher_attempt_key)
             if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
                 return JsonResponse(
                     {
@@ -697,7 +749,12 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
         voucher_failed = False
 
         if raw_voucher:
-            voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            try:
+                voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            except VoucherRateLimitUnavailable:
+                response = HttpResponse(error_messages['voucher_rate_limit_unavailable'], status=503)
+                response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+                return response
             if not allowed:
                 response = redirect(self.get_index_url())
                 response.status_code = 429

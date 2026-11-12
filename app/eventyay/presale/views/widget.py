@@ -35,6 +35,7 @@ from eventyay.base.models import CartPosition, Event, Quota, SubEvent, Voucher
 from eventyay.base.services.cart import (
     MAX_VOUCHER_CODE_LENGTH,
     VOUCHER_RATE_LIMIT_WINDOW,
+    VoucherRateLimitUnavailable,
     error_messages,
     release_voucher_attempt,
     reserve_voucher_attempt,
@@ -701,7 +702,14 @@ class WidgetAPIProductList(EventListMixin, View):
     def _get_event_view(self, request, **kwargs):
         self._voucher_attempt_key = None
         if request.GET.get('voucher'):
-            self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            try:
+                self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            except VoucherRateLimitUnavailable:
+                return self.response(
+                    {'error': error_messages['voucher_rate_limit_unavailable']},
+                    status=503,
+                    retry_after=VOUCHER_RATE_LIMIT_WINDOW,
+                )
             if not allowed:
                 return self.response(
                     {'error': error_messages['voucher_rate_limited']},

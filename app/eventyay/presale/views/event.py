@@ -67,6 +67,7 @@ from eventyay.base.models.product import (
 from eventyay.base.services.cart import (
     MAX_VOUCHER_CODE_LENGTH,
     VOUCHER_RATE_LIMIT_WINDOW,
+    VoucherRateLimitUnavailable,
     error_messages,
     release_voucher_attempt,
     reserve_voucher_attempt,
@@ -694,8 +695,13 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if request.sales_channel.identifier not in request.event.sales_channels:
             raise Http404(_('Tickets for this event cannot be purchased on this sales channel.'))
 
-        if request.GET.get('voucher'):
-            self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+        if request.GET.get('voucher') and request.event.has_subevents:
+            try:
+                self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            except VoucherRateLimitUnavailable:
+                response = HttpResponse(error_messages['voucher_rate_limit_unavailable'], status=503)
+                response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+                return response
             if not allowed:
                 response = HttpResponse(error_messages['voucher_rate_limited'], status=429)
                 response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)

@@ -1,4 +1,5 @@
 import hashlib
+import ipaddress
 import logging
 import math
 import time as time_module
@@ -73,6 +74,10 @@ class CartError(Exception):
         log_event('tickets', 'cart.error', OUTCOME_FAILURE, error_code='cart_error')
 
 
+class VoucherError(CartError):
+    pass
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -115,6 +120,7 @@ error_messages = {
     'voucher_invalid': _('This voucher code is not known in our database.'),
     'voucher_invalid_length': _('This voucher code has an invalid length.'),
     'voucher_rate_limited': _('Too many invalid voucher attempts. Please try again later.'),
+    'voucher_rate_limit_unavailable': _('Voucher redemption is temporarily unavailable. Please try again later.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
         'This voucher code is currently locked since it is already contained in a cart. This '
@@ -165,18 +171,45 @@ error_messages = {
 }
 
 MAX_VOUCHER_CODE_LENGTH = Voucher._meta.get_field('code').max_length
-VOUCHER_RATE_LIMIT_MAX = getattr(settings, 'VOUCHER_RATE_LIMIT_MAX', 10)
-VOUCHER_RATE_LIMIT_WINDOW = getattr(settings, 'VOUCHER_RATE_LIMIT_WINDOW', 300)
+VOUCHER_RATE_LIMIT_MAX = settings.VOUCHER_RATE_LIMIT_MAX
+VOUCHER_RATE_LIMIT_WINDOW = settings.VOUCHER_RATE_LIMIT_WINDOW
 # shortcut: one-second buckets approximate a sliding window without a new limiter dependency.
-VOUCHER_RATE_LIMIT_BUCKET = getattr(settings, 'VOUCHER_RATE_LIMIT_BUCKET', 1)
+VOUCHER_RATE_LIMIT_BUCKET = settings.VOUCHER_RATE_LIMIT_BUCKET
+
+
+class VoucherRateLimitUnavailable(Exception):
+    """The voucher limiter could not safely check or reserve an attempt."""
 
 
 def _voucher_rate_limit_key(request):
-    # Use the socket peer; forwarded headers are only safe after proxy sanitisation.
-    client_ip = request.META.get('REMOTE_ADDR')
+    peer = request.META.get('REMOTE_ADDR')
     event = getattr(request, 'event', None)
-    if not client_ip or not event:
-        return None
+    if not event:
+        raise VoucherRateLimitUnavailable
+    try:
+        peer_ip = ipaddress.ip_address(peer)
+    except (TypeError, ValueError):
+        raise VoucherRateLimitUnavailable from None
+    trusted_proxies = settings.VOUCHER_RATE_LIMIT_TRUSTED_PROXIES
+    client_ip = peer
+    if any(peer_ip.version == network.version and peer_ip in network for network in trusted_proxies):
+        forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        try:
+            chain = [ipaddress.ip_address(value.strip()) for value in forwarded_for.split(',') if value.strip()]
+        except ValueError:
+            chain = []
+        if chain:
+            chain.append(peer_ip)
+            for address in reversed(chain):
+                if not any(
+                    address.version == network.version and address in network for network in trusted_proxies
+                ):
+                    client_ip = str(address)
+                    break
+            else:
+                client_ip = str(peer_ip)
+        else:
+            client_ip = str(peer_ip)
     value = f'{event.pk}:{client_ip}'.encode()
     return f'voucher_redeem_fail:{hashlib.sha256(value).hexdigest()}'
 
@@ -188,8 +221,8 @@ def is_voucher_rate_limited(request):
     try:
         return _voucher_rate_limit_count(key) > VOUCHER_RATE_LIMIT_MAX
     except (RedisError, TimeoutError, ValueError, ConnectionError):
-        logger.exception('Could not read voucher rate limit; allowing request')
-        return False
+        logger.exception('Could not read voucher rate limit')
+        raise VoucherRateLimitUnavailable from None
 
 
 def _voucher_bucket_keys(key, timestamp=None):
@@ -227,7 +260,8 @@ def record_voucher_failure(request):
     try:
         _increment_voucher_counter(key)
     except (RedisError, TimeoutError, ValueError, ConnectionError):
-        logger.exception('Could not record voucher rate limit; allowing request')
+        logger.exception('Could not record voucher rate limit')
+        raise VoucherRateLimitUnavailable from None
 
 
 def reserve_voucher_attempt(request):
@@ -250,8 +284,8 @@ def reserve_voucher_attempt(request):
             return None, True
         return reservation_key, True
     except (RedisError, TimeoutError, ValueError, ConnectionError):
-        logger.exception('Could not reserve voucher rate limit; allowing request')
-        return None, True
+        logger.exception('Could not reserve voucher rate limit')
+        raise VoucherRateLimitUnavailable from None
 
 
 def release_voucher_attempt(key):
@@ -495,13 +529,13 @@ class CartManager:
                 raise CartError(error_messages['not_for_sale'])
 
             if op.voucher and not op.voucher.applies_to(op.product, op.variation):
-                raise CartError(error_messages['voucher_invalid_product'])
+                raise VoucherError(error_messages['voucher_invalid_product'])
 
             if op.voucher and op.voucher.seat and op.voucher.seat != op.seat:
-                raise CartError(error_messages['voucher_invalid_seat'])
+                raise VoucherError(error_messages['voucher_invalid_seat'])
 
             if op.voucher and op.voucher.subevent_id and op.voucher.subevent_id != op.subevent.pk:
-                raise CartError(error_messages['voucher_invalid_subevent'])
+                raise VoucherError(error_messages['voucher_invalid_subevent'])
 
             if op.subevent and not op.subevent.active:
                 raise CartError(error_messages['inactive_subevent'])
@@ -753,19 +787,19 @@ class CartManager:
         if self._operations:
             raise CartError('Applying a voucher to the whole cart should not be combined with other operations.')
         if not isinstance(voucher_code, str):
-            raise CartError(error_messages['voucher_invalid'])
+            raise VoucherError(error_messages['voucher_invalid'])
         if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
-            raise CartError(error_messages['voucher_invalid_length'])
+            raise VoucherError(error_messages['voucher_invalid_length'])
         voucher_code = voucher_code.strip()
         try:
             voucher = self.event.vouchers.get(code__iexact=voucher_code)
         except Voucher.DoesNotExist:
-            raise CartError(error_messages['voucher_invalid'])
+            raise VoucherError(error_messages['voucher_invalid'])
         voucher_use_diff = Counter()
         ops = []
 
         if not voucher.is_active():
-            raise CartError(error_messages['voucher_expired'])
+            raise VoucherError(error_messages['voucher_expired'])
 
         for p in self.positions.prefetch_related('addons'):
             if p.voucher_id:
@@ -804,12 +838,18 @@ class CartManager:
         ops.sort(key=lambda k: k[0], reverse=True)
         self._operations += [k[1] for k in ops]
         if not voucher_use_diff:
-            raise CartError(error_messages['voucher_no_match'])
+            raise VoucherError(error_messages['voucher_no_match'])
         self._voucher_use_diff += voucher_use_diff
 
     def add_new_products(self, products: List[dict]):
         if not all(isinstance(product, dict) for product in products):
             raise CartError(error_messages['voucher_invalid'])
+        for product in products:
+            voucher_code = product.get('voucher')
+            if voucher_code is not None and not isinstance(voucher_code, str):
+                raise VoucherError(error_messages['voucher_invalid'])
+            if isinstance(voucher_code, str) and len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
+                raise VoucherError(error_messages['voucher_invalid_length'])
         # Fetch products from the database
         self._update_products_cache([i['product'] for i in products], [i['variation'] for i in products])
         self._update_subevents_cache([i['subevent'] for i in products if i.get('subevent')])
@@ -853,14 +893,14 @@ class CartManager:
 
             if i.get('voucher'):
                 if not isinstance(i['voucher'], str):
-                    raise CartError(error_messages['voucher_invalid'])
+                    raise VoucherError(error_messages['voucher_invalid'])
                 if len(i['voucher']) > MAX_VOUCHER_CODE_LENGTH:
-                    raise CartError(error_messages['voucher_invalid_length'])
+                    raise VoucherError(error_messages['voucher_invalid_length'])
                 voucher_code = i['voucher'].strip()
                 try:
                     voucher = self.event.vouchers.get(code__iexact=voucher_code)
                 except Voucher.DoesNotExist:
-                    raise CartError(error_messages['voucher_invalid'])
+                    raise VoucherError(error_messages['voucher_invalid'])
                 else:
                     voucher_use_diff[voucher] += i['count']
 
@@ -1185,7 +1225,7 @@ class CartManager:
             voucher = Voucher.objects.select_for_update().get(pk=voucher.pk)
 
             if voucher.valid_until is not None and voucher.valid_until < self.now_dt:
-                raise CartError(error_messages['voucher_expired'])
+                raise VoucherError(error_messages['voucher_expired'])
 
             redeemed_in_carts = CartPosition.objects.filter(
                 Q(voucher=voucher) & Q(event=self.event) & Q(expires__gte=self.now_dt)
@@ -1195,7 +1235,7 @@ class CartManager:
             
             # Validate availability after acquiring lock to prevent over-redemption
             if v_avail < count:
-                raise CartError(error_messages['voucher_redeemed'])
+                raise VoucherError(error_messages['voucher_redeemed'])
             
             if cart_count > 0:
                 self._voucher_depend_on_cart.add(voucher)
@@ -1537,7 +1577,7 @@ class CartManager:
             elif isinstance(op, self.VoucherOperation):
                 if vouchers_ok[op.voucher] < 1:
                     if iop == 0:
-                        raise CartError(error_messages['voucher_redeemed'])
+                        raise VoucherError(error_messages['voucher_redeemed'])
                     else:
                         # We fail silently if we could only apply the voucher to part of the cart, since that might
                         # be expected
@@ -1740,6 +1780,10 @@ def add_products_to_cart(
                 return result
             except LockTimeoutException:
                 self.retry()
+            except CartError as exc:
+                if not isinstance(exc, VoucherError):
+                    release_voucher_attempt(voucher_attempt_key)
+                raise
         except (MaxRetriesExceededError, LockTimeoutException):
             raise CartError(error_messages['busy'])
 
@@ -1776,6 +1820,10 @@ def apply_voucher(
                 release_voucher_attempt(voucher_attempt_key)
             except LockTimeoutException:
                 self.retry()
+            except CartError as exc:
+                if not isinstance(exc, VoucherError):
+                    release_voucher_attempt(voucher_attempt_key)
+                raise
         except (MaxRetriesExceededError, LockTimeoutException):
             raise CartError(error_messages['busy'])
 

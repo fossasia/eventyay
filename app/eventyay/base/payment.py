@@ -17,7 +17,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.dispatch import receiver
 from django.forms import Form
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.template.loader import get_template
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
@@ -42,7 +42,15 @@ from eventyay.base.models import (
 )
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.reldate import RelativeDateField, RelativeDateWrapper
-from eventyay.base.services.cart import get_fees
+from eventyay.base.services.cart import (
+    MAX_VOUCHER_CODE_LENGTH,
+    VOUCHER_RATE_LIMIT_WINDOW,
+    VoucherRateLimitUnavailable,
+    error_messages,
+    get_fees,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
+)
 from eventyay.base.settings import SettingsSandbox
 from eventyay.base.signals import register_payment_providers
 from eventyay.base.templatetags.money import money_filter
@@ -1204,6 +1212,23 @@ class GiftCardPayment(BasePaymentProvider):
     def order_change_allowed(self, order: Order) -> bool:
         return super().order_change_allowed(order) and self.event.organizer.has_gift_cards
 
+    def _voucher_attempt_response(self, request: HttpRequest, unavailable: bool = False) -> HttpResponse:
+        message = error_messages['voucher_rate_limit_unavailable' if unavailable else 'voucher_rate_limited']
+        status = 503 if unavailable else 429
+        messages.error(request, message)
+        response = HttpResponse(message, status=status)
+        response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+        return response
+
+    def _reserve_gift_card_attempt(self, request: HttpRequest):
+        try:
+            key, allowed = reserve_voucher_attempt(request)
+        except VoucherRateLimitUnavailable:
+            return None, self._voucher_attempt_response(request, unavailable=True)
+        if not allowed:
+            return None, self._voucher_attempt_response(request)
+        return key, None
+
     def payment_form_render(self, request: HttpRequest, total: Decimal) -> str:
         return get_template('pretixcontrol/giftcards/checkout.html').render({})
 
@@ -1247,7 +1272,7 @@ class GiftCardPayment(BasePaymentProvider):
     def payment_refund_supported(self, payment: OrderPayment) -> bool:
         return True
 
-    def checkout_prepare(self, request: HttpRequest, cart: Dict[str, Any]) -> Union[bool, str, None]:
+    def checkout_prepare(self, request: HttpRequest, cart: Dict[str, Any]) -> Union[bool, str, None, HttpResponse]:
         for p in get_cart(request):
             if p.product.issue_giftcard:
                 messages.error(
@@ -1259,13 +1284,22 @@ class GiftCardPayment(BasePaymentProvider):
         cs = cart_session(request)
         effective_testmode = self.event.testmode or self.event.private_testmode_tickets_enabled
 
-        gift_card_code = request.POST.get('giftcard', '').strip()
-        if not gift_card_code:
+        raw_gift_card_code = request.POST.get('giftcard', '')
+        if not raw_gift_card_code:
             messages.error(request, _('Please enter a gift card code.'))
             return
+
+        voucher_attempt_key, response = self._reserve_gift_card_attempt(request)
+        if response:
+            return response
+        if len(raw_gift_card_code) > MAX_VOUCHER_CODE_LENGTH:
+            messages.error(request, error_messages['voucher_invalid_length'])
+            return
+        gift_card_code = raw_gift_card_code.strip()
         
         try:
             gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
+            release_voucher_attempt(voucher_attempt_key)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1340,7 +1374,7 @@ class GiftCardPayment(BasePaymentProvider):
                 ),
             )
 
-    def payment_prepare(self, request: HttpRequest, payment: OrderPayment) -> Union[bool, str, None]:
+    def payment_prepare(self, request: HttpRequest, payment: OrderPayment) -> Union[bool, str, None, HttpResponse]:
         for p in payment.order.positions.all():
             if p.product.issue_giftcard:
                 messages.error(
@@ -1349,13 +1383,22 @@ class GiftCardPayment(BasePaymentProvider):
                 )
                 return
 
-        gift_card_code = request.POST.get('giftcard', '').strip()
-        if not gift_card_code:
+        raw_gift_card_code = request.POST.get('giftcard', '')
+        if not raw_gift_card_code:
             messages.error(request, _('Please enter a gift card code.'))
             return
 
+        voucher_attempt_key, response = self._reserve_gift_card_attempt(request)
+        if response:
+            return response
+        if len(raw_gift_card_code) > MAX_VOUCHER_CODE_LENGTH:
+            messages.error(request, error_messages['voucher_invalid_length'])
+            return
+        gift_card_code = raw_gift_card_code.strip()
+
         try:
             gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
+            release_voucher_attempt(voucher_attempt_key)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
