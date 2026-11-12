@@ -4,8 +4,9 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 13:58+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:22+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
 "Language: fr\n"
@@ -13,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -5982,8 +5983,7 @@ msgstr "Retour à l'aperçu"
 #, fuzzy
 #| msgid "Add the client ID and client secret to admin settings"
 msgid "Gmail OAuth client ID and secret must be configured in global settings."
-msgstr ""
-"Ajoutez l'ID client et le secret client aux paramètres d'administration"
+msgstr "Ajoutez l'ID client et le secret client aux paramètres d'administration"
 
 #: eventyay/base/gmail/oauth.py:85
 #, fuzzy
