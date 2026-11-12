@@ -203,8 +203,6 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
         if 'email' in self.contact_form.cleaned_data:
             self.cart_session['email'] = self.contact_form.cleaned_data['email']
         elif request.user.is_authenticated and request.user.email:
-            # Order email is often not asked when login is required; still bind the
-            # order to the account email so the buyer can open the confirmation page.
             self.cart_session['email'] = request.user.email
         else:
             self.cart_session.pop('email', None)
