@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from eventyay.base.models.room import Room
-from eventyay.base.services.room import restrict_module_config_patch, strip_webhook_secrets
+from eventyay.base.services.room import redact_unmoderated_modules, restrict_module_config_patch
 from eventyay.core.permissions import Permission
 from eventyay.features.live.modules import room as room_module
 from eventyay.features.live.modules.room import RoomModule
@@ -14,14 +14,22 @@ CHAT = {
     "config": {"webhook_url": "https://hooks.example.invalid/in", "webhook_hmac_secret": "s3cret"},
 }
 JITSI = {"type": "call.jitsi", "config": {"start_with_audio_muted": False}}
+ZOOM = {
+    "type": "call.zoom",
+    "config": {"meeting_number": "123456789", "password": "zoompass", "client_secret": "zoomsecret"},
+}
 
 
-def test_strip_webhook_secrets_copies_and_strips():
-    """The secret is removed from the returned copy only."""
-    config = {"module_config": [CHAT]}
-    stripped = strip_webhook_secrets(config)
-    assert "webhook_hmac_secret" not in stripped["module_config"][0]["config"]
-    assert config["module_config"][0]["config"]["webhook_hmac_secret"] == "s3cret"
+def test_redact_unmoderated_modules_empties_other_modules():
+    """Other modules keep their type and position but lose their settings; the input is untouched."""
+    config = {"id": "1", "module_config": [CHAT, JITSI, ZOOM]}
+    redacted = redact_unmoderated_modules(config, {"call.jitsi"})
+    assert redacted["module_config"] == [
+        {"type": "chat.native", "config": {}},
+        JITSI,
+        {"type": "call.zoom", "config": {}},
+    ]
+    assert config["module_config"] == [CHAT, JITSI, ZOOM]
 
 
 def test_restrict_patch_keeps_stored_config_of_other_modules():
@@ -63,9 +71,8 @@ def test_restrict_patch_cannot_reorder_modules():
     assert result == [new_jitsi, CHAT]
 
 
-def make_moderator_module(room):
-    """RoomModule for a user with only Jitsi moderate rights on ``room``."""
-    allowed = {Permission.ROOM_JITSI_MODERATE}
+def make_moderator_module(room, allowed=frozenset({Permission.ROOM_JITSI_MODERATE})):
+    """RoomModule for a user holding only the ``allowed`` permissions (Jitsi moderate by default)."""
 
     async def has_permission(*, user, permission, room=None):
         if isinstance(permission, (list, tuple)):
@@ -101,13 +108,28 @@ def jitsi_chat_room(monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_moderator_config_get_hides_webhook_secret(jitsi_chat_room):
-    """Call moderators do not receive the chat webhook secret."""
+async def test_moderator_config_get_only_returns_moderated_module_settings(jitsi_chat_room):
+    """Call moderators get their call module's settings, not the Zoom or chat settings."""
+    jitsi_chat_room.module_config = copy.deepcopy([JITSI, CHAT, ZOOM])
     module, consumer = make_moderator_module(jitsi_chat_room)
     await module.config_get({"room": str(jitsi_chat_room.pk)})
     sent = consumer.send_success.call_args[0][0]
-    chat = next(m for m in sent["module_config"] if m["type"] == "chat.native")
-    assert "webhook_hmac_secret" not in chat["config"]
+    assert sent["module_config"] == [
+        JITSI,
+        {"type": "chat.native", "config": {}},
+        {"type": "call.zoom", "config": {}},
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_room_editor_config_get_returns_all_settings(jitsi_chat_room):
+    """People who can edit the room still receive every module's settings."""
+    jitsi_chat_room.module_config = copy.deepcopy([JITSI, CHAT, ZOOM])
+    module, consumer = make_moderator_module(jitsi_chat_room, allowed={Permission.ROOM_UPDATE})
+    await module.config_get({"room": str(jitsi_chat_room.pk)})
+    sent = consumer.send_success.call_args[0][0]
+    assert sent["module_config"] == [JITSI, CHAT, ZOOM]
 
 
 @pytest.mark.asyncio
@@ -163,8 +185,7 @@ async def test_moderator_config_patch_only_applies_call_settings(jitsi_chat_room
     assert saved_room.trait_grants == {"viewer": []}
     module._verify_webhook_challenges.assert_not_awaited()
     sent = consumer.send_success.call_args[0][0]
-    chat = next(m for m in sent["module_config"] if m["type"] == "chat.native")
-    assert "webhook_hmac_secret" not in chat["config"]
+    assert sent["module_config"] == [new_jitsi, {"type": "chat.native", "config": {}}]
 
 
 @pytest.mark.asyncio

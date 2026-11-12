@@ -34,11 +34,11 @@ from eventyay.base.services.room import (
     end_view,
     get_viewers,
     normalize_after_priority_change,
+    redact_unmoderated_modules,
     reorder_rooms,
     restrict_module_config_patch,
     save_room,
     start_view,
-    strip_webhook_secrets,
     validate_room_config_patch,
 )
 from eventyay.base.services.room_creation_gate import (
@@ -656,7 +656,7 @@ class RoomModule(BaseModule):
     async def config_get(self, body):
         config = await database_sync_to_async(serialize_room_config)(self.room)
         if not await self._can_edit_full_room_config():
-            config = strip_webhook_secrets(config)
+            config = redact_unmoderated_modules(config, await self._moderated_module_types())
         await self.consumer.send_success(config)
 
     async def _can_edit_full_room_config(self):
@@ -827,7 +827,7 @@ class RoomModule(BaseModule):
                 )
                 new = await database_sync_to_async(serialize_room_config)(self.room)
             if not full_edit:
-                new = strip_webhook_secrets(new)
+                new = redact_unmoderated_modules(new, await self._moderated_module_types())
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:

@@ -51,13 +51,17 @@ MODERATED_CALL_MODULE_PERMISSIONS = {
 }
 
 
-def strip_webhook_secrets(room_config):
-    """Return a copy of a serialized room config without chat webhook secrets."""
+def redact_unmoderated_modules(room_config, moderated_types):
+    """
+    Return a copy of a serialized room config where only ``moderated_types`` keep their settings.
+
+    The other modules stay in the list with an empty config, so clients still see which modules
+    exist but never receive their settings (passwords, secrets, webhook URLs).
+    """
     room_config = copy.deepcopy(room_config)
     for module in room_config.get("module_config") or []:
-        config = module.get("config") if isinstance(module, dict) else None
-        if isinstance(config, dict):
-            config.pop("webhook_hmac_secret", None)
+        if isinstance(module, dict) and module.get("type") not in moderated_types:
+            module["config"] = {}
     return room_config
 
 
