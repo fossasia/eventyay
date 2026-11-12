@@ -167,10 +167,13 @@ def test_team_form_allows_no_tracks_when_team_events_have_none(
 def test_team_form_reports_all_tracks_toggle_as_track_change(organizer, event_with_tracks):
     with scopes_disabled():
         track = event_with_tracks.tracks.first()
-        team = Team.objects.create(organizer=organizer, name='Reviewers', is_reviewer=True, all_events=True)
+        # Keep "can change teams" so the form's last-admin-team safety check passes.
+        team = Team.objects.create(
+            organizer=organizer, name='Reviewers', is_reviewer=True, all_events=True, can_change_teams=True
+        )
         team.limit_tracks.add(track)
     form = TeamForm(
-        _reviewer_team_data(all_tracks=True, limit_tracks=[str(track.pk)]),
+        _reviewer_team_data(all_tracks=True, can_change_teams=True, limit_tracks=[str(track.pk)]),
         organizer=organizer,
         instance=team,
     )
