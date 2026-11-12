@@ -35,8 +35,17 @@ from eventyay.base.models.product import (
 from eventyay.base.services.cart import (
     CartError,
     CartManager,
+    VOUCHER_RATE_LIMIT_BUCKET,
+    VOUCHER_RATE_LIMIT_MAX,
+    VOUCHER_RATE_LIMIT_WINDOW,
+    _increment_voucher_counter,
     error_messages,
+    is_voucher_rate_limited,
+    record_voucher_failure,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
     update_tax_rates,
+    _voucher_bucket_keys,
 )
 from tests.testutils.scope import classscope
 from tests.testutils.sessions import get_cart_session_key
@@ -2254,7 +2263,7 @@ class CartTest(CartTestMixin, TestCase):
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {
                 'item_%d' % self.ticket.id: '1',
-                '_voucher_code': 'A' * 256,
+                '_voucher_code': ' ' * 256 + 'A',
             },
             follow=True,
         )
@@ -2272,12 +2281,6 @@ class CartTest(CartTestMixin, TestCase):
         }
     )
     def test_voucher_rate_limit_counts_failures(self):
-        from eventyay.base.services.cart import (
-            VOUCHER_RATE_LIMIT_MAX,
-            is_voucher_rate_limited,
-            record_voucher_failure,
-        )
-
         cache.clear()
         request = RequestFactory().get('/')
         request.event = self.event
@@ -2298,15 +2301,20 @@ class CartTest(CartTestMixin, TestCase):
             }
         }
     )
-    def test_voucher_rate_limit_refreshes_expiry_after_increment(self):
-        from eventyay.base.services.cart import VOUCHER_RATE_LIMIT_WINDOW, _increment_voucher_counter
-
+    def test_voucher_rate_limit_keeps_original_expiry_after_increment(self):
         cache.clear()
-        key = 'voucher-rate-limit-touch-key'
-        cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW)
-        with patch.object(cache, 'incr', return_value=2), patch.object(cache, 'touch') as touch:
-            self.assertEqual(_increment_voucher_counter(key), 2)
-        touch.assert_called_once_with(key, timeout=VOUCHER_RATE_LIMIT_WINDOW)
+        key = 'voucher-rate-limit-key'
+        bucket_key = _voucher_bucket_keys(key)[0]
+        cache.add(bucket_key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW + VOUCHER_RATE_LIMIT_BUCKET)
+        with (
+            patch.object(cache, 'incr', return_value=2),
+            patch.object(cache, 'get_many', return_value={bucket_key: 2}),
+            patch.object(cache, 'touch') as touch,
+        ):
+            count, actual_bucket = _increment_voucher_counter(key)
+        self.assertEqual(count, 2)
+        self.assertEqual(actual_bucket, bucket_key)
+        touch.assert_not_called()
         cache.clear()
 
     @override_settings(
@@ -2318,8 +2326,6 @@ class CartTest(CartTestMixin, TestCase):
         }
     )
     def test_voucher_rate_limit_releases_successful_reservation(self):
-        from eventyay.base.services.cart import release_voucher_attempt, reserve_voucher_attempt
-
         cache.clear()
         request = RequestFactory().get('/')
         request.event = self.event
@@ -2327,7 +2333,7 @@ class CartTest(CartTestMixin, TestCase):
         key, allowed = reserve_voucher_attempt(request)
         self.assertTrue(allowed)
         release_voucher_attempt(key)
-        self.assertEqual(cache.get(key), 0)
+        self.assertIsNone(cache.get(key))
         cache.clear()
 
     def test_voucher_quota_empty(self):

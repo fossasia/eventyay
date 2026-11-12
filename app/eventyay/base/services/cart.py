@@ -1,5 +1,8 @@
 import hashlib
 import logging
+import math
+import time as time_module
+import uuid
 from collections import Counter, defaultdict, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
@@ -17,6 +20,7 @@ from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
 from django.utils.translation import pgettext_lazy
 from django_scopes import scopes_disabled
+from redis.exceptions import RedisError
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
@@ -50,7 +54,6 @@ from eventyay.base.signals import validate_cart_addons
 from eventyay.base.templatetags.rich_text import rich_text
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.celery_app import app
-from eventyay.helpers.http import get_client_ip
 from eventyay.presale.signals import (
     checkout_confirm_messages,
     fee_calculation_for_cart,
@@ -164,10 +167,13 @@ error_messages = {
 MAX_VOUCHER_CODE_LENGTH = Voucher._meta.get_field('code').max_length
 VOUCHER_RATE_LIMIT_MAX = getattr(settings, 'VOUCHER_RATE_LIMIT_MAX', 10)
 VOUCHER_RATE_LIMIT_WINDOW = getattr(settings, 'VOUCHER_RATE_LIMIT_WINDOW', 300)
+# shortcut: one-second buckets approximate a sliding window without a new limiter dependency.
+VOUCHER_RATE_LIMIT_BUCKET = getattr(settings, 'VOUCHER_RATE_LIMIT_BUCKET', 1)
 
 
 def _voucher_rate_limit_key(request):
-    client_ip = get_client_ip(request)
+    # Use the socket peer; forwarded headers are only safe after proxy sanitisation.
+    client_ip = request.META.get('REMOTE_ADDR')
     event = getattr(request, 'event', None)
     if not client_ip or not event:
         return None
@@ -180,26 +186,38 @@ def is_voucher_rate_limited(request):
     if not key:
         return False
     try:
-        return int(cache.get(key, 0) or 0) > VOUCHER_RATE_LIMIT_MAX
-    except Exception:
+        return _voucher_rate_limit_count(key) > VOUCHER_RATE_LIMIT_MAX
+    except (RedisError, TimeoutError, ValueError, ConnectionError):
         logger.exception('Could not read voucher rate limit; allowing request')
         return False
 
 
-def _increment_voucher_counter(key):
-    """Increment a failed-voucher counter while keeping its expiry window."""
+def _voucher_bucket_keys(key, timestamp=None):
+    """Return the rolling-window bucket keys for a limiter key."""
+    bucket = VOUCHER_RATE_LIMIT_BUCKET
+    current = int((time_module.time() if timestamp is None else timestamp) // bucket)
+    count = math.ceil(VOUCHER_RATE_LIMIT_WINDOW / bucket)
+    return [f'{key}:{current - offset}' for offset in range(count)]
 
-    if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
-        return 1
-    try:
-        count = cache.incr(key)
-    except ValueError:
-        if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
-            return 1
-        count = cache.incr(key)
-    if not cache.touch(key, timeout=VOUCHER_RATE_LIMIT_WINDOW):
-        cache.add(key, count, timeout=VOUCHER_RATE_LIMIT_WINDOW)
-    return count
+
+def _voucher_rate_limit_count(key):
+    return sum(int(value or 0) for value in cache.get_many(_voucher_bucket_keys(key)).values())
+
+
+def _increment_voucher_counter(key):
+    """Increment a failed-voucher counter in a rolling window."""
+    bucket_key = _voucher_bucket_keys(key)[0]
+    timeout = VOUCHER_RATE_LIMIT_WINDOW + VOUCHER_RATE_LIMIT_BUCKET
+    if cache.add(bucket_key, 1, timeout=timeout):
+        return _voucher_rate_limit_count(key), bucket_key
+    for _ in range(3):
+        try:
+            cache.incr(bucket_key)
+            return _voucher_rate_limit_count(key), bucket_key
+        except ValueError:
+            if cache.add(bucket_key, 1, timeout=timeout):
+                return _voucher_rate_limit_count(key), bucket_key
+    raise ValueError('voucher rate-limit bucket expired during increment')
 
 
 def record_voucher_failure(request):
@@ -208,7 +226,7 @@ def record_voucher_failure(request):
         return
     try:
         _increment_voucher_counter(key)
-    except Exception:
+    except (RedisError, TimeoutError, ValueError, ConnectionError):
         logger.exception('Could not record voucher rate limit; allowing request')
 
 
@@ -218,13 +236,22 @@ def reserve_voucher_attempt(request):
     key = _voucher_rate_limit_key(request)
     if not key:
         return None, True
-    if _increment_voucher_counter(key) > VOUCHER_RATE_LIMIT_MAX:
-        try:
-            cache.decr(key)
-        except ValueError:
-            pass
-        return key, False
-    return key, True
+    try:
+        count, bucket_key = _increment_voucher_counter(key)
+        if count > VOUCHER_RATE_LIMIT_MAX:
+            try:
+                cache.decr(bucket_key)
+            except (RedisError, TimeoutError, ValueError, ConnectionError):
+                pass
+            return key, False
+        reservation_key = f'{key}:reservation:{uuid.uuid4().hex}'
+        if not cache.add(reservation_key, bucket_key, timeout=VOUCHER_RATE_LIMIT_WINDOW):
+            cache.decr(bucket_key)
+            return None, True
+        return reservation_key, True
+    except (RedisError, TimeoutError, ValueError, ConnectionError):
+        logger.exception('Could not reserve voucher rate limit; allowing request')
+        return None, True
 
 
 def release_voucher_attempt(key):
@@ -233,9 +260,13 @@ def release_voucher_attempt(key):
     if not key:
         return
     try:
-        cache.decr(key)
-    except ValueError:
-        pass
+        counter_key = cache.get(key)
+        if not counter_key:
+            return
+        if cache.delete(key):
+            cache.decr(counter_key)
+    except (RedisError, TimeoutError, ValueError, ConnectionError):
+        logger.exception('Could not release voucher rate limit; allowing request')
 
 
 class CartManager:
@@ -721,9 +752,11 @@ class CartManager:
     def apply_voucher(self, voucher_code: str):
         if self._operations:
             raise CartError('Applying a voucher to the whole cart should not be combined with other operations.')
-        voucher_code = voucher_code.strip()
+        if not isinstance(voucher_code, str):
+            raise CartError(error_messages['voucher_invalid'])
         if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
             raise CartError(error_messages['voucher_invalid_length'])
+        voucher_code = voucher_code.strip()
         try:
             voucher = self.event.vouchers.get(code__iexact=voucher_code)
         except Voucher.DoesNotExist:
@@ -775,6 +808,8 @@ class CartManager:
         self._voucher_use_diff += voucher_use_diff
 
     def add_new_products(self, products: List[dict]):
+        if not all(isinstance(product, dict) for product in products):
+            raise CartError(error_messages['voucher_invalid'])
         # Fetch products from the database
         self._update_products_cache([i['product'] for i in products], [i['variation'] for i in products])
         self._update_subevents_cache([i['subevent'] for i in products if i.get('subevent')])
@@ -817,9 +852,11 @@ class CartManager:
             voucher = None
 
             if i.get('voucher'):
-                voucher_code = i['voucher'].strip()
-                if len(voucher_code) > MAX_VOUCHER_CODE_LENGTH:
+                if not isinstance(i['voucher'], str):
+                    raise CartError(error_messages['voucher_invalid'])
+                if len(i['voucher']) > MAX_VOUCHER_CODE_LENGTH:
                     raise CartError(error_messages['voucher_invalid_length'])
+                voucher_code = i['voucher'].strip()
                 try:
                     voucher = self.event.vouchers.get(code__iexact=voucher_code)
                 except Voucher.DoesNotExist:
@@ -1701,7 +1738,6 @@ def add_products_to_cart(
                     result = {'success': True}
                 release_voucher_attempt(voucher_attempt_key)
                 return result
-                    
             except LockTimeoutException:
                 self.retry()
         except (MaxRetriesExceededError, LockTimeoutException):

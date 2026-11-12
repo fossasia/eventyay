@@ -32,7 +32,13 @@ from lxml import html
 from eventyay.base.i18n import language
 from eventyay.base.js_catalog_template import js_catalog_template
 from eventyay.base.models import CartPosition, Event, Quota, SubEvent, Voucher
-from eventyay.base.services.cart import MAX_VOUCHER_CODE_LENGTH, error_messages
+from eventyay.base.services.cart import (
+    MAX_VOUCHER_CODE_LENGTH,
+    VOUCHER_RATE_LIMIT_WINDOW,
+    error_messages,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
+)
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.rich_text import rich_text
 from eventyay.helpers.daterange import daterange
@@ -313,10 +319,12 @@ class WidgetAPIProductList(EventListMixin, View):
             pgettext('widget', 'powered by eventyay')
         )
 
-    def response(self, data):
+    def response(self, data, status=200, retry_after=None):
         self.post_process(data)
-        resp = JsonResponse(data)
+        resp = JsonResponse(data, status=status)
         resp['Access-Control-Allow-Origin'] = '*'
+        if retry_after is not None:
+            resp['Retry-After'] = str(retry_after)
         return resp
 
     def get(self, request, *args, **kwargs):
@@ -691,6 +699,15 @@ class WidgetAPIProductList(EventListMixin, View):
         return self.response(data)
 
     def _get_event_view(self, request, **kwargs):
+        self._voucher_attempt_key = None
+        if request.GET.get('voucher'):
+            self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            if not allowed:
+                return self.response(
+                    {'error': error_messages['voucher_rate_limited']},
+                    status=429,
+                    retry_after=VOUCHER_RATE_LIMIT_WINDOW,
+                )
         cache_key = ':'.join(
             [
                 'widget.py',
@@ -703,7 +720,7 @@ class WidgetAPIProductList(EventListMixin, View):
                 request.sales_channel.identifier,
             ]
         )
-        if 'cart_id' not in request.GET:
+        if 'cart_id' not in request.GET and 'voucher' not in request.GET:
             cached_data = cache.get(cache_key)
             if cached_data:
                 return self.response(cached_data)
@@ -785,6 +802,9 @@ class WidgetAPIProductList(EventListMixin, View):
                     if v_avail < 1:
                         data['error'] = error_messages['voucher_redeemed']
                         fail = True
+                    if not fail:
+                        release_voucher_attempt(self._voucher_attempt_key)
+                        self._voucher_attempt_key = None
                 except Voucher.DoesNotExist:
                     data['error'] = error_messages['voucher_invalid']
                     fail = True
@@ -805,7 +825,7 @@ class WidgetAPIProductList(EventListMixin, View):
             channel=request.sales_channel.identifier,
         )
 
-        if 'cart_id' not in request.GET:
+        if 'cart_id' not in request.GET and 'voucher' not in request.GET:
             cache.set(cache_key, data, 10)
             # These pages are cached for a really short duration – this should make them pretty accurate with
             # regards to availability display, while still providing some protection against burst traffic.
