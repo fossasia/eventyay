@@ -92,19 +92,17 @@
     align-items: center;
 }
 
-/* Same-size tile for every section icon, centred on the heading text */
+/* Same-size box for every section icon, centred on the heading text */
 .team-permissions-legend-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 28px;
-    width: 28px;
-    height: 28px;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
     margin-right: 10px;
-    border-radius: 6px;
-    background: #eaf1fa;
     color: #3b73b9;
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1;
 }
 
