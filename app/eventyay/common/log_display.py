@@ -21,7 +21,16 @@ from eventyay.base.models import (
     SubmissionStates,
     TalkQuestion,
 )
-from eventyay.base.signals import activitylog_display, activitylog_object_link
+from eventyay.base.signals import (
+    activitylog_display,
+    activitylog_object_link,
+    logentry_display,
+    logentry_object_link,
+)
+from eventyay.common.signals import (
+    activitylog_display as common_activitylog_display,
+    activitylog_object_link as common_activitylog_object_link,
+)
 from eventyay.common.text.phrases import phrases
 
 # Usually, we don't have to include the object name in activity log
@@ -221,14 +230,21 @@ LOG_NAMES = {
 
 
 @receiver(activitylog_display)
-def default_activitylog_display(sender: Event, activitylog: LogEntry, **kwargs):
-    if templated_entry := TEMPLATE_LOG_NAMES.get(activitylog.action_type):
+@receiver(logentry_display)
+@receiver(common_activitylog_display)
+def default_activitylog_display(
+    sender: Event, activitylog: LogEntry = None, logentry: LogEntry = None, **kwargs
+):
+    log_entry = activitylog or logentry
+    if log_entry is None:
+        return None
+    if templated_entry := TEMPLATE_LOG_NAMES.get(log_entry.action_type):
         message = str(templated_entry)
         # Check if all placeholders are present in activitylog.data
         placeholders = {v[1] for v in string.Formatter().parse(message) if v[1]}
-        if placeholders <= set(activitylog.json_data.keys()):
-            return message.format(**activitylog.json_data)
-    action_type = LOG_ALIASES.get(activitylog.action_type, activitylog.action_type)
+        if placeholders <= set(log_entry.json_data.keys()):
+            return message.format(**log_entry.json_data)
+    action_type = LOG_ALIASES.get(log_entry.action_type, log_entry.action_type)
     return LOG_NAMES.get(action_type)
 
 
@@ -243,58 +259,63 @@ def _submission_label_text(submission: Submission) -> str:
 
 
 @receiver(activitylog_object_link)
-def default_activitylog_object_link(sender: Event, activitylog: LogEntry, **kwargs):
-    if not activitylog.content_object:
+@receiver(logentry_object_link)
+@receiver(common_activitylog_object_link)
+def default_activitylog_object_link(
+    sender: Event, activitylog: LogEntry = None, logentry: LogEntry = None, **kwargs
+):
+    log_entry = activitylog or logentry
+    if not log_entry.content_object:
         return
     url = ''
     text = ''
     link_text = ''
-    if isinstance(activitylog.content_object, Submission):
-        url = activitylog.content_object.orga_urls.base
-        link_text = escape(activitylog.content_object.title)
-        text = _submission_label_text(activitylog.content_object)
-    elif isinstance(activitylog.content_object, SubmissionComment):
-        url = activitylog.content_object.submission.orga_urls.comments + f'#comment-{activitylog.content_object.pk}'
-        link_text = escape(activitylog.content_object.submission.title)
-        text = _submission_label_text(activitylog.content_object.submission)
-    elif isinstance(activitylog.content_object, Review):
-        url = activitylog.content_object.submission.orga_urls.reviews
-        link_text = escape(activitylog.content_object.submission.title)
-        text = _submission_label_text(activitylog.content_object.submission)
-    elif isinstance(activitylog.content_object, TalkQuestion):
-        url = activitylog.content_object.urls.base
-        link_text = escape(activitylog.content_object.question)
+    if isinstance(log_entry.content_object, Submission):
+        url = log_entry.content_object.orga_urls.base
+        link_text = escape(log_entry.content_object.title)
+        text = _submission_label_text(log_entry.content_object)
+    elif isinstance(log_entry.content_object, SubmissionComment):
+        url = log_entry.content_object.submission.orga_urls.comments + f'#comment-{log_entry.content_object.pk}'
+        link_text = escape(log_entry.content_object.submission.title)
+        text = _submission_label_text(log_entry.content_object.submission)
+    elif isinstance(log_entry.content_object, Review):
+        url = log_entry.content_object.submission.orga_urls.reviews
+        link_text = escape(log_entry.content_object.submission.title)
+        text = _submission_label_text(log_entry.content_object.submission)
+    elif isinstance(log_entry.content_object, TalkQuestion):
+        url = log_entry.content_object.urls.base
+        link_text = escape(log_entry.content_object.question)
         text = _('Custom field')
-    elif isinstance(activitylog.content_object, AnswerOption):
-        url = activitylog.content_object.question.urls.base
-        link_text = escape(activitylog.content_object.question.question)
+    elif isinstance(log_entry.content_object, AnswerOption):
+        url = log_entry.content_object.question.urls.base
+        link_text = escape(log_entry.content_object.question.question)
         text = _('Custom field')
-    elif isinstance(activitylog.content_object, Answer):
-        if activitylog.content_object.submission:
-            url = activitylog.content_object.submission.orga_urls.base
+    elif isinstance(log_entry.content_object, Answer):
+        if log_entry.content_object.submission:
+            url = log_entry.content_object.submission.orga_urls.base
         else:
-            url = activitylog.content_object.question.urls.base
-        link_text = escape(activitylog.content_object.question.question)
+            url = log_entry.content_object.question.urls.base
+        link_text = escape(log_entry.content_object.question.question)
         text = _('Response to custom field')
-    elif isinstance(activitylog.content_object, CfP):
-        url = activitylog.content_object.urls.text
+    elif isinstance(log_entry.content_object, CfP):
+        url = log_entry.content_object.urls.text
         link_text = _('Call for Proposals')
-    elif isinstance(activitylog.content_object, MailTemplate):
-        url = activitylog.content_object.urls.base
+    elif isinstance(log_entry.content_object, MailTemplate):
+        url = log_entry.content_object.urls.base
         text = _('Mail template')
-        link_text = escape(activitylog.content_object.subject)
-    elif isinstance(activitylog.content_object, QueuedMail):
-        url = activitylog.content_object.urls.base
+        link_text = escape(log_entry.content_object.subject)
+    elif isinstance(log_entry.content_object, QueuedMail):
+        url = log_entry.content_object.urls.base
         text = _('Email')
-        link_text = escape(activitylog.content_object.subject)
-    elif isinstance(activitylog.content_object, SpeakerProfile):
-        url = activitylog.content_object.orga_urls.base
+        link_text = escape(log_entry.content_object.subject)
+    elif isinstance(log_entry.content_object, SpeakerProfile):
+        url = log_entry.content_object.orga_urls.base
         text = _('Speaker profile')
-        link_text = escape(activitylog.content_object.user.get_display_name())
-    elif isinstance(activitylog.content_object, Event):
-        url = activitylog.content_object.orga_urls.base
+        link_text = escape(log_entry.content_object.user.get_display_name())
+    elif isinstance(log_entry.content_object, Event):
+        url = log_entry.content_object.orga_urls.base
         text = _('Event')
-        link_text = escape(activitylog.content_object.name)
+        link_text = escape(log_entry.content_object.name)
     if url:
         if not link_text:
             link_text = url
