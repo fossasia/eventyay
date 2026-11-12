@@ -5,10 +5,10 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
-from django.views.generic import CreateView, DeleteView, TemplateView, UpdateView, View
+from django.views.generic import CreateView, DeleteView, UpdateView, View
 
 from eventyay.base.forms.organizer_request import OrganizerRequestQuestionForm
-from eventyay.base.models import OrganizerRequestFieldSetting, OrganizerRequestQuestion
+from eventyay.base.models.organizer_request import OrganizerRequestFieldSetting, OrganizerRequestQuestion
 from eventyay.base.organizer_request_fields import (
     REQUEST_FIELDS,
     next_form_position,
@@ -20,15 +20,13 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
 
-class OrganizerRequestQuestionList(AdministratorPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/admin/organizer_requests/questions.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['field_rows'] = organiser_form_rows()
-        context['field_order'] = ','.join(row['sort_id'] for row in context['field_rows'])
-        context['organizer_request_enabled'] = organizer_request_enabled()
-        return context
+def organizer_form_tab_context() -> dict:
+    field_rows = organiser_form_rows()
+    return {
+        'field_rows': field_rows,
+        'field_order': ','.join(row['sort_id'] for row in field_rows),
+        'organizer_request_enabled': organizer_request_enabled(),
+    }
 
 
 class OrganizerRequestFeatureToggle(AdministratorPermissionRequiredMixin, View):
@@ -37,7 +35,7 @@ class OrganizerRequestFeatureToggle(AdministratorPermissionRequiredMixin, View):
         GlobalSettingsObject().settings.set('organizer_request_enabled', enabled)
         messages.success(
             request,
-            _('The public organiser request form has been {state}.').format(
+            _('The public organizer request form has been {state}.').format(
                 state=_('enabled') if enabled else _('disabled')
             ),
         )
