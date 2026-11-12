@@ -1,1 +1,12 @@
-{}
+{
+  "+ Add Stream Schedule": "+ Lägg till sändningsschema",
+  "inactive": "inaktiv",
+  "Downloads": "Hämtningar",
+  "Reject": "Neka",
+  "Muted": "Tystad",
+  "Question": "Fråga",
+  "silence": "tystnad",
+  "continue": "fortsätt",
+  "https://youtube.com/watch?v=...": "https://youtube.com/watch?v=...",
+  "create": "skapa"
+}
