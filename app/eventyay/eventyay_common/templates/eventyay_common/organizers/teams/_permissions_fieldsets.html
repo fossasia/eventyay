@@ -69,6 +69,11 @@
                         {% translate "Please select at least one track, or grant access to all tracks." %}
                     </p>
                     <p class="text-muted team-track-summary" data-track-summary aria-live="polite"></p>
+                    <div class="team-track-search-row" hidden>
+                        <label class="sr-only" for="track-search-{{ form.prefix }}">{% translate "Filter tracks" %}</label>
+                        <input type="search" id="track-search-{{ form.prefix }}" class="form-control team-track-search"
+                               placeholder="{% translate 'Filter tracks…' %}" autocomplete="off">
+                    </div>
                     <div class="scrolling-multiple-choice scrolling-multiple-choice-large team-track-list" role="group"
                          aria-label="{% translate "Tracks this team can access" %}">
                         <small class="team-track-bulk-actions">
@@ -92,7 +97,7 @@
                                 </small>
                             </div>
                             {% for track in event_data.tracks %}
-                            <div class="checkbox">
+                            <div class="checkbox team-track-item" data-track-name="{{ track.name|lower }}">
                                 <label>
                                     <input type="checkbox" name="{{ form.limit_tracks.html_name }}" value="{{ track.id }}"{% if track.id in form.selected_track_ids %} checked{% endif %}>
                                     {% if track.color %}<span class="team-track-color" style="background-color: {{ track.color }}" aria-hidden="true"></span>{% endif %}
@@ -103,6 +108,9 @@
                         </div>
                         {% endif %}
                         {% endfor %}
+                        <p class="text-muted team-track-search-empty" hidden>
+                            {% translate "No tracks match your filter." %}
+                        </p>
                         <p class="text-muted team-track-out-of-scope" hidden>
                             {% translate "None of the events this team can access have tracks." %}
                         </p>

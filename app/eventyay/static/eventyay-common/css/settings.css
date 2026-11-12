@@ -221,6 +221,10 @@
     margin: 0 0 6px;
 }
 
+.team-track-search-row {
+    margin-bottom: 8px;
+}
+
 .team-track-bulk-actions {
     display: block;
     margin-bottom: 6px;

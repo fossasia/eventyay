@@ -10,11 +10,13 @@
  *   input#<all tracks id>
  *   .team-track-limits[data-all-tracks-id][data-all-events-id][data-limit-events-name]
  *     .team-track-empty-warning
+ *     .team-track-search-row > input.team-track-search  (shown from 8 tracks)
  *     [data-track-select="all|none"]            (whole list)
  *     .team-track-group[data-event-id]
  *       [data-selection-count]
  *       [data-track-select="all|none"]          (this event only)
- *       input[type="checkbox"]
+ *       .team-track-item[data-track-name] input[type="checkbox"]
+ *     .team-track-search-empty
  *     .team-track-out-of-scope
  */
 
@@ -67,11 +69,42 @@ function initTrackLimits(container) {
     const outOfScope = container.querySelector('.team-track-out-of-scope');
     const warning = container.querySelector('.team-track-empty-warning');
     const summary = container.querySelector('[data-track-summary]');
+    const search = container.querySelector('.team-track-search');
+    const searchRow = container.querySelector('.team-track-search-row');
+    const noMatch = container.querySelector('.team-track-search-empty');
+    const totalTracks = groups.reduce(function (sum, group) {
+        return sum + trackBoxes(group).length;
+    }, 0);
+
+    // Groups for events the team can access, whether or not the filter hides them.
+    function inScopeGroups() {
+        return groups.filter(function (group) {
+            return group.dataset.inScope !== 'false';
+        });
+    }
 
     function visibleGroups() {
         return groups.filter(function (group) {
             return !group.hidden;
         });
+    }
+
+    function applyFilter() {
+        const needle = search ? search.value.trim().toLowerCase() : '';
+        groups.forEach(function (group) {
+            let matches = 0;
+            group.querySelectorAll('.team-track-item').forEach(function (item) {
+                const match = !needle || (item.dataset.trackName || '').includes(needle);
+                item.hidden = !match;
+                if (match) {
+                    matches += 1;
+                }
+            });
+            group.hidden = group.dataset.inScope === 'false' || matches === 0;
+        });
+        if (noMatch) {
+            noMatch.hidden = !needle || inScopeGroups().length === 0 || visibleGroups().length > 0;
+        }
     }
 
     function accessibleEventIds() {
@@ -93,7 +126,7 @@ function initTrackLimits(container) {
         if (!summary) {
             return;
         }
-        const shown = visibleGroups();
+        const shown = inScopeGroups();
         const boxes = shown.flatMap(trackBoxes);
         const selected = boxes.filter(function (box) {
             return box.checked;
@@ -123,11 +156,16 @@ function initTrackLimits(container) {
         container.hidden = Boolean(allTracks && allTracks.checked);
         const eventIds = accessibleEventIds();
         groups.forEach(function (group) {
-            group.hidden = eventIds !== null && !eventIds.has(group.dataset.eventId);
+            const inScope = eventIds === null || eventIds.has(group.dataset.eventId);
+            group.dataset.inScope = String(inScope);
             updateCount(group);
         });
+        applyFilter();
         if (outOfScope) {
-            outOfScope.hidden = visibleGroups().length > 0;
+            outOfScope.hidden = inScopeGroups().length > 0;
+        }
+        if (searchRow) {
+            searchRow.hidden = totalTracks < 8;
         }
         if (warning) {
             warning.hidden = true;
@@ -145,7 +183,8 @@ function initTrackLimits(container) {
         const targets = ownGroup ? [ownGroup] : visibleGroups();
         const checked = link.dataset.trackSelect === 'all';
         targets.forEach(function (group) {
-            trackBoxes(group).forEach(function (box) {
+            // Like the per-event filter before, All / None only touch the tracks you can see.
+            group.querySelectorAll('.team-track-item:not([hidden]) input[type="checkbox"]').forEach(function (box) {
                 box.checked = checked;
             });
             updateCount(group);
@@ -170,18 +209,28 @@ function initTrackLimits(container) {
         }
     });
 
+    if (search) {
+        search.addEventListener('input', applyFilter);
+        // Enter in the filter should not submit the whole team form.
+        search.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+            }
+        });
+    }
+
     if (form) {
         form.addEventListener('submit', function (event) {
             const restricting = allTracks && !allTracks.checked && container.offsetParent !== null;
             if (!restricting) {
                 return;
             }
-            const anySelected = visibleGroups().some(function (group) {
+            const anySelected = inScopeGroups().some(function (group) {
                 return trackBoxes(group).some(function (box) {
                     return box.checked;
                 });
             });
-            if (!anySelected && visibleGroups().length > 0) {
+            if (!anySelected && inScopeGroups().length > 0) {
                 event.preventDefault();
                 if (warning) {
                     warning.hidden = false;
