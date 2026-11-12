@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.core.cache import caches
 from django.core.cache.backends.base import InvalidCacheBackendError
 from django.db.models import Q
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import translation
 from django.utils.crypto import get_random_string
@@ -373,9 +373,39 @@ class CartApplyVoucher(EventViewMixin, CartActionMixin, AsyncAction, View):
 
     def post(self, request, *args, **kwargs):
         if 'voucher' in request.POST:
+            voucher_code = request.POST.get('voucher', '').strip()
+            # Reject oversized voucher codes before any processing
+            if len(voucher_code) > 255:
+                if 'ajax' in request.GET or 'ajax' in request.POST:
+                    return JsonResponse(
+                        {'error': 'Invalid voucher code.'},
+                        status=429,
+                    )
+                return HttpResponse(
+                    'Invalid voucher code.',
+                    status=429,
+                    headers={'Retry-After': '300'},
+                )
+
+            # Rate limit: 10 failed attempts per IP and event within 5 minutes
+            cache = caches['default']
+            rate_limit_key = f'voucher_cart_failures:{request.event.pk}:{get_client_ip(request)}'
+            failures = cache.get(rate_limit_key, 0)
+            if failures >= 10:
+                if 'ajax' in request.GET or 'ajax' in request.POST:
+                    return JsonResponse(
+                        {'error': 'Too many attempts. Try again later.'},
+                        status=429,
+                    )
+                return HttpResponse(
+                    'Too many attempts. Try again later.',
+                    status=429,
+                    headers={'Retry-After': '300'},
+                )
+
             return self.do(
                 self.request.event.id,
-                request.POST.get('voucher'),
+                voucher_code,
                 get_or_create_cart_id(self.request),
                 translation.get_language(),
                 request.sales_channel.identifier,
@@ -563,6 +593,16 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                 return redirect(self.get_error_url())
 
 
+def get_client_ip(request):
+    """Get client IP from request, handling proxies."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip or 'unknown'
+
+
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
@@ -630,8 +670,30 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
 
         if v:
             v = v.strip()
+
+            # Reject oversized voucher codes before any database lookup
+            if len(v) > 255:
+                return HttpResponse(
+                    error_messages.get('voucher_invalid', 'Invalid voucher code.'),
+                    status=429,
+                    headers={'Retry-After': '300'},
+                )
+
+            # Rate limit: 10 failed attempts per IP and event within 5 minutes
+            cache = caches['default']
+            rate_limit_key = f'voucher_redeem_failures:{request.event.pk}:{get_client_ip(request)}'
+            failures = cache.get(rate_limit_key, 0)
+            if failures >= 10:
+                return HttpResponse(
+                    error_messages.get('voucher_invalid', 'Too many attempts. Try again later.'),
+                    status=429,
+                    headers={'Retry-After': '300'},
+                )
+
             try:
                 self.voucher = Voucher.objects.get(code__iexact=v, event=request.event)
+                # Successful redemption - clear failure count
+                cache.delete(rate_limit_key)
                 if self.voucher.redeemed >= self.voucher.max_usages:
                     err = error_messages['voucher_redeemed']
                 if self.voucher.valid_until is not None and self.voucher.valid_until < now():
@@ -648,6 +710,9 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
                 if v_avail < 1 and not err:
                     err = error_messages['voucher_redeemed_cart'] % (GlobalSettingsObject().settings.get('reservation_time', default=30) or 30)
             except Voucher.DoesNotExist:
+                # Increment failure count for rate limiting
+                cache.incr(rate_limit_key)
+                cache.expire(rate_limit_key, 300)
                 if self.request.event.organizer.accepted_gift_cards.filter(
                     secret__iexact=request.GET.get('voucher')
                 ).exists():
