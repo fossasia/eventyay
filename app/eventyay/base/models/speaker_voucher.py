@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Count, F, IntegerField, OuterRef, Q, Subquery
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -11,15 +11,17 @@ from eventyay.base.models.vouchers import Voucher
 
 class SpeakerVoucherStatus(models.TextChoices):
     NOT_SENT = 'not_sent', _('Not sent')
+    SENDING = 'sending', _('Sending')
     SENT = 'sent', _('Sent — not claimed')
     CLAIMED = 'claimed', _('Claimed')
 
 
 def usable_batch_vouchers(event, voucher_tag: str):
-    """Unused, unexpired vouchers in the given batch that are not yet assigned.
+    """Single-use, never-redeemed, unexpired vouchers in the batch that are free to assign.
 
-    Codes reserved in an active cart are excluded, matching RedeemView /
-    CartManager availability so we never email a code that redemption would reject.
+    Speaker voucher emails say the code is personal and redeemable once, so only
+    ``max_usages=1`` and ``redeemed=0`` codes are eligible. Codes reserved in an
+    active cart are excluded, matching RedeemView / CartManager availability.
     """
     if not voucher_tag:
         return Voucher.objects.none()
@@ -41,6 +43,8 @@ def usable_batch_vouchers(event, voucher_tag: str):
         Voucher.objects.filter(
             event=event,
             tag=voucher_tag,
+            max_usages=1,
+            redeemed=0,
         )
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=now()))
         .filter(speaker_voucher_link__isnull=True)
@@ -50,7 +54,7 @@ def usable_batch_vouchers(event, voucher_tag: str):
                 0,
             )
         )
-        .filter(redeemed__lt=F('max_usages') - F('cart_reserved'))
+        .filter(cart_reserved=0)
     )
 
 

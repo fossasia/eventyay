@@ -28,6 +28,7 @@ from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.speaker_vouchers import (
     allocate_and_send_vouchers,
+    assignment_needs_replacement,
     profiles_needing_voucher,
     speaker_summary_counts,
     voucher_redeem_url,
@@ -811,8 +812,11 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
             new_needed = 0
             for profile in recipients:
                 try:
-                    profile.voucher_assignment
+                    assignment = profile.voucher_assignment
                 except SpeakerVoucher.DoesNotExist:
+                    new_needed += 1
+                    continue
+                if assignment_needs_replacement(assignment):
                     new_needed += 1
             remaining = settings_obj.batch_remaining_count() if settings_obj.voucher_tag else 0
         return len(recipients), new_needed, remaining, max(remaining - new_needed, 0)

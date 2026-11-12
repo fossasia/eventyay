@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from datetime import timedelta
 from typing import TypedDict
 from urllib.parse import urlencode
 
@@ -20,6 +21,9 @@ from eventyay.common.exceptions import SendMailException
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 logger = logging.getLogger(__name__)
+
+# If a worker dies after claiming SENDING, allow another send to reclaim it.
+SENDING_STALE_AFTER = timedelta(minutes=15)
 
 
 class SendResult(TypedDict):
@@ -53,6 +57,12 @@ def _has_email(profile: SpeakerProfile) -> bool:
     return bool(user and (user.email or '').strip())
 
 
+def assignment_needs_replacement(assignment: SpeakerVoucher) -> bool:
+    """True when the linked ticket voucher can no longer be emailed/redeemed."""
+    voucher = assignment.voucher
+    return voucher.valid_until is not None and voucher.valid_until < now()
+
+
 def eligible_speaker_profiles(event: Event):
     """Speakers with at least one confirmed session for this event."""
     return (
@@ -74,9 +84,13 @@ def profiles_needing_voucher(event: Event):
     """
     return (
         eligible_speaker_profiles(event)
-        .filter(Q(voucher_assignment__isnull=True) | Q(voucher_assignment__status=SpeakerVoucherStatus.NOT_SENT))
+        .filter(
+            Q(voucher_assignment__isnull=True)
+            | Q(voucher_assignment__status=SpeakerVoucherStatus.NOT_SENT)
+        )
         .exclude(user__email='')
         .filter(user__email__isnull=False)
+        .select_related('voucher_assignment', 'voucher_assignment__voucher')
     )
 
 
@@ -84,7 +98,9 @@ def speaker_summary_counts(event: Event, settings: SpeakerVoucherSettings) -> Sp
     with scope(event=event):
         eligible_ids = set(eligible_speaker_profiles(event).values_list('pk', flat=True))
         assigned = SpeakerVoucher.objects.filter(event=event, speaker_profile_id__in=eligible_ids)
-        sent = assigned.exclude(status=SpeakerVoucherStatus.NOT_SENT).count()
+        sent = assigned.exclude(
+            status__in=(SpeakerVoucherStatus.NOT_SENT, SpeakerVoucherStatus.SENDING)
+        ).count()
         claimed = assigned.filter(
             Q(status=SpeakerVoucherStatus.CLAIMED) | Q(voucher__redeemed__gt=0)
         ).distinct().count()
@@ -128,6 +144,7 @@ def _send_voucher_email(
         'voucher_code': voucher.code,
         'voucher_url': voucher_redeem_url(event, voucher.code),
     }
+    mail = None
     try:
         mail = template.to_mail(
             user,
@@ -142,7 +159,57 @@ def _send_voucher_email(
         return mail
     except SendMailException:
         logger.exception('Failed to send speaker voucher email to user %s', user.pk)
+        if mail is not None and mail.pk and mail.sent is None:
+            # Drop the unsent outbox row so a retry does not leave a duplicate/stale mail.
+            mail.delete()
         return None
+
+
+def _recover_stale_sending_assignments(event: Event) -> None:
+    """Reclaim assignments left in ``sending`` after a crashed worker."""
+    SpeakerVoucher.objects.filter(
+        event=event,
+        status=SpeakerVoucherStatus.SENDING,
+        updated__lt=now() - SENDING_STALE_AFTER,
+    ).update(status=SpeakerVoucherStatus.NOT_SENT, sent_at=None)
+
+
+def _claim_assignment_for_send(assignment: SpeakerVoucher) -> tuple[SpeakerVoucher, bool] | None:
+    """Atomically claim an assignment for delivery.
+
+    Returns ``(locked_assignment, was_already_sent)`` or ``None`` when another
+    request already owns delivery for this row.
+    """
+    with transaction.atomic():
+        locked = (
+            SpeakerVoucher.objects.select_for_update(skip_locked=True)
+            .select_related('voucher', 'speaker_profile', 'speaker_profile__user')
+            .filter(pk=assignment.pk)
+            .first()
+        )
+        if locked is None:
+            return None
+
+        locked.refresh_claimed_status()
+        if locked.status == SpeakerVoucherStatus.CLAIMED or locked.voucher.redeemed > 0:
+            return None
+        if locked.status == SpeakerVoucherStatus.SENDING:
+            return None
+
+        was_already_sent = locked.status == SpeakerVoucherStatus.SENT
+        if locked.status not in (SpeakerVoucherStatus.NOT_SENT, SpeakerVoucherStatus.SENT):
+            return None
+
+        locked.status = SpeakerVoucherStatus.SENDING
+        locked.save(update_fields=['status'])
+        return locked, was_already_sent
+
+
+def _release_send_claim(assignment: SpeakerVoucher, *, restore_status: str, sent_at=None) -> None:
+    SpeakerVoucher.objects.filter(pk=assignment.pk, status=SpeakerVoucherStatus.SENDING).update(
+        status=restore_status,
+        sent_at=sent_at,
+    )
 
 
 def allocate_and_send_vouchers(
@@ -184,6 +251,7 @@ def allocate_and_send_vouchers(
 
     profile_ids = [p.pk for p in profiles]
     with scope(event=event):
+        _recover_stale_sending_assignments(event)
         eligible_ids = set(
             eligible_speaker_profiles(event).filter(pk__in=profile_ids).values_list('pk', flat=True)
         )
@@ -215,9 +283,12 @@ def allocate_and_send_vouchers(
         if existing.status == SpeakerVoucherStatus.CLAIMED or existing.voucher.redeemed > 0:
             result['skipped_claimed'] += 1
             continue
+        if existing.status == SpeakerVoucherStatus.SENDING:
+            # Another request owns delivery for this assignment.
+            continue
         # Expired/cancelled codes cannot be emailed; claim a replacement below.
         # Active cart reservations do not block the assigned speaker from receiving their code.
-        if existing.voucher.valid_until is not None and existing.voucher.valid_until < now():
+        if assignment_needs_replacement(existing):
             needs_replacement.append((profile, existing))
             continue
         retry_or_resend.append((profile, existing))
@@ -240,7 +311,9 @@ def allocate_and_send_vouchers(
                         )
                         if existing.status == SpeakerVoucherStatus.CLAIMED or existing.voucher.redeemed > 0:
                             continue
-                        if existing.voucher.valid_until is not None and existing.voucher.valid_until < now():
+                        if existing.status == SpeakerVoucherStatus.SENDING:
+                            continue
+                        if assignment_needs_replacement(existing):
                             needs_replacement.append((profile, existing))
                         else:
                             retry_or_resend.append((profile, existing))
@@ -268,8 +341,12 @@ def allocate_and_send_vouchers(
                             .select_related('voucher')
                             .first()
                         )
-                        if existing and existing.status != SpeakerVoucherStatus.CLAIMED:
-                            if existing.voucher.valid_until is not None and existing.voucher.valid_until < now():
+                        if (
+                            existing
+                            and existing.status
+                            not in (SpeakerVoucherStatus.CLAIMED, SpeakerVoucherStatus.SENDING)
+                        ):
+                            if assignment_needs_replacement(existing):
                                 needs_replacement.append((profile, existing))
                             else:
                                 retry_or_resend.append((profile, existing))
@@ -294,24 +371,36 @@ def allocate_and_send_vouchers(
             return result
 
     for profile, assignment in newly_allocated + retry_or_resend:
-        was_already_sent = assignment.status == SpeakerVoucherStatus.SENT
-        mail = _send_voucher_email(event, profile, assignment.voucher, requestor=requestor)
-        if mail is None:
+        claimed = _claim_assignment_for_send(assignment)
+        if claimed is None:
             continue
-        assignment.status = SpeakerVoucherStatus.SENT
-        assignment.sent_at = now()
-        assignment.save(update_fields=['status', 'sent_at'])
+        locked, was_already_sent = claimed
+        previous_sent_at = locked.sent_at
+        restore_status = (
+            SpeakerVoucherStatus.SENT if was_already_sent else SpeakerVoucherStatus.NOT_SENT
+        )
+        mail = _send_voucher_email(event, profile, locked.voucher, requestor=requestor)
+        if mail is None:
+            _release_send_claim(
+                locked,
+                restore_status=restore_status,
+                sent_at=previous_sent_at if was_already_sent else None,
+            )
+            continue
+        locked.status = SpeakerVoucherStatus.SENT
+        locked.sent_at = now()
+        locked.save(update_fields=['status', 'sent_at'])
         action = (
             'eventyay.speaker.voucher.resent'
             if was_already_sent
             else 'eventyay.speaker.voucher.sent'
         )
-        assignment.log_action(
+        locked.log_action(
             action,
             person=requestor,
             orga=True,
             data={
-                'voucher_code': assignment.voucher.code,
+                'voucher_code': locked.voucher.code,
                 'speaker_user_id': profile.user.pk if profile.user else None,
             },
         )
@@ -367,6 +456,8 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
         assignment.refresh_claimed_status()
         if assignment.status == SpeakerVoucherStatus.CLAIMED or assignment.voucher.redeemed > 0:
             return 'claimed'
+        if assignment.status in (SpeakerVoucherStatus.NOT_SENT, SpeakerVoucherStatus.SENDING):
+            return 'not_sent' if confirmed_count else 'withdrawn'
         if confirmed_count:
             return 'sent'
         return 'withdrawn'

@@ -60,6 +60,7 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[
                             ('not_sent', 'Not sent'),
+                            ('sending', 'Sending'),
                             ('sent', 'Sent — not claimed'),
                             ('claimed', 'Claimed'),
                         ],
