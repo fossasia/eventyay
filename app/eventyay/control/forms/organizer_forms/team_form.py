@@ -32,11 +32,18 @@ def event_has_exhibition(event):
 
 
 class TeamForm(forms.ModelForm):
+    all_tracks = forms.BooleanField(
+        label=_('All tracks (including newly created ones)'),
+        required=False,
+    )
+
     @scopes_disabled()
     def __init__(self, *args, **kwargs):
         organizer = kwargs.pop('organizer')
         self.organizer = organizer
         super().__init__(*args, **kwargs)
+        # An empty track selection means access to all tracks, so the toggle mirrors that.
+        self.fields['all_tracks'].initial = not (self.instance.pk and self.instance.limit_tracks.exists())
         self.fields['limit_events'].queryset = organizer.events.all().order_by('-has_subevents', '-date_from')
         tracks_qs = (
             Track.objects.filter(event__organizer=organizer)
@@ -128,22 +135,11 @@ class TeamForm(forms.ModelForm):
         """
         events = OrderedDict()
         for event in events_qs:
-            events[event.pk] = {
-                'id': event.pk,
-                'name': str(event.name),
-                'slug': event.slug,
-                'tracks': [],
-            }
+            events[event.pk] = TeamForm._event_group(event)
         for track in tracks_qs:
             evt_pk = track.event_id
             if evt_pk not in events:
-                event = track.event
-                events[evt_pk] = {
-                    'id': evt_pk,
-                    'name': str(event.name),
-                    'slug': event.slug,
-                    'tracks': [],
-                }
+                events[evt_pk] = TeamForm._event_group(track.event)
             events[evt_pk]['tracks'].append(
                 {
                     'id': track.pk,
@@ -151,6 +147,21 @@ class TeamForm(forms.ModelForm):
                 }
             )
         return list(events.values())
+
+    @staticmethod
+    def _event_group(event):
+        return {
+            'id': event.pk,
+            'name': str(event.name),
+            'slug': event.slug,
+            'date': event.get_date_range_display() if not event.has_subevents else _('Event series'),
+            'tracks': [],
+        }
+
+    @property
+    def changed_data(self):
+        # ``all_tracks`` is not a model field; callers map changed_data to model fields for the audit log.
+        return [name for name in super().changed_data if name != 'all_tracks']
 
     @property
     def events_with_tracks(self):
@@ -270,6 +281,17 @@ class TeamForm(forms.ModelForm):
                 self.fields['limit_teamshifts_roles'] = limit_field
         return instance
 
+    def _clean_track_limits(self, data):
+        if data.get('all_tracks'):
+            data['limit_tracks'] = []
+            return
+        has_talk_permission = data.get('is_reviewer') or data.get('can_change_submissions')
+        if has_talk_permission and self.has_any_tracks and not data.get('limit_tracks'):
+            self.add_error(
+                'limit_tracks',
+                forms.ValidationError(_('Please select at least one track, or grant access to all tracks.')),
+            )
+
     def clean(self):
         data = super().clean()
         all_events = data.get('all_events')
@@ -279,6 +301,8 @@ class TeamForm(forms.ModelForm):
                 _('Please either pick some events for this team, or grant access to all your events!')
             )
             self.add_error('limit_events', error)
+
+        self._clean_track_limits(data)
 
         all_teamshifts_roles = data.get('all_teamshifts_roles')
         if isinstance(all_teamshifts_roles, str):

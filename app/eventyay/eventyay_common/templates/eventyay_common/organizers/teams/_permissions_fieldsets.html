@@ -49,118 +49,73 @@
         <div class="form-group">
             <label class="control-label col-md-3">
                 {% translate "Restrict access to tracks" %}
-                <br><small class="text-muted">{% translate "Optional" %}</small>
             </label>
             <div class="col-md-9">
-                <p class="help-block track-limit-help">
-                    {% blocktranslate trimmed %}
-                        Select tracks to restrict this team’s talk-workflow access.
-                        Leave empty (click "Select none") for access to all tracks in the team’s events.
-                        Track limits apply to proposals, sessions, reviews, speakers, schedule,
-                        exports, and the API.
-                    {% endblocktranslate %}
-                </p>
-                {% if form.events_with_tracks %}
-                <div class="event-track-selector" id="event-track-selector-{{ form.prefix }}">
-                    <div class="event-track-filter-row">
-                        <label class="text-muted event-track-filter-label" for="event-track-filter-{{ form.prefix }}">
-                            <i class="fa fa-calendar" aria-hidden="true"></i>
-                            {% translate "Event to configure:" %}
-                        </label>
-                        <select id="event-track-filter-{{ form.prefix }}"
-                                class="form-control event-track-filter"
-                                data-target-prefix="{{ form.prefix }}"
-                                aria-describedby="event-track-help-{{ form.prefix }}">
-                            <option value="">{% translate "— Select an event —" %}</option>
-                            {% for event_data in form.events_with_tracks %}
-                            <option value="{{ event_data.id }}"
-                                    data-track-count="{{ event_data.tracks|length }}"
-                                    data-base-label="{{ event_data.name }} ({{ event_data.slug }})"
-                                    data-no-tracks-label="{% translate 'no tracks' %}">
-                                {{ event_data.name }} ({{ event_data.slug }})
-                            </option>
+                {% if form.has_any_tracks %}
+                <div class="checkbox">
+                    <label for="{{ form.all_tracks.id_for_label }}">
+                        <input type="checkbox" name="{{ form.all_tracks.html_name }}" id="{{ form.all_tracks.id_for_label }}"{% if form.all_tracks.value %} checked{% endif %}>
+                        {{ form.all_tracks.label }}
+                    </label>
+                </div>
+                <div class="team-track-limits"
+                     data-all-tracks-id="{{ form.all_tracks.id_for_label }}"
+                     data-all-events-id="{{ form.all_events.id_for_label }}"
+                     data-limit-events-name="{{ form.limit_events.html_name }}">
+                    {% for error in form.limit_tracks.errors %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                    <p class="alert alert-danger team-track-empty-warning" hidden>
+                        {% translate "Please select at least one track, or grant access to all tracks." %}
+                    </p>
+                    <div class="scrolling-multiple-choice scrolling-multiple-choice-large team-track-list" role="group"
+                         aria-label="{% translate "Tracks this team can access" %}">
+                        <small class="team-track-bulk-actions">
+                            <a href="#" class="choice-options-all" data-track-select="all">{% translate "All" %}</a>
+                            /
+                            <a href="#" class="choice-options-none" data-track-select="none">{% translate "None" %}</a>
+                        </small>
+                        {% for event_data in form.events_with_tracks %}
+                        {% if event_data.tracks %}
+                        <div class="team-track-group" data-event-id="{{ event_data.id }}">
+                            <div class="team-track-group-header">
+                                <span>
+                                    <strong>{{ event_data.name }}</strong>
+                                    <span class="text-muted">· {{ event_data.date }} · {{ event_data.slug }}</span>
+                                </span>
+                                <small class="team-track-group-actions">
+                                    <span class="text-muted" data-selection-count></span>
+                                    <a href="#" data-track-select="all">{% translate "All" %}</a>
+                                    /
+                                    <a href="#" data-track-select="none">{% translate "None" %}</a>
+                                </small>
+                            </div>
+                            {% for track in event_data.tracks %}
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="{{ form.limit_tracks.html_name }}" value="{{ track.id }}"{% if track.id in form.selected_track_ids %} checked{% endif %}>
+                                    {{ track.name }}
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
-                        <p class="help-block" id="event-track-help-{{ form.prefix }}">
-                            {% translate "Choose an event, then select the tracks this team may access for that event." %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        <p class="text-muted team-track-out-of-scope" hidden>
+                            {% translate "None of the events this team can access have tracks." %}
                         </p>
                     </div>
-
-                    <div class="event-tracks-wrapper">
-                        <div class="event-tracks-placeholder text-muted">
-                            <i class="fa fa-info-circle" aria-hidden="true"></i>
-                            {% translate "Select an event above to configure its tracks." %}
-                        </div>
-
-                        {% for event_data in form.events_with_tracks %}
-                        <div class="event-track-group" data-event-group-id="{{ event_data.id }}" hidden>
-                            <div class="event-track-group-header">
-                                <span class="event-track-group-title">
-                                    <i class="fa fa-calendar-o" aria-hidden="true"></i> {{ event_data.name }}
-                                </label>
-                                <span class="event-track-selection-count text-muted"
-                                      data-selection-count
-                                      data-total="{{ event_data.tracks|length }}">
-                                    {% if event_data.tracks %}
-                                        0 / {{ event_data.tracks|length }}
-                                    {% endif %}
-                                </label>
-                            </div>
-                            {% if event_data.tracks %}
-                            <div class="event-track-search-row"{% if event_data.tracks|length < 8 %} hidden{% endif %}>
-                                <label class="sr-only" for="track-search-{{ form.prefix }}-{{ event_data.id }}">
-                                    {% translate "Filter tracks" %}
-                                </label>
-                                <input type="search"
-                                       id="track-search-{{ form.prefix }}-{{ event_data.id }}"
-                                       class="form-control event-track-search"
-                                       placeholder="{% translate 'Filter tracks…' %}"
-                                       autocomplete="off">
-                            </div>
-                            <div class="scrolling-multiple-choice event-track-list" role="group"
-                                 aria-label="{% blocktranslate with name=event_data.name %}Tracks for {{ name }}{% endblocktranslate %}">
-                                {% for track in event_data.tracks %}
-                                <div class="event-track-item" data-track-name="{{ track.name|lower }}">
-                                    <label>
-                                        <input type="checkbox" name="{{ form.limit_tracks.html_name }}"
-                                            value="{{ track.id }}" {% if track.id in form.selected_track_ids %}checked{% endif %}>
-                                        {{ track.name }}
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <p class="event-track-search-empty text-muted" hidden>
-                                {% translate "No tracks match your filter." %}
-                            </p>
-                            <div class="event-track-actions">
-                                <button type="button" class="btn btn-link btn-xs track-select-all" data-event-id="{{ event_data.id }}">
-                                    {% translate "Select all" %}
-                                </button>
-                                <span class="text-muted" aria-hidden="true">·</span>
-                                <button type="button" class="btn btn-link btn-xs track-select-none" data-event-id="{{ event_data.id }}">
-                                    {% translate "Select none" %}
-                                </button>
-                            </div>
-                            {% else %}
-                            <p class="text-muted event-track-empty">
-                                <i class="fa fa-info-circle" aria-hidden="true"></i>
-                                {% translate "This event has no tracks yet. Add tracks in the event’s talk settings to limit access by track." %}
-                            </p>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% if not form.has_any_tracks %}
-                    <p class="text-muted track-hint">
-                        <i class="fa fa-info-circle" aria-hidden="true"></i>
-                        {% translate "None of your events have tracks configured yet. Track limits will appear here once tracks exist." %}
+                    <p class="help-block">
+                        {% blocktranslate trimmed %}
+                            The team only sees proposals, sessions, reviews, speakers and schedule entries
+                            in the selected tracks. This also applies to exports and the API.
+                        {% endblocktranslate %}
                     </p>
-                    {% endif %}
                 </div>
                 {% else %}
                 <p class="text-muted track-hint">
                     <i class="fa fa-info-circle" aria-hidden="true"></i>
-                    {% translate "Create an event first to configure track limits." %}
+                    {% translate "None of your events have tracks configured yet. Track limits will appear here once tracks exist." %}
                 </p>
                 {% endif %}
             </div>
@@ -326,3 +281,5 @@
 <script type="module" src="{% static 'common/js/teamshiftsRoleToggle.js' %}"></script>
 
 <script type="module" src="{% static 'common/js/eventTrackSelector.js' %}"></script>
+
+<script type="module" src="{% static 'common/js/teamTrackLimits.js' %}"></script>

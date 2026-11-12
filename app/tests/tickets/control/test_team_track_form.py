@@ -95,3 +95,35 @@ def test_team_form_selected_track_ids_from_post(organizer, event_with_tracks):
         organizer=organizer,
     )
     assert form.selected_track_ids == {tracks[0].pk, tracks[1].pk}
+
+
+def _reviewer_team_data(**extra):
+    return {'name': 'Reviewers', 'all_events': True, 'is_reviewer': True, **extra}
+
+
+@pytest.mark.django_db
+def test_team_form_all_tracks_clears_track_limits(organizer, event_with_tracks):
+    with scopes_disabled():
+        track = event_with_tracks.tracks.first()
+    form = TeamForm(
+        _reviewer_team_data(all_tracks=True, limit_tracks=[str(track.pk)]),
+        organizer=organizer,
+    )
+    assert form.is_valid(), form.errors
+    assert list(form.cleaned_data['limit_tracks']) == []
+
+
+@pytest.mark.django_db
+def test_team_form_requires_a_track_when_not_all_tracks(organizer, event_with_tracks):
+    form = TeamForm(_reviewer_team_data(), organizer=organizer)
+    assert not form.is_valid()
+    assert 'limit_tracks' in form.errors
+
+
+@pytest.mark.django_db
+def test_team_form_all_tracks_initial_reflects_instance(organizer, event_with_tracks):
+    with scopes_disabled():
+        team = Team.objects.create(organizer=organizer, name='Reviewers', is_reviewer=True, all_events=True)
+        assert TeamForm(organizer=organizer, instance=team).fields['all_tracks'].initial is True
+        team.limit_tracks.add(event_with_tracks.tracks.first())
+        assert TeamForm(organizer=organizer, instance=team).fields['all_tracks'].initial is False

@@ -209,6 +209,31 @@
     }
 }
 
+/* Team permissions: "Restrict access to tracks" */
+.team-track-bulk-actions {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.team-track-group + .team-track-group {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.team-track-group-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding-right: 10px;
+}
+
+.team-track-group .checkbox {
+    margin: 4px 0;
+}
+
 /* Thumbnailed file input widget styles */
 .thumbnailed-file-initial {
     margin-bottom: 8px;
