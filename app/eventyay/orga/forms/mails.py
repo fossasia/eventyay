@@ -151,23 +151,45 @@ class DraftRemindersForm(MailTemplateForm):
         kwargs = ['event', 'submission', 'user']
         return get_available_placeholders(event=self.event, kwargs=kwargs)
 
-    def save(self, *args, **kwargs):
-        template = self.instance
-        submissions = Submission.all_objects.filter(state=SubmissionStates.DRAFT, event=self.event)
-        mail_count = 0
+    def save(self, *args, created_by=None, **kwargs):
+        from eventyay.base.models.draft_reminder import (
+            DraftReminderBatch,
+            DraftReminderRecipient,
+        )
+
+        submissions = Submission.all_objects.filter(
+            state=SubmissionStates.DRAFT, event=self.event
+        )
+        recipients = []
         for submission in submissions:
             for user in submission.speakers.all():
-                template.to_mail(
-                    user=user,
-                    event=self.event,
-                    locale=submission.get_email_locale(user.locale),
-                    context_kwargs={'submission': submission, 'user': user},
-                    skip_queue=True,
-                    commit=False,
-                )
-                mail_count += 1
+                recipients.append((submission, user))
 
-        return mail_count
+        if not recipients:
+            return None
+
+        template = super().save(commit=False)
+        template.event = self.event
+        template.is_auto_created = True
+
+        with transaction.atomic():
+            template.save()
+            batch = DraftReminderBatch.objects.create(
+                event=self.event,
+                template=template,
+                total_count=len(recipients),
+                created_by=created_by,
+            )
+            DraftReminderRecipient.objects.bulk_create([
+                DraftReminderRecipient(
+                    batch=batch,
+                    submission=sub,
+                    user=user,
+                )
+                for sub, user in recipients
+            ])
+
+        return batch
 
     class Meta:
         model = MailTemplate

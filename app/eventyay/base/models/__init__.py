@@ -15,6 +15,7 @@ from .checkin import Checkin, CheckinList
 from .choices import Choices, PriceModeChoices
 from .comment import SubmissionComment
 from .devices import Device, Gate
+from .draft_reminder import DraftReminderBatch, DraftReminderBatchStatus, DraftReminderRecipient, DraftReminderRecipientStatus
 from .event import (
     Event,
     Event_SettingsStore,
@@ -154,6 +155,10 @@ __all__ = [
     'CheckinList',
     'Choices',
     'Device',
+    'DraftReminderBatch',
+    'DraftReminderBatchStatus',
+    'DraftReminderRecipient',
+    'DraftReminderRecipientStatus',
     'Event',
     'Event_SettingsStore',
     'EventLock',

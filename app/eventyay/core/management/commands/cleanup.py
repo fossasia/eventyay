@@ -6,9 +6,11 @@ from django.db.models import F
 from django.utils.timezone import now
 
 from eventyay.base.models.auth import ShortToken
+from eventyay.base.models.draft_reminder import DraftReminderBatch
 from eventyay.base.models.event import EventView
 from eventyay.base.models.room import AnonymousInvite, RoomView
 from eventyay.base.models.storage_model import StoredFile
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ class Command(BaseCommand):
         self._cleanup_views()
         self._cleanup_files()
         self._cleanup_tokens()
+        self._cleanup_draft_reminder_batches()
 
     def _cleanup_files(self):
         for f in StoredFile.objects.filter(expires__isnull=False, expires__lt=now()):
@@ -48,3 +51,9 @@ class Command(BaseCommand):
     def _cleanup_tokens(self):
         ShortToken.objects.filter(expires__lte=now() - timedelta(days=90)).delete()
         AnonymousInvite.objects.filter(expires__lte=now() - timedelta(days=90)).delete()
+
+    def _cleanup_draft_reminder_batches(self):
+        cutoff = now() - timedelta(hours=72)
+        deleted, _ = DraftReminderBatch.objects.filter(created_at__lt=cutoff).delete()
+        if deleted:
+            logger.info('Cleaned up %d draft reminder batch(es) older than 72h.', deleted)
