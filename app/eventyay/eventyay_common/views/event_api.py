@@ -14,6 +14,7 @@ from django.views.generic import TemplateView
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Team, UserApiToken
 from eventyay.base.models.organizer import TeamAPIToken
+from eventyay.base.services.teams import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsViewMixin
 from eventyay.control.views.organizer import TokenForm
@@ -22,11 +23,11 @@ from eventyay.eventyay_common.api_catalog import (
     access_levels,
     build_api_catalog,
     docs_urls,
-    event_has_tickets_component,
     event_has_talks_component,
+    event_has_tickets_component,
     permission_label,
-    tickets_api_base,
     talks_api_base,
+    tickets_api_base,
 )
 
 
@@ -153,6 +154,11 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
             return redirect(self.get_success_url() + '#tokens')
 
         with transaction.atomic():
+            if not can_delegate_team_permissions(
+                request.organizer, request.user, session_key=request.session.session_key, team=team
+            ):
+                messages.error(request, TEAM_DELEGATION_ERROR)
+                return redirect(self.get_success_url() + '#tokens')
             token = team.tokens.create(name=form.cleaned_data['name'])
             team.log_action(
                 'eventyay.team.token.created',

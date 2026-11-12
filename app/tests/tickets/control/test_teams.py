@@ -1,9 +1,14 @@
 import pytest
 from django.core import mail as djmail
+from django.test import override_settings
+from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.base.models.auth import StaffSession
+from eventyay.base.models.organizer import TeamInvite
+from eventyay.base.services.teams import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
 
 
 @pytest.fixture
@@ -27,6 +32,204 @@ def admin_user(admin_team):
     u = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     admin_team.members.add(u)
     return u
+
+
+@pytest.fixture
+def team_manager(admin_user, admin_team):
+    admin_team.all_events = True
+    admin_team.can_change_organizer_settings = True
+    admin_team.save(update_fields=['all_events', 'can_change_organizer_settings'])
+    return admin_user
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+@pytest.mark.parametrize(
+    'permission',
+    [
+        'can_view_orders',
+        'can_change_orders',
+        'can_manage_bank_transfers',
+        'can_manage_gift_cards',
+        'can_video_moderate',
+    ],
+)
+def test_team_manager_cannot_grant_permissions_to_own_team(client, organizer, team_manager, admin_team, permission):
+    client.force_login(team_manager)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    prefix = f'team-{admin_team.pk}'
+
+    response = client.post(
+        url,
+        {
+            'team_action': 'update',
+            'team_id': admin_team.pk,
+            f'{prefix}-name': admin_team.name,
+            f'{prefix}-all_events': 'on',
+            f'{prefix}-can_change_teams': 'on',
+            f'{prefix}-can_change_organizer_settings': 'on',
+            f'{prefix}-{permission}': 'on',
+        },
+    )
+
+    assert response.status_code == 200
+    assert str(TEAM_DELEGATION_ERROR) in response.content.decode()
+    admin_team.refresh_from_db()
+    assert not admin_team.has_permission(permission)
+    assert not admin_team.has_permission('can_view_orders')
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+@pytest.mark.parametrize('legacy', [False, True])
+def test_team_manager_cannot_create_team_with_extra_permissions(client, organizer, team_manager, legacy):
+    client.force_login(team_manager)
+    teams_url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    data = {'name': 'Privileged', 'all_events': 'on', 'can_manage_gift_cards': 'on'}
+    if legacy:
+        url = reverse('eventyay_common:organizer.team.add', kwargs={'organizer': organizer.slug}) + '?next=' + teams_url
+    else:
+        url = teams_url
+        data = {'team_action': 'create', **{f'team-create-{field}': value for field, value in data.items()}}
+
+    response = client.post(url, data, follow=True)
+
+    assert response.status_code == 200
+    assert str(TEAM_DELEGATION_ERROR) in response.content.decode()
+    assert not organizer.teams.filter(name='Privileged').exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+@pytest.mark.parametrize('action', ['invite', 'reissue', 'token'])
+def test_team_manager_cannot_delegate_privileged_team(client, organizer, team_manager, action):
+    client.force_login(team_manager)
+    team = organizer.teams.create(name='Finance', all_events=True, can_manage_gift_cards=True)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+
+    data = {'team_id': team.pk}
+    if action == 'token':
+        data.update({'team_action': 'tokens', f'team-{team.pk}-token-name': 'New token'})
+    else:
+        data['team_action'] = 'members'
+        if action == 'reissue':
+            invite = team.invites.create(email='invitee@example.com', state=TeamInvite.State.EXPIRED)
+            data['resend-invite'] = invite.pk
+        else:
+            data[f'team-{team.pk}-invite-user'] = 'invitee@example.com'
+
+    response = client.post(url, data, follow=True)
+
+    assert response.status_code == 200
+    assert str(TEAM_DELEGATION_ERROR) in response.content.decode()
+    assert not team.invites.open().exists()
+    assert not team.tokens.exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_team_manager_can_grant_own_order_permission_for_covered_event(client, organizer, event, team_manager):
+    orders = organizer.teams.create(name='Orders', can_change_orders=True)
+    orders.limit_events.add(event)
+    orders.members.add(team_manager)
+    client.force_login(team_manager)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+
+    response = client.post(
+        url,
+        {
+            'team_action': 'create',
+            'team-create-name': 'Order access',
+            'team-create-limit_events': [event.pk],
+            'team-create-can_change_orders': 'on',
+        },
+    )
+
+    assert response.status_code == 302
+    team = organizer.teams.get(name='Order access')
+    assert team.permission_set() == {'can_change_orders', 'can_view_orders'}
+    assert list(team.limit_events.all()) == [event]
+    assert team.members.filter(pk=team_manager.pk).exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_team_manager_cannot_remove_last_team_management_grant(client, organizer, team_manager, admin_team):
+    client.force_login(team_manager)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    prefix = f'team-{admin_team.pk}'
+
+    response = client.post(
+        url,
+        {
+            'team_action': 'update',
+            'team_id': admin_team.pk,
+            f'{prefix}-name': admin_team.name,
+            f'{prefix}-all_events': 'on',
+            f'{prefix}-can_change_organizer_settings': 'on',
+        },
+    )
+
+    assert response.status_code == 200
+    assert 'no remaining team with the permission to change teams' in response.content.decode()
+    admin_team.refresh_from_db()
+    assert admin_team.can_change_teams
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_active_staff_session_can_grant_team_permissions(client, organizer):
+    staff = User.objects.create_user('staff@example.com', is_staff=True)
+    client.force_login(staff)
+    StaffSession.objects.create(user=staff, session_key=client.session.session_key)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+
+    response = client.post(
+        url,
+        {
+            'team_action': 'create',
+            'team-create-name': 'Finance',
+            'team-create-all_events': 'on',
+            'team-create-can_manage_gift_cards': 'on',
+        },
+    )
+
+    assert response.status_code == 302
+    assert organizer.teams.get(name='Finance', can_manage_gift_cards=True).members.filter(pk=staff.pk).exists()
+
+
+@pytest.mark.django_db
+def test_delegation_combines_permissions_only_for_covered_events(organizer, event, team_manager):
+    other_event = Event.objects.create(organizer=organizer, name='Other', slug='other', date_from=now())
+    orders = organizer.teams.create(name='Orders', can_change_orders=True)
+    orders.limit_events.add(event)
+    orders.members.add(team_manager)
+    vouchers = organizer.teams.create(name='Vouchers', can_view_vouchers=True)
+    vouchers.limit_events.add(event, other_event)
+    vouchers.members.add(team_manager)
+    changes = {'can_view_orders': True, 'can_view_vouchers': True}
+
+    assert can_delegate_team_permissions(organizer, team_manager, changes={**changes, 'limit_events': [event]})
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, changes={**changes, 'limit_events': [other_event]}
+    )
+    assert not can_delegate_team_permissions(organizer, team_manager, changes={**changes, 'all_events': True})
+
+
+@pytest.mark.django_db
+def test_delegation_preserves_existing_grants_without_allowing_scope_expansion(organizer, event, team_manager):
+    finance = organizer.teams.create(name='Finance', can_manage_bank_transfers=True)
+    finance.limit_events.add(event)
+    other_event = Event.objects.create(organizer=organizer, name='Other', slug='other', date_from=now())
+
+    assert can_delegate_team_permissions(organizer, team_manager, team=finance, changes={'name': 'Banking'})
+    assert can_delegate_team_permissions(
+        organizer, team_manager, team=finance, changes={'can_manage_bank_transfers': False}
+    )
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, team=finance, changes={'limit_events': [event, other_event]}
+    )
+    assert not can_delegate_team_permissions(organizer, team_manager, team=finance, changes={'all_events': True})
 
 
 @pytest.mark.django_db

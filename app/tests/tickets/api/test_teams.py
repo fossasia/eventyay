@@ -1,8 +1,10 @@
 import pytest
 from django.core import mail
+from django.dispatch import Signal
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Team, User
+from eventyay.base.services.teams import TEAM_DELEGATION_ERROR
 
 
 @pytest.fixture
@@ -13,6 +15,74 @@ def second_team(organizer, event):
     )
     t.limit_events.add(event)
     return t
+
+
+@pytest.fixture
+def limited_team_token(client, organizer, monkeypatch):
+    monkeypatch.setattr('eventyay.base.entitlements.entitlement_check', Signal())
+    team = organizer.teams.create(name='Team managers', all_events=True, can_change_teams=True)
+    token = team.tokens.create(name='Team manager token')
+    client.credentials(HTTP_AUTHORIZATION=f'Token {token.token}')
+    return team
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('method', ['post', 'patch'])
+def test_team_token_cannot_grant_extra_permissions(client, organizer, limited_team_token, method):
+    base_url = f'/api/v1/organizers/{organizer.slug}/teams/'
+    data = {'can_change_orders': True, 'can_manage_bank_transfers': True, 'can_manage_gift_cards': True}
+    if method == 'post':
+        response = client.post(
+            base_url, {'name': 'Finance', 'limit_events': [], 'all_events': True, **data}, format='json'
+        )
+    else:
+        response = client.patch(f'{base_url}{limited_team_token.pk}/', data, format='json')
+
+    assert response.status_code == 403
+    assert str(response.data['detail']) == str(TEAM_DELEGATION_ERROR)
+    limited_team_token.refresh_from_db()
+    assert limited_team_token.permission_set() == {'can_change_teams'}
+    assert organizer.teams.count() == 1
+
+
+@pytest.mark.django_db
+def test_team_token_can_update_without_expanding_existing_grants(client, organizer, event, limited_team_token):
+    finance = organizer.teams.create(name='Finance', can_manage_bank_transfers=True)
+    finance.limit_events.add(event)
+    url = f'/api/v1/organizers/{organizer.slug}/teams/{finance.pk}/'
+
+    response = client.patch(url, {'name': 'Banking'}, format='json')
+
+    assert response.status_code == 200
+    finance.refresh_from_db()
+    assert finance.name == 'Banking'
+    assert finance.permission_set() == {'can_manage_bank_transfers', 'can_view_orders'}
+
+    response = client.patch(url, {'all_events': True, 'limit_events': []}, format='json')
+
+    assert response.status_code == 403
+    finance.refresh_from_db()
+    assert not finance.all_events
+    assert list(finance.limit_events.all()) == [event]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('resource', 'data'),
+    [
+        ('invites', {'email': 'invitee@example.com'}),
+        ('tokens', {'name': 'New token'}),
+    ],
+)
+def test_team_token_cannot_delegate_privileged_team(client, organizer, limited_team_token, resource, data):
+    team = organizer.teams.create(name='Finance', all_events=True, can_manage_gift_cards=True)
+
+    response = client.post(f'/api/v1/organizers/{organizer.slug}/teams/{team.pk}/{resource}/', data, format='json')
+
+    assert response.status_code == 403
+    assert str(response.data['detail']) == str(TEAM_DELEGATION_ERROR)
+    assert not team.invites.exists()
+    assert not team.tokens.exists()
 
 
 TEST_TEAM_RES = {
