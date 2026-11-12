@@ -87,12 +87,25 @@
 }
 
 /* Team permission sections */
+.team-permissions-section > legend {
+    display: flex;
+    align-items: center;
+}
+
+/* Same-size tile for every section icon, centred on the heading text */
 .team-permissions-legend-icon {
-    display: inline-block;
-    width: 1.4em;
-    margin-right: 6px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    margin-right: 10px;
+    border-radius: 6px;
+    background: #eaf1fa;
     color: #3b73b9;
+    font-size: 14px;
+    line-height: 1;
 }
 
 .team-permissions-section > .form-group:has(> .col-md-9 > .checkbox) {
