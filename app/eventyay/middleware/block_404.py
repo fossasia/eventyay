@@ -77,11 +77,15 @@ class Block404Middleware:
     @classmethod
     def _increment(cls, cache, key):
         try:
-            return cache.incr(key)
+            count = cache.incr(key)
         except ValueError:
             # Key does not exist yet — initialise to 1 with a 60 s TTL.
             cache.set(key, 1, timeout=60)
             return 1
+        # Always refresh the TTL so the key never persists indefinitely
+        # even if it was created without one through another code path.
+        cache.touch(key, timeout=60)
+        return count
 
     @classmethod
     def _too_many_requests_response(cls):
