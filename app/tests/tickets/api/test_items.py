@@ -986,7 +986,7 @@ def test_item_create_with_bundle_negative_count(token_client, organizer, event, 
         format='json',
     )
     assert resp.status_code == 400
-    assert 'count' in resp.content.decode()
+    assert resp.content.decode() == '{"bundles":["The count needs to be equal to or greater than zero."]}'
 
 
 @pytest.mark.django_db
@@ -1621,7 +1621,7 @@ def test_bundles_update(token_client, organizer, event, item, bundle):
         format='json',
     )
     assert resp.status_code == 400
-    assert 'count' in resp.content.decode()
+    assert 'count' in resp.data
 
 
 @pytest.mark.django_db

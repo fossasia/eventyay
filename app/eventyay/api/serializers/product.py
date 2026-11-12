@@ -313,12 +313,13 @@ class ProductSerializer(I18nAwareModelSerializer):
                 ProductBundle.clean_count(count)
 
                 if bundled_product:
-                    if bundled_product.pk in products_with_bundles:
+                    bundled_product_pk = getattr(bundled_product, 'pk', None)
+                    if bundled_product_pk in products_with_bundles:
                         raise ValidationError(_('The bundled product must not have bundles on its own.'))
 
                     bundle_key = (
-                        bundled_product.pk,
-                        bundled_variation.pk if bundled_variation else None,
+                        bundled_product_pk,
+                        getattr(bundled_variation, 'pk', None),
                     )
                     if bundle_key in seen_bundles:
                         raise ValidationError(_('The product already contains this bundled product.'))
