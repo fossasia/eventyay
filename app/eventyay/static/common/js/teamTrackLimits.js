@@ -34,6 +34,22 @@ function updateCount(group) {
     countEl.textContent = `${selected} / ${boxes.length}`;
 }
 
+function translate(singular, plural, count, values) {
+    // Django's JavaScript catalog provides ngettext/interpolate; fall back to English without it.
+    const template =
+        typeof window.ngettext === 'function'
+            ? window.ngettext(singular, plural, count)
+            : count === 1
+              ? singular
+              : plural;
+    if (typeof window.interpolate === 'function') {
+        return window.interpolate(template, values, true);
+    }
+    return template.replace(/%\((\w+)\)s/g, function (match, key) {
+        return String(values[key]);
+    });
+}
+
 function initTrackLimits(container) {
     if (container.dataset.initialized) {
         return;
@@ -50,6 +66,7 @@ function initTrackLimits(container) {
     const groups = Array.from(container.querySelectorAll('.team-track-group'));
     const outOfScope = container.querySelector('.team-track-out-of-scope');
     const warning = container.querySelector('.team-track-empty-warning');
+    const summary = container.querySelector('[data-track-summary]');
 
     function visibleGroups() {
         return groups.filter(function (group) {
@@ -72,6 +89,36 @@ function initTrackLimits(container) {
         );
     }
 
+    function updateSummary() {
+        if (!summary) {
+            return;
+        }
+        const shown = visibleGroups();
+        const boxes = shown.flatMap(trackBoxes);
+        const selected = boxes.filter(function (box) {
+            return box.checked;
+        }).length;
+        const events = shown.filter(function (group) {
+            return trackBoxes(group).some(function (box) {
+                return box.checked;
+            });
+        }).length;
+        const tracksText = translate(
+            '%(selected)s of %(total)s track selected',
+            '%(selected)s of %(total)s tracks selected',
+            boxes.length,
+            { selected: selected, total: boxes.length }
+        );
+        const eventsText = translate(
+            'in %(events)s event',
+            'in %(events)s events',
+            events,
+            { events: events }
+        );
+        summary.textContent = selected ? `${tracksText} ${eventsText}` : tracksText;
+        summary.hidden = boxes.length === 0;
+    }
+
     function refresh() {
         container.hidden = Boolean(allTracks && allTracks.checked);
         const eventIds = accessibleEventIds();
@@ -85,6 +132,7 @@ function initTrackLimits(container) {
         if (warning) {
             warning.hidden = true;
         }
+        updateSummary();
     }
 
     container.addEventListener('click', function (event) {
@@ -102,6 +150,7 @@ function initTrackLimits(container) {
             });
             updateCount(group);
         });
+        updateSummary();
     });
 
     container.addEventListener('change', function (event) {
@@ -112,6 +161,7 @@ function initTrackLimits(container) {
         if (warning) {
             warning.hidden = true;
         }
+        updateSummary();
     });
 
     [allTracks, allEvents].concat(eventBoxes).forEach(function (input) {

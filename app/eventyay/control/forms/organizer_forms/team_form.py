@@ -144,6 +144,7 @@ class TeamForm(forms.ModelForm):
                 {
                     'id': track.pk,
                     'name': str(track.name),
+                    'color': getattr(track, 'color', ''),
                 }
             )
         return list(events.values())

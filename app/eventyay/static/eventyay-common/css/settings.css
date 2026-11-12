@@ -210,28 +210,54 @@
 }
 
 /* Team permissions: "Restrict access to tracks" */
+.team-track-limits .team-track-list.scrolling-multiple-choice {
+    height: auto;
+    max-height: 350px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.team-track-summary {
+    margin: 0 0 6px;
+}
+
 .team-track-bulk-actions {
     display: block;
     margin-bottom: 6px;
 }
 
 .team-track-group + .team-track-group {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid #eee;
+    margin-top: 8px;
 }
 
 .team-track-group-header {
+    position: sticky;
+    top: -6px;
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
     gap: 8px;
-    padding-right: 10px;
+    margin: 0 0 2px -15px;
+    padding: 6px 10px 6px 15px;
+    background: #f5f6f8;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .team-track-group .checkbox {
     margin: 4px 0;
+}
+
+.team-track-color {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 4px 0 2px;
+    border-radius: 50%;
+    vertical-align: middle;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
 /* Thumbnailed file input widget styles */

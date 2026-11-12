@@ -68,6 +68,7 @@
                     <p class="alert alert-danger team-track-empty-warning" hidden>
                         {% translate "Please select at least one track, or grant access to all tracks." %}
                     </p>
+                    <p class="text-muted team-track-summary" data-track-summary aria-live="polite"></p>
                     <div class="scrolling-multiple-choice scrolling-multiple-choice-large team-track-list" role="group"
                          aria-label="{% translate "Tracks this team can access" %}">
                         <small class="team-track-bulk-actions">
@@ -94,6 +95,7 @@
                             <div class="checkbox">
                                 <label>
                                     <input type="checkbox" name="{{ form.limit_tracks.html_name }}" value="{{ track.id }}"{% if track.id in form.selected_track_ids %} checked{% endif %}>
+                                    {% if track.color %}<span class="team-track-color" style="background-color: {{ track.color }}" aria-hidden="true"></span>{% endif %}
                                     {{ track.name }}
                                 </label>
                             </div>
