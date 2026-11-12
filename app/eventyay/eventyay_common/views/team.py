@@ -14,13 +14,12 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
-from eventyay.base.services.teams import (
+from eventyay.base.services.team_permissions import (
     TEAM_DELEGATION_ERROR,
-    TeamInviteError,
     can_delegate_team_permissions,
-    invite_to_team,
-    resend_team_invite,
+    lock_team_organizer,
 )
+from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
 
 from ...control.forms.organizer_forms import TeamForm
@@ -98,6 +97,7 @@ class TeamMemberView(
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        lock_team_organizer(request.organizer.pk)
         self.object = self.get_object()
 
         if 'remove-member' in request.POST:
@@ -202,7 +202,7 @@ class TeamMemberView(
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():
             if not can_delegate_team_permissions(
-                request.organizer, request.user, session_key=request.session.session_key, team=self.object
+                request.organizer, request.user, session_key=request.session.session_key, team=self.object, lock=True
             ):
                 messages.error(request, TEAM_DELEGATION_ERROR)
                 return redirect(self.get_success_url())
@@ -245,6 +245,10 @@ class TeamCreateView(
 
     def dispatch(self, request, *args, **kwargs):
         if 'next' in request.GET:
+            if request.method == 'POST':
+                with transaction.atomic():
+                    lock_team_organizer(request.organizer.pk)
+                    return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
             return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
 

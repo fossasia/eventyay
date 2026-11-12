@@ -10,7 +10,7 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.track import Track
-from eventyay.base.services.teams import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
+from eventyay.base.services.team_permissions import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
 
 
@@ -379,6 +379,7 @@ class TeamForm(forms.ModelForm):
                 session_key=self.session_key,
                 team=self.instance if self.instance.pk else None,
                 changes=data,
+                lock=True,
             )
         ):
             raise ValidationError(TEAM_DELEGATION_ERROR)

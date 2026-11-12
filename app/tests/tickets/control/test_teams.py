@@ -1,14 +1,21 @@
 import pytest
 from django.core import mail as djmail
+from django.db import connection, transaction
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Team, User
 from eventyay.base.models.auth import StaffSession
-from eventyay.base.models.organizer import TeamInvite
-from eventyay.base.services.teams import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
+from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
+from eventyay.base.models.track import Track
+from eventyay.base.services.team_permissions import (
+    TEAM_DELEGATION_ERROR,
+    can_delegate_team_permissions,
+    lock_team_organizer,
+)
 
 
 @pytest.fixture
@@ -101,8 +108,10 @@ def test_team_manager_cannot_create_team_with_extra_permissions(client, organize
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-@pytest.mark.parametrize('action', ['invite', 'reissue', 'token'])
-def test_team_manager_cannot_delegate_privileged_team(client, organizer, team_manager, action):
+@pytest.mark.parametrize('action', ['invite', 'resend', 'reissue', 'token'])
+def test_team_manager_cannot_delegate_privileged_team(
+    client, organizer, team_manager, action, django_capture_on_commit_callbacks
+):
     client.force_login(team_manager)
     team = organizer.teams.create(name='Finance', all_events=True, can_manage_gift_cards=True)
     url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
@@ -112,17 +121,20 @@ def test_team_manager_cannot_delegate_privileged_team(client, organizer, team_ma
         data.update({'team_action': 'tokens', f'team-{team.pk}-token-name': 'New token'})
     else:
         data['team_action'] = 'members'
-        if action == 'reissue':
-            invite = team.invites.create(email='invitee@example.com', state=TeamInvite.State.EXPIRED)
+        if action in ('resend', 'reissue'):
+            state = TeamInvite.State.PENDING if action == 'resend' else TeamInvite.State.EXPIRED
+            invite = team.invites.create(email='invitee@example.com', state=state)
             data['resend-invite'] = invite.pk
         else:
             data[f'team-{team.pk}-invite-user'] = 'invitee@example.com'
 
-    response = client.post(url, data, follow=True)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(url, data, follow=True)
 
     assert response.status_code == 200
     assert str(TEAM_DELEGATION_ERROR) in response.content.decode()
-    assert not team.invites.open().exists()
+    assert not djmail.outbox
+    assert team.invites.open().count() == (1 if action == 'resend' else 0)
     assert not team.tokens.exists()
 
 
@@ -148,6 +160,7 @@ def test_team_manager_can_grant_own_order_permission_for_covered_event(client, o
     assert response.status_code == 302
     team = organizer.teams.get(name='Order access')
     assert team.permission_set() == {'can_change_orders', 'can_view_orders'}
+    assert not team.all_events
     assert list(team.limit_events.all()) == [event]
     assert team.members.filter(pk=team_manager.pk).exists()
 
@@ -230,6 +243,93 @@ def test_delegation_preserves_existing_grants_without_allowing_scope_expansion(o
         organizer, team_manager, team=finance, changes={'limit_events': [event, other_event]}
     )
     assert not can_delegate_team_permissions(organizer, team_manager, team=finance, changes={'all_events': True})
+
+
+@pytest.mark.django_db
+def test_delegation_cannot_expand_reviewer_tracks_or_speaker_visibility(organizer, event, team_manager):
+    with scope(event=event):
+        allowed = Track.objects.create(event=event, name='Allowed')
+        other = Track.objects.create(event=event, name='Other')
+    reviewers = organizer.teams.create(name='Reviewers', is_reviewer=True, force_hide_speaker_names=True)
+    reviewers.limit_events.add(event)
+    reviewers.limit_tracks.add(allowed)
+    reviewers.members.add(team_manager)
+    grant = {'is_reviewer': True, 'limit_events': [event], 'limit_tracks': [allowed], 'force_hide_speaker_names': True}
+
+    assert can_delegate_team_permissions(organizer, team_manager, changes=grant)
+    assert not can_delegate_team_permissions(organizer, team_manager, changes={**grant, 'limit_tracks': []})
+    assert not can_delegate_team_permissions(organizer, team_manager, changes={**grant, 'limit_tracks': [other]})
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, changes={**grant, 'force_hide_speaker_names': False}
+    )
+    assert not can_delegate_team_permissions(organizer, team_manager, team=reviewers, changes={'limit_tracks': []})
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, team=reviewers, changes={'force_hide_speaker_names': False}
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('permission', 'restriction'),
+    [('is_reviewer', 'force_hide_speaker_emails'), ('is_exhibition_reviewer', 'hide_exhibition_applicant_emails')],
+)
+def test_delegation_cannot_remove_email_visibility_restriction(organizer, team_manager, permission, restriction):
+    grant = {'all_events': True, permission: True, restriction: True}
+    team = organizer.teams.create(name='Reviewers', **grant)
+    team.members.add(team_manager)
+
+    assert can_delegate_team_permissions(organizer, team_manager, changes=grant)
+    assert not can_delegate_team_permissions(organizer, team_manager, changes={**grant, restriction: False})
+    assert not can_delegate_team_permissions(organizer, team_manager, team=team, changes={restriction: False})
+
+
+@pytest.mark.django_db
+def test_delegation_cannot_expand_teamshifts_roles_or_email_visibility(organizer, event, team_manager):
+    grant = {
+        'limit_events': [event],
+        'teamshifts_role': 'lead',
+        'limit_teamshifts_roles': [1],
+        'hide_teamshifts_emails': True,
+    }
+    assert not can_delegate_team_permissions(organizer, team_manager, changes=grant)
+
+    team = organizer.teams.create(
+        name='TeamShifts lead', teamshifts_role='lead', limit_teamshifts_roles=[1], hide_teamshifts_emails=True
+    )
+    team.limit_events.add(event)
+    team.members.add(team_manager)
+
+    assert can_delegate_team_permissions(organizer, team_manager, changes=grant)
+    assert not can_delegate_team_permissions(organizer, team_manager, changes={**grant, 'all_teamshifts_roles': True})
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, changes={**grant, 'teamshifts_role': 'coordinator'}
+    )
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, team=team, changes={'limit_teamshifts_roles': [2]}
+    )
+    assert not can_delegate_team_permissions(
+        organizer, team_manager, team=team, changes={'hide_teamshifts_emails': False}
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('credential', ['membership', 'token'])
+def test_delegation_locks_credential_used_for_grant(organizer, admin_team, admin_user, credential):
+    admin_team.can_manage_gift_cards = True
+    admin_team.save(update_fields=['can_manage_gift_cards'])
+    if credential == 'token':
+        actor = admin_team.tokens.create(name='Manager token')
+        credential_table = TeamAPIToken._meta.db_table
+    else:
+        actor = admin_user
+        credential_table = Team.members.through._meta.db_table
+
+    with transaction.atomic(), CaptureQueriesContext(connection) as queries:
+        lock_team_organizer(organizer.pk)
+        assert can_delegate_team_permissions(organizer, actor, changes={'can_manage_gift_cards': True}, lock=True)
+
+    grant_query = next(query['sql'] for query in queries if f'INNER JOIN "{credential_table}"' in query['sql'])
+    assert grant_query.endswith('FOR NO KEY UPDATE')
 
 
 @pytest.mark.django_db

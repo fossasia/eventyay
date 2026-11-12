@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from eventyay.base.models import Team
 from eventyay.base.models.organizer import TeamAPIToken
-from eventyay.base.services.teams import TEAM_DELEGATION_ERROR
+from eventyay.base.services.team_permissions import TEAM_DELEGATION_ERROR
 from eventyay.eventyay_common.api_catalog import (
     build_api_catalog,
     event_has_talks_component,
@@ -300,7 +300,13 @@ def test_event_team_manager_cannot_create_token_with_wider_event_access(client, 
     managers.limit_events.add(event)
     managers.members.add(user)
     finance = organizer.teams.create(name='Finance', all_events=True, can_change_orders=True)
+    token = finance.tokens.create(name='Existing token')
     client.force_login(user)
+
+    page = client.get(_api_url(event))
+    assert f'token-{managers.pk}-name' in page.content.decode()
+    assert f'token-{finance.pk}-name' not in page.content.decode()
+    assert f'name="token_id" value="{token.pk}"' in page.content.decode()
 
     response = client.post(
         _api_url(event),
@@ -314,7 +320,7 @@ def test_event_team_manager_cannot_create_token_with_wider_event_access(client, 
 
     assert response.status_code == 200
     assert str(TEAM_DELEGATION_ERROR) in response.content.decode()
-    assert not finance.tokens.exists()
+    assert list(finance.tokens.values_list('pk', flat=True)) == [token.pk]
 
 
 @override_settings(SITE_URL='https://testserver')

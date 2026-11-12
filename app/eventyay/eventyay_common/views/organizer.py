@@ -17,13 +17,12 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
-from eventyay.base.services.teams import (
+from eventyay.base.services.team_permissions import (
     TEAM_DELEGATION_ERROR,
-    TeamInviteError,
     can_delegate_team_permissions,
-    invite_to_team,
-    resend_team_invite,
+    lock_team_organizer,
 )
+from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
     OrganizerCreationPermissionMixin,
@@ -180,7 +179,9 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             }
             handler = handlers.get(action)
             if handler:
-                return handler()
+                with transaction.atomic():
+                    lock_team_organizer(self.request.organizer.pk)
+                    return handler()
         return super().post(request, *args, **kwargs)
 
     def _validated_teams_return_next(self, candidate: str | None) -> str | None:
@@ -447,7 +448,6 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         self._team_create_form_override = form
         return self._render_with_team_errors()
 
-    @transaction.atomic
     def _handle_team_update(self):
         team = self._get_team_from_post(lock=True)
         with scopes_disabled():
@@ -658,7 +658,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_create_token(self, team, token_form):
         """Handle creating a new token."""
         if not can_delegate_team_permissions(
-            self.request.organizer, self.request.user, session_key=self.request.session.session_key, team=team
+            self.request.organizer,
+            self.request.user,
+            session_key=self.request.session.session_key,
+            team=team,
+            lock=True,
         ):
             messages.error(self.request, TEAM_DELEGATION_ERROR)
             return self._redirect_to_team_members_panel(team.pk)

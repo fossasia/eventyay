@@ -10,11 +10,12 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
+from django_scopes import scope
 
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Team, UserApiToken
 from eventyay.base.models.organizer import TeamAPIToken
-from eventyay.base.services.teams import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
+from eventyay.base.services.team_permissions import TEAM_DELEGATION_ERROR, TeamDelegation, lock_team_organizer
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsViewMixin
 from eventyay.control.views.organizer import TokenForm
@@ -84,9 +85,14 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         event = self.request.event
-        teams = list(self.get_event_teams())
+        delegation = TeamDelegation(event.organizer, self.request.user, session_key=self.request.session.session_key)
+        teams = self.get_event_teams()
+        if self.can_manage_team_tokens:
+            with scope(event=tuple(delegation.event_ids)):
+                teams = list(teams.prefetch_related('limit_events', 'limit_tracks'))
         for team in teams:
-            team.token_form = TokenForm(prefix=f'token-{team.pk}')
+            if self.can_manage_team_tokens and delegation.allows(team=team):
+                team.token_form = TokenForm(prefix=f'token-{team.pk}')
             # Tokens inherit the team's permissions; surface the effective set.
             # permission_set() is a method; permission_set_display incorrectly
             # treats it as a property in some code paths, so build labels here.
@@ -142,7 +148,9 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
             return None
         return self.get_event_teams().filter(pk=team_id).first()
 
+    @transaction.atomic
     def _create_token(self, request):
+        lock_team_organizer(request.organizer.pk)
         team = self._get_team(request)
         if not team:
             messages.error(request, _('Invalid team selected.'))
@@ -153,18 +161,16 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
             messages.error(request, _('Please provide a token name.'))
             return redirect(self.get_success_url() + '#tokens')
 
-        with transaction.atomic():
-            if not can_delegate_team_permissions(
-                request.organizer, request.user, session_key=request.session.session_key, team=team
-            ):
-                messages.error(request, TEAM_DELEGATION_ERROR)
-                return redirect(self.get_success_url() + '#tokens')
-            token = team.tokens.create(name=form.cleaned_data['name'])
-            team.log_action(
-                'eventyay.team.token.created',
-                user=request.user,
-                data={'name': token.name, 'id': token.pk, 'event': request.event.slug},
-            )
+        delegation = TeamDelegation(request.organizer, request.user, session_key=request.session.session_key, lock=True)
+        if not delegation.allows(team=team):
+            messages.error(request, TEAM_DELEGATION_ERROR)
+            return redirect(self.get_success_url() + '#tokens')
+        token = team.tokens.create(name=form.cleaned_data['name'])
+        team.log_action(
+            'eventyay.team.token.created',
+            user=request.user,
+            data={'name': token.name, 'id': token.pk, 'event': request.event.slug},
+        )
         messages.success(
             request,
             _(

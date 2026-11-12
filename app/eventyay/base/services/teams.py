@@ -1,8 +1,4 @@
 import logging
-from collections import defaultdict
-from collections.abc import Iterable, Mapping
-from copy import copy
-from typing import cast
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
@@ -18,17 +14,20 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.entitlements import EntitlementDecision, check_entitlement
-from eventyay.base.models import Event, Organizer
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import (
     TEAM_INVITE_REMINDER_AFTER,
     TEAM_INVITE_VALIDITY,
     Team,
-    TeamAPIToken,
     TeamInvite,
     generate_invite_token,
 )
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.team_permissions import (
+    TEAM_DELEGATION_ERROR,
+    can_delegate_team_permissions,
+    lock_team_organizer,
+)
 from eventyay.base.signals import periodic_task
 from eventyay.eventyay_common.video.traits_sync import sync_video_traits_for_team
 from eventyay.helpers.periodic import minimum_interval
@@ -38,15 +37,6 @@ from eventyay.helpers.urls import build_absolute_uri
 logger = logging.getLogger(__name__)
 
 TEAMSHIFTS_PLUGIN_REGEX = r'(^|,)teamshifts(,|$)'
-
-TEAM_DELEGATION_ERROR = _('You can only grant permissions and event access that you already have.')
-ORGANIZER_ONLY_TEAM_PERMISSIONS = frozenset(
-    {
-        'can_create_events',
-        'can_change_organizer_settings',
-        'can_manage_gift_cards',
-    }
-)
 
 TEAM_INVITATION_SUBJECT = _('Invitation to join the “{team}” team for “{event}”')
 TEAM_INVITATION_TEXT = _(
@@ -147,77 +137,8 @@ class TeamInviteError(Exception):
     """Raised when a team invitation cannot be created, resent or answered."""
 
 
-def can_delegate_team_permissions(
-    organizer: Organizer,
-    actor: User | TeamAPIToken,
-    *,
-    session_key: str | None = None,
-    team: Team | None = None,
-    changes: Mapping[str, object] | None = None,
-) -> bool:
-    """Check the increase in access from an edit, or the full grant for an invite or token."""
-    if isinstance(actor, User) and session_key and actor.has_active_staff_session(session_key):
-        return True
-
-    previous = team if changes is not None else None
-    proposed = copy(team) if team is not None else Team()
-    if changes is not None:
-        for field in (*Team._permission_field_names(), 'all_events'):
-            if field in changes:
-                setattr(proposed, field, changes[field])
-
-    permissions = proposed.permission_set()
-    new_permissions = permissions - (previous.permission_set() if previous is not None else set())
-    event_permissions = permissions - ORGANIZER_ONLY_TEAM_PERMISSIONS
-    new_event_permissions = new_permissions - ORGANIZER_ONLY_TEAM_PERMISSIONS
-    previously_all_events = previous is not None and previous.all_events
-    required_all_events = set()
-    required_by_event = {}
-    if event_permissions and proposed.all_events:
-        required_all_events = new_event_permissions if previously_all_events else event_permissions
-    elif event_permissions:
-        if changes is not None and 'limit_events' in changes:
-            event_ids = {event.pk for event in cast(Iterable[Event], changes['limit_events'])}
-        else:
-            event_ids = {event.pk for event in team.limit_events.all()} if team is not None else set()
-        previous_ids = (
-            {event.pk for event in previous.limit_events.all()}
-            if previous is not None and not previously_all_events
-            else set()
-        )
-        for event_id in event_ids:
-            required = new_event_permissions if previously_all_events or event_id in previous_ids else event_permissions
-            if required:
-                required_by_event[event_id] = required
-
-    if not (new_permissions or required_all_events or required_by_event):
-        return True
-
-    teams = organizer.teams.all()
-    if isinstance(actor, TeamAPIToken):
-        teams = teams.filter(pk=actor.team_id, tokens__pk=actor.pk, tokens__active=True)
-    else:
-        teams = teams.filter(members=actor)
-    if required_by_event:
-        teams = teams.prefetch_related('limit_events')
-
-    organizer_grants = set()
-    all_event_grants = set()
-    grants_by_event = defaultdict(set)
-    for source in teams:
-        grants = source.permission_set()
-        organizer_grants.update(grants)
-        if source.all_events:
-            all_event_grants.update(grants)
-        elif required_by_event:
-            for event in source.limit_events.all():
-                grants_by_event[event.pk].update(grants)
-
-    if new_permissions - organizer_grants or required_all_events - all_event_grants:
-        return False
-    return all(
-        required <= (all_event_grants | grants_by_event[event_id]) for event_id, required in required_by_event.items()
-    )
+class TeamInviteDelegationError(TeamInviteError):
+    """The actor cannot delegate the invited team's access."""
 
 
 def check_full_admin_limit(team, email=None, user=None):
@@ -255,7 +176,7 @@ def check_full_admin_limit(team, email=None, user=None):
         return EntitlementDecision(allowed=True)
 
     # Lock the organizer row to serialize concurrent checks
-    Organizer.objects.select_for_update().filter(pk=team.organizer_id).first()
+    lock_team_organizer(team.organizer_id)
 
     admin_member_emails = set(
         User.objects.filter(
@@ -420,15 +341,21 @@ def send_team_invite(invite, *, locale=None, reminder=False) -> bool:
     return True
 
 
-def invite_to_team(team, email, *, invited_by=None, session_key=None, locale=None, log_kwargs=None):
+@transaction.atomic
+def invite_to_team(team, email, *, invited_by=None, actor=None, session_key=None, locale=None, log_kwargs=None):
     """Create a pending invitation for ``email`` and email it once the transaction commits.
 
     Existing accounts are only bound to the invite; membership is granted on acceptance.
     """
-    if invited_by is not None and not can_delegate_team_permissions(
-        team.organizer, invited_by, session_key=session_key, team=team
-    ):
-        raise TeamInviteError(TEAM_DELEGATION_ERROR)
+    actor = invited_by if actor is None else actor
+    if actor is not None:
+        lock_team_organizer(team.organizer_id)
+        try:
+            team = Team.objects.select_for_update(no_key=True).get(pk=team.pk)
+        except Team.DoesNotExist as exc:
+            raise TeamInviteError(_('Invalid team selected.')) from exc
+        if not can_delegate_team_permissions(team.organizer, actor, session_key=session_key, team=team, lock=True):
+            raise TeamInviteDelegationError(TEAM_DELEGATION_ERROR)
     email = email.strip()
     log_kwargs = log_kwargs or {}
     user = User.objects.filter(email__iexact=email).first()
@@ -460,14 +387,24 @@ def invite_to_team(team, email, *, invited_by=None, session_key=None, locale=Non
     return invite
 
 
+@transaction.atomic
 def resend_team_invite(invite, *, actor=None, session_key=None, locale=None, log_kwargs=None):
     """Resend an open invite, or issue a fresh invitation if it has expired or been declined."""
+    lock_team_organizer(invite.team.organizer_id)
+    try:
+        invite = (
+            TeamInvite.all_objects.select_for_update(of=('self',)).select_related('team__organizer').get(pk=invite.pk)
+        )
+    except TeamInvite.DoesNotExist as exc:
+        raise TeamInviteError(_('Invalid invite selected.')) from exc
+    team = invite.team
+    if actor is not None and not can_delegate_team_permissions(
+        team.organizer, actor, session_key=session_key, team=team, lock=True
+    ):
+        raise TeamInviteDelegationError(TEAM_DELEGATION_ERROR)
+    if invite.state == TeamInvite.State.ACCEPTED:
+        raise TeamInviteError(_('This invitation has already been answered.'))
     if not invite.is_open:
-        team = invite.team
-        if actor is not None and not can_delegate_team_permissions(
-            team.organizer, actor, session_key=session_key, team=team
-        ):
-            raise TeamInviteError(TEAM_DELEGATION_ERROR)
         user = invite.user or User.objects.filter(email__iexact=invite.email).first()
         if user and team.members.filter(pk=user.pk).exists():
             raise TeamInviteError(_('This user already has permissions for this team.'))
@@ -475,6 +412,8 @@ def resend_team_invite(invite, *, actor=None, session_key=None, locale=None, log
         if not decision.allowed:
             raise TeamInviteError(decision.message)
         invite.user = user
+        if isinstance(actor, User):
+            invite.invited_by = actor
         invite.token = generate_invite_token()
         invite.state = TeamInvite.State.PENDING
         invite.created = now()
@@ -488,7 +427,7 @@ def resend_team_invite(invite, *, actor=None, session_key=None, locale=None, log
 
 
 def _lock_open_invite(invite, user):
-    invite = TeamInvite.all_objects.select_for_update().select_related('team__organizer').get(pk=invite.pk)
+    invite = TeamInvite.all_objects.select_for_update(of=('self',)).select_related('team__organizer').get(pk=invite.pk)
     if invite.is_expired:
         raise TeamInviteError(
             _('This invitation has expired. Please contact the event organizer if you still want to join the team.')
@@ -505,6 +444,7 @@ def _lock_open_invite(invite, user):
 def accept_team_invite(invite, user):
     """Add ``user`` to the invited team. Only the intended recipient can accept an open invite."""
     with transaction.atomic():
+        lock_team_organizer(invite.team.organizer_id)
         invite = _lock_open_invite(invite, user)
         team = invite.team
         team.members.add(user)
@@ -523,6 +463,7 @@ def accept_team_invite(invite, user):
 
 def decline_team_invite(invite, user):
     with transaction.atomic():
+        lock_team_organizer(invite.team.organizer_id)
         invite = _lock_open_invite(invite, user)
         invite.user = user
         invite.state = TeamInvite.State.DECLINED

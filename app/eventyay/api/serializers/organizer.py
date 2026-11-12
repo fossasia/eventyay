@@ -6,7 +6,7 @@ from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.api.serializers.order import CompatibleJSONField
@@ -26,7 +26,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.seating import SeatingPlanLayoutValidator
 from eventyay.base.models.track import Track
-from eventyay.base.services.teams import TeamInviteError, invite_to_team
+from eventyay.base.services.teams import TeamInviteDelegationError, TeamInviteError, invite_to_team
 from eventyay.base.settings import validate_organizer_settings
 
 
@@ -269,13 +269,19 @@ class TeamInviteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if 'email' not in validated_data:
             raise ValidationError('No email address given.')
+        request = self.context['request']
         try:
             return invite_to_team(
                 self.context['team'],
                 validated_data['email'],
+                invited_by=request.user if request.user.is_authenticated else None,
+                actor=self.context['actor'],
+                session_key=request.session.session_key,
                 locale=get_language_without_region(),
                 log_kwargs=self.context['log_kwargs'],
             )
+        except TeamInviteDelegationError as e:
+            raise PermissionDenied(str(e)) from e
         except TeamInviteError as e:
             raise ValidationError(str(e))
 

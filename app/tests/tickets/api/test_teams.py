@@ -1,10 +1,16 @@
+from types import SimpleNamespace
+from unittest.mock import Mock
+
 import pytest
 from django.core import mail
 from django.dispatch import Signal
 from django_scopes import scopes_disabled
+from rest_framework.exceptions import PermissionDenied
 
+from eventyay.api.views.team import TeamViewSet as TalkTeamViewSet
 from eventyay.base.models import Team, User
-from eventyay.base.services.teams import TEAM_DELEGATION_ERROR
+from eventyay.base.models.auth import StaffSession
+from eventyay.base.services.team_permissions import TEAM_DELEGATION_ERROR
 
 
 @pytest.fixture
@@ -28,9 +34,10 @@ def limited_team_token(client, organizer, monkeypatch):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('method', ['post', 'patch'])
-def test_team_token_cannot_grant_extra_permissions(client, organizer, limited_team_token, method):
+@pytest.mark.parametrize('permission', ['can_change_orders', 'can_manage_bank_transfers', 'can_manage_gift_cards'])
+def test_team_token_cannot_grant_extra_permissions(client, organizer, limited_team_token, method, permission):
     base_url = f'/api/v1/organizers/{organizer.slug}/teams/'
-    data = {'can_change_orders': True, 'can_manage_bank_transfers': True, 'can_manage_gift_cards': True}
+    data = {permission: True}
     if method == 'post':
         response = client.post(
             base_url, {'name': 'Finance', 'limit_events': [], 'all_events': True, **data}, format='json'
@@ -83,6 +90,52 @@ def test_team_token_cannot_delegate_privileged_team(client, organizer, limited_t
     assert str(response.data['detail']) == str(TEAM_DELEGATION_ERROR)
     assert not team.invites.exists()
     assert not team.tokens.exists()
+
+
+@pytest.mark.django_db
+def test_event_limited_team_token_cannot_mint_all_events_token(client, organizer, event, limited_team_token):
+    limited_team_token.all_events = False
+    limited_team_token.save(update_fields=['all_events'])
+    limited_team_token.limit_events.add(event)
+    team = organizer.teams.create(name='All-event managers', all_events=True, can_change_teams=True)
+
+    response = client.post(
+        f'/api/v1/organizers/{organizer.slug}/teams/{team.pk}/tokens/', {'name': 'Wider token'}, format='json'
+    )
+
+    assert response.status_code == 403
+    assert str(response.data['detail']) == str(TEAM_DELEGATION_ERROR)
+    assert not team.tokens.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('method', ['perform_create', 'perform_update'])
+def test_talk_team_view_checks_delegation(organizer, limited_team_token, method):
+    view = TalkTeamViewSet()
+    view.request = SimpleNamespace(
+        organizer=organizer, auth=limited_team_token.tokens.get(), session=SimpleNamespace(session_key=None)
+    )
+    serializer = Mock(instance=limited_team_token, validated_data={'is_reviewer': True})
+
+    with pytest.raises(PermissionDenied, match=str(TEAM_DELEGATION_ERROR)):
+        getattr(view, method)(serializer)
+
+    serializer.save.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_active_staff_session_can_invite_through_team_api(client, organizer):
+    staff = User.objects.create_user('staff@example.com', is_staff=True)
+    client.force_login(staff)
+    StaffSession.objects.create(user=staff, session_key=client.session.session_key)
+    team = organizer.teams.create(name='Finance', all_events=True, can_manage_gift_cards=True)
+
+    response = client.post(
+        f'/api/v1/organizers/{organizer.slug}/teams/{team.pk}/invites/', {'email': 'invitee@example.com'}, format='json'
+    )
+
+    assert response.status_code == 201
+    assert team.invites.get().invited_by == staff
 
 
 TEST_TEAM_RES = {
