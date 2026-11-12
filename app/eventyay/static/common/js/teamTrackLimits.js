@@ -240,6 +240,9 @@ function initTrackLimits(container) {
         });
     }
 
+    // Browsers can restore checkbox states on reload or back navigation without firing change events.
+    window.addEventListener('pageshow', refresh);
+
     refresh();
 }
 
