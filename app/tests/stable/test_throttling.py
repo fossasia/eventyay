@@ -5,9 +5,22 @@ PublicScheduleThrottle, and EventyayAnonRateThrottle / EventyayUserRateThrottle.
 Uses LocMemCache isolation (override_settings) to ensure throttle state never
 bleeds between tests and that the tests can run without a running Redis instance.
 """
+
+import logging
+import os
+import uuid
+
+import fakeredis
 import pytest
-from django.test import RequestFactory, override_settings
+from django.core.cache import caches
+from django.core.cache.backends.redis import RedisCache as DjangoRedisCache
 from django.http import HttpResponse
+from django.test import RequestFactory, override_settings
+from django_redis import get_redis_connection
+from redis.exceptions import ConnectionError as RedisConnectionError
+
+from eventyay.middleware import block_404
+from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +83,7 @@ class TestBlock404Middleware:
         from django.core.cache import caches
         caches['default'].clear()
 
-        from eventyay.middleware.block_404 import Block404Middleware, _API_PATH_PREFIX
+        from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
         middleware = Block404Middleware(_make_get_response(404))
         factory = RequestFactory()
 
@@ -86,7 +99,7 @@ class TestBlock404Middleware:
         from django.core.cache import caches
         caches['default'].clear()
 
-        from eventyay.middleware.block_404 import Block404Middleware, _API_PATH_PREFIX
+        from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
         middleware = Block404Middleware(_make_get_response(404))
         factory = RequestFactory()
 
@@ -108,7 +121,7 @@ class TestBlock404Middleware:
         from django.core.cache import caches
         caches['default'].clear()
 
-        from eventyay.middleware.block_404 import Block404Middleware, _API_PATH_PREFIX
+        from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
         middleware = Block404Middleware(_make_get_response(404))
         factory = RequestFactory()
 
@@ -129,7 +142,7 @@ class TestBlock404Middleware:
         from django.core.cache import caches
         caches['default'].clear()
 
-        from eventyay.middleware.block_404 import Block404Middleware, _API_PATH_PREFIX
+        from eventyay.middleware.block_404 import _API_PATH_PREFIX, Block404Middleware
         middleware = Block404Middleware(_make_get_response(200))
         factory = RequestFactory()
 
@@ -320,3 +333,210 @@ class TestThrottleSettings:
         classes = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES']
         assert 'EventyayAnonRateThrottle' not in classes
         assert 'eventyay.api.throttles.EventyayUserRateThrottle' in classes
+
+
+# ---------------------------------------------------------------------------
+# Block404Middleware Redis TTL tests
+# ---------------------------------------------------------------------------
+
+
+def _build_redis_cache_settings(backend_mode: str, key_prefix: str) -> dict:
+    if backend_mode == 'live':
+        redis_url = os.environ.get('TEST_REDIS_URL')
+        if not redis_url:
+            pytest.skip('TEST_REDIS_URL not set')
+        return {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': redis_url,
+                'KEY_PREFIX': key_prefix,
+            },
+            'redis': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': redis_url,
+                'KEY_PREFIX': key_prefix,
+            },
+        }
+
+    server = fakeredis.FakeServer()
+    location = f'redis://{key_prefix}:6379/0'
+    return {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': location,
+            'KEY_PREFIX': key_prefix,
+            'OPTIONS': {
+                'connection_class': fakeredis.FakeRedisConnection,
+                'server': server,
+            },
+        },
+        'redis': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': location,
+            'KEY_PREFIX': key_prefix,
+            'OPTIONS': {
+                'CONNECTION_POOL_KWARGS': {
+                    'connection_class': fakeredis.FakeRedisConnection,
+                    'server': server,
+                },
+            },
+        },
+    }
+
+
+def _make_identity_request(identity_kind: str):
+    request = RequestFactory().get(f'{_API_PATH_PREFIX}v1/rooms/', REMOTE_ADDR='198.51.100.42')
+    if identity_kind == 'user':
+
+        class AuthUser:
+            is_authenticated = True
+            pk = 138
+
+        request.user = AuthUser()
+        request.auth = None
+    elif identity_kind == 'token':
+
+        class FakeToken:
+            pk = 77
+
+        request.user = _anon_user()
+        request.auth = FakeToken()
+    else:
+        request.user = _anon_user()
+        request.auth = None
+    return request
+
+
+@pytest.fixture(params=['fakeredis', 'live'])
+def redis_cache_env(request):
+    key_prefix = f'test-404-{uuid.uuid4().hex}'
+    with override_settings(CACHES=_build_redis_cache_settings(request.param, key_prefix)):
+        cache = caches[Block404Middleware.CACHE_ALIAS]
+        try:
+            yield cache
+        finally:
+            rc = get_redis_connection('redis')
+            keys = list(rc.scan_iter(match=f'{key_prefix}:*'))
+            if keys:
+                rc.delete(*keys)
+
+
+@pytest.fixture
+def fakeredis_cache():
+    key_prefix = f'test-404-{uuid.uuid4().hex}'
+    with override_settings(CACHES=_build_redis_cache_settings('fakeredis', key_prefix)):
+        yield caches[Block404Middleware.CACHE_ALIAS]
+
+
+class TestBlock404MiddlewareRedis:
+    def test_increment_initializes_counter_with_active_ttl(self, redis_cache_env):
+        cache = redis_cache_env
+        rc = get_redis_connection('redis')
+        request = _make_identity_request('user')
+        key = Block404Middleware._cache_key(request)
+        made_key = cache.make_and_validate_key(key)
+
+        assert Block404Middleware._increment(cache, key) == 1
+        assert rc.get(made_key) == b'1'
+        assert 0 < rc.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+
+        rc.delete(made_key)
+        assert Block404Middleware(_make_get_response(404))(request).status_code == 404
+        assert rc.get(made_key) == b'1'
+        assert 0 < rc.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+
+    @pytest.mark.parametrize('identity_kind', ['user', 'token', 'ip'])
+    def test_stuck_ttl_minus_one_repaired_on_429(self, redis_cache_env, identity_kind):
+        cache = redis_cache_env
+        rc = get_redis_connection('redis')
+        request = _make_identity_request(identity_kind)
+        made_key = cache.make_and_validate_key(Block404Middleware._cache_key(request))
+
+        rc.set(made_key, Block404Middleware.MAX_404_PER_MINUTE)
+        assert rc.ttl(made_key) == -1
+
+        blocked = Block404Middleware(_make_get_response(200))(request)
+        assert blocked.status_code == 429
+        assert 0 < rc.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+
+        rc.delete(made_key)
+        assert Block404Middleware(_make_get_response(200))(_make_identity_request(identity_kind)).status_code == 200
+
+    def test_stuck_ttl_minus_one_repaired_mid_window(self, redis_cache_env):
+        cache = redis_cache_env
+        rc = get_redis_connection('redis')
+        request = _make_identity_request('user')
+        made_key = cache.make_and_validate_key(Block404Middleware._cache_key(request))
+
+        rc.set(made_key, 15)
+        assert rc.ttl(made_key) == -1
+
+        assert Block404Middleware(_make_get_response(404))(request).status_code == 404
+        assert rc.get(made_key) == b'16'
+        assert 0 < rc.ttl(made_key) <= Block404Middleware.WINDOW_SECONDS
+
+    def test_active_ttl_preserved_on_404_and_429(self, redis_cache_env):
+        cache = redis_cache_env
+        rc = get_redis_connection('redis')
+        request = _make_identity_request('user')
+        made_key = cache.make_and_validate_key(Block404Middleware._cache_key(request))
+
+        mw_404 = Block404Middleware(_make_get_response(404))
+        assert mw_404(request).status_code == 404
+        rc.expire(made_key, 25)
+        before_404 = rc.ttl(made_key)
+
+        assert mw_404(_make_identity_request('user')).status_code == 404
+        assert rc.get(made_key) == b'2'
+        assert before_404 - 2 <= rc.ttl(made_key) <= before_404
+
+        rc.set(made_key, Block404Middleware.MAX_404_PER_MINUTE, ex=25)
+        mw_200 = Block404Middleware(_make_get_response(200))
+        for _ in range(3):
+            before_429 = rc.ttl(made_key)
+            assert mw_200(_make_identity_request('user')).status_code == 429
+            assert before_429 - 2 <= rc.ttl(made_key) <= before_429
+
+    def test_redis_errors_fail_open_without_leaking_ip(self, fakeredis_cache, monkeypatch, caplog):
+        def _warnings():
+            return [r.getMessage() for r in caplog.records if r.name == block_404.__name__]
+
+        with caplog.at_level(logging.WARNING, logger=block_404.__name__):
+            caplog.clear()
+            with monkeypatch.context() as mp:
+                mp.setattr(
+                    DjangoRedisCache,
+                    'get',
+                    lambda self, key, default=None, version=None: (_ for _ in ()).throw(RedisConnectionError('down')),
+                )
+                assert Block404Middleware(_make_get_response(200))(_make_identity_request('ip')).status_code == 200
+            assert _warnings() == ['Failed to read 404 counter: ConnectionError']
+
+            caplog.clear()
+            with monkeypatch.context() as mp:
+                mp.setattr(
+                    DjangoRedisCache,
+                    'add',
+                    lambda self, key, value, timeout=None, version=None: False,
+                )
+                mp.setattr(
+                    DjangoRedisCache,
+                    'incr',
+                    lambda self, key, delta=1, version=None: (_ for _ in ()).throw(RedisConnectionError('down')),
+                )
+                assert Block404Middleware(_make_get_response(404))(_make_identity_request('ip')).status_code == 404
+            assert _warnings() == ['Failed to increment 404 counter: ConnectionError']
+
+            rc = get_redis_connection('redis')
+            ip_req = _make_identity_request('ip')
+            made_ip = fakeredis_cache.make_and_validate_key(Block404Middleware._cache_key(ip_req))
+            rc.set(made_ip, Block404Middleware.MAX_404_PER_MINUTE)
+            caplog.clear()
+            with monkeypatch.context() as mp:
+                mp.setattr(
+                    block_404,
+                    'get_redis_connection',
+                    lambda alias='redis': (_ for _ in ()).throw(RedisConnectionError('down')),
+                )
+                assert Block404Middleware(_make_get_response(200))(ip_req).status_code == 429
+            assert _warnings() == ['Failed to ensure TTL on 404 counter: ConnectionError']
