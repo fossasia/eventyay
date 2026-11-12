@@ -65,13 +65,13 @@ def test_batch_send_marks_recipients_sent(event, speaker, mail_template):
     sub = _make_draft_submission(event, speaker)
     batch = _create_batch(event, [(sub, speaker)])
 
-    with patch('eventyay.common.tasks.transaction'):
-        send_draft_reminder_batch(batch.pk)
+    send_draft_reminder_batch(batch.pk)
 
     with scopes_disabled():
         batch.refresh_from_db()
         assert batch.status == DraftReminderBatchStatus.COMPLETED
         assert batch.completed_at is not None
+        assert batch.sent_count == 1
 
         recipient = batch.recipients.first()
         assert recipient.status == DraftReminderRecipientStatus.SENT
@@ -116,7 +116,7 @@ def test_batch_recipient_failure_continues(event, speaker, other_speaker, mail_t
             raise Exception('SMTP connection refused')
         return original_to_mail(self, user, event, **kwargs)
 
-    with patch.object(mail_template.__class__, 'to_mail', side_effect):
+    with patch.object(mail_template.__class__, 'to_mail', autospec=True, side_effect=side_effect):
         send_draft_reminder_batch(batch.pk)
 
     with scopes_disabled():

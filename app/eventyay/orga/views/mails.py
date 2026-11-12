@@ -875,6 +875,18 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
             messages.error(self.request, error_msg)
             return redirect(self.get_success_url())
 
+        with transaction.atomic():
+            entitlement_usage_recorded.send(
+                sender=self.request.event.organizer,
+                capability='email.bulk.monthly',
+                quantity=batch.total_count,
+                unit='emails',
+                source_type='draft_reminder',
+                source_id=str(batch.pk),
+                idempotency_key=f'draft_reminder_batch_{batch.pk}',
+                event=self.request.event,
+            )
+
         transaction.on_commit(
             lambda: send_draft_reminder_batch.delay(batch.pk)
         )

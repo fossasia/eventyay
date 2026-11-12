@@ -135,6 +135,7 @@ def send_draft_reminder_batch(self, batch_id: int):
         DraftReminderRecipient,
         DraftReminderRecipientStatus,
     )
+    from eventyay.base.models.submission import SubmissionStates
 
     try:
         with scopes_disabled(), transaction.atomic():
@@ -169,9 +170,12 @@ def send_draft_reminder_batch(self, batch_id: int):
                 .select_related('submission', 'user')
             )
 
-            sent = 0
-            failed = 0
             for recipient in pending.iterator():
+                if recipient.submission.state != SubmissionStates.DRAFT:
+                    recipient.status = DraftReminderRecipientStatus.SENT
+                    recipient.sent_at = now()
+                    recipient.save(update_fields=['status', 'sent_at'])
+                    continue
                 try:
                     template.to_mail(
                         user=recipient.user,
@@ -187,15 +191,14 @@ def send_draft_reminder_batch(self, batch_id: int):
                     recipient.status = DraftReminderRecipientStatus.SENT
                     recipient.sent_at = now()
                     recipient.save(update_fields=['status', 'sent_at'])
-                    sent += 1
                 except Exception as exc:
+                    error_type = type(exc).__name__
                     recipient.status = DraftReminderRecipientStatus.FAILED
-                    recipient.error = str(exc)[:500]
+                    recipient.error = error_type[:500]
                     recipient.save(update_fields=['status', 'error'])
-                    failed += 1
                     logger.warning(
                         '[DraftReminder] Failed to send to user %s for submission %s: %s',
-                        recipient.user_id, recipient.submission_id, exc,
+                        recipient.user_id, recipient.submission_id, error_type,
                     )
 
             with transaction.atomic():
@@ -204,15 +207,19 @@ def send_draft_reminder_batch(self, batch_id: int):
                     .select_for_update()
                     .get(pk=batch_id)
                 )
-                batch.sent_count = models.F('sent_count') + sent
-                batch.failed_count = models.F('failed_count') + failed
-
-                remaining = (
+                counts = (
                     DraftReminderRecipient.objects
-                    .filter(batch=batch, status=DraftReminderRecipientStatus.PENDING)
-                    .count()
+                    .filter(batch=batch)
+                    .aggregate(
+                        sent=models.Count('pk', filter=models.Q(status=DraftReminderRecipientStatus.SENT)),
+                        failed=models.Count('pk', filter=models.Q(status=DraftReminderRecipientStatus.FAILED)),
+                        pending=models.Count('pk', filter=models.Q(status=DraftReminderRecipientStatus.PENDING)),
+                    )
                 )
-                if remaining == 0:
+                batch.sent_count = counts['sent']
+                batch.failed_count = counts['failed']
+
+                if counts['pending'] == 0:
                     batch.status = DraftReminderBatchStatus.COMPLETED
                     batch.completed_at = now()
                 else:
@@ -223,7 +230,7 @@ def send_draft_reminder_batch(self, batch_id: int):
             log_event(
                 'mail', 'mail.draft_reminder_batch', OUTCOME_SUCCESS,
                 event_id=event.pk, object_id=batch_id,
-                recipient_count=sent,
+                recipient_count=counts['sent'],
             )
 
     except Exception as exc:

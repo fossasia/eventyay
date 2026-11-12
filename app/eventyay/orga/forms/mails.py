@@ -152,10 +152,7 @@ class DraftRemindersForm(MailTemplateForm):
         return get_available_placeholders(event=self.event, kwargs=kwargs)
 
     def save(self, *args, created_by=None, **kwargs):
-        from eventyay.base.models.draft_reminder import (
-            DraftReminderBatch,
-            DraftReminderRecipient,
-        )
+        from eventyay.base.models.draft_reminder import DraftReminderBatch, DraftReminderRecipient
 
         submissions = Submission.all_objects.filter(
             state=SubmissionStates.DRAFT, event=self.event
