@@ -64,6 +64,7 @@ from eventyay.base.models.product import (
     SubEventProduct,
     SubEventProductVariation,
 )
+from eventyay.base.services.cart import MAX_VOUCHER_CODE_LENGTH
 from eventyay.base.services.geo import resolve_venue_map_coordinates
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
@@ -889,10 +890,11 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
     def _subevent_list_context(self):
         voucher = None
-        if self.request.GET.get('voucher'):
+        raw_voucher = self.request.GET.get('voucher')
+        if raw_voucher and len(raw_voucher) <= MAX_VOUCHER_CODE_LENGTH:
             try:
                 voucher = Voucher.objects.get(
-                    code__iexact=self.request.GET.get('voucher'),
+                    code__iexact=raw_voucher.strip(),
                     event=self.request.event,
                 )
             except Voucher.DoesNotExist:

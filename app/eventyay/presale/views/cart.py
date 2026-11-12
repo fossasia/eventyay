@@ -653,11 +653,11 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
         from eventyay.base.services.cart import error_messages
 
         err = None
-        v = request.GET.get('voucher')
+        raw_voucher = request.GET.get('voucher')
         voucher_attempt_key = None
         voucher_failed = False
 
-        if v:
+        if raw_voucher:
             voucher_attempt_key, allowed = reserve_voucher_attempt(request)
             if not allowed:
                 response = redirect(self.get_index_url())
@@ -665,11 +665,11 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
                 response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
                 messages.error(request, _(error_messages['voucher_rate_limited']))
                 return response
-            v = v.strip()
-            if len(v) > MAX_VOUCHER_CODE_LENGTH:
+            if len(raw_voucher) > MAX_VOUCHER_CODE_LENGTH:
                 voucher_failed = True
                 messages.error(request, error_messages['voucher_invalid_length'])
                 return redirect(self.get_index_url())
+            v = raw_voucher.strip()
             try:
                 self.voucher = Voucher.objects.get(code__iexact=v, event=request.event)
                 if self.voucher.redeemed >= self.voucher.max_usages:
@@ -694,7 +694,7 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
             except Voucher.DoesNotExist:
                 voucher_failed = True
                 if self.request.event.organizer.accepted_gift_cards.filter(
-                    secret__iexact=request.GET.get('voucher')
+                    secret__iexact=v
                 ).exists():
                     err = error_messages['gift_card']
                 else:

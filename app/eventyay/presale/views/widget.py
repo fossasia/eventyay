@@ -32,7 +32,7 @@ from lxml import html
 from eventyay.base.i18n import language
 from eventyay.base.js_catalog_template import js_catalog_template
 from eventyay.base.models import CartPosition, Event, Quota, SubEvent, Voucher
-from eventyay.base.services.cart import error_messages
+from eventyay.base.services.cart import MAX_VOUCHER_CODE_LENGTH, error_messages
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.templatetags.rich_text import rich_text
 from eventyay.helpers.daterange import daterange
@@ -755,34 +755,39 @@ class WidgetAPIProductList(EventListMixin, View):
 
         self.voucher = None
         if 'voucher' in request.GET:
-            try:
-                self.voucher = request.event.vouchers.get(code__iexact=request.GET.get('voucher').strip())
-                if self.voucher.redeemed >= self.voucher.max_usages:
-                    data['error'] = error_messages['voucher_redeemed']
-                    fail = True
-                if self.voucher.valid_until is not None and self.voucher.valid_until < now():
-                    data['error'] = error_messages['voucher_expired']
-                    fail = True
-
-                cart_id = get_or_create_cart_id(request, create=False)
-                if cart_id:
-                    redeemed_in_carts = CartPosition.objects.filter(
-                        Q(voucher=self.voucher)
-                        & Q(event=request.event)
-                        & (Q(expires__gte=now()) | Q(cart_id=get_or_create_cart_id(request)))
-                    )
-                else:
-                    redeemed_in_carts = CartPosition.objects.filter(
-                        Q(voucher=self.voucher) & Q(event=request.event) & Q(expires__gte=now())
-                    )
-                v_avail = self.voucher.max_usages - self.voucher.redeemed - redeemed_in_carts.count()
-
-                if v_avail < 1:
-                    data['error'] = error_messages['voucher_redeemed']
-                    fail = True
-            except Voucher.DoesNotExist:
-                data['error'] = error_messages['voucher_invalid']
+            raw_voucher = request.GET.get('voucher')
+            if len(raw_voucher) > MAX_VOUCHER_CODE_LENGTH:
+                data['error'] = error_messages['voucher_invalid_length']
                 fail = True
+            else:
+                try:
+                    self.voucher = request.event.vouchers.get(code__iexact=raw_voucher.strip())
+                    if self.voucher.redeemed >= self.voucher.max_usages:
+                        data['error'] = error_messages['voucher_redeemed']
+                        fail = True
+                    if self.voucher.valid_until is not None and self.voucher.valid_until < now():
+                        data['error'] = error_messages['voucher_expired']
+                        fail = True
+
+                    cart_id = get_or_create_cart_id(request, create=False)
+                    if cart_id:
+                        redeemed_in_carts = CartPosition.objects.filter(
+                            Q(voucher=self.voucher)
+                            & Q(event=request.event)
+                            & (Q(expires__gte=now()) | Q(cart_id=get_or_create_cart_id(request)))
+                        )
+                    else:
+                        redeemed_in_carts = CartPosition.objects.filter(
+                            Q(voucher=self.voucher) & Q(event=request.event) & Q(expires__gte=now())
+                        )
+                    v_avail = self.voucher.max_usages - self.voucher.redeemed - redeemed_in_carts.count()
+
+                    if v_avail < 1:
+                        data['error'] = error_messages['voucher_redeemed']
+                        fail = True
+                except Voucher.DoesNotExist:
+                    data['error'] = error_messages['voucher_invalid']
+                    fail = True
 
         if not fail and (ev.presale_is_running or request.event.settings.show_products_outside_presale_period):
             data['items_by_category'], data['display_add_to_cart'], data['itemnum'] = self._get_products()
