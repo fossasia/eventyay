@@ -23,7 +23,7 @@ from django.utils.formats import date_format
 from django.utils.html import conditional_escape
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from zoneinfo import ZoneInfo
 from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode.qr import QrCodeWidget
@@ -836,7 +836,10 @@ class Renderer:
             except OSError:
                 pass
             self.background_file = None
-            self.bg_pdf = PdfReader(BytesIO(self.bg_bytes), strict=False)
+            # pypdf 7 only allows content changes on pages that belong to a writer.
+            reader = PdfReader(BytesIO(self.bg_bytes), strict=False)
+            self.bg_pdf = PdfWriter()
+            self.bg_pdf.add_page(reader.pages[0])
             correct_page_media_box(self.bg_pdf.pages[0])
         else:
             self.bg_bytes = None
@@ -1256,7 +1259,7 @@ class Renderer:
 
     def merge_foreground_buffer(self, buffer):
         buffer.seek(0)
-        fg_pdf = PdfReader(buffer, strict=False)
+        fg_pdf = PdfWriter(clone_from=PdfReader(buffer, strict=False))
         if not self.bg_pdf:
             return list(fg_pdf.pages)
         bg_page = self.bg_pdf.pages[0]
@@ -1287,8 +1290,6 @@ class Renderer:
                 with open(os.path.join(d, 'out.pdf'), 'rb') as f:
                     return BytesIO(f.read())
         else:
-            from pypdf import PdfWriter
-
             output = PdfWriter()
             for page in self.merge_foreground_buffer(buffer):
                 output.add_page(page)

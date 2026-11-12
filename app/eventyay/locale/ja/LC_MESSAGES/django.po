@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:34+0000\n"
-"Last-Translator: \"Masaki Murakami (VZP)\" <vzp10224@wikiusers.jp>\n"
+"PO-Revision-Date: 2026-11-12 10:18+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
 "Language: ja\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -31312,8 +31313,8 @@ msgstr ""
 msgid ""
 "Publishing exposes the Schedule, Sessions, Speakers, and Call for Speakers."
 msgstr ""
-"トークページを公開すると、プレセールページにスケジュール、セッション、登壇"
-"者、登壇者募集が表示されます。"
+"トークページを公開すると、プレセールページにスケジュール、セッション、登壇者"
+"、登壇者募集が表示されます。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:312
 #, fuzzy
@@ -31375,9 +31376,8 @@ msgid ""
 "pages. Users with appropriate permissions can propose sessions or add "
 "speaker info."
 msgstr ""
-"トークのプライベートテストモードが有効です。スケジュール、セッション、登壇"
-"者、登壇者募集には、主催者、レビュアー、システム管理者のみがアクセスできま"
-"す。"
+"トークのプライベートテストモードが有効です。スケジュール、セッション、登壇者"
+"、登壇者募集には、主催者、レビュアー、システム管理者のみがアクセスできます。"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:388
 #, fuzzy
