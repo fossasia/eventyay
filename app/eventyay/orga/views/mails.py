@@ -851,10 +851,50 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.base
 
     def form_valid(self, form):
-        result = form.save()
+        from eventyay.common.tasks import send_draft_reminder_batch
+
+        batch = form.save(created_by=self.request.user)
+        if batch is None:
+            messages.info(self.request, _('No draft submissions found.'))
+            return super().form_valid(form)
+
+        decision = check_entitlement(
+            self.request.event.organizer,
+            'email.bulk.monthly',
+            event=self.request.event,
+            quantity=batch.total_count,
+        )
+        if not decision.allowed:
+            template = batch.template
+            batch.delete()
+            if template:
+                template.delete()
+            error_msg = decision.message or _(
+                'You have reached the limit for sending bulk emails on your plan.'
+            )
+            messages.error(self.request, error_msg)
+            return redirect(self.get_success_url())
+
+        with transaction.atomic():
+            entitlement_usage_recorded.send(
+                sender=self.request.event.organizer,
+                capability='email.bulk.monthly',
+                quantity=batch.total_count,
+                unit='emails',
+                source_type='draft_reminder',
+                source_id=str(batch.pk),
+                idempotency_key=f'draft_reminder_batch_{batch.pk}',
+                event=self.request.event,
+            )
+
+        transaction.on_commit(
+            lambda: send_draft_reminder_batch.delay(batch.pk)
+        )
         messages.success(
             self.request,
-            _('{count} emails have been sent.').format(count=result),
+            _('{count} draft reminders queued for sending.').format(
+                count=batch.total_count
+            ),
         )
         return super().form_valid(form)
 
