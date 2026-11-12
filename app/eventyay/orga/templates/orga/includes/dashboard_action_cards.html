@@ -99,22 +99,20 @@
         </div>
 
         <aside class="td-upcoming-card" aria-labelledby="td-upcoming-title">
-            <div class="td-upcoming-header">
-                <h3 id="td-upcoming-title" class="td-card-title">
-                    <span class="fa fa-clock-o" aria-hidden="true"></span>
-                    {% trans "Upcoming" %}
-                </h3>
+            <div class="td-action-header">
+                <span class="td-action-icon" aria-hidden="true"><span class="fa fa-clock-o"></span></span>
+                <span id="td-upcoming-title" class="td-action-title">{% trans "Upcoming" %}</span>
             </div>
             {% if upcoming_items %}
-                <ul class="td-upcoming-list" style="margin-top: 15px; margin-bottom: 15px; padding-left: 0; list-style: none;">
+                <ul class="td-upcoming-list">
                     {% for item in upcoming_items %}
-                    <li style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="font-weight: 800; font-size: 16px;">{{ item.large }}</span> 
-                            <span style="color: var(--td-muted); font-size: 14px;">{{ item.small }}</span>
+                    <li class="td-upcoming-item">
+                        <div class="td-upcoming-text">
+                            <span class="td-upcoming-large">{{ item.large }}</span>
+                            {% if item.small %}<span class="td-upcoming-small">{{ item.small }}</span>{% endif %}
                         </div>
                         {% if item.url %}
-                            <a href="{{ item.url }}" class="btn btn-sm btn-outline-primary" style="font-size: 11px; padding: 2px 6px;">{{ item.left.text|default:"View" }}</a>
+                            <a href="{{ item.url }}" class="btn btn-sm btn-outline-primary td-upcoming-btn">{{ item.left.text|default:"View" }}</a>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -122,8 +120,8 @@
             {% else %}
                 <p class="td-upcoming-empty">{% trans "No upcoming deadlines." %}</p>
             {% endif %}
-            <div class="td-action-footer mt-auto" style="border-top: 1px solid var(--td-border); padding-top: 12px; text-align: right;">
-                <a href="{{ request.event.orga_urls.base }}#timeline-steps" class="td-view-all-link" style="font-size: 13px; font-weight: 600;">{% trans "View full deadlines" %} <span aria-hidden="true">></span></a>
+            <div class="td-upcoming-footer">
+                <a href="{{ request.event.orga_urls.base }}#timeline-steps" class="td-view-all-link">{% trans "View full deadlines" %} <span aria-hidden="true">></span></a>
             </div>
         </aside>
     </div>
