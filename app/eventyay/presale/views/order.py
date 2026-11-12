@@ -219,7 +219,11 @@ class OrderProtectedActionMixin:
 
             allowed_emails.discard('')
 
-            if user_email not in allowed_emails:
+            # Order was already resolved by its secret URL. Enforce email ownership
+            # only when the order has a contact/attendee email to compare against;
+            # otherwise the secret is the credential (login-required checkout with
+            # order email not asked used to create empty-email orders and 403 here).
+            if allowed_emails and user_email not in allowed_emails:
                 raise PermissionDenied(_('You are not authorized to access this order.'))
 
         return super().dispatch(request, *args, **kwargs)
