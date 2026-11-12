@@ -157,6 +157,7 @@ const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/Feature
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
 import { changeScheduleLanguage } from './i18n.js'
+import { getLanguageNativeLabel } from '../../i18n/index.js'
 import { isShiftSchedule, resolveMode } from './teamshifts-adapter'
 import { logOperational } from './operationalLog.js'
 
@@ -1312,12 +1313,7 @@ export default {
 			const addLanguage = (code) => {
 				if (!code || knownLanguages.has(code)) return
 				knownLanguages.add(code)
-				let label = code
-				try {
-					label = new Intl.DisplayNames([this.locale], { type: 'language' }).of(code) || code
-				} catch {
-					label = code
-				}
+				const label = getLanguageNativeLabel(code) || code
 				this.allLanguages.push({ value: code, label, selected: false })
 			}
 			;(schedule.content_locales || []).forEach(addLanguage)

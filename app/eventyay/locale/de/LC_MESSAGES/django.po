@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-09-02 04:04+0000\n"
-"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
+"PO-Revision-Date: 2026-11-11 20:12+0000\n"
+"Last-Translator: Andreas Kleinert <andyk@users.noreply.hosted.weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 "X-Poedit-Bookmarks: -1,-1,904,-1,-1,-1,-1,-1,-1,-1\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
@@ -441,7 +441,7 @@ msgstr "Verstecken"
 #: eventyay/orga/templates/orga/submission/feedbacks_list.html:143
 #: eventyay/orga/templates/orga/submission/feedbacks_list.html:144
 msgid "Unban User"
-msgstr ""
+msgstr "Benutzersperre aufheben"
 
 #: eventyay/agenda/templates/agenda/includes/feedback_reply.html:59
 #: eventyay/agenda/templates/agenda/talk.html:165
@@ -469,7 +469,7 @@ msgstr "Antwort an"
 #: eventyay/agenda/templates/agenda/includes/feedback_reply.html:74
 #: eventyay/agenda/templates/agenda/talk.html:205
 msgid "replies"
-msgstr ""
+msgstr "Antworten"
 
 #: eventyay/agenda/templates/agenda/public_starred.html:39
 msgid "This page requires JavaScript to show the starred sessions."
@@ -539,11 +539,11 @@ msgstr "Eine Zahlung für diese Bestellung ist noch offen."
 
 #: eventyay/agenda/templates/agenda/talk.html:102
 msgid "Only attendees can leave comments on this session."
-msgstr ""
+msgstr "Nur Teilnehmer können Kommentare zu dieser Sitzung hinterlassen."
 
 #: eventyay/agenda/templates/agenda/talk.html:191
 msgid "Add a reply..."
-msgstr ""
+msgstr "Antwort hinzufügen ..."
 
 #: eventyay/agenda/templates/agenda/talk_review.html:17
 #: eventyay/base/models/submission.py:192
@@ -1166,7 +1166,7 @@ msgstr "Dieser Nutzer wurde anonymisiert."
 
 #: eventyay/agenda/views/talk.py:884
 msgid "Cannot unban an anonymous user."
-msgstr ""
+msgstr "Sperre für einen anonymen Nutzer kann nicht aufgehoben werden."
 
 #: eventyay/agenda/views/talk.py:886
 #, fuzzy
@@ -5947,7 +5947,7 @@ msgstr "Die Mail an den folgenden Benutzer konnte nicht versendet werden: {}"
 #: eventyay/control/forms/global_settings.py:113
 #: eventyay/orga/forms/email.py:21
 msgid "Gmail / Google Workspace API"
-msgstr ""
+msgstr "Gmail-/Google Workspace-API"
 
 #: eventyay/base/gmail/deps.py:20
 msgid ""
