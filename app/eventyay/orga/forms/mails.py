@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from i18nfield.forms import I18nModelForm
 
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
@@ -153,15 +154,22 @@ class DraftRemindersForm(MailTemplateForm):
 
     def get_recipients(self):
         """Return one ``(submission, speaker)`` pair per reminder that will be sent."""
-        submissions = Submission.all_objects.filter(
-            state=SubmissionStates.DRAFT, event=self.event
-        ).prefetch_related('speakers')
-        return [(submission, user) for submission in submissions for user in submission.speakers.all()]
+        with scope(event=self.event):
+            submissions = Submission.all_objects.filter(
+                state=SubmissionStates.DRAFT, event=self.event
+            ).prefetch_related('speakers')
+            return [(submission, user) for submission in submissions for user in submission.speakers.all()]
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, recipients=None, **kwargs):
+        """Send the checked audience without storing draft authors' mail details.
+
+        Keep the successful count available if a later dispatch raises.
+        """
+        self.sent_count = 0
+        if recipients is None:
+            recipients = self.get_recipients()
         template = self.instance
-        mail_count = 0
-        for submission, user in self.get_recipients():
+        for submission, user in recipients:
             template.to_mail(
                 user=user,
                 event=self.event,
@@ -170,9 +178,9 @@ class DraftRemindersForm(MailTemplateForm):
                 skip_queue=True,
                 commit=False,
             )
-            mail_count += 1
+            self.sent_count += 1
 
-        return mail_count
+        return self.sent_count
 
     class Meta:
         model = MailTemplate
@@ -342,7 +350,8 @@ class WriteTeamsMailForm(WriteMailBaseForm):
         return User.objects.filter(is_active=True, teams__in=teams, email__isnull=False).exclude(email='').distinct()
 
     @transaction.atomic
-    def save(self):
+    def save(self, *, send=True):
+        """Create team mail, optionally deferring dispatch until usage is committed."""
         send_template = self.build_send_template()
         result = []
         users = self.get_recipients()
@@ -361,7 +370,8 @@ class WriteTeamsMailForm(WriteMailBaseForm):
                 self.attach_template_reference(mail)
                 mail.save()
                 mail.to_users.add(user)
-                mail.send(requestor=self.user)
+                if send:
+                    mail.send(requestor=self.user)
                 result.append(mail)
         return result
 
@@ -530,7 +540,8 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
         return getattr(self, 'filter_search', None)
 
     @transaction.atomic
-    def save(self):
+    def save(self, *, send=True):
+        """Create session mail, optionally deferring immediate dispatch."""
         send_template = self.build_send_template()
 
         mails_by_user = defaultdict(list)
@@ -570,7 +581,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                     if submission := context.get('submission'):
                         mail.submissions.add(submission)
                 result.append(mail)
-        if self.cleaned_data.get('skip_queue') and not scheduled_at:
+        if send and self.cleaned_data.get('skip_queue') and not scheduled_at:
             for mail in result:
                 mail.send(requestor=self.user)
         return result
