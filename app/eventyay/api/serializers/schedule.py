@@ -98,9 +98,13 @@ class TalkSlotSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                     pk=instance.pk,
                 )
             except TalkSlot.DoesNotExist as exc:
-                raise ValidationError('The draft schedule changed. Reload it before editing this slot.') from exc
+                raise serializers.ValidationError(
+                    _('The draft schedule changed. Reload it before editing this slot.')
+                ) from exc
             if instance.schedule.version:
-                raise ValidationError('Released schedule slots cannot be edited. Reload the draft schedule.')
+                raise serializers.ValidationError(
+                    _('Released schedule slots cannot be edited. Reload the draft schedule.')
+                )
             if 'local_end' in validated_data:
                 validated_data['end'] = validated_data.pop('local_end')
             if 'start' in validated_data and instance.submission_id:
@@ -108,6 +112,9 @@ class TalkSlotSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 validated_data['end'] = (
                     start + timedelta(minutes=instance.submission.get_duration()) if start else None
                 )
+            elif 'start' in validated_data and 'end' not in validated_data and instance.start and instance.end:
+                start = validated_data['start']
+                validated_data['end'] = start + (instance.end - instance.start) if start else None
             return super().update(instance, validated_data)
 
     class Meta:

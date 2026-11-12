@@ -431,12 +431,13 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
                     or self.request.POST.get('action') == 'dedraft'
                 ):
                     type(self.request.event).objects.select_for_update(no_key=True).get(pk=self.request.event.pk)
-                previous_defaults = {key: getattr(form.instance, key) for key in form.default_values}
+                default_values = getattr(form, 'default_values', {})
+                previous_defaults = {key: getattr(form.instance, key, None) for key in default_values}
                 form.instance.refresh_for_update(form.changed_data)
                 for key, previous in previous_defaults.items():
-                    current = getattr(form.instance, key)
+                    current = getattr(form.instance, key, None)
                     if current != previous:
-                        form.default_values[key] = current
+                        default_values[key] = current
             # Validate formset before saving form to prevent partial persistence
             result = self.save_formset(form.instance)
             if not result:

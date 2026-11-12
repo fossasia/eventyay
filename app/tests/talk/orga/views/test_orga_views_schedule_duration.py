@@ -7,6 +7,7 @@ import pytest
 from django.apps import apps
 from django.db import IntegrityError, OperationalError, connection, connections, transaction
 from django.db.models import QuerySet
+from django.forms import modelform_factory
 from django.http import QueryDict
 from django.test.utils import CaptureQueriesContext
 from django.utils.timezone import now
@@ -111,6 +112,7 @@ def test_type_rename_preserves_concurrent_duration(event, accepted_submission, m
             'name_0': 'Renamed session type', 'default_duration': old_duration,
         })
         assert form.is_valid(), form.errors
+        assert form.changed_data == ['name']
         current_type = event.submission_types.get(pk=submission_type.pk)
         current_type.default_duration = old_duration + 15
         current_type.save(update_fields=['default_duration'])
@@ -276,7 +278,7 @@ def test_review_api_duration_override_writes(event, submission, orga_user, data,
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
 @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row-lock contention.')
 @pytest.mark.parametrize('operation', (
-    'slot', 'type', 'type_name', 'type_form_name', 'api_title', 'orga_title', 'cfp_title',
+    'slot', 'type', 'type_name', 'type_form_name', 'api_title', 'orga_title', 'cfp_title', 'orga_create',
 ))
 def test_review_event_lock_only_blocks_schedule_edits(request, mocker, operation):
     """Slot/type writes must wait for release, but independent title edits must not."""
@@ -339,7 +341,10 @@ def test_review_event_lock_only_blocks_schedule_edits(request, mocker, operation
                                 )
                             else:
                                 serializer = SubmissionForm(
-                                    event=event, instance=Submission.all_objects.get(pk=submission.pk), data=data,
+                                    event=event,
+                                    instance=Submission(event=event) if operation == 'orga_create'
+                                    else Submission.all_objects.get(pk=submission.pk),
+                                    data={**data, 'state': SubmissionStates.SUBMITTED},
                                 )
                             assert serializer.is_valid(), serializer.errors
                             serializer.save()
@@ -715,3 +720,94 @@ def test_schedule_reset_locks_draft_before_copying_slots(mocker, request):
 
         _, reset_draft = released.unfreeze()
         assert reset_draft.talks.filter(submission=submission).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('creating', (False, True))
+def test_type_form_saves_new_and_unchanged_types(event, mocker, creating):
+    """An unchanged form must not write stale values, while new types save normally."""
+    with scope(event=event):
+        instance = SubmissionType(event=event, name='Type save test', default_duration=30)
+        if not creating:
+            instance.save()
+            instance.refresh_from_db()
+        initial_form = SubmissionTypeForm(event=event, instance=instance)
+        data = {
+            f'name_{index}': value
+            for index, value in enumerate(initial_form.fields['name'].widget.decompress(instance.name))
+        }
+        form = SubmissionTypeForm(event=event, instance=instance, data={**data, 'default_duration': 30})
+        assert form.is_valid(), form.errors
+        save = mocker.spy(instance, 'save')
+        if not creating:
+            assert form.changed_data == []
+            SubmissionType.objects.filter(pk=instance.pk).update(default_duration=60)
+        form.save()
+        instance.refresh_from_db()
+        assert str(instance.name) == 'Type save test'
+        assert instance.default_duration == (30 if creating else 60)
+        assert save.call_count == int(creating)
+        if creating:
+            assert 'update_fields' not in save.call_args.kwargs
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('field', ('title', 'duration'))
+def test_api_submission_rechecks_changes_after_refresh(event, submission, orga_user, field):
+    """An explicit update must not be dropped by comparison with a stale instance."""
+    with scope(event=event):
+        old_value = getattr(submission, field)
+        data = {'duration_override' if field == 'duration' else field: old_value}
+        serializer = SubmissionSerializer(
+            instance=submission, data=data, partial=True,
+            context={'request': SimpleNamespace(event=event, user=orga_user, query_params=QueryDict())},
+        )
+        assert serializer.is_valid(), serializer.errors
+        new_value = 'Concurrent title' if field == 'title' else (old_value or 30) + 15
+        Submission.all_objects.filter(pk=submission.pk).update(**{field: new_value})
+        serializer.save()
+        submission.refresh_from_db()
+        assert getattr(submission, field) == old_value
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('explicit_end', (False, True))
+@pytest.mark.parametrize('clear_start', (False, True))
+def test_break_move_preserves_duration_unless_end_is_supplied(event, room, explicit_end, clear_start):
+    """Moving or clearing a break start must keep its end consistent."""
+    with scope(event=event):
+        start = now()
+        end = start + dt.timedelta(minutes=15, seconds=17)
+        slot = event.wip_schedule.talks.create(room=room, start=start, end=end, description='Break')
+        new_start = None if clear_start else start + dt.timedelta(hours=1)
+        data = {'start': new_start}
+        new_end = start + dt.timedelta(hours=2)
+        if explicit_end:
+            data['end'] = new_end
+        serializer = TalkSlotOrgaSerializer(
+            instance=slot, data=data, partial=True,
+            context={'request': SimpleNamespace(event=event, query_params=QueryDict())},
+        )
+        assert serializer.is_valid(), serializer.errors
+        serializer.save()
+        slot.refresh_from_db()
+        assert slot.start == new_start
+        expected_end = new_end if explicit_end else None if clear_start else new_start + (end - start)
+        assert slot.end == expected_end
+
+
+@pytest.mark.django_db
+def test_speaker_edit_accepts_form_without_default_values(event, submission, speaker_client, mocker):
+    """A normal ModelForm can save without InfoForm's optional default-value mapping."""
+    with scope(event=event):
+        form_class = modelform_factory(Submission, fields=('title',))
+        form = form_class(instance=submission, data={'title': 'Edited without defaults'})
+        assert form.is_valid(), form.errors
+        assert not hasattr(form, 'default_values')
+        mocker.patch.object(SubmissionsEditView, 'get_form', return_value=form)
+        response = speaker_client.post(submission.urls.user_base, data={
+            'resource-TOTAL_FORMS': 0, 'resource-INITIAL_FORMS': 0,
+        })
+        assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.title == 'Edited without defaults'

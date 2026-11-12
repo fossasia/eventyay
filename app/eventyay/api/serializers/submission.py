@@ -287,14 +287,14 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             raise serializers.ValidationError('Event is required for submissions.')
         if 'get_duration' in validated_data:
             validated_data.setdefault('duration', validated_data.pop('get_duration'))
-        validated_data = {
-            key: value for key, value in validated_data.items()
-            if key in ('tags', 'image') or value != getattr(instance, key)
-        }
         with scope(event=self.event):
             if {'duration', 'submission_type', 'slot_count'}.intersection(validated_data):
                 type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
             instance.refresh_from_db(from_queryset=Submission.all_objects.select_for_update())
+        validated_data = {
+            key: value for key, value in validated_data.items()
+            if key in ('tags', 'image') or value != getattr(instance, key, None)
+        }
         tags_provided = 'tags' in validated_data
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
