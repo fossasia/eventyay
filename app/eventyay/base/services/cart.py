@@ -186,16 +186,28 @@ def is_voucher_rate_limited(request):
         return False
 
 
+def _increment_voucher_counter(key):
+    """Increment a failed-voucher counter while keeping its expiry window."""
+
+    if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
+        return 1
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        if cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
+            return 1
+        count = cache.incr(key)
+    if not cache.touch(key, timeout=VOUCHER_RATE_LIMIT_WINDOW):
+        cache.add(key, count, timeout=VOUCHER_RATE_LIMIT_WINDOW)
+    return count
+
+
 def record_voucher_failure(request):
     key = _voucher_rate_limit_key(request)
     if not key:
         return
     try:
-        if not cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW):
-            try:
-                cache.incr(key)
-            except ValueError:
-                cache.add(key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW)
+        _increment_voucher_counter(key)
     except Exception:
         logger.exception('Could not record voucher rate limit; allowing request')
 
