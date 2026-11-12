@@ -24,10 +24,9 @@ def test_account_general_dropdowns_are_searchable(authenticated_client, user):
     assert response.status_code == 200
 
     content = response.content.decode()
-
-    # Searchable select script and stylesheet must be present in the page
-    assert 'common/js/searchable-select.js' in content
-    assert 'common/css/searchable-select.css' in content
+    soup = BeautifulSoup(content, 'html.parser')
+    assert soup.find('script', src=lambda s: s and 'common/js/searchable-select.js' in s) is not None
+    assert soup.find('link', href=lambda h: h and 'common/css/searchable-select.css' in h) is not None
 
     # Language dropdown verification
     locale_html = _select(content, 'locale')
@@ -128,21 +127,21 @@ def test_account_general_retains_selected_values_after_reload(authenticated_clie
 @override_settings(SITE_URL='https://testserver')
 def test_account_general_unrelated_fields_unaffected(authenticated_client, user):
     """Verify that updating other fields leaves language and timezone intact, and vice versa."""
-    user.locale = 'en'
-    user.timezone = 'UTC'
+    user.locale = 'de'
+    user.timezone = 'Europe/Berlin'
     user.fullname = 'Original Name'
     user.save()
 
     url = reverse('eventyay_common:account.general')
     post_data = {
         'fullname': 'New Full Name',
-        'locale': 'en',
-        'timezone': 'UTC',
+        'locale': 'de',
+        'timezone': 'Europe/Berlin',
     }
     response = authenticated_client.post(url, post_data, follow=True)
     assert response.status_code == 200
 
     user.refresh_from_db()
     assert user.fullname == 'New Full Name'
-    assert user.locale == 'en'
-    assert user.timezone == 'UTC'
+    assert user.locale == 'de'
+    assert user.timezone == 'Europe/Berlin'
