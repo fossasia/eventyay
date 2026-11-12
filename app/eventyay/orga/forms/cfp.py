@@ -429,8 +429,10 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     )
 
     def __init__(self, *args, event=None, **kwargs):
+        """Configure question fields for the supplied event or existing instance."""
         instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
+        event = event or self.instance.event
         self.event = event
         self.fields['question'].required = True
         self.fields['question'].label = _('Custom question')
@@ -473,6 +475,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             variant__in=(
                 TalkQuestionVariant.BOOLEAN,
                 TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.SELECT,
                 TalkQuestionVariant.MULTIPLE,
             ),
         )
@@ -524,8 +527,9 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             return [opt.strip() for opt in options if opt.strip()]
 
     def clean_dependency_values(self):
+        """Read dependency values through the widget for dict and QueryDict input."""
         if self.is_bound:
-            values = self.data.getlist(self.add_prefix('dependency_values'))
+            values = self['dependency_values'].value()
         else:
             values = self.cleaned_data.get('dependency_values')
         if not values:
@@ -546,6 +550,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         return self.cleaned_data.get('dependency_question')
 
     def clean(self):
+        """Validate deadlines, option uploads and dependency choices together."""
         d = super().clean()
         deadline = d.get('deadline')
         question_required = d.get('question_required')
@@ -585,6 +590,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         if question and dependency_values:
             if question.variant in (
                 TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.SELECT,
                 TalkQuestionVariant.MULTIPLE,
             ):
                 valid_option_ids = set(question.options.values_list('id', flat=True))
@@ -628,9 +634,9 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
         return d
 
-    def option_key(self, option: LazyI18nString) -> str:
+    def option_key(self, option: LazyI18nString | str | dict) -> str:
         """Match stored and uploaded options using non-empty translations."""
-        data = option.data
+        data = getattr(option, 'data', option)
         if not isinstance(data, dict):
             data = {self.event.locale: data}
         return AnswerOption._meta.get_field('answer').get_prep_value(data)

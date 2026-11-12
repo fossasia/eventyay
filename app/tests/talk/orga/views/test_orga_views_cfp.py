@@ -1151,7 +1151,8 @@ class TestConcurrentQuestionOptionUploads(TransactionTestCase):
                             },
                         ).status_code
                     except OperationalError as error:
-                        return error.__cause__.sqlstate
+                        database_error = error.__cause__ or error
+                        return getattr(database_error, 'sqlstate', None) or getattr(database_error, 'pgcode', None)
                 finally:
                     connections.close_all()
 
@@ -1177,8 +1178,9 @@ class TestConcurrentQuestionOptionUploads(TransactionTestCase):
 @pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
 @pytest.mark.parametrize('existing_value', ('Vegan', {'en': 'Vegan'}, {'en': 'Vegan', 'de': ''}))
 @pytest.mark.parametrize('uploaded_value', ({'en': 'Vegan'}, {'en': 'Vegan', 'de': ''}))
+@pytest.mark.parametrize('pass_event', (True, False))
 def test_upload_options_matches_stored_translation_format(
-    event, submission, speaker, variant, existing_value, uploaded_value
+    event, submission, speaker, variant, existing_value, uploaded_value, pass_event
 ):
     """Reuse choices when empty translations or legacy strings differ only in storage format."""
     event.locale_array = 'en,de'
@@ -1206,11 +1208,12 @@ def test_upload_options_matches_stored_translation_format(
         )
         for _ in range(2):
             form = TalkQuestionForm(
-                event=event,
+                **({'event': event} if pass_event else {}),
                 instance=question,
                 data=data,
                 files={'options': SimpleUploadedFile('options.json', json.dumps([uploaded_value]).encode())},
             )
+            assert form.option_key(existing_value) == form.option_key(existing.answer)
             assert form.is_valid(), form.errors
             assert form.save() == question
             option = question.options.get()
@@ -1221,18 +1224,28 @@ def test_upload_options_matches_stored_translation_format(
 
 
 @pytest.mark.django_db
-def test_question_form_dependency_choice_validation(event):
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+def test_question_form_dependency_choice_validation(event, other_event, variant):
     """Validate dependency choice IDs directly against question options and guard missing IDs."""
+    with scope(event=other_event):
+        foreign_question = Question.objects.create(
+            event=other_event, question='Other event', variant=variant, target='submission',
+        )
+        foreign_option = foreign_question.options.create(answer='Other event choice')
     with scope(event=event):
         parent_choice_q = Question.objects.create(
             event=event,
             question='Dietary restriction',
-            variant='choices',
+            variant=variant,
             target='submission',
             question_required=QuestionRequired.OPTIONAL,
         )
         opt1 = parent_choice_q.options.create(answer='Gluten-free', position=1)
         opt2 = parent_choice_q.options.create(answer='Nut allergy', position=2)
+        other_question = Question.objects.create(
+            event=event, question='Other parent', variant=variant, target='submission',
+        )
+        other_option = other_question.options.create(answer='Other parent choice')
 
         # Valid choice option ID
         data = {
@@ -1241,7 +1254,7 @@ def test_question_form_dependency_choice_validation(event):
             'variant': 'string',
             'question_required': QuestionRequired.OPTIONAL,
             'dependency_question': parent_choice_q.pk,
-            'dependency_values': [str(opt1.pk)],
+            'dependency_values': [f' {opt1.pk} '],
         }
         form = TalkQuestionForm(event=event, data=data)
         assert form.is_valid(), form.errors
@@ -1265,6 +1278,19 @@ def test_question_form_dependency_choice_validation(event):
         assert not form.is_valid()
         assert 'dependency_values' in form.errors
 
+        for option in (other_option, foreign_option):
+            data['dependency_values'] = [str(option.pk)]
+            form = TalkQuestionForm(event=event, data=data)
+            assert not form.is_valid()
+            assert 'dependency_values' in form.errors
+
+        data['dependency_question'] = foreign_question.pk
+        data['dependency_values'] = [str(foreign_option.pk)]
+        form = TalkQuestionForm(event=event, data=data)
+        assert not form.is_valid()
+        assert 'dependency_question' in form.errors
+        data['dependency_question'] = parent_choice_q.pk
+
         # Missing / empty choice IDs
         data['dependency_values'] = ['', '   ']
         form = TalkQuestionForm(event=event, data=data)
@@ -1275,7 +1301,7 @@ def test_question_form_dependency_choice_validation(event):
         parent_empty_q = Question.objects.create(
             event=event,
             question='Empty choices',
-            variant='choices',
+            variant=variant,
             target='submission',
             question_required=QuestionRequired.OPTIONAL,
         )
