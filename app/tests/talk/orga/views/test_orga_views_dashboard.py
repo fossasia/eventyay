@@ -1,11 +1,13 @@
 import datetime as dt
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Team, User
+from eventyay.base.models.log import LogEntry
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.submission import Submission, SubmissionStates
 
@@ -161,8 +163,6 @@ def test_event_dashboard_internal_note_uses_settings_not_comment(event, orga_cli
     )
     assert response.status_code == 200
     with scope(event=event):
-        from eventyay.base.models.log import LogEntry
-
         event.refresh_from_db()
         assert event.comment == 'tickets comment'
         assert event.settings.get('orga_internal_note') == 'talks organizer note'
@@ -175,8 +175,6 @@ def test_event_dashboard_internal_note_uses_settings_not_comment(event, orga_cli
 
 @pytest.mark.django_db
 def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_user):
-    from eventyay.base.models.log import LogEntry
-
     with scope(event=event):
         LogEntry.objects.create(
             event=event,
@@ -194,12 +192,8 @@ def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_use
 
 @pytest.mark.django_db
 def test_event_dashboard_skips_stale_log_content_types(event, orga_client, orga_user, slot):
-    from django.contrib.contenttypes.models import ContentType
-
-    from eventyay.base.models.log import LogEntry
-
     with scope(event=event):
-        LogEntry.objects.create(
+        valid_log = LogEntry.objects.create(
             event=event,
             user=orga_user,
             content_object=slot.submission,
@@ -207,7 +201,7 @@ def test_event_dashboard_skips_stale_log_content_types(event, orga_client, orga_
             data='{}',
         )
         stale_ct = ContentType.objects.create(app_label='gone_app', model='ghostmodel')
-        LogEntry.all.create(
+        stale_log = LogEntry.all.create(
             event=event,
             user=orga_user,
             content_type=stale_ct,
@@ -219,7 +213,9 @@ def test_event_dashboard_skips_stale_log_content_types(event, orga_client, orga_
 
     response = orga_client.get(event.orga_urls.base)
     assert response.status_code == 200
-    assert event.slug in response.text
+    activity_ids = {entry.pk for entry in response.context_data['recent_talk_activity']}
+    assert valid_log.pk in activity_ids
+    assert stale_log.pk not in activity_ids
 
 
 @pytest.mark.django_db
