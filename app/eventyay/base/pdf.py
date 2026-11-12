@@ -23,7 +23,7 @@ from django.utils.formats import date_format
 from django.utils.html import conditional_escape
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
 from zoneinfo import ZoneInfo
 from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode.qr import QrCodeWidget
@@ -836,7 +836,7 @@ class Renderer:
             except OSError:
                 pass
             self.background_file = None
-            self.bg_pdf = PdfReader(BytesIO(self.bg_bytes), strict=False)
+            self.bg_pdf = PdfWriter(clone_from=PdfReader(BytesIO(self.bg_bytes), strict=False))
             correct_page_media_box(self.bg_pdf.pages[0])
         else:
             self.bg_bytes = None
@@ -1256,13 +1256,14 @@ class Renderer:
 
     def merge_foreground_buffer(self, buffer):
         buffer.seek(0)
-        fg_pdf = PdfReader(buffer, strict=False)
+        fg_reader = PdfReader(buffer, strict=False)
         if not self.bg_pdf:
-            return list(fg_pdf.pages)
+            return list(fg_reader.pages)
         bg_page = self.bg_pdf.pages[0]
-        for page in fg_pdf.pages:
+        writer = PdfWriter(clone_from=fg_reader)
+        for page in writer.pages:
             page.merge_page(bg_page, over=False)
-        return list(fg_pdf.pages)
+        return list(writer.pages)
 
     def render_background(self, buffer, title=_('Ticket')):
         if settings.PDFTK:
