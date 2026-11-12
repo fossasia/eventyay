@@ -4,7 +4,7 @@ from datetime import MAXYEAR, MINYEAR, UTC, date, datetime, time, timedelta
 from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import isoweek
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -173,7 +173,10 @@ class EventListMixin:
 
         if datetime_from:
             tz_name = next_ev.settings.timezone or settings.TIME_ZONE
-            tz = ZoneInfo(tz_name)
+            try:
+                tz = ZoneInfo(tz_name)
+            except ZoneInfoNotFoundError:
+                tz = ZoneInfo(settings.TIME_ZONE)
             self.year = datetime_from.astimezone(tz).year
             self.month = datetime_from.astimezone(tz).month
         else:
@@ -281,7 +284,11 @@ class EventListMixin:
             datetime_from = next_ev.date_from
 
         if datetime_from:
-            tz = ZoneInfo(next_ev.settings.timezone or settings.TIME_ZONE)
+            tz_name = next_ev.settings.timezone or settings.TIME_ZONE
+            try:
+                tz = ZoneInfo(tz_name)
+            except ZoneInfoNotFoundError:
+                tz = ZoneInfo(settings.TIME_ZONE)
             self.year = datetime_from.astimezone(tz).isocalendar()[0]
             self.week = datetime_from.astimezone(tz).isocalendar()[1]
         else:
