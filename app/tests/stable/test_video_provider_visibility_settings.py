@@ -6,12 +6,12 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Room
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.log import LogEntry
-from eventyay.base.services.event import create_room, get_event_config_for_user, get_rooms
+from eventyay.base.services.event import create_room, get_event_config_for_user, get_room_config, get_rooms
 from eventyay.base.settings import (
     GlobalSettingsObject,
     SUPPORTED_VIDEO_PROVIDERS,
@@ -249,6 +249,47 @@ def test_get_room_config_marks_disabled_for_inactive_provider(sample_event):
         assert "no longer available" in cfg["disabled_reason"]
     finally:
         gs.settings.set("video_provider_jitsi_attendee", True)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "permissions, sees_credentials",
+    [
+        (set(), False),
+        ({"room:jitsi.moderate", "room:bbb.moderate"}, False),
+        ({"room:update"}, True),
+        ({"event:update"}, True),
+        ({"world:update"}, True),
+    ],
+)
+def test_get_room_config_hides_zoom_credentials_from_non_editors(sample_event, permissions, sees_credentials):
+    zoom_config = {
+        "meeting_number": "123456789",
+        "disable_chat": True,
+        "password": "zoompass",
+        "client_id": "zoom-client",
+        "client_secret": "zoomsecret",
+    }
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Room Credentials Test",
+            module_config=[{"type": "call.zoom", "config": dict(zoom_config)}],
+            trait_grants={"viewer": []},
+        )
+
+    cfg = get_room_config(room, permissions=permissions)
+
+    (zoom,) = cfg["modules"]
+    shown = zoom["config"]
+    # Settings the room page needs stay visible to everyone.
+    assert shown["meeting_number"] == "123456789"
+    assert shown["disable_chat"] is True
+    assert shown["client_id"] == "zoom-client"
+    assert ("password" in shown) is sees_credentials
+    assert ("client_secret" in shown) is sees_credentials
+    # The stored room is never changed by building the payload.
+    assert room.module_config[0]["config"] == zoom_config
 
 
 @pytest.mark.asyncio

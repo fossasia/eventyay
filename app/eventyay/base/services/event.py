@@ -300,9 +300,18 @@ def count_chat_participants(channel_id):
     return len(set(member_ids) | set(sender_ids))
 
 
+ROOM_EDIT_PERMISSIONS = frozenset({"room:update", "event:update", "world:update"})
+
+
+def can_edit_room_settings(permission_values):
+    """Whether the given permission values allow changing any setting of a room."""
+    return bool(ROOM_EDIT_PERMISSIONS & set(permission_values))
+
+
 def get_room_config(room, permissions, *, current_stream=_UNSET):
     """Build room configuration dictionary filtered by module entitlements."""
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
+    can_edit = can_edit_room_settings(str_permissions)
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
@@ -349,6 +358,12 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
                 cfg.pop("app_id", None)
                 cfg.pop("key_id", None)
                 cfg.pop("app_secret", None)
+        elif module["type"] == "call.zoom":
+            # The server signs the join data itself, so only room editors need the credentials.
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict) and not can_edit:
+                cfg.pop("password", None)
+                cfg.pop("client_secret", None)
         elif module["type"] == "chat.native":
             # Strip webhook secrets — these are server-side only
             cfg = module_config.get("config")
@@ -772,9 +787,7 @@ async def get_room_config_for_user(room: str, event_id: str, user):
         p.value if hasattr(p, "value") else str(p)
         for p in effective_permissions
     }
-    is_orga = bool(
-        {"room:update", "event:update", "world:update"} & permission_values
-    )
+    is_orga = can_edit_room_settings(permission_values)
     if not is_orga:
         visible = await database_sync_to_async(is_room_visible_for_attendee)(room)
         if not visible:
