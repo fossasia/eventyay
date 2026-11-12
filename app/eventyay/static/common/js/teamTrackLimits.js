@@ -72,6 +72,7 @@ function initTrackLimits(container) {
     const search = container.querySelector('.team-track-search');
     const searchRow = container.querySelector('.team-track-search-row');
     const noMatch = container.querySelector('.team-track-search-empty');
+    const bulkActions = container.querySelector('.team-track-bulk-actions');
     const totalTracks = groups.reduce(function (sum, group) {
         return sum + trackBoxes(group).length;
     }, 0);
@@ -163,6 +164,9 @@ function initTrackLimits(container) {
         applyFilter();
         if (outOfScope) {
             outOfScope.hidden = inScopeGroups().length > 0;
+        }
+        if (bulkActions) {
+            bulkActions.hidden = inScopeGroups().length === 0;
         }
         if (searchRow) {
             searchRow.hidden = totalTracks < 8;
