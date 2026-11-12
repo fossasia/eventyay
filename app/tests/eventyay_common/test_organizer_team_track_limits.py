@@ -1,8 +1,9 @@
 import pytest
 from django.urls import reverse
-from django_scopes import scopes_disabled
+from django.utils.timezone import now
+from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import Team, Track
+from eventyay.base.models import Event, Team, Track
 
 
 @pytest.fixture(autouse=True)
@@ -13,7 +14,7 @@ def _site_url(settings):
 
 @pytest.fixture
 def tracks(event):
-    with scopes_disabled():
+    with scope(event=event):
         return [
             Track.objects.create(event=event, name='Alpha', color='#111111'),
             Track.objects.create(event=event, name='Beta', color='#222222'),
@@ -33,14 +34,23 @@ def _update_team(client, organizer, team, **fields):
 
 
 @pytest.mark.django_db
-def test_teams_page_saves_selected_tracks(organizer_client, organizer, tracks, reviewers):
+def test_teams_page_saves_tracks_from_several_events(organizer_client, organizer, tracks, reviewers):
+    other_event = Event.objects.create(organizer=organizer, name='Other Event', slug='other', date_from=now())
+    with scope(event=other_event):
+        other_track = Track.objects.create(event=other_event, name='Gamma', color='#333333')
+
     response = _update_team(
-        organizer_client, organizer, reviewers, all_events='on', is_reviewer='on', limit_tracks=[tracks[0].pk]
+        organizer_client,
+        organizer,
+        reviewers,
+        all_events='on',
+        is_reviewer='on',
+        limit_tracks=[tracks[0].pk, other_track.pk],
     )
 
     assert response.status_code == 302
     with scopes_disabled():
-        assert list(reviewers.limit_tracks.all()) == [tracks[0]]
+        assert set(reviewers.limit_tracks.all()) == {tracks[0], other_track}
 
 
 @pytest.mark.django_db
