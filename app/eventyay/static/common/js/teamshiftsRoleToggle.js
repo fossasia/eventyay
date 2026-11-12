@@ -12,7 +12,6 @@ document.querySelectorAll('.teamshifts-lead-options[data-role-name]').forEach(fu
     optionsDiv.hidden = !(lead && lead.checked);
   }
 
-  // A team has a single TeamShifts role, so ticking one role unticks the other.
   roleInputs.forEach(function (input) {
     input.addEventListener('change', function () {
       if (input.checked) {

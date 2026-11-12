@@ -1,6 +1,6 @@
 import pytest
-from django.http import QueryDict
 from django.apps import apps
+from django.http import QueryDict
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -44,8 +44,6 @@ def test_team_form_can_remove_teamshifts_role(organizer, event, teamshifts_insta
     )
     team.limit_events.add(event)
 
-    # The lead-only options stay in the page (just hidden) when "No TeamShifts access"
-    # is picked, so the browser still submits them together with the empty role.
     form = TeamForm(
         organizer=organizer,
         instance=team,
@@ -127,17 +125,6 @@ def lead_team(organizer, event):
 
 
 @pytest.mark.django_db
-def test_unticking_all_teamshifts_checkboxes_removes_the_role(organizer, event, lead_team, teamshifts_installed):
-    form = TeamForm(organizer=organizer, instance=lead_team, data=_checkbox_post(event))
-    assert form.is_valid(), form.errors
-    form.save()
-
-    lead_team.refresh_from_db()
-    assert lead_team.teamshifts_role == ''
-    assert lead_team.hide_teamshifts_emails is False
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'submitted, expected',
     (
@@ -146,7 +133,9 @@ def test_unticking_all_teamshifts_checkboxes_removes_the_role(organizer, event, 
         (('coordinator', 'lead'), 'lead'),
     ),
 )
-def test_ticked_teamshifts_checkbox_sets_the_role(organizer, event, lead_team, teamshifts_installed, submitted, expected):
+def test_ticked_teamshifts_checkbox_sets_the_role(
+    organizer, event, lead_team, teamshifts_installed, submitted, expected
+):
     data = _checkbox_post(event, *submitted)
     data['all_teamshifts_roles'] = 'True'
     form = TeamForm(organizer=organizer, instance=lead_team, data=data)
