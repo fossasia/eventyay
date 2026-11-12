@@ -12,10 +12,12 @@ from eventyay.control.views.pdf import BaseEditorView
 
 
 def _make_pdf(text='background', width=300, height=200, rotate=0, pages=1):
+    # `text` may be a list with one string per page.
+    texts = text if isinstance(text, list) else [text] * pages
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=(width, height))
-    for _ in range(pages):
-        c.drawString(20, 100, text)
+    for page_text in texts:
+        c.drawString(20, 100, page_text)
         c.showPage()
     c.save()
     buf.seek(0)
@@ -46,24 +48,47 @@ def _page_text(page):
     return PdfReader(out).pages[0].extract_text()
 
 
+def _text_position(page, needle):
+    # Position of the first text run containing `needle`, in page space.
+    found = []
+
+    def visit(text, cm, tm, font_dict, font_size):
+        if needle in text:
+            x, y = tm[4], tm[5]
+            found.append((cm[0] * x + cm[2] * y + cm[4], cm[1] * x + cm[3] * y + cm[5]))
+
+    page.extract_text(visitor_text=visit)
+    return found[0]
+
+
 @pytest.mark.parametrize('rotate', [0, 90])
 def test_background_is_merged_under_foreground(rotate):
     renderer = _renderer(_make_pdf('BACKGROUNDTEXT', rotate=rotate))
-    pages = renderer.merge_foreground_buffer(_make_pdf('FOREGROUNDTEXT'))
+    # The foreground gets the size draw_page gives it: swapped for a rotated background.
+    width, height = (200, 300) if rotate else (300, 200)
+    pages = renderer.merge_foreground_buffer(_make_pdf('FOREGROUNDTEXT', width=width, height=height))
     assert len(pages) == 1
-    text = _page_text(pages[0])
-    assert 'BACKGROUNDTEXT' in text
-    assert 'FOREGROUNDTEXT' in text
+    page = pages[0]
+
+    # Background content comes first in the stream, so the foreground is painted on top.
+    content = page.get_contents().get_data()
+    assert content.index(b'BACKGROUNDTEXT') < content.index(b'FOREGROUNDTEXT')
+
+    # The background text must land inside the output page.
+    x, y = _text_position(page, 'BACKGROUNDTEXT')
+    assert 0 <= x <= float(page.mediabox.width)
+    assert 0 <= y <= float(page.mediabox.height)
 
 
 def test_background_is_merged_into_every_foreground_page():
     renderer = _renderer(_make_pdf('BACKGROUNDTEXT', pages=3))
-    pages = renderer.merge_foreground_buffer(_make_pdf('FOREGROUNDTEXT', pages=3))
+    expected_texts = ['FIRSTPAGE', 'SECONDPAGE', 'THIRDPAGE']
+    pages = renderer.merge_foreground_buffer(_make_pdf(expected_texts))
     assert len(pages) == 3
-    for page in pages:
+    for page, expected in zip(pages, expected_texts):
         text = _page_text(page)
         assert 'BACKGROUNDTEXT' in text
-        assert 'FOREGROUNDTEXT' in text
+        assert expected in text
 
 
 def test_only_first_background_page_is_kept():
@@ -73,7 +98,9 @@ def test_only_first_background_page_is_kept():
 
 def test_no_background_returns_foreground_pages():
     renderer = _renderer(None)
-    assert len(renderer.merge_foreground_buffer(_make_pdf())) == 1
+    pages = renderer.merge_foreground_buffer(_make_pdf('FOREGROUNDTEXT'))
+    assert len(pages) == 1
+    assert 'FOREGROUNDTEXT' in _page_text(pages[0])
 
 
 def test_resize_background_pdf_scales_page_and_keeps_content():
