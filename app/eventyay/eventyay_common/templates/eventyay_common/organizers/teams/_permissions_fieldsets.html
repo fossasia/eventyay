@@ -2,28 +2,28 @@
 {% load bootstrap3 %}
 {% load static %}
 
-<fieldset>
-    <legend>{% translate "General information" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-info-circle team-permissions-legend-icon" aria-hidden="true"></i>{% translate "General information" %}</legend>
     {% bootstrap_field form.name layout="control" %}
 </fieldset>
 
-<fieldset>
-    <legend>{% translate "Organizer permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-group team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Organizer permissions" %}</legend>
     {% bootstrap_field form.can_create_events layout="control" %}
     {% bootstrap_field form.can_manage_gift_cards layout="control" %}
     {% bootstrap_field form.can_change_teams layout="control" %}
     {% bootstrap_field form.can_change_organizer_settings layout="control" %}
 </fieldset>
 
-<fieldset>
-    <legend>{% translate "Event permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-calendar team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Event permissions" %}</legend>
     {% bootstrap_field form.all_events layout="control" %}
     {% bootstrap_field form.limit_events layout="control" %}
     {% bootstrap_field form.can_change_event_settings layout="control" %}
 </fieldset>
 
-<fieldset>
-    <legend>{% translate "Ticket permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-ticket team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Ticket permissions" %}</legend>
     {% bootstrap_field form.can_change_items layout="control" %}
     {% bootstrap_field form.can_view_orders layout="control" %}
     <div class="team-permission-children" data-parent="{{ form.can_view_orders.auto_id }}">
@@ -37,8 +37,8 @@
     </div>
 </fieldset>
 
-<fieldset>
-    <legend>{% translate "Talk permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-microphone team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Talk permissions" %}</legend>
     {% bootstrap_field form.can_change_submissions layout="control" %}
     {% bootstrap_field form.is_reviewer layout="control" %}
     {% with toggle_id=form.is_reviewer.auto_id submission_toggle_id=form.can_change_submissions.auto_id %}
@@ -136,19 +136,19 @@
 </fieldset>
 
 {% if form.exhibition_plugin_enabled %}
-<fieldset class="team-exhibition-permissions"
+<fieldset class="team-permissions-section team-exhibition-permissions"
           data-exhibition-events="{{ form.exhibition_event_ids|join:"," }}"
           data-all-events-id="{{ form.all_events.auto_id }}"
           data-limit-events-name="{{ form.limit_events.html_name }}">
-    <legend>{% translate "Exhibition permissions" %}</legend>
+    <legend><i class="fa fa-building-o team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Exhibition permissions" %}</legend>
     {% bootstrap_field form.can_change_exhibition_proposals layout="control" %}
     {% bootstrap_field form.is_exhibition_reviewer layout="control" %}
     {% bootstrap_field form.hide_exhibition_applicant_emails layout="control" %}
 </fieldset>
 {% endif %}
 
-<fieldset>
-    <legend>{% translate "Video permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-video-camera team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Video permissions" %}</legend>
     {% bootstrap_field form.can_change_config layout="control" %}
     {% bootstrap_field form.can_video_manage_content layout="control" %}
     {% bootstrap_field form.can_video_moderate layout="control" %}
@@ -157,8 +157,8 @@
 </fieldset>
 
 {% if form.can_manage_social_media %}
-<fieldset>
-    <legend>{% translate "Social Media permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-share-alt team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Social Media permissions" %}</legend>
     {% bootstrap_field form.can_manage_social_media layout="control" %}
 </fieldset>
 {% endif %}
@@ -166,8 +166,8 @@
 
 
 {% if form.teamshifts_plugin_enabled %}
-<fieldset>
-    <legend>{% translate "TeamShifts Permissions" %}</legend>
+<fieldset class="team-permissions-section">
+    <legend><i class="fa fa-clock-o team-permissions-legend-icon" aria-hidden="true"></i>{% translate "TeamShifts Permissions" %}</legend>
     <div class="form-group">
         <div class="col-md-offset-3 col-md-9">
             <div class="radio">

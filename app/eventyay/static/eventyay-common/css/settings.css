@@ -86,10 +86,52 @@
     font-size: 10px;
 }
 
-/* Team permission nesting */
+/* Team permission sections */
+.team-permissions-legend-icon {
+    display: inline-block;
+    width: 1.4em;
+    margin-right: 6px;
+    text-align: center;
+    color: #3b73b9;
+}
+
+.team-permissions-section > .form-group:has(> .col-md-9 > .checkbox) {
+    margin-bottom: 6px;
+}
+
+/* Team permission nesting: children sit under their parent with a guide line */
 .team-permission-children {
-    margin-left: 24px;
-    padding-left: 10px;
+    margin-bottom: 10px;
+}
+
+.team-permission-children > .form-group {
+    margin-bottom: 0;
+}
+
+.team-permission-children .col-md-9 > * {
+    margin-left: 6px;
+    padding-left: 18px;
+    border-left: 2px solid #dbe3ee;
+}
+
+.team-permission-children .col-md-9 > .checkbox {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.team-permission-children .col-md-9 > .help-block {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-bottom: 6px;
+}
+
+/* On stacked layouts the empty label column only adds gaps between rows */
+@media (max-width: 991px) {
+    .team-permissions-section .control-label.label-empty {
+        display: none;
+    }
 }
 
 .team-permission-children--disabled {
