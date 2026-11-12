@@ -193,6 +193,36 @@ def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_use
 
 
 @pytest.mark.django_db
+def test_event_dashboard_skips_stale_log_content_types(event, orga_client, orga_user, slot):
+    from django.contrib.contenttypes.models import ContentType
+
+    from eventyay.base.models.log import LogEntry
+
+    with scope(event=event):
+        LogEntry.objects.create(
+            event=event,
+            user=orga_user,
+            content_object=slot.submission,
+            action_type='eventyay.submission.create',
+            data='{}',
+        )
+        stale_ct = ContentType.objects.create(app_label='gone_app', model='ghostmodel')
+        LogEntry.all.create(
+            event=event,
+            user=orga_user,
+            content_type=stale_ct,
+            object_id=1,
+            action_type='eventyay.submission.update',
+            data='{}',
+            visible=True,
+        )
+
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    assert event.slug in response.text
+
+
+@pytest.mark.django_db
 def test_dashboard_without_session_event_boundary(event, other_event, orga_client, speaker):
     from eventyay.base.models.submission import SubmissionType
 
