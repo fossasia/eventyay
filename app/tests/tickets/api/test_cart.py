@@ -899,6 +899,28 @@ def test_cartpos_create_serializer_choice_answer_without_answer(event, item, quo
 
 
 @pytest.mark.django_db
+def test_cartpos_create_choice_answer_without_answer(token_client, organizer, event, item, quota, question):
+    """Test cart position creation when answering choice question omitting answer field via HTTP POST."""
+    question.type = Question.TYPE_CHOICE
+    question.save()
+    opt = question.options.first()
+    res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
+    res['product'] = item.pk
+    res['answers'] = [{'question': question.pk, 'options': [opt.pk]}]
+    resp = token_client.post(
+        f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/cartpositions/',
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 201
+    with scope(organizer=organizer, event=event):
+        cp = CartPosition.objects.get(pk=resp.data['id'])
+        answ = cp.answers.first()
+    assert answ.question == question
+    assert answ.options.first() == opt
+
+
+@pytest.mark.django_db
 def test_cartpos_create_serializer_text_answer_without_answer(event, item, quota, question):
     """Test that serializer create handles non-choice answers omitting answer field."""
     serializer = CartPositionCreateSerializer(context={'event': event})
