@@ -156,6 +156,19 @@ def test_build_data_excludes_deleted_submission_with_released_slot(slot):
 
 
 @pytest.mark.django_db
+def test_remove_clears_pending_state_and_wip_slots(slot):
+    submission = slot.submission
+    with scope(event=submission.event):
+        submission.pending_state = SubmissionStates.ACCEPTED
+        submission.save()
+        assert submission.event.wip_schedule.talks.filter(submission=submission).exists()
+        submission.remove()
+        submission.refresh_from_db()
+        assert submission.pending_state is None
+        assert not submission.event.wip_schedule.talks.filter(submission=submission).exists()
+
+
+@pytest.mark.django_db
 def test_dashboard_scheduled_count_excludes_deleted_submission(orga_client, slot):
     event = slot.schedule.event
     assert orga_client.get(event.orga_urls.base).context['at_a_glance']['scheduled_sessions'] == 1

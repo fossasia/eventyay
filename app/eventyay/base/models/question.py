@@ -367,6 +367,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
                 submissions = self.event.submissions.all()
             else:
                 submissions = self.event.submissions.filter(pk__in=_as_pk_lookup(filter_talks))
+            submissions = submissions.filter(state__in=SubmissionStates.valid_submission_states)
             if self.tracks.exists():
                 submissions = submissions.filter(track__in=self.tracks.all())
             if self.submission_types.exists():

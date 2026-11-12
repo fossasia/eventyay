@@ -280,7 +280,8 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
         list instead of an empty view.
         """
         parsed = urlparse(url)
-        if parsed.path != self.request.event.orga_urls.submissions:
+        list_path = urlparse(str(self.request.event.orga_urls.submissions)).path
+        if parsed.path.rstrip('/') != list_path.rstrip('/'):
             return False
         query = QueryDict(parsed.query)
         if not query.getlist('state'):

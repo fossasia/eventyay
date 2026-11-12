@@ -840,8 +840,9 @@ class Submission(GenerateCode, PretalxModel):
     ):
         """Sets the submission's state to 'deleted' while preserving session data."""
         previous = self.state
-        # Keep the state change, slot cleanup and log entry in one transaction so a
-        # failure during slot cleanup cannot leave a deleted session with stale slots.
+        # _set_state clears pending_state (so ApplyPending cannot restore the session)
+        # and update_talk_slots() drops its WIP schedule slots. Keep that and the log
+        # entry in one transaction so a failure cannot leave stale slots behind.
         with transaction.atomic():
             self._set_state(SubmissionStates.DELETED, force, person=person)
             self.log_action(
