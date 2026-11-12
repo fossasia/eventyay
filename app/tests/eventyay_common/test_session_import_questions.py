@@ -391,6 +391,46 @@ def test_create_video_question_reuses_canonical_session_video_field(event):
 
 
 @pytest.mark.django_db
+def test_session_export_includes_inactive_custom_questions(event):
+    with scope(event=event):
+        question = Question.all_objects.create(
+            event=event,
+            question='Audience takeaway',
+            variant=QuestionVariant.STRING,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=QuestionRequired.OPTIONAL,
+            active=False,
+        )
+        sub_type = SubmissionType.objects.create(event=event, name='Talk')
+        submission = Submission.objects.create(
+            event=event,
+            title='Inactive question talk',
+            submission_type=sub_type,
+            state=SubmissionStates.SUBMITTED,
+        )
+        Answer.objects.create(
+            question=question,
+            submission=submission,
+            answer='Ship the feature',
+        )
+
+        form = ScheduleExportForm(
+            event=event,
+            data={
+                'export_format': 'csv',
+                'target': ['all'],
+                'title': True,
+                f'question_{question.pk}': True,
+            },
+        )
+        assert form.is_valid(), form.errors
+        assert question in list(form.questions)
+        data = form.get_data(form.get_queryset(), ['title'], [question])
+
+        assert data[0]['Audience takeaway'] == 'Ship the feature'
+
+
+@pytest.mark.django_db
 def test_session_export_includes_session_videos_column(event):
     with scope(event=event):
         ensure_session_video_question(event)

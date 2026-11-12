@@ -171,10 +171,12 @@ class ScheduleExportForm(ExportForm):
 
     @cached_property
     def questions(self):
+        # Include inactive questions so organisers can still export answers
+        # after a custom field was switched off. Session-video fields stay
+        # on the dedicated session_videos column instead.
         return exclude_session_video_from_cfp_questions(
-            self.event.talkquestions.filter(
+            self.event.talkquestions(manager='all_objects').filter(
                 target='submission',
-                active=True,
             )
         ).prefetch_related('answers', 'answers__submission', 'options', 'answers__options')
 
