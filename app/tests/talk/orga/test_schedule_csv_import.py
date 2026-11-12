@@ -398,6 +398,36 @@ def test_csv_import_skips_new_invalid_row_and_continues(event, orga_user, invali
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('variant', ('choices', 'multiple_choice', 'select'))
+def test_csv_import_creates_choices_for_new_mapped_fields(event, orga_user, variant):
+    """Allow new CSV fields to generate choices without bypassing label validation."""
+    content = export_style_csv([
+        {'Title': 'First mapped session', 'Choice': 'New'},
+        {'Title': 'Second mapped session', 'Choice': 'New'},
+    ], headers=['Title', 'Choice'])
+    cached = CachedFile.objects.create(type='text/csv', filename='new-choices.csv')
+    cached.file.save('new-choices.csv', ContentFile(content.encode('utf-8')))
+    result = import_submissions(
+        event=event.pk, fileid=str(cached.pk), locale='en', user_id=orga_user.pk,
+        settings={
+            'title': 'csv:Title',
+            'new_questions': [{
+                'header': 'Choice', 'label': 'Imported choice', 'variant': variant, 'mapping': 'csv:Choice',
+            }],
+        },
+    )
+    assert result['created'] == 2
+    assert result['skipped'] == 0
+    assert not result['errors']
+    with scope(event=event):
+        question = TalkQuestion.objects.get(question__icontains='Imported choice')
+        option = question.options.get()
+        assert str(option.answer) == 'New'
+        assert question.answers.count() == 2
+        assert all(list(answer.options.all()) == [option] for answer in question.answers.all())
+
+
+@pytest.mark.django_db
 def test_import_answer_keeps_generated_choice_creation(event, submission):
     """Import-generated fields still create and cache new choices after validation changes."""
     with scope(event=event), override('en'):
