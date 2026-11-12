@@ -64,7 +64,7 @@ class TeamForm(forms.ModelForm):
         self.fields['limit_tracks'].queryset = tracks_qs
 
         events_qs = organizer.events.all().order_by('-date_from', 'name')
-        self._events_with_tracks = self._build_events_with_tracks(events_qs, tracks_qs)
+        self._events_with_tracks = self._build_events_with_tracks(events_qs, tracks_qs, with_color=True)
 
         # Cache selected track IDs now (inside scopes_disabled context)
         # so the template can use them without scope issues
@@ -137,12 +137,13 @@ class TeamForm(forms.ModelForm):
         return any(event_has_exhibition(event) for event in data.get('limit_events') or [])
 
     @staticmethod
-    def _build_events_with_tracks(events_qs, tracks_qs):
+    def _build_events_with_tracks(events_qs, tracks_qs, with_color=False):
         """Build per-event track groups for the organiser team permissions UI.
 
         Includes every organiser event so the UI can show an empty state when
         an event has no tracks. Tracks are grouped using select_related data
-        from ``tracks_qs`` to avoid N+1 queries.
+        from ``tracks_qs`` to avoid N+1 queries. Also used for TeamShifts roles,
+        which have no colour, so ``with_color`` is only set for tracks.
         """
         events = OrderedDict()
         for event in events_qs:
@@ -151,13 +152,10 @@ class TeamForm(forms.ModelForm):
             evt_pk = track.event_id
             if evt_pk not in events:
                 events[evt_pk] = event_track_group(track.event)
-            events[evt_pk]['tracks'].append(
-                {
-                    'id': track.pk,
-                    'name': str(track.name),
-                    'color': track.color,
-                }
-            )
+            item = {'id': track.pk, 'name': str(track.name)}
+            if with_color:
+                item['color'] = track.color
+            events[evt_pk]['tracks'].append(item)
         return list(events.values())
 
     @property

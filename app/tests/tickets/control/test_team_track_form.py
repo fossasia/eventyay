@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -175,3 +177,11 @@ def test_team_form_reports_all_tracks_toggle_as_track_change(organizer, event_wi
     assert form.is_valid(), form.errors
     assert 'limit_tracks' in form.changed_data
     assert 'all_tracks' not in form.changed_data
+
+
+@pytest.mark.django_db
+def test_build_events_with_tracks_works_for_items_without_colour(organizer, event_without_tracks):
+    # TeamShifts roles reuse this helper and have no ``color`` attribute.
+    role = SimpleNamespace(pk=7, name='Stage crew', event_id=event_without_tracks.pk, event=event_without_tracks)
+    groups = TeamForm._build_events_with_tracks([event_without_tracks], [role])
+    assert groups[0]['tracks'] == [{'id': 7, 'name': 'Stage crew'}]
