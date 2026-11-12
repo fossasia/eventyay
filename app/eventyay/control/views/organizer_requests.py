@@ -7,7 +7,8 @@ from django.utils.translation import gettext as _
 from django.views.generic import DetailView, ListView
 
 from eventyay.base.forms.organizer_request import OrganizerRequestRejectForm, OrganizerRequestReviewForm
-from eventyay.base.models import OrganizerRequest, OrganizerRequestAnswer, User
+from eventyay.base.models import User
+from eventyay.base.models.organizer_request import OrganizerRequest, OrganizerRequestAnswer
 from eventyay.base.services.organizer_requests import review_request
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
