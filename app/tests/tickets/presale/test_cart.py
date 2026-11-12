@@ -2309,6 +2309,27 @@ class CartTest(CartTestMixin, TestCase):
         touch.assert_called_once_with(key, timeout=VOUCHER_RATE_LIMIT_WINDOW)
         cache.clear()
 
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-reservation',
+            }
+        }
+    )
+    def test_voucher_rate_limit_releases_successful_reservation(self):
+        from eventyay.base.services.cart import release_voucher_attempt, reserve_voucher_attempt
+
+        cache.clear()
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+        key, allowed = reserve_voucher_attempt(request)
+        self.assertTrue(allowed)
+        release_voucher_attempt(key)
+        self.assertEqual(cache.get(key), 0)
+        cache.clear()
+
     def test_voucher_quota_empty(self):
         self.quota_tickets.size = 0
         self.quota_tickets.save()

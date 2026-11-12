@@ -212,6 +212,32 @@ def record_voucher_failure(request):
         logger.exception('Could not record voucher rate limit; allowing request')
 
 
+def reserve_voucher_attempt(request):
+    """Reserve one failed-voucher attempt before performing a lookup."""
+
+    key = _voucher_rate_limit_key(request)
+    if not key:
+        return None, True
+    if _increment_voucher_counter(key) > VOUCHER_RATE_LIMIT_MAX:
+        try:
+            cache.decr(key)
+        except ValueError:
+            pass
+        return key, False
+    return key, True
+
+
+def release_voucher_attempt(key):
+    """Release a reservation when the voucher operation succeeds."""
+
+    if not key:
+        return
+    try:
+        cache.decr(key)
+    except ValueError:
+        pass
+
+
 class CartManager:
     AddOperation = namedtuple(
         'AddOperation',
@@ -1636,6 +1662,7 @@ def add_products_to_cart(
     invoice_address: int = None,
     widget_data=None,
     sales_channel='web',
+    voucher_attempt_key=None,
 ) -> dict:
     """
     Adds a list of products to a user's cart.
@@ -1669,9 +1696,11 @@ def add_products_to_cart(
                 # Check if there was a warning about quantity adjustment
                 warning = cm.get_last_warning()
                 if warning:
-                    return {'success': True, 'warning': str(warning)}
+                    result = {'success': True, 'warning': str(warning)}
                 else:
-                    return {'success': True}
+                    result = {'success': True}
+                release_voucher_attempt(voucher_attempt_key)
+                return result
                     
             except LockTimeoutException:
                 self.retry()
@@ -1693,6 +1722,7 @@ def apply_voucher(
     cart_id: str = None,
     locale='en',
     sales_channel='web',
+    voucher_attempt_key=None,
 ) -> None:
     """
     Removes a list of products from a user's cart.
@@ -1707,6 +1737,7 @@ def apply_voucher(
                 cm.apply_voucher(voucher)
                 cm.commit()
                 log_event('tickets', 'voucher.apply', OUTCOME_SUCCESS, event_id=event.pk)
+                release_voucher_attempt(voucher_attempt_key)
             except LockTimeoutException:
                 self.retry()
         except (MaxRetriesExceededError, LockTimeoutException):
