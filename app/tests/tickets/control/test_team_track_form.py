@@ -127,3 +127,51 @@ def test_team_form_all_tracks_initial_reflects_instance(organizer, event_with_tr
         assert TeamForm(organizer=organizer, instance=team).fields['all_tracks'].initial is True
         team.limit_tracks.add(event_with_tracks.tracks.first())
         assert TeamForm(organizer=organizer, instance=team).fields['all_tracks'].initial is False
+
+
+@pytest.mark.django_db
+def test_team_form_drops_tracks_of_events_outside_the_team_scope(
+    organizer, event_with_tracks, event_without_tracks
+):
+    other_event = Event.objects.create(organizer=organizer, name='Other Event', slug='other', date_from=now())
+    with scopes_disabled():
+        kept = event_with_tracks.tracks.first()
+        dropped = Track.objects.create(event=other_event, name='Gamma', color='333333')
+    form = TeamForm(
+        {
+            'name': 'Reviewers',
+            'is_reviewer': True,
+            'limit_events': [str(event_with_tracks.pk)],
+            'limit_tracks': [str(kept.pk), str(dropped.pk)],
+        },
+        organizer=organizer,
+    )
+    assert form.is_valid(), form.errors
+    assert [track.pk for track in form.cleaned_data['limit_tracks']] == [kept.pk]
+
+
+@pytest.mark.django_db
+def test_team_form_allows_no_tracks_when_team_events_have_none(
+    organizer, event_with_tracks, event_without_tracks
+):
+    form = TeamForm(
+        {'name': 'Reviewers', 'is_reviewer': True, 'limit_events': [str(event_without_tracks.pk)]},
+        organizer=organizer,
+    )
+    assert form.is_valid(), form.errors
+
+
+@pytest.mark.django_db
+def test_team_form_reports_all_tracks_toggle_as_track_change(organizer, event_with_tracks):
+    with scopes_disabled():
+        track = event_with_tracks.tracks.first()
+        team = Team.objects.create(organizer=organizer, name='Reviewers', is_reviewer=True, all_events=True)
+        team.limit_tracks.add(track)
+    form = TeamForm(
+        _reviewer_team_data(all_tracks=True, limit_tracks=[str(track.pk)]),
+        organizer=organizer,
+        instance=team,
+    )
+    assert form.is_valid(), form.errors
+    assert 'limit_tracks' in form.changed_data
+    assert 'all_tracks' not in form.changed_data

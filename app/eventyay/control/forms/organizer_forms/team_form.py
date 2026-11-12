@@ -31,6 +31,17 @@ def event_has_exhibition(event):
     return bool(re.search(EXHIBITION_PLUGIN_REGEX, event.plugins or ''))
 
 
+def event_track_group(event):
+    """Header data for one event in the "Restrict access to tracks" list."""
+    return {
+        'id': event.pk,
+        'name': str(event.name),
+        'slug': event.slug,
+        'date': event.get_date_range_display() if not event.has_subevents else _('Event series'),
+        'tracks': [],
+    }
+
+
 class TeamForm(forms.ModelForm):
     all_tracks = forms.BooleanField(
         label=_('All tracks (including newly created ones)'),
@@ -135,34 +146,31 @@ class TeamForm(forms.ModelForm):
         """
         events = OrderedDict()
         for event in events_qs:
-            events[event.pk] = TeamForm._event_group(event)
+            events[event.pk] = event_track_group(event)
         for track in tracks_qs:
             evt_pk = track.event_id
             if evt_pk not in events:
-                events[evt_pk] = TeamForm._event_group(track.event)
+                events[evt_pk] = event_track_group(track.event)
             events[evt_pk]['tracks'].append(
                 {
                     'id': track.pk,
                     'name': str(track.name),
-                    'color': getattr(track, 'color', ''),
+                    'color': track.color,
                 }
             )
         return list(events.values())
 
-    @staticmethod
-    def _event_group(event):
-        return {
-            'id': event.pk,
-            'name': str(event.name),
-            'slug': event.slug,
-            'date': event.get_date_range_display() if not event.has_subevents else _('Event series'),
-            'tracks': [],
-        }
-
     @property
     def changed_data(self):
         # ``all_tracks`` is not a model field; callers map changed_data to model fields for the audit log.
-        return [name for name in super().changed_data if name != 'all_tracks']
+        # Toggling it changes the saved track limits, so report that as a ``limit_tracks`` change.
+        changed = super().changed_data
+        if 'all_tracks' not in changed:
+            return changed
+        changed = [name for name in changed if name != 'all_tracks']
+        if 'limit_tracks' not in changed:
+            changed.append('limit_tracks')
+        return changed
 
     @property
     def events_with_tracks(self):
@@ -286,8 +294,20 @@ class TeamForm(forms.ModelForm):
         if data.get('all_tracks'):
             data['limit_tracks'] = []
             return
+        event_ids = None
+        if not data.get('all_events'):
+            event_ids = {event.pk for event in data.get('limit_events') or []}
+            # Drop tracks of events the team cannot access, so they don't apply if the event is added later.
+            with scopes_disabled():
+                data['limit_tracks'] = [
+                    track for track in data.get('limit_tracks') or [] if track.event_id in event_ids
+                ]
+        scope_has_tracks = any(
+            event_data['tracks'] and (event_ids is None or event_data['id'] in event_ids)
+            for event_data in self._events_with_tracks
+        )
         has_talk_permission = data.get('is_reviewer') or data.get('can_change_submissions')
-        if has_talk_permission and self.has_any_tracks and not data.get('limit_tracks'):
+        if has_talk_permission and scope_has_tracks and not data.get('limit_tracks'):
             self.add_error(
                 'limit_tracks',
                 forms.ValidationError(_('Please select at least one track, or grant access to all tracks.')),

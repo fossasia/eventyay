@@ -159,6 +159,10 @@ function initTrackLimits(container) {
         groups.forEach(function (group) {
             const inScope = eventIds === null || eventIds.has(group.dataset.eventId);
             group.dataset.inScope = String(inScope);
+            // Tracks of events the team cannot access are not submitted.
+            trackBoxes(group).forEach(function (box) {
+                box.disabled = !inScope;
+            });
             updateCount(group);
         });
         applyFilter();
