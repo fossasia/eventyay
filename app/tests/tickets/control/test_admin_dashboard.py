@@ -8,10 +8,13 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.timezone import now
+from django.utils.translation import get_language, override
 from django_redis.exceptions import ConnectionInterrupted
-from django_scopes import scope
+from django_scopes import get_scope, scope
+from i18nfield.strings import LazyI18nString
 from redis.exceptions import RedisError
 
+from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 from eventyay.base.models import (
     Event,
     JitsiServer,
@@ -28,6 +31,7 @@ from eventyay.control.forms.server_management import VideoStreamingSelectionForm
 from eventyay.control.platform_dashboard import (
     ACTIVITY_RANGES,
     activity_context,
+    cached_activity_context,
     cached_dashboard_context,
     dashboard_cards,
     setup_events,
@@ -217,7 +221,8 @@ def test_dashboard_sections_and_analytics_render(dashboard_admin, settings):
             keys = clear.call_args.args[0]
             assert {'admin_dashboard_common', 'admin_dashboard_operations', 'admin_dashboard_counts',
                     'admin_dashboard_health'} <= set(keys)
-            assert all(f'admin_dashboard_activity_{period}' in keys for period in ACTIVITY_RANGES)
+            assert all(f'admin_dashboard_activity_{period}_{language}' in keys
+                       for period in ACTIVITY_RANGES for language, _ in settings.LANGUAGES)
 
 
 @pytest.mark.django_db
@@ -374,6 +379,14 @@ def test_video_settings_preserve_stream_times_and_existing_room(dashboard_admin,
     assert str(room.pk) in room_choices
     assert str(other_room.pk) not in room_choices
     assert page.find(id='id_room').has_attr('disabled')
+    delete_button = page.find('button', attrs={'form': 'stream-delete-form'})
+    delete_form = page.find('form', id=delete_button['form'])
+    assert delete_form['data-confirm']
+    assert delete_form.find('input', attrs={'name': 'stream_action'})['value'] == 'delete'
+    assert delete_form.find('input', attrs={'name': 'csrfmiddlewaretoken'})
+    assert not delete_form.select('input[required], select[required], textarea[required]')
+    assert not delete_button.has_attr('onclick')
+    assert not delete_button.find_parent('form').has_attr('data-confirm')
     response = dashboard_admin.post(edit_url, {
         'stream_action': 'save', 'title': 'Updated title', 'room': room.pk,
         'url': stream.url, 'stream_type': stream.stream_type, 'config': '{}',
@@ -654,3 +667,72 @@ def test_empty_analytics_report_spans_all_columns(dashboard_admin, metric):
     cell = BeautifulSoup(response.content, 'html.parser').select_one('.platform-dashboard table tbody td')
     assert cell.get_text(strip=True) == 'No records found.'
     assert cell['colspan'] == str(len(response.context['report_headers']))
+
+
+def test_activity_cache_is_partitioned_by_language(settings, mocker):
+    """Reuse each locale's activity payload without serving another locale's labels."""
+    settings.CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+    cache.clear()
+    load = mocker.patch('eventyay.control.platform_dashboard.activity_context',
+                        side_effect=lambda selected_range: {'language': get_language()})
+    for language in ('en', 'de', 'en', 'de'):
+        with override(language):
+            assert cached_activity_context('7d') == {'language': language}
+    assert load.call_count == 2
+    cache.clear()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('metric', ('top-events', 'needs-setup', 'missing-payment'))
+@pytest.mark.parametrize('language', ('en', 'de'))
+def test_analytics_report_localizes_event_names(dashboard_admin, metric, language):
+    """ORM values retain localized event names and ordinary organizer names."""
+    organizer = Organizer.objects.create(name='Report organizer', slug='report-organizer')
+    names = {'en': 'English event', 'de': 'Deutsche Veranstaltung'}
+    event = Event.objects.create(organizer=organizer, name=names, slug='localized-report', date_from=now())
+    with scope(event=event, organizer=organizer):
+        Product.objects.create(event=event, name='Ticket', default_price=10)
+        Order.objects.create(event=event, total=10, status=Order.STATUS_PAID)
+    User.objects.filter(pk=dashboard_admin.session['_auth_user_id']).update(locale=language)
+    with override(language):
+        response = dashboard_admin.get(
+            reverse('eventyay_admin:admin.analytics.metric', kwargs={'metric': metric}), HTTP_ACCEPT_LANGUAGE=language,
+        )
+        assert response.status_code == 200
+        row = response.context['report_rows'][0]
+        assert isinstance(row[0], LazyI18nString)
+        assert str(row[0]) == names[language]
+        assert row[1] == organizer.name
+        cells = BeautifulSoup(response.content, 'html.parser').select('.platform-dashboard table tbody td')
+        assert [cell.get_text(strip=True) for cell in cells[:2]] == [names[language], organizer.name]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('overlapping', (False, True))
+def test_stream_form_scopes_serializer_validation(mocker, overlapping):
+    """Validate new streams in their event scope even without a scoped caller."""
+    organizer = Organizer.objects.create(name='Scoped streams', slug='scoped-streams')
+    event = Event.objects.create(organizer=organizer, name='Scoped streams', slug='scoped-streams', date_from=now())
+    start = now() + timedelta(days=1)
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Stream room')
+        if overlapping:
+            StreamSchedule.objects.create(
+                room=room, url='https://example.com/existing', stream_type='hls',
+                start_time=start, end_time=start + timedelta(hours=1),
+            )
+    form = VideoStreamScheduleForm({
+        'room': room.pk, 'url': 'https://example.com/live', 'stream_type': 'hls',
+        'start_time': start.isoformat(), 'end_time': (start + timedelta(hours=1)).isoformat(), 'config': '{}',
+    }, event=event)
+    original_validate = StreamScheduleSerializer.is_valid
+
+    def validate_in_scope(serializer, *args, **kwargs):
+        assert get_scope()['event'] == event
+        return original_validate(serializer, *args, **kwargs)
+
+    validate = mocker.patch.object(StreamScheduleSerializer, 'is_valid', autospec=True, side_effect=validate_in_scope)
+    assert form.is_valid() is not overlapping
+    validate.assert_called_once()
+    if overlapping:
+        assert '__all__' in form.errors

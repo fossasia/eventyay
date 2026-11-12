@@ -10,6 +10,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.db.models.functions import TruncDay, TruncHour, TruncMonth
 from django.urls import reverse
 from django.utils.timezone import localtime, now
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 from django_redis.exceptions import ConnectionInterrupted
 from django_scopes import scopes_disabled
@@ -167,10 +168,10 @@ def cached_dashboard_context(key, load, timeout=300):
 
 
 def cached_activity_context(selected_range='30d'):
-    """Reuse activity aggregates for five minutes, with one key per supported range."""
+    """Reuse activity aggregates for five minutes per range and language."""
     selected_range = selected_range if selected_range in ACTIVITY_RANGES else '30d'
     return cached_dashboard_context(
-        f'admin_dashboard_activity_{selected_range}', lambda: activity_context(selected_range), 300,
+        f'admin_dashboard_activity_{selected_range}_{get_language()}', lambda: activity_context(selected_range), 300,
     )
 
 

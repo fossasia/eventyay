@@ -71,6 +71,7 @@ from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm, VoucherFil
 from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.platform_dashboard import (
+    ACTIVITY_RANGES,
     cached_activity_context,
     cached_dashboard_context,
     dashboard_cards,
@@ -103,11 +104,8 @@ class AdminContextMixin:
                 'admin_dashboard_operations',
                 'admin_dashboard_counts',
                 'admin_dashboard_health',
-                'admin_dashboard_activity_24h',
-                'admin_dashboard_activity_7d',
-                'admin_dashboard_activity_30d',
-                'admin_dashboard_activity_90d',
-                'admin_dashboard_activity_all',
+                *(f'admin_dashboard_activity_{period}_{language}'
+                  for period in ACTIVITY_RANGES for language, _ in settings.LANGUAGES),
                 'admin_dashboard_events_pending_setup',
                 'admin_dashboard_orders_top5',
                 'admin_dashboard_email_stats',

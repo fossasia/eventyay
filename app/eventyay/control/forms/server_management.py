@@ -95,6 +95,7 @@ class VideoStreamScheduleForm(forms.ModelForm):
     def __init__(self, *args, event, **kwargs):
         """Restrict room choices to the selected event and retain existing rooms."""
         super().__init__(*args, **kwargs)
+        self.event = event
         available_rooms = Q(deleted=False)
         if self.instance.pk:
             available_rooms |= Q(pk=self.instance.room_id)
@@ -112,9 +113,10 @@ class VideoStreamScheduleForm(forms.ModelForm):
             data={key: value for key, value in data.items() if key != 'room'},
             context={'room': data['room']},
         )
-        if not serializer.is_valid():
-            for field, errors in serializer.errors.items():
-                self.add_error(field if field in self.fields else None, [str(error) for error in errors])
+        with scope(event=self.event):
+            if not serializer.is_valid():
+                for field, errors in serializer.errors.items():
+                    self.add_error(field if field in self.fields else None, [str(error) for error in errors])
         return data
 
     def clean_config(self):

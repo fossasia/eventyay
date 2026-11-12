@@ -77,10 +77,18 @@
                         {% bootstrap_form streaming_form %}
                         <button class="btn btn-primary" type="submit" name="stream_action" value="save">{% trans 'Save stream' %}</button>
                         {% if streaming_form.instance.pk %}
-                            <button class="btn btn-danger" type="submit" name="stream_action" value="delete" formnovalidate>{% trans 'Delete stream' %}</button>
+                            <button class="btn btn-danger" type="submit" form="stream-delete-form" formnovalidate>{% trans 'Delete stream' %}</button>
                             <a href="?tab=streaming&amp;event={{ streaming_event.pk }}" class="btn btn-default">{% trans 'Add another stream' %}</a>
                         {% endif %}
                     </form>
+                    {% if streaming_form.instance.pk %}
+                        <form id="stream-delete-form" method="post"
+                              data-confirm="{% trans 'Delete this stream schedule?' %}"
+                              data-confirm-label="{% trans 'Delete stream' %}" data-confirm-class="btn-danger">
+                            {% csrf_token %}
+                            <input type="hidden" name="stream_action" value="delete">
+                        </form>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
