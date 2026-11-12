@@ -8,6 +8,7 @@
 {% block custom_header %}
     {{ block.super }}
     <link type="text/css" rel="stylesheet" href="{% url "control:pdf.css" %}">
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
 {% endblock %}
 {% block inside %}
     {% trans "General settings" as header_title %}
