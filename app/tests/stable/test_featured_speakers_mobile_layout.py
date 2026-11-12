@@ -19,7 +19,7 @@ def test_featured_speakers_mobile_layout_stays_within_viewport():
     assert '&.is-embedded' in mobile_rules
     assert re.search(r'\.featured-speakers-grid[\s\S]*?justify-content:\s*flex-start', desktop_source)
     assert 'justify-content: center' in mobile_rules
-    assert 'padding: 0 16px' in mobile_rules
+    assert 'padding: 0 1rem' in mobile_rules
     assert 'width: 100%' in mobile_rules
     assert '.featured-speaker-card' in mobile_rules
     assert re.search(r'\.featured-speaker-card[\s\S]*?width:\s*100%', desktop_source)

@@ -1390,7 +1390,7 @@ export default {
 @media (max-width: 600px)
 	.c-speakers-list
 		&.is-embedded
-			padding: 0 16px
+			padding: 0 1rem
 			box-sizing: border-box
 			width: 100%
 			max-width: 100vw
