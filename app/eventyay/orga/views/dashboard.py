@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q
+from django.db.models import Count, Q, prefetch_related_objects
 from django.http import Http404, HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.template.defaultfilters import timeuntil
@@ -302,22 +302,47 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                 )
         return result
 
+    # @context
+    # def recent_talk_activity(self):
+    #     with scope(event=self.request.event):
+    #         return list(
+    #             LogEntry.objects.filter(
+    #                 Q(action_type__contains='submission')
+    #                 | Q(action_type__contains='speaker')
+    #                 | Q(action_type__contains='talk')
+    #                 | Q(action_type__contains='cfp')
+    #                 | Q(action_type__contains='review')
+    #                 | Q(action_type__contains='schedule'),
+    #                 event=self.request.event,
+    #             )
+    #             .select_related('user', 'event', 'content_type')
+    #             .prefetch_related('content_object')[:10]
+    #         )
+
     @context
     def recent_talk_activity(self):
         with scope(event=self.request.event):
-            return list(
+            logs = list(
                 LogEntry.objects.filter(
-                    Q(action_type__contains='submission')
-                    | Q(action_type__contains='speaker')
-                    | Q(action_type__contains='talk')
-                    | Q(action_type__contains='cfp')
-                    | Q(action_type__contains='review')
-                    | Q(action_type__contains='schedule'),
-                    event=self.request.event,
-                )
-                .select_related('user', 'event', 'content_type')
-                .prefetch_related('content_object')[:10]
+                Q(action_type__contains='submission')
+                | Q(action_type__contains='speaker')
+                | Q(action_type__contains='talk')
+                | Q(action_type__contains='cfp')
+                | Q(action_type__contains='review')
+                | Q(action_type__contains='schedule'),
+                event=self.request.event,
             )
+            .select_related('user', 'event', 'content_type')[:10]
+        )
+
+        valid_logs = [
+            log for log in logs
+            if log.content_type.model_class() is not None
+        ]
+
+        prefetch_related_objects(valid_logs, 'content_object')
+
+        return valid_logs
 
     @context
     def orga_internal_note(self):
