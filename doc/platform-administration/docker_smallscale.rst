@@ -306,7 +306,7 @@ workers, e.g. ``docker run … taskworker -Q notifications --concurrency 32``.
 
 .. _Docker: https://docs.docker.com/engine/installation/linux/debian/
 .. _Postfix: https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-postfix-as-a-send-only-smtp-server-on-ubuntu-16-04
-.. _nginx: https://botleg.com/stories/https-with-lets-encrypt-and-nginx/
+.. _nginx: https://nginx.org/
 .. _Let's Encrypt: https://letsencrypt.org/
 .. _eventyay.com: https://eventyay.com/
 .. _MySQL: https://dev.mysql.com/doc/refman/5.7/en/linux-installation-apt-repo.html
