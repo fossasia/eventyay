@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:19+0000\n"
-"Last-Translator: Kristoffer Grundström <swedishsailfishosuser@tutanota.com>\n"
+"PO-Revision-Date: 2026-11-12 10:25+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sv/>\n"
 "Language: sv\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -5963,8 +5964,7 @@ msgstr "Användningsöversikt"
 #, fuzzy
 #| msgid "Add the client ID and client secret to admin settings"
 msgid "Gmail OAuth client ID and secret must be configured in global settings."
-msgstr ""
-"Lägg till klient-ID och klienthemlighet i administratörsinställningarna"
+msgstr "Lägg till klient-ID och klienthemlighet i administratörsinställningarna"
 
 #: eventyay/base/gmail/oauth.py:85
 #, fuzzy
