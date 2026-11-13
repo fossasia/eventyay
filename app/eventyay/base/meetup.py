@@ -347,7 +347,7 @@ def _save_meetup_header_image(event, header_image, crop_box=None):
         event.settings.set(setting_key, f'file://{file_path}')
 
 
-def set_meetup_privacy(event, is_private: bool, is_clone: bool = False):
+def set_meetup_privacy(event, is_private: bool):
     """
     Configure meetup visibility flags for public or private operation.
     Preserves the event's publication state (live, tickets_published).
@@ -385,10 +385,9 @@ def provision_meetup_event(
         event.tickets_published = True
         event.save(update_fields=['live', 'tickets_published'])
     else:
-        event.live = False
-        event.tickets_published = False
-        event.save(update_fields=['live', 'tickets_published'])
-    set_meetup_privacy(event, is_private=is_private, is_clone=is_clone)
+        event.reset_publishing_and_testmode_state()
+        event.save(update_fields=['live', 'tickets_published', 'talks_published', 'testmode', 'private_testmode'])
+    set_meetup_privacy(event, is_private=is_private)
 
     if frontpage_text is not None:
         event.settings.set('frontpage_text', frontpage_text)

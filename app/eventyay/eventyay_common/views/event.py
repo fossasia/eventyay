@@ -719,10 +719,6 @@ class EventCreateView(TemplateView):
                     is_private=is_private,
                     is_clone=bool(self.clone_from),
                 )
-                if self.clone_from:
-                    # Defensive safeguard: keep meetup provisioning from publishing cloned events
-                    event.reset_publishing_and_testmode_state()
-                    event.save(update_fields=['live', 'tickets_published', 'talks_published', 'testmode', 'private_testmode'])
 
         return redirect(
             reverse(

@@ -152,6 +152,16 @@ def test_clone_view_post_selective_clone(organizer_client, event, clone_url):
         assert cloned_event.products.count() == 0
 
 
+def _simulate_copy_data_from(self, other, clone_options=None):
+    """Simulate copy_data_from copying testmode and publication state from source event."""
+    self.testmode = other.testmode
+    self.live = other.live
+    self.tickets_published = other.tickets_published
+    self.talks_published = other.talks_published
+    self.private_testmode = other.private_testmode
+    self.save()
+
+
 @pytest.mark.django_db
 def test_clone_event_serializer_preserves_explicit_testmode(event):
     with scopes_disabled():
@@ -171,7 +181,7 @@ def test_clone_event_serializer_preserves_explicit_testmode(event):
         'locales': ['en'],
         'testmode': True,
     }
-    with scopes_disabled(), patch.object(Event, 'copy_data_from'):
+    with scopes_disabled(), patch.object(Event, 'copy_data_from', autospec=True, side_effect=_simulate_copy_data_from):
         request = SimpleNamespace(organizer=event.organizer)
         serializer = CloneEventSerializer(
             data=data,
@@ -179,6 +189,7 @@ def test_clone_event_serializer_preserves_explicit_testmode(event):
         )
         assert serializer.is_valid(), serializer.errors
         cloned = serializer.save(organizer=event.organizer)
+        cloned.refresh_from_db()
 
         assert cloned.testmode is True
         assert cloned.live is False
@@ -205,7 +216,7 @@ def test_clone_event_serializer_resets_testmode_when_omitted(event):
         'locale': 'en',
         'locales': ['en'],
     }
-    with scopes_disabled(), patch.object(Event, 'copy_data_from'):
+    with scopes_disabled(), patch.object(Event, 'copy_data_from', autospec=True, side_effect=_simulate_copy_data_from):
         request = SimpleNamespace(organizer=event.organizer)
         serializer = CloneEventSerializer(
             data=data,
@@ -213,6 +224,7 @@ def test_clone_event_serializer_resets_testmode_when_omitted(event):
         )
         assert serializer.is_valid(), serializer.errors
         cloned = serializer.save(organizer=event.organizer)
+        cloned.refresh_from_db()
 
         assert cloned.testmode is False
         assert cloned.live is False

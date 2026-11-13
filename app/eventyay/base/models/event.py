@@ -1462,10 +1462,7 @@ class Event(
                 else:
                     s.save()
 
-        self.settings.flush()
-        self.settings.set('private_testmode_tickets', False)
-        self.settings.set('private_testmode_talks', False)
-        self.settings.set('talks_testmode', False)
+            self.settings.flush()
 
         if clone_talks:
             from eventyay.base.models.type import SubmissionType
