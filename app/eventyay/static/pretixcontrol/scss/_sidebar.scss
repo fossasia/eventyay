@@ -146,6 +146,10 @@ body:not(.sidebar-minimized) #page-wrapper {
   margin-left: $sidebar-width;
 }
 
+#page-wrapper main.container {
+  max-width: 100%;
+}
+
 @media (max-width: 767px) {
   .navbar-toggle-sidebar {
     display: block;

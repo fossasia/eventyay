@@ -39,4 +39,9 @@ def test_common_organizer_base_header_shows_public_profile_link():
     soup = BeautifulSoup(rendered, 'html.parser')
     main_el = soup.find('main', id='main-content')
     assert main_el is not None
+    assert 'container' in main_el.get('class', [])
     assert main_el.find(id='test-main-body') is not None
+
+    page_wrapper = soup.find(id='page-wrapper')
+    assert page_wrapper is not None
+    assert main_el in page_wrapper.descendants
