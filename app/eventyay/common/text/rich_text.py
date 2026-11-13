@@ -280,6 +280,67 @@ _MARKDOWN_RE = re.compile(
     re.MULTILINE,
 )
 _DUNDER_RE = re.compile(r'(?<!\w)__([a-zA-Z0-9_]+)__(?!\w)')
+_DUNDER_TOKEN_RE = re.compile(r'(?<!\w)__([a-zA-Z0-9_]+)__(?:\.[a-zA-Z0-9_]+)?(?!\w)')
+_MD_LINK_RE = re.compile(r'!?\[([^\]]+)\](?:\([^)]+\)|\[[^\]]*\])')
+_MD_IMAGE_EMPTY_RE = re.compile(r'!\[\]\([^)]+\)')
+_MD_INLINE_CODE_RE = re.compile(r'`{1,2}([^`\n]+)`{1,2}')
+_MD_BOLD_ITALIC_ASTERISK_RE = re.compile(r'\*\*\*([^\*\n]+)\*\*\*')
+_MD_BOLD_ASTERISK_RE = re.compile(r'\*\*([^\*\n]+)\*\*')
+_MD_BOLD_UNDERSCORE_RE = re.compile(r'__([^_\n]+)__')
+_MD_ITALIC_ASTERISK_RE = re.compile(r'(?<![\w\*])\*([^\*\s\n](?:[^\*\n]*?[^\*\s\n])?)\*(?![\w\*])')
+_MD_ITALIC_UNDERSCORE_RE = re.compile(r'(?<![\w_])_([^_\s\n](?:[^_\n]*?[^_\s\n])?)_(?![\w_])')
+_MD_STRIKE_RE = re.compile(r'~~([^~\n]+)~~')
+_MD_HEADING_RE = re.compile(r'(?m)^#{1,6}\s+')
+_MD_LIST_RE = re.compile(r'(?m)^(?:\s*[-*+]\s+|\s*\d+\.\s+)')
+_MD_BLOCKQUOTE_RE = re.compile(r'(?m)^>\s*')
+_GENERIC_TYPE_RE = re.compile(r'(?<=\w)<([A-Za-z0-9_,\s*&]+)>|(?<=\s)<([A-Z][A-Za-z0-9_,\s*&]*)>')
+
+
+def protect_generics(text: str) -> str:
+    """Protect technical generics like std::vector<T> and Map<K,V> from being stripped as unknown HTML tags."""
+
+    def repl(m: re.Match) -> str:
+        g = m.group(1) or m.group(2)
+        inner = g.strip()
+        if '=' in inner or '"' in inner or "'" in inner:
+            return m.group(0)
+        tag_name = inner.split()[0].lower() if inner else ''
+        if tag_name in VALID_HTML_TAGS or f'</{tag_name}>' in text.lower():
+            return m.group(0)
+        return f'&lt;{g}&gt;'
+
+    return _GENERIC_TYPE_RE.sub(repl, text)
+
+
+def strip_markdown(text: str) -> str:
+    """Remove Markdown delimiters from text while preserving legitimate technical syntax."""
+    if not text:
+        return ''
+    dunders: list[str] = []
+
+    def _save_dunder(m: re.Match) -> str:
+        dunders.append(m.group(0))
+        return f'\ue002{len(dunders) - 1}\ue003'
+
+    text = _DUNDER_TOKEN_RE.sub(_save_dunder, text)
+    text = _MD_IMAGE_EMPTY_RE.sub('', text)
+    text = _MD_LINK_RE.sub(r'\1', text)
+    text = _MD_INLINE_CODE_RE.sub(r'\1', text)
+    text = _MD_BOLD_ITALIC_ASTERISK_RE.sub(r'\1', text)
+    text = _MD_BOLD_ASTERISK_RE.sub(r'\1', text)
+    text = _MD_BOLD_UNDERSCORE_RE.sub(r'\1', text)
+    text = _MD_ITALIC_ASTERISK_RE.sub(r'\1', text)
+    text = _MD_ITALIC_UNDERSCORE_RE.sub(r'\1', text)
+    text = _MD_STRIKE_RE.sub(r'\1', text)
+    text = _MD_HEADING_RE.sub('', text)
+    text = _MD_LIST_RE.sub('', text)
+    text = _MD_BLOCKQUOTE_RE.sub('', text)
+
+    for i, orig in enumerate(dunders):
+        text = text.replace(f'\ue002{i}\ue003', orig)
+    text = text.replace(r'\_', '_')
+
+    return text
 
 
 class PreviewTextHTMLParser(HTMLParser):
@@ -301,43 +362,54 @@ class PreviewTextHTMLParser(HTMLParser):
     def _emit_text(self, text: str) -> None:
         if not text:
             return
+        if self.max_collect is not None and self.collected_chars >= self.max_collect:
+            self.stopped_early = True
+            raise StopIteration
+
         if self.needs_space:
             if self.parts:
+                if self.max_collect is not None and self.collected_chars + 1 > self.max_collect:
+                    self.stopped_early = True
+                    raise StopIteration
                 self.parts.append(' ')
                 self.collected_chars += 1
             self.needs_space = False
 
         remaining = (self.max_collect - self.collected_chars) if self.max_collect is not None else None
-        if remaining is not None and len(text) >= remaining:
-            self.parts.append(text[:remaining])
-            self.collected_chars += remaining
-            self.stopped_early = True
-            raise StopIteration
+        if remaining is not None:
+            if remaining <= 0:
+                self.stopped_early = True
+                raise StopIteration
+            if len(text) >= remaining:
+                take = max(0, remaining)
+                if take > 0:
+                    self.parts.append(text[:take])
+                    self.collected_chars += take
+                self.stopped_early = True
+                raise StopIteration
 
         self.parts.append(text)
         self.collected_chars += len(text)
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag not in VALID_HTML_TAGS:
-            self.handle_data(self.get_starttag_text() or f'<{tag}>')
-            return
         if tag in SKIPPED_TAGS:
             self.skip_depth += 1
             return
         if self.skip_depth > 0:
             return
+        if tag not in VALID_HTML_TAGS:
+            return
         if tag in BLOCK_TAGS or tag in LIST_TAGS or tag in ('li', 'br'):
             self._append_space()
 
     def handle_endtag(self, tag: str) -> None:
-        if tag not in VALID_HTML_TAGS:
-            self.handle_data(f'</{tag}>')
-            return
         if tag in SKIPPED_TAGS:
             if self.skip_depth > 0:
                 self.skip_depth -= 1
             return
         if self.skip_depth > 0:
+            return
+        if tag not in VALID_HTML_TAGS:
             return
         if tag in BLOCK_TAGS or tag in LIST_TAGS or tag in ('li', 'tr', 'td', 'th'):
             self._append_space()
@@ -382,15 +454,18 @@ def rich_text_to_preview_text(value: str | None, max_chars: int = 200) -> str:
     value = str(value)
 
     if _HTML_TAG_RE.search(value):
-        pass
+        if _MARKDOWN_RE.search(value):
+            value = strip_markdown(value)
     elif _MARKDOWN_RE.search(value):
-        protected = _DUNDER_RE.sub(r'\_\\_\1\_\\_', value)
+        value = _MD_LIST_RE.sub('', value)
+        protected = _DUNDER_RE.sub(r'\\_\\_\1\\_\\_', value)
         value = compile_markdown(protected)
-    elif '<' not in value and '&' not in value:
+    elif '<' not in value and '&' not in value and '\n' not in value:
         clean = _INVISIBLE_CHARS_RE.sub('', value).replace('\xa0', ' ')
         clean_text = ' '.join(clean.split())
         return Truncator(clean_text).chars(max_chars, truncate='…')
 
+    value = protect_generics(value)
     parser = PreviewTextHTMLParser(max_collect=max_chars * 2 if max_chars else None)
     try:
         parser.feed(value)
@@ -399,6 +474,8 @@ def rich_text_to_preview_text(value: str | None, max_chars: int = 200) -> str:
         pass
 
     text = ''.join(parser.parts).replace('\xa0', ' ')
+    if _MARKDOWN_RE.search(text):
+        text = strip_markdown(text)
     clean_text = _INVISIBLE_CHARS_RE.sub('', text)
     clean_text = ' '.join(clean_text.split())
     return Truncator(clean_text).chars(max_chars, truncate='…')

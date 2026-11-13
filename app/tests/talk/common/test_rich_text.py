@@ -189,7 +189,27 @@ def test_rich_text_to_preview_text_whitespace_cutoff():
             'Mixed text with **bold**, [Eventyay](https://eventyay.com), and `sys.py`.',
             'Mixed text with bold, Eventyay, and sys.py.',
         ),
+        (
+            '<p>Explore **core** [tools](https://eventyay.com) in `sys.py`</p>',
+            'Explore core tools in sys.py',
+        ),
+        (
+            '<p>Learn <strong>systems</strong><br class="break">with vector<T> and Map<K,V>! '
+            'Explore **core** [tools](https://eventyay.com) in `sys.py`<script>alert("xss")</script>'
+            '<style>.test{color:red;}</style> Join our hands-on masterclass</p>',
+            'Learn systems with vector<T> and Map<K,V>! Explore core tools in sys.py Join our hands-on masterclass',
+        ),
+        (
+            '# Heading 1\n## Heading 2\nBody text with `code`',
+            'Heading 1 Heading 2 Body text with code',
+        ),
+        (
+            '- Item 1\n* Item 2\n+ Item 3\n1. Numbered',
+            'Item 1 Item 2 Item 3 Numbered',
+        ),
+        ('> Quoted block text', 'Quoted block text'),
         ('Exploring std::vector<T> with Eventyay', 'Exploring std::vector<T> with Eventyay'),
+        ('vector<T> and Map<K,V>', 'vector<T> and Map<K,V>'),
         ('if (a < b)', 'if (a < b)'),
         ('Check __init__.py in Python packages', 'Check __init__.py in Python packages'),
         (
@@ -238,3 +258,104 @@ def test_rich_text_to_preview_text_inline_html(value, expected):
 )
 def test_rich_text_to_preview_text_invisible_chars_and_unicode(value, expected):
     assert rich_text_to_preview_text(value) == expected
+
+
+def test_preview_parser_collection_limit_boundary_accounting():
+    """Verify PreviewTextHTMLParser._emit_text handles max_collect bounds cleanly."""
+    from eventyay.common.text.rich_text import PreviewTextHTMLParser
+
+    # Exact collection limit reached on first emit
+    parser = PreviewTextHTMLParser(max_collect=10)
+    with pytest.raises(StopIteration):
+        parser._emit_text('1234567890')
+    assert parser.collected_chars == 10
+    assert parser.parts == ['1234567890']
+    assert parser.stopped_early is True
+
+    # needs_space when already at max_collect raises StopIteration immediately
+    # without decrementing collected_chars or slicing negative indices
+    parser.needs_space = True
+    with pytest.raises(StopIteration):
+        parser._emit_text('additional')
+    assert parser.collected_chars == 10
+    assert parser.parts == ['1234567890']
+
+    # needs_space reaches exact max_collect
+    parser2 = PreviewTextHTMLParser(max_collect=10)
+    parser2._emit_text('123456789')  # 9 chars
+    assert parser2.collected_chars == 9
+    parser2.needs_space = True
+    with pytest.raises(StopIteration):
+        parser2._emit_text('word')
+    # 9 chars + 1 space = 10 chars, remaining <= 0 raises StopIteration
+    assert parser2.collected_chars == 10
+    assert parser2.parts == ['123456789', ' ']
+
+    # Clamping slice with max(0, remaining)
+    parser3 = PreviewTextHTMLParser(max_collect=10)
+    parser3._emit_text('1234567')  # 7 chars
+    parser3.needs_space = True  # 1 space -> 8 chars, 2 remaining from 'word' -> 'wo'
+    with pytest.raises(StopIteration):
+        parser3._emit_text('word')
+    assert parser3.collected_chars == 10
+    assert parser3.parts == ['1234567', ' ', 'wo']
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        ('<speaker-card id="123" class="badge">Speaker Name</speaker-card>', 'Speaker Name'),
+        ('<event-schedule title="Opening">Session 1</event-schedule>', 'Session 1'),
+        ('<custom-tag attr="value">Custom content</custom-tag>', 'Custom content'),
+        ('<div class="content"><unknown-element id="abc">Nested text</unknown-element></div>', 'Nested text'),
+        ('<component-widget id="1" />Trailing text', 'Trailing text'),
+        ('<invalid-tag>Readable text without tags</invalid-tag>', 'Readable text without tags'),
+        (
+            '<my-session-card class="active">Card content with <span class="badge">Badge</span></my-session-card>',
+            'Card content with Badge',
+        ),
+    ),
+)
+def test_rich_text_to_preview_text_strips_unknown_html_tags(value, expected):
+    """Verify unknown and custom HTML tags and attributes are stripped while preserving inner text."""
+    result = rich_text_to_preview_text(value)
+    assert result == expected
+    assert '<' not in result
+    assert '>' not in result
+    assert 'id=' not in result
+    assert 'class=' not in result
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    (
+        ('Statistical analysis shows p < 0.05 and score < 10.', 'Statistical analysis shows p < 0.05 and score < 10.'),
+        ('Comparing values: if (a < b) and p < 0.001', 'Comparing values: if (a < b) and p < 0.001'),
+        ('Cases: latency < 5ms, error < 0.01%, n < 100', 'Cases: latency < 5ms, error < 0.01%, n < 100'),
+        ('Using std::vector<T> and Map<K,V> in C++', 'Using std::vector<T> and Map<K,V> in C++'),
+        ('Generic types like List<T> and Set<E>', 'Generic types like List<T> and Set<E>'),
+        (
+            '<p>HTML block with p < 0.05 and std::vector<T></p>',
+            'HTML block with p < 0.05 and std::vector<T>',
+        ),
+    ),
+)
+def test_rich_text_to_preview_text_preserves_comparisons_and_generics(value, expected):
+    """Verify plain-text comparisons and technical expressions are preserved."""
+    assert rich_text_to_preview_text(value) == expected
+
+
+def test_rich_text_to_preview_text_regex_escaping_no_warnings():
+    """Verify dunder replacement regex generates no SyntaxWarning or DeprecationWarning."""
+    import warnings
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
+        result = rich_text_to_preview_text('Technical review of __init__.py, __str__, and __all__ in Python')
+        assert result == 'Technical review of __init__.py, __str__, and __all__ in Python'
+
+    escape_warnings = [
+        w for w in captured
+        if issubclass(w.category, (SyntaxWarning, DeprecationWarning)) and 'escape' in str(w.message).lower()
+    ]
+    assert not escape_warnings, f'Unexpected escape warnings: {[str(w.message) for w in escape_warnings]}'
