@@ -93,6 +93,7 @@ def test_not_found_page_sets_html_lang(client):
 def test_rtl_language_sets_lang_and_dir(client, url_name):
     client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'ar'
     response = client.get(reverse(url_name))
+    assert response.status_code == 200
     assert re.search(r"<html lang='ar' dir='rtl'", response.content.decode())
 
 
