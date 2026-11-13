@@ -1,10 +1,23 @@
 import unicodedata
-from urllib.parse import quote, urlencode, urlsplit
+from urllib.parse import urlencode, urlsplit
 
 from django.core import signing
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+
+
+RETURN_ORIGIN_MAX_AGE = 24 * 60 * 60
+
+
+def get_redirect_target(request: HttpRequest) -> str | None:
+    """Read a submitted destination before falling back to query parameters."""
+    return (
+        request.POST.get('next')
+        or request.POST.get('redirect_url')
+        or request.GET.get('next')
+        or request.GET.get('redirect_url')
+    )
 
 
 def is_internal_url(request: HttpRequest, target: str) -> bool:
@@ -50,15 +63,17 @@ def safe_return_url(request: HttpRequest, target: str | None, origin_signature: 
     target_parts = urlsplit(destination)
     if request.is_secure() and target_parts.scheme == 'http':
         return fallback
-    if target_parts.path in {
-        reverse('eventyay_common:external-link'),
-        reverse('redirect'),
+    if target_parts.path.rstrip('/') in {
+        reverse('eventyay_common:external-link').rstrip('/'),
+        reverse('redirect').rstrip('/'),
     }:
         return fallback
     if is_internal_url(request, destination):
         return destination
     try:
-        origin = signing.loads(origin_signature or '', salt='external-link-return-origin')
+        origin = signing.loads(
+            origin_signature or '', salt='external-link-return-origin', max_age=RETURN_ORIGIN_MAX_AGE
+        )
     except signing.BadSignature:
         return fallback
     if not isinstance(origin, str) or not validate_redirect_url(request, origin):
@@ -94,10 +109,9 @@ def safe_redirect_url(
 def safelink(url: str, *, return_url: str | None = None, return_origin: str | None = None) -> str:
     """Wrap a destination in a signed redirect link."""
     signer = signing.Signer(salt='safe-redirect')
-    target = reverse('redirect') + '?url=' + quote(signer.sign(url))
-    params = {}
+    params = {'url': signer.sign(url)}
     if return_url is not None:
         params['return_url'] = return_url
     if return_origin:
         params['return_origin'] = return_origin
-    return target + ('&' + urlencode(params) if params else '')
+    return reverse('redirect') + '?' + urlencode(params)

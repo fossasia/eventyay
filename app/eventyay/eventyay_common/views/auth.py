@@ -52,7 +52,7 @@ from eventyay.base.services.teams import (
     get_team_invite_event_name,
     invite_belongs_to,
 )
-from eventyay.common.redirects import safe_redirect_url
+from eventyay.common.redirects import get_redirect_target, safe_redirect_url
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
@@ -68,13 +68,13 @@ def get_used_backend(request):
 
 
 def get_safe_next(request: HttpRequest) -> str:
-    return safe_redirect_url(request, request.GET.get('next') or request.GET.get('redirect_url'))
+    return safe_redirect_url(request, get_redirect_target(request))
 
 
 def auth_flow_url(request: HttpRequest, url_name: str) -> str:
     """Carry a validated destination through intermediate authentication pages."""
     url = reverse(url_name)
-    if request.GET.get('next') or request.GET.get('redirect_url'):
+    if get_redirect_target(request):
         url += '?' + urlencode({'next': get_safe_next(request)})
     return url
 
@@ -89,7 +89,7 @@ def process_login(request, user, keep_logged_in, *, next_url=None):
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
 
     if not next_url:
-        next_url = get_auth_backends()[user.auth_backend].get_next_url(request) or request.GET.get('redirect_url')
+        next_url = get_auth_backends()[user.auth_backend].get_next_url(request) or get_redirect_target(request)
     next_url = safe_redirect_url(request, next_url)
 
     if user.require_2fa:
@@ -152,7 +152,7 @@ def login(request):
     if not backend.visible:
         backend = [b for b in backends if b.visible][0]
     if request.user.is_authenticated:
-        return redirect(safe_redirect_url(request, backend.get_next_url(request) or request.GET.get('redirect_url')))
+        return redirect(safe_redirect_url(request, backend.get_next_url(request) or get_redirect_target(request)))
     if request.method == 'POST':
         form = LoginForm(backend=backend, data=request.POST, request=request)
         if form.is_valid() and form.user_cache and form.user_cache.auth_backend == backend.identifier:
@@ -166,7 +166,7 @@ def login(request):
     ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
     ctx['backends'] = backends
     ctx['backend'] = backend
-    next_url = request.GET.get('next') or request.GET.get('redirect_url')
+    next_url = get_redirect_target(request)
     ctx['next_url'] = safe_redirect_url(request, next_url) if next_url else None
 
     return render(request, 'eventyay_common/auth/login.html', ctx)
@@ -178,12 +178,10 @@ def logout(request):
     """
     auth_logout(request)
     request.session['eventyay_auth_login_time'] = 0
-    next = reverse('auth.login')
-    if request.GET.get('next') or request.GET.get('redirect_url'):
-        next += '?next=' + quote(get_safe_next(request))
+    next_url = auth_flow_url(request, 'auth.login')
     if request.GET.get('back'):
         return redirect(safe_redirect_url(request, request.GET.get('back')))
-    return redirect(next)
+    return redirect(next_url)
 
 
 
@@ -611,7 +609,7 @@ def send_password_reset(email: str, has_redis: bool, request: HttpRequest):
         else:
             rc.setex(f'eventyay_pwreset_{user.id}', 3600 * 24, '1')
 
-    next_url = get_safe_next(request) if request.GET.get('next') or request.GET.get('redirect_url') else None
+    next_url = get_safe_next(request) if get_redirect_target(request) else None
     user.send_password_reset(request, next_url=next_url)
     logger.info('Sent email for password reset to "%s"', email)
     user.log_action('eventyay.eventyay_common.auth.user.forgot_password.mail_sent')

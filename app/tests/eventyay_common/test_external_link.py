@@ -116,12 +116,16 @@ def test_authenticated_login_shows_warning(authenticated_client, parameter):
     assert response.context['destination'] == DESTINATION
 
 
-def test_successful_login_preserves_external_next(client, user):
-    response = client.post(
-        reverse('auth.login') + '?' + urlencode({'next': DESTINATION}),
-        {'email': user.email, 'password': 'testpass123'},
-        follow=True,
-    )
+@pytest.mark.parametrize('source', ['query', 'form'])
+@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
+def test_successful_login_preserves_external_destination(client, user, source, parameter):
+    url = reverse('auth.login')
+    data = {'email': user.email, 'password': 'testpass123'}
+    if source == 'form':
+        data[parameter] = DESTINATION
+    else:
+        url += '?' + urlencode({parameter: DESTINATION})
+    response = client.post(url, data, follow=True)
     assert response.status_code == 200
     assert response.request['PATH_INFO'] == EXTERNAL_LINK
     assert response.context['destination'] == DESTINATION
@@ -580,3 +584,32 @@ def test_standalone_signup_page_loads_link_protection(client):
     assert script['data-external-link-url'] == EXTERNAL_LINK
     assert script['type'] == 'module'
     assert script['blocking'] == 'render'
+
+
+@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
+@pytest.mark.parametrize(
+    'destination',
+    [EXTERNAL_LINK, EXTERNAL_LINK.rstrip('/'), 'https://testserver' + EXTERNAL_LINK + '?next=https://example.org/'],
+)
+def test_warning_does_not_redirect_into_itself(client, parameter, destination):
+    response = client.get(EXTERNAL_LINK, {parameter: destination}, secure=True)
+    assert response.status_code == 302
+    assert response.url == reverse('eventyay_common:dashboard')
+
+
+def test_external_destination_with_warning_path_still_requires_confirmation(client):
+    destination = 'https://example.org/common/external-link/'
+    response = client.get(EXTERNAL_LINK, {'next': destination}, secure=True)
+    assert response.status_code == 200
+    assert response.context['destination'] == destination
+
+
+def test_logout_next_preserves_encoded_destination(authenticated_client, user):
+    destination = 'https://example.org/event?name=A+B&note=%2B%26%3D#details'
+    response = authenticated_client.get(reverse('eventyay_common:auth.logout'), {'next': destination})
+    assert urlsplit(response.url).path == reverse('auth.login')
+    assert '_auth_user_id' not in authenticated_client.session
+    response = authenticated_client.post(response.url, {'email': user.email, 'password': 'testpass123'})
+    warning = authenticated_client.get(response.url)
+    assert warning.status_code == 200
+    assert warning.context['destination'] == destination

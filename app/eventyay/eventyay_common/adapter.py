@@ -23,8 +23,10 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request: HttpRequest | None, emailconfirmation) -> str:
         """Return to login with the validated destination after email verification."""
         url = super().get_email_confirmation_url(request, emailconfirmation)
+        if request is None:
+            return url
         target = get_request_param(request, 'next')
-        if not request or not target:
+        if not target:
             return url
         login_url = reverse('auth.login') + '?' + urlencode({'next': safe_redirect_url(request, target)})
         separator = '&' if '?' in url else '?'

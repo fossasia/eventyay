@@ -1,5 +1,8 @@
+from urllib.parse import urlsplit
+
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_safe
 
@@ -13,6 +16,8 @@ def external_link(request: HttpRequest) -> HttpResponse:
     if not destination:
         return HttpResponseBadRequest('Invalid destination')
     if is_internal_url(request, destination):
+        if urlsplit(destination).path.rstrip('/') == request.path.rstrip('/'):
+            return HttpResponseRedirect(reverse('eventyay_common:dashboard'))
         return HttpResponseRedirect(destination)
     return_url = safe_return_url(request, request.GET.get('return_url'), request.GET.get('return_origin'))
     response = render(

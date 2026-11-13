@@ -12,7 +12,7 @@ from django_otp.plugins.otp_static.models import StaticDevice
 
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.views.redirect import safelink as base_safelink
-from eventyay.common.redirects import safe_redirect_url
+from eventyay.common.redirects import external_link_origin, safe_redirect_url
 from eventyay.common.views.redirect import safelink as common_safelink
 from eventyay.eventyay_common.views.auth import process_login
 from eventyay.multidomain.models import KnownDomain
@@ -25,22 +25,26 @@ INTERNAL = 'https://testserver/common/organizers/?tab=events#upcoming'
 WARNING = '/common/external-link/'
 
 
+@pytest.mark.parametrize('source', ['query', 'form'])
 @pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
 @pytest.mark.parametrize('destination', ['/common/organizers/?tab=events#upcoming', INTERNAL])
-def test_native_login_keeps_valid_internal_destination(client, user, parameter, destination):
-    response = client.post(
-        reverse('auth.login') + '?' + urlencode({parameter: destination}),
-        {'email': user.email, 'password': 'testpass123'},
-        secure=True,
-    )
+def test_native_login_keeps_valid_internal_destination(client, user, parameter, destination, source):
+    url = reverse('auth.login')
+    data = {'email': user.email, 'password': 'testpass123'}
+    if source == 'form':
+        data[parameter] = destination
+    else:
+        url += '?' + urlencode({parameter: destination})
+    response = client.post(url, data, secure=True)
     assert response.status_code == 302
     assert response.url == destination
     assert int(client.session['_auth_user_id']) == user.pk
 
 
+@pytest.mark.parametrize('source', ['query', 'form'])
 @pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
 @pytest.mark.parametrize('destination', [INTERNAL, DESTINATION])
-def test_two_factor_keeps_destination_through_retry(client, user, settings, parameter, destination):
+def test_two_factor_keeps_destination_through_retry(client, user, settings, parameter, destination, source):
     settings.OTP_STATIC_THROTTLE_FACTOR = 0
     user.require_2fa = True
     user.save()
@@ -55,22 +59,31 @@ def test_two_factor_keeps_destination_through_retry(client, user, settings, para
     assert parse_qs(urlsplit(response.url).query).get('next') == [target]
     assert '_auth_user_id' not in client.session
 
-    response = client.post(response.url, {'token': 'incorrect'}, secure=True)
+    retry_url = reverse('auth.login.2fa') if source == 'form' else response.url
+    retry_data = {'token': 'incorrect'}
+    if source == 'form':
+        retry_data[parameter] = destination
+    response = client.post(retry_url, retry_data, secure=True)
     assert urlsplit(response.url).path == reverse('auth.login.2fa')
     assert parse_qs(urlsplit(response.url).query).get('next') == [target]
     assert '_auth_user_id' not in client.session
 
-    response = client.post(response.url, {'token': '123456'}, secure=True)
+    success_url = reverse('auth.login.2fa') if source == 'form' else response.url
+    success_data = {'token': '123456'}
+    if source == 'form':
+        success_data[parameter] = destination
+    response = client.post(success_url, success_data, secure=True)
     assert response.url == target
     assert int(client.session['_auth_user_id']) == user.pk
 
 
-def test_expired_two_factor_keeps_destination_on_return_to_login(client, user):
+@pytest.mark.parametrize('method', ['get', 'post'])
+def test_expired_two_factor_keeps_destination_on_return_to_login(client, user, method):
     session = client.session
     session['eventyay_auth_2fa_user'] = user.pk
     session['eventyay_auth_2fa_time'] = str(int(time.time()) - 600)
     session.save()
-    response = client.get(reverse('auth.login.2fa'), {'next': DESTINATION}, secure=True)
+    response = getattr(client, method)(reverse('auth.login.2fa'), {'next': DESTINATION}, secure=True)
     assert urlsplit(response.url).path == reverse('auth.login')
     assert parse_qs(urlsplit(response.url).query).get('next') == [safe_redirect_url(response.wsgi_request, DESTINATION)]
 
@@ -99,6 +112,10 @@ def test_public_cancel_returns_to_source_page(request, client_fixture):
         'http://testserver/terms/',
         '/common/external-link/?next=https://evil.example/',
         '/redirect/?url=forged',
+        '/common/external-link?next=https://evil.example/',
+        '/redirect?url=forged',
+        'https://testserver/common/external-link?next=https://evil.example/',
+        'https://testserver/redirect?url=forged',
     ],
 )
 def test_cancel_rejects_unsafe_return_without_another_warning(client, return_url):
@@ -219,13 +236,21 @@ def test_lost_password_link_keeps_effective_destination(client, preferred, param
     assert parse_qs(urlsplit(action).query).get('next') == [target]
 
 
+@pytest.mark.parametrize('source', ['query', 'form'])
 @pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
 @pytest.mark.parametrize('destination', [INTERNAL, DESTINATION, 'javascript:alert(1)'])
-def test_password_recovery_email_and_login_keep_safe_destination(client, user, settings, parameter, destination):
+def test_password_recovery_email_and_login_keep_safe_destination(
+    client, user, settings, parameter, destination, source
+):
     settings.HAS_REDIS = False
-    forgot_url = reverse('eventyay_common:auth.forgot') + '?' + urlencode({parameter: destination})
+    forgot_url = reverse('eventyay_common:auth.forgot')
+    data = {'email': user.email}
+    if source == 'form':
+        data[parameter] = destination
+    else:
+        forgot_url += '?' + urlencode({parameter: destination})
     with patch('eventyay.base.services.mail.mail') as deliver:
-        response = client.post(forgot_url, {'email': user.email}, secure=True)
+        response = client.post(forgot_url, data, secure=True)
     assert response.status_code == 302
     target = safe_redirect_url(response.wsgi_request, destination)
     deliver.assert_called_once()
@@ -236,7 +261,13 @@ def test_password_recovery_email_and_login_keep_safe_destination(client, user, s
     recovery = client.get(recovery_url, secure=True)
     assert recovery.status_code == 200
     password = 'N3w-Passw0rd!X'
-    response = client.post(recovery_url, {'password': password, 'password_repeat': password}, secure=True)
+    data = {'password': password, 'password_repeat': password}
+    if source == 'form':
+        params = parse_qs(urlsplit(recovery_url).query)
+        del params['next']
+        recovery_url = reverse('eventyay_common:auth.forgot.recover') + '?' + urlencode(params, doseq=True)
+        data[parameter] = target
+    response = client.post(recovery_url, data, secure=True)
     assert response.status_code == 302
     assert urlsplit(response.url).path == reverse('auth.login')
     assert parse_qs(urlsplit(response.url).query).get('next') == [target]
@@ -332,8 +363,9 @@ def test_explicit_login_destination_overrides_query_and_stale_social_state(clien
 
 @pytest.mark.parametrize('link_builder', [base_safelink, common_safelink])
 def test_signed_link_entry_points_keep_destination_and_cancel_context(client, link_builder):
-    source = 'https://testserver/terms/?lang=en#privacy'
-    url = link_builder(DESTINATION, return_url=source)
+    source = 'https://testserver/terms/?lang=en&name=A+B#privacy'
+    destination = 'https://external.example/event?name=A+B&note=%2B%26%3D#details'
+    url = link_builder(destination, return_url=source)
 
     response = client.get(url, secure=True, follow=True)
 
@@ -341,5 +373,52 @@ def test_signed_link_entry_points_keep_destination_and_cancel_context(client, li
     assert response.request['PATH_INFO'] == WARNING
     assert 'Location' not in response
     page = BeautifulSoup(response.content, 'html.parser')
-    assert page.select_one('[data-external-link-continue]')['href'] == DESTINATION
+    assert page.select_one('[data-external-link-continue]')['href'] == destination
     assert page.select_one('[data-external-link-cancel]')['href'] == source
+
+
+@pytest.mark.parametrize('parameter', ['next', 'redirect_url'])
+def test_submitted_login_destination_takes_precedence_over_query(client, user, parameter):
+    response = client.post(
+        reverse('auth.login') + '?' + urlencode({'next': '/terms/'}),
+        {'email': user.email, 'password': 'testpass123', parameter: DESTINATION},
+        secure=True,
+    )
+    warning = client.get(response.url, secure=True)
+    assert warning.status_code == 200
+    assert warning.context['destination'] == DESTINATION
+
+
+def test_backend_state_still_controls_login_destination(client, settings):
+    settings.EVENTYAY_AUTH_BACKENDS = [
+        'eventyay.base.auth.NativeAuthBackend',
+        'tests.tickets.testdummy.auth.TestRequestAuthBackend',
+    ]
+    response = client.get(
+        reverse('auth.login'),
+        {'state': '/terms/', 'next': DESTINATION},
+        HTTP_X_LOGIN_EMAIL='request-auth@example.org',
+        secure=True,
+    )
+    assert response.status_code == 302
+    assert response.url == '/terms/'
+
+
+@pytest.mark.parametrize('age', [86400, 86401])
+def test_cross_domain_cancel_requires_unexpired_origin(client, rf, settings, age):
+    settings.ALLOWED_HOSTS = ['testserver', 'tickets.example']
+    source = rf.get('/event/?lang=en', HTTP_HOST='tickets.example', secure=True)
+    return_url = source.build_absolute_uri() + '#speakers'
+    with patch('django.core.signing.time.time', return_value=1800000000):
+        token = external_link_origin(source)
+    with patch('django.core.signing.time.time', return_value=1800000000 + age):
+        response = client.get(
+            WARNING,
+            {'next': DESTINATION, 'return_url': return_url, 'return_origin': token},
+            secure=True,
+        )
+    assert response.status_code == 200
+    page = BeautifulSoup(response.content, 'html.parser')
+    expected = return_url if age <= 86400 else reverse('presale:index')
+    assert page.select_one('[data-external-link-cancel]')['href'] == expected
+    assert page.select_one('[data-external-link-continue]')['href'] == DESTINATION
