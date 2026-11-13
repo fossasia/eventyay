@@ -78,9 +78,9 @@
                     <div class="scrolling-multiple-choice scrolling-multiple-choice-large team-track-list" role="group"
                          aria-label="{% translate 'Tracks this team can access' %}">
                         <small class="team-track-bulk-actions">
-                            <a href="#" class="choice-options-all" data-track-select="all">{% translate "All" %}</a>
+                            <button type="button" class="btn btn-link btn-xs choice-options-all" data-track-select="all">{% translate "All" %}</button>
                             /
-                            <a href="#" class="choice-options-none" data-track-select="none">{% translate "None" %}</a>
+                            <button type="button" class="btn btn-link btn-xs choice-options-none" data-track-select="none">{% translate "None" %}</button>
                         </small>
                         {% for event_data in form.events_with_tracks %}
                         {% if event_data.tracks %}
@@ -92,9 +92,9 @@
                                 </span>
                                 <small class="team-track-group-actions">
                                     <span class="text-muted" data-selection-count></span>
-                                    <a href="#" data-track-select="all">{% translate "All" %}</a>
+                                    <button type="button" class="btn btn-link btn-xs" data-track-select="all">{% translate "All" %}</button>
                                     /
-                                    <a href="#" data-track-select="none">{% translate "None" %}</a>
+                                    <button type="button" class="btn btn-link btn-xs" data-track-select="none">{% translate "None" %}</button>
                                 </small>
                             </div>
                             {% for track in event_data.tracks %}

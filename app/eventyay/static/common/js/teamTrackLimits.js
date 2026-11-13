@@ -1,25 +1,3 @@
-/**
- * "Restrict access to tracks" in the team permissions form.
- *
- * Mirrors the "Limit to events" pattern: an "All tracks" checkbox and, when it
- * is unchecked, one list of tracks grouped by event with All / None helpers.
- * Only events the team can access are shown, and the form cannot be submitted
- * with track limits switched on but no track selected.
- *
- * Expected DOM structure (per form):
- *   input#<all tracks id>
- *   .team-track-limits[data-all-tracks-id][data-all-events-id][data-limit-events-name]
- *     .team-track-empty-warning
- *     .team-track-search-row > input.team-track-search  (shown from 8 tracks)
- *     [data-track-select="all|none"]            (whole list)
- *     .team-track-group[data-event-id]
- *       [data-selection-count]
- *       [data-track-select="all|none"]          (this event only)
- *       .team-track-item[data-track-name] input[type="checkbox"]
- *     .team-track-search-empty
- *     .team-track-out-of-scope
- */
-
 function trackBoxes(group) {
     return Array.from(group.querySelectorAll('input[type="checkbox"]'));
 }
@@ -37,7 +15,6 @@ function updateCount(group) {
 }
 
 function translate(singular, plural, count, values) {
-    // Django's JavaScript catalog provides ngettext/interpolate; fall back to English without it.
     const template =
         typeof window.ngettext === 'function'
             ? window.ngettext(singular, plural, count)
@@ -77,7 +54,6 @@ function initTrackLimits(container) {
         return sum + trackBoxes(group).length;
     }, 0);
 
-    // Groups for events the team can access, whether or not the filter hides them.
     function inScopeGroups() {
         return groups.filter(function (group) {
             return group.dataset.inScope !== 'false';
@@ -159,7 +135,6 @@ function initTrackLimits(container) {
         groups.forEach(function (group) {
             const inScope = eventIds === null || eventIds.has(group.dataset.eventId);
             group.dataset.inScope = String(inScope);
-            // Tracks of events the team cannot access are not submitted.
             trackBoxes(group).forEach(function (box) {
                 box.disabled = !inScope;
             });
@@ -182,16 +157,15 @@ function initTrackLimits(container) {
     }
 
     container.addEventListener('click', function (event) {
-        const link = event.target.closest('[data-track-select]');
-        if (!link || !container.contains(link)) {
+        const trigger = event.target.closest('[data-track-select]');
+        if (!trigger || !container.contains(trigger)) {
             return;
         }
         event.preventDefault();
-        const ownGroup = link.closest('.team-track-group');
+        const ownGroup = trigger.closest('.team-track-group');
         const targets = ownGroup ? [ownGroup] : visibleGroups();
-        const checked = link.dataset.trackSelect === 'all';
+        const checked = trigger.dataset.trackSelect === 'all';
         targets.forEach(function (group) {
-            // Like the per-event filter before, All / None only touch the tracks you can see.
             group.querySelectorAll('.team-track-item:not([hidden]) input[type="checkbox"]').forEach(function (box) {
                 box.checked = checked;
             });
@@ -219,7 +193,6 @@ function initTrackLimits(container) {
 
     if (search) {
         search.addEventListener('input', applyFilter);
-        // Enter in the filter should not submit the whole team form.
         search.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
@@ -248,7 +221,6 @@ function initTrackLimits(container) {
         });
     }
 
-    // Browsers can restore checkbox states on reload or back navigation without firing change events.
     window.addEventListener('pageshow', refresh);
 
     refresh();
