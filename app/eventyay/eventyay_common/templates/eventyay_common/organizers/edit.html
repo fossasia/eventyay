@@ -17,7 +17,7 @@
                 </div>
                 <p class="text-muted" style="clear: both; padding-top: 10px;">{% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}</p>
 
-                <div id="create-team-form" class="collapse {% if team_create_form.errors %}in{% endif %}">
+                <div id="create-team-form" class="collapse {% if team_create_form.errors or is_duplicating %}in{% endif %}">
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">{% translate "Create a new team" %}</h3>
@@ -104,6 +104,14 @@
                                     <i class="fa fa-users"></i> {% translate "Members & API" %}
                                 </button>
                             </div>
+                            {% if can_manage_teams %}
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'eventyay_common:organizer.teams' organizer=request.organizer.slug %}?section=teams&duplicate_team={{ panel.team.pk }}#create-team-form"
+                                       class="btn btn-default btn-sm">
+                                        <i class="fa fa-copy"></i> {% translate "Duplicate" %}
+                                    </a>
+                                </div>
+                            {% endif %}
                             {% if panel.can_delete %}
                                 <div class="btn-group btn-group-sm">
                                     <a href="{% url 'eventyay_common:organizer.team.delete' organizer=request.organizer.slug team=panel.team.pk %}?next={{ request.get_full_path|urlencode }}"

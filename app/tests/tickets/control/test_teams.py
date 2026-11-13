@@ -394,3 +394,41 @@ def test_invite_new_user(event, admin_team, client):
     with scopes_disabled():
         assert admin_team.members.filter(email='dummy@example.org').exists()
         assert not admin_team.invites.exists()
+
+
+@pytest.mark.django_db
+def test_duplicate_team_prefill_form(event, admin_user, admin_team, client):
+    """Test that duplicate_team parameter pre-fills the create team form with source team's attributes."""
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    resp = client.get(f'/control/organizer/dummy/teams?section=teams&duplicate_team={admin_team.pk}')
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert f'{admin_team.name} (copy)' in content
+    assert 'Duplicate' in content
+
+
+@pytest.mark.django_db
+def test_duplicate_team_submit(event, admin_user, admin_team, client):
+    """Test creating a team with duplicated permissions and scopes."""
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    admin_team.can_change_event_settings = True
+    admin_team.save()
+
+    resp = client.post(
+        '/control/organizer/dummy/teams',
+        {
+            'team_action': 'create',
+            'team-create-name': f'{admin_team.name} (copy)',
+            'team-create-can_change_teams': 'on',
+            'team-create-can_change_event_settings': 'on',
+        },
+        follow=True,
+    )
+    assert resp.status_code == 200
+    with scopes_disabled():
+        new_team = Team.objects.get(name=f'{admin_team.name} (copy)')
+        assert new_team.can_change_teams is True
+        assert new_team.can_change_event_settings is True
+        # Verify tokens and invites are NOT copied
+        assert new_team.tokens.count() == 0
+        assert new_team.invites.count() == 0

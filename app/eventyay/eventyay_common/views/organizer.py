@@ -197,6 +197,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             selected_panel = 'permissions'
         ctx['selected_team_id'] = selected_team_id
         ctx['selected_panel'] = selected_panel
+        ctx['is_duplicating'] = bool(self.request.GET.get('duplicate_team'))
 
         if self.can_manage_teams:
             teams_qs = self._get_team_queryset()
@@ -285,7 +286,33 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         if self._team_create_form_override is not None:
             return self._team_create_form_override
         with scopes_disabled():
-            return TeamForm(prefix='team-create', organizer=self.request.organizer)
+            initial = None
+            duplicate_pk = self.request.GET.get('duplicate_team')
+            if duplicate_pk:
+                try:
+                    source_team = self.request.organizer.teams.get(pk=duplicate_pk)
+                    initial = self._get_duplicate_team_initial(source_team)
+                except (Team.DoesNotExist, ValueError):
+                    pass
+            return TeamForm(prefix='team-create', organizer=self.request.organizer, initial=initial)
+
+    def _get_duplicate_team_initial(self, source_team: Team) -> dict:
+        initial = {
+            'name': _('{name} (copy)').format(name=source_team.name),
+            'all_events': source_team.all_events,
+            'limit_events': list(source_team.limit_events.all()),
+            'limit_tracks': list(source_team.limit_tracks.all()),
+        }
+        for field in TeamForm.Meta.fields:
+            if field in initial or field == 'name':
+                continue
+            if hasattr(source_team, field):
+                attr = getattr(source_team, field)
+                if hasattr(attr, 'all'):
+                    initial[field] = list(attr.all())
+                else:
+                    initial[field] = attr
+        return initial
 
     def _accepted_invite_user_ids_by_team(self, teams) -> dict[int, frozenset[int]]:
         accepted: dict[int, set[int]] = {}

@@ -52,12 +52,18 @@ class TeamForm(forms.ModelForm):
         # so the template can use them without scope issues
         if self.instance and self.instance.pk:
             self._selected_track_ids = set(self.instance.limit_tracks.values_list('pk', flat=True))
+        elif self.initial and self.initial.get('limit_tracks') is not None:
+            tracks = self.initial.get('limit_tracks')
+            if hasattr(tracks, 'values_list'):
+                self._selected_track_ids = set(tracks.values_list('pk', flat=True))
+            else:
+                self._selected_track_ids = {t.pk if hasattr(t, 'pk') else int(t) for t in tracks}
         else:
             self._selected_track_ids = set()
 
-        if not apps.is_installed("socialmedia"):
-            if "can_manage_social_media" in self.fields:
-                del self.fields["can_manage_social_media"]
+        if not apps.is_installed('socialmedia'):
+            if 'can_manage_social_media' in self.fields:
+                del self.fields['can_manage_social_media']
 
         self.exhibition_event_ids = []
         if apps.is_installed('exhibition'):
@@ -74,9 +80,7 @@ class TeamForm(forms.ModelForm):
 
         has_teamshifts = False
         if apps.is_installed('teamshifts'):
-            has_teamshifts = organizer.events.filter(
-                plugins__regex=r'(^|,)teamshifts(,|$)'
-            ).exists()
+            has_teamshifts = organizer.events.filter(plugins__regex=r'(^|,)teamshifts(,|$)').exists()
 
         self.teamshifts_plugin_enabled = has_teamshifts
         if has_teamshifts:
