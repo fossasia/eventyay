@@ -22,14 +22,11 @@ TEAM_DELEGATION_ERROR = _('You can only grant permissions and event access that 
 ORGANIZER_ONLY_PERMISSIONS = frozenset({'can_create_events', 'can_change_organizer_settings', 'can_manage_gift_cards'})
 TALK_PERMISSIONS = frozenset({'is_reviewer', 'can_change_submissions'})
 EXHIBITION_PERMISSIONS = frozenset({'is_exhibition_reviewer', 'can_change_exhibition_proposals'})
-ACCESS_RESTRICTIONS = {
-    'speaker_names': 'force_hide_speaker_names',
-    'speaker_emails': 'force_hide_speaker_emails',
-    'applicant_emails': 'hide_exhibition_applicant_emails',
-}
 GRANT_FIELDS = (
     'all_events',
-    *ACCESS_RESTRICTIONS.values(),
+    'force_hide_speaker_names',
+    'force_hide_speaker_emails',
+    'hide_exhibition_applicant_emails',
     'teamshifts_role',
     'all_teamshifts_roles',
     'limit_teamshifts_roles',
@@ -112,7 +109,7 @@ class TeamGrant:
                 {('teamshifts', capability): None for capability in ('coordinator', 'lead', 'roles', 'emails')}
             )
         elif self.team.teamshifts_role == 'lead':
-            roles = None if self.team.all_teamshifts_roles else frozenset(self.team.limit_teamshifts_roles)
+            roles = None if self.team.all_teamshifts_roles else frozenset(self.team.limit_teamshifts_roles or ())
             grants['teamshifts', 'lead'] = None
             grants['teamshifts', 'roles'] = roles
             if not self.team.hide_teamshifts_emails:
@@ -187,19 +184,11 @@ class TeamDelegation:
 
     def available_for_event(self, event_id: int | None) -> Grants:
         available = {}
-        restrictions = set()
         for source in self.sources:
-            if not source.covers_event(event_id):
-                continue
             for key, granted in source.grants_for_event(event_id).items():
                 existing = available.get(key, frozenset())
                 available[key] = None if granted is None or existing is None else existing | granted
-            restrictions.update(
-                capability for capability, field in ACCESS_RESTRICTIONS.items() if getattr(source.team, field)
-            )
-        if 'speaker_names' in restrictions:
-            restrictions.add('speaker_emails')
-        return {key: value for key, value in available.items() if key[1] not in restrictions}
+        return available
 
     def allows(self, *, team: Team | None = None, changes: Mapping[str, object] | None = None) -> bool:
         """Check the full access delegated by an invite or token, or the access added by an edit."""

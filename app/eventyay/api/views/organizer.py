@@ -73,7 +73,12 @@ def team_delegation_actor(request):
 def check_api_team_delegation(request, *, team=None, changes=None):
     actor = team_delegation_actor(request)
     if isinstance(actor, Device) or not can_delegate_team_permissions(
-        request.organizer, actor, session_key=request.session.session_key, team=team, changes=changes, lock=True
+        request.organizer,
+        actor,
+        session_key=getattr(getattr(request, 'session', None), 'session_key', None),
+        team=team,
+        changes=changes,
+        lock=True,
     ):
         raise PermissionDenied(TEAM_DELEGATION_ERROR)
 

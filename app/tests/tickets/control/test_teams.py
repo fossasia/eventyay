@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import pytest
 from django.core import mail as djmail
 from django.db import connection, transaction
@@ -136,6 +138,41 @@ def test_team_manager_cannot_delegate_privileged_team(
     assert not djmail.outbox
     assert team.invites.open().count() == (1 if action == 'resend' else 0)
     assert not team.tokens.exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+@pytest.mark.parametrize(
+    ('action', 'operation'), [('members', 'remove-member'), ('members', 'remove-invite'), ('tokens', 'remove-token')]
+)
+def test_team_manager_cannot_remove_access_after_membership_is_revoked(
+    client, organizer, team_manager, admin_team, action, operation, monkeypatch
+):
+    target = organizer.teams.create(name='Target team')
+    member = User.objects.create_user('member@example.com')
+    target.members.add(member)
+    invite = target.invites.create(email='invitee@example.com')
+    token = target.tokens.create(name='Target token')
+    objects = {'remove-member': member, 'remove-invite': invite, 'remove-token': token}
+    client.force_login(team_manager)
+
+    def revoke_before_lock(organizer_id):
+        admin_team.members.remove(team_manager)
+        lock_team_organizer(organizer_id)
+
+    lock = Mock(side_effect=revoke_before_lock)
+    monkeypatch.setattr('eventyay.eventyay_common.views.organizer.lock_team_organizer', lock)
+    response = client.post(
+        reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug}),
+        {'team_action': action, 'team_id': target.pk, operation: objects[operation].pk},
+    )
+
+    assert response.status_code == 403
+    lock.assert_called_once_with(organizer.pk)
+    assert target.members.filter(pk=member.pk).exists()
+    assert target.invites.filter(pk=invite.pk).exists()
+    token.refresh_from_db()
+    assert token.active
 
 
 @pytest.mark.django_db
@@ -281,6 +318,39 @@ def test_delegation_cannot_remove_email_visibility_restriction(organizer, team_m
     assert can_delegate_team_permissions(organizer, team_manager, changes=grant)
     assert not can_delegate_team_permissions(organizer, team_manager, changes={**grant, restriction: False})
     assert not can_delegate_team_permissions(organizer, team_manager, team=team, changes={restriction: False})
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('permission', 'restriction'),
+    [
+        ('is_reviewer', 'force_hide_speaker_names'),
+        ('is_reviewer', 'force_hide_speaker_emails'),
+        ('is_exhibition_reviewer', 'hide_exhibition_applicant_emails'),
+    ],
+)
+def test_delegation_combines_restricted_and_unrestricted_team_grants(
+    organizer, event, team_manager, permission, restriction
+):
+    grant = {permission: True, 'all_events': True}
+    restricted = organizer.teams.create(name='Restricted team', **grant, **{restriction: True})
+    restricted.members.add(team_manager)
+    unrestricted = organizer.teams.create(name='Unrestricted team', **{permission: True})
+    unrestricted.limit_events.add(event)
+    unrestricted.members.add(team_manager)
+
+    assert can_delegate_team_permissions(organizer, team_manager, changes={permission: True, 'limit_events': [event]})
+    assert not can_delegate_team_permissions(organizer, team_manager, changes=grant)
+
+
+@pytest.mark.django_db
+def test_delegation_treats_null_teamshifts_role_limits_as_empty(organizer, event, team_manager):
+    lead = organizer.teams.create(name='TeamShifts lead', all_events=True, teamshifts_role='lead')
+    lead.members.add(team_manager)
+    grant = {'limit_events': [event], 'teamshifts_role': 'lead', 'limit_teamshifts_roles': None}
+
+    assert can_delegate_team_permissions(organizer, team_manager, changes=grant)
+    assert not can_delegate_team_permissions(organizer, team_manager, changes={**grant, 'all_teamshifts_roles': True})
 
 
 @pytest.mark.django_db

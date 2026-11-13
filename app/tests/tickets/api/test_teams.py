@@ -2,11 +2,16 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.core import mail
 from django.dispatch import Signal
 from django_scopes import scopes_disabled
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import JSONParser
+from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory
 
+from eventyay.api.serializers.organizer import TeamInviteSerializer
 from eventyay.api.views.team import TeamViewSet as TalkTeamViewSet
 from eventyay.base.models import Team, User
 from eventyay.base.models.auth import StaffSession
@@ -110,17 +115,42 @@ def test_event_limited_team_token_cannot_mint_all_events_token(client, organizer
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('method', ['perform_create', 'perform_update'])
-def test_talk_team_view_checks_delegation(organizer, limited_team_token, method):
+def test_talk_team_view_checks_delegation_without_session(organizer, limited_team_token, method):
     view = TalkTeamViewSet()
-    view.request = SimpleNamespace(
-        organizer=organizer, auth=limited_team_token.tokens.get(), session=SimpleNamespace(session_key=None)
-    )
+    view.request = SimpleNamespace(organizer=organizer, auth=limited_team_token.tokens.get())
     serializer = Mock(instance=limited_team_token, validated_data={'is_reviewer': True})
 
     with pytest.raises(PermissionDenied, match=str(TEAM_DELEGATION_ERROR)):
         getattr(view, method)(serializer)
 
     serializer.save.assert_not_called()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('endpoint', ['organizer', 'talk'])
+def test_team_token_can_invite_without_session(organizer, limited_team_token, endpoint, monkeypatch):
+    token = limited_team_token.tokens.get()
+    data = {'email': 'invitee@example.com'}
+    request = Request(APIRequestFactory().post('/', data, format='json'), parsers=[JSONParser()])
+    request.organizer = organizer
+    request.user = AnonymousUser()
+    request.auth = token
+    request.LANGUAGE_CODE = 'en'
+    if endpoint == 'organizer':
+        serializer = TeamInviteSerializer(
+            data=data,
+            context={'request': request, 'team': limited_team_token, 'actor': token, 'log_kwargs': {'auth': token}},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+    else:
+        view = TalkTeamViewSet()
+        view.request = request
+        view.format_kwarg = None
+        monkeypatch.setattr(view, 'get_object', lambda: limited_team_token)
+        assert view.invite(request).status_code == 201
+
+    assert limited_team_token.invites.filter(email=data['email']).exists()
 
 
 @pytest.mark.django_db

@@ -276,7 +276,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                 validated_data['email'],
                 invited_by=request.user if request.user.is_authenticated else None,
                 actor=self.context['actor'],
-                session_key=request.session.session_key,
+                session_key=getattr(getattr(request, 'session', None), 'session_key', None),
                 locale=get_language_without_region(),
                 log_kwargs=self.context['log_kwargs'],
             )

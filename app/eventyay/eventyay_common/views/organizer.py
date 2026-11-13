@@ -19,6 +19,7 @@ from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.team_permissions import (
     TEAM_DELEGATION_ERROR,
+    TeamDelegation,
     can_delegate_team_permissions,
     lock_team_organizer,
 )
@@ -180,7 +181,17 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             handler = handlers.get(action)
             if handler:
                 with transaction.atomic():
-                    lock_team_organizer(self.request.organizer.pk)
+                    lock_team_organizer(request.organizer.pk)
+                    delegation = TeamDelegation(
+                        request.organizer, request.user, session_key=request.session.session_key, lock=True
+                    )
+                    # Middleware may have cached the actor's teams before the lock was acquired.
+                    if not delegation.staff_override and not (
+                        request.organizer.teams.select_for_update(no_key=True)
+                        .filter(members=request.user, can_change_teams=True)
+                        .exists()
+                    ):
+                        raise PermissionDenied()
                     return handler()
         return super().post(request, *args, **kwargs)
 

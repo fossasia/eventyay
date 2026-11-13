@@ -122,9 +122,9 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
                     email,
                     invited_by=request.user if request.user.is_authenticated else None,
                     actor=team_delegation_actor(request),
-                    session_key=request.session.session_key,
+                    session_key=getattr(getattr(request, 'session', None), 'session_key', None),
                     locale=request.LANGUAGE_CODE,
-                    log_kwargs={'person': request.user, 'orga': True},
+                    log_kwargs={'user': request.user, 'auth': request.auth, 'orga': True},
                 )
             except TeamInviteDelegationError as e:
                 raise exceptions.PermissionDenied(str(e)) from e
