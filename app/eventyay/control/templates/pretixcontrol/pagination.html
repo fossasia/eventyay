@@ -5,7 +5,7 @@
         {% if is_paginated %}
             {% if page_obj.has_previous %}
                 <li>
-                    <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">
+                    <a href="?{% url_replace request 'page' page_obj.previous_page_number %}{% if pagination_hash %}#{{ pagination_hash }}{% endif %}">
                         <span>&laquo;</span>
                     </a>
                 </li>
@@ -17,7 +17,7 @@
             </a></li>
             {% if page_obj.has_next %}
                 <li>
-                        <a href="?{% url_replace request 'page' page_obj.next_page_number %}">
+                        <a href="?{% url_replace request 'page' page_obj.next_page_number %}{% if pagination_hash %}#{{ pagination_hash }}{% endif %}">
                         <span>&raquo;</span>
                     </a>
                 </li>
@@ -35,11 +35,11 @@
             <small>
                 {% trans "Show per page:" %}
             </small>
-            <a href="?{% url_replace request "page_size" "25" "page" "1" %}">
+            <a href="?{% url_replace request 'page_size' '25' 'page' '1' %}{% if pagination_hash %}#{{ pagination_hash }}{% endif %}">
                 {% if page_size == 25 %}<strong>{% endif %}25{% if page_size == 25 %}</strong>{% endif %}</a> |
-            <a href="?{% url_replace request "page_size" "50" "page" "1" %}">
+            <a href="?{% url_replace request 'page_size' '50' 'page' '1' %}{% if pagination_hash %}#{{ pagination_hash }}{% endif %}">
                 {% if page_size == 50 %}<strong>{% endif %}50{% if page_size == 50 %}</strong>{% endif %}</a> |
-            <a href="?{% url_replace request "page_size" "100" "page" "1" %}">
+            <a href="?{% url_replace request 'page_size' '100' 'page' '1' %}{% if pagination_hash %}#{{ pagination_hash }}{% endif %}">
                 {% if page_size == 100 %}<strong>{% endif %}100{% if page_size == 100 %}</strong>{% endif %}</a>
         </div>
     {% endif %}
