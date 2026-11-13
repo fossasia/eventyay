@@ -41,6 +41,12 @@ from .admin_mail import AdminEmailQueue, AdminEmailQueueFilter, AdminEmailQueueR
 from .loungemesh import LoungeMeshAccessToken, LoungeMeshServer
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
 from .mixins import FileCleanupMixin, GenerateCode, LogMixin, OrderedModel, PretalxModel, TimestampedModel
+from .organizer_request import (
+    OrganizerRequest,
+    OrganizerRequestAnswer,
+    OrganizerRequestFieldSetting,
+    OrganizerRequestQuestion,
+)
 from .notifications import NotificationSetting
 from .orders import (
     AbstractPosition,
