@@ -342,12 +342,24 @@ class WriteTeamsMailForm(WriteMailBaseForm):
         return get_available_placeholders(event=self.event, kwargs=['event', 'user'])
 
     def get_recipients(self):
+        """Return the team audience, materialized once per form.
+
+        The entitlement check, the empty-audience check and ``save`` must all
+        see the same users, even if team membership changes in between.
+        """
+        if getattr(self, '_recipients', None) is None:
+            self._recipients = self.build_recipients()
+        return self._recipients
+
+    def build_recipients(self):
         recipients = self.cleaned_data.get('recipients')
         if recipients:
             teams = self.event.teams.all().filter(pk__in=recipients)
         else:
             teams = self.event.teams.all()
-        return User.objects.filter(is_active=True, teams__in=teams, email__isnull=False).exclude(email='').distinct()
+        return list(
+            User.objects.filter(is_active=True, teams__in=teams, email__isnull=False).exclude(email='').distinct()
+        )
 
     @transaction.atomic
     def save(self, *, send=True):

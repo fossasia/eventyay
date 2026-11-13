@@ -14,8 +14,9 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.entitlements import EntitlementDecision
-from eventyay.base.models import LogEntry, MailTemplate, MailTemplateRoles, QueuedMail
+from eventyay.base.models import LogEntry, MailTemplate, MailTemplateRoles, QueuedMail, User
 from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.exceptions import SendMailException
 from eventyay.orga.forms.mails import DraftRemindersForm, MailDetailForm, WriteSessionMailForm
 
@@ -1797,3 +1798,74 @@ def test_immediate_compose_usage_failure_prevents_dispatch(
     assert djmail.outbox == []
     with scope(event=event):
         assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+def test_teams_mail_saves_the_checked_audience(orga_client, review_user, event):
+    """Users joining a team after the entitlement check must not be mailed."""
+    with scope(event=event):
+        team = review_user.teams.first()
+    late_user = User.objects.create_user(email="late@example.com", password="test")
+    checked = []
+
+    def check(*args, quantity, **kwargs):
+        checked.append(quantity)
+        team.members.add(late_user)
+        return EntitlementDecision(allowed=True)
+
+    djmail.outbox = []
+    with patch("eventyay.orga.views.mails.check_entitlement", side_effect=check):
+        response = orga_client.post(
+            event.orga_urls.compose_mails_teams,
+            follow=True,
+            data={"recipients": f"{team.pk}", "subject_0": "foo", "text_0": "bar"},
+        )
+    assert response.status_code == 200
+    with scope(event=event):
+        mails = QueuedMail.objects.all()
+        assert mails.count() == checked[0]
+        assert not mails.filter(to_users=late_user).exists()
+
+
+@pytest.mark.django_db
+def test_compose_does_not_resend_mail_sent_from_outbox(orga_client, event, submission):
+    """A row sent elsewhere between save and dispatch must not be queued again."""
+    def send_from_outbox(sender, **kwargs):
+        with scope(event=event):
+            for mail in QueuedMail.objects.filter(sent__isnull=True):
+                mail.send()
+
+    entitlement_usage_recorded.connect(send_from_outbox, dispatch_uid="test_outbox_race")
+    djmail.outbox = []
+    try:
+        with patch(
+            "eventyay.orga.views.mails.check_entitlement",
+            return_value=EntitlementDecision(allowed=True),
+        ):
+            response = orga_client.post(
+                event.orga_urls.compose_mails_sessions,
+                follow=True,
+                data={
+                    "state": "submitted", "skip_queue": "on",
+                    "subject_0": "Reminder", "text_0": "Hello!",
+                },
+            )
+    finally:
+        entitlement_usage_recorded.disconnect(dispatch_uid="test_outbox_race")
+    assert response.status_code == 200
+    with scope(event=event):
+        mail_count = QueuedMail.objects.filter(sent__isnull=False).count()
+    assert mail_count >= 1
+    assert len(djmail.outbox) == mail_count
+
+
+@pytest.mark.django_db
+def test_stale_mail_instance_is_not_sent_twice(event, submission):
+    with scope(event=event):
+        mail = QueuedMail.objects.create(event=event, to="a@example.com", subject="s", text="t")
+        stale = QueuedMail.objects.get(pk=mail.pk)
+        djmail.outbox = []
+        mail.send()
+        stale.send()
+        assert len(djmail.outbox) == 1
+        assert stale.sent == QueuedMail.objects.get(pk=mail.pk).sent
