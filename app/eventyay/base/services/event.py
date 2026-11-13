@@ -318,18 +318,23 @@ def without_zoom_passcode(meeting_number):
     return urlunsplit(parts._replace(query=urlencode(query)))
 
 
-def get_room_config(room, permissions, *, current_stream=_UNSET, user=None):
+def user_can_edit_rooms(event, user):
+    """Whether ``user`` may change room settings.
+
+    Unlike the role-based permission sets this also covers staff, administrators and teams with
+    ``can_change_event_settings``, which ``Event.has_permission`` lets through.
+    """
+    return event.has_permission(user=user, permission=[Permission.ROOM_UPDATE, Permission.EVENT_UPDATE])
+
+
+def get_room_config(room, permissions, *, current_stream=_UNSET, can_edit_rooms=False):
     """Build room configuration dictionary filtered by module entitlements.
 
-    ``user`` is only used to recognise people who may edit rooms without holding the permission
-    in ``permissions``: staff, administrators and teams with ``can_change_event_settings``.
+    Credentials of Zoom and chat modules are only included for people who can edit the room: those
+    holding an edit permission in ``permissions``, or ``can_edit_rooms`` (see ``user_can_edit_rooms``).
     """
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
-    can_edit = can_edit_room_settings(str_permissions)
-    if not can_edit and user is not None and any(m.get("type") == "call.zoom" for m in room.module_config):
-        can_edit = room.event.has_permission(
-            user=user, permission=[Permission.ROOM_UPDATE, Permission.EVENT_UPDATE], room=room
-        )
+    can_edit = can_edit_rooms or can_edit_room_settings(str_permissions)
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
@@ -386,10 +391,13 @@ def get_room_config(room, permissions, *, current_stream=_UNSET, user=None):
                 if "meeting_number" in cfg:
                     cfg["meeting_number"] = without_zoom_passcode(cfg["meeting_number"])
         elif module["type"] == "chat.native":
-            # Strip webhook secrets — these are server-side only
+            # Strip webhook secrets — these are server-side only. The webhook URL is only
+            # used by the room editor, so only editors get it.
             cfg = module_config.get("config")
             if isinstance(cfg, dict):
                 cfg.pop("webhook_hmac_secret", None)
+                if not can_edit:
+                    cfg.pop("webhook_url", None)
             channel = getattr(room, "channel", None)
             if not channel:
                 channel = Channel.objects.filter(room=room).first()
@@ -462,13 +470,14 @@ def get_event_config_for_user(event, user):
 
     rooms = get_rooms(event, user)
     stream_data_by_room = batch_room_current_stream_data(rooms)
+    can_edit_rooms = user_can_edit_rooms(event, user)
     for room in rooms:
         result["rooms"].append(
             get_room_config(
                 room,
                 permissions[event] | permissions[room],
                 current_stream=stream_data_by_room.get(room.pk),
-                user=user,
+                can_edit_rooms=can_edit_rooms,
             )
         )
     return result
@@ -817,8 +826,9 @@ async def get_room_config_for_user(room: str, event_id: str, user):
         if not visible:
             return None
 
+    can_edit_rooms = await database_sync_to_async(user_can_edit_rooms)(room.event, user)
     return await database_sync_to_async(get_room_config)(
-        room, effective_permissions, user=user
+        room, effective_permissions, can_edit_rooms=can_edit_rooms
     )
 
 

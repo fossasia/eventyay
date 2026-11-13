@@ -334,24 +334,86 @@ def test_get_room_config_hides_the_passcode_in_a_zoom_invite_url(sample_event, p
 
 
 @pytest.mark.django_db
-def test_get_room_config_keeps_zoom_credentials_for_staff_without_room_permissions(sample_event, attendee_user):
+def test_get_room_config_keeps_credentials_when_the_caller_says_the_user_can_edit_rooms(sample_event):
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Caller Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "123", "password": "zoompass"}}],
+            trait_grants={"viewer": []},
+        )
+
+    (zoom,) = get_room_config(room, permissions=set(), can_edit_rooms=True)["modules"]
+    assert zoom["config"]["password"] == "zoompass"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("permissions, keeps_webhook_url", [(set(), False), ({"event.update"}, True)])
+def test_get_room_config_hides_the_chat_webhook_url_from_non_editors(sample_event, permissions, keeps_webhook_url):
+    chat = {"webhook_url": "https://example.org/hook", "webhook_hmac_secret": "hmacsecret"}
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Chat Webhook Test",
+            module_config=[{"type": "chat.native", "config": dict(chat)}],
+            trait_grants={"viewer": []},
+        )
+
+    (module,) = get_room_config(room, permissions=permissions)["modules"]
+
+    assert ("webhook_url" in module["config"]) is keeps_webhook_url
+    # The HMAC secret is server-side only and is never sent, not even to editors.
+    assert "webhook_hmac_secret" not in module["config"]
+    assert room.module_config[0]["config"] == chat
+
+
+@pytest.mark.django_db
+def test_get_event_config_for_user_keeps_zoom_credentials_for_staff_without_room_permissions(
+    sample_event, attendee_user
+):
     # Staff and administrators may edit rooms through has_permission without holding the permission
     # in their role-based permission set, so the room payload must not strip the credentials from them.
     User = get_user_model()
-    staff = User.objects.create(email="staff_no_traits@test.local", is_active=True, is_staff=True)
+    staff = User.objects.create(
+        email="staff_attendee@test.local", is_active=True, is_staff=True, traits=["attendee"]
+    )
     with scope(event=sample_event):
-        room = Room.objects.create(
+        Room.objects.create(
             event=sample_event,
             name="Zoom Staff Test",
             module_config=[{"type": "call.zoom", "config": {"meeting_number": "123456789", "password": "zoompass"}}],
             trait_grants={"viewer": []},
         )
 
-    (for_staff,) = get_room_config(room, permissions=set(), user=staff)["modules"]
-    (for_attendee,) = get_room_config(room, permissions=set(), user=attendee_user)["modules"]
+    def zoom_config(user):
+        (room,) = get_event_config_for_user(sample_event, user)["rooms"]
+        (zoom,) = room["modules"]
+        return zoom["config"]
 
-    assert for_staff["config"]["password"] == "zoompass"
-    assert "password" not in for_attendee["config"]
+    assert zoom_config(staff)["password"] == "zoompass"
+    assert "password" not in zoom_config(attendee_user)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_can_edit", [True, False])
+async def test_get_room_config_for_user_passes_the_edit_decision_on(mocker, user_can_edit):
+    from eventyay.base.services.event import get_room_config_for_user
+
+    mock_event = MagicMock()
+    mock_room = MagicMock()
+    mock_room.event = mock_event
+    mock_event.get_all_permissions.return_value = {mock_room: set(), mock_event: set()}
+    mocker.patch("eventyay.base.services.event.get_room", return_value=mock_room)
+    mocker.patch("eventyay.base.services.event.is_room_visible_for_attendee", return_value=True)
+    mocker.patch("eventyay.base.services.event.user_can_edit_rooms", return_value=user_can_edit)
+    build = mocker.patch("eventyay.base.services.event.get_room_config", return_value={"modules": []})
+
+    user = MagicMock()
+    await get_room_config_for_user("room-123", "event-123", user)
+
+    # Staff and administrators hold no listed permission, so the caller's decision must be used.
+    assert build.call_args.kwargs["can_edit_rooms"] is user_can_edit
 
 
 @pytest.mark.django_db
