@@ -72,7 +72,6 @@ def searchable_product_select():
 
 
 def searchable_country_select():
-    """Return a Select widget configured for searchable country filtering."""
     return forms.Select(
         attrs={
             'data-searchable-select': '',

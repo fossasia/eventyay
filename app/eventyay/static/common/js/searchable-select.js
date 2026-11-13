@@ -112,6 +112,9 @@ const initSearchableSelect = function (select) {
     const syncLabel = function () {
       const selected = select.options[select.selectedIndex]
       value.textContent = selected ? (allLabel && selected.value === '' ? allLabel : selected.text) : ''
+      const isPlaceholder = Boolean(selected && selected.value === '' && !allLabel)
+      toggle.classList.toggle('has-placeholder', isPlaceholder)
+      root.classList.toggle('has-placeholder', isPlaceholder)
       options().forEach(function (option) {
         const isSelected = option.dataset.value === select.value
         option.classList.toggle('is-selected', isSelected)
@@ -355,36 +358,36 @@ const initSearchableSelect = function (select) {
   }
 
 const initSearchableSelects = function (root) {
-    const scope = root && root.querySelectorAll ? root : (typeof document !== 'undefined' ? document : null)
-    if (!scope) {
-      return
-    }
-    scope.querySelectorAll('select[data-searchable-select]').forEach(initSearchableSelect)
+  const scope = root && root.querySelectorAll ? root : (typeof document !== 'undefined' ? document : null)
+  if (!scope) {
+    return
   }
+  scope.querySelectorAll('select[data-searchable-select]').forEach(initSearchableSelect)
+}
 
-  if (typeof window !== 'undefined') {
-    window.eventyayInitSearchableSelects = initSearchableSelects
-  }
+if (typeof window !== 'undefined') {
+  window.eventyayInitSearchableSelects = initSearchableSelects
+}
 
-  if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () {
-        initSearchableSelects(document)
-      })
-    } else {
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
       initSearchableSelects(document)
-    }
-
-    document.addEventListener('eventyay:ajax-results-replaced', function (event) {
-      initSearchableSelects(event.detail && event.detail.container ? event.detail.container : document)
     })
+  } else {
+    initSearchableSelects(document)
   }
 
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-      initSearchableSelect,
-      initSearchableSelects,
-      normalize,
-      escapeSelectorId,
-    }
+  document.addEventListener('eventyay:ajax-results-replaced', function (event) {
+    initSearchableSelects(event.detail && event.detail.container ? event.detail.container : document)
+  })
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    initSearchableSelect,
+    initSearchableSelects,
+    normalize,
+    escapeSelectorId,
   }
+}

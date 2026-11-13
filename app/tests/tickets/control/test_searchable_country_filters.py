@@ -53,7 +53,7 @@ def env():
             country='DE',
         )
 
-        # Order 2: United States (US)
+        # Order 2: Invoice in United States (US), Attendee in France (FR)
         order_us = Order.objects.create(
             event=event,
             status=Order.STATUS_PAID,
@@ -69,7 +69,7 @@ def env():
             product=product,
             price=10,
             attendee_name_cached='John Doe',
-            country='US',
+            country='FR',
         )
 
     return {
@@ -81,13 +81,13 @@ def env():
     }
 
 
-def _url(env, name, **extra):
+def make_url(env, name, **extra):
     """Generate a reverse URL scoped to the test organizer and event."""
     kwargs = {'organizer': env['organizer'].slug, 'event': env['event'].slug, **extra}
     return reverse(name, kwargs=kwargs)
 
 
-def _select(content, field):
+def extract_select(content, field):
     """Extract the HTML <select> tag block for the given form field name."""
     match = re.search(rf'<select[^>]*name="{field}"[^>]*>(.*?)</select>', content, re.S)
     assert match, f'no <select name="{field}">'
@@ -99,7 +99,7 @@ def _select(content, field):
 def test_order_search_country_filters_are_searchable(client, env):
     """Verify invoice and attendee address country dropdowns render as searchable selects on order search."""
     client.force_login(env['user'])
-    url = _url(env, 'control:event.orders.search')
+    url = make_url(env, 'control:event.orders.search')
     response = client.get(url)
     assert response.status_code == 200
 
@@ -110,7 +110,7 @@ def test_order_search_country_filters_are_searchable(client, env):
     assert 'common/css/searchable-select.css' in content
 
     # Check invoice_address_country filter
-    invoice_select = _select(content, 'expert-invoice_address_country')
+    invoice_select = extract_select(content, 'expert-invoice_address_country')
     invoice_tag = invoice_select.split('>', 1)[0]
     assert 'data-searchable-select' in invoice_tag
     assert 'data-all-label="All countries"' in invoice_tag
@@ -121,7 +121,7 @@ def test_order_search_country_filters_are_searchable(client, env):
     assert 'United States' in invoice_select
 
     # Check attendee_address_country filter
-    attendee_select = _select(content, 'expert-attendee_address_country')
+    attendee_select = extract_select(content, 'expert-attendee_address_country')
     attendee_tag = attendee_select.split('>', 1)[0]
     assert 'data-searchable-select' in attendee_tag
     assert 'data-all-label="All countries"' in attendee_tag
@@ -137,7 +137,7 @@ def test_order_search_country_filters_are_searchable(client, env):
 def test_order_search_filtering_by_country(client, env):
     """Verify filtering orders by invoice and attendee address country via GET params."""
     client.force_login(env['user'])
-    orders_url = _url(env, 'control:event.orders')
+    orders_url = make_url(env, 'control:event.orders')
 
     # 1. Base list without country filter shows both orders
     res_base = client.get(orders_url)
@@ -152,14 +152,28 @@ def test_order_search_filtering_by_country(client, env):
     assert 'DE001' in content_de
     assert 'US001' not in content_de
 
-    # 3. Filter by attendee address country: United States (US)
-    res_us = client.get(orders_url, {'expert-attendee_address_country': 'US'})
-    assert res_us.status_code == 200
-    content_us = res_us.content.decode()
-    assert 'US001' in content_us
-    assert 'DE001' not in content_us
+    # 3. Filter by invoice address country: United States (US)
+    res_invoice_us = client.get(orders_url, {'expert-invoice_address_country': 'US'})
+    assert res_invoice_us.status_code == 200
+    content_invoice_us = res_invoice_us.content.decode()
+    assert 'US001' in content_invoice_us
+    assert 'DE001' not in content_invoice_us
 
-    # 4. Filter with empty country (All countries) shows both orders
+    # 4. Filter by attendee address country: France (FR) - matches Order 2 whose attendee is in FR
+    res_attendee_fr = client.get(orders_url, {'expert-attendee_address_country': 'FR'})
+    assert res_attendee_fr.status_code == 200
+    content_attendee_fr = res_attendee_fr.content.decode()
+    assert 'US001' in content_attendee_fr
+    assert 'DE001' not in content_attendee_fr
+
+    # 5. Filter by attendee address country: United States (US) - neither order has an attendee in US
+    res_attendee_us = client.get(orders_url, {'expert-attendee_address_country': 'US'})
+    assert res_attendee_us.status_code == 200
+    content_attendee_us = res_attendee_us.content.decode()
+    assert 'US001' not in content_attendee_us
+    assert 'DE001' not in content_attendee_us
+
+    # 6. Filter with empty country (All countries) shows both orders
     res_all = client.get(orders_url, {'expert-invoice_address_country': ''})
     assert res_all.status_code == 200
     content_all = res_all.content.decode()
