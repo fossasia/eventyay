@@ -1,5 +1,6 @@
 import copy
 import datetime
+import re
 import uuid
 from contextlib import suppress
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -311,10 +312,16 @@ def can_edit_room_settings(permission_values):
 
 def without_zoom_passcode(meeting_number):
     """Return a Zoom meeting number or invite URL without its ``pwd`` passcode parameter."""
-    if not isinstance(meeting_number, str) or "pwd=" not in meeting_number:
+    if not isinstance(meeting_number, str) or not meeting_number:
         return meeting_number
-    parts = urlsplit(meeting_number)
-    query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k != "pwd"]
+    try:
+        parts = urlsplit(meeting_number)
+    except ValueError:
+        # Not a parsable URL (stored values are free text): drop the whole query rather than
+        # risk leaving the passcode in, and never fail the event configuration over it.
+        return re.split(r"[?#]", meeting_number, maxsplit=1)[0]
+    # parse_qsl decodes parameter names, so an encoded name such as %70wd is caught as well.
+    query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k.lower() != "pwd"]
     return urlunsplit(parts._replace(query=urlencode(query)))
 
 

@@ -309,10 +309,30 @@ def test_get_room_config_hides_zoom_credentials_from_non_editors(sample_event, p
         ("https://zoom.us/j/123456789?uname=Bob&pwd=secret", "https://zoom.us/j/123456789?uname=Bob"),
         ("https://zoom.us/j/123456789?pwd=secret&uname=Bob", "https://zoom.us/j/123456789?uname=Bob"),
         ("zoom.us/j/123456789?pwd=secret", "zoom.us/j/123456789"),
+        # Encoded and differently cased parameter names are the same parameter.
+        ("https://zoom.us/j/123456789?%70wd=secret", "https://zoom.us/j/123456789"),
+        ("https://zoom.us/j/123456789?PWD=secret&uname=Bob", "https://zoom.us/j/123456789?uname=Bob"),
+        # A value that is not a parsable URL must not raise, and must not keep the passcode.
+        ("https://[zoom.us/j/123456789?pwd=secret", "https://[zoom.us/j/123456789"),
     ],
 )
 def test_without_zoom_passcode(value, expected):
     assert without_zoom_passcode(value) == expected
+
+
+@pytest.mark.django_db
+def test_get_room_config_survives_an_unparsable_zoom_meeting_number(sample_event):
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Malformed Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "https://[zoom.us/j/1?pwd=secret"}}],
+            trait_grants={"viewer": []},
+        )
+
+    (zoom,) = get_room_config(room, permissions=set())["modules"]
+
+    assert "secret" not in zoom["config"]["meeting_number"]
 
 
 @pytest.mark.django_db
