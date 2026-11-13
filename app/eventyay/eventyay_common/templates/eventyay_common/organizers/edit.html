@@ -185,6 +185,9 @@
                                                             <span class="fa fa-shield disabled" data-toggle="tooltip"
                                                                   title="{% translate "Two-factor authentication disabled" %}"></span>
                                                         {% endif %}
+                                                        {% if member.pk in panel.accepted_invite_user_ids %}
+                                                            <span class="label label-success">{% translate "Accepted" %}</span>
+                                                        {% endif %}
                                                     </td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-member" value="{{ member.id }}"
@@ -204,13 +207,28 @@
                                                 <tr>
                                                     <td>
                                                         {{ invite.email }}
-                                                        <span class="fa fa-envelope-o" data-toggle="tooltip"
-                                                              title="{% translate "invited, pending response" %}"></span>
-                                                        <button type="submit" name="resend-invite" value="{{ invite.id }}"
-                                                                data-toggle="tooltip" title="{% translate "Resend invite" %}"
-                                                                class="btn-invisible">
-                                                            <span class="fa fa-repeat"></span>
-                                                        </button>
+                                                        {% if invite.is_open %}
+                                                            {% blocktranslate trimmed with expires=invite.expires|date:'SHORT_DATETIME_FORMAT' asvar pending_title %}
+                                                                Invited, pending response until {{ expires }}
+                                                            {% endblocktranslate %}
+                                                            <span class="fa fa-envelope-o" data-toggle="tooltip" title="{{ pending_title }}"></span>
+                                                            <button type="submit" name="resend-invite" value="{{ invite.id }}"
+                                                                    data-toggle="tooltip" title="{% translate "Resend invite" %}"
+                                                                    class="btn-invisible">
+                                                                <span class="fa fa-repeat"></span>
+                                                            </button>
+                                                            {% if invite.reminder_sent %}
+                                                                <div>
+                                                                    <small class="text-muted">{% translate "Follow-up reminder sent" %}</small>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <span class="label {{ invite.display_state_css_class }}">{{ invite.display_state_label }}</span>
+                                                            <button type="submit" name="resend-invite" value="{{ invite.id }}"
+                                                                    class="btn btn-default btn-xs">
+                                                                <span class="fa fa-repeat"></span> {% translate "Send new invitation" %}
+                                                            </button>
+                                                        {% endif %}
                                                     </td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-invite" value="{{ invite.id }}"
@@ -227,8 +245,8 @@
                                                         {% bootstrap_field panel.invite_form.user layout='inline' %}
                                                         <small class="text-muted">
                                                             {% blocktrans trimmed %}
-                                                                Enter an email address to add a user. Existing eventyay accounts
-                                                                are added immediately; everyone else receives an invitation email.
+                                                                Enter an email address to invite a user. Everyone receives an invitation
+                                                                email and joins the team after accepting it. The invitation is valid for 48 hours.
                                                             {% endblocktrans %}
                                                         </small>
                                                     </td>
