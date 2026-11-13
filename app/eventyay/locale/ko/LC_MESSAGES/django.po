@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:39+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:19+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Korean <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ko/>\n"
 "Language: ko\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -14030,8 +14031,8 @@ msgid ""
 "Upload a valid SVG image. The file you uploaded was either not an SVG or a "
 "corrupted SVG."
 msgstr ""
-"유효한 이미지를 업로드하세요. 업로드한 파일이 이미지가 아니거나 손상된 이미지"
-"입니다."
+"유효한 이미지를 업로드하세요. 업로드한 파일이 이미지가 아니거나 손상된 "
+"이미지입니다."
 
 #: eventyay/common/image.py:187 eventyay/common/image.py:196
 msgid ""
@@ -29938,8 +29939,7 @@ msgstr ""
 #| "choose a different one."
 msgid ""
 "You already have an event with this short name. Please choose another one."
-msgstr ""
-"해당 이메일 주소로 이미 계정이 존재합니다. 다른 이메일 주소를 사용해 주세요."
+msgstr "해당 이메일 주소로 이미 계정이 존재합니다. 다른 이메일 주소를 사용해 주세요."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -31114,8 +31114,8 @@ msgstr ""
 msgid ""
 "Publishing exposes the Schedule, Sessions, Speakers, and Call for Speakers."
 msgstr ""
-"사전 판매 페이지에 일정, 세션, 발표자 및 발표자 모집을 표시하려면 발표 페이지"
-"를 공개하세요."
+"사전 판매 페이지에 일정, 세션, 발표자 및 발표자 모집을 표시하려면 발표 "
+"페이지를 공개하세요."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:312
 #, fuzzy
@@ -31177,8 +31177,8 @@ msgid ""
 "pages. Users with appropriate permissions can propose sessions or add "
 "speaker info."
 msgstr ""
-"토크에 대해 비공개 테스트 모드가 활성화되어 있습니다. 일정, 세션, 발표자, 발"
-"표자 모집 정보는 주최자, 리뷰어 및 시스템 관리자만 볼 수 있습니다."
+"토크에 대해 비공개 테스트 모드가 활성화되어 있습니다. 일정, 세션, 발표자, "
+"발표자 모집 정보는 주최자, 리뷰어 및 시스템 관리자만 볼 수 있습니다."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:388
 #, fuzzy
