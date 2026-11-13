@@ -202,6 +202,8 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             return self.render()
         if 'email' in self.contact_form.cleaned_data:
             self.cart_session['email'] = self.contact_form.cleaned_data['email']
+        elif request.user.is_authenticated and request.user.email:
+            self.cart_session['email'] = request.user.email
         else:
             self.cart_session.pop('email', None)
         d = dict(self.contact_form.cleaned_data)
