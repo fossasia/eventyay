@@ -11,7 +11,13 @@ from django_scopes import scope, scopes_disabled
 from eventyay.base.models import Event, Organizer, Room
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.log import LogEntry
-from eventyay.base.services.event import create_room, get_event_config_for_user, get_room_config, get_rooms
+from eventyay.base.services.event import (
+    create_room,
+    get_event_config_for_user,
+    get_room_config,
+    get_rooms,
+    without_zoom_passcode,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     SUPPORTED_VIDEO_PROVIDERS,
@@ -258,8 +264,7 @@ def test_get_room_config_marks_disabled_for_inactive_provider(sample_event):
         (set(), False),
         ({"room:jitsi.moderate", "room:bbb.moderate"}, False),
         ({"room:update"}, True),
-        ({"event:update"}, True),
-        ({"world:update"}, True),
+        ({"event.update"}, True),
     ],
 )
 def test_get_room_config_hides_zoom_credentials_from_non_editors(sample_event, permissions, sees_credentials):
@@ -290,6 +295,84 @@ def test_get_room_config_hides_zoom_credentials_from_non_editors(sample_event, p
     assert ("client_secret" in shown) is sees_credentials
     # The stored room is never changed by building the payload.
     assert room.module_config[0]["config"] == zoom_config
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("123456789", "123456789"),
+        ("123 456 7890", "123 456 7890"),
+        ("", ""),
+        (None, None),
+        ("https://zoom.us/j/123456789", "https://zoom.us/j/123456789"),
+        ("https://zoom.us/j/123456789?pwd=secret", "https://zoom.us/j/123456789"),
+        ("https://zoom.us/j/123456789?uname=Bob&pwd=secret", "https://zoom.us/j/123456789?uname=Bob"),
+        ("https://zoom.us/j/123456789?pwd=secret&uname=Bob", "https://zoom.us/j/123456789?uname=Bob"),
+        ("zoom.us/j/123456789?pwd=secret", "zoom.us/j/123456789"),
+    ],
+)
+def test_without_zoom_passcode(value, expected):
+    assert without_zoom_passcode(value) == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("permissions, keeps_passcode", [(set(), False), ({"room:update"}, True)])
+def test_get_room_config_hides_the_passcode_in_a_zoom_invite_url(sample_event, permissions, keeps_passcode):
+    invite = "https://zoom.us/j/123456789?pwd=zoompass"
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Invite Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": invite, "password": ""}}],
+            trait_grants={"viewer": []},
+        )
+
+    (zoom,) = get_room_config(room, permissions=permissions)["modules"]
+
+    assert ("pwd=zoompass" in zoom["config"]["meeting_number"]) is keeps_passcode
+    assert room.module_config[0]["config"]["meeting_number"] == invite
+
+
+@pytest.mark.django_db
+def test_get_room_config_keeps_zoom_credentials_for_staff_without_room_permissions(sample_event, attendee_user):
+    # Staff and administrators may edit rooms through has_permission without holding the permission
+    # in their role-based permission set, so the room payload must not strip the credentials from them.
+    User = get_user_model()
+    staff = User.objects.create(email="staff_no_traits@test.local", is_active=True, is_staff=True)
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Staff Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "123456789", "password": "zoompass"}}],
+            trait_grants={"viewer": []},
+        )
+
+    (for_staff,) = get_room_config(room, permissions=set(), user=staff)["modules"]
+    (for_attendee,) = get_room_config(room, permissions=set(), user=attendee_user)["modules"]
+
+    assert for_staff["config"]["password"] == "zoompass"
+    assert "password" not in for_attendee["config"]
+
+
+@pytest.mark.django_db
+def test_get_event_config_for_user_hides_zoom_credentials_only_from_users_who_cannot_edit(
+    sample_event, attendee_user, admin_user
+):
+    with scope(event=sample_event):
+        Room.objects.create(
+            event=sample_event,
+            name="Zoom Event Config Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "123", "password": "zoompass"}}],
+            trait_grants={"viewer": []},
+        )
+
+    def zoom_config(user):
+        (room,) = get_event_config_for_user(sample_event, user)["rooms"]
+        (zoom,) = room["modules"]
+        return zoom["config"]
+
+    assert zoom_config(admin_user)["password"] == "zoompass"
+    assert "password" not in zoom_config(attendee_user)
 
 
 @pytest.mark.asyncio

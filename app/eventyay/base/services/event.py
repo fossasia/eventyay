@@ -2,6 +2,7 @@ import copy
 import datetime
 import uuid
 from contextlib import suppress
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import jwt
 from asgiref.sync import sync_to_async
@@ -300,7 +301,7 @@ def count_chat_participants(channel_id):
     return len(set(member_ids) | set(sender_ids))
 
 
-ROOM_EDIT_PERMISSIONS = frozenset({"room:update", "event:update", "world:update"})
+ROOM_EDIT_PERMISSIONS = frozenset({Permission.ROOM_UPDATE.value, Permission.EVENT_UPDATE.value})
 
 
 def can_edit_room_settings(permission_values):
@@ -308,10 +309,27 @@ def can_edit_room_settings(permission_values):
     return bool(ROOM_EDIT_PERMISSIONS & set(permission_values))
 
 
-def get_room_config(room, permissions, *, current_stream=_UNSET):
-    """Build room configuration dictionary filtered by module entitlements."""
+def without_zoom_passcode(meeting_number):
+    """Return a Zoom meeting number or invite URL without its ``pwd`` passcode parameter."""
+    if not isinstance(meeting_number, str) or "pwd=" not in meeting_number:
+        return meeting_number
+    parts = urlsplit(meeting_number)
+    query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k != "pwd"]
+    return urlunsplit(parts._replace(query=urlencode(query)))
+
+
+def get_room_config(room, permissions, *, current_stream=_UNSET, user=None):
+    """Build room configuration dictionary filtered by module entitlements.
+
+    ``user`` is only used to recognise people who may edit rooms without holding the permission
+    in ``permissions``: staff, administrators and teams with ``can_change_event_settings``.
+    """
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     can_edit = can_edit_room_settings(str_permissions)
+    if not can_edit and user is not None and any(m.get("type") == "call.zoom" for m in room.module_config):
+        can_edit = room.event.has_permission(
+            user=user, permission=[Permission.ROOM_UPDATE, Permission.EVENT_UPDATE], room=room
+        )
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
@@ -359,11 +377,14 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
                 cfg.pop("key_id", None)
                 cfg.pop("app_secret", None)
         elif module["type"] == "call.zoom":
-            # The server signs the join data itself, so only room editors need the credentials.
+            # The server signs the join data itself from the stored config, so only room editors
+            # need the credentials. An invite URL in meeting_number can carry the passcode too.
             cfg = module_config.get("config")
             if isinstance(cfg, dict) and not can_edit:
                 cfg.pop("password", None)
                 cfg.pop("client_secret", None)
+                if "meeting_number" in cfg:
+                    cfg["meeting_number"] = without_zoom_passcode(cfg["meeting_number"])
         elif module["type"] == "chat.native":
             # Strip webhook secrets — these are server-side only
             cfg = module_config.get("config")
@@ -447,6 +468,7 @@ def get_event_config_for_user(event, user):
                 room,
                 permissions[event] | permissions[room],
                 current_stream=stream_data_by_room.get(room.pk),
+                user=user,
             )
         )
     return result
@@ -787,14 +809,16 @@ async def get_room_config_for_user(room: str, event_id: str, user):
         p.value if hasattr(p, "value") else str(p)
         for p in effective_permissions
     }
-    is_orga = can_edit_room_settings(permission_values)
+    is_orga = bool(
+        {"room:update", "event:update", "world:update"} & permission_values
+    )
     if not is_orga:
         visible = await database_sync_to_async(is_room_visible_for_attendee)(room)
         if not visible:
             return None
 
     return await database_sync_to_async(get_room_config)(
-        room, effective_permissions
+        room, effective_permissions, user=user
     )
 
 
