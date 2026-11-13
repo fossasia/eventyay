@@ -6,6 +6,7 @@ import pytest
 from django.contrib.staticfiles import finders
 from django.core.exceptions import ValidationError
 from django.template.loader import get_template
+from fontTools.ttLib import TTFont
 from reportlab.pdfbase.ttfonts import TTFontFile
 
 from eventyay.common.text.css import validate_css
@@ -93,7 +94,13 @@ def test_contact_organizer_button_css_rules():
 
 def test_open_sans_font_assets_exist_and_contain_eastern_european_glyphs():
     fonts_dir = Path(__file__).resolve().parents[3] / 'eventyay' / 'static' / 'fonts'
-    font_files = [
+    woff2_files = [
+        'OpenSans-Regular.woff2',
+        'OpenSans-Bold.woff2',
+        'OpenSans-Italic.woff2',
+        'OpenSans-BoldItalic.woff2',
+    ]
+    ttf_files = [
         'OpenSans-Regular.ttf',
         'OpenSans-Bold.ttf',
         'OpenSans-Italic.ttf',
@@ -118,9 +125,21 @@ def test_open_sans_font_assets_exist_and_contain_eastern_european_glyphs():
         0x017E,
     ]
 
-    for fname in font_files:
+    # Verify WOFF2 assets (used for web font delivery)
+    for fname in woff2_files:
         font_path = fonts_dir / fname
-        assert font_path.is_file(), f'Font file {font_path} does not exist'
+        assert font_path.is_file(), f'WOFF2 font file {font_path} does not exist'
+        font = TTFont(font_path)
+        glyph_count = len(font.getGlyphOrder())
+        assert glyph_count > 500, f'{fname} has only {glyph_count} glyphs'
+        cmap = font.getBestCmap()
+        for cp in required_codepoints:
+            assert cp in cmap, f'Character U+{cp:04X} ({chr(cp)}) missing in {fname}'
+
+    # Verify original TTF assets (preserved for ReportLab PDF generation)
+    for fname in ttf_files:
+        font_path = fonts_dir / fname
+        assert font_path.is_file(), f'TTF font file {font_path} does not exist'
         ttfont = TTFontFile(str(font_path))
         assert ttfont.numGlyphs > 500, f'{fname} has only {ttfont.numGlyphs} glyphs'
         for cp in required_codepoints:
@@ -133,10 +152,11 @@ def test_open_sans_css_declarations():
     content = Path(fonts_css_path).read_text(encoding='utf-8')
 
     assert 'macroman' not in content
-    assert '../../fonts/OpenSans-Regular.ttf' in content
-    assert '../../fonts/OpenSans-Bold.ttf' in content
-    assert '../../fonts/OpenSans-Italic.ttf' in content
-    assert '../../fonts/OpenSans-BoldItalic.ttf' in content
+    assert '../../fonts/OpenSans-Regular.woff2' in content
+    assert '../../fonts/OpenSans-Bold.woff2' in content
+    assert '../../fonts/OpenSans-Italic.woff2' in content
+    assert '../../fonts/OpenSans-BoldItalic.woff2' in content
+    assert 'format("woff2")' in content
     assert 'font-display: swap' in content
 
 
