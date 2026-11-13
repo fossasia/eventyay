@@ -13,6 +13,11 @@ on:
 env:
   PYTHON_VERSION: "3.12"
 
+concurrency:
+  # Cancel checks for older commits when a PR gets a new push; never cancel runs on branches.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   collect:
     runs-on: ubuntu-latest
