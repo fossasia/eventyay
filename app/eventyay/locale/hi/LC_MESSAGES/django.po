@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:54+0000\n"
-"Last-Translator: Arnav Angarkar <arnav.angarkar20@gmail.com>\n"
+"PO-Revision-Date: 2026-11-12 10:27+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Hindi <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "hi/>\n"
 "Language: hi\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -14194,8 +14195,8 @@ msgid ""
 "Upload a valid SVG image. The file you uploaded was either not an SVG or a "
 "corrupted SVG."
 msgstr ""
-"मान्य इमेज अपलोड करें। आपके द्वारा अपलोड की गई फ़ाइल या तो इमेज नहीं थी या खराब इमेज "
-"थी।"
+"मान्य इमेज अपलोड करें। आपके द्वारा अपलोड की गई फ़ाइल या तो इमेज नहीं थी या खराब इमेज थी"
+"।"
 
 #: eventyay/common/image.py:187 eventyay/common/image.py:196
 msgid ""
@@ -31402,8 +31403,8 @@ msgstr ""
 msgid ""
 "Publishing exposes the Schedule, Sessions, Speakers, and Call for Speakers."
 msgstr ""
-"प्रीसेल पेज पर शेड्यूल, सत्र, वक्ता, और वक्ताओं के लिए कॉल दिखाने के लिए टॉक पेज प्रकाशित "
-"करें।"
+"प्रीसेल पेज पर शेड्यूल, सत्र, वक्ता, और वक्ताओं के लिए कॉल दिखाने के लिए टॉक पेज प्रकाशित करें"
+"।"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:312
 #, fuzzy
