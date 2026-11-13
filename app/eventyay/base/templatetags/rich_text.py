@@ -29,6 +29,7 @@ except ImportError:
 
 from i18nfield.strings import LazyI18nString
 
+from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.common.views.redirect import safelink as sl
 from eventyay.helpers.placeholders import escape_stray_braces
 
@@ -281,8 +282,7 @@ def compile_email_body(source: str) -> str:
         return source
     source = str(source)
     if is_tiptap_email_html(source):
-        from eventyay.common.sanitizers import sanitize_email_html
-        return sanitize_email_html(source)
+        return linkify_email_html(sanitize_email_html(source))
     return markdown_compile_email(source)
 
 
@@ -297,7 +297,7 @@ def email_body_to_editor_html(source: str) -> str:
         return source
     source = str(source)
     if is_tiptap_email_html(source):
-        return compile_email_body(source)
+        return sanitize_email_html(source)
     return markdown_compile_email(source, preserve_line_breaks=True)
 
 
@@ -308,7 +308,7 @@ def email_html_to_plain_text(html_body: str) -> str:
     dropped because their data URIs are useless in plain text.
     """
     return html_to_markdown(
-        compile_email_body(html_body),
+        sanitize_email_html(html_body),
         strip=['img'],
         bullets='*',
         escape_underscores=False,
@@ -368,6 +368,16 @@ def build_email_preview_context(event, base_parameters: list[str]):
         else:
             context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict
+
+
+def linkify_email_html(html_body):
+    """Link bare URLs in editor HTML, e.g. {url} values, as markdown_compile_email does."""
+    return bleach.Linker(
+        url_re=URL_RE,
+        email_re=EMAIL_RE,
+        callbacks=DEFAULT_CALLBACKS + [abslink_callback],
+        parse_email=True,
+    ).linkify(html_body)
 
 
 # TODO: Implement nh3 equivalent
