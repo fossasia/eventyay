@@ -1,20 +1,21 @@
 import json
+import uuid
 
 import nh3
 from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import escape
-from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy, npgettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, View
 from django_context_decorator import context
-from i18nfield.strings import LazyI18nString
 
-from eventyay.base.entitlements import check_entitlement
+from eventyay.base.entitlements import check_entitlement, record_usage
+from eventyay.base.models import Organizer
 from eventyay.base.models.mail import MailTemplate, QueuedMail, get_prefixed_subject
 from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.exceptions import SendMailException
@@ -236,7 +237,10 @@ class DraftToOutbox(PermissionRequired, ActionConfirmMixin, TemplateView):
     def question(self):
         return str(_('Move this draft to the outbox so it can be sent?'))
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
+        """Move the draft and record usage under the shared organizer allowance lock."""
+        Organizer.objects.select_for_update().get(pk=request.event.organizer_id)
         mail = self.object
         decision = check_entitlement(
             self.request.event.organizer,
@@ -526,7 +530,10 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         return self.form_invalid(form)
 
     def form_invalid(self, form):
-        if self.request.POST.get('action') == 'preview' and self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if (
+            self.request.POST.get('action') == 'preview'
+            and self.request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        ):
             errors = form.errors.get_json_data() if hasattr(form.errors, 'get_json_data') else dict(form.errors)
             return JsonResponse({'success': False, 'error': True, 'errors': errors}, status=400)
         return super().form_invalid(form)
@@ -558,13 +565,16 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                 if 'proposal_title' in context_dict:
                     text = str(
                         _(
-                            'Hello {name},\n\nThis is an example test email for your proposal "{proposal_title}" at {event_name}.\n\nBest regards,\nThe {event_name} team'
+                            'Hello {name},\n\n'
+                            'This is an example test email for your proposal "{proposal_title}" '
+                            'at {event_name}.\n\nBest regards,\nThe {event_name} team'
                         )
                     )
                 else:
                     text = str(
                         _(
-                            'Hello {name},\n\nThis is an example test email for {event_name}.\n\nBest regards,\nThe {event_name} team'
+                            'Hello {name},\n\nThis is an example test email for {event_name}.\n\n'
+                            'Best regards,\nThe {event_name} team'
                         )
                     )
             text = text.format_map(context_dict)
@@ -586,6 +596,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         return self.render_to_response(self.get_context_data(form=form))
 
     def form_valid(self, form):
+        """Persist composed mail and usage together before immediate delivery."""
         action = self.request.POST.get('action')
         if action == 'test':
             return self.send_test_email(form)
@@ -615,7 +626,9 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             self.preview_warning = None
             if not result:
                 if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    self.preview_warning = _('Preview generated with sample recipient data because no recipient is currently selected.')
+                    self.preview_warning = _(
+                        'Preview generated with sample recipient data because no recipient is currently selected.'
+                    )
                 else:
                     messages.warning(
                         self.request,
@@ -676,23 +689,24 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             form.add_error(None, message)
             return self.render_to_response(self.get_context_data(form=form))
 
-        if not is_draft:
-            recipients_count = len(form.get_recipients())
-            decision = check_entitlement(
-                self.request.event.organizer,
-                'email.bulk.monthly',
-                event=self.request.event,
-                quantity=recipients_count
-            )
-            if not decision.allowed:
-                error_msg = decision.message or _(
-                    'You have reached the limit for sending bulk emails on your plan.'
-                )
-                form.add_error(None, error_msg)
-                return self.render_to_response(self.get_context_data(form=form))
-
         with transaction.atomic():
-            result = form.save()
+            if not is_draft:
+                Organizer.objects.select_for_update().get(pk=self.request.event.organizer_id)
+                recipients_count = len(form.get_recipients())
+                decision = check_entitlement(
+                    self.request.event.organizer,
+                    'email.bulk.monthly',
+                    event=self.request.event,
+                    quantity=recipients_count
+                )
+                if not decision.allowed:
+                    error_msg = decision.message or _(
+                        'You have reached the limit for sending bulk emails on your plan.'
+                    )
+                    form.add_error(None, error_msg)
+                    return self.render_to_response(self.get_context_data(form=form))
+
+            result = form.save(send=False)
             if is_draft and result:
                 # Until this runs, the rows look like ordinary outbox entries.
                 QueuedMail.objects.filter(pk__in=[mail.pk for mail in result]).update(is_draft=True)
@@ -709,6 +723,11 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                     event=self.request.event,
                 )
         scheduled_at = form.cleaned_data.get('scheduled_at')
+        if not is_draft and not scheduled_at and (
+            form.always_send_immediately or form.cleaned_data.get('skip_queue')
+        ):
+            for mail in result:
+                mail.send(requestor=self.request.user)
         if len(result) and result[0].sent:
             self.success_url = self.request.event.orga_urls.sent_mails
             messages.success(
@@ -851,7 +870,56 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.base
 
     def form_valid(self, form):
-        result = form.save()
+        """Reserve allowance before sending, then release any unsent reminders."""
+        event = self.request.event
+        recipients = form.get_recipients()
+        recipients_count = len(recipients)
+        source_id = uuid.uuid4().hex
+        with transaction.atomic():
+            Organizer.objects.select_for_update().get(pk=event.organizer_id)
+            if recipients_count:
+                decision = check_entitlement(
+                    event.organizer,
+                    'email.bulk.monthly',
+                    event=event,
+                    quantity=recipients_count,
+                )
+                if not decision.allowed:
+                    error_msg = decision.message or _(
+                        'You have reached the limit for sending bulk emails on your plan.'
+                    )
+                    form.add_error(None, error_msg)
+                    return self.form_invalid(form)
+
+                # Commit the reservation before dispatch: a usage failure must not send mail.
+                record_usage(
+                    event.organizer,
+                    'email.bulk.monthly',
+                    quantity=recipients_count,
+                    unit='emails',
+                    source_type='bulk_email',
+                    source_id=source_id,
+                    idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
+                    event=event,
+                )
+
+        try:
+            result = form.save(recipients=recipients)
+        finally:
+            unsent_count = recipients_count - form.sent_count
+            if unsent_count:
+                with transaction.atomic():
+                    Organizer.objects.select_for_update().get(pk=event.organizer_id)
+                    record_usage(
+                        event.organizer,
+                        'email.bulk.monthly',
+                        quantity=-unsent_count,
+                        unit='emails',
+                        source_type='bulk_email',
+                        source_id=source_id,
+                        idempotency_key=f'bulk_mail_draft_reminders_{source_id}_release',
+                        event=event,
+                    )
         messages.success(
             self.request,
             _('{count} emails have been sent.').format(count=result),

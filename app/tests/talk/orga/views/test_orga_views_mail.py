@@ -1,15 +1,24 @@
 import datetime as dt
 import json
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier, Event
 from unittest.mock import patch
 
 import pytest
+from django.apps import apps
 from django.core import mail as djmail
+from django.db import connections
+from django.test import Client, TransactionTestCase
+from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
 from eventyay.base.entitlements import EntitlementDecision
-from eventyay.base.models import MailTemplate, MailTemplateRoles, QueuedMail
-from eventyay.orga.forms.mails import MailDetailForm, WriteSessionMailForm
+from eventyay.base.models import LogEntry, MailTemplate, MailTemplateRoles, QueuedMail, User
+from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.signals import entitlement_usage_recorded
+from eventyay.common.exceptions import SendMailException
+from eventyay.orga.forms.mails import DraftRemindersForm, MailDetailForm, WriteSessionMailForm
 
 
 @pytest.mark.django_db
@@ -528,7 +537,7 @@ def test_orga_can_compose_single_mail(
 
 
 @pytest.mark.django_db
-def test_orga_can_compose_single_mail_multiple_states_and_failing_placeholders(
+def test_orga_can_compose_single_mail_multiple_states_and_missing_placeholders(
     orga_client, orga_user, event, slot, other_submission
 ):
     with scope(event=event):
@@ -547,13 +556,10 @@ def test_orga_can_compose_single_mail_multiple_states_and_failing_placeholders(
     )
     assert response.status_code == 200
     with scope(event=event):
-        assert (
-            QueuedMail.objects.filter(sent__isnull=True).count() == 1
-        )  # only one, the other fails for lack of a room name!
-        assert (
-            QueuedMail.objects.filter(sent__isnull=True).first().text
-            == f"bar {slot.room.name}"
-        )
+        # Missing context is rendered as empty text, matching MailTemplate.to_mail.
+        assert sorted(QueuedMail.objects.filter(sent__isnull=True).values_list("text", flat=True)) == [
+            "bar ", f"bar {slot.room.name}",
+        ]
 
 
 @pytest.mark.django_db
@@ -1117,7 +1123,7 @@ def test_teams_composer_shows_test_email_and_send_email_label(orga_client, event
     assert "Send test email" in response.text
     assert "Send email" in response.text
     assert "mail-composer" in response.text
-    assert 'class="form-with-placeholder mail-composer" data-always-immediate' in response.text
+    assert 'class="form-with-placeholder mail-composer mail-composer-horizontal" data-always-immediate' in response.text
     assert "Save draft" not in response.text
     assert 'id="delivery-mode-later"' not in response.text
     assert 'id="id_skip_queue"' not in response.text
@@ -1258,8 +1264,7 @@ def test_teams_mail_cannot_be_sent_to_a_team_without_members(orga_client, event)
 
 @pytest.mark.django_db
 def test_teams_mail_cannot_be_saved_as_a_draft(orga_client, review_user, event):
-    # WriteTeamsMailForm sends as it builds, so a draft action there would send
-    # the mail while reporting that it had been saved.
+    # Team messages are immediate-only; rejecting this action prevents a misleading draft.
     djmail.outbox = []
     response = orga_client.post(
         event.orga_urls.compose_mails_teams,
@@ -1399,6 +1404,7 @@ def test_compose_mail_preview_endpoint(orga_client, event):
     assert response.status_code == 400
 
 
+@pytest.mark.django_db
 def test_session_test_mail_uses_fallbacks_for_empty_subject_and_body(orga_client, event, submission):
     djmail.outbox = []
     response = orga_client.post(
@@ -1492,4 +1498,374 @@ def test_draft_to_outbox_denied_by_entitlement(orga_client, event, mail):
         )
 
 
+def _draft_reminders_url(event):
+    return reverse(
+        "orga:mails.compose.draft_reminders",
+        kwargs={"organizer": event.organizer.slug, "event": event.slug},
+    )
 
+
+@pytest.mark.django_db
+def test_draft_reminders_denied_by_entitlement(orga_client, event, speaker, submission):
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.save()
+    djmail.outbox = []
+
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(
+            allowed=False,
+            reason_code="tier_limit_exceeded",
+            message="Monthly email limit reached for this plan.",
+        ),
+    ) as mock_check, patch("eventyay.orga.views.mails.record_usage") as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            follow=True,
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 200
+    assert (
+        "Monthly email limit reached for this plan."
+        in response.context["form"].non_field_errors()
+    )
+    mock_check.assert_called_once_with(
+        event.organizer,
+        "email.bulk.monthly",
+        event=event,
+        quantity=1,
+    )
+    mock_record.assert_not_called()
+    assert djmail.outbox == []
+
+
+@pytest.mark.django_db
+def test_draft_reminders_record_bulk_mail_usage(
+    orga_client, event, speaker, submission, other_speaker,
+):
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.save()
+        submission.speakers.add(other_speaker)
+    djmail.outbox = []
+
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(allowed=True),
+    ) as mock_check, patch("eventyay.orga.views.mails.record_usage") as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            follow=True,
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 200
+    assert len(djmail.outbox) == 2
+    mock_check.assert_called_once_with(
+        event.organizer, "email.bulk.monthly", event=event, quantity=2,
+    )
+    mock_record.assert_called_once()
+    args, kwargs = mock_record.call_args
+    assert args == (event.organizer, "email.bulk.monthly")
+    assert kwargs["quantity"] == 2
+    assert kwargs["unit"] == "emails"
+    assert kwargs["event"] == event
+    assert kwargs["idempotency_key"].startswith("bulk_mail_draft_reminders_")
+    with scope(event=event):
+        assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+def test_draft_reminders_without_drafts_skip_entitlement(orga_client, event, submission):
+    with patch("eventyay.orga.views.mails.check_entitlement") as mock_check, patch(
+        "eventyay.orga.views.mails.record_usage"
+    ) as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            follow=True,
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 200
+    mock_check.assert_not_called()
+    mock_record.assert_not_called()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("initially_empty", [False, True])
+def test_draft_reminders_dispatch_only_checked_recipients(
+    orga_client, event, submission, speaker, initially_empty,
+):
+    """A changed audience must not add unchecked reminders, even after an empty check."""
+    recipients = [] if initially_empty else [(submission, speaker)]
+    djmail.outbox = []
+    with patch.object(
+        DraftRemindersForm, "get_recipients",
+        side_effect=[recipients, [(submission, speaker), (submission, speaker)]],
+    ) as mock_recipients, patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(allowed=True),
+    ) as mock_check, patch("eventyay.orga.views.mails.record_usage") as mock_record:
+        response = orga_client.post(
+            _draft_reminders_url(event),
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert response.status_code == 302
+    mock_recipients.assert_called_once()
+    assert len(djmail.outbox) == len(recipients)
+    if initially_empty:
+        mock_check.assert_not_called()
+        mock_record.assert_not_called()
+    else:
+        assert mock_check.call_args.kwargs["quantity"] == 1
+        assert mock_record.call_args.kwargs["quantity"] == 1
+
+
+class TestConcurrentDraftReminders(TransactionTestCase):
+    """Use committed fixtures and cascade cleanup across the legacy talk tables."""
+
+    available_apps = [app.name for app in apps.get_app_configs()]
+
+    @pytest.fixture(autouse=True)
+    def bind_test_fixtures(self, request, monkeypatch):
+        self.fixture_request = request
+        monkeypatch.setattr(
+            "eventyay.base.models.cache.VersionedModel._set_cache_version_sync",
+            lambda self: None,
+        )
+
+    def test_concurrent_draft_reminders_share_remaining_allowance(self):
+        """Concurrent requests cannot both reserve the last available reminder."""
+        request = self.fixture_request
+        orga_client = request.getfixturevalue("orga_client")
+        event = request.getfixturevalue("event")
+        submission = request.getfixturevalue("submission")
+        with scope(event=event):
+            submission.state = SubmissionStates.DRAFT
+            submission.save()
+        start = Barrier(2)
+        first_check = Event()
+        second_check = Event()
+        release_first = Event()
+
+        def check_allowance(organizer, capability, *, event, quantity):
+            with scope(event=event):
+                used = sum(
+                    json.loads(data)["quantity"]
+                    for data in LogEntry.objects.filter(
+                        event=event, action_type="test.email.usage",
+                    ).values_list("data", flat=True)
+                )
+            if not first_check.is_set():
+                first_check.set()
+                assert release_first.wait(timeout=10)
+            else:
+                second_check.set()
+            return EntitlementDecision(allowed=used + quantity <= 1)
+
+        def persist_usage(organizer, capability, *, event, quantity, **kwargs):
+            # A database-backed receiver keeps the concurrency test independent of Business.
+            with scope(event=event):
+                LogEntry.objects.create(
+                    content_object=event, event=event, action_type="test.email.usage",
+                    data=json.dumps({"quantity": quantity}),
+                )
+
+        def send_reminders():
+            client = Client()
+            client.cookies = orga_client.cookies.copy()
+            try:
+                start.wait(timeout=10)
+                return client.post(
+                    _draft_reminders_url(event),
+                    data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+                ).status_code
+            finally:
+                connections.close_all()
+
+        with (
+            patch("eventyay.orga.views.mails.check_entitlement", side_effect=check_allowance),
+            patch("eventyay.orga.views.mails.record_usage", side_effect=persist_usage),
+            patch.object(QueuedMail, "send"),
+            ThreadPoolExecutor(max_workers=2) as executor,
+        ):
+            futures = [executor.submit(send_reminders) for _ in range(2)]
+            try:
+                assert first_check.wait(timeout=10)
+                # Without the organizer lock, the second check runs against the same allowance.
+                assert not second_check.wait(timeout=0.5)
+            finally:
+                release_first.set()
+            assert sorted(future.result(timeout=10) for future in futures) == [200, 302]
+
+        with scope(event=event):
+            assert LogEntry.objects.filter(event=event, action_type="test.email.usage").count() == 1
+            assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("fail_at", [1, 2])
+def test_draft_reminders_release_unsent_usage_after_partial_failure(
+    orga_client, event, submission, speaker, other_speaker, fail_at,
+):
+    """A second dispatch failure retains usage for the first successful reminder."""
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.save()
+        submission.speakers.add(other_speaker)
+    djmail.outbox = []
+    original_to_mail = MailTemplate.to_mail
+    dispatch_count = 0
+
+    def dispatch(template, *args, **kwargs):
+        nonlocal dispatch_count
+        dispatch_count += 1
+        if dispatch_count == fail_at:
+            raise SendMailException("Reminder failed")
+        return original_to_mail(template, *args, **kwargs)
+
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(allowed=True),
+    ), patch("eventyay.orga.views.mails.record_usage") as mock_record, patch.object(
+        MailTemplate, "to_mail", new=dispatch,
+    ), pytest.raises(SendMailException, match="Reminder failed"):
+        orga_client.post(
+            _draft_reminders_url(event),
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+
+    assert len(djmail.outbox) == fail_at - 1
+    reservation, release = [call.kwargs for call in mock_record.call_args_list]
+    assert reservation["quantity"] == 2
+    assert release["quantity"] == -(3 - fail_at)
+    assert release["source_id"] == reservation["source_id"]
+    assert release["idempotency_key"] == reservation["idempotency_key"] + "_release"
+    with scope(event=event):
+        assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+def test_draft_reminders_usage_failure_prevents_dispatch(orga_client, event, submission, speaker):
+    """A failed usage receiver must not queue reminders that a retry could duplicate."""
+    with scope(event=event):
+        submission.state = SubmissionStates.DRAFT
+        submission.save()
+    djmail.outbox = []
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(allowed=True),
+    ), patch(
+        "eventyay.orga.views.mails.record_usage", side_effect=RuntimeError("Usage unavailable"),
+    ), pytest.raises(RuntimeError, match="Usage unavailable"):
+        orga_client.post(
+            _draft_reminders_url(event),
+            data={"subject_0": "Reminder", "text_0": "Please submit your draft."},
+        )
+    assert djmail.outbox == []
+    with scope(event=event):
+        assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("audience", ["sessions", "teams"])
+def test_immediate_compose_usage_failure_prevents_dispatch(
+    orga_client, event, submission, audience,
+):
+    """Both stored-mail composers commit usage before handing mail to Celery."""
+    djmail.outbox = []
+    urls = {
+        "sessions": event.orga_urls.compose_mails_sessions,
+        "teams": event.orga_urls.compose_mails_teams,
+    }
+    with patch(
+        "eventyay.orga.views.mails.check_entitlement",
+        return_value=EntitlementDecision(allowed=True),
+    ), patch(
+        "eventyay.orga.views.mails.entitlement_usage_recorded.send",
+        side_effect=RuntimeError("Usage unavailable"),
+    ), pytest.raises(RuntimeError, match="Usage unavailable"):
+        orga_client.post(
+            urls[audience],
+            data={
+                "state": "submitted", "skip_queue": "on",
+                "subject_0": "Reminder", "text_0": "Hello!",
+            },
+        )
+    assert djmail.outbox == []
+    with scope(event=event):
+        assert not QueuedMail.objects.exists()
+
+
+@pytest.mark.django_db
+def test_teams_mail_saves_the_checked_audience(orga_client, review_user, event):
+    """Users joining a team after the entitlement check must not be mailed."""
+    with scope(event=event):
+        team = review_user.teams.first()
+    late_user = User.objects.create_user(email="late@example.com", password="test")
+    checked = []
+
+    def check(*args, quantity, **kwargs):
+        checked.append(quantity)
+        team.members.add(late_user)
+        return EntitlementDecision(allowed=True)
+
+    djmail.outbox = []
+    with patch("eventyay.orga.views.mails.check_entitlement", side_effect=check):
+        response = orga_client.post(
+            event.orga_urls.compose_mails_teams,
+            follow=True,
+            data={"recipients": f"{team.pk}", "subject_0": "foo", "text_0": "bar"},
+        )
+    assert response.status_code == 200
+    with scope(event=event):
+        mails = QueuedMail.objects.all()
+        assert mails.count() == checked[0]
+        assert not mails.filter(to_users=late_user).exists()
+
+
+@pytest.mark.django_db
+def test_compose_does_not_resend_mail_sent_from_outbox(orga_client, event, submission):
+    """A row sent elsewhere between save and dispatch must not be queued again."""
+    def send_from_outbox(sender, **kwargs):
+        with scope(event=event):
+            for mail in QueuedMail.objects.filter(sent__isnull=True):
+                mail.send()
+
+    entitlement_usage_recorded.connect(send_from_outbox, dispatch_uid="test_outbox_race")
+    djmail.outbox = []
+    try:
+        with patch(
+            "eventyay.orga.views.mails.check_entitlement",
+            return_value=EntitlementDecision(allowed=True),
+        ):
+            response = orga_client.post(
+                event.orga_urls.compose_mails_sessions,
+                follow=True,
+                data={
+                    "state": "submitted", "skip_queue": "on",
+                    "subject_0": "Reminder", "text_0": "Hello!",
+                },
+            )
+    finally:
+        entitlement_usage_recorded.disconnect(dispatch_uid="test_outbox_race")
+    assert response.status_code == 200
+    with scope(event=event):
+        mail_count = QueuedMail.objects.filter(sent__isnull=False).count()
+    assert mail_count >= 1
+    assert len(djmail.outbox) == mail_count
+
+
+@pytest.mark.django_db
+def test_stale_mail_instance_is_not_sent_twice(event, submission):
+    with scope(event=event):
+        mail = QueuedMail.objects.create(event=event, to="a@example.com", subject="s", text="t")
+        stale = QueuedMail.objects.get(pk=mail.pk)
+        djmail.outbox = []
+        mail.send()
+        stale.send()
+        assert len(djmail.outbox) == 1
+        assert stale.sent == QueuedMail.objects.get(pk=mail.pk).sent
