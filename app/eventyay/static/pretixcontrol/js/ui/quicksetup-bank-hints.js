@@ -1,40 +1,45 @@
 /**
  * Quick setup wizard: keep the required/optional hints of the bank transfer
  * fields in sync with the backend validation (BankTransfer.settings_form_clean).
- * Only the hint is changed, not the HTML "required" attribute,
+ *
+ * The server renders every one of these labels with its translated "Optional"
+ * hint (see render_label in control/forms/renderers.py). This script only hides
+ * or shows that hint and adds a "*" marker, so it never needs its own
+ * translations. Only the hint is changed, not the HTML "required" attribute,
  * so "Save draft" keeps working.
  */
-const gettext = window.gettext ?? ((text) => text)
 
 function setHint(selector, required) {
   const field = document.querySelector(selector)
   const label = field?.closest('.form-group')?.querySelector('label')
-  // Fall back to the label itself if the .label-text span is missing
-  const text = label && (label.querySelector('.label-text') ?? label)
-  if (!text) return
+  if (!label) return
+  const text = label.querySelector('.label-text') ?? label
 
+  // Show or hide the server-rendered, already translated "Optional" hint
   const optional = label.querySelector('.optional')
   if (optional) {
+    optional.hidden = required
     const br = optional.previousElementSibling
-    if (br?.tagName === 'BR') br.remove()
-    optional.remove()
+    if (br?.tagName === 'BR') br.hidden = required
   }
-  text.querySelectorAll('.required-indicator, .sr-only').forEach((el) => el.remove())
 
+  // Add or remove the required marker
+  text.querySelector('.required-indicator')?.remove()
   if (required) {
     const star = document.createElement('span')
     star.className = 'required-indicator text-danger'
     star.setAttribute('aria-hidden', 'true')
     star.textContent = ' *'
-    const sr = document.createElement('span')
-    sr.className = 'sr-only'
-    sr.textContent = `, ${gettext('required')}`
-    text.append(star, sr)
-  } else {
-    const opt = document.createElement('span')
-    opt.className = 'optional'
-    opt.textContent = gettext('Optional')
-    label.append(document.createElement('br'), opt)
+    text.append(star)
+  }
+
+  // Expose the required state to assistive technology (not valid on a single radio button)
+  if (field.type !== 'radio') {
+    if (required) {
+      field.setAttribute('aria-required', 'true')
+    } else {
+      field.removeAttribute('aria-required')
+    }
   }
 }
 
