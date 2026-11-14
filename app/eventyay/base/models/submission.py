@@ -94,14 +94,14 @@ class SubmissionStates(Choices):
     valid_choices = [(key, value) for key, value in display_values.items()]
 
     valid_next_states = {
-        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED),
-        REJECTED: (ACCEPTED, SUBMITTED),
-        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN),
-        CONFIRMED: (ACCEPTED, CANCELED),
-        CANCELED: (ACCEPTED, CONFIRMED),
-        WITHDRAWN: (SUBMITTED),
+        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED, DELETED),
+        REJECTED: (ACCEPTED, SUBMITTED, DELETED),
+        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN, DELETED),
+        CONFIRMED: (ACCEPTED, CANCELED, DELETED),
+        CANCELED: (ACCEPTED, CONFIRMED, DELETED),
+        WITHDRAWN: (SUBMITTED, DELETED),
         DELETED: (),
-        DRAFT: (SUBMITTED,),
+        DRAFT: (SUBMITTED, DELETED),
     }
 
     method_names = {
@@ -116,6 +116,7 @@ class SubmissionStates(Choices):
 
     accepted_states = (ACCEPTED, CONFIRMED)
     terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
+    valid_submission_states = (SUBMITTED, ACCEPTED, CONFIRMED, REJECTED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -124,6 +125,7 @@ class SubmissionStates(Choices):
             SubmissionStates.ACCEPTED: '--color-success',
             SubmissionStates.CONFIRMED: '--color-success',
             SubmissionStates.REJECTED: '--color-danger',
+            SubmissionStates.DELETED: '--color-danger',
         }.get(state, '--color-grey')
 
 
@@ -836,17 +838,19 @@ class Submission(GenerateCode, PretalxModel):
         orga: bool = True,
         from_pending: bool = False,
     ):
-        """Sets the submission's state to 'deleted'."""
+        """Sets the submission's state to 'deleted' while preserving session data."""
         previous = self.state
-        self._set_state(SubmissionStates.DELETED, force, person=person)
-        for answer in self.answers.all():
-            answer.remove(person=person, force=force)
-        self.log_action(
-            'eventyay.submission.deleted',
-            person=person,
-            orga=True,
-            data={'previous': previous, 'from_pending': from_pending},
-        )
+        # _set_state clears pending_state (so ApplyPending cannot restore the session)
+        # and update_talk_slots() drops its WIP schedule slots. Keep that and the log
+        # entry in one transaction so a failure cannot leave stale slots behind.
+        with transaction.atomic():
+            self._set_state(SubmissionStates.DELETED, force, person=person)
+            self.log_action(
+                'eventyay.submission.deleted',
+                person=person,
+                orga=True,
+                data={'previous': previous, 'from_pending': from_pending},
+            )
 
     remove.alters_data = True
 

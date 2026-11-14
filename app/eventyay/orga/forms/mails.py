@@ -411,6 +411,14 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
             (sub.code, sub.title) for sub in self.event.submissions.all().order_by('title')
         ]
         self.fields['speakers'].queryset = self.event.submitters.all().order_by('fullname')
+        # Deleted proposals are not valid email recipients (build_recipients queries the
+        # default manager, which excludes them), so drop that option from the filter.
+        if 'state' in self.fields:
+            self.fields['state'].choices = [
+                choice
+                for choice in self.fields['state'].choices
+                if choice[0] not in (SubmissionStates.DELETED, f'pending_state__{SubmissionStates.DELETED}')
+            ]
         composer_filter_fields = {
             'state': (_('State'), _('Proposal states')),
             'submission_type': (_('Submission type'), None),
