@@ -1393,8 +1393,7 @@ export default {
 			padding: 0 1rem
 			box-sizing: border-box
 			width: 100%
-			max-width: 100vw
-			overflow-x: hidden !important
+			max-width: 100%
 			.speakers-details
 				padding-left: 0
 				padding-right: 0
