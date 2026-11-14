@@ -1386,7 +1386,7 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
         writer = csv.writer(text, quoting=csv.QUOTE_NONNUMERIC, delimiter=',')
         writer.writerow([_('Date'), _('User'), _('Object'), _('Action')])
 
-        logs = self.get_queryset().prefetch_related('content_object')
+        logs = self.get_queryset().exclude_unresolvable_content_types().prefetch_related('content_object')
         for log in logs.iterator(chunk_size=500):
             if log.user:
                 user = log.user.get_full_name()

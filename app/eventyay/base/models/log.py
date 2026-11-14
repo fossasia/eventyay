@@ -16,7 +16,25 @@ from django_scopes import ScopedManager
 from eventyay.base.signals import logentry_object_link
 
 
-class VisibleOnlyManager(models.Manager):
+class LogEntryQuerySet(models.QuerySet):
+    def exclude_unresolvable_content_types(self):
+        """Skip rows whose ContentType no longer maps to an installed model.
+
+        Prefetching ``content_object`` calls ``model_class()._base_manager`` and
+        crashes when ``model_class()`` is ``None`` after a model rename or removal.
+        """
+        content_type_ids = self.values_list('content_type_id', flat=True).distinct()
+        stale_ids = [
+            content_type.pk
+            for content_type in ContentType.objects.filter(pk__in=content_type_ids)
+            if content_type.model_class() is None
+        ]
+        if not stale_ids:
+            return self
+        return self.exclude(content_type_id__in=stale_ids)
+
+
+class VisibleOnlyManager(models.Manager.from_queryset(LogEntryQuerySet)):
     def get_queryset(self):
         return super().get_queryset().filter(visible=True)
 
@@ -60,7 +78,7 @@ class LogEntry(models.Model):
     is_orga_action = models.BooleanField(default=False)
 
     objects = VisibleOnlyManager()
-    all = models.Manager()
+    all = models.Manager.from_queryset(LogEntryQuerySet)()
 
     class Meta:
         ordering = ('-datetime', '-id')
