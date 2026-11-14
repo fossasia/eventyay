@@ -269,6 +269,12 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         'remove_speaker': 'submission.update_submission',
     }
     endpoint = 'submissions'
+    # EventPermission (the active DRF permission class) does not honour
+    # permission_map, so every non-safe method, including the custom
+    # accept/reject/confirm/cancel/make-submitted/add-speaker/remove-speaker
+    # actions, must declare the required role here. Without this any member
+    # of any team for the event (e.g. a reviewer) could change submissions.
+    write_permission = 'can_change_submissions'
 
     def get_legacy_queryset(self):  # pragma: no cover
         base_qs = self.event.submissions.all().prefetch_related('resources').order_by('code')
