@@ -29,8 +29,10 @@ except ImportError:
 
 from i18nfield.strings import LazyI18nString
 
+from eventyay.common.text.rich_text import rich_text_to_plain_text
 from eventyay.common.views.redirect import safelink as sl
 from eventyay.helpers.placeholders import escape_stray_braces
+
 
 register = template.Library()
 
@@ -490,6 +492,16 @@ def rich_text_email(text: str):
 def html_to_markdown_filter(html_text: str) -> str:
     """Convert HTML to markdown format."""
     return html_text if not html_text else html_to_markdown(html_text)
+
+
+@register.filter
+def rich_text_to_plain(text: str) -> str:
+    """Convert HTML/rich-text/Markdown to clean, single-line plain text for meta tags and previews."""
+    if not text:
+        return ''
+    rendered = rich_text_without_links(str(text))
+    plain = rich_text_to_plain_text(rendered)
+    return ' '.join(plain.split())
 
 
 @register.filter
