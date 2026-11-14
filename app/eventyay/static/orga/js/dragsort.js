@@ -6,7 +6,18 @@ const DIRECTION_HORIZONTAL = Symbol();
 const DIRECTION_VERTICAL = Symbol();
 const INTENT_BEFORE = Symbol();
 const INTENT_AFTER = Symbol();
-const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
+const getCsrfToken = () => {
+    for (const name of ['eventyay_csrftoken', 'csrftoken', 'pretix_csrftoken']) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return decodeURIComponent(parts.pop().split(';').shift());
+        }
+    }
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+};
+const EVENTYAY_CSRF_TOKEN = getCsrfToken();
 
 const computeCentroid = (element) => {
     const rect = element.getBoundingClientRect();
@@ -110,6 +121,8 @@ const dragStart = (el) => {
     return stopDragging;
 };
 
+let pendingSave = Promise.resolve();
+
 const pushOrder = (parentElement) => {
     const url = parentElement.getAttribute("dragsort-url");
     const ids = Array.from(parentElement.querySelectorAll("[dragsort-id], [data-formset-form]")).map(
@@ -123,20 +136,79 @@ const pushOrder = (parentElement) => {
         }
     });
 
+    const orderValue = ids.join(",");
+
     if (url) {
         const data = new URLSearchParams();
-        data.append("order", ids.join(","));
-        fetch(url, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": EVENTYAY_CSRF_TOKEN,
-            },
-            body: data,
-        });
+        data.append("order", orderValue);
+        pendingSave = pendingSave
+            .catch((err) => {
+                console.error("Previous order save failed, continuing with latest order", err);
+            })
+            .then(async () => {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCsrfToken(),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    body: data,
+                });
+                if (!response.ok || response.redirected) {
+                    throw new Error(
+                        `Order save request failed: status ${response.status}${response.redirected ? " (redirected)" : ""}`
+                    );
+                }
+                const contentType = response.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    const resData = await response.json();
+                    if (resData && resData.ok === false) {
+                        throw new Error(resData.error || "Order save response indicated failure");
+                    }
+                }
+                return response;
+            })
+            .catch((err) => {
+                console.error("Failed to save new item order", err);
+                const message = typeof window.gettext === "function"
+                    ? window.gettext("The new order could not be saved. Reload the page and try again.")
+                    : "The new order could not be saved. Reload the page and try again.";
+                window.alert(message);
+                throw err;
+            });
+        return pendingSave;
     }
 };
 
-onReady(() => {
+const initDragsort = () => {
+    document.addEventListener("keydown", (evt) => {
+        if (evt.key !== "ArrowUp" && evt.key !== "ArrowDown") return;
+        const handle = evt.target.closest(".dragsort-button");
+        if (!handle) return;
+
+        const el = handle.closest("[dragsort-id]") || handle.closest("[data-formset-form]");
+        if (!el || !el.parentElement) return;
+
+        const parentElement = el.closest("[dragsort-url]") || el.parentElement;
+        if (evt.key === "ArrowUp") {
+            const prev = el.previousElementSibling;
+            if (prev && (prev.hasAttribute("dragsort-id") || prev.hasAttribute("data-formset-form"))) {
+                evt.preventDefault();
+                prev.insertAdjacentElement("beforebegin", el);
+                pushOrder(parentElement);
+                handle.focus();
+            }
+        } else if (evt.key === "ArrowDown") {
+            const next = el.nextElementSibling;
+            if (next && (next.hasAttribute("dragsort-id") || next.hasAttribute("data-formset-form"))) {
+                evt.preventDefault();
+                next.insertAdjacentElement("afterend", el);
+                pushOrder(parentElement);
+                handle.focus();
+            }
+        }
+    });
+
     document.addEventListener("dragstart", (evt) => {
         const handle = evt.target.closest(".dragsort-button");
         if (!handle) return;
@@ -154,23 +226,34 @@ onReady(() => {
         const stop = dragStart(el);
         if (!stop) return;  // Exit early if dragStart couldn't find a valid parent
 
-        const dropHandler = (evt) => evt.preventDefault();
+        const dropHandler = (dropEvt) => dropEvt.preventDefault();
         el.parentElement.addEventListener("drop", dropHandler, { once: true });
 
-        const dragEndHandler = (evt) => {
-            evt.preventDefault();
+        const dragEndHandler = (dragEvt) => {
+            dragEvt.preventDefault();
+            el.parentElement.removeEventListener("drop", dropHandler);
             el.classList.remove("dragging");
             document.querySelector("body").classList.remove("dragging");
 
             const { closest, intent } = stop();
-            if (intent === INTENT_AFTER) {
-                closest.insertAdjacentElement("afterend", el);
-            } else {
-                closest.insertAdjacentElement("beforebegin", el);
+            if (closest && closest !== el) {
+                if (intent === INTENT_AFTER) {
+                    closest.insertAdjacentElement("afterend", el);
+                } else {
+                    closest.insertAdjacentElement("beforebegin", el);
+                }
+                pushOrder(el.parentElement);
             }
-            pushOrder(el.parentElement);
         };
 
         document.addEventListener("dragend", dragEndHandler, { once: true });
     });
-});
+};
+
+if (typeof onReady === 'function') {
+    onReady(initDragsort);
+} else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDragsort);
+} else {
+    initDragsort();
+}

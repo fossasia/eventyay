@@ -643,3 +643,39 @@ def test_default_fields_follow_active_required_and_position(client, admin, data)
     assert client.post(reverse('eventyay_admin:admin.organizer_forms.order'), {'order': order}).status_code == 302
     events.refresh_from_db()
     assert events.position == 4
+
+
+def test_organizer_request_form_order_ajax(client, admin):
+    order_url = reverse('eventyay_admin:admin.organizer_forms.order')
+    order = 'field:name,field:email,field:organizer_name,field:slug,field:events,field:affiliation'
+
+    response = client.post(
+        order_url,
+        {'order': order},
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+    )
+    assert response.status_code == 200
+    assert response.json() == {'ok': True}
+
+    events = OrganizerRequestFieldSetting.objects.get(key='events')
+    assert events.position == 4
+
+    reverse_order = 'field:affiliation,field:events,field:slug,field:organizer_name,field:email,field:name'
+    json_response = client.post(
+        order_url,
+        {'order': reverse_order},
+        HTTP_ACCEPT='application/json',
+    )
+    assert json_response.status_code == 200
+    assert json_response.json() == {'ok': True}
+
+    events.refresh_from_db()
+    assert events.position == 1
+
+    invalid_response = client.post(
+        order_url,
+        {'order': 'field:name'},
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+    )
+    assert invalid_response.status_code == 400
+    assert 'error' in invalid_response.json()
