@@ -414,8 +414,68 @@ $(function () {
             $(this).attr("placeholder", gettext("Ticket name"));
         }
     });
+        // Bank transfer details: the server requires these fields once bank transfer is
+    // selected, so show "required" instead of the misleading "Optional" hint. Only the
+    // hint is changed (not the HTML "required" attribute) so "Save draft" keeps working.
+    function setHint(selector, required) {
+        var field = document.querySelector(selector);
+        var group = field && field.closest(".form-group");
+        var label = group && group.querySelector("label");
+        var text = label && label.querySelector(".label-text");
+        if (!text) return;
+
+        // Remove the current hint (either markup) so switching back and forth works
+        var optional = label.querySelector(".optional");
+        if (optional) {
+            var br = optional.previousElementSibling;
+            if (br && br.tagName === "BR") br.remove();
+            optional.remove();
+        }
+        text.querySelectorAll(".required-indicator, .sr-only").forEach(function (el) {
+            el.remove();
+        });
+
+        if (required) {
+            var star = document.createElement("span");
+            star.className = "required-indicator text-danger";
+            star.setAttribute("aria-hidden", "true");
+            star.textContent = " *";
+            var sr = document.createElement("span");
+            sr.className = "sr-only";
+            sr.textContent = ", " + gettext("required");
+            text.appendChild(star);
+            text.appendChild(sr);
+        } else {
+            label.appendChild(document.createElement("br"));
+            var opt = document.createElement("span");
+            opt.className = "optional";
+            opt.textContent = gettext("Optional");
+            label.appendChild(opt);
+        }
+    }
+
+    function update_banktransfer_required_hints() {
+        var sepaRadio = document.getElementById("id_payment_banktransfer_bank_details_type_0");
+        if (!sepaRadio) return;
+        var isSepa = sepaRadio.checked;
+        // Account type always has a selection, so show it as required
+        setHint("input[name='payment_banktransfer_bank_details_type']", true);
+        // SEPA: holder name, IBAN, BIC and bank name are required
+        ["name", "iban", "bic", "bank"].forEach(function (f) {
+            setHint("#id_payment_banktransfer_bank_details_sepa_" + f, isSepa);
+        });
+        // Other bank account: free-text details are required
+        setHint("textarea[name^='payment_banktransfer_bank_details']", !isSepa);
+    }
+
+    document
+        .querySelectorAll("input[name='payment_banktransfer_bank_details_type']")
+        .forEach(function (el) {
+            el.addEventListener("change", update_banktransfer_required_hints);
+        });
 
     // Initialize state on page load
+    update_banktransfer_required_hints();
     update_currency();
     update_tickets_and_capacity();
     update_review_summary();
