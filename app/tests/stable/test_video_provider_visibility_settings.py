@@ -6,12 +6,18 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Room
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.log import LogEntry
-from eventyay.base.services.event import create_room, get_event_config_for_user, get_rooms
+from eventyay.base.services.event import (
+    create_room,
+    get_event_config_for_user,
+    get_room_config,
+    get_rooms,
+    without_zoom_passcode,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     SUPPORTED_VIDEO_PROVIDERS,
@@ -249,6 +255,206 @@ def test_get_room_config_marks_disabled_for_inactive_provider(sample_event):
         assert "no longer available" in cfg["disabled_reason"]
     finally:
         gs.settings.set("video_provider_jitsi_attendee", True)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "permissions, sees_credentials",
+    [
+        (set(), False),
+        ({"room:jitsi.moderate", "room:bbb.moderate"}, False),
+        ({"room:update"}, True),
+        ({"event.update"}, True),
+    ],
+)
+def test_get_room_config_hides_zoom_credentials_from_non_editors(sample_event, permissions, sees_credentials):
+    zoom_config = {
+        "meeting_number": "123456789",
+        "disable_chat": True,
+        "password": "zoompass",
+        "client_id": "zoom-client",
+        "client_secret": "zoomsecret",
+    }
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Room Credentials Test",
+            module_config=[{"type": "call.zoom", "config": dict(zoom_config)}],
+            trait_grants={"viewer": []},
+        )
+
+    cfg = get_room_config(room, permissions=permissions)
+
+    (zoom,) = cfg["modules"]
+    shown = zoom["config"]
+    # Settings the room page needs stay visible to everyone.
+    assert shown["meeting_number"] == "123456789"
+    assert shown["disable_chat"] is True
+    assert shown["client_id"] == "zoom-client"
+    assert ("password" in shown) is sees_credentials
+    assert ("client_secret" in shown) is sees_credentials
+    # The stored room is never changed by building the payload.
+    assert room.module_config[0]["config"] == zoom_config
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("123456789", "123456789"),
+        ("123 456 7890", "123 456 7890"),
+        ("", ""),
+        (None, None),
+        ("https://zoom.us/j/123456789", "https://zoom.us/j/123456789"),
+        ("https://zoom.us/j/123456789?pwd=secret", "https://zoom.us/j/123456789"),
+        ("https://zoom.us/j/123456789?uname=Bob&pwd=secret", "https://zoom.us/j/123456789?uname=Bob"),
+        ("https://zoom.us/j/123456789?pwd=secret&uname=Bob", "https://zoom.us/j/123456789?uname=Bob"),
+        ("zoom.us/j/123456789?pwd=secret", "zoom.us/j/123456789"),
+        # Encoded and differently cased parameter names are the same parameter.
+        ("https://zoom.us/j/123456789?%70wd=secret", "https://zoom.us/j/123456789"),
+        ("https://zoom.us/j/123456789?PWD=secret&uname=Bob", "https://zoom.us/j/123456789?uname=Bob"),
+        # A value that is not a parsable URL must not raise, and must not keep the passcode.
+        ("https://[zoom.us/j/123456789?pwd=secret", "https://[zoom.us/j/123456789"),
+    ],
+)
+def test_without_zoom_passcode(value, expected):
+    assert without_zoom_passcode(value) == expected
+
+
+@pytest.mark.django_db
+def test_get_room_config_survives_an_unparsable_zoom_meeting_number(sample_event):
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Malformed Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "https://[zoom.us/j/1?pwd=secret"}}],
+            trait_grants={"viewer": []},
+        )
+
+    (zoom,) = get_room_config(room, permissions=set())["modules"]
+
+    assert "secret" not in zoom["config"]["meeting_number"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("permissions, keeps_passcode", [(set(), False), ({"room:update"}, True)])
+def test_get_room_config_hides_the_passcode_in_a_zoom_invite_url(sample_event, permissions, keeps_passcode):
+    invite = "https://zoom.us/j/123456789?pwd=zoompass"
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Invite Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": invite, "password": ""}}],
+            trait_grants={"viewer": []},
+        )
+
+    (zoom,) = get_room_config(room, permissions=permissions)["modules"]
+
+    assert ("pwd=zoompass" in zoom["config"]["meeting_number"]) is keeps_passcode
+    assert room.module_config[0]["config"]["meeting_number"] == invite
+
+
+@pytest.mark.django_db
+def test_get_room_config_keeps_credentials_when_the_caller_says_the_user_can_edit_rooms(sample_event):
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Zoom Caller Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "123", "password": "zoompass"}}],
+            trait_grants={"viewer": []},
+        )
+
+    (zoom,) = get_room_config(room, permissions=set(), can_edit_rooms=True)["modules"]
+    assert zoom["config"]["password"] == "zoompass"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("permissions, keeps_webhook_url", [(set(), False), ({"event.update"}, True)])
+def test_get_room_config_hides_the_chat_webhook_url_from_non_editors(sample_event, permissions, keeps_webhook_url):
+    chat = {"webhook_url": "https://example.org/hook", "webhook_hmac_secret": "hmacsecret"}
+    with scope(event=sample_event):
+        room = Room.objects.create(
+            event=sample_event,
+            name="Chat Webhook Test",
+            module_config=[{"type": "chat.native", "config": dict(chat)}],
+            trait_grants={"viewer": []},
+        )
+
+    (module,) = get_room_config(room, permissions=permissions)["modules"]
+
+    assert ("webhook_url" in module["config"]) is keeps_webhook_url
+    # The HMAC secret is server-side only and is never sent, not even to editors.
+    assert "webhook_hmac_secret" not in module["config"]
+    assert room.module_config[0]["config"] == chat
+
+
+@pytest.mark.django_db
+def test_get_event_config_for_user_keeps_zoom_credentials_for_staff_without_room_permissions(
+    sample_event, attendee_user
+):
+    # Staff and administrators may edit rooms through has_permission without holding the permission
+    # in their role-based permission set, so the room payload must not strip the credentials from them.
+    User = get_user_model()
+    staff = User.objects.create(
+        email="staff_attendee@test.local", is_active=True, is_staff=True, traits=["attendee"]
+    )
+    with scope(event=sample_event):
+        Room.objects.create(
+            event=sample_event,
+            name="Zoom Staff Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "123456789", "password": "zoompass"}}],
+            trait_grants={"viewer": []},
+        )
+
+    def zoom_config(user):
+        (room,) = get_event_config_for_user(sample_event, user)["rooms"]
+        (zoom,) = room["modules"]
+        return zoom["config"]
+
+    assert zoom_config(staff)["password"] == "zoompass"
+    assert "password" not in zoom_config(attendee_user)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_can_edit", [True, False])
+async def test_get_room_config_for_user_passes_the_edit_decision_on(mocker, user_can_edit):
+    from eventyay.base.services.event import get_room_config_for_user
+
+    mock_event = MagicMock()
+    mock_room = MagicMock()
+    mock_room.event = mock_event
+    mock_event.get_all_permissions.return_value = {mock_room: set(), mock_event: set()}
+    mocker.patch("eventyay.base.services.event.get_room", return_value=mock_room)
+    mocker.patch("eventyay.base.services.event.is_room_visible_for_attendee", return_value=True)
+    mocker.patch("eventyay.base.services.event.user_can_edit_rooms", return_value=user_can_edit)
+    build = mocker.patch("eventyay.base.services.event.get_room_config", return_value={"modules": []})
+
+    user = MagicMock()
+    await get_room_config_for_user("room-123", "event-123", user)
+
+    # Staff and administrators hold no listed permission, so the caller's decision must be used.
+    assert build.call_args.kwargs["can_edit_rooms"] is user_can_edit
+
+
+@pytest.mark.django_db
+def test_get_event_config_for_user_hides_zoom_credentials_only_from_users_who_cannot_edit(
+    sample_event, attendee_user, admin_user
+):
+    with scope(event=sample_event):
+        Room.objects.create(
+            event=sample_event,
+            name="Zoom Event Config Test",
+            module_config=[{"type": "call.zoom", "config": {"meeting_number": "123", "password": "zoompass"}}],
+            trait_grants={"viewer": []},
+        )
+
+    def zoom_config(user):
+        (room,) = get_event_config_for_user(sample_event, user)["rooms"]
+        (zoom,) = room["modules"]
+        return zoom["config"]
+
+    assert zoom_config(admin_user)["password"] == "zoompass"
+    assert "password" not in zoom_config(attendee_user)
 
 
 @pytest.mark.asyncio

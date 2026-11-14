@@ -1,7 +1,9 @@
 import copy
 import datetime
+import re
 import uuid
 from contextlib import suppress
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import jwt
 from asgiref.sync import sync_to_async
@@ -300,9 +302,46 @@ def count_chat_participants(channel_id):
     return len(set(member_ids) | set(sender_ids))
 
 
-def get_room_config(room, permissions, *, current_stream=_UNSET):
-    """Build room configuration dictionary filtered by module entitlements."""
+ROOM_EDIT_PERMISSIONS = frozenset({Permission.ROOM_UPDATE.value, Permission.EVENT_UPDATE.value})
+
+
+def can_edit_room_settings(permission_values):
+    """Whether the given permission values allow changing any setting of a room."""
+    return bool(ROOM_EDIT_PERMISSIONS & set(permission_values))
+
+
+def without_zoom_passcode(meeting_number):
+    """Return a Zoom meeting number or invite URL without its ``pwd`` passcode parameter."""
+    if not isinstance(meeting_number, str) or not meeting_number:
+        return meeting_number
+    try:
+        parts = urlsplit(meeting_number)
+    except ValueError:
+        # Not a parsable URL (stored values are free text): drop the whole query rather than
+        # risk leaving the passcode in, and never fail the event configuration over it.
+        return re.split(r"[?#]", meeting_number, maxsplit=1)[0]
+    # parse_qsl decodes parameter names, so an encoded name such as %70wd is caught as well.
+    query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k.lower() != "pwd"]
+    return urlunsplit(parts._replace(query=urlencode(query)))
+
+
+def user_can_edit_rooms(event, user):
+    """Whether ``user`` may change room settings.
+
+    Unlike the role-based permission sets this also covers staff, administrators and teams with
+    ``can_change_event_settings``, which ``Event.has_permission`` lets through.
+    """
+    return event.has_permission(user=user, permission=[Permission.ROOM_UPDATE, Permission.EVENT_UPDATE])
+
+
+def get_room_config(room, permissions, *, current_stream=_UNSET, can_edit_rooms=False):
+    """Build room configuration dictionary filtered by module entitlements.
+
+    Credentials of Zoom and chat modules are only included for people who can edit the room: those
+    holding an edit permission in ``permissions``, or ``can_edit_rooms`` (see ``user_can_edit_rooms``).
+    """
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
+    can_edit = can_edit_rooms or can_edit_room_settings(str_permissions)
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
@@ -349,11 +388,23 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
                 cfg.pop("app_id", None)
                 cfg.pop("key_id", None)
                 cfg.pop("app_secret", None)
+        elif module["type"] == "call.zoom":
+            # The server signs the join data itself from the stored config, so only room editors
+            # need the credentials. An invite URL in meeting_number can carry the passcode too.
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict) and not can_edit:
+                cfg.pop("password", None)
+                cfg.pop("client_secret", None)
+                if "meeting_number" in cfg:
+                    cfg["meeting_number"] = without_zoom_passcode(cfg["meeting_number"])
         elif module["type"] == "chat.native":
-            # Strip webhook secrets — these are server-side only
+            # Strip webhook secrets — these are server-side only. The webhook URL is only
+            # used by the room editor, so only editors get it.
             cfg = module_config.get("config")
             if isinstance(cfg, dict):
                 cfg.pop("webhook_hmac_secret", None)
+                if not can_edit:
+                    cfg.pop("webhook_url", None)
             channel = getattr(room, "channel", None)
             if not channel:
                 channel = Channel.objects.filter(room=room).first()
@@ -426,12 +477,14 @@ def get_event_config_for_user(event, user):
 
     rooms = get_rooms(event, user)
     stream_data_by_room = batch_room_current_stream_data(rooms)
+    can_edit_rooms = user_can_edit_rooms(event, user)
     for room in rooms:
         result["rooms"].append(
             get_room_config(
                 room,
                 permissions[event] | permissions[room],
                 current_stream=stream_data_by_room.get(room.pk),
+                can_edit_rooms=can_edit_rooms,
             )
         )
     return result
@@ -780,8 +833,9 @@ async def get_room_config_for_user(room: str, event_id: str, user):
         if not visible:
             return None
 
+    can_edit_rooms = await database_sync_to_async(user_can_edit_rooms)(room.event, user)
     return await database_sync_to_async(get_room_config)(
-        room, effective_permissions
+        room, effective_permissions, can_edit_rooms=can_edit_rooms
     )
 
 
