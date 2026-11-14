@@ -15,7 +15,7 @@ from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
 from pycountry import currencies
-from pydantic import Field, HttpUrl
+from pydantic import Field, HttpUrl, IPvAnyNetwork
 from pydantic_settings import BaseSettings as _BaseSettings
 from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, TomlConfigSettingsSource
 from redis.asyncio.retry import Retry
@@ -160,6 +160,11 @@ class BaseSettings(_BaseSettings):
     plugin_dev_mode: bool = False
     fetch_ecb_rates: bool = True
     cache_tickets_hours: int = Field(default=24, ge=1)
+    voucher_rate_limit_max: int = Field(default=10, ge=1)
+    voucher_rate_limit_window: int = Field(default=300, ge=1)
+    voucher_rate_limit_bucket: int = Field(default=1, ge=1)
+    # Set only to CIDRs of proxies that sanitize/append X-Forwarded-For.
+    voucher_rate_limit_trusted_proxies: tuple[IPvAnyNetwork, ...] = ()
     # Days of the month to send unpaid billing invoice reminders.
     billing_reminder_schedule: Annotated[
         list[Annotated[int, Field(ge=1, le=31)]],
@@ -263,6 +268,10 @@ DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
 CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)
 BILLING_REMINDER_SCHEDULE = conf.billing_reminder_schedule
+VOUCHER_RATE_LIMIT_MAX = conf.voucher_rate_limit_max
+VOUCHER_RATE_LIMIT_WINDOW = conf.voucher_rate_limit_window
+VOUCHER_RATE_LIMIT_BUCKET = conf.voucher_rate_limit_bucket
+VOUCHER_RATE_LIMIT_TRUSTED_PROXIES = conf.voucher_rate_limit_trusted_proxies
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'

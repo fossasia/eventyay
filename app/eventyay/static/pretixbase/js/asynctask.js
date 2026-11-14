@@ -198,6 +198,12 @@ function async_task_error(jqXHR, textStatus, errorThrown) {
     if (textStatus === "timeout") {
         alert(gettext("The request took too long. Please try again."));
         waitingDialog.hide();
+    } else if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+        waitingDialog.hide();
+        alert(jqXHR.responseJSON.message);
+        if (jqXHR.responseJSON.redirect) {
+            window.location.assign(jqXHR.responseJSON.redirect);
+        }
     } else if (jqXHR.responseText.indexOf('<html') > 0) {
         var respdom = $(jqXHR.responseText);
         var c = respdom.filter('.container');

@@ -64,6 +64,14 @@ from eventyay.base.models.product import (
     SubEventProduct,
     SubEventProductVariation,
 )
+from eventyay.base.services.cart import (
+    MAX_VOUCHER_CODE_LENGTH,
+    VOUCHER_RATE_LIMIT_WINDOW,
+    VoucherRateLimitUnavailable,
+    error_messages,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
+)
 from eventyay.base.services.geo import resolve_venue_map_coordinates
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
@@ -647,6 +655,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         from eventyay.presale.views.cart import get_or_create_cart_id
 
         self.subevent = None
+        self._voucher_attempt_key = None
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
@@ -685,6 +694,18 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         if request.sales_channel.identifier not in request.event.sales_channels:
             raise Http404(_('Tickets for this event cannot be purchased on this sales channel.'))
+
+        if request.GET.get('voucher') and request.event.has_subevents:
+            try:
+                self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
+            except VoucherRateLimitUnavailable:
+                response = HttpResponse(error_messages['voucher_rate_limit_unavailable'], status=503)
+                response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+                return response
+            if not allowed:
+                response = HttpResponse(error_messages['voucher_rate_limited'], status=429)
+                response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+                return response
 
         if request.event.has_subevents:
             if 'subevent' in kwargs:
@@ -889,12 +910,15 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
     def _subevent_list_context(self):
         voucher = None
-        if self.request.GET.get('voucher'):
+        raw_voucher = self.request.GET.get('voucher')
+        if raw_voucher and len(raw_voucher) <= MAX_VOUCHER_CODE_LENGTH:
             try:
                 voucher = Voucher.objects.get(
-                    code__iexact=self.request.GET.get('voucher'),
+                    code__iexact=raw_voucher.strip(),
                     event=self.request.event,
                 )
+                release_voucher_attempt(getattr(self, '_voucher_attempt_key', None))
+                self._voucher_attempt_key = None
             except Voucher.DoesNotExist:
                 pass
 

@@ -2,9 +2,12 @@ import datetime
 import json
 from datetime import timedelta
 from decimal import Decimal
+from ipaddress import ip_network
+from unittest.mock import patch
 
 from bs4 import BeautifulSoup
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
@@ -33,8 +36,20 @@ from eventyay.base.models.product import (
 from eventyay.base.services.cart import (
     CartError,
     CartManager,
+    VoucherError,
+    VoucherRateLimitUnavailable,
+    VOUCHER_RATE_LIMIT_BUCKET,
+    VOUCHER_RATE_LIMIT_MAX,
+    VOUCHER_RATE_LIMIT_WINDOW,
+    _increment_voucher_counter,
     error_messages,
+    is_voucher_rate_limited,
+    record_voucher_failure,
+    release_voucher_attempt,
+    reserve_voucher_attempt,
     update_tax_rates,
+    _voucher_rate_limit_key,
+    _voucher_bucket_keys,
 )
 from tests.testutils.scope import classscope
 from tests.testutils.sessions import get_cart_session_key
@@ -2246,6 +2261,136 @@ class CartTest(CartTestMixin, TestCase):
         self.assertIn('not known', doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             self.assertFalse(CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists())
+
+    def test_voucher_invalid_length(self):
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '1',
+                '_voucher_code': ' ' * 256 + 'A',
+            },
+            follow=True,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('invalid length', doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            self.assertFalse(CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists())
+
+    def test_oversized_add_to_cart_voucher_is_returned_to_ajax_caller(self):
+        response = self.client.post(
+            '/%s/%s/cart/add?ajax=1' % (self.orga.slug, self.event.slug),
+            {
+                'item_%d' % self.ticket.id: '1',
+                '_voucher_code': 'X' * 256,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('invalid length', response.json()['message'])
+
+    def test_oversized_cart_voucher_rejected_before_product_lookup(self):
+        manager = CartManager(event=self.event, cart_id=self.session_key)
+        with patch.object(manager, '_update_products_cache') as update_products:
+            with self.assertRaises(VoucherError):
+                manager.add_new_products(
+                    [{'product': self.ticket.pk, 'variation': None, 'count': 1, 'voucher': 'X' * 256}]
+                )
+        update_products.assert_not_called()
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-tests',
+            }
+        }
+    )
+    def test_voucher_rate_limit_counts_failures(self):
+        cache.clear()
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+        self.assertFalse(is_voucher_rate_limited(request))
+        for _ in range(VOUCHER_RATE_LIMIT_MAX):
+            record_voucher_failure(request)
+        self.assertFalse(is_voucher_rate_limited(request))
+        record_voucher_failure(request)
+        self.assertTrue(is_voucher_rate_limited(request))
+        cache.clear()
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
+    def test_voucher_rate_limit_uses_client_after_trusted_proxy_chain(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='203.0.113.8, 192.0.2.55, 10.0.0.2')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '10.0.0.1'
+        key = _voucher_rate_limit_key(request)
+
+        direct_request = RequestFactory().get('/')
+        direct_request.event = self.event
+        direct_request.META['REMOTE_ADDR'] = '192.0.2.55'
+        self.assertEqual(key, _voucher_rate_limit_key(direct_request))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
+    def test_voucher_rate_limit_ignores_forwarded_header_from_untrusted_peer(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='198.51.100.8')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.55'
+        key = _voucher_rate_limit_key(request)
+
+        direct_request = RequestFactory().get('/')
+        direct_request.event = self.event
+        direct_request.META['REMOTE_ADDR'] = '192.0.2.55'
+        self.assertEqual(key, _voucher_rate_limit_key(direct_request))
+
+    def test_voucher_rate_limit_fails_closed_when_cache_is_unavailable(self):
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+        with patch('eventyay.base.services.cart.cache.add', side_effect=ConnectionError):
+            with self.assertRaises(VoucherRateLimitUnavailable):
+                reserve_voucher_attempt(request)
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-touch',
+            }
+        }
+    )
+    def test_voucher_rate_limit_keeps_original_expiry_after_increment(self):
+        cache.clear()
+        key = 'voucher-rate-limit-key'
+        bucket_key = _voucher_bucket_keys(key)[0]
+        cache.add(bucket_key, 1, timeout=VOUCHER_RATE_LIMIT_WINDOW + VOUCHER_RATE_LIMIT_BUCKET)
+        with (
+            patch.object(cache, 'incr', return_value=2),
+            patch.object(cache, 'get_many', return_value={bucket_key: 2}),
+            patch.object(cache, 'touch') as touch,
+        ):
+            count, actual_bucket = _increment_voucher_counter(key)
+        self.assertEqual(count, 2)
+        self.assertEqual(actual_bucket, bucket_key)
+        touch.assert_not_called()
+        cache.clear()
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-reservation',
+            }
+        }
+    )
+    def test_voucher_rate_limit_releases_successful_reservation(self):
+        cache.clear()
+        request = RequestFactory().get('/')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '192.0.2.1'
+        key, allowed = reserve_voucher_attempt(request)
+        self.assertTrue(allowed)
+        release_voucher_attempt(key)
+        self.assertIsNone(cache.get(key))
+        cache.clear()
 
     def test_voucher_quota_empty(self):
         self.quota_tickets.size = 0

@@ -2,6 +2,7 @@ import inspect
 from decimal import Decimal
 
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -80,7 +81,9 @@ class PaymentStep(CartMixin, TemplateFlowStep):
                 self.cart_session['payment'] = provider.identifier
                 response = provider.checkout_prepare(request, self.get_cart())
 
-                if isinstance(response, str):
+                if isinstance(response, HttpResponse):
+                    return response
+                elif isinstance(response, str):
                     log_event('tickets', 'payment.handoff', OUTCOME_SUCCESS, event_id=request.event.pk, payment_provider=provider.identifier)
                     return redirect(response)
                 elif response is True:
