@@ -23,3 +23,4 @@ applyTo: "**"
 - Update or add tests for any changed behavior.
 - Only work inside this repository.
 - All changes must be self-contained; do not depend on code in external forks or unmerged upstream branches. You may reference issues for context, but the PR itself must be reviewable and workable on its own in this repo.
+- For AI attribution in PR descriptions and reviews, follow the AI Attribution Rules in `agents.md`.
