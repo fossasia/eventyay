@@ -23,3 +23,12 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Review ${REVIEW_ACTION} on PR #${PR_NUMBER}"
+          mkdir -p .pr
+          echo "${PR_NUMBER}" > .pr/NR
+
+      - name: Upload PR number
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-number
+          path: .pr/NR
+          retention-days: 1

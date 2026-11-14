@@ -1,13 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import { latestApprovers, resolvePrNumbers, runApprovalLabels, wantedLabel } from './approval-labels-lib.mjs';
+import { isSourcery, latestApprovers, resolvePrNumbers, runApprovalLabels, wantedLabel } from './approval-labels-lib.mjs';
 
 const review = (login, state) => ({ user: { login }, state });
 
 // Minimal fake of the github-script client. `prs` maps PR number -> { labels, reviews,
 // author?, state?, failGet? }; `perms` maps login -> role (missing = not a collaborator).
-function fakeGithub({ prs = {}, perms = {}, forkPrs = [] } = {}) {
+function fakeGithub({ prs = {}, perms = {}, forkPrs = [], openPrs = [] } = {}) {
   const calls = [];
   const listReviews = async () => {};
   const list = async () => {};
@@ -16,8 +19,12 @@ function fakeGithub({ prs = {}, perms = {}, forkPrs = [] } = {}) {
     paginate: async (fn, params) => {
       if (fn === listReviews) return prs[params.pull_number].reviews;
       if (fn === list) {
-        calls.push(`list ${params.head}`);
-        return forkPrs.map(number => ({ number }));
+        if (params.head) {
+          calls.push(`list ${params.head}`);
+          return forkPrs.map(number => ({ number }));
+        }
+        calls.push('list open');
+        return openPrs;
       }
       throw new Error('unexpected paginate');
     },
@@ -177,4 +184,80 @@ test('one failing PR does not stop the others and fails the run', async () => {
   assert.ok(github.calls.includes('#2 +approvals: 1/3'));
   assert.equal(core.errors.length, 1);
   assert.match(core.failed, /#1/);
+});
+
+test('isSourcery identifies Sourcery AI accounts', () => {
+  assert.equal(isSourcery('sourcery-ai[bot]'), true);
+  assert.equal(isSourcery('sourcery-ai'), true);
+  assert.equal(isSourcery('sourcery'), true);
+  assert.equal(isSourcery('SOURCERY-AI[BOT]'), true);
+  assert.equal(isSourcery('other-sourcery'), false);
+  assert.equal(isSourcery('coderabbitai[bot]'), false);
+  assert.equal(isSourcery(null), false);
+  assert.equal(isSourcery(''), false);
+});
+
+test('Sourcery approval counts as a qualifying approval without collaborator write permissions', async () => {
+  const { calls } = await sync(
+    { labels: [], reviews: [review('sourcery-ai[bot]', 'APPROVED')] },
+    {}, // no collaborator write permissions
+  );
+  assert.deepEqual(calls, ['#1 +approvals: 1/3']);
+});
+
+test('Sourcery approval combined with two write-access approvals reaches required threshold', async () => {
+  const { calls } = await sync(
+    {
+      labels: ['approvals: 2/3'],
+      reviews: [review('a', 'APPROVED'), review('b', 'APPROVED'), review('sourcery-ai[bot]', 'APPROVED')],
+    },
+    { a: 'write', b: 'write' }, // sourcery-ai[bot] is not in perms
+  );
+  assert.deepEqual(calls, ['#1 -approvals: 2/3']);
+});
+
+test('Sourcery changes requested cancels earlier Sourcery approval', async () => {
+  const { calls } = await sync(
+    {
+      labels: ['approvals: 1/3'],
+      reviews: [review('sourcery-ai[bot]', 'APPROVED'), review('sourcery-ai[bot]', 'CHANGES_REQUESTED')],
+    },
+    {},
+  );
+  assert.deepEqual(calls, ['#1 -approvals: 1/3']);
+});
+
+test('fork PR is resolved from artifact file when available', async () => {
+  const tmpDir = mkdtempSync(join(tmpdir(), 'approval-test-'));
+  const prFile = join(tmpDir, 'NR');
+  try {
+    writeFileSync(prFile, '123\n');
+    const github = fakeGithub();
+    const run = { repository: { id: 10 }, head_repository: { owner: { login: 'fossasia' }, id: 10 }, head_branch: 'fix', pull_requests: [] };
+    const prs = await resolvePrNumbers({ github, context: workflowRun(run), prFile });
+    assert.deepEqual(prs, [123]);
+    assert.deepEqual(github.calls, []);
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('fork PR is found when head_repository is base repo by matching head ref or sha', async () => {
+  const github = fakeGithub({
+    openPrs: [
+      { number: 50, head: { ref: 'fix-other', sha: 'sha-other' } },
+      { number: 51, head: { ref: 'feature-branch', sha: 'sha-51' } },
+    ],
+  });
+  // In real workflow_run on review events from forks, head_repository is the base repo:
+  const run = {
+    repository: { id: 10 },
+    head_repository: { owner: { login: 'fossasia' }, id: 10 },
+    head_branch: 'feature-branch',
+    head_sha: 'sha-51',
+    pull_requests: [],
+  };
+  const prs = await resolvePrNumbers({ github, context: workflowRun(run), prFile: '/tmp/nonexistent-pr-file' });
+  assert.deepEqual(prs, [51]);
+  assert.deepEqual(github.calls, ['list open']);
 });
