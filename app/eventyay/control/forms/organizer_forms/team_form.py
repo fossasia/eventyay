@@ -13,7 +13,9 @@ from eventyay.base.models.track import Track
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
 
 
-EXHIBITION_PLUGIN_REGEX = r'(^|,)exhibition(,|$)'
+TRACK_COLOR_RE = re.compile(r'^#([0-9A-Fa-f]{3}){1,2}$')
+
+EXHIBITION_PLUGIN_REGEX =r'(^|,)exhibition(,|$)'
 
 EXHIBITION_FIELDS = (
     'can_change_exhibition_proposals',
@@ -27,11 +29,28 @@ EXHIBITION_PERMISSIONS = (
 )
 
 
+def _safe_color(item):
+    """Return the item's colour if it is a well-formed hex colour, else an empty string.
+
+    The value ends up in a style attribute. The builder also groups teamshifts roles,
+    which have no colour.
+    """
+    color = getattr(item, 'color', '') or ''
+    return color if TRACK_COLOR_RE.match(color) else ''
+
+
 def event_has_exhibition(event):
     return bool(re.search(EXHIBITION_PLUGIN_REGEX, event.plugins or ''))
 
 
 class TeamForm(forms.ModelForm):
+    # Not a model field: an empty ``limit_tracks`` already means "all tracks, including
+    # newly created ones". This checkbox makes that state explicit in the form.
+    all_tracks = forms.BooleanField(
+        required=False,
+        label=_('All tracks (including newly created ones)'),
+    )
+
     @scopes_disabled()
     def __init__(self, *args, **kwargs):
         organizer = kwargs.pop('organizer')
@@ -54,6 +73,8 @@ class TeamForm(forms.ModelForm):
             self._selected_track_ids = set(self.instance.limit_tracks.values_list('pk', flat=True))
         else:
             self._selected_track_ids = set()
+        self.initial.setdefault('all_tracks', not self._selected_track_ids)
+        self.fields['limit_tracks'].widget.attrs['data-inverse-dependency'] = '#' + self['all_tracks'].auto_id
 
         if not apps.is_installed("socialmedia"):
             if "can_manage_social_media" in self.fields:
@@ -126,31 +147,43 @@ class TeamForm(forms.ModelForm):
         an event has no tracks. Tracks are grouped using select_related data
         from ``tracks_qs`` to avoid N+1 queries.
         """
-        events = OrderedDict()
-        for event in events_qs:
-            events[event.pk] = {
+
+        def describe(event):
+            return {
                 'id': event.pk,
                 'name': str(event.name),
                 'slug': event.slug,
+                'date_range': str(_('Event series') if event.has_subevents else event.get_date_range_display()),
                 'tracks': [],
             }
+
+        events = OrderedDict()
+        for event in events_qs:
+            events[event.pk] = describe(event)
         for track in tracks_qs:
             evt_pk = track.event_id
             if evt_pk not in events:
-                event = track.event
-                events[evt_pk] = {
-                    'id': evt_pk,
-                    'name': str(event.name),
-                    'slug': event.slug,
-                    'tracks': [],
-                }
+                events[evt_pk] = describe(track.event)
             events[evt_pk]['tracks'].append(
                 {
                     'id': track.pk,
                     'name': str(track.name),
+                    # Only well-formed colours are rendered, the template puts them in a style attribute.
+                    'color': _safe_color(track),
                 }
             )
         return list(events.values())
+
+    @property
+    def changed_data(self):
+        # ``all_tracks`` is not a model field, but the team views map changed_data to model
+        # fields for the audit log. The track restriction itself is logged as ``limit_tracks``.
+        changed = super().changed_data
+        names = [name for name in changed if name != 'all_tracks']
+        if 'all_tracks' in changed and 'limit_tracks' not in names:
+            # Ticking "All tracks" clears the stored restriction even if the posted boxes did not change.
+            names.append('limit_tracks')
+        return names
 
     @property
     def events_with_tracks(self):
@@ -270,6 +303,23 @@ class TeamForm(forms.ModelForm):
                 self.fields['limit_teamshifts_roles'] = limit_field
         return instance
 
+    def _clean_track_limits(self, data):
+        if data.get('all_tracks'):
+            # Unrestricted: drop any ticked tracks so the stored state is "empty = all".
+            data['limit_tracks'] = self.fields['limit_tracks'].queryset.none()
+            return
+        tracks = data.get('limit_tracks')
+        if tracks is not None and not data.get('all_events'):
+            # The checklist only offers tracks of events the team can access, but boxes of
+            # events that were just unticked are still submitted, so enforce the scope here.
+            data['limit_tracks'] = tracks = tracks.filter(event__in=data.get('limit_events') or [])
+        has_talk_permission = data.get('is_reviewer') or data.get('can_change_submissions')
+        if has_talk_permission and not tracks:
+            self.add_error(
+                'limit_tracks',
+                forms.ValidationError(_('Please pick at least one track, or grant access to all tracks.')),
+            )
+
     def clean(self):
         data = super().clean()
         all_events = data.get('all_events')
@@ -279,6 +329,8 @@ class TeamForm(forms.ModelForm):
                 _('Please either pick some events for this team, or grant access to all your events!')
             )
             self.add_error('limit_events', error)
+
+        self._clean_track_limits(data)
 
         all_teamshifts_roles = data.get('all_teamshifts_roles')
         if isinstance(all_teamshifts_roles, str):
