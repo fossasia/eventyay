@@ -52,7 +52,7 @@ class AuditLog(models.Model):
         return {
             "id": self.id,
             "timestamp": self.timestamp.isoformat(),
-            "user": self.user.serialize_public(),
+            "user": self.user.serialize_public() if self.user else None,
             "type": self.type,
             "data": self.data,
         }
