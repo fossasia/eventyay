@@ -945,6 +945,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                                 locale=self.new_speaker_form.cleaned_data.get('locale'),
                                 user=self.request.user,
                                 biography=self.new_speaker_form.cleaned_data.get('biography'),
+                                send_immediately=self.new_speaker_form.cleaned_data.get('send_immediately', True),
                             )
                             self.new_speaker_form.save_speaker_questions(speaker)
                     elif existing_speaker_ids and self.request.user.has_perm(
