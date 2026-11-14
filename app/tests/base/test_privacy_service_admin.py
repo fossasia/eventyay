@@ -1,0 +1,277 @@
+from unittest.mock import patch
+
+import pytest
+from django.urls import reverse
+from django.utils.timezone import now
+
+from eventyay.base.models import User
+from eventyay.base.models.privacy import (
+    ConsentCategory,
+    ConsentProvider,
+    DPAStatus,
+    ThirdPartyService,
+)
+from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.templatetags.privacy_consent import build_consent_config
+from eventyay.control.forms.privacy import ThirdPartyServiceForm
+from eventyay.control.views.privacy import ServiceUpdate
+
+
+@pytest.fixture
+def admin_client(client):
+    user = User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
+    client.force_login(user)
+    user.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
+    return client
+
+
+@pytest.fixture
+def service():
+    return ThirdPartyService.objects.create(
+        name='google-analytics',
+        title='Google Analytics',
+        provider='Google',
+        category=ConsentCategory.ANALYTICS,
+    )
+
+
+def _service_data(**overrides):
+    data = {
+        'title': 'Matomo',
+        'name': 'matomo',
+        'provider': 'InnoCraft',
+        'purpose': 'Visitor statistics',
+        'category': ConsentCategory.ANALYTICS,
+        'enabled': 'on',
+        'privacy_policy_url': 'https://matomo.org/privacy-policy/',
+        'cookie_names': '_pk_id\n_pk_ses',
+        'data_processed': 'IP address, page views',
+        'region': 'EU',
+        'dpa_status': DPAStatus.SIGNED,
+    }
+    data.update(overrides)
+    return data
+
+
+@pytest.mark.django_db
+def test_admin_can_add_a_service(admin_client):
+    response = admin_client.post(reverse('eventyay_admin:admin.global.privacy.service.add'), _service_data())
+
+    assert response.status_code == 302
+    service = ThirdPartyService.objects.get(name='matomo')
+    assert service.category == ConsentCategory.ANALYTICS
+    assert service.region == 'EU'
+    assert service.dpa_status == DPAStatus.SIGNED
+    assert service.cookie_name_list == ['_pk_id', '_pk_ses']
+
+
+@pytest.mark.django_db
+def test_a_service_needs_a_consent_category(admin_client):
+    """Without a category the service never reaches the banner, so it would never be blocked."""
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.add'),
+        _service_data(category=''),
+    )
+
+    assert response.status_code == 200
+    assert 'category' in response.context['form'].errors
+    assert not ThirdPartyService.objects.filter(name='matomo').exists()
+
+
+@pytest.mark.django_db
+def test_admin_can_edit_a_service(admin_client, service):
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': service.pk}),
+        _service_data(title='GA4', name='google-analytics', category=ConsentCategory.MARKETING, enabled=''),
+    )
+
+    assert response.status_code == 302
+    service.refresh_from_db()
+    assert service.title == 'GA4'
+    assert service.category == ConsentCategory.MARKETING
+    assert service.enabled is False
+
+
+@pytest.mark.django_db
+def test_service_without_a_category_can_still_be_edited(admin_client):
+    """Older services may have no category; the admin must be able to open and fix them."""
+    legacy = ThirdPartyService.objects.create(name='legacy', title='Legacy', category='')
+
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': legacy.pk}),
+        _service_data(title='Legacy tracker', name='legacy', category=''),
+    )
+
+    assert response.status_code == 302
+    legacy.refresh_from_db()
+    assert legacy.title == 'Legacy tracker'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('url', ['ftp://example.org/privacy', 'javascript:alert(1)', 'not a url'])
+def test_service_privacy_policy_must_be_an_http_url(url):
+    form = ThirdPartyServiceForm(data=_service_data(privacy_policy_url=url))
+
+    assert not form.is_valid()
+    assert 'privacy_policy_url' in form.errors
+
+
+@pytest.mark.django_db
+def test_comma_separated_cookie_names_are_split():
+    """Saved as one line, "_ga, _gid" would match no cookie and clear nothing."""
+    form = ThirdPartyServiceForm(data=_service_data(cookie_names='  _ga, _gid\n\n^_ga_.{1,3}\n'))
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['cookie_names'] == '_ga\n_gid\n^_ga_.{1,3}'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('line', ['^_ga_(', '_ga, ^_ga_(', '^(?P<id>_ga_)', '^(?i)_ga', '^(?>_ga)', '^_ga.*+'])
+def test_cookie_pattern_a_browser_rejects_is_refused(line):
+    """Klaro compiles ^ entries with new RegExp and does not catch the error."""
+    form = ThirdPartyServiceForm(data=_service_data(cookie_names=line))
+
+    assert not form.is_valid()
+    assert 'is not a valid regular expression' in form.errors['cookie_names'][0]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'pattern',
+    ['^_ga_', '^_ga_.{1,3}', r'^_pk_(id|ses)\.', '^(?:_ga|_gid)$', '^_ga(?!_x)', r'^_ga\(?x', '^_ga[(?]x', '^_ga[*+]+'],
+)
+def test_cookie_pattern_a_browser_accepts_is_kept(pattern):
+    form = ThirdPartyServiceForm(data=_service_data(cookie_names=pattern))
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['cookie_names'] == pattern
+
+
+@pytest.mark.django_db
+def test_classified_service_cannot_lose_its_category(admin_client, service):
+    """Blanking the category would drop the service from the banner, so visitors could never allow it."""
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': service.pk}),
+        _service_data(name='google-analytics', category=''),
+    )
+
+    assert response.status_code == 200
+    assert 'category' in response.context['form'].errors
+    service.refresh_from_db()
+    assert service.category == ConsentCategory.ANALYTICS
+
+
+@pytest.mark.django_db
+def test_editing_a_service_deleted_meanwhile_does_not_recreate_it(admin_client, service):
+    pk = service.pk
+    stale = ThirdPartyService.objects.get(pk=pk)
+    service.delete()
+
+    with patch.object(ServiceUpdate, 'get_object', return_value=stale):
+        response = admin_client.post(
+            reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': pk}),
+            _service_data(name='google-analytics'),
+        )
+
+    assert response.status_code == 302
+    assert not ThirdPartyService.objects.filter(pk=pk).exists()
+
+
+@pytest.mark.django_db
+def test_identifier_taken_by_a_concurrent_add_is_a_form_error(admin_client):
+    """Both requests pass the form's uniqueness check; the losing insert must not be a server error."""
+    ThirdPartyService.objects.create(name='matomo', title='Matomo', category=ConsentCategory.ANALYTICS)
+
+    with patch.object(ThirdPartyServiceForm, 'validate_unique'):
+        response = admin_client.post(reverse('eventyay_admin:admin.global.privacy.service.add'), _service_data())
+
+    assert response.status_code == 200
+    assert 'name' in response.context['form'].errors
+    assert ThirdPartyService.objects.filter(name='matomo').count() == 1
+
+
+@pytest.mark.django_db
+def test_dpa_status_is_not_assessed_by_default():
+    """Nothing should be recorded as exempt from a DPA until someone has checked."""
+    service = ThirdPartyService.objects.create(name='vimeo', title='Vimeo', category=ConsentCategory.EMBED)
+
+    assert service.dpa_status == DPAStatus.UNKNOWN
+
+
+@pytest.mark.django_db
+def test_overview_lists_the_data_each_service_processes(admin_client):
+    ThirdPartyService.objects.create(
+        name='matomo',
+        title='Matomo',
+        category=ConsentCategory.ANALYTICS,
+        data_processed='IP address, page views',
+    )
+
+    response = admin_client.get(reverse('eventyay_admin:admin.global.privacy'))
+
+    assert 'IP address, page views' in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_identifier_cannot_be_renamed_after_creation(admin_client, service):
+    """Blocked scripts are matched on the identifier, so renaming would stop blocking them."""
+    admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.edit', kwargs={'pk': service.pk}),
+        _service_data(name='renamed'),
+    )
+
+    service.refresh_from_db()
+    assert service.name == 'google-analytics'
+
+
+@pytest.mark.django_db
+def test_admin_can_delete_a_service(admin_client, service):
+    response = admin_client.post(
+        reverse('eventyay_admin:admin.global.privacy.service.delete', kwargs={'pk': service.pk})
+    )
+
+    assert response.status_code == 302
+    assert response['Location'] == reverse('eventyay_admin:admin.global.privacy') + '#services'
+    assert not ThirdPartyService.objects.filter(pk=service.pk).exists()
+
+
+@pytest.mark.django_db
+def test_service_actions_have_accessible_names(admin_client, service):
+    response = admin_client.get(reverse('eventyay_admin:admin.global.privacy'))
+
+    html = response.content.decode()
+    assert 'aria-label="Edit Google Analytics"' in html
+    assert 'aria-label="Delete Google Analytics"' in html
+
+
+@pytest.mark.django_db
+def test_added_service_reaches_the_consent_banner(admin_client):
+    gs = GlobalSettingsObject()
+    gs.settings.set('privacy_consent_provider', ConsentProvider.KLARO)
+    gs.settings.set('privacy_cookie_policy_url', 'https://example.org/cookies')
+    gs.settings.set('privacy_category_analytics_enabled', True)
+
+    admin_client.post(reverse('eventyay_admin:admin.global.privacy.service.add'), _service_data())
+
+    names = [service['name'] for service in build_consent_config()['services']]
+    assert 'matomo' in names
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url_name, needs_pk',
+    [
+        ('admin.global.privacy.service.add', False),
+        ('admin.global.privacy.service.edit', True),
+        ('admin.global.privacy.service.delete', True),
+    ],
+)
+def test_service_pages_need_an_admin_session(client, service, url_name, needs_pk):
+    user = User.objects.create_user('orga@example.com', 'dummy')
+    client.force_login(user)
+    kwargs = {'pk': service.pk} if needs_pk else {}
+
+    response = client.post(reverse(f'eventyay_admin:{url_name}', kwargs=kwargs), _service_data())
+
+    assert response.status_code == 403
+    assert ThirdPartyService.objects.count() == 1
