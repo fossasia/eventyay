@@ -7,6 +7,11 @@
 .modern-dashboard #event-nav {
   margin-bottom: 0
 }
+.modern-dashboard #event-nav .navigation-title h2 {
+  margin: 0;
+  padding-top: 8px;
+  color: var(--td-text, #555)
+}
 .dashboard-header-extra {
   font-size: 16px;
   margin-top: 8px;
@@ -563,6 +568,38 @@ body:has(.td-dashboard) #page-content {
   display: inline-flex;
   align-items: center;
   gap: 5px
+}
+/* Tickets dashboard Action required: titles are headings, descriptions are
+   shown in full, and notifications span the grid and wrap long text. */
+.td-action-header .td-action-title {
+  margin: 0
+}
+.td-action-desc.td-action-desc-full {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset
+}
+.td-action-card.td-action-notifications {
+  grid-column: 1 / -1
+}
+.td-action-notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0
+}
+.td-action-notification {
+  padding: 8px 0;
+  border-top: 1px solid var(--td-border)
+}
+.td-action-notification-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px
+}
+.td-action-notification-body {
+  overflow-wrap: anywhere
 }
 .td-quick-section {
   display: flex;

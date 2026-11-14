@@ -9,105 +9,41 @@
 {% load getitem %}
 
 {% block title %}{{ request.event.name }}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
+{% endblock %}
 {% block body_class %}dashboard-print{% endblock %}
 {% block content %}
+    {# Modern dashboard header: 'Tickets dashboard' title with event name and date range. #}
     {% if is_meetup_event %}
-        {% trans "Meetup" as date_text %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
-        {% endwith %}
+        {% trans 'Meetup' as date_text %}
     {% elif request.event.has_subevents %}
-        {% trans "Event series" as date_text %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
-        {% endwith %}
+        {% trans 'Event series' as date_text %}
     {% else %}
-        {% with date_text=request.event.get_date_range_display %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
-        {% endwith %}
-        {% endwith %}
+        {% firstof request.event.get_date_range_display as date_text %}
     {% endif %}
-    {% if has_overpaid_orders %}
-        <div class="alert alert-warning">
-            {% blocktrans trimmed %}
-                This event contains <strong>overpaid orders</strong>, for example due to duplicate payment attempts.
-                You should review the cases and consider refunding the overpaid amount to the user.
-            {% endblocktrans %}
-            <a href="{% url "control:event.orders" event=request.event.slug organizer=request.event.organizer.slug %}?status=overpaid"
-                    class="btn btn-primary">{% trans "Show overpaid orders" %}</a>
-        </div>
-    {% endif %}
-    {% if has_pending_refunds %}
-        <div class="alert alert-warning">
-            {% blocktrans trimmed %}
-                This event contains <strong>pending refunds</strong> that you should take care of.
-            {% endblocktrans %}
-            <a href="{% url "control:event.orders.refunds" event=request.event.slug organizer=request.event.organizer.slug %}"
-                    class="btn btn-primary">{% trans "Show pending refunds" %}</a>
-        </div>
-    {% endif %}
-    {% if has_cancellation_requests %}
-        <div class="alert alert-warning">
-            {% blocktrans trimmed %}
-                This event contains <strong>requested cancellations</strong> that you should take care of.
-            {% endblocktrans %}
-            <a href="{% url "control:event.orders" event=request.event.slug organizer=request.event.organizer.slug %}?status=rc"
-                    class="btn btn-primary">{% trans "Show orders requesting cancellation" %}</a>
-        </div>
-    {% endif %}
-    {% if has_pending_approvals %}
-        <div class="alert alert-warning">
-            {% blocktrans trimmed %}
-                This event contains <strong>pending approvals</strong> that you should take care of.
-            {% endblocktrans %}
-            <a href="{% url "control:event.orders" event=request.event.slug organizer=request.event.organizer.slug %}?status=pa"
-                    class="btn btn-primary">{% trans "Show orders pending approval" %}</a>
-        </div>
-    {% endif %}
-    {% if has_pending_orders_with_full_payment %}
-        <div class="alert alert-warning">
-            {% blocktrans trimmed %}
-                This event contains <strong>fully paid orders</strong> that are not marked as paid, probably
-                because no quota was left at the time their payment arrived. You should review the cases and consider
-                either refunding the customer or creating more space.
-            {% endblocktrans %}
-            <a href="{% url "control:event.orders" event=request.event.slug organizer=request.event.organizer.slug %}?status=pendingpaid"
-                    class="btn btn-primary">{% trans "Show affected orders" %}</a>
-        </div>
-    {% endif %}
+    <div class="modern-dashboard">
+        <nav id="event-nav" class="header-nav">
+            <div class="navigation">
+                <div class="navigation-title">
+                    <h2>{% trans 'Tickets dashboard' %}</h2>
+                    <div class="text-muted dashboard-header-extra">{{ request.event.name }}{% if date_text %} &middot; {{ date_text }}{% endif %}</div>
+                </div>
+                {% include 'pretixcontrol/event/component_link.html' %}
+            </div>
+        </nav>
+    </div>
+    {# Plugin output stays at the top of the dashboard, as the signal documents. #}
     {% eventsignal request.event "eventyay.control.signals.event_dashboard_top" request=request %}
-    {% if actions|length > 0 %}
-        <div class="panel panel-danger">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    {% trans "Your attention is required to resolve the following issues" %}
-                </h3>
-            </div>
-            <ul class="list-group">
-                {% for action in actions %}
-                    <li class="list-group-item logentry">
-                        <p>
-                            <form method="post" action="{% url 'control:event.requiredaction.discard' event=request.event.slug organizer=request.event.organizer.slug id=action.id %}" class="pull-right flip">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-default btn-xs">
-                                    {% trans "Hide message" %}
-                                </button>
-                            </form>
-                            <small><span
-                                    class="fa fa-clock-o"></span> {{ action.datetime|date:"SHORT_DATETIME_FORMAT" }}
-                            </small>
-                        </p>
-                        {{ action.display|safe }}
-                    </li>
-                {% endfor %}
-            </ul>
-            <div class="panel-footer">
-                <a href="{% url "control:event.requiredactions" event=request.event.slug organizer=request.event.organizer.slug %}">
-                    {% trans "Show more" %}
-                </a>
-            </div>
+    {# The wrapper is always rendered so the page keeps the same side padding #}
+    {# (common_dashboard.css: body:has(.td-dashboard)) whether or not there are items. #}
+    {% if has_overpaid_orders or has_pending_orders_with_full_payment or has_pending_refunds or has_cancellation_requests or has_pending_approvals or actions %}
+        <div class="td-dashboard pt-0">
+            {% include 'pretixcontrol/event/includes/dashboard_action_required.html' %}
         </div>
+    {% else %}
+        <div class="td-dashboard p-0"></div>
     {% endif %}
 
     {% if request.event.has_subevents %}
