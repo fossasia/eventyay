@@ -1048,12 +1048,14 @@ h1 .label {
 
             img {
                 height: 30px;
-                margin: 0 5px 0 0;
+                margin: 0;
+                margin-inline-end: 5px;
             }
         }
 
         #sidebar-toggle {
-            margin: 4px 10px 3px 0;
+            margin: 4px 0 3px;
+            margin-inline-end: 10px;
             padding: 5px;
             height: auto;
             display: flex;
@@ -1064,7 +1066,8 @@ h1 .label {
             display: flex;
             align-items: center;
             height: 50px;
-            margin: 0 0 0 auto;
+            margin: 0;
+            margin-inline-start: auto;
             padding: 0;
             gap: 4px;
 

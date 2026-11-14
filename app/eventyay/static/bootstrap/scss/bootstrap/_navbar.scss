@@ -375,10 +375,10 @@
 
 @media (min-width: $grid-float-breakpoint) {
   .navbar-left {
-    float: left !important;
+    float: inline-start;
   }
   .navbar-right {
-    float: right !important;
+    float: inline-end;
   margin-right: -$navbar-padding-horizontal;
 
     ~ .navbar-right {
