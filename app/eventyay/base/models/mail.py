@@ -17,6 +17,7 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.mail.context import get_available_placeholders, get_mail_context, get_used_placeholders
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
 from eventyay.mail.signals import queuedmail_post_send, queuedmail_pre_send
@@ -229,8 +230,8 @@ class MailTemplate(PretalxModel):
                 log_event('mail', 'mail.template.render', OUTCOME_FAILURE, error_code='missing_placeholders', event_id=event.pk if event else None, object_id=self.pk)
                 logger.warning('Mail template (pk=%s, role=%s) uses placeholders not available in this context', self.pk, self.role)
             try:
-                subject = str(self.subject).format_map(defaultdict(str, context))
-                text = str(self.text).format_map(defaultdict(str, context))
+                subject = escape_stray_braces(str(self.subject)).format_map(defaultdict(str, context))
+                text = escape_stray_braces(str(self.text)).format_map(defaultdict(str, context))
             except (KeyError, IndexError, ValueError):
                 log_event('mail', 'mail.template.render', OUTCOME_FAILURE, error_code='render_error', event_id=event.pk if event else None, object_id=self.pk)
                 raise SendMailException('Experienced error when rendering email text.', already_logged=True)

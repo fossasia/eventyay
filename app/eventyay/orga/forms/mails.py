@@ -23,7 +23,8 @@ from eventyay.common.forms.widgets import EnhancedSelectMultiple, I18nEmailEdito
 from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import SplitDateTimeField
-from eventyay.mail.context import get_available_placeholders, get_invalid_placeholders
+from eventyay.helpers.placeholders import escape_stray_braces
+from eventyay.mail.context import get_available_placeholders, get_invalid_placeholders, get_malformed_placeholders
 from eventyay.submission.forms import SubmissionFilterForm
 
 
@@ -90,44 +91,39 @@ class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 grouped['other'].append(placeholder)
         return grouped
 
-    def clean_subject(self):
-        text = self.cleaned_data['subject']
-        try:
-            warnings = get_invalid_placeholders(text, self.valid_placeholders)
-        except Exception:
+    def _check_placeholders(self, text):
+        """Reject mistyped and unknown placeholders; other braces are sent as plain text."""
+        malformed = get_malformed_placeholders(text, self.valid_placeholders)
+        if malformed:
             raise forms.ValidationError(
                 _(
-                    'Invalid email template! '
-                    'Please check that you don’t have stray { or } somewhere, '
-                    'and that there are no spaces inside the {} blocks.'
-                )
+                    'Invalid placeholder syntax: %(value)s. Write placeholders without spaces inside the '
+                    'braces, for example {event_name}. To show braces as text, write {{ and }}.'
+                ),
+                code='invalid_placeholder_syntax',
+                params={'value': ', '.join(malformed)},
             )
+        warnings = get_invalid_placeholders(text, self.valid_placeholders)
         if warnings:
             warnings = ', '.join('{' + warning + '}' for warning in warnings)
             raise forms.ValidationError(str(_('Unknown placeholder!')) + ' ' + warnings)
+
+    def clean_subject(self):
+        """Validate the subject's placeholders."""
+        text = self.cleaned_data['subject']
+        self._check_placeholders(text)
         return text
 
     def clean_text(self):
+        """Validate the text's placeholders and reject empty links in each locale's preview."""
         text = self.cleaned_data['text']
-        try:
-            warnings = get_invalid_placeholders(text, self.valid_placeholders)
-        except Exception:
-            raise forms.ValidationError(
-                _(
-                    'Invalid email template! '
-                    'Please check that you don’t have stray { or } somewhere, '
-                    'and that there are no spaces inside the {} blocks.'
-                )
-            )
-        if warnings:
-            warnings = ', '.join('{' + warning + '}' for warning in warnings)
-            raise forms.ValidationError(str(_('Unknown placeholder!')) + ' ' + warnings)
+        self._check_placeholders(text)
 
         from eventyay.base.templatetags.rich_text import compile_email_body
 
         for locale in self.event.locales:
             with language(locale):
-                message = text.localize(locale)
+                message = escape_stray_braces(text.localize(locale))
                 preview_text = compile_email_body(
                     message.format_map(
                         {key: escape(value.render_sample(self.event)) for key, value in self.valid_placeholders.items()}
