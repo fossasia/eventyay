@@ -287,7 +287,7 @@ def test_import_submission_row_rejects_unknown_choice_and_cleans_up(event, user)
             question_cache=_choice_cache(question),
         )
 
-        with pytest.raises(ImportExecutionError, match='Invalid answer'):
+        with pytest.raises(ImportExecutionError, match='Unknown choice'):
             _import_submission_row(
                 event,
                 {'title': 'csv:title'},
@@ -315,7 +315,7 @@ def test_import_submission_row_rejects_unknown_choice_on_optionless_question(eve
             question_cache=_choice_cache(question),
         )
 
-        with pytest.raises(ImportExecutionError, match='Invalid answer'):
+        with pytest.raises(ImportExecutionError, match='Unknown choice'):
             _import_submission_row(
                 event,
                 {'title': 'csv:title'},

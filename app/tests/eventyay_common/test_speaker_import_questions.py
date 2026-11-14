@@ -225,7 +225,7 @@ def test_import_speaker_row_rejects_unknown_choice_value(event, user):
             'question_cache': _choice_cache(question),
         }
 
-        with pytest.raises(ImportExecutionError, match='Invalid answer'):
+        with pytest.raises(ImportExecutionError, match='Unknown choice'):
             _import_speaker_row(
                 event,
                 _speaker_settings(),
@@ -253,7 +253,7 @@ def test_import_speaker_row_rejects_unknown_choice_on_optionless_question(event,
             'question_cache': _choice_cache(question),
         }
 
-        with pytest.raises(ImportExecutionError, match='Invalid answer'):
+        with pytest.raises(ImportExecutionError, match='Unknown choice'):
             _import_speaker_row(
                 event,
                 _speaker_settings(),
@@ -295,7 +295,7 @@ def test_import_speaker_row_drops_rolled_back_choice_options_from_cache(event, u
             },
         }
 
-        with pytest.raises(ImportExecutionError, match='Invalid answer'):
+        with pytest.raises(ImportExecutionError, match='Unknown choice'):
             _import_speaker_row(
                 event,
                 _speaker_settings(),
