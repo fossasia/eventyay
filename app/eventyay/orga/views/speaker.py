@@ -1,3 +1,6 @@
+from collections import defaultdict
+from urllib.parse import urlencode
+
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -6,22 +9,32 @@ from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from urllib.parse import urlencode
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import Answer, SpeakerProfile, User
+from eventyay.base.models import Answer, SpeakerProfile, User, Voucher
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.mail import MailTemplateRoles
+from eventyay.base.models.speaker_voucher import SpeakerVoucher, SpeakerVoucherSettings
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
+from eventyay.base.services.speaker_vouchers import (
+    allocate_and_send_vouchers,
+    assignment_needs_replacement,
+    profiles_needing_voucher,
+    speaker_summary_counts,
+    voucher_redeem_url,
+)
 from eventyay.base.services.talkimport import import_speakers
+from eventyay.base.templatetags.rich_text import compile_email_body
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
@@ -39,8 +52,9 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-
+from eventyay.mail.context import get_mail_context
 from eventyay.orga.forms.importers import SpeakerImportProcessForm, csv_sample_values
+from eventyay.orga.forms.speaker import SpeakerVoucherSettingsForm
 from eventyay.orga.forms.submission import SubmissionForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
@@ -752,3 +766,228 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
                 msg += ' ' + _('Errors: {errors}').format(errors='; '.join(str(e) for e in errors[:10]))
             return msg
         return _('The speaker import was successful.')
+
+
+class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
+    template_name = 'orga/speaker/vouchers.html'
+    form_class = SpeakerVoucherSettingsForm
+    permission_required = 'base.update_speakerprofile'
+
+    def has_permission(self):
+        # Do not allow event-access sessions to bypass organiser permission.
+        request = getattr(self, 'request', None)
+        if (
+            request
+            and hasattr(request, 'user')
+            and hasattr(request.user, 'has_active_staff_session')
+            and request.user.has_active_staff_session(request.session.session_key)
+        ):
+            return True
+        return super(PermissionRequired, self).has_permission()
+
+    def get_success_url(self):
+        return self.request.event.orga_urls.speaker_vouchers
+
+    def _get_settings(self):
+        with scope(event=self.request.event):
+            obj, _created = SpeakerVoucherSettings.objects.get_or_create(event=self.request.event)
+        return obj
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def get_initial(self):
+        settings_obj = self._get_settings()
+        return {
+            'enabled': settings_obj.enabled,
+            'voucher_tag': settings_obj.voucher_tag,
+        }
+
+    def _pending_send_counts(self, settings_obj):
+        """Return (recipient_count, new_vouchers_needed, remaining, remaining_after)."""
+        with scope(event=self.request.event):
+            recipients = list(profiles_needing_voucher(self.request.event))
+            new_needed = 0
+            for profile in recipients:
+                try:
+                    assignment = profile.voucher_assignment
+                except SpeakerVoucher.DoesNotExist:
+                    new_needed += 1
+                    continue
+                if assignment_needs_replacement(assignment):
+                    new_needed += 1
+            remaining = settings_obj.batch_remaining_count() if settings_obj.voucher_tag else 0
+        return len(recipients), new_needed, remaining, max(remaining - new_needed, 0)
+
+    def _send_blocker(self, settings_obj):
+        if not settings_obj.enabled:
+            return _('Enable speaker vouchers and save before sending.')
+        if not settings_obj.voucher_tag:
+            return _('Select a voucher batch first.')
+        recipient_count, new_needed, remaining, _remaining_after = self._pending_send_counts(settings_obj)
+        if not recipient_count:
+            return _('Every eligible speaker already has a voucher.')
+        if new_needed and remaining < new_needed:
+            return _('All codes in this batch have been used. Add more codes in Tickets → Vouchers.')
+        return None
+
+    def _email_preview(self, settings_obj):
+        event = self.request.event
+        template = event.get_mail_template(MailTemplateRoles.SPEAKER_VOUCHER)
+        sample_code = 'SPEAKER-EXAMPLE'
+        sample_url = voucher_redeem_url(event, sample_code)
+        with scope(event=event):
+            sample_profile = profiles_needing_voucher(event).first() or SpeakerProfile.objects.filter(
+                event=event
+            ).select_related('user').first()
+        user = sample_profile.user if sample_profile else self.request.user
+        context = get_mail_context(event=event, user=user)
+        context.update({'voucher_code': sample_code, 'voucher_url': sample_url})
+        raw_subject = str(template.subject)
+        raw_text = str(template.text)
+        try:
+            subject = raw_subject.format_map(defaultdict(str, context))
+            text = raw_text.format_map(defaultdict(str, context))
+            preview_note = _(
+                'This preview uses an example voucher code. Each speaker receives their own code.'
+            )
+        except (KeyError, IndexError, ValueError):
+            subject = raw_subject
+            text = raw_text
+            preview_note = _(
+                'This template could not be rendered for preview. Fix placeholders in the mail template.'
+            )
+        return {
+            'template': template,
+            'subject': subject,
+            'html': compile_email_body(text),
+            'sample_note': preview_note,
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        settings_obj = self._get_settings()
+        with scopes_disabled():
+            has_batches = (
+                Voucher.objects.filter(event=self.request.event).exclude(tag='').exists()
+            )
+        with scope(event=self.request.event):
+            summary = speaker_summary_counts(self.request.event, settings_obj)
+        recipient_count, vouchers_to_use, _remaining, remaining_after = self._pending_send_counts(
+            settings_obj
+        )
+        create_batch_url = reverse(
+            'control:event.vouchers.bulk',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
+        context.update(
+            {
+                'voucher_settings': settings_obj,
+                'has_voucher_batches': has_batches,
+                'summary': summary,
+                'send_blocker': self._send_blocker(settings_obj),
+                'create_batch_url': create_batch_url,
+                'email_preview': self._email_preview(settings_obj),
+                'pending_recipient_count': recipient_count,
+                'vouchers_to_use': vouchers_to_use,
+                'vouchers_remaining_after': remaining_after,
+            }
+        )
+        return context
+
+    def form_valid(self, form):
+        settings_obj = self._get_settings()
+        settings_obj.enabled = form.cleaned_data['enabled']
+        settings_obj.voucher_tag = form.cleaned_data['voucher_tag'] or ''
+        settings_obj.save(update_fields=['enabled', 'voucher_tag'])
+        messages.success(self.request, _('Voucher settings saved.'))
+        return super().form_valid(form)
+
+
+class SpeakerVoucherBulkSendView(EventPermissionRequired, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def has_permission(self):
+        # Do not allow event-access sessions to bypass organiser permission.
+        request = getattr(self, 'request', None)
+        if (
+            request
+            and hasattr(request, 'user')
+            and hasattr(request.user, 'has_active_staff_session')
+            and request.user.has_active_staff_session(request.session.session_key)
+        ):
+            return True
+        return super(PermissionRequired, self).has_permission()
+
+    def post(self, request, *args, **kwargs):
+        event = request.event
+        with scope(event=event):
+            try:
+                settings_obj = event.speaker_voucher_settings
+            except SpeakerVoucherSettings.DoesNotExist:
+                settings_obj = None
+
+            if not settings_obj or not settings_obj.enabled or not settings_obj.voucher_tag:
+                messages.error(request, _('Configure a voucher batch first.'))
+                return redirect(event.orga_urls.speaker_vouchers)
+
+            profiles = list(profiles_needing_voucher(event))
+            if not profiles:
+                messages.info(request, _('Every eligible speaker already has a voucher.'))
+                return redirect(event.orga_urls.speaker_vouchers)
+
+            result = allocate_and_send_vouchers(
+                event, settings_obj, profiles, requestor=request.user
+            )
+
+        if result['aborted_insufficient']:
+            if result['sent']:
+                messages.error(
+                    request,
+                    _(
+                        'Not enough unused vouchers in this batch. '
+                        'Needed {needed}, but only {available} remain. '
+                        'Sent vouchers to {sent} speaker(s) before stopping.'
+                    ).format(
+                        needed=result['needed'],
+                        available=result['available'],
+                        sent=result['sent'],
+                    ),
+                )
+            else:
+                messages.error(
+                    request,
+                    _(
+                        'Not enough unused vouchers in this batch. '
+                        'Needed {needed}, but only {available} remain. Nothing was sent.'
+                    ).format(needed=result['needed'], available=result['available']),
+                )
+            return redirect(event.orga_urls.speaker_vouchers)
+
+        parts = []
+        if result['sent']:
+            parts.append(
+                ngettext(
+                    'Sent a voucher to {count} speaker.',
+                    'Sent vouchers to {count} speakers.',
+                    result['sent'],
+                ).format(count=result['sent'])
+            )
+        if result['resent']:
+            parts.append(
+                ngettext(
+                    'Resent a voucher to {count} speaker.',
+                    'Resent vouchers to {count} speakers.',
+                    result['resent'],
+                ).format(count=result['resent'])
+            )
+        if not parts:
+            messages.warning(request, _('No vouchers were sent.'))
+        else:
+            messages.success(request, ' '.join(str(part) for part in parts))
+        return redirect(event.orga_urls.speaker_vouchers)

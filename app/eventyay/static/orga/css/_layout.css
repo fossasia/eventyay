@@ -258,7 +258,8 @@ aside.sidebar {
   display: flex;
   font-size: 14px;
   flex-wrap: nowrap;
-  z-index: 150;
+  /* Stay above page content while hover-expanded, below the top navbar (1100). */
+  z-index: 1050;
   padding-left: 0;
   margin-bottom: 0;
   overflow-x: hidden;
@@ -332,18 +333,26 @@ aside.sidebar {
   .nav-fold span.has-children,
   #nav-search-wrapper {
     .arrow {
+      flex: 0 0 40px;
       flex-grow: 0;
+      flex-shrink: 0;
       color: var(--color-primary);
       width: 40px;
+      min-width: 40px;
       border: none;
       display: flex;
       justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      cursor: pointer;
 
       i {
         padding-top: 4px;
         margin-right: 0;
         transform: rotate(90deg);
         transition: transform 0.2s;
+        pointer-events: none;
       }
     }
 
@@ -360,9 +369,36 @@ aside.sidebar {
   .nav-fold span.has-children {
     display: flex;
     flex-direction: row;
+    align-items: stretch;
+    min-width: 0;
+    width: 100%;
 
-    a {
-      flex-grow: 1;
+    > a.nav-link-inner {
+      flex: 1 1 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    > a.arrow {
+      flex: 0 0 40px;
+    }
+  }
+
+  /* Keep long labels from shoving the submenu chevron outside the sidebar hit area. */
+  &.sidebar-uncollapsed .nav-fold span.has-children > a.nav-link-inner .sidebar-text,
+  &:focus-within .nav-fold span.has-children > a.nav-link-inner .sidebar-text {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (hover: hover) {
+    &:hover .nav-fold span.has-children > a.nav-link-inner .sidebar-text {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
