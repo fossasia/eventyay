@@ -23,7 +23,6 @@ function setHint(selector, required) {
     if (br?.tagName === 'BR') br.hidden = required
   }
 
-  // Add or remove the required marker
   text.querySelector('.required-indicator')?.remove()
   if (required) {
     const star = document.createElement('span')
@@ -49,11 +48,9 @@ function updateBankTransferHints() {
   const isSepa = sepaRadio.checked
   // Account type always has a selection, so show it as required
   setHint("input[name='payment_banktransfer_bank_details_type']", true)
-  // SEPA: holder name, IBAN, BIC and bank name are required
   for (const f of ['name', 'iban', 'bic', 'bank']) {
     setHint(`#id_payment_banktransfer_bank_details_sepa_${f}`, isSepa)
   }
-  // Other bank account: free-text details are required
   setHint("textarea[name^='payment_banktransfer_bank_details']", !isSepa)
 }
 
