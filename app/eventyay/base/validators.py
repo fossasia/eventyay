@@ -37,6 +37,25 @@ class EventSlugBanlistValidator(BanlistValidator):
     ]
 
 
+# @deconstructible
+# class OrganizerSlugBanlistValidator(BanlistValidator):
+#     banlist = [
+#         'download',
+#         'healthcheck',
+#         'locale',
+#         'control',
+#         'pretixdroid',
+#         'redirect',
+#         'jsi18n',
+#         'metrics',
+#         '_global',
+#         '__debug__',
+#         'about',
+#         'api',
+#         'csp_report',
+#         'widget',
+#     ]
+
 @deconstructible
 class OrganizerSlugBanlistValidator(BanlistValidator):
     banlist = [
@@ -54,9 +73,22 @@ class OrganizerSlugBanlistValidator(BanlistValidator):
         'api',
         'csp_report',
         'widget',
+
+        # Reserved top-level paths
+        'common',
+        'admin',
+        'orga',
+        'login',
+        'upcoming',
+        'past',
+        'followed-events',
+        'all-events',
+        'terms',
+        'privacy',
+        'support',
     ]
 
-
+    
 @deconstructible
 class EmailBanlistValidator(BanlistValidator):
     banlist = [

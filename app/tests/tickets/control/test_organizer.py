@@ -6,6 +6,7 @@ from django.db import transaction
 from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scopes_disabled
+from django.core.exceptions import ValidationError
 
 from eventyay.base.models import Event, Organizer, Team, User
 from tests.tickets.base import SoupTest, extract_form_fields
@@ -20,6 +21,31 @@ def class_monkeypatch(request, monkeypatch):
 @pytest.mark.usefixtures('class_monkeypatch')
 class OrganizerTest(SoupTest):
     @scopes_disabled()
+    @pytest.mark.parametrize(
+    'slug',
+    [
+        'common',
+        'admin',
+        'orga',
+        'login',
+        'upcoming',
+        'past',
+        'followed-events',
+        'all-events',
+        'terms',
+        'privacy',
+        'support',
+    ],
+    )
+    def test_organizer_reserved_slug_validation(self, slug):
+        organizer = Organizer(
+            name='Test Organizer',
+            slug=slug,
+        )
+
+        with pytest.raises(ValidationError):
+            organizer.full_clean()
+
     def setUp(self):
         super().setUp()
         self.user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
