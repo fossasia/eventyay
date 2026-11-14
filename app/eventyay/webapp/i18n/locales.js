@@ -21,6 +21,7 @@ export const locales = [
 	{ code: 'de-formal', label: 'Deutsch (Sie)', nativeLabel: 'Deutsch (Sie)', englishLabel: 'German (formal)' },
 	{ code: 'el', label: 'Ελληνικά', nativeLabel: 'Ελληνικά', englishLabel: 'Greek' },
 	{ code: 'gu', label: 'ગુજરાતી', nativeLabel: 'ગુજરાતી', englishLabel: 'Gujarati' },
+	{ code: 'ha', label: 'Hausa', nativeLabel: 'Hausa', englishLabel: 'Hausa' },
 	{ code: 'hi', label: 'हिन्दी', nativeLabel: 'हिन्दी', englishLabel: 'Hindi' },
 	{ code: 'hu', label: 'Magyar', nativeLabel: 'Magyar', englishLabel: 'Hungarian' },
 	{ code: 'id', label: 'Bahasa Indonesia', nativeLabel: 'Bahasa Indonesia', englishLabel: 'Indonesian' },
