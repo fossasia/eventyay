@@ -82,6 +82,7 @@
         <meta id="eventyay-file-input-i18n" data-choose-file="{% translate 'Choose file' %}">
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
+        {% include 'common/includes/external_links.html' %}
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         <div id="top-bg" class="header {{ request.event.display_settings.header_pattern|default:"bg-primary" }}">

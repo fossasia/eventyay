@@ -1,0 +1,22 @@
+{% extends 'eventyay_common/auth/base.html' %}
+{% load i18n %}
+
+{% block content %}
+  <main class='panel panel-default external-link-warning' aria-labelledby='external-link-title'>
+    <div class='panel-body'>
+      <h1 id='external-link-title'>{% translate 'You are leaving Eventyay' %}</h1>
+      <p>{% translate 'You are leaving Eventyay and being redirected to an external website.' %}</p>
+      <p>{% translate 'You are being redirected to:' %}</p>
+      <p class='external-link-destination'>{{ destination }}</p>
+      <p>{% translate 'Only continue if you trust this destination.' %}</p>
+      <div class='external-link-actions'>
+        <a href='{{ destination }}' class='btn btn-primary' rel='noreferrer noopener' data-external-link-continue>
+          {% translate 'Continue to External Site' %}
+        </a>
+        <a href='{{ return_url }}' class='btn btn-default' data-external-link-cancel>
+          {% translate 'Cancel / Go back' %}
+        </a>
+      </div>
+    </div>
+  </main>
+{% endblock %}

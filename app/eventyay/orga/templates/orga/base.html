@@ -90,6 +90,7 @@
         {% endcomment %}
         {% block scripts %}{% endblock scripts %}
         {{ html_head|safe }}
+        {% include 'common/includes/external_links.html' %}
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">

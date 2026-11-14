@@ -41,6 +41,7 @@
         <link rel="icon" type="image/png" sizes="194x194" href="{% static 'pretixbase/img/icons/favicon-194x194.png' %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static 'pretixbase/img/icons/favicon-16x16.png' %}">
     {% endif %}
+    {% include 'common/includes/external_links.html' %}
 </head>
 <body class="startpage-body{% if request.user.is_authenticated %} startpage-auth{% endif %}">
     {{ base_path|json_script:"base_path" }}
