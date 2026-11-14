@@ -71,6 +71,17 @@ def searchable_product_select():
     )
 
 
+def searchable_country_select():
+    return forms.Select(
+        attrs={
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search'),
+            'data-empty-text': _('No results'),
+            'data-all-label': _('All countries'),
+        }
+    )
+
+
 def get_all_payment_providers():
     global PAYMENT_PROVIDERS
 
@@ -608,6 +619,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """Initialize expert filter form with dynamic fields, choices, and searchable dropdowns."""
         super().__init__(*args, **kwargs)
         del self.fields['query']
         del self.fields['question']
@@ -649,7 +661,8 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         self.fields['invoice_address_country'] = forms.ChoiceField(
             required=False,
             label=gettext('Invoice address') + ': ' + gettext('Country'),
-            choices=[('', '')] + list(CachedCountries()),
+            choices=[('', _('All countries'))] + list(CachedCountries()),
+            widget=searchable_country_select(),
         )
         self.fields['attendee_name'] = forms.CharField(required=False, label=_('Attendee name'))
         self.fields['attendee_email'] = forms.CharField(required=False, label=_('Attendee e-mail address'))
@@ -674,7 +687,8 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         self.fields['attendee_address_country'] = forms.ChoiceField(
             required=False,
             label=gettext('Attendee address') + ': ' + gettext('Country'),
-            choices=[('', '')] + list(CachedCountries()),
+            choices=[('', _('All countries'))] + list(CachedCountries()),
+            widget=searchable_country_select(),
         )
         self.fields['ticket_secret'] = forms.CharField(label=_('Ticket secret'), required=False)
         for q in self.event.questions.all():
