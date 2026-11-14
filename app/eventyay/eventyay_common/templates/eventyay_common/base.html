@@ -7,7 +7,7 @@
 {% load rich_text %}
 {% load timezone %}
 <!DOCTYPE html>
-<html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
+<html lang='{{ html_locale }}'{% if rtl %} dir='rtl' class='rtl'{% endif %}>
 	<head>
 		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ settings.INSTANCE_NAME }}</title>
