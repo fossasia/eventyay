@@ -1389,6 +1389,24 @@ export default {
 
 @media (max-width: 600px)
 	.c-speakers-list
+		&.is-embedded
+			padding: 0 1rem
+			box-sizing: border-box
+			width: 100%
+			max-width: 100vw
+			overflow-x: hidden !important
+			.speakers-details
+				padding-left: 0
+				padding-right: 0
+			.featured-speakers-grid
+				width: 100%
+				max-width: 100%
+				justify-content: center
+				gap: 12px
+			.featured-speaker-stack
+				max-width: 100%
+			.featured-speaker-card
+				max-width: 100%
 		.speakers-toolbar
 			padding: 6px 0 0
 			gap: 6px

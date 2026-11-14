@@ -235,6 +235,11 @@ section.front-page {
         display: block;
         white-space: normal;
     }
+    // Keep this row inside the mobile event-page container without changing Bootstrap rows elsewhere.
+    .order-status-row {
+        margin-left: 0;
+        margin-right: 0;
+    }
     .row-voucher > div:first-child {
         margin-bottom: 15px;
     }
