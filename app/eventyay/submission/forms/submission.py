@@ -146,7 +146,7 @@ class InfoForm(
         _now = now()
         submission_types = self.event.submission_types
         if instance and instance.pk and (
-            instance.state != SubmissionStates.SUBMITTED
+            instance.state not in (SubmissionStates.DRAFT, SubmissionStates.SUBMITTED)
             or not (hasattr(self.event, 'cfp') and self.event.cfp.is_open)
         ):
             self.fields['submission_type'].queryset = submission_types.filter(pk=instance.submission_type_id)

@@ -228,16 +228,15 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
-        """Validate release data before accessing or creating the draft schedule."""
+        """Validate release data, then release the current draft under the event lock."""
         serializer = ScheduleReleaseSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
-        wip_schedule = request.event.wip_schedule
         version_name = serializer.validated_data.get('version')
         comment = serializer.validated_data.get('comment')
 
         try:
-            schedule, _ = wip_schedule.freeze(
+            schedule, _ = request.event.release_schedule(
                 name=version_name,
                 user=request.user,
                 notify_speakers=False,

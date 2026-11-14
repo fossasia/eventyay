@@ -348,28 +348,29 @@ def test_orga_cannot_release_schedule_without_version_name(
 def test_release_reports_competing_release(
     client, orga_client, orga_user_write_token, event, slot, monkeypatch, via_api, competing_action
 ):
-    """Report a competing release or reset through both interfaces without overwriting it."""
+    """Report a stale release or reset target without rolling back another request's change."""
     original_freeze = Schedule.freeze
     with scope(event=event):
         if competing_action == 'reset':
             released, _ = event.wip_schedule.freeze('previous-release', notify_speakers=False)
+        stale_draft = event.wip_schedule
+        schedule_count = event.schedules.count()
+        if competing_action == 'reset':
+            released.unfreeze()
+        else:
+            competing_draft = Schedule.objects.get(pk=stale_draft.pk)
+            original_freeze(competing_draft, 'competing-release', notify_speakers=False)
     error_message = 'draft no longer exists' if competing_action == 'reset' else 'already versioned'
 
     def freeze_after_competing_release(draft, *args, **kwargs):
-        """Complete another request after this request has loaded its draft."""
+        """Supply a stale target after the competing request's writes have completed."""
         with scope(event=draft.event):
-            if competing_action == 'reset':
-                released.unfreeze()
-            else:
-                competing_draft = Schedule.objects.get(pk=draft.pk)
-                original_freeze(competing_draft, 'competing-release', notify_speakers=False)
-            return original_freeze(draft, *args, **kwargs)
+            return original_freeze(stale_draft, *args, **kwargs)
 
     monkeypatch.setattr(Schedule, 'freeze', freeze_after_competing_release)
     with scope(event=event):
         event.talks_published = True
         event.save(update_fields=['talks_published'])
-        schedule_count = event.schedules.count()
 
     if via_api:
         response = client.post(
