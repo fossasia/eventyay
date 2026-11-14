@@ -19,6 +19,7 @@ from django.utils.http import http_date
 
 from eventyay.base.middleware import should_skip_session_save
 from eventyay.base.models import Event
+from eventyay.helpers.cookies import set_cookie_without_samesite
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
@@ -220,16 +221,17 @@ class SessionMiddleware(BaseSessionMiddleware):
                         request.session.save()
                     except UpdateError:  # pragma: no cover
                         request.session.create()
-                    response.set_cookie(
+                    set_cookie_without_samesite(
+                        request,
+                        response,
                         settings.SESSION_COOKIE_NAME,
                         request.session.session_key,
                         max_age=max_age,
                         expires=expires,
                         domain=get_cookie_domain(request),
                         path=settings.SESSION_COOKIE_PATH,
-                        secure=request.scheme == 'https',
+                        secure=request.scheme == 'https' or settings.SITE_URL.startswith('https://'),
                         httponly=settings.SESSION_COOKIE_HTTPONLY or None,
-                        samesite=settings.SESSION_COOKIE_SAMESITE,
                     )
         return response
 
@@ -256,15 +258,16 @@ class CsrfViewMiddleware(BaseCsrfMiddleware):
         else:
             # Set the CSRF cookie even if it's already set, so we renew
             # the expiry timer.
-            response.set_cookie(
+            set_cookie_without_samesite(
+                request,
+                response,
                 settings.CSRF_COOKIE_NAME,
                 request.META['CSRF_COOKIE'],
                 max_age=settings.CSRF_COOKIE_AGE,
                 domain=get_cookie_domain(request),
                 path=settings.CSRF_COOKIE_PATH,
-                secure=request.scheme == 'https',
+                secure=request.scheme == 'https' or settings.SITE_URL.startswith('https://'),
                 httponly=settings.CSRF_COOKIE_HTTPONLY,
-                samesite=settings.CSRF_COOKIE_SAMESITE,
             )
             # Content varies with the CSRF cookie, so set the Vary header.
             patch_vary_headers(response, ('Cookie',))

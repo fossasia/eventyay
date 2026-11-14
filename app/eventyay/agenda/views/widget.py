@@ -458,4 +458,5 @@ def event_css(request, organizer=None, event=None, **kwargs):
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
+    response['Access-Control-Allow-Origin'] = '*'
     return response
