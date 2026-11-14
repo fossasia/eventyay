@@ -199,7 +199,18 @@
                                         <td></td>
                                         <td></td>
                                         {% if request.event.has_subevents %}<td></td>{% endif %}
-                                        <td></td>
+                                        <td class="list-actions text-right flip">
+                                            {% if "can_change_vouchers" in request.eventpermset %}
+                                                <a href="{% url 'control:event.voucher.group_edit' organizer=request.event.organizer.slug event=request.event.slug voucher=v.pk %}"
+                                                   class="btn btn-sm btn-default" title="{% trans 'Edit group' %}" data-toggle="tooltip">
+                                                    <i class="fa fa-pencil"></i>
+                                                </a>
+                                                <a href="{% url 'control:event.voucher.group_delete' organizer=request.event.organizer.slug event=request.event.slug voucher=v.pk %}"
+                                                   class="btn btn-delete btn-danger btn-sm" title="{% trans 'Delete group' %}" data-toggle="tooltip">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                 {% else %}
                                     {% include 'pretixcontrol/vouchers/_voucher_row.html' with v=v %}
@@ -212,6 +223,9 @@
                             <div class="batch-select-actions hidden">
                                 <button type="submit" class="btn btn-default btn-save" name="action" value="delete">
                                     {% trans "Delete selected" %}
+                                </button>
+                                <button type="submit" class="btn btn-default btn-save" name="action" value="edit">
+                                    {% trans "Edit selected" %}
                                 </button>
                             </div>
                         {% endif %}

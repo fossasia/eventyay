@@ -310,7 +310,8 @@ class VoucherForm(I18nModelForm):
                     }
                 )
         Voucher.clean_subevent(data, self.instance.event)
-        Voucher.clean_max_usages(data, self.instance.redeemed)
+        if not getattr(self, 'allow_reduced_max_usages', False):
+            Voucher.clean_max_usages(data, self.instance.redeemed)
         check_quota = Voucher.clean_quota_needs_checking(
             data,
             self.initial_instance_data,
@@ -380,6 +381,41 @@ class VoucherForm(I18nModelForm):
 
             self.save_m2m = save_m2m
         return instance
+
+
+class VoucherGroupForm(VoucherForm):
+    allow_reduced_max_usages = True
+
+    def __init__(self, *args, mixed_fields=None, **kwargs):
+        self.mixed_fields = set(mixed_fields or ())
+        super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = Voucher
+        localized_fields = '__all__'
+        fields = [
+            'tag',
+            'valid_until',
+            'block_quota',
+            'allow_ignore_quota',
+            'allow_ignore_approval',
+            'value',
+            'max_usages',
+            'price_mode',
+            'subevent',
+            'show_hidden_products',
+            'all_addons_included',
+            'all_bundles_included',
+            'budget',
+            'comment',
+        ]
+        field_classes = {
+            'valid_until': SplitDateTimeField,
+            'subevent': SafeModelChoiceField,
+        }
+        widgets = {
+            'valid_until': SplitDateTimePickerWidget(),
+        }
 
 
 class VoucherBulkForm(VoucherForm):
