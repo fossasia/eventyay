@@ -561,10 +561,11 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
         # variation-limits.js on the page to check that it counts the quantities and not the prices,
         # so a price above the maximum does not block the order.
         path = finders.find('pretixpresale/js/ui/variation-limits.js')
+        self.assertIsNotNone(path, 'pretixpresale/js/ui/variation-limits.js not found in the static files')
         with open(path, encoding='utf-8') as fp:
-            match = re.search(r"VARIATION_INPUTS_SELECTOR = '([^']+)'", fp.read())
+            match = re.search(r"VARIATION_INPUTS_SELECTOR\s*=\s*(['\"`])(.+?)\1", fp.read())
         self.assertIsNotNone(match, 'VARIATION_INPUTS_SELECTOR not found in variation-limits.js')
-        selector = match.group(1)
+        selector = match.group(2)
         item = self._create_variation_item_for_max_total(max_per_order=3, free_price=True)
         doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
         details = doc.select_one('#item-%d' % item.pk)

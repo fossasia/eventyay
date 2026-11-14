@@ -6,7 +6,7 @@ const DETAILS_SELECTOR = 'details.item-with-variations[data-variation-max-total]
 
 // Only the selected quantities count towards the limit: the checkboxes and the quantity inputs.
 // Other number inputs, such as the price of a pay-what-you-want variation, are not counted or changed.
-// tests/tickets/presale/test_event.py reads this selector, so keep it a single-quoted string.
+// tests/tickets/presale/test_event.py reads this selector, so keep it a single string literal.
 const VARIATION_INPUTS_SELECTOR = '.variations input[type=checkbox], .variations input.input-product-count';
 
 const variationInputs = (details) => [...details.querySelectorAll(VARIATION_INPUTS_SELECTOR)];
@@ -54,19 +54,42 @@ const showValidity = (input, message) => {
     input.reportValidity();
 };
 
+// For each input that was set back within the limit and still shows the message: the value it was set to,
+// and the controller that removes the listeners which clear the message.
+const corrections = new WeakMap();
+
+const clearCorrection = (input) => {
+    const correction = corrections.get(input);
+    if (correction) {
+        correction.controller.abort();
+        corrections.delete(input);
+    }
+};
+
 // Shows the message on an input that was set back within the limit. Browsers hide the message as soon as
 // the input is valid again, so it stays invalid only until the visitor's next action: pressing the mouse or
 // a key, or leaving the input. The corrected input therefore never blocks the order.
 const showCorrection = (input, message) => {
+    // Remove the listeners of a message that is still shown, so they are not added again on every correction.
+    clearCorrection(input);
     showValidity(input, message);
-    const done = new AbortController();
+    const controller = new AbortController();
+    corrections.set(input, { value: input.value, controller });
     const clear = () => {
         input.setCustomValidity('');
-        done.abort();
+        clearCorrection(input);
     };
-    input.addEventListener('blur', clear, { signal: done.signal });
-    input.addEventListener('keydown', clear, { signal: done.signal });
-    document.addEventListener('pointerdown', clear, { signal: done.signal });
+    input.addEventListener('blur', clear, { signal: controller.signal });
+    input.addEventListener('keydown', clear, { signal: controller.signal });
+    document.addEventListener('pointerdown', clear, { signal: controller.signal });
+};
+
+// Clicking an arrow of a number input fires input, and change when the mouse button is released. When input
+// set the value back, the check on change would clear the message straight away, so it is skipped while the
+// value is still the one it was set back to.
+const isCorrectedValue = (input) => {
+    const correction = corrections.get(input);
+    return input.type !== 'checkbox' && Boolean(correction) && correction.value === input.value;
 };
 
 const showVariations = (details) => {
@@ -132,7 +155,11 @@ const enforceMaximum = (details, changedInput) => {
 document.querySelectorAll(DETAILS_SELECTOR).forEach((details) => {
     variationInputs(details).forEach((input) => {
         const onChange = () => enforceMaximum(details, input);
-        input.addEventListener('change', onChange);
+        input.addEventListener('change', () => {
+            if (!isCorrectedValue(input)) {
+                onChange();
+            }
+        });
         // A checkbox fires input and then change for the same click. Checking it on both would clear the
         // message that the first check showed, so a checkbox is only checked on change.
         if (input.type !== 'checkbox') {
