@@ -15,6 +15,8 @@ from eventyay.base.models import (
     LogEntry,
     QueuedMail,
     Review,
+    Room,
+    Schedule,
     SpeakerProfile,
     Submission,
     SubmissionComment,
@@ -222,12 +224,14 @@ LOG_NAMES = {
 
 @receiver(activitylog_display)
 def default_activitylog_display(sender: Event, activitylog: LogEntry, **kwargs):
+    """Return the readable message for a talk log action, or None if it is unknown."""
     if templated_entry := TEMPLATE_LOG_NAMES.get(activitylog.action_type):
         message = str(templated_entry)
         # Check if all placeholders are present in activitylog.data
         placeholders = {v[1] for v in string.Formatter().parse(message) if v[1]}
-        if placeholders <= set(activitylog.json_data.keys()):
-            return message.format(**activitylog.json_data)
+        data = activitylog.json_data
+        if isinstance(data, dict) and placeholders <= set(data.keys()):
+            return message.format(**data)
     action_type = LOG_ALIASES.get(activitylog.action_type, activitylog.action_type)
     return LOG_NAMES.get(action_type)
 
@@ -244,6 +248,7 @@ def _submission_label_text(submission: Submission) -> str:
 
 @receiver(activitylog_object_link)
 def default_activitylog_object_link(sender: Event, activitylog: LogEntry, **kwargs):
+    """Return an HTML reference to the object a talk log entry is about."""
     if not activitylog.content_object:
         return
     url = ''
@@ -291,6 +296,21 @@ def default_activitylog_object_link(sender: Event, activitylog: LogEntry, **kwar
         url = activitylog.content_object.orga_urls.base
         text = _('Speaker profile')
         link_text = escape(activitylog.content_object.user.get_display_name())
+    elif isinstance(activitylog.content_object, Schedule):
+        schedule = activitylog.content_object
+        text = _('Schedule')
+        if schedule.version:
+            url = schedule.urls.public
+            link_text = escape(schedule.version)
+        else:
+            url = schedule.event.orga_urls.schedule
+            link_text = _('Work in progress')
+    elif isinstance(activitylog.content_object, Room):
+        room = activitylog.content_object
+        text = _('Room')
+        link_text = escape(room.name)
+        if not room.deleted:
+            url = room.urls.edit
     elif isinstance(activitylog.content_object, Event):
         url = activitylog.content_object.orga_urls.base
         text = _('Event')
