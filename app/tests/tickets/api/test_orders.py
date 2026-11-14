@@ -1,17 +1,21 @@
 import copy
 import datetime
 import json
+import threading
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 from django.core import mail as djmail
 from django.core.files.base import ContentFile
-from django.db import connection
+from django.db import connection, connections
+from django.db.models.query import QuerySet
 from django.test.utils import CaptureQueriesContext
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
+from rest_framework.test import APIClient
 import datetime
 UTC = datetime.timezone.utc
 
@@ -688,6 +692,107 @@ def test_payment_refund_fail(token_client, organizer, event, order, monkeypatch)
     )
     assert resp.status_code == 400
     assert resp.data == {'detail': 'Invalid state of payment.'}
+
+
+@pytest.fixture
+def refund_race_order(event):
+    with scopes_disabled():
+        o = Order.objects.create(
+            code='RACE1',
+            event=event,
+            email='dummy@dummy.test',
+            status=Order.STATUS_PAID,
+            secret='k24fiuwvu8kxz3y1',
+            datetime=now(),
+            expires=now(),
+            total=Decimal('100.00'),
+            locale='en',
+        )
+        o.payments.create(
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            amount=Decimal('100.00'),
+            payment_date=now(),
+        )
+    return o
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_refunds_exceed_payment_amount(organizer, event, team, refund_race_order, monkeypatch):
+    team.can_view_orders = True
+    team.can_change_orders = True
+    team.all_events = True
+    team.save()
+    token = team.tokens.create(name='Race').token
+
+    provider = SimpleNamespace(
+        payment_refund_supported=lambda payment: True,
+        payment_partial_refund_supported=lambda payment: True,
+        execute_refund=lambda refund: None,
+    )
+    monkeypatch.setattr(OrderPayment, 'payment_provider', property(lambda self: provider))
+    monkeypatch.setattr(OrderRefund, 'payment_provider', property(lambda self: provider))
+
+    start = threading.Barrier(2, timeout=10)
+    original = OrderPayment.refunded_amount.fget
+    second_lock_attempt = threading.Event()
+    second_lock_seen = []
+
+    def refunded_amount_waiting(self):
+        value = original(self)
+        second_lock_seen.append(second_lock_attempt.wait(timeout=5))
+        return value
+
+    monkeypatch.setattr(OrderPayment, 'refunded_amount', property(refunded_amount_waiting))
+
+    lock_attempts = []
+    original_select_for_update = QuerySet.select_for_update
+
+    def recording_select_for_update(self, *args, **kwargs):
+        if self.model is OrderPayment:
+            lock_attempts.append(threading.current_thread().name)
+            if len(lock_attempts) >= 2:
+                second_lock_attempt.set()
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', recording_select_for_update)
+
+    url = '/api/v1/organizers/{}/events/{}/orders/{}/payments/1/refund/'.format(
+        organizer.slug, event.slug, refund_race_order.pk
+    )
+    results = []
+    errors = []
+
+    def fire():
+        try:
+            client = APIClient()
+            client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+            start.wait()
+            results.append(client.post(url, format='json', data={'amount': '100.00', 'mark_canceled': False}))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+        finally:
+            connections.close_all()
+
+    threads = [threading.Thread(target=fire) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors, 'A request thread failed to run: {!r}'.format(errors)
+    with scopes_disabled():
+        refunds = list(refund_race_order.refunds.values_list('amount', flat=True))
+
+    assert sum(refunds) <= Decimal('100.00'), 'Over-refund: refunded {} of a 100.00 payment'.format(sum(refunds))
+    assert sorted(r.status_code for r in results) == [200, 400], 'Status codes: {}'.format(
+        [r.status_code for r in results]
+    )
+    assert len(lock_attempts) == 2, 'Expected both requests to lock the payment, got {}'.format(lock_attempts)
+    assert second_lock_seen and all(second_lock_seen), (
+        'The second request did not try to lock the payment within the timeout, '
+        'so the two requests did not overlap as intended'
+    )
 
 
 @pytest.mark.django_db
