@@ -61,8 +61,8 @@ def test_repeat_purchase_respects_product_limit(client, repeat_purchase, status,
     order.status = status
     order.save()
     if limit_value is not None:
-        property = event.product_meta_properties.create(name='limit_one_per_user')
-        ProductMetaValue.objects.create(product=product, property=property, value=limit_value)
+        meta_property = event.product_meta_properties.create(name='limit_one_per_user')
+        ProductMetaValue.objects.create(product=product, property=meta_property, value=limit_value)
     if restricted:
         CartPosition.objects.filter(event=event, cart_id=cart_id).delete()
     session = client.session
@@ -107,8 +107,8 @@ def test_repeat_purchase_respects_product_limit(client, repeat_purchase, status,
 def test_shop_respects_product_limit_value(client, repeat_purchase, limit_value, restricted):
     event, product, order, cart_id = repeat_purchase
     if limit_value is not None:
-        property = event.product_meta_properties.create(name='limit_one_per_user')
-        ProductMetaValue.objects.create(product=product, property=property, value=limit_value)
+        meta_property = event.product_meta_properties.create(name='limit_one_per_user')
+        ProductMetaValue.objects.create(product=product, property=meta_property, value=limit_value)
 
     response = client.get('/organizer/event/')
 
@@ -125,9 +125,9 @@ def test_repeat_purchase_mixed_products(client, repeat_purchase, status, owned_r
     order.save()
     other = Product.objects.create(event=event, name='Other ticket', default_price=10)
     event.quotas.get(name='Tickets').products.add(other)
-    property = event.product_meta_properties.create(name='limit_one_per_user')
+    meta_property = event.product_meta_properties.create(name='limit_one_per_user')
     ProductMetaValue.objects.create(
-        product=product if owned_restricted else other, property=property, value='1',
+        product=product if owned_restricted else other, property=meta_property, value='1',
     )
 
     response = client.post('/organizer/event/cart/add', {
@@ -151,8 +151,8 @@ def test_cart_service_respects_product_limit_value(repeat_purchase, status, limi
     event, product, order, cart_id = repeat_purchase
     order.status = status
     order.save()
-    property = event.product_meta_properties.create(name='limit_one_per_user')
-    ProductMetaValue.objects.create(product=product, property=property, value=limit_value)
+    meta_property = event.product_meta_properties.create(name='limit_one_per_user')
+    ProductMetaValue.objects.create(product=product, property=meta_property, value=limit_value)
     positions = CartPosition.objects.filter(event=event, cart_id=cart_id, product=product)
     if restricted:
         positions.delete()
@@ -181,8 +181,8 @@ def test_order_submission_respects_product_limit_value(repeat_purchase, status, 
     event, product, order, cart_id = repeat_purchase
     order.status = status
     order.save()
-    property = event.product_meta_properties.create(name='limit_one_per_user')
-    ProductMetaValue.objects.create(product=product, property=property, value=limit_value)
+    meta_property = event.product_meta_properties.create(name='limit_one_per_user')
+    ProductMetaValue.objects.create(product=product, property=meta_property, value=limit_value)
     position_ids = list(CartPosition.objects.filter(event=event, cart_id=cart_id).values_list('pk', flat=True))
     if restricted:
         with pytest.raises(OrderError, match='Only one ticket per user'):
