@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [ dev, main ]
 
+concurrency:
+  # PRs: a new push cancels checks still running for older commits of the same PR.
+  # Branch pushes: grouped per commit, so they never cancel or replace each other.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check_translations:
     name: Validate translation files

@@ -13,6 +13,12 @@ on:
 env:
   PYTHON_VERSION: "3.12"
 
+concurrency:
+  # PRs: a new push cancels checks still running for older commits of the same PR.
+  # Branch pushes: grouped per commit, so they never cancel or replace each other.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   collect:
     runs-on: ubuntu-latest

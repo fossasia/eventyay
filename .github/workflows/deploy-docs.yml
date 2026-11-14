@@ -4,6 +4,14 @@ on:
   pull_request:
     branches:
       - dev
+    # Only build docs on PRs that change docs or dependencies. Autodoc import
+    # errors from app code are warnings, not failures, and every push to
+    # dev/main still builds and deploys the docs.
+    paths:
+      - "doc/**"
+      - ".github/workflows/deploy-docs.yml"
+      - "app/pyproject.toml"
+      - "app/uv.lock"
   push:
     branches:
       - dev
