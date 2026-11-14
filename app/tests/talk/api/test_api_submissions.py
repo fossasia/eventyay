@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from django.dispatch import Signal
 from django_scopes import scope
 
 from eventyay.api.serializers.submission import (
@@ -10,7 +11,14 @@ from eventyay.api.serializers.submission import (
     TagSerializer,
     TrackSerializer,
 )
-from eventyay.base.models import SubmissionStates
+from eventyay.base import entitlements
+from eventyay.base.models import SubmissionStates, TeamAPIToken
+
+
+@pytest.fixture
+def allow_all_entitlements(monkeypatch):
+    """Ignore installed plan plugins so API writes do not depend on the organizer's plan."""
+    monkeypatch.setattr(entitlements, 'entitlement_check', Signal())
 
 
 @pytest.mark.django_db
@@ -1587,7 +1595,7 @@ def test_remove_favourite_not_favourited(event, speaker_client, slot, speaker):
         assert not slot.submission.favourites.filter(user=speaker).exists()
 
 @pytest.mark.django_db
-def test_team_token_can_create_submission(client, event, submission_type):
+def test_team_token_can_create_submission(client, event, submission_type, allow_all_entitlements):
     from django_scopes import scope
     from eventyay.base.models import TeamAPIToken
     with scope(event=event):
@@ -1636,3 +1644,95 @@ def test_team_token_read_only_team_forbidden_submission(client, event, submissio
         headers={"Authorization": f"Token {token.token}"},
     )
     assert response.status_code in [403, 401]
+
+
+def _team_token(event, can_change_submissions, name, limit_tracks=(), **team_fields):
+    with scope(event=event):
+        team = event.organizer.teams.create(
+            name=name, can_change_submissions=can_change_submissions, **team_fields
+        )
+        team.limit_events.add(event)
+        if limit_tracks:
+            team.limit_tracks.set(limit_tracks)
+        return TeamAPIToken.objects.create(team=team, name=name)
+
+
+@pytest.mark.django_db
+def test_team_token_can_list_and_retrieve_unscheduled_submissions(client, event, submission):
+    token = _team_token(event, True, "Manage submissions")
+    headers = {"Authorization": f"Token {token.token}"}
+
+    response = client.get(event.api_urls.submissions, follow=True, headers=headers)
+    assert response.status_code == 200, response.text
+    assert [s["code"] for s in response.json()["results"]] == [submission.code]
+
+    response = client.get(
+        event.api_urls.submissions + f"{submission.code}/", follow=True, headers=headers
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["code"] == submission.code
+
+
+@pytest.mark.django_db
+def test_team_token_without_submission_permission_cannot_see_unscheduled_submissions(
+    client, event, submission
+):
+    token = _team_token(event, False, "No submission rights")
+    headers = {"Authorization": f"Token {token.token}"}
+
+    response = client.get(event.api_urls.submissions, follow=True, headers=headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["count"] == 0
+
+    response = client.get(
+        event.api_urls.submissions + f"{submission.code}/", follow=True, headers=headers
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_team_token_respects_track_limits(
+    client, event, submission, other_submission, track, other_track
+):
+    with scope(event=event):
+        submission.track = track
+        submission.save()
+        other_submission.track = other_track
+        other_submission.save()
+    token = _team_token(event, True, "Track limited", limit_tracks=[track])
+    headers = {"Authorization": f"Token {token.token}"}
+
+    response = client.get(event.api_urls.submissions, follow=True, headers=headers)
+    assert response.status_code == 200, response.text
+    assert [s["code"] for s in response.json()["results"]] == [submission.code]
+
+    response = client.get(
+        event.api_urls.submissions + f"{other_submission.code}/", follow=True, headers=headers
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_team_token_honours_force_hide_speaker_names(client, event, submission, speaker):
+    visible = _team_token(event, True, "Shows speakers")
+    hidden = _team_token(event, True, "Hides speakers", force_hide_speaker_names=True)
+    url = event.api_urls.submissions + f"{submission.code}/?expand=speakers"
+
+    response = client.get(url, follow=True, headers={"Authorization": f"Token {visible.token}"})
+    assert response.status_code == 200, response.text
+    assert response.json()["speakers"]
+
+    response = client.get(url, follow=True, headers={"Authorization": f"Token {hidden.token}"})
+    assert response.status_code == 200, response.text
+    assert response.json()["speakers"] == []
+
+
+@pytest.mark.django_db
+def test_team_token_of_other_event_cannot_see_unscheduled_submissions(client, event, other_event, submission):
+    token = _team_token(other_event, True, "Other event")
+
+    response = client.get(
+        event.api_urls.submissions, follow=True, headers={"Authorization": f"Token {token.token}"}
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["count"] == 0
