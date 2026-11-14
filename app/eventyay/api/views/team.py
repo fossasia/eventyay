@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from django_scopes import scopes_disabled
+from django_scopes import scope
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.team import TeamInviteSerializer, TeamSerializer
+from eventyay.api.views.organizer import check_api_team_delegation, team_delegation_actor
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import (
     Team,
@@ -22,7 +23,8 @@ from eventyay.base.models.organizer import (
     TeamPermissionError,
     check_access_permissions,
 )
-from eventyay.base.services.teams import TeamInviteError, invite_to_team
+from eventyay.base.services.team_permissions import lock_team_organizer
+from eventyay.base.services.teams import TeamInviteDelegationError, TeamInviteError, invite_to_team
 
 
 class TeamInviteCreateSerializer(serializers.Serializer):
@@ -64,13 +66,27 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             queryset = queryset.prefetch_related(*fields)
         return queryset
 
-    def dispatch(self, *args, **kwargs):
-        with scopes_disabled():
-            return super().dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        organizer = getattr(request, 'organizer', None)
+        event_ids = tuple(organizer.events.values_list('pk', flat=True)) if organizer is not None else ()
+        with scope(event=event_ids):
+            return super().dispatch(request, *args, **kwargs)
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        lock_team_organizer(self.request.organizer.pk)
+        check_api_team_delegation(self.request, changes=serializer.validated_data)
+        super().perform_create(serializer)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        lock_team_organizer(request.organizer.pk)
+        return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         try:
             with transaction.atomic():
+                check_api_team_delegation(self.request, team=serializer.instance, changes=serializer.validated_data)
                 super().perform_update(serializer)
                 check_access_permissions(self.request.organizer)
         except TeamPermissionError as e:
@@ -105,9 +121,13 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
                     team,
                     email,
                     invited_by=request.user if request.user.is_authenticated else None,
+                    actor=team_delegation_actor(request),
+                    session_key=getattr(getattr(request, 'session', None), 'session_key', None),
                     locale=request.LANGUAGE_CODE,
-                    log_kwargs={'person': request.user, 'orga': True},
+                    log_kwargs={'user': request.user, 'auth': request.auth, 'orga': True},
                 )
+            except TeamInviteDelegationError as e:
+                raise exceptions.PermissionDenied(str(e)) from e
             except TeamInviteError as e:
                 raise exceptions.ValidationError(str(e))
 

@@ -4,7 +4,8 @@ from django.http import QueryDict
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Event, Organizer, Team
+from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.base.services.team_permissions import TEAM_DELEGATION_ERROR
 from eventyay.control.forms.organizer_forms.team_form import TeamForm
 
 
@@ -27,6 +28,20 @@ def event(organizer):
         date_from=now(),
         plugins='teamshifts',
     )
+
+
+@pytest.mark.django_db
+def test_team_form_rejects_role_only_grant_from_manager_without_teamshifts(organizer, event, teamshifts_installed):
+    user = User.objects.create_user('manager@example.com')
+    organizer.teams.create(name='Managers', all_events=True, can_change_teams=True).members.add(user)
+    form = TeamForm(
+        organizer=organizer,
+        actor=user,
+        data={'name': 'Coordinators', 'limit_events': [event.pk], 'teamshifts_role': 'coordinator'},
+    )
+
+    assert not form.is_valid()
+    assert str(TEAM_DELEGATION_ERROR) in form.non_field_errors()
 
 
 @pytest.mark.django_db

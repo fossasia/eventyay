@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import (
     filters,
@@ -56,9 +56,31 @@ from eventyay.base.models import (
     TeamInvite,
     User,
 )
+from eventyay.base.services.team_permissions import (
+    TEAM_DELEGATION_ERROR,
+    can_delegate_team_permissions,
+    lock_team_organizer,
+)
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.helpers.dicts import merge_dicts
 from eventyay.presale.style import regenerate_organizer_css
+
+
+def team_delegation_actor(request):
+    return request.auth if isinstance(request.auth, (Device, TeamAPIToken)) else request.user
+
+
+def check_api_team_delegation(request, *, team=None, changes=None):
+    actor = team_delegation_actor(request)
+    if isinstance(actor, Device) or not can_delegate_team_permissions(
+        request.organizer,
+        actor,
+        session_key=getattr(getattr(request, 'session', None), 'session_key', None),
+        team=team,
+        changes=changes,
+        lock=True,
+    ):
+        raise PermissionDenied(TEAM_DELEGATION_ERROR)
 
 
 @extend_schema_view(
@@ -388,8 +410,17 @@ class TeamViewSet(viewsets.ModelViewSet):
     permission = 'can_change_teams'
     write_permission = 'can_change_teams'
 
+    def dispatch(self, request, *args, **kwargs):
+        organizer = getattr(request, 'organizer', None)
+        event_ids = tuple(organizer.events.values_list('pk', flat=True)) if organizer is not None else ()
+        with scope(event=event_ids):
+            return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
-        return self.request.organizer.teams.order_by('pk')
+        teams = self.request.organizer.teams.order_by('pk')
+        if self.action in ('update', 'partial_update'):
+            return teams.select_for_update()
+        return teams
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -398,6 +429,8 @@ class TeamViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic()
     def perform_create(self, serializer):
+        lock_team_organizer(self.request.organizer.pk)
+        check_api_team_delegation(self.request, changes=serializer.validated_data)
         inst = serializer.save(organizer=self.request.organizer)
         inst.log_action(
             'eventyay.team.created',
@@ -406,8 +439,13 @@ class TeamViewSet(viewsets.ModelViewSet):
             data=merge_dicts(self.request.data, {'id': inst.pk}),
         )
 
-    @transaction.atomic()
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        lock_team_organizer(request.organizer.pk)
+        return super().update(request, *args, **kwargs)
+
     def perform_update(self, serializer):
+        check_api_team_delegation(self.request, team=serializer.instance, changes=serializer.validated_data)
         inst = serializer.save()
         inst.log_action(
             'eventyay.team.changed',
@@ -468,6 +506,7 @@ class TeamInviteViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyMo
         ctx = super().get_serializer_context()
         ctx['organizer'] = self.request.organizer
         ctx['team'] = self.team
+        ctx['actor'] = team_delegation_actor(self.request)
         ctx['log_kwargs'] = {
             'user': self.request.user,
             'auth': self.request.auth,
@@ -486,7 +525,6 @@ class TeamInviteViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyMo
         )
         instance.delete()
 
-    @transaction.atomic()
     def perform_create(self, serializer):
         serializer.save(team=self.team)
 
@@ -527,8 +565,8 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
             },
         )
 
-    @transaction.atomic()
     def perform_create(self, serializer):
+        check_api_team_delegation(self.request, team=self.team)
         instance = serializer.save(team=self.team)
         self.team.log_action(
             'eventyay.team.token.created',
@@ -537,7 +575,9 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
             data={'name': instance.name, 'id': instance.pk},
         )
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
+        lock_team_organizer(request.organizer.pk)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)

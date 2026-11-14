@@ -235,15 +235,17 @@
                   </tbody>
                 </table>
               </form>
-              <form method="post" class="form-inline" action="{% url 'eventyay_common:event.api' organizer=request.event.organizer.slug event=request.event.slug %}#tokens">
-                {% csrf_token %}
-                <input type="hidden" name="token_action" value="create">
-                <input type="hidden" name="team_id" value="{{ team.pk }}">
-                {% bootstrap_field team.token_form.name layout='inline' %}
-                <button type="submit" class="btn btn-primary btn-sm">
-                  <i class="fa fa-plus"></i> {% translate "Create token" %}
-                </button>
-              </form>
+              {% if team.token_form %}
+                <form method="post" class="form-inline" action="{% url 'eventyay_common:event.api' organizer=request.event.organizer.slug event=request.event.slug %}#tokens">
+                  {% csrf_token %}
+                  <input type="hidden" name="token_action" value="create">
+                  <input type="hidden" name="team_id" value="{{ team.pk }}">
+                  {% bootstrap_field team.token_form.name layout='inline' %}
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa fa-plus"></i> {% translate "Create token" %}
+                  </button>
+                </form>
+              {% endif %}
             </div>
           </div>
         {% empty %}

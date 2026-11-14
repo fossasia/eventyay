@@ -17,6 +17,12 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
+from eventyay.base.services.team_permissions import (
+    TEAM_DELEGATION_ERROR,
+    TeamDelegation,
+    can_delegate_team_permissions,
+    lock_team_organizer,
+)
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
@@ -174,7 +180,19 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             }
             handler = handlers.get(action)
             if handler:
-                return handler()
+                with transaction.atomic():
+                    lock_team_organizer(request.organizer.pk)
+                    delegation = TeamDelegation(
+                        request.organizer, request.user, session_key=request.session.session_key, lock=True
+                    )
+                    # Middleware may have cached the actor's teams before the lock was acquired.
+                    if not delegation.staff_override and not (
+                        request.organizer.teams.select_for_update(no_key=True)
+                        .filter(members=request.user, can_change_teams=True)
+                        .exists()
+                    ):
+                        raise PermissionDenied()
+                    return handler()
         return super().post(request, *args, **kwargs)
 
     def _validated_teams_return_next(self, candidate: str | None) -> str | None:
@@ -381,10 +399,12 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         form = self._build_unbound_organizer_form()
         return self.render_to_response(self.get_context_data(form=form))
 
-    def _get_team_from_post(self):
+    def _get_team_from_post(self, *, lock=False):
+        teams = self.request.organizer.teams.all()
+        if lock:
+            teams = teams.select_for_update()
         return get_object_or_404(
-            Team,
-            organizer=self.request.organizer,
+            teams,
             pk=self.request.POST.get('team_id'),
         )
 
@@ -410,6 +430,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 data=self.request.POST,
                 organizer=self.request.organizer,
                 prefix='team-create',
+                actor=self.request.user,
+                session_key=self.request.session.session_key,
             )
         if form.is_valid():
             with transaction.atomic():
@@ -438,21 +460,22 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         return self._render_with_team_errors()
 
     def _handle_team_update(self):
-        team = self._get_team_from_post()
+        team = self._get_team_from_post(lock=True)
         with scopes_disabled():
             form = TeamForm(
                 data=self.request.POST,
                 organizer=self.request.organizer,
                 instance=team,
                 prefix=self._team_form_prefix(team),
+                actor=self.request.user,
+                session_key=self.request.session.session_key,
             )
         self._forced_section = 'permissions'
 
         if form.is_valid():
-            with transaction.atomic():
-                with scopes_disabled():
-                    form.instance.organizer = self.request.organizer
-                    form.save()
+            with scopes_disabled():
+                form.instance.organizer = self.request.organizer
+                form.save()
             if form.has_changed():
                 team.log_action(
                     'eventyay.team.changed',
@@ -564,6 +587,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         try:
             resend_team_invite(
                 invite,
+                actor=self.request.user,
+                session_key=self.request.session.session_key,
                 locale=self.request.LANGUAGE_CODE,
                 log_kwargs={'user': self.request.user},
             )
@@ -583,6 +608,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 team,
                 invite_form.cleaned_data['user'],
                 invited_by=self.request.user,
+                session_key=self.request.session.session_key,
                 locale=self.request.LANGUAGE_CODE,
                 log_kwargs={'user': self.request.user},
             )
@@ -642,6 +668,15 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
 
     def _handle_create_token(self, team, token_form):
         """Handle creating a new token."""
+        if not can_delegate_team_permissions(
+            self.request.organizer,
+            self.request.user,
+            session_key=self.request.session.session_key,
+            team=team,
+            lock=True,
+        ):
+            messages.error(self.request, TEAM_DELEGATION_ERROR)
+            return self._redirect_to_team_members_panel(team.pk)
         token = team.tokens.create(name=token_form.cleaned_data['name'])
         team.log_action(
             'eventyay.team.token.created',

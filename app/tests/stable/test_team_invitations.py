@@ -1,8 +1,11 @@
 from datetime import timedelta
+from importlib import import_module
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.apps import apps
 from django.core import mail as djmail
+from django.db import connection
 from django.test import override_settings
 from django.urls import NoReverseMatch, reverse
 from django.utils.timezone import now
@@ -452,6 +455,25 @@ def test_expired_invitation_cannot_be_accepted(client, helpers_team, invitee, dj
 
     assert response.status_code == 410
     assert 'has expired' in response.content.decode()
+    assert not helpers_team.members.filter(pk=invitee.pk).exists()
+
+
+@pytest.mark.django_db
+def test_delegation_migration_expires_existing_pending_invitations(client, helpers_team, invitee):
+    pending = helpers_team.invites.create(email=invitee.email, user=invitee)
+    accepted = TeamInvite.all_objects.create(
+        team=helpers_team, email='accepted@example.org', state=TeamInvite.State.ACCEPTED
+    )
+    migration = import_module('eventyay.base.migrations.0091_expire_unverified_team_invites')
+
+    migration.expire_unverified_team_invites(apps, connection.schema_editor())
+
+    pending.refresh_from_db()
+    accepted.refresh_from_db()
+    assert pending.state == TeamInvite.State.EXPIRED
+    assert accepted.state == TeamInvite.State.ACCEPTED
+    client.force_login(invitee)
+    assert client.post(_invite_url(pending), {'action': 'accept'}).status_code == 410
     assert not helpers_team.members.filter(pk=invitee.pk).exists()
 
 

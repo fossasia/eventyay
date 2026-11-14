@@ -14,15 +14,20 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.entitlements import EntitlementDecision, check_entitlement
-from eventyay.base.models import Organizer
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import (
     TEAM_INVITE_REMINDER_AFTER,
     TEAM_INVITE_VALIDITY,
+    Team,
     TeamInvite,
     generate_invite_token,
 )
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.team_permissions import (
+    TEAM_DELEGATION_ERROR,
+    can_delegate_team_permissions,
+    lock_team_organizer,
+)
 from eventyay.base.signals import periodic_task
 from eventyay.eventyay_common.video.traits_sync import sync_video_traits_for_team
 from eventyay.helpers.periodic import minimum_interval
@@ -132,6 +137,10 @@ class TeamInviteError(Exception):
     """Raised when a team invitation cannot be created, resent or answered."""
 
 
+class TeamInviteDelegationError(TeamInviteError):
+    """The actor cannot delegate the invited team's access."""
+
+
 def check_full_admin_limit(team, email=None, user=None):
     """
     Enforce full-admin entitlement before adding a member or invite.
@@ -167,7 +176,7 @@ def check_full_admin_limit(team, email=None, user=None):
         return EntitlementDecision(allowed=True)
 
     # Lock the organizer row to serialize concurrent checks
-    Organizer.objects.select_for_update().filter(pk=team.organizer_id).first()
+    lock_team_organizer(team.organizer_id)
 
     admin_member_emails = set(
         User.objects.filter(
@@ -332,11 +341,21 @@ def send_team_invite(invite, *, locale=None, reminder=False) -> bool:
     return True
 
 
-def invite_to_team(team, email, *, invited_by=None, locale=None, log_kwargs=None):
+@transaction.atomic
+def invite_to_team(team, email, *, invited_by=None, actor=None, session_key=None, locale=None, log_kwargs=None):
     """Create a pending invitation for ``email`` and email it once the transaction commits.
 
     Existing accounts are only bound to the invite; membership is granted on acceptance.
     """
+    actor = invited_by if actor is None else actor
+    if actor is not None:
+        lock_team_organizer(team.organizer_id)
+        try:
+            team = Team.objects.select_for_update(no_key=True).get(pk=team.pk)
+        except Team.DoesNotExist as exc:
+            raise TeamInviteError(_('Invalid team selected.')) from exc
+        if not can_delegate_team_permissions(team.organizer, actor, session_key=session_key, team=team, lock=True):
+            raise TeamInviteDelegationError(TEAM_DELEGATION_ERROR)
     email = email.strip()
     log_kwargs = log_kwargs or {}
     user = User.objects.filter(email__iexact=email).first()
@@ -368,10 +387,24 @@ def invite_to_team(team, email, *, invited_by=None, locale=None, log_kwargs=None
     return invite
 
 
-def resend_team_invite(invite, *, locale=None, log_kwargs=None):
+@transaction.atomic
+def resend_team_invite(invite, *, actor=None, session_key=None, locale=None, log_kwargs=None):
     """Resend an open invite, or issue a fresh invitation if it has expired or been declined."""
+    lock_team_organizer(invite.team.organizer_id)
+    try:
+        invite = (
+            TeamInvite.all_objects.select_for_update(of=('self',)).select_related('team__organizer').get(pk=invite.pk)
+        )
+    except TeamInvite.DoesNotExist as exc:
+        raise TeamInviteError(_('Invalid invite selected.')) from exc
+    team = invite.team
+    if actor is not None and not can_delegate_team_permissions(
+        team.organizer, actor, session_key=session_key, team=team, lock=True
+    ):
+        raise TeamInviteDelegationError(TEAM_DELEGATION_ERROR)
+    if invite.state == TeamInvite.State.ACCEPTED:
+        raise TeamInviteError(_('This invitation has already been answered.'))
     if not invite.is_open:
-        team = invite.team
         user = invite.user or User.objects.filter(email__iexact=invite.email).first()
         if user and team.members.filter(pk=user.pk).exists():
             raise TeamInviteError(_('This user already has permissions for this team.'))
@@ -379,6 +412,8 @@ def resend_team_invite(invite, *, locale=None, log_kwargs=None):
         if not decision.allowed:
             raise TeamInviteError(decision.message)
         invite.user = user
+        if isinstance(actor, User):
+            invite.invited_by = actor
         invite.token = generate_invite_token()
         invite.state = TeamInvite.State.PENDING
         invite.created = now()
@@ -392,7 +427,7 @@ def resend_team_invite(invite, *, locale=None, log_kwargs=None):
 
 
 def _lock_open_invite(invite, user):
-    invite = TeamInvite.all_objects.select_for_update().select_related('team__organizer').get(pk=invite.pk)
+    invite = TeamInvite.all_objects.select_for_update(of=('self',)).select_related('team__organizer').get(pk=invite.pk)
     if invite.is_expired:
         raise TeamInviteError(
             _('This invitation has expired. Please contact the event organizer if you still want to join the team.')
@@ -409,6 +444,7 @@ def _lock_open_invite(invite, user):
 def accept_team_invite(invite, user):
     """Add ``user`` to the invited team. Only the intended recipient can accept an open invite."""
     with transaction.atomic():
+        lock_team_organizer(invite.team.organizer_id)
         invite = _lock_open_invite(invite, user)
         team = invite.team
         team.members.add(user)
@@ -427,6 +463,7 @@ def accept_team_invite(invite, user):
 
 def decline_team_invite(invite, user):
     with transaction.atomic():
+        lock_team_organizer(invite.team.organizer_id)
         invite = _lock_open_invite(invite, user)
         invite.user = user
         invite.state = TeamInvite.State.DECLINED

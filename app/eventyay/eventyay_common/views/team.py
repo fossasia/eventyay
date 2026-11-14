@@ -12,8 +12,13 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_scopes import scopes_disabled
 
-from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
+from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
+from eventyay.base.services.team_permissions import (
+    TEAM_DELEGATION_ERROR,
+    can_delegate_team_permissions,
+    lock_team_organizer,
+)
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
 
@@ -92,6 +97,7 @@ class TeamMemberView(
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        lock_team_organizer(request.organizer.pk)
         self.object = self.get_object()
 
         if 'remove-member' in request.POST:
@@ -148,7 +154,13 @@ class TeamMemberView(
                 messages.error(self.request, _('Invalid invite selected.'))
                 return redirect(self.get_success_url())
             try:
-                resend_team_invite(invite, locale=self.request.LANGUAGE_CODE, log_kwargs={'user': self.request.user})
+                resend_team_invite(
+                    invite,
+                    actor=request.user,
+                    session_key=request.session.session_key,
+                    locale=request.LANGUAGE_CODE,
+                    log_kwargs={'user': request.user},
+                )
             except TeamInviteError as e:
                 messages.error(self.request, str(e))
                 return redirect(self.get_success_url())
@@ -178,6 +190,7 @@ class TeamMemberView(
                     self.object,
                     self.add_form.cleaned_data['user'],
                     invited_by=self.request.user,
+                    session_key=request.session.session_key,
                     locale=self.request.LANGUAGE_CODE,
                     log_kwargs={'user': self.request.user},
                 )
@@ -188,6 +201,11 @@ class TeamMemberView(
             return redirect(self.get_success_url())
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():
+            if not can_delegate_team_permissions(
+                request.organizer, request.user, session_key=request.session.session_key, team=self.object, lock=True
+            ):
+                messages.error(request, TEAM_DELEGATION_ERROR)
+                return redirect(self.get_success_url())
             token = self.object.tokens.create(name=self.add_token_form.cleaned_data['name'])
             self.object.log_action(
                 'eventyay.team.token.created',
@@ -227,12 +245,18 @@ class TeamCreateView(
 
     def dispatch(self, request, *args, **kwargs):
         if 'next' in request.GET:
+            if request.method == 'POST':
+                with transaction.atomic():
+                    lock_team_organizer(request.organizer.pk)
+                    return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
             return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organizer'] = self.request.organizer
+        kwargs['actor'] = self.request.user
+        kwargs['session_key'] = self.request.session.session_key
         return kwargs
 
     def get_object(self, queryset=None):
@@ -297,6 +321,8 @@ class TeamUpdateView(
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organizer'] = self.request.organizer
+        kwargs['actor'] = self.request.user
+        kwargs['session_key'] = self.request.session.session_key
         return kwargs
 
     def get_object(self, queryset=None):

@@ -10,6 +10,7 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.track import Track
+from eventyay.base.services.team_permissions import TEAM_DELEGATION_ERROR, can_delegate_team_permissions
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
 
 
@@ -36,6 +37,8 @@ class TeamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         organizer = kwargs.pop('organizer')
         self.organizer = organizer
+        self.actor = kwargs.pop('actor', None)
+        self.session_key = kwargs.pop('session_key', None)
         super().__init__(*args, **kwargs)
         self.fields['limit_events'].queryset = organizer.events.all().order_by('-has_subevents', '-date_from')
         tracks_qs = (
@@ -366,5 +369,19 @@ class TeamForm(forms.ModelForm):
                         'the permission to change teams and permissions.'
                     )
                 )
+
+        if (
+            self.actor is not None
+            and not self.errors
+            and not can_delegate_team_permissions(
+                self.organizer,
+                self.actor,
+                session_key=self.session_key,
+                team=self.instance if self.instance.pk else None,
+                changes=data,
+                lock=True,
+            )
+        ):
+            raise ValidationError(TEAM_DELEGATION_ERROR)
 
         return data
