@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.timezone import now
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -38,7 +39,13 @@ from eventyay.control.forms import CachedFileField, SplitDateTimeField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
 from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone
 from eventyay.orga.forms.mails import TalkSplitDateTimePickerWidget
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, TicketMailTemplate
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+    EmailQueueToUser,
+    TicketMailTemplate,
+    resolve_queued_mail_i18n,
+)
 
 
 MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP = _( 'If the order contains attendees with email addresses different from the person who orders the ' 'tickets, the following email will be sent out to the attendees.' )
@@ -1064,20 +1071,51 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
         configured_locales = set(self.event.settings.get('locales', [])) if self.event else set()
         allowed_locales = saved_locales | configured_locales
 
+        subject_initial = self.instance.subject
+        text_initial = self.instance.message
+        # Sent mail is read-only, so resolved names are display-only. Editable
+        # Outbox fields keep stored placeholders so Save cannot persist one
+        # recipient's values for everyone else.
+        resolved_for_email = None
+        if self.read_only and self.recipient_objects:
+            recipient = self.recipient_objects[0]
+            resolved_for_email = recipient.email
+            contexts = {}
+
+            def context_factory():
+                locale = get_language() or ''
+                if locale not in contexts:
+                    contexts[locale] = self.instance.placeholder_context(recipient)
+                return contexts[locale]
+
+            subject_initial = resolve_queued_mail_i18n(
+                subject_initial,
+                context_factory=context_factory,
+            )
+            text_initial = resolve_queued_mail_i18n(
+                text_initial,
+                context_factory=context_factory,
+                escape_text=True,
+            )
+
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
             widget=I18nTextInput,
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.subject
+            initial=subject_initial,
         )
+        if resolved_for_email and len(self.recipient_objects) > 1:
+            self.fields['subject'].help_text = _(
+                'Placeholders are filled in for {email}. Each other recipient received their own values.'
+            ).format(email=resolved_for_email)
         self.fields['text'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
             widget_kwargs={'placeholders': placeholder_names},
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.message,
+            initial=text_initial,
         )
 
         if not self.read_only:
