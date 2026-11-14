@@ -129,6 +129,25 @@ The {event_name} organisers"""
     )
 )
 
+SPEAKER_VOUCHER_SUBJECT = LazyI18nString.from_gettext(_('Your ticket voucher — {event_name}'))
+SPEAKER_VOUCHER_TEXT = LazyI18nString.from_gettext(
+    _(
+        """Hi {name}!
+
+Thank you for speaking at {event_name}. As a speaker, you receive a ticket voucher.
+
+Voucher code: {voucher_code}
+Redeem your ticket here: {voucher_url}
+
+This voucher is for your personal use and can only be redeemed once. Please use it to get your ticket before the event.
+
+If you have any questions, reply to this email and we will be happy to help.
+
+See you at {event_name}!
+The {event_name} organisers"""
+    )
+)
+
 
 def get_default_template(role):
     from eventyay.base.models import MailTemplateRoles
@@ -150,6 +169,10 @@ def get_default_template(role):
         MailTemplateRoles.EXISTING_SPEAKER_INVITE: (
             SPEAKER_INVITE_SUBJECT,
             EXISTING_SPEAKER_INVITE_TEXT,
+        ),
+        MailTemplateRoles.SPEAKER_VOUCHER: (
+            SPEAKER_VOUCHER_SUBJECT,
+            SPEAKER_VOUCHER_TEXT,
         ),
     }
     return TEMPLATE_MAPPING[role]

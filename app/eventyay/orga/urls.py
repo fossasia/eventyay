@@ -386,6 +386,16 @@ urlpatterns = [
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path('speakers/new/', speaker.SpeakerCreate.as_view(), name='speakers.create'),
                 path(
+                    'speakers/vouchers/',
+                    speaker.SpeakerVoucherSettingsView.as_view(),
+                    name='speakers.vouchers',
+                ),
+                path(
+                    'speakers/vouchers/send/',
+                    speaker.SpeakerVoucherBulkSendView.as_view(),
+                    name='speakers.vouchers.send',
+                ),
+                path(
                     'speakers/<code>/',
                     include(
                         [
@@ -408,6 +418,21 @@ urlpatterns = [
                                 'toggle-featured',
                                 speaker.SpeakerToggleFeatured.as_view(),
                                 name='speakers.featured',
+                            ),
+                            path(
+                                'voucher/send',
+                                speaker.SpeakerVoucherSendView.as_view(),
+                                name='speakers.voucher.send',
+                            ),
+                            path(
+                                'voucher/resend',
+                                speaker.SpeakerVoucherResendView.as_view(),
+                                name='speakers.voucher.resend',
+                            ),
+                            path(
+                                'voucher/cancel',
+                                speaker.SpeakerVoucherCancelView.as_view(),
+                                name='speakers.voucher.cancel',
                             ),
                         ]
                     ),

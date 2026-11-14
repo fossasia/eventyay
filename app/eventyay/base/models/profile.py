@@ -97,6 +97,9 @@ class SpeakerProfile(PretalxModel):
         password_reset = '{self.event.orga_urls.speakers}{self.user.code}/reset'
         toggle_arrived = '{self.event.orga_urls.speakers}{self.user.code}/toggle-arrived'
         toggle_featured = '{self.event.orga_urls.speakers}{self.user.code}/toggle-featured'
+        voucher_send = '{base}voucher/send'
+        voucher_resend = '{base}voucher/resend'
+        voucher_cancel = '{base}voucher/cancel'
 
     def __str__(self):
         """Help when debugging."""
