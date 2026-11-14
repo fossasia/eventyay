@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from django import template
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 from markdownify import markdownify as html_to_markdown
 
 try:
@@ -29,7 +29,10 @@ except ImportError:
 
 from i18nfield.strings import LazyI18nString
 
+from eventyay.common.text.rich_text import rich_text_to_plain_text
 from eventyay.common.views.redirect import safelink as sl
+from eventyay.helpers.placeholders import escape_stray_braces
+
 
 register = template.Library()
 
@@ -166,7 +169,7 @@ _TIPTAP_BLOCK_START_RE = re.compile(
 )
 
 
-def _is_tiptap_email_html(source: str) -> bool:
+def is_tiptap_email_html(source: str) -> bool:
     """Return True when *source* looks like HTML from the Tiptap email editor.
 
     ``nh3.is_html()`` is too broad: legacy Markdown bodies may contain inline
@@ -182,6 +185,11 @@ def _is_tiptap_email_html(source: str) -> bool:
     return bool(_TIPTAP_BLOCK_START_RE.match(source))
 
 
+# Placeholders whose values are Markdown (``{orders}`` is a bullet list of order
+# links). Legacy bodies compile them as part of the body; editor (Tiptap) HTML
+# bodies must compile the value itself before inserting it.
+MARKDOWN_PLACEHOLDERS = frozenset({'orders'})
+
 _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
     'event',
     'order',
@@ -196,6 +204,12 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 VOUCHER_EMAIL_PREVIEW_CONTEXT = 'voucher'
 
 _VOUCHER_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'voucher_list', 'name')
+
+# Query value the team composer adds to the shared preview URL. Team mails are sent with these
+# parameters, so {name}, {email} and {all_submissions_url} preview as the receiving team member.
+TEAM_EMAIL_PREVIEW_CONTEXT = 'team'
+
+_TEAM_PREVIEW_PARAMETERS: tuple[str, ...] = ('event', 'user', 'team')
 
 
 def _preview_placeholder_context(html_body: str) -> list[str]:
@@ -220,9 +234,12 @@ def _preview_parameters(html_body: str, preview_context: str | None) -> list[str
 
     ``voucher`` is the bulk-voucher form. It always includes ``voucher_list``,
     so ``{url}`` samples the event shop the same way delivery does.
+    ``team`` is the team composer, the only editor whose mails carry a ``user``.
     """
     if preview_context == VOUCHER_EMAIL_PREVIEW_CONTEXT:
         return list(_VOUCHER_PREVIEW_PARAMETERS)
+    if preview_context == TEAM_EMAIL_PREVIEW_CONTEXT:
+        return list(_TEAM_PREVIEW_PARAMETERS)
     return _preview_placeholder_context(html_body)
 
 
@@ -232,8 +249,14 @@ def expand_email_preview_placeholders(
     *,
     locale: str | None = None,
     preview_context: str | None = None,
+    base_parameters: list[str] | None = None,
 ) -> str:
-    """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview."""
+    """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview.
+
+    ``base_parameters`` selects which placeholders get sample values (e.g. a system
+    template's context such as ``payment`` or ``comment``); without it the context
+    is derived from ``html_body`` and ``preview_context``.
+    """
     from eventyay.base.i18n import language
     from eventyay.base.services.mail import expand_email_variable_chips
 
@@ -241,9 +264,11 @@ def expand_email_preview_placeholders(
     if resolved_locale not in event.settings.locales:
         resolved_locale = event.settings.locale
 
+    if base_parameters is None:
+        base_parameters = _preview_parameters(html_body, preview_context)
     with language(resolved_locale, event.settings.region):
-        context_dict = build_email_preview_context(event, _preview_parameters(html_body, preview_context))
-        expanded = html_body.format_map(context_dict)
+        context_dict = build_email_preview_context(event, list(base_parameters))
+        expanded = escape_stray_braces(html_body).format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 
 
@@ -257,10 +282,41 @@ def compile_email_body(source: str) -> str:
     if not source:
         return source
     source = str(source)
-    if _is_tiptap_email_html(source):
+    if is_tiptap_email_html(source):
         from eventyay.common.sanitizers import sanitize_email_html
         return sanitize_email_html(source)
     return markdown_compile_email(source)
+
+
+def email_body_to_editor_html(source: str) -> str:
+    """Convert a stored email body to HTML the Tiptap email editor can load.
+
+    Unlike ``compile_email_body``, single newlines in legacy plain-text/Markdown
+    bodies become ``<br>``: the editor collapses bare newlines to spaces, so
+    opening and saving a legacy template would otherwise join its lines.
+    """
+    if not source:
+        return source
+    source = str(source)
+    if is_tiptap_email_html(source):
+        return compile_email_body(source)
+    return markdown_compile_email(source, preserve_line_breaks=True)
+
+
+def email_html_to_plain_text(html_body: str) -> str:
+    """Render the text/plain part for an editor (Tiptap) HTML email body.
+
+    Produces Markdown, like legacy plain-text bodies. Images (QR codes) are
+    dropped because their data URIs are useless in plain text.
+    """
+    return html_to_markdown(
+        compile_email_body(html_body),
+        strip=['img'],
+        bullets='*',
+        escape_underscores=False,
+        escape_asterisks=False,
+        escape_misc=False,
+    ).strip()
 
 
 def email_allowed_attributes(tag: str, name: str, value: str) -> bool:
@@ -276,10 +332,14 @@ def email_allowed_attributes(tag: str, name: str, value: str) -> bool:
     return True
 
 
-def is_placeholder_html_sample(sample: str) -> bool:
-    """Return True when a placeholder sample is trusted HTML (button, QR image)."""
-    stripped = str(sample).lstrip()
-    return stripped.startswith('<') and not stripped.startswith('</')
+def is_placeholder_html_sample(sample) -> bool:
+    """Return True only when a sample is explicitly marked as trusted HTML.
+
+    Trust is determined by an explicit ``SafeString`` marker (used for the QR
+    and button samples), not by the sample's content — otherwise a user-set
+    value such as an event name beginning with ``<`` could bypass escaping.
+    """
+    return isinstance(sample, SafeString)
 
 
 def build_email_preview_context(event, base_parameters: list[str]):
@@ -302,31 +362,31 @@ def build_email_preview_context(event, base_parameters: list[str]):
     all_placeholders = {**base_placeholders, **talk_placeholders}
 
     for key, placeholder in all_placeholders.items():
-        sample = str(placeholder.render_sample(event))
+        sample = placeholder.render_sample(event)
         if is_placeholder_html_sample(sample):
-            context_dict[key] = sample
+            context_dict[key] = str(sample)
+        elif key in MARKDOWN_PLACEHOLDERS:
+            context_dict[key] = markdown_compile_email(str(sample))
         else:
-            context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(sample)}</span>'
+            context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(str(sample))}</span>'
     return context_dict
 
 
 # TODO: Implement nh3 equivalent
-def markdown_compile_email(source):
+def markdown_compile_email(source, *, preserve_line_breaks=False):
     linker = bleach.Linker(
         url_re=URL_RE,
         email_re=EMAIL_RE,
         callbacks=DEFAULT_CALLBACKS + [abslink_callback],
         parse_email=True,
     )
+    extensions = ['markdown.extensions.sane_lists']
+    if preserve_line_breaks:
+        # nl2br stays off by default for backwards-compatibility of sent emails.
+        extensions.append('markdown.extensions.nl2br')
     return linker.linkify(
         bleach.clean(
-            markdown.markdown(
-                source,
-                extensions=[
-                    'markdown.extensions.sane_lists',
-                    #  'markdown.extensions.nl2br' # disabled for backwards-compatibility
-                ],
-            ),
+            markdown.markdown(source, extensions=extensions),
             tags=EMAIL_ALLOWED_TAGS,
             attributes=email_allowed_attributes,
             protocols=EMAIL_ALLOWED_PROTOCOLS,
@@ -432,6 +492,16 @@ def rich_text_email(text: str):
 def html_to_markdown_filter(html_text: str) -> str:
     """Convert HTML to markdown format."""
     return html_text if not html_text else html_to_markdown(html_text)
+
+
+@register.filter
+def rich_text_to_plain(text: str) -> str:
+    """Convert HTML/rich-text/Markdown to clean, single-line plain text for meta tags and previews."""
+    if not text:
+        return ''
+    rendered = rich_text_without_links(str(text))
+    plain = rich_text_to_plain_text(rendered)
+    return ' '.join(plain.split())
 
 
 @register.filter
