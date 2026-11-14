@@ -403,6 +403,9 @@ class CloneEventSerializer(EventSerializer):
 
         if plugins is not None:
             new_event.set_active_plugins(plugins)
+        # Ensure clone starts in draft state, resetting inherited publishing and testmode flags
+        new_event.reset_publishing_and_testmode_state()
+        # Restore explicitly requested testmode while keeping publication flags disabled
         if testmode is not None:
             new_event.testmode = testmode
         if has_subevents is not None:
