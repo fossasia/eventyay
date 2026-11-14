@@ -25,6 +25,7 @@ from eventyay.base.models import (
 from eventyay.base.models.product import default_product_available_until
 from eventyay.consts import SizeKey
 
+
 _VARIATION_SERIALIZER_FIELDS = (
     'id',
     'value',
@@ -106,6 +107,7 @@ class ProductBundleSerializer(serializers.ModelSerializer):
         full_data.update(data)
 
         ProductBundle.clean_productvar(event, full_data.get('bundled_product'), full_data.get('bundled_variation'))
+        ProductBundle.clean_count(full_data.get('count', 1))
 
         product = self.context['product']
         if product == full_data.get('bundled_product'):
@@ -113,6 +115,15 @@ class ProductBundleSerializer(serializers.ModelSerializer):
         if full_data.get('bundled_product'):
             if full_data['bundled_product'].bundles.exists():
                 raise ValidationError(_('The bundled product must not have bundles on its own.'))
+            if (
+                product.bundles.exclude(pk=getattr(self.instance, 'pk', None))
+                .filter(
+                    bundled_product=full_data['bundled_product'],
+                    bundled_variation=full_data.get('bundled_variation'),
+                )
+                .exists()
+            ):
+                raise ValidationError(_('The product already contains this bundled product.'))
 
         return data
 
@@ -258,13 +269,61 @@ class ProductSerializer(I18nAwareModelSerializer):
         return value
 
     def validate_bundles(self, value):
+        """
+        Validate inline product bundles on product creation.
+
+        Ensures that bundled products belong to the same event, required variations are provided,
+        multi-level bundling is prevented via batched query inspection, count is enforced,
+        and duplicate bundled product/variation combinations within the payload are rejected.
+
+        :param value: List of bundle data dictionaries.
+        :return: Validated list of bundle data dictionaries.
+        :raises ValidationError: If any bundle constraint is violated.
+        """
         if not self.instance:
+            seen_bundles = set()
+            bundled_product_ids = [
+                b_data['bundled_product'].pk
+                for b_data in value
+                if b_data.get('bundled_product') and hasattr(b_data['bundled_product'], 'pk')
+            ]
+            products_with_bundles = (
+                set(
+                    ProductBundle.objects.filter(
+                        base_product_id__in=bundled_product_ids,
+                        base_product__event=self.context['event'],
+                    ).values_list('base_product_id', flat=True)
+                )
+                if bundled_product_ids
+                else set()
+            )
+
             for b_data in value:
+                bundled_product = b_data.get('bundled_product')
+                bundled_variation = b_data.get('bundled_variation')
+                if 'count' not in b_data:
+                    b_data['count'] = 1
+                count = b_data.get('count')
+
                 ProductBundle.clean_productvar(
                     self.context['event'],
-                    b_data['bundled_product'],
-                    b_data['bundled_variation'],
+                    bundled_product,
+                    bundled_variation,
                 )
+                ProductBundle.clean_count(count)
+
+                if bundled_product:
+                    bundled_product_pk = getattr(bundled_product, 'pk', None)
+                    if bundled_product_pk in products_with_bundles:
+                        raise ValidationError(_('The bundled product must not have bundles on its own.'))
+
+                    bundle_key = (
+                        bundled_product_pk,
+                        getattr(bundled_variation, 'pk', None),
+                    )
+                    if bundle_key in seen_bundles:
+                        raise ValidationError(_('The product already contains this bundled product.'))
+                    seen_bundles.add(bundle_key)
         return value
 
     def validate_addons(self, value):
