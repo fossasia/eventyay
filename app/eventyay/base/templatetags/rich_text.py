@@ -248,6 +248,7 @@ def expand_email_preview_placeholders(
     locale: str | None = None,
     preview_context: str | None = None,
     base_parameters: list[str] | None = None,
+    extra_context: dict | None = None,
 ) -> str:
     """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview.
 
@@ -266,6 +267,7 @@ def expand_email_preview_placeholders(
         base_parameters = _preview_parameters(html_body, preview_context)
     with language(resolved_locale, event.settings.region):
         context_dict = build_email_preview_context(event, list(base_parameters))
+        context_dict.update({key: html.escape(str(value)) for key, value in (extra_context or {}).items()})
         expanded = escape_stray_braces(html_body).format_map(context_dict)
         return expand_email_variable_chips(expanded, dict(context_dict))
 

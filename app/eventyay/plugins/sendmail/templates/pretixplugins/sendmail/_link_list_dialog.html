@@ -1,0 +1,31 @@
+{% load i18n %}
+<dialog class="info-dialog link-list-dialog" id="link-list-dialog" aria-labelledby="link-list-dialog-title"
+        data-added-label="{% translate '{added} rows added. {skipped} were skipped because they were empty or already in the list.' %}"
+        data-nothing-added-label="{% translate 'No rows added: all {skipped} rows were empty or already in the list.' %}"
+        data-choose-file-label="{% translate 'Choose a CSV file to add.' %}"
+        data-error-label="{% translate 'The rows could not be added. Please try again.' %}">
+  <div class="dialog-content">
+    <div class="link-list-dialog-head">
+      <h5 class="mb-0" id="link-list-dialog-title">{% translate "Link list" %}</h5>
+      <button type="button" class="btn btn-link p-0" data-link-list-close aria-label="{% translate 'Close' %}">&times;</button>
+    </div>
+    {% for panel in form.link_list_panels %}
+      <div class="link-list-panel" data-link-list-panel="{{ panel.list.pk }}"
+           data-rows-url="{% url 'control:event.mail.link_lists.rows' organizer=request.event.organizer.slug event=request.event.slug pk=panel.list.pk %}"
+           hidden>
+        <p class="link-list-name">{{ panel.list.name }}</p>
+        <p class="link-list-counts">
+          <span><strong data-link-list-count="used">{{ panel.counts.used }}</strong> {% translate "rows used" %}</span>
+          <span><strong data-link-list-count="left">{{ panel.counts.left }}</strong> {% translate "rows left" %}</span>
+        </p>
+        <label class="link-list-add-label" for="link-list-rows-{{ panel.list.pk }}">{% translate "Add rows from a CSV file" %}</label>
+        <input type="file" class="link-list-add-file" id="link-list-rows-{{ panel.list.pk }}" accept=".csv,text/csv" data-link-list-rows-file>
+        <p class="link-list-hint text-muted">{% translate "Use the same column names as the list." %}</p>
+        <p class="link-list-status" role="status" data-link-list-status></p>
+        <div class="link-list-actions">
+          <button type="button" class="btn btn-primary" data-link-list-add-rows>{% translate "Add rows" %}</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</dialog>

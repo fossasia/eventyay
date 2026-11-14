@@ -2,7 +2,8 @@ import logging
 from collections import defaultdict
 
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import IntegrityError, models, transaction
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -111,6 +112,95 @@ class Recipients(models.TextChoices):
 
 
 
+LINK_LIST_PLACEHOLDER_PREFIX = 'list_'
+
+
+class MailLinkList(models.Model):
+    """
+    Rows uploaded by an organizer, such as partner links or codes, handed out one per recipient.
+
+    Each column becomes a ``{list_<column>}`` placeholder. A recipient address keeps the row
+    it was given, so later emails using the same list send that address the same values.
+    """
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='mail_link_lists')
+    name = models.CharField(max_length=190, verbose_name=_('Name'))
+    columns = ArrayField(models.CharField(max_length=100), default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('name', 'pk')
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def placeholders(self):
+        return [f'{LINK_LIST_PLACEHOLDER_PREFIX}{column}' for column in self.columns]
+
+    def counts(self):
+        total = self.rows.count()
+        used = self.rows.filter(assigned_email__isnull=False).count()
+        return {'total': total, 'used': used, 'left': total - used}
+
+    def sample_values(self):
+        """Placeholder values for previews: the next row to hand out, else any row."""
+        row = self.rows.filter(assigned_email__isnull=True).first() or self.rows.first()
+        return row.placeholder_values() if row else {}
+
+    def shortfall(self, emails):
+        """How many more unused rows the given addresses need than the list has left."""
+        emails = {email.strip().lower() for email in emails if email and email.strip()}
+        already = set(self.rows.filter(assigned_email__in=emails).values_list('assigned_email', flat=True))
+        left = self.rows.filter(assigned_email__isnull=True).count()
+        return max(0, len(emails - already) - left)
+
+    def assign(self, email):
+        """The row for this address, handing out the next unused one if it has none yet."""
+        email = (email or '').strip().lower()
+        if not email:
+            return None
+        for _attempt in range(2):
+            try:
+                with transaction.atomic():
+                    if MailLinkList.objects.select_for_update().filter(pk=self.pk).only('pk').first() is None:
+                        return None
+                    row = self.rows.filter(assigned_email=email).first()
+                    if row is None:
+                        unused = self.rows.filter(assigned_email__isnull=True).order_by('position', 'pk')
+                        row = unused.select_for_update().first()
+                        if row is None:
+                            return None
+                        row.assigned_email = email
+                        row.assigned_at = now()
+                        row.save(update_fields=['assigned_email', 'assigned_at'])
+                    return row
+            except IntegrityError:
+                continue
+        return self.rows.filter(assigned_email=email).first()
+
+
+class MailLinkListRow(models.Model):
+    link_list = models.ForeignKey(MailLinkList, on_delete=models.CASCADE, related_name='rows')
+    position = models.PositiveIntegerField(default=0)
+    values = models.JSONField(default=dict)
+    assigned_email = models.CharField(max_length=254, null=True, blank=True)
+    assigned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('position', 'pk')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['link_list', 'assigned_email'],
+                condition=Q(assigned_email__isnull=False),
+                name='sendmail_link_list_row_one_per_email',
+            ),
+        ]
+
+    def placeholder_values(self):
+        return {f'{LINK_LIST_PLACEHOLDER_PREFIX}{column}': value for column, value in self.values.items()}
+
+
 class EmailQueue(models.Model):
     """
     Stores queued emails composed by organizers for later sending.
@@ -177,6 +267,14 @@ class EmailQueue(models.Model):
         verbose_name=_('Draft'),
         help_text=_('Drafts are kept out of the outbox and are never sent until they are moved there.')
     )
+    link_list = models.ForeignKey(
+        MailLinkList,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='emails',
+        verbose_name=_('Link list'),
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -224,6 +322,7 @@ class EmailQueue(models.Model):
             scheduled_at=self.scheduled_at,
             is_draft=True,
             sent_at=None,
+            link_list=self.link_list,
         )
 
         if hasattr(self, 'filters_data'):
@@ -304,6 +403,14 @@ class EmailQueue(models.Model):
                 self.save(update_fields=['scheduled_at'])
             return False
 
+        if self.link_list_id and self.link_list.shortfall(self.get_recipient_emails()):
+            message = _('The link list "{name}" has too few unused rows for these recipients. Add rows and send again.')
+            self.recipients.filter(sent=False).update(error=str(message.format(name=self.link_list.name)))
+            if self.scheduled_at is not None:
+                self.scheduled_at = None
+                self.save(update_fields=['scheduled_at'])
+            return False
+
         subject = LazyI18nString(self.subject)
         message = LazyI18nString(self.message)
 
@@ -377,6 +484,15 @@ class EmailQueue(models.Model):
         context = self._build_email_context(order, position, position_or_address, recipient)
         if context is None:
             return True  # Error already logged
+
+        if self.link_list_id:
+            row = self.link_list.assign(email)
+            if row is None:
+                recipient.sent = False
+                recipient.error = str(_('The link list has no unused rows left for this recipient.'))
+                recipient.save(update_fields=['sent', 'error'])
+                return True
+            context.update(row.placeholder_values())
 
         try:
             mail(
