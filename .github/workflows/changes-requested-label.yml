@@ -1,0 +1,91 @@
+# .github/workflows/changes-requested-label.yml
+#
+# Keeps the "changes requested" label in sync with pull-request reviews.
+#
+# How it works:
+#   - When any reviewer submits a review with state CHANGES_REQUESTED, the label
+#     is added to the PR.
+#   - When the reviewer later approves or their review is dismissed, and no other
+#     reviewer still has a CHANGES_REQUESTED review, the label is removed.
+#   - A later COMMENTED review does not cancel a CHANGES_REQUESTED review.
+#
+# Reuses the "Approval labels trigger" workflow for the pull_request_review event.
+# That split is needed because review events on fork PRs only get a read-only
+# token. This workflow checks out the default branch for its script and only reads
+# reviews through the API.
+#
+# Manual run: Actions -> Changes requested label -> Run workflow, with a PR number.
+
+name: Changes requested label
+
+on:
+  workflow_run:
+    workflows: ["Approval labels trigger"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: PR number to relabel
+        required: true
+        type: string
+
+permissions:
+  contents: read       # check out the default branch for the script
+  pull-requests: write # read reviews and add/remove labels
+  issues: write        # manage labels on issues/PRs
+  actions: read        # read trigger workflow run logs to resolve PR number
+
+jobs:
+  resolve-targets:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_numbers: ${{ steps.resolve.outputs.pr_numbers }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - id: resolve
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { resolvePrNumbers } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/changes-requested-label-lib.mjs`
+            );
+            const prNumbers = await resolvePrNumbers({ github, context });
+            if (prNumbers === null) {
+              core.setFailed(`Invalid PR number: ${context.payload.inputs?.['pr-number']}`);
+              return;
+            }
+            core.setOutput('pr_numbers', JSON.stringify(prNumbers));
+
+  label:
+    needs: resolve-targets
+    if: ${{ needs.resolve-targets.outputs.pr_numbers != '[]' && needs.resolve-targets.outputs.pr_numbers != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJson(needs.resolve-targets.outputs.pr_numbers) }}
+    concurrency:
+      group: changes-requested-label-${{ matrix.pr_number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/github-script@v9
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+        with:
+          script: |
+            const { syncSinglePr } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/changes-requested-label-lib.mjs`
+            );
+            await syncSinglePr({
+              github,
+              context,
+              core,
+              prNumber: Number(process.env.PR_NUMBER),
+            });
