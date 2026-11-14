@@ -464,6 +464,11 @@ urlpatterns = [
                     name='schedule.toggle',
                 ),
                 path(
+                    'schedule/toggle-accepted',
+                    schedule.ScheduleToggleAcceptedView.as_view(),
+                    name='schedule.toggle_accepted',
+                ),
+                path(
                     'schedule/resend_mails',
                     schedule.ScheduleResendMailsView.as_view(),
                     name='schedule.resend_mails',

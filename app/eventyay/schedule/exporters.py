@@ -22,6 +22,7 @@ from eventyay.base.models.submission import Submission
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
+from eventyay.talk_rules.agenda import public_talk_visibility_q
 
 
 if TYPE_CHECKING:
@@ -80,7 +81,10 @@ class ScheduleData(BaseExporter):
         event = self.event
         schedule = self.schedule
 
-        base_qs = schedule.talks.all() if self.with_accepted else schedule.talks.filter(is_visible=True)
+        if self.with_accepted:
+            base_qs = schedule.talks.all()
+        else:
+            base_qs = schedule.talks.filter(public_talk_visibility_q(event))
         if getattr(self, 'featured_only', False):
             base_qs = filter_featured_public_talk_slots(base_qs)
         talks = (
