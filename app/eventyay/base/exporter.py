@@ -12,9 +12,14 @@ from django.utils.formats import localize
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, KNOWN_TYPES
 
 from eventyay.base.models import Event
+
+
+SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '\t', '\r', '\n', '＝', '＋', '－', '＠')
+NUMERIC_TEXT_RE = re.compile(r'^[+-]?[0-9,.]+$')
 
 
 def excel_safe(val):
@@ -24,6 +29,17 @@ def excel_safe(val):
     if isinstance(val, str):
         val = re.sub(ILLEGAL_CHARACTERS_RE, '', val)
 
+    return val
+
+
+def neutralize_spreadsheet_formula(val):
+    """Prefix formula-like text with an apostrophe so CSV viewers treat it as plain text."""
+    if val is None or val == '':
+        return val
+    text = str(val)
+    stripped = text.lstrip()
+    if stripped.startswith(SPREADSHEET_FORMULA_PREFIXES) and not NUMERIC_TEXT_RE.match(stripped):
+        return f"'{text}"
     return val
 
 
@@ -140,6 +156,14 @@ class ListExporter(BaseExporter):
     def get_filename(self):
         return 'export'
 
+    def _clean_csv_row(self, line):
+        return [
+            neutralize_spreadsheet_formula(localize(f))
+            if isinstance(f, Decimal)
+            else neutralize_spreadsheet_formula(f)
+            for f in line
+        ]
+
     def _render_csv(self, form_data, output_file=None, **kwargs):
         if output_file:
             if 'b' in output_file.mode:
@@ -151,7 +175,7 @@ class ListExporter(BaseExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 if total:
                     counter += 1
                     if counter % max(10, total // 100) == 0:
@@ -167,7 +191,7 @@ class ListExporter(BaseExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 if total:
                     counter += 1
                     if counter % max(10, total // 100) == 0:
@@ -178,6 +202,14 @@ class ListExporter(BaseExporter):
                 'text/csv',
                 output.getvalue().encode('utf-8'),
             )
+
+    def _clean_xlsx_cell(self, ws, val):
+        val = excel_safe(val)
+        if isinstance(val, str) and val.startswith('='):
+            cell = WriteOnlyCell(ws, value=val)
+            cell.data_type = 's'
+            return cell
+        return val
 
     def _render_xlsx(self, form_data, output_file=None):
         wb = Workbook(write_only=True)
@@ -192,7 +224,7 @@ class ListExporter(BaseExporter):
             if isinstance(line, self.ProgressSetTotal):
                 total = line.total
                 continue
-            ws.append([excel_safe(val) if not isinstance(val, KNOWN_TYPES) else val for val in line])
+            ws.append([self._clean_xlsx_cell(ws, val) for val in line])
             if total:
                 counter += 1
                 if counter % max(10, total // 100) == 0:
@@ -281,7 +313,7 @@ class MultiSheetListExporter(ListExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 writer.writerow(line)
                 if total:
                     counter += 1
@@ -295,7 +327,7 @@ class MultiSheetListExporter(ListExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                line = [localize(f) if isinstance(f, Decimal) else f for f in line]
+                line = self._clean_csv_row(line)
                 writer.writerow(line)
                 if total:
                     counter += 1
@@ -321,7 +353,7 @@ class MultiSheetListExporter(ListExporter):
                 if isinstance(line, self.ProgressSetTotal):
                     total = line.total
                     continue
-                ws.append([excel_safe(val) for val in line])
+                ws.append([self._clean_xlsx_cell(ws, val) for val in line])
                 if total:
                     counter += 1
                     if counter % max(10, total // 100) == 0:
