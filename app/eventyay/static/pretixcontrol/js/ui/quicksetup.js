@@ -421,7 +421,7 @@ $(function () {
         var field = document.querySelector(selector);
         var group = field && field.closest(".form-group");
         var label = group && group.querySelector("label");
-        var text = label && label.querySelector(".label-text");
+        var text = label && (label.querySelector(".label-text") || label);
         if (!text) return;
 
         // Remove the current hint (either markup) so switching back and forth works
