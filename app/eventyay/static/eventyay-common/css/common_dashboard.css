@@ -7,6 +7,11 @@
 .modern-dashboard #event-nav {
   margin-bottom: 0
 }
+.modern-dashboard #event-nav .navigation-title h2 {
+  margin: 0;
+  padding-top: 8px;
+  color: var(--td-text, #555)
+}
 .dashboard-header-extra {
   font-size: 16px;
   margin-top: 8px;
@@ -782,6 +787,18 @@ body:has(.td-dashboard) #page-content {
 }
 .td-status-card-off .td-status-card-value {
   color: var(--td-red)
+}
+/* Plain variant: grey, normal-weight text like the other KPI figures; the dot
+   alone carries the live/off colour. */
+.td-status-card .td-status-card-value.td-status-card-value-plain {
+  font-weight: normal;
+  color: var(--td-text)
+}
+.td-status-card-live .td-status-card-value-plain .td-status-dot {
+  background: var(--td-green)
+}
+.td-status-card-off .td-status-card-value-plain .td-status-dot {
+  background: var(--td-red)
 }
 .td-dashboard .visually-hidden {
   position: absolute;
