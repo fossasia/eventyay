@@ -2,9 +2,12 @@ import json
 
 import pytest
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.dispatch import Signal
 from django_scopes import scope
 
 from eventyay.api.serializers.speaker_information import SpeakerInformationSerializer
+from eventyay.base import entitlements
 
 
 @pytest.mark.django_db
@@ -374,3 +377,60 @@ def test_orga_cannot_assign_track_from_other_event(
 
     with scope(event=event):
         assert not event.information.filter(title="New Test Info").exists()
+
+
+@pytest.fixture
+def allow_all_entitlements(monkeypatch):
+    """Ignore installed plan plugins so API writes do not depend on the organizer's plan."""
+    monkeypatch.setattr(entitlements, "entitlement_check", Signal())
+
+
+@pytest.mark.django_db
+def test_orga_can_replace_speaker_information_resource(
+    client, event, settings, tmp_path, allow_all_entitlements, django_capture_on_commit_callbacks
+):
+    settings.MEDIA_ROOT = tmp_path
+    with scope(event=event):
+        team = event.organizer.teams.filter(can_change_organizer_settings=True, is_reviewer=False).first()
+        # The upload endpoint only accepts team tokens, and an uploaded file can only be
+        # used by the same client that uploaded it, so both requests use this token.
+        team_token = team.tokens.create(name="testtoken")
+        speaker_info = event.information.create(
+            title="Test Info",
+            text="This is some test information",
+            target_group="accepted",
+        )
+        speaker_info.resource.save("old.pdf", ContentFile(b"%PDF-1.4 old"))
+        old_name = speaker_info.resource.name
+    assert default_storage.exists(old_name)
+
+    response = client.post(
+        "/api/v1/upload",
+        data={"file": ContentFile(b"%PDF-1.4 new", name="new.pdf")},
+        headers={"Authorization": f"Token {team_token.token}"},
+    )
+    assert response.status_code == 201, response.content
+    file_id = response.json()["id"]
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.patch(
+            event.api_urls.speaker_information + f"{speaker_info.pk}/",
+            follow=True,
+            data=json.dumps({"resource": file_id}),
+            headers={
+                "Authorization": f"Token {team_token.token}",
+                "Content-Type": "application/json",
+            },
+        )
+        assert response.status_code == 200, response.text
+        # The old file is only deleted once the transaction commits.
+        assert default_storage.exists(old_name)
+
+    with scope(event=event):
+        speaker_info.refresh_from_db()
+        new_name = speaker_info.resource.name
+    assert new_name != old_name
+    assert default_storage.exists(new_name)
+    assert not default_storage.exists(old_name)
+    with default_storage.open(new_name) as new_file:
+        assert new_file.read() == b"%PDF-1.4 new"

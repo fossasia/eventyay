@@ -1,5 +1,8 @@
+import logging
 from pathlib import Path
 
+from django.core.files.storage import default_storage
+from django.db import transaction
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 
 from eventyay.api.mixins import PretalxSerializer
@@ -8,6 +11,16 @@ from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
+
+
+logger = logging.getLogger(__name__)
+
+
+def delete_stored_file(name: str) -> None:
+    try:
+        default_storage.delete(name)
+    except OSError:
+        logger.error('Deleting file %s failed.', name)
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -58,5 +71,10 @@ class SpeakerInformationSerializer(FlexFieldsSerializerMixin, PretalxSerializer)
         resource = validated_data.pop("resource", None)
         instance = super().update(instance, validated_data)
         if resource:
-            instance.resource.update(Path(resource.name).name, resource)
+            old_resource_name = instance.resource.name
+            instance.resource.save(Path(resource.name).name, resource, save=False)
+            instance.save(update_fields=("resource",))
+
+            if old_resource_name:
+                transaction.on_commit(lambda: delete_stored_file(old_resource_name))
         return instance
