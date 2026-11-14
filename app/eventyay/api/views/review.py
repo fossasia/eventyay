@@ -1,4 +1,5 @@
 from django.utils.functional import cached_property
+from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 from rest_framework.permissions import SAFE_METHODS
@@ -55,6 +56,7 @@ class ReviewViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     queryset = Review.objects.none()
     search_fields = ("submission__title", "user__fullname")
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ReviewFilter
     endpoint = "reviews"
     # We only permit access to this endpoint if the user can see all reviews,

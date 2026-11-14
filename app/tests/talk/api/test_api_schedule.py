@@ -1,9 +1,10 @@
 import json
+from datetime import timedelta
 
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import Schedule
+from eventyay.base.models import Room, Schedule, TalkSlot
 
 
 @pytest.fixture
@@ -574,6 +575,116 @@ def test_list_slots_orga_can_filter_by_schedule_pk(
     content = json.loads(response.text)
     assert response.status_code == 200
     assert content["count"] == 3
+
+
+@pytest.mark.django_db
+def test_list_slots_orga_can_filter_by_room(
+    client, orga_user_token, event, slot, room
+):
+    with scope(event=event):
+        other_room = Room.objects.create(event=event, name="Other Room", position=9)
+        other_slot = TalkSlot.objects.create(
+            schedule=slot.schedule,
+            submission=slot.submission,
+            room=other_room,
+            is_visible=True,
+            start=event.datetime_from,
+            end=event.datetime_from + timedelta(minutes=30),
+        )
+
+    response = client.get(
+        event.api_urls.slots + f"?room={room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 2
+    assert slot.pk in [s["id"] for s in content["results"]]
+    assert other_slot.pk not in [s["id"] for s in content["results"]]
+
+    response = client.get(
+        event.api_urls.slots + f"?room={other_room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == other_slot.pk
+
+    # Invalid room returns 400
+    response_invalid = client.get(
+        event.api_urls.slots + "?room=99999",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_invalid.status_code == 400
+    assert "room" in response_invalid.json()
+
+
+@pytest.mark.django_db
+def test_list_slots_orga_can_filter_by_schedule_version(
+    client, orga_user_token, event, slot, room
+):
+    with scope(event=event):
+        versioned_schedule = event.schedules.create(version="v2-filter")
+        slot.schedule = versioned_schedule
+        slot.save()
+        expected_pks = {slot.pk}
+
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=v2-filter",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == len(expected_pks)
+    assert {s["id"] for s in content["results"]} == expected_pks
+
+
+@pytest.mark.django_db
+def test_list_slots_orga_can_filter_by_schedule_version_wip(
+    client, orga_user_token, event, slot
+):
+    with scope(event=event):
+        wip_pks = set(event.wip_schedule.talks.values_list("pk", flat=True))
+        assert wip_pks
+
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == len(wip_pks)
+    assert {s["id"] for s in content["results"]} == wip_pks
+
+    # Case-insensitive "WIP"
+    response_upper = client.get(
+        event.api_urls.slots + "?schedule_version=WIP",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content_upper = json.loads(response_upper.text)
+    assert response_upper.status_code == 200, content_upper
+    assert content_upper["count"] == len(wip_pks)
+    assert {s["id"] for s in content_upper["results"]} == wip_pks
+
+
+@pytest.mark.django_db
+def test_list_slots_anonymous_cannot_filter_by_schedule_version_wip(
+    client, event, slot
+):
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 0
 
 
 @pytest.mark.django_db
