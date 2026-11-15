@@ -6,6 +6,7 @@ from django.utils.timezone import now
 
 from eventyay.base.models import Event, GiftCard, GiftCardTransaction, Organizer
 from eventyay.base.payment import GiftCardPayment
+from eventyay.base.services.cart import VOUCHER_RATE_LIMIT_WINDOW, VoucherRateLimitUnavailable
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def test_giftcard_checkout_prepare_applies_gift_card(event):
 
 
 @pytest.mark.django_db
-def test_giftcard_checkout_rate_limit_queues_error_for_checkout_template(event):
+def test_giftcard_checkout_rate_limit_returns_429(event):
     provider = GiftCardPayment(event)
     request = MagicMock()
     request.event = event
@@ -59,12 +60,13 @@ def test_giftcard_checkout_rate_limit_queues_error_for_checkout_template(event):
     ):
         response = provider.checkout_prepare(request, {})
 
-    assert response is None
-    add_error.assert_called_once()
+    assert response.status_code == 429
+    assert response['Retry-After'] == str(VOUCHER_RATE_LIMIT_WINDOW)
+    add_error.assert_not_called()
 
 
 @pytest.mark.django_db
-def test_giftcard_payment_rate_limit_queues_error_for_order_template(event):
+def test_giftcard_payment_rate_limit_returns_429(event):
     provider = GiftCardPayment(event)
     request = MagicMock()
     request.event = event
@@ -79,5 +81,27 @@ def test_giftcard_payment_rate_limit_queues_error_for_order_template(event):
     ):
         response = provider.payment_prepare(request, payment)
 
-    assert response is None
-    add_error.assert_called_once()
+    assert response.status_code == 429
+    assert response['Retry-After'] == str(VOUCHER_RATE_LIMIT_WINDOW)
+    add_error.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_giftcard_checkout_rate_limit_unavailable_returns_503(event):
+    provider = GiftCardPayment(event)
+    request = MagicMock()
+    request.event = event
+    request.POST = {'giftcard': 'wrong-code'}
+
+    with (
+        patch('eventyay.base.payment.get_cart', return_value=[]),
+        patch('eventyay.base.payment.cart_session', return_value={}),
+        patch(
+            'eventyay.base.payment.reserve_voucher_attempt',
+            side_effect=VoucherRateLimitUnavailable,
+        ),
+    ):
+        response = provider.checkout_prepare(request, {})
+
+    assert response.status_code == 503
+    assert response['Retry-After'] == str(VOUCHER_RATE_LIMIT_WINDOW)

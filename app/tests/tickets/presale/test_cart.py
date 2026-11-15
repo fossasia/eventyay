@@ -2372,6 +2372,32 @@ class CartTest(CartTestMixin, TestCase):
             with self.assertRaises(VoucherRateLimitUnavailable):
                 reserve_voucher_attempt(request)
 
+    def test_cart_add_returns_503_when_voucher_rate_limit_is_unavailable(self):
+        with patch(
+            'eventyay.presale.views.cart.reserve_voucher_attempt',
+            side_effect=VoucherRateLimitUnavailable,
+        ):
+            response = self.client.post(
+                f'/{self.orga.slug}/{self.event.slug}/cart/add',
+                {'item_%d' % self.ticket.id: '1', '_voucher_code': 'invalid'},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response['Retry-After'], str(VOUCHER_RATE_LIMIT_WINDOW))
+
+    def test_cart_apply_voucher_returns_503_when_rate_limit_is_unavailable(self):
+        with patch(
+            'eventyay.presale.views.cart.reserve_voucher_attempt',
+            side_effect=VoucherRateLimitUnavailable,
+        ):
+            response = self.client.post(
+                f'/{self.orga.slug}/{self.event.slug}/cart/voucher',
+                {'voucher': 'invalid'},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response['Retry-After'], str(VOUCHER_RATE_LIMIT_WINDOW))
+
     @override_settings(
         CACHES={
             'default': {
@@ -2433,6 +2459,33 @@ class CartTest(CartTestMixin, TestCase):
         self.assertEqual(response['Retry-After'], str(VOUCHER_RATE_LIMIT_WINDOW))
         self.assertContains(response, 'alert-danger', status_code=429)
         cache.clear()
+
+    def test_subevent_detail_does_not_reserve_voucher_attempt(self):
+        self.event.has_subevents = True
+        self.event.save()
+        with scopes_disabled():
+            subevent = self.event.subevents.create(
+                name='Subevent',
+                date_from=self.event.date_from,
+                active=True,
+            )
+
+        with patch('eventyay.presale.views.event.reserve_voucher_attempt') as reserve_attempt:
+            response = self.client.get(
+                f'/{self.orga.slug}/{self.event.slug}/{subevent.pk}/?voucher=invalid'
+            )
+
+        self.assertEqual(response.status_code, 200)
+        reserve_attempt.assert_not_called()
+
+    def test_subevent_index_reports_oversized_voucher(self):
+        self.event.has_subevents = True
+        self.event.save()
+        response = self.client.get(
+            f'/{self.orga.slug}/{self.event.slug}/?voucher={"X" * 256}'
+        )
+
+        self.assertContains(response, 'invalid length')
 
     def test_voucher_quota_empty(self):
         self.quota_tickets.size = 0
