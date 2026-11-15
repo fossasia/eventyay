@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q, prefetch_related_objects
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.template.defaultfilters import timeuntil
@@ -334,7 +334,7 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
     @context
     def recent_talk_activity(self):
         with scope(event=self.request.event):
-            logs = list(
+            return list(
                 LogEntry.objects.filter(
                     Q(action_type__contains='submission')
                     | Q(action_type__contains='speaker')
@@ -343,19 +343,10 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                     | Q(action_type__contains='review')
                     | Q(action_type__contains='schedule'),
                     event=self.request.event,
-                ).select_related('user', 'event', 'content_type')[:10]
+                )
+                .select_related('user', 'event', 'content_type')
+                .prefetch_related('content_object')[:10]
             )
-            # A log entry can point at a model that is no longer installed, e.g. one from a
-            # removed plugin. Loading it would fail, so show such entries without an object.
-            content_object = LogEntry._meta.get_field('content_object')
-            resolvable = []
-            for log in logs:
-                if log.content_type_id and log.content_type.model_class() is None:
-                    content_object.set_cached_value(log, None)
-                else:
-                    resolvable.append(log)
-            prefetch_related_objects(resolvable, 'content_object')
-            return logs
 
     @context
     def orga_internal_note(self):
