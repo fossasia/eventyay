@@ -412,7 +412,7 @@ def _has_i18n_content(value):
     """True when a stored i18n value has non-empty text in at least one locale."""
     data = getattr(value, 'data', value)
     if isinstance(data, dict):
-        return any(str(item).strip() for item in data.values())
+        return any(item is not None and str(item).strip() for item in data.values())
     return bool(data and str(data).strip())
 
 
