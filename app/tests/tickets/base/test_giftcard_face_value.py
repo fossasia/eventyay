@@ -254,6 +254,26 @@ def test_legacy_canceled_addon_is_not_credited_again(gift_order, redeemed):
 
 
 @pytest.mark.django_db
+def test_cancelling_parent_and_addon_together_reverses_card_once(gift_order):
+    """A batch cancelling a parent and its gift-card add-on must not reverse the card twice."""
+    event, order, position = gift_order
+    product = Product.objects.create(event=event, name='Parent', default_price=0)
+    parent = OrderPosition.objects.create(order=order, product=product, price=0)
+    retained = OrderPosition.objects.create(order=order, product=product, price=0)
+    position.addon_to = parent
+    position.save(update_fields=['addon_to'])
+    signal_listener_issue_giftcards(event, order)
+    card = position.issued_gift_cards.get()
+    manager = OrderChangeManager(order)
+    manager.cancel(parent)
+    manager.cancel(position)
+    manager.commit(check_quotas=False)
+    assert card.value == 0
+    retained.refresh_from_db()
+    assert not retained.canceled
+
+
+@pytest.mark.django_db
 def test_signal_establishes_event_scope(gift_order):
     event, order, position = gift_order
     with scope(event=None, organizer=None):
