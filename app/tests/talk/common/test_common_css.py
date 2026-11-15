@@ -332,7 +332,7 @@ def test_organizer_dashboard_kpi_responsive_layout():
     header, body = extract_kpi_mobile_media_block(css_content)
     rule_match = re.search(r'([^{}]*\.od-kpi-grid[^{]*)\{([^}]+)\}', body)
     assert rule_match is not None
-    assert 'grid-template-columns: 1fr' in rule_match.group(2)
+    assert re.search(r'(?:^|;)\s*grid-template-columns:\s*1fr\s*(?:;|$)', rule_match.group(2)) is not None
 
     # .od-kpi-grid is defined in base layout and the mobile media query only
     assert len(re.findall(r'\.od-kpi-grid\b', css_content)) == 2
@@ -352,3 +352,21 @@ def test_organizer_dashboard_kpi_rejects_600px_mobile_breakpoint():
     # Moving the organizer grid rule to a 600px breakpoint must be rejected
     with pytest.raises(AssertionError, match=r'Expected max-width: 767px media query, got: @media \(max-width:600px\)'):
         extract_kpi_mobile_media_block(modified_css)
+
+
+def test_organizer_dashboard_kpi_rejects_multi_column_mobile_declaration():
+    css_path = finders.find('eventyay-common/css/common_dashboard.css')
+    assert css_path is not None
+    css_content = Path(css_path).read_text(encoding='utf-8')
+
+    modified_css = css_content.replace(
+        '.od-kpi-grid {\n    grid-template-columns: 1fr',
+        '.od-kpi-grid {\n    grid-template-columns: 1fr 1fr',
+    )
+    assert modified_css != css_content
+
+    header, body = extract_kpi_mobile_media_block(modified_css)
+    rule_match = re.search(r'([^{}]*\.od-kpi-grid[^{]*)\{([^}]+)\}', body)
+    assert rule_match is not None
+    with pytest.raises(AssertionError):
+        assert re.search(r'(?:^|;)\s*grid-template-columns:\s*1fr\s*(?:;|$)', rule_match.group(2)) is not None
