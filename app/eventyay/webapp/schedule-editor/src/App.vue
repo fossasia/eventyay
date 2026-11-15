@@ -785,8 +785,8 @@ const pinnedTimezones = computed<{ id: string; label: string }[]>(() => {
   }
 
   const eventTz = schedule.value?.timezone || 'UTC'
-  add(eventTz, 'event')
-  add(userLocalTimezone.value, 'local')
+  add(eventTz, $t('event'))
+  add(userLocalTimezone.value, $t('local'))
   add('UTC', 'UTC')
   return list
 })

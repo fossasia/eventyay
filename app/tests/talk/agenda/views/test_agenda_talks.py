@@ -21,6 +21,13 @@ def test_can_see_talk_list(client, django_assert_max_num_queries, event):
 @pytest.mark.django_db
 @pytest.mark.usefixtures('other_slot')
 def test_can_see_talk(client, event, slot):
+    with scope(event=event):
+        slot.submission.abstract = (
+            '<p><strong>HTML</strong> &nbsp; abstract with &lt;T&gt;</p><p>Second paragraph '
+            + ('long text ' * 30)
+            + '</p>'
+        )
+        slot.submission.save()
     response = client.get(slot.submission.urls.public, follow=True)
     assert response.status_code == 200
     content = response.text
@@ -29,6 +36,20 @@ def test_can_see_talk(client, event, slot):
         assert content.count(slot.submission.title) >= 2  # meta+h1
         assert slot.submission.abstract in content
         assert slot.submission.description in content
+        meta_desc = content.split('<meta name="description" content="')[1].split('"')[0]
+        og_desc = content.split('<meta property="og:description" content="')[1].split('"')[0]
+        assert meta_desc.startswith('HTML abstract with <T> Second paragraph')
+        assert og_desc.startswith('HTML abstract with <T> Second paragraph')
+        assert '<p>' not in meta_desc and '</p>' not in meta_desc
+        assert '<p>' not in og_desc and '</p>' not in og_desc
+        assert '<strong>' not in meta_desc and '</strong>' not in meta_desc
+        assert '<strong>' not in og_desc and '</strong>' not in og_desc
+        assert '&nbsp;' not in meta_desc
+        assert '<T>' in meta_desc
+        assert '<T>' in og_desc
+        assert meta_desc.endswith('…')
+        assert len(meta_desc) == 200
+        assert len(og_desc) == 200
         assert formats.date_format(slot.local_start, 'H:i') in content
         assert formats.date_format(slot.local_end, 'H:i') in content
         assert str(slot.room.name) in content
