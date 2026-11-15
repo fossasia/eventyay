@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from pathlib import Path
 
 from django.core.files.storage import default_storage
@@ -75,6 +76,6 @@ class SpeakerInformationSerializer(FlexFieldsSerializerMixin, PretalxSerializer)
             instance.resource.save(Path(resource.name).name, resource, save=False)
             instance.save(update_fields=("resource",))
 
-            if old_resource_name:
-                transaction.on_commit(lambda: delete_stored_file(old_resource_name))
+            if old_resource_name and old_resource_name != instance.resource.name:
+                transaction.on_commit(partial(delete_stored_file, name=old_resource_name))
         return instance
