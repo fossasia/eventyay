@@ -1,13 +1,15 @@
+import io
 from collections import Counter
 from datetime import timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 
+import openpyxl
 import pytest
 from django.utils import timezone, translation
 from django_scopes import scope
 
-from eventyay.base.exporter import neutralize_spreadsheet_formula
+from eventyay.base.exporter import ListExporter, neutralize_spreadsheet_formula
 from eventyay.base.exporters.orderlist import OrderListExporter
 from eventyay.base.models import InvoiceAddress, Order, OrderPosition, Product
 from eventyay.plugins.checkinlists.exporters import CSVCheckinList, PDFCheckinList
@@ -87,9 +89,6 @@ def test_order_list_export_orders_includes_job_title(event):
 
         _, _, xlsx_bytes = exporter.render({'_format': 'xlsx', 'paid_only': True})
         assert xlsx_bytes.startswith(b'PK')
-
-        import io
-        import openpyxl
 
         wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
         ws = wb['Orders']
@@ -257,3 +256,40 @@ def test_pdf_checkin_list_exports_escaped_job_title(event):
 )
 def test_neutralize_spreadsheet_formula(val, expected):
     assert neutralize_spreadsheet_formula(val) == expected
+
+
+def test_clean_xlsx_cell_neutralizes_formulas():
+    class DummyExporter(ListExporter):
+        def __init__(self):
+            pass
+
+    exporter = DummyExporter()
+    wb = openpyxl.Workbook(write_only=True)
+    ws = wb.create_sheet()
+
+    assert exporter._clean_xlsx_cell(ws, None) is None
+    assert exporter._clean_xlsx_cell(ws, '') == ''
+    assert exporter._clean_xlsx_cell(ws, 'Senior Engineer') == 'Senior Engineer'
+    assert exporter._clean_xlsx_cell(ws, Decimal('25.00')) == Decimal('25.00')
+    assert exporter._clean_xlsx_cell(ws, 42) == 42
+    assert exporter._clean_xlsx_cell(ws, '+10') == '+10'
+    assert exporter._clean_xlsx_cell(ws, '-10.50') == '-10.50'
+
+    for formula in ('=1+1', ' =1+1', '   @SUM(A1:A10)', '+cmd|calc', '-cmd|calc', '＝1+1', '＋1+1', '\t@calc'):
+        cell = exporter._clean_xlsx_cell(ws, formula)
+        assert cell.data_type == 's'
+        assert cell.value == formula
+
+
+def test_clean_csv_row_handles_decimals_and_formulas():
+    class DummyExporter(ListExporter):
+        def __init__(self):
+            pass
+
+    exporter = DummyExporter()
+    with translation.override('en'):
+        row = [Decimal('25.00'), '=1+1', '@SUM', 'Normal', None, '+10']
+        cleaned = exporter._clean_csv_row(row)
+        assert cleaned == ['25.00', "'=1+1", "'@SUM", 'Normal', None, '+10']
+
+

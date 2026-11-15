@@ -158,7 +158,7 @@ class ListExporter(BaseExporter):
 
     def _clean_csv_row(self, line):
         return [
-            neutralize_spreadsheet_formula(localize(f))
+            localize(f)
             if isinstance(f, Decimal)
             else neutralize_spreadsheet_formula(f)
             for f in line
@@ -205,10 +205,12 @@ class ListExporter(BaseExporter):
 
     def _clean_xlsx_cell(self, ws, val):
         val = excel_safe(val)
-        if isinstance(val, str) and val.startswith('='):
-            cell = WriteOnlyCell(ws, value=val)
-            cell.data_type = 's'
-            return cell
+        if isinstance(val, str):
+            stripped = val.lstrip()
+            if stripped.startswith(SPREADSHEET_FORMULA_PREFIXES) and not NUMERIC_TEXT_RE.match(stripped):
+                cell = WriteOnlyCell(ws, value=val)
+                cell.data_type = 's'
+                return cell
         return val
 
     def _render_xlsx(self, form_data, output_file=None):
