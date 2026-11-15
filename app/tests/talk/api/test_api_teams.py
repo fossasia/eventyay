@@ -357,7 +357,7 @@ def test_orga_cannot_invite_existing_member(
         },
     )
     assert response.status_code == 400, response.text
-    assert "already a member" in response.text
+    assert "already has permissions" in response.text
     assert team.invites.count() == invite_count
 
 
