@@ -118,8 +118,12 @@ class OrganizerRequestFieldSettings(AdministratorPermissionRequiredMixin, Update
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
+        # Save only the two text columns, so a stale read cannot overwrite a concurrent change to active, required
+        # or position made on the list page.
+        self.object = form.instance
+        self.object.save(update_fields=['label', 'help_text'])
         messages.success(self.request, _('The field settings have been saved.'))
-        return super().form_valid(form)
+        return redirect(self.get_success_url())
 
 
 class OrganizerRequestQuestionToggle(AdministratorPermissionRequiredMixin, View):

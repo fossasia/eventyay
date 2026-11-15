@@ -11,8 +11,13 @@
     {% bootstrap_form form layout='control' %}
     <div class="form-group submit-group">
       <a href="{% url 'eventyay_admin:admin.organizer_forms' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
-      <button type="submit" name="action" value="reset" class="btn btn-default">{% trans 'Reset to defaults' %}</button>
+      <button type="submit" form="field-reset-form" class="btn btn-default">{% trans 'Reset to defaults' %}</button>
       <button type="submit" class="btn btn-primary btn-save">{% trans 'Save' %}</button>
     </div>
+  </form>
+  {# Separate form, so pressing Enter in a field submits Save and never Reset. #}
+  <form method="post" id="field-reset-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="reset">
   </form>
 {% endblock %}

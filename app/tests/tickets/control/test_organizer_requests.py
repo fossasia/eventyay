@@ -731,3 +731,24 @@ def test_field_settings_require_admin(client, application):
     assert client.get(url).status_code == 403
     assert client.post(url, {'label': 'X', 'help_text': ''}).status_code == 403
     assert OrganizerRequestFieldSetting.objects.filter(key='events', label='X').count() == 0
+
+
+def test_field_settings_reset_button_is_not_part_of_the_save_form(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
+    html = client.get(url).content.decode()
+    save_form = html.split('<form method="post" class="form-horizontal">', 1)[1].split('</form>', 1)[0]
+    assert 'value="reset"' not in save_form
+    assert 'form="field-reset-form"' in save_form
+    assert 'id="field-reset-form"' in html
+    assert 'name="action" value="reset"' in html
+
+
+def test_field_settings_save_only_writes_the_two_text_columns(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    with CaptureQueriesContext(connection) as queries:
+        assert client.post(url, {'label': 'Group', 'help_text': ''}).status_code == 302
+    updates = [q['sql'] for q in queries if q['sql'].startswith('UPDATE "base_organizerrequestfieldsetting"')]
+    assert len(updates) == 1
+    assert '"label"' in updates[0] and '"help_text"' in updates[0]
+    for column in ('"active"', '"required"', '"position"'):
+        assert column not in updates[0].split(' WHERE ')[0]
