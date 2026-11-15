@@ -590,7 +590,7 @@ body:has(.td-dashboard) #page-content {
 }
 .td-action-notification {
   padding: 8px 0;
-  border-top: 1px solid var(--td-border)
+  border-top: 1px solid var(--td-border, #e5e7eb)
 }
 .td-action-notification-meta {
   display: flex;
