@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Sum
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -80,17 +79,14 @@ class GiftCard(LoggedModel):
 
     @property
     def value(self):
-        if 'transactions' in getattr(self, '_prefetched_objects_cache', {}):
-            return sum((entry.value for entry in self.transactions.all()), Decimal('0.00'))
-        return self.transactions.aggregate(s=Sum('value'))['s'] or Decimal('0.00')
+        # transactions.all() reads the prefetch cache when the relation was
+        # prefetched, otherwise it runs a single query.
+        return sum((entry.value for entry in self.transactions.all()), Decimal('0.00'))
 
     @property
     def issued_value(self):
         """Original credit, independent of subsequent redemption or cancellation."""
-        if 'transactions' in getattr(self, '_prefetched_objects_cache', {}):
-            initial = min(self.transactions.all(), key=lambda entry: (entry.datetime, entry.pk), default=None)
-        else:
-            initial = self.transactions.order_by('datetime', 'pk').first()
+        initial = min(self.transactions.all(), key=lambda entry: (entry.datetime, entry.pk), default=None)
         if initial is not None:
             return initial.value
         if self.issued_in_id:
