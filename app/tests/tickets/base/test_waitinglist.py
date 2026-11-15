@@ -13,10 +13,11 @@ from eventyay.base.models import (
     ProductVariation as ItemVariation,
     Organizer,
     Quota,
+    SubEvent,
     Voucher,
     WaitingListEntry,
 )
-from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.models.waitinglist import WaitingListBusy, WaitingListException
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.waitinglist import (
     assign_automatically,
@@ -49,12 +50,16 @@ def test_send_voucher_quota_capacity(quota_size, with_variation, release_failure
         monkeypatch.setattr('eventyay.base.models.waitinglist.mail', lambda *args, **kwargs: sent.append(args[0]))
         if release_failure:
             original_lock = Event.lock
+            release_events = []
 
             @contextmanager
             def failing_release(event):
                 """Fail after releasing the booking lock and committing the reservation."""
                 with original_lock(event):
+                    release_events.append('entered')
                     yield
+                assert WaitingListEntry.objects.get(pk=entry.pk).voucher_id is not None
+                release_events.append('failed after reservation')
                 raise LockTimeoutException()
 
             monkeypatch.setattr(Event, 'lock', failing_release)
@@ -76,6 +81,63 @@ def test_send_voucher_quota_capacity(quota_size, with_variation, release_failure
             assert entry.voucher.variation == variation
             assert entry.voucher.block_quota
             assert sent == [entry.email]
+            if release_failure:
+                assert release_events == ['entered', 'failed after reservation', 'entered']
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('with_variation', [False, True])
+@pytest.mark.parametrize('scenario', ['date', 'capacity', 'busy'])
+def test_automatic_assignment_refreshes_capacity_and_retries(with_variation, scenario, monkeypatch):
+    """POST date strings, released capacity and temporary contention must permit assignment."""
+    organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
+    event = Event.objects.create(
+        organizer=organizer, name='Waiting list', slug='waiting-list',
+        date_from=now() + timedelta(days=1), live=True, has_subevents=True,
+    )
+    with scope(event=event, organizer=organizer):
+        date = SubEvent.objects.create(
+            event=event, name='Day', active=True, date_from=event.date_from, date_to=event.date_from,
+        )
+        product = Item.objects.create(event=event, name='Ticket', default_price=23)
+        variation = ItemVariation.objects.create(product=product, value='Standard') if with_variation else None
+        quota = Quota.objects.create(
+            event=event, subevent=date, name='Tickets', size=0 if scenario == 'capacity' else 2,
+        )
+        (quota.variations if variation else quota.products).add(variation or product)
+        first, second = [
+            WaitingListEntry.objects.create(
+                event=event, product=product, variation=variation, subevent=date,
+                email=f'waiting{i}@example.test', priority=2 - i,
+            ) for i in range(2)
+        ]
+        original_send = WaitingListEntry.send_voucher
+        attempts, sent = [], []
+
+        def send(entry, *args, **kwargs):
+            """Make capacity available after the first rejection, or fail one lock attempt."""
+            attempts.append(entry.pk)
+            if scenario == 'busy' and len(attempts) == 2:
+                raise WaitingListBusy('busy')
+            try:
+                return original_send(entry, *args, **kwargs)
+            finally:
+                if scenario == 'capacity' and entry.pk == first.pk:
+                    quota.size = 2
+                    quota.save(update_fields=['size'])
+
+        monkeypatch.setattr(WaitingListEntry, 'send_voucher', send)
+        monkeypatch.setattr('eventyay.base.models.waitinglist.mail', lambda *args, **kwargs: sent.append(args[0]))
+        assigned = assign_automatically.apply(
+            args=(event.pk, None, str(date.pk)), throw=scenario != 'busy',
+        ).get()
+        expected = 1 if scenario == 'capacity' else 2
+        assert Voucher.objects.count() == len(sent) == expected
+        assert assigned == (1 if scenario == 'busy' else expected)
+        assert attempts == ([first.pk, second.pk, second.pk] if scenario == 'busy' else [first.pk, second.pk])
+        if scenario == 'capacity':
+            first.refresh_from_db()
+            assert first.voucher_id is None
 
 
 class WaitingListTestCase(TestCase):

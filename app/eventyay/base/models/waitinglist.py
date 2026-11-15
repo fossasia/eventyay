@@ -32,6 +32,10 @@ class WaitingListUnavailable(WaitingListException):
     """The ticket has no remaining quota for a waiting-list reservation."""
 
 
+class WaitingListBusy(WaitingListException):
+    """A temporary booking or quota conflict requires another assignment attempt."""
+
+
 class WaitingListEntry(LoggedModel):
     event = models.ForeignKey(
         Event,
@@ -128,12 +132,12 @@ class WaitingListEntry(LoggedModel):
                 reserved = True
         except (LockTimeoutException, LockReleaseException) as exc:
             if not reserved:
-                raise WaitingListException(_('The event is busy. Please try again.')) from exc
+                raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
         except OperationalError as exc:
             cause = exc.__cause__
             if (getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)) != '55P03':
                 raise
-            raise WaitingListException(_('The event is busy. Please try again.')) from exc
+            raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
 
         with language(self.locale, self.event.settings.region):
             mail(

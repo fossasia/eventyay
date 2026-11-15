@@ -1,7 +1,7 @@
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from django_scopes import scopes_disabled
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from eventyay.api.serializers.waitinglist import WaitingListSerializer
 from eventyay.base.models import WaitingListEntry
-from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.models.waitinglist import WaitingListBusy, WaitingListException
 
 with scopes_disabled():
 
@@ -78,6 +78,8 @@ class WaitingListViewSet(viewsets.ModelViewSet):
                 user=self.request.user,
                 auth=self.request.auth,
             )
+        except WaitingListBusy as e:
+            return Response({'detail': str(e)}, status=status.HTTP_409_CONFLICT, headers={'Retry-After': '5'})
         except WaitingListException as e:
             raise ValidationError(str(e))
         else:

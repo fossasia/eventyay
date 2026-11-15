@@ -6,20 +6,19 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, User, WaitingListEntry
-from eventyay.base.models.waitinglist import WaitingListException, WaitingListUnavailable
+from eventyay.base.models.waitinglist import WaitingListBusy, WaitingListException
 from eventyay.base.services.tasks import EventTask
 from eventyay.base.signals import order_canceled, order_changed, periodic_task
 from eventyay.celery_app import app
 
 
-@app.task(base=EventTask)
-def assign_automatically(event: Event, user_id: int = None, subevent_id: int = None):
+@app.task(base=EventTask, bind=True)
+def assign_automatically(self, event: Event, user_id: int = None, subevent_id: int = None):
+    """Assign eligible entries, retrying temporary conflicts with serializable identifiers."""
     if user_id:
         user = User.objects.get(id=user_id)
     else:
         user = None
-
-    gone = set()
 
     qs = (
         WaitingListEntry.objects.filter(event=event, voucher__isnull=True)
@@ -30,6 +29,7 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
     if subevent_id and event.has_subevents:
         subevent = event.subevents.get(id=subevent_id)
         qs = qs.filter(subevent=subevent)
+        subevent_id = subevent.pk
 
     sent = 0
 
@@ -44,13 +44,12 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
         )
 
     for wle in qs:
-        if (wle.product, wle.variation, wle.subevent) in gone:
-            continue
-
         try:
             wle.send_voucher(user=user, eligible=eligible)
-        except WaitingListUnavailable:
-            gone.add((wle.product, wle.variation, wle.subevent))
+        except WaitingListBusy as exc:
+            raise self.retry(
+                args=(event.pk, user_id, subevent_id), kwargs={}, exc=exc, countdown=5, max_retries=5,
+            )
         except WaitingListException:
             continue
         else:
