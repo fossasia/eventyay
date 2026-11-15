@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -84,3 +85,36 @@ def test_contact_organizer_button_css_rules():
     assert '.contact-organizer-btn:active' in css_content
     assert 'footer .contact-organizer-btn:active' in css_content
     assert 'color: var(--color-primary-text-dark, var(--color-primary, inherit));' in css_content
+
+
+def test_organizer_dashboard_kpi_responsive_layout():
+    css_path = finders.find('eventyay-common/css/common_dashboard.css')
+    assert css_path is not None
+    css_content = Path(css_path).read_text(encoding='utf-8')
+
+    # .od-kpi-grid uses responsive auto-fit / minmax sizing rule with a six-column cap
+    kpi_grid_match = re.search(r'\.od-kpi-grid\s*\{([^}]+)\}', css_content)
+    assert kpi_grid_match is not None
+    kpi_grid_rules = kpi_grid_match.group(1)
+    assert 'repeat(auto-fit, minmax(max(170px, calc((100% - 5 * 12px) / 6)), 1fr))' in kpi_grid_rules
+
+    # .od-kpi-label includes overflow-wrap: anywhere
+    kpi_label_match = re.search(r'\.od-kpi-label\s*\{([^}]+)\}', css_content)
+    assert kpi_label_match is not None
+    kpi_label_rules = kpi_label_match.group(1)
+    assert 'overflow-wrap: anywhere' in kpi_label_rules
+
+    # Obsolete 1200px and 991px fixed-column overrides are absent
+    for query in ('1200px', '991px'):
+        for match in re.finditer(rf'@media[^{{]*{query}[^{{]*\{{([\s\S]*?\n\}})', css_content):
+            assert '.od-kpi-grid' not in match.group(1)
+
+    # Existing mobile breakpoint (767px) is preserved
+    mobile_match = re.search(
+        r'@media[^{]*max-width:\s*767px[^{]*\{[\s\S]*?\.od-kpi-grid[^{]*\{[^}]*grid-template-columns:\s*1fr',
+        css_content,
+    )
+    assert mobile_match is not None
+
+    # .od-kpi-grid is defined in base layout and the mobile media query only
+    assert len(re.findall(r'\.od-kpi-grid\b', css_content)) == 2
