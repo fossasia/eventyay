@@ -87,7 +87,8 @@ jobs:
   pytest-integration:
     name: Integration tests (pytest) (shard ${{ matrix.group }}/4)
     runs-on: ubuntu-latest
-    needs: python-uv-check
+    # Starts alongside the Django checks instead of after them; a broken
+    # project fails here too, so waiting only delayed every shard.
     strategy:
       fail-fast: false
       matrix:
@@ -174,7 +175,6 @@ jobs:
   backend-smoke:
     name: Backend smoke test (healthcheck)
     runs-on: ubuntu-latest
-    needs: python-uv-check
     services:
       postgres:
         image: postgres:16
