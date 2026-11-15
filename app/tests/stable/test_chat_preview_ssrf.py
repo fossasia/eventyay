@@ -1,10 +1,15 @@
 import socket
-from unittest.mock import MagicMock
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
+from requests.adapters import HTTPAdapter
 
 from eventyay.storage import external
-from eventyay.storage.external import is_public_http_url, retrieve_url
+from eventyay.storage.external import PinnedAddressAdapter, fetch_pinned, resolve_public_address, retrieve_url
 
 
 PUBLIC_IP = '93.184.216.34'
@@ -39,7 +44,7 @@ def dns(monkeypatch):
 @pytest.fixture
 def http_get(monkeypatch):
     get = MagicMock(return_value=fake_response())
-    monkeypatch.setattr(external.requests, 'get', get)
+    monkeypatch.setattr(external, 'fetch_pinned', get)
     return get
 
 
@@ -53,13 +58,17 @@ def http_get(monkeypatch):
         ['::1'],
         ['fd00::1'],
         ['::ffff:127.0.0.1'],
+        ['64:ff9b::a00:5'],  # NAT64 for 10.0.0.5
+        ['64:ff9b::7f00:1'],  # NAT64 for 127.0.0.1
+        ['2002:7f00:1::'],  # 6to4 for 127.0.0.1
         ['0.0.0.0'],
+        ['224.0.0.1'],
         [PUBLIC_IP, '10.0.0.5'],
     ],
 )
 def test_non_public_addresses_are_refused(dns, addresses):
     dns['internal.example'] = addresses
-    assert not is_public_http_url('http://internal.example/')
+    assert resolve_public_address('http://internal.example/') is None
 
 
 @pytest.mark.parametrize(
@@ -73,11 +82,26 @@ def test_non_public_addresses_are_refused(dns, addresses):
     ],
 )
 def test_invalid_urls_are_refused(dns, url):
-    assert not is_public_http_url(url)
+    assert resolve_public_address(url) is None
 
 
-def test_public_url_is_allowed(dns):
-    assert is_public_http_url('https://public.example/page')
+def test_public_url_returns_resolved_address(dns):
+    assert resolve_public_address('https://public.example/page') == PUBLIC_IP
+
+
+def test_nat64_of_public_address_is_allowed(dns):
+    dns['nat64.example'] = ['64:ff9b::5db8:d822']  # NAT64 for 93.184.216.34
+    assert resolve_public_address('https://nat64.example/') == '64:ff9b::5db8:d822'
+
+
+def test_slow_dns_is_refused(monkeypatch):
+    def slow_getaddrinfo(*args, **kwargs):
+        time.sleep(1)
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (PUBLIC_IP, 80))]
+
+    monkeypatch.setattr(external.socket, 'getaddrinfo', slow_getaddrinfo)
+    monkeypatch.setattr(external, 'PREVIEW_DNS_TIMEOUT', 0.05)
+    assert resolve_public_address('http://slow.example/') is None
 
 
 def test_retrieve_url_does_not_request_private_hosts(dns, http_get):
@@ -86,10 +110,9 @@ def test_retrieve_url_does_not_request_private_hosts(dns, http_get):
     http_get.assert_not_called()
 
 
-def test_retrieve_url_fetches_public_url_without_auto_redirects(dns, http_get):
+def test_retrieve_url_requests_the_validated_address(dns, http_get):
     assert retrieve_url('https://public.example/page') is http_get.return_value
-    http_get.assert_called_once()
-    assert http_get.call_args.kwargs['allow_redirects'] is False
+    assert http_get.call_args.args[1:] == ('https://public.example/page', PUBLIC_IP)
 
 
 def test_retrieve_url_blocks_redirect_to_private_host(dns, http_get):
@@ -103,10 +126,115 @@ def test_retrieve_url_follows_public_relative_redirect(dns, http_get):
     final = fake_response()
     http_get.side_effect = [fake_response(301, '/new'), final]
     assert retrieve_url('https://public.example/old') is final
-    assert http_get.call_args.args[0] == 'https://public.example/new'
+    assert http_get.call_args.args[1:] == ('https://public.example/new', PUBLIC_IP)
 
 
 def test_retrieve_url_limits_redirects(dns, http_get):
     http_get.return_value = fake_response(302, 'https://public.example/loop')
     assert retrieve_url('https://public.example/loop') is None
     assert http_get.call_count == external.MAX_PREVIEW_REDIRECTS + 1
+
+
+def test_fetch_pinned_connects_to_address_without_resolving_hostname(monkeypatch):
+    """The hostname is never resolved again; the Host header keeps the original name."""
+    seen = {}
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen['host'] = self.headers['Host']
+            seen['path'] = self.path
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'ok')
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(('127.0.0.1', 0), Handler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    real_getaddrinfo = socket.getaddrinfo
+
+    def no_dns(host, *args, **kwargs):
+        # urllib3 passes the IP literal to getaddrinfo, which needs no DNS lookup.
+        if host != '127.0.0.1':
+            raise AssertionError(f'{host} must not be resolved again')
+        return real_getaddrinfo(host, *args, **kwargs)
+
+    monkeypatch.setattr(socket, 'getaddrinfo', no_dns)
+    try:
+        with requests.Session() as session:
+            response = fetch_pinned(session, f'http://rebind.example:{port}/page?x=1', '127.0.0.1')
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert response.status_code == 200
+    assert response.content == b'ok'
+    assert response.url == f'http://rebind.example:{port}/page?x=1'
+    assert seen == {'host': f'rebind.example:{port}', 'path': '/page?x=1'}
+
+
+def test_pinned_adapter_keeps_hostname_for_tls():
+    """For https the certificate and SNI are checked against the original hostname."""
+    adapter = PinnedAddressAdapter('2001:db8::1')
+    request = requests.Request('GET', 'https://public.example/page').prepare()
+    with patch.object(HTTPAdapter, 'send', return_value=MagicMock()) as send:
+        response = adapter.send(request)
+
+    sent = send.call_args.args[0]
+    assert sent.url == 'https://[2001:db8::1]/page'
+    assert sent.headers['Host'] == 'public.example'
+    assert request.url == 'https://public.example/page'
+    assert response.request is request
+    assert adapter.poolmanager.connection_pool_kw['server_hostname'] == 'public.example'
+    assert adapter.poolmanager.connection_pool_kw['assert_hostname'] == 'public.example'
+    assert response.url == 'https://public.example/page'
+
+
+def test_validated_hostname_is_the_requested_hostname(dns, http_get):
+    """Python and Requests encode non-ASCII hostnames differently; the requested one is checked."""
+    dns['xn--fa-hia.attacker.example'] = [PUBLIC_IP]  # what Requests sends for faß
+    dns['fass.attacker.example'] = ['127.0.0.1']  # what getaddrinfo would use for faß
+    assert retrieve_url('http://faß.attacker.example/') is http_get.return_value
+    assert http_get.call_args.args[1:] == ('http://xn--fa-hia.attacker.example/', PUBLIC_IP)
+
+    dns['xn--fa-hia.attacker.example'] = ['127.0.0.1']
+    dns['fass.attacker.example'] = [PUBLIC_IP]
+    http_get.reset_mock()
+    assert retrieve_url('http://faß.attacker.example/') is None
+    http_get.assert_not_called()
+
+
+def test_cookies_are_kept_across_redirects(monkeypatch):
+    """A cookie set before a redirect is sent with the redirected request."""
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == '/start':
+                self.send_response(302)
+                self.send_header('Set-Cookie', 'consent=yes; Path=/')
+                self.send_header('Location', '/article')
+            elif 'consent=yes' in (self.headers['Cookie'] or ''):
+                self.send_response(200)
+            else:
+                self.send_response(403)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(('127.0.0.1', 0), Handler)
+    port = server.server_address[1]
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    monkeypatch.setattr(external, 'resolve_public_address', lambda url: '127.0.0.1')
+    try:
+        response = retrieve_url(f'http://cookie.example:{port}/start')
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert response is not None
+    assert response.url == f'http://cookie.example:{port}/article'

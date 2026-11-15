@@ -2,10 +2,13 @@ import ipaddress
 import mimetypes
 import socket
 import uuid
-from urllib.parse import urljoin, urlparse
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -65,62 +68,142 @@ def store_image(response, event):  # TODO deduplicate
 
 
 MAX_PREVIEW_REDIRECTS = 3
+PREVIEW_DNS_TIMEOUT = 5  # seconds
+PREVIEW_HTTP_TIMEOUT = 10  # seconds
+# Well-known NAT64 prefix (RFC 6052). Python treats it as global, but on networks with
+# NAT64 it reaches the embedded IPv4 address, which can be private.
+NAT64_NETWORK = ipaddress.ip_network('64:ff9b::/96')
+
+# getaddrinfo() has no timeout of its own, so it runs in a small pool to bound how long
+# a slow resolver can block the worker.
+dns_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix='preview-dns')
 
 
-def is_public_http_url(url: str) -> bool:
+def is_public_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    if isinstance(address, ipaddress.IPv6Address):
+        if address.ipv4_mapped:
+            address = address.ipv4_mapped
+        elif address in NAT64_NETWORK:
+            address = ipaddress.IPv4Address(int(address) & 0xFFFFFFFF)
+    return address.is_global and not address.is_multicast
+
+
+def resolve_public_address(url: str) -> str | None:
     """
-    Return True only for http(s) URLs whose host resolves exclusively to public addresses.
+    Resolve the host of an http(s) URL and return an address to connect to.
 
-    Link previews are fetched server-side for any URL posted in chat, so private,
-    loopback, link-local and other non-global targets must be refused (SSRF).
+    Link previews are fetched server-side for any URL posted in chat, so the URL is
+    refused (``None``) unless its host resolves exclusively to public addresses (SSRF).
     """
     try:
         parsed = urlparse(url)
         port = parsed.port
     except ValueError:
-        return False
+        return None
     if parsed.scheme not in ('http', 'https') or not parsed.hostname:
-        return False
+        return None
+    future = dns_executor.submit(
+        socket.getaddrinfo,
+        parsed.hostname,
+        port or (443 if parsed.scheme == 'https' else 80),
+        type=socket.SOCK_STREAM,
+    )
     try:
-        infos = socket.getaddrinfo(parsed.hostname, port or (443 if parsed.scheme == 'https' else 80))
+        infos = future.result(timeout=PREVIEW_DNS_TIMEOUT)
+    except FuturesTimeoutError:
+        future.cancel()
+        return None
     except (socket.gaierror, UnicodeError):
-        return False
+        return None
     if not infos:
-        return False
+        return None
+    addresses = []
     for info in infos:
         try:
             address = ipaddress.ip_address(info[4][0])
         except ValueError:
-            return False
-        if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
-            address = address.ipv4_mapped
-        if not address.is_global or address.is_multicast:
-            return False
-    return True
+            return None
+        if not is_public_address(address):
+            return None
+        addresses.append(address)
+    return str(addresses[0])
+
+
+class PinnedAddressAdapter(HTTPAdapter):
+    """
+    Connect to an already validated address instead of resolving the hostname again,
+    so the target cannot change between the check and the request (DNS rebinding).
+    The original hostname is still used for the Host header, SNI and certificate checks.
+    """
+
+    def __init__(self, address: str):
+        self.address = address
+        super().__init__(max_retries=0)
+
+    def send(self, request, **kwargs):
+        parsed = urlparse(request.url)
+        netloc = f'[{self.address}]' if ':' in self.address else self.address
+        if parsed.port:
+            netloc = f'{netloc}:{parsed.port}'
+        if parsed.scheme == 'https':
+            self.poolmanager.connection_pool_kw['server_hostname'] = parsed.hostname
+            self.poolmanager.connection_pool_kw['assert_hostname'] = parsed.hostname
+        # Send a copy so the session still sees the original URL (cookies, redirects).
+        pinned = request.copy()
+        pinned.url = urlunparse(parsed._replace(netloc=netloc))
+        pinned.headers['Host'] = parsed.netloc.rpartition('@')[2]
+        response = super().send(pinned, **kwargs)
+        response.url = request.url
+        response.request = request
+        return response
+
+
+def normalize_url(url: str) -> str | None:
+    """
+    Return the URL as Requests will send it (e.g. IDNA-encoded hostname), so the
+    hostname that is validated is the same one that is requested.
+    """
+    try:
+        return requests.Request('GET', url).prepare().url
+    except (requests.RequestException, ValueError):
+        return None
+
+
+def fetch_pinned(session: requests.Session, url: str, address: str) -> requests.Response:
+    adapter = PinnedAddressAdapter(address)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session.get(url, timeout=PREVIEW_HTTP_TIMEOUT, allow_redirects=False)  # TODO: user agent
 
 
 def retrieve_url(url):
     """
     Fetch a URL for a link preview.
 
-    Redirects are followed manually so that every hop is checked with
-    ``is_public_http_url`` before a request is sent to it.
+    Every hop, including redirects, is resolved and checked with
+    ``resolve_public_address`` and then requested at exactly that address.
+    One session is used for all hops so cookies set before a redirect are kept.
     """
-    for _ in range(MAX_PREVIEW_REDIRECTS + 1):
-        if not is_public_http_url(url):
-            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='blocked_url', backend='preview')
+    with requests.Session() as session:
+        # Environment proxies would connect by hostname and bypass the pinned address.
+        session.trust_env = False
+        for _ in range(MAX_PREVIEW_REDIRECTS + 1):
+            url = normalize_url(url)
+            address = resolve_public_address(url) if url else None
+            if not address:
+                log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='blocked_url', backend='preview')
+                return
+            try:
+                response = fetch_pinned(session, url, address)
+            except requests.RequestException:
+                log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
+                return
+            if not response.is_redirect:
+                break
+            url = urljoin(url, response.headers['Location'])
+        else:
+            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='too_many_redirects', backend='preview')
             return
-        try:
-            response = requests.get(url, timeout=10, allow_redirects=False)  # TODO: user agent
-        except requests.RequestException:
-            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
-            return
-        if not response.is_redirect:
-            break
-        url = urljoin(url, response.headers['Location'])
-    else:
-        log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='too_many_redirects', backend='preview')
-        return
     if response.status_code == 200:
         return response
     if response.status_code >= 500:
