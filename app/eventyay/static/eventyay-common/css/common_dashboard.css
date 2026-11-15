@@ -840,7 +840,10 @@ body:has(.td-dashboard) #page-content {
     width: 100%;
   }
   .dashboard-timeline-container {
-    padding: 16px
+    padding: 16px 12px
+  }
+  .timeline-step {
+    min-width: 0;
   }
   .timeline-step-label,
   .timeline-step-summary {
@@ -863,6 +866,32 @@ body:has(.td-dashboard) #page-content {
   .timeline-step::after {
     top: 16px
   }
+
+  /* Keep the step link popups inside the screen on phones */
+  .timeline-step-links {
+    left: 0;
+    transform: none;
+    width: max-content;
+    min-width: 0;
+    max-width: min(220px, calc(100vw - 3rem));
+  }
+  .timeline-step:nth-child(n+4) .timeline-step-links {
+    left: auto;
+    right: 0;
+  }
+  .timeline-step-links::before {
+    left: 12px;
+    transform: rotate(45deg);
+  }
+  .timeline-step:nth-child(n+4) .timeline-step-links::before {
+    left: auto;
+    right: 12px;
+  }
+  .timeline-step-links li a,
+  .timeline-step-links li .timeline-step-text {
+    white-space: normal;
+  }
+
 }
 .td-kpi-grid .td-kpi-link {
   font-weight: 700;
