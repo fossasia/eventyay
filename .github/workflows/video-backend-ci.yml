@@ -9,11 +9,18 @@ on:
       - "app/**/**.py"
       - "app/pyproject.toml"
       - "app/uv.lock"
+      - "app/tests/stable/.test_durations"
       - ".github/workflows/video-backend-ci.yml"
 
 env:
   PYTHON_VERSION: "3.12"
   NODE_VERSION: "22"
+
+concurrency:
+  # PRs: a new push cancels checks still running for older commits of the same PR.
+  # Branch pushes: grouped per commit, so they never cancel or replace each other.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   python-uv-check:
@@ -77,9 +84,14 @@ jobs:
         run: npm run build
 
   pytest-integration:
-    name: Integration tests (pytest)
+    name: Integration tests (pytest) (shard ${{ matrix.group }}/4)
     runs-on: ubuntu-latest
-    needs: python-uv-check
+    # Starts alongside the Django checks instead of after them; a broken
+    # project fails here too, so waiting only delayed every shard.
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3, 4]
     services:
       postgres:
         image: postgres:16
@@ -116,23 +128,13 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
-        run: pip install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: app/uv.lock
 
       - name: Sync dependencies (including test group)
         run: uv sync --directory app --group test
-
-      - name: Run database migrations
-        env:
-          EVY_POSTGRES_USER: eventyay
-          EVY_POSTGRES_PASSWORD: eventyay
-          EVY_POSTGRES_DB: eventyay-db
-          EVY_POSTGRES_HOST: localhost
-          EVY_POSTGRES_PORT: "5432"
-          EVY_REDIS_URL: redis://localhost:6379/0
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
-        working-directory: app
-        run: uv run python manage.py migrate --noinput
 
       - name: Run pytest
         env:
@@ -147,12 +149,24 @@ jobs:
           EVY_RUNNING_ENVIRONMENT: testing
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
-        run: uv run pytest tests/stable -v --tb=short
+        # Each shard has its own Postgres and Redis services. duration_based_chunks keeps
+        # files contiguous, so module-scoped fixtures are not rebuilt in several shards.
+        run: >-
+          uv run pytest tests/stable -v --tb=short --durations=10
+          --splits 4 --group ${{ matrix.group }} --durations-path tests/stable/.test_durations
+
+  pytest-integration-result:
+    name: Integration tests (pytest)
+    runs-on: ubuntu-latest
+    needs: pytest-integration
+    if: always()
+    steps:
+      - name: Check shard results
+        run: test "${{ needs.pytest-integration.result }}" = "success"
 
   backend-smoke:
     name: Backend smoke test (healthcheck)
     runs-on: ubuntu-latest
-    needs: python-uv-check
     services:
       postgres:
         image: postgres:16
