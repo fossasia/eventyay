@@ -471,9 +471,9 @@ class SubmissionFilterForm(forms.Form):
     state = forms.MultipleChoiceField(
         required=False,
         choices=[
-            (state, name)
+            (state, phrases.submission.not_accepted if state == SubmissionStates.REJECTED else name)
             for (state, name) in SubmissionStates.get_choices()
-            if state not in (SubmissionStates.DELETED, SubmissionStates.DRAFT)
+            if state != SubmissionStates.DRAFT
         ],
         widget=SelectMultipleWithCount(
             attrs={'title': _('Proposal states')},
@@ -544,7 +544,7 @@ class SubmissionFilterForm(forms.Form):
         initial['exclude_pending'] = False
         super().__init__(*args, initial=initial, **kwargs)
         qs = event.submissions
-        state_qs = Submission.objects.filter(event=event)
+        state_qs = Submission.all_objects.filter(event=event).exclude(state=SubmissionStates.DRAFT)
         if usable_states:
             qs = qs.filter(state__in=usable_states)
             state_qs = state_qs.filter(state__in=usable_states)
@@ -586,12 +586,9 @@ class SubmissionFilterForm(forms.Form):
                 count=Count(
                     'submissions',
                     distinct=True,
-                    filter=Q(event=event)
-                    & ~Q(
-                        submissions__state__in=[
-                            SubmissionStates.DELETED,
-                            SubmissionStates.DRAFT,
-                        ]
+                    filter=Q(
+                        submissions__event=event,
+                        submissions__state__in=SubmissionStates.valid_submission_states,
                     ),
                 )
             ).order_by('-count')
@@ -610,7 +607,14 @@ class SubmissionFilterForm(forms.Form):
 
         if self.event.tags.all().exists() or show_all_filters:
             self.fields['tags'].queryset = event.tags.prefetch_related('submissions').annotate(
-                submission_count=Count('submissions', distinct=True)
+                submission_count=Count(
+                    'submissions',
+                    distinct=True,
+                    filter=Q(
+                        submissions__event=event,
+                        submissions__state__in=SubmissionStates.valid_submission_states,
+                    ),
+                )
             )
         else:
             self.fields.pop('tags', None)
@@ -757,14 +761,26 @@ class SubmissionFilterForm(forms.Form):
 
         state_filter = self.cleaned_data.get('state')
         if state_filter:
-            states = [state for state in state_filter if not state.startswith('pending_state__')]
-            pending_states = [state.split('__')[1] for state in state_filter if state not in states]
-            if states and not pending_states:
-                qs = qs.filter(state__in=states)
-            elif pending_states and not states:
-                qs = qs.filter(pending_state__in=pending_states)
-            else:
-                qs = qs.filter(Q(state__in=states) | Q(pending_state__in=pending_states))
+            states = [s for s in state_filter if not s.startswith('pending_state__')]
+            pending = []
+            for s in state_filter:
+                if not s.startswith('pending_state__'):
+                    continue
+                # Guard against malformed values such as a bare "pending_state__"
+                # with no actual state following the separator.
+                part = s.split('__', 1)[1]
+                if part:
+                    pending.append(part)
+            query = Q()
+            if states:
+                query |= Q(state__in=states)
+            if pending:
+                query |= Q(pending_state__in=pending)
+            qs = qs.filter(query)
+            if SubmissionStates.DELETED not in states and SubmissionStates.DELETED not in pending:
+                qs = qs.exclude(state=SubmissionStates.DELETED)
+        else:
+            qs = qs.exclude(state=SubmissionStates.DELETED)
 
         if self.cleaned_data.get('pending_state__isnull'):
             qs = qs.filter(pending_state__isnull=True)
@@ -784,6 +800,4 @@ class SubmissionFilterForm(forms.Form):
             option=self.cleaned_data.get('answer__options'),
             unanswered=self.cleaned_data.get('unanswered'),
         )
-        if not self.cleaned_data.get('state'):
-            qs = qs.exclude(state='deleted')
         return qs
