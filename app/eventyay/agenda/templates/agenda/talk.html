@@ -11,8 +11,8 @@
 {% block title %}{{ submission.title|event_localize }} -{% endblock title %}
 {% block meta_title %}{{ submission.title|event_localize }}{% endblock meta_title %}
 {% block social_title %}{{ submission.title|event_localize }}{% endblock social_title %}
-{% block meta_description %}{{ submission_description|event_localize }}{% endblock meta_description %}
-{% block social_description %}{{ submission_description|event_localize }}{% endblock social_description %}
+{% block meta_description %}{{ submission_description|event_localize|rich_text_to_plain|truncatechars:200 }}{% endblock meta_description %}
+{% block social_description %}{{ submission_description|event_localize|rich_text_to_plain|truncatechars:200 }}{% endblock social_description %}
 {% block meta_image %}
     <meta property="thumbnail" content="{{ submission.urls.social_image.full }}">
     <meta property="og:image" content="{{ submission.urls.social_image.full }}">
