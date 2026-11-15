@@ -1,4 +1,5 @@
 import nh3
+import html
 import json
 import re
 from django import forms
@@ -423,7 +424,9 @@ def _has_i18n_content(value):
     for item in values:
         if item is None:
             continue
-        text = _HTML_TAG_RE.sub('', str(item)).replace('&nbsp;', '')
+        # Decode character references (&nbsp;, &#160;, …) so entity-only markup
+        # does not read as visible text.
+        text = html.unescape(_HTML_TAG_RE.sub('', str(item)))
         for char in _INVISIBLE_CHARS:
             text = text.replace(char, '')
         if text.strip():
