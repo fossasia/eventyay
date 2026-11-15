@@ -219,7 +219,7 @@ class OrderProtectedActionMixin:
 
             allowed_emails.discard('')
 
-            if user_email not in allowed_emails:
+            if allowed_emails and user_email not in allowed_emails:
                 raise PermissionDenied(_('You are not authorized to access this order.'))
 
         return super().dispatch(request, *args, **kwargs)
