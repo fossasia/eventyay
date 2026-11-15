@@ -2259,6 +2259,9 @@ class OrderChangeManager:
                             reversal = card.transactions.filter(order=self.order).order_by('-datetime', '-pk').first()
                             if reversal and reversal.value < 0:
                                 card.transactions.create(value=-reversal.value, order=self.order)
+                                # Credit is restored, so a later cancellation in this
+                                # batch must be able to reverse the card again.
+                                reversed_card_pks.discard(card.pk)
                     if pos_to_check.voucher_id:
                         v = Voucher.objects.select_for_update().get(pk=pos_to_check.voucher_id)
                         if v.redeemed >= v.max_usages:
