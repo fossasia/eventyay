@@ -248,12 +248,16 @@ export default {
 				this.error = err
 				const errorCode = err?.code === 'jitsi.join.missing_profile'
 					? 'missing_profile'
-					: (err?.code === 'jitsi.server_unavailable' ? 'server_unavailable' : 'join_failed')
+					: (err?.code === 'jitsi.server_unavailable'
+						? 'server_unavailable'
+						: (err?.code === 'jitsi.concurrent_rooms_exceeded' ? 'concurrent_rooms_exceeded' : 'join_failed'))
 				logOperational({action: 'jitsi.join', outcome: 'failure', backend: 'jitsi', error_code: errorCode})
 				if (err?.code === 'jitsi.join.missing_profile') {
 					this.errorMsg = this.$t('Please update your display name in your profile to join.')
 				} else if (err?.code === 'jitsi.server_unavailable') {
 					this.errorMsg = this.$t('No active meeting server available.')
+				} else if (err?.code === 'jitsi.concurrent_rooms_exceeded') {
+					this.errorMsg = this.$t('All video rooms included in this event\'s plan are in use. Please try again when another room has ended.')
 				} else {
 					this.errorMsg = this.$t('Could not establish connection with meeting server.')
 				}

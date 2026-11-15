@@ -10,6 +10,7 @@ from eventyay.base.services.jitsi import (
     normalize_server_url,
 )
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
+from eventyay.base.services.video_entitlements import admit_to_jitsi_room
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -265,6 +266,23 @@ class JitsiModule(BaseModule):
         room_display_name = get_jitsi_room_display_name(self.room)
         if not domain:
             raise ConsumerException("jitsi.missing_domain")
+
+        decision = await database_sync_to_async(admit_to_jitsi_room)(
+            self.room, self.consumer.user
+        )
+        if not decision.allowed:
+            log_event(
+                'video',
+                'connection.room_config',
+                OUTCOME_FAILURE,
+                error_code='concurrent_rooms_exceeded',
+                event_id=getattr(self.consumer.event, 'pk', None),
+                backend='jitsi',
+            )
+            raise ConsumerException(
+                "jitsi.concurrent_rooms_exceeded",
+                decision.message or "The maximum number of simultaneous video rooms has been reached.",
+            )
 
         is_moderator = await self.can_moderate_room()
         logger.info("Jitsi room_config user=%s room=%s jitsi_room=%s moderator=%s domain=%s server=%s", self.consumer.user.pk, self.room.id, room_name, is_moderator, domain, server_model.pk)
