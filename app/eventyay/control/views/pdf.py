@@ -255,9 +255,9 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             logger.exception('Failed to read background PDF for resize')
             return None, JsonResponse({'status': 'error', 'error': _BACKGROUND_PDF_READ_ERROR})
 
-        page.scale_to(width_mm * mm, height_mm * mm)
         writer = PdfWriter()
-        writer.add_page(page)
+        page = writer.add_page(page)
+        page.scale_to(width_mm * mm, height_mm * mm)
         buffer = BytesIO()
         writer.write(buffer)
         buffer.seek(0)
