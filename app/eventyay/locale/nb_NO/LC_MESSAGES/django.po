@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 16:20+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:23+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Norwegian Bokmål <https://hosted.weblate.org/projects/"
-"eventyay/eventyay/nb_NO/>\n"
+"eventyay/eventyay/nb/>\n"
 "Language: nb_NO\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -34383,8 +34384,7 @@ msgstr "Det er ingen tilbakemelding for denne økten ennå."
 #, fuzzy
 #| msgid "Attendees will be able to send in feedback after a session is over."
 msgid "Allow attendees to submit feedback on session pages."
-msgstr ""
-"Deltakere kan sende inn tilbakemelding etter at en sesjon er avsluttet."
+msgstr "Deltakere kan sende inn tilbakemelding etter at en sesjon er avsluttet."
 
 #: eventyay/orga/forms/event.py:301
 #, fuzzy
@@ -37836,8 +37836,7 @@ msgstr "CSV-eksport"
 #, fuzzy
 #| msgid "There has been no feedback for sessions in this event yet."
 msgid "There has been no feedback for sessions in this tab yet."
-msgstr ""
-"Det finnes ingen tilbakemeldinger for økter i dette arrangementet ennå."
+msgstr "Det finnes ingen tilbakemeldinger for økter i dette arrangementet ennå."
 
 #: eventyay/orga/templates/orga/submission/import_process.html:5
 #: eventyay/orga/templates/orga/submission/import_process.html:8
