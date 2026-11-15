@@ -18,10 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 def delete_stored_file(name: str) -> None:
+    if not name or not name.strip():
+        return
     try:
         default_storage.delete(name)
     except OSError:
-        logger.error('Deleting file %s failed.', name)
+        logger.exception('Deleting file %s failed.', name)
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
