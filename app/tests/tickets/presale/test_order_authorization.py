@@ -252,3 +252,30 @@ class OrderAuthorizationTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response['Location'])
+
+    def test_logged_in_buyer_can_open_order_without_contact_email(self):
+        """Login-required checkout can omit order email; secret URL must still work."""
+        self.event.settings.set('require_registered_account_for_tickets', True)
+        self.event.settings.set('include_wikimedia_username', True)
+        with scopes_disabled():
+            order = Order.objects.create(
+                status=Order.STATUS_PAID,
+                event=self.event,
+                email='',
+                datetime=now() - datetime.timedelta(days=1),
+                expires=now() + datetime.timedelta(days=11),
+                total=Decimal('23'),
+                locale='en',
+            )
+            OrderPosition.objects.create(
+                order=order,
+                product=self.ticket,
+                price=Decimal('23'),
+                attendee_name_parts={'full_name': 'No Email Buyer'},
+            )
+
+        self.client.login(email='user_a@example.com', password='testpass123')
+        response = self.client.get(
+            f'/{self.event.organizer.slug}/{self.event.slug}/order/{order.code}/{order.secret}/?thanks=1'
+        )
+        self.assertEqual(response.status_code, 200)
