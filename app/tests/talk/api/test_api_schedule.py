@@ -133,6 +133,14 @@ def test_user_can_access_latest_schedule_shortcut_if_public(client, event, slot)
     assert response.status_code == 200
     content = json.loads(response.text)
     assert content["version"] == current_schedule_version
+    assert isinstance(content["slots"], list)
+
+    # Calling the endpoint again exercises the cached schedule detail response
+    response_cached = client.get(event.api_urls.schedules + "latest/")
+    assert response_cached.status_code == 200
+    content_cached = json.loads(response_cached.text)
+    assert content_cached["version"] == current_schedule_version
+    assert isinstance(content_cached["slots"], list)
 
 
 @pytest.mark.django_db
