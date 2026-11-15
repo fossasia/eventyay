@@ -176,19 +176,26 @@ const initSearchableSelect = function(select) {
     syncLabel()
   }
 
+  /**
+   * Filter list options by matching the search query against label and value text.
+   */
   const applyFilter = function() {
     const rawQuery = search.value.trim()
     const query = normalize(rawQuery)
-    const queryWithSpaces = normalize(rawQuery.replace(/_/g, ' '))
+    const querySpacing = query.replace(/[_\s]+/g, ' ')
     let choiceMatches = 0
     options().forEach(function(option) {
       const isAll = allLabel && option.dataset.value === ''
-      const text = normalize(option.textContent)
-      const val = option.dataset.value ? normalize(option.dataset.value) : ''
-      const matchesQuery = !query ||
-        text.includes(query) ||
-        text.includes(queryWithSpaces) ||
-        Boolean(val && (val.includes(query) || val.replace(/_/g, ' ').includes(queryWithSpaces)))
+      const label = normalize(option.textContent)
+      const val = normalize(option.dataset.value)
+      const labelSpacing = label.replace(/[_\s]+/g, ' ')
+      const valSpacing = val.replace(/[_\s]+/g, ' ')
+      const matchesQuery =
+        !query ||
+        label.includes(query) ||
+        val.includes(query) ||
+        labelSpacing.includes(querySpacing) ||
+        valSpacing.includes(querySpacing)
       option.hidden = !(isAll || matchesQuery)
       if (!isAll && query && matchesQuery && !isDisabledItem(option)) {
         choiceMatches += 1
