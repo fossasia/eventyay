@@ -6,7 +6,6 @@
 		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	template(v-else-if="config")
 		.ui-page-header
-			bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})", :tooltip="$t('Back to Rooms & Stages')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 			h1(v-if="!inferredType", v-html="$emojify(config.name)")
 			h1(v-else) {{ roomTypeLabel }} :
 				span.room-name(v-html="$emojify(config.name)")

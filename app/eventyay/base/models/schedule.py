@@ -11,6 +11,7 @@ from xml.etree.ElementTree import tostring as xml_tostring
 
 import qrcode as qr_lib
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.utils import DatabaseError
@@ -342,12 +343,30 @@ class Schedule(PretalxModel):
         :rtype: Schedule
         """
 
-        if name in ('wip', 'latest'):
-            raise Exception(f'Cannot use reserved name "{name}" for schedule version.')
-        if self.version:
-            raise Exception(f'Cannot freeze schedule version: already versioned as "{self.version}".')
-        if not name:
-            raise Exception('Cannot create schedule version without a version name.')
+        if not name or not name.strip():
+            raise ValidationError(_('Cannot create schedule version without a version name.'))
+        name = name.strip()
+        if name.lower() in ('wip', 'latest'):
+            raise ValidationError(_('This schedule version is reserved. Please choose a different name.'))
+
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event_id)
+            try:
+                self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
+            except Schedule.DoesNotExist as exc:
+                raise ValidationError(
+                    _('This schedule draft no longer exists. Please reload and try again.')
+                ) from exc
+            if self.version:
+                raise ValidationError(
+                    _('Cannot freeze schedule version: already versioned as "%(version)s".'),
+                    params={'version': self.version},
+                )
+            if Schedule.objects.filter(event_id=self.event_id, version__iexact=name).exists():
+                raise ValidationError(
+                    _("A schedule with the version '%(version)s' already exists for this event."),
+                    params={'version': name},
+                )
 
         self.version = name
         self.comment = comment
@@ -399,9 +418,15 @@ class Schedule(PretalxModel):
         if not self.version:
             raise Exception('Cannot unfreeze schedule version: not released yet.')
 
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
+            with suppress(AttributeError):
+                del self.event.wip_schedule
+            draft = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
+
         # collect all talks, which have been added since this schedule (#72)
         submission_ids = self.talks.all().values_list('submission_id', flat=True)
-        talks = self.event.wip_schedule.talks.exclude(submission_id__in=submission_ids)
+        talks = draft.talks.exclude(submission_id__in=submission_ids)
         try:
             talks = list(talks.union(self.talks.all()))  # We force evaluation to catch the DatabaseError early
         except DatabaseError:  # SQLite cannot deal with ordered querysets in union()
@@ -413,8 +438,8 @@ class Schedule(PretalxModel):
             new_talks.append(talk.copy_to_schedule(wip_schedule, save=False))
         TalkSlot.objects.bulk_create(new_talks)
 
-        self.event.wip_schedule.talks.all().delete()
-        self.event.wip_schedule.delete()
+        draft.talks.all().delete()
+        draft.delete()
 
         with suppress(AttributeError):
             del wip_schedule.event.wip_schedule
@@ -1037,6 +1062,7 @@ class Schedule(PretalxModel):
             talks = talks.filter(updated__gte=filter_updated)
         if submission_codes is not None:
             talks = talks.filter(submission__code__in=submission_codes)
+        talks = talks.exclude(submission__state=SubmissionStates.DELETED)
         talks = talks.select_related(
             'submission',
             'room',

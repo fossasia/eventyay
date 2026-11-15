@@ -35,6 +35,7 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.control.forms import MultipleLanguagesWidget, SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.control.forms.global_settings import StripeKeyValidator
 from eventyay.helpers.image_optimize import optimize_uploaded_image
+from eventyay.helpers.timezone import format_timezone_name
 from eventyay.multidomain.models import KnownDomain
 
 logger = logging.getLogger(__name__)
@@ -42,10 +43,9 @@ logger = logging.getLogger(__name__)
 
 class EventCommonSettingsForm(SettingsForm):
     timezone = forms.ChoiceField(
-        choices=((a, a) for a in common_timezones),
-        label=_('Event timezone'),
+        choices=((a, format_timezone_name(a)) for a in common_timezones),
+        label=_('Region'),
     )
-
 
     auto_fields = [
         'locales',
@@ -327,6 +327,20 @@ class EventCommonSettingsForm(SettingsForm):
                 field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
                 field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
 
+        for fname in ('timezone', 'region'):
+            if fname in self.fields:
+                existing_classes = self.fields[fname].widget.attrs.get('class', '').split()
+                if 'form-control' not in existing_classes:
+                    existing_classes.append('form-control')
+                self.fields[fname].widget.attrs.update(
+                    {
+                        'class': ' '.join(existing_classes),
+                        'data-searchable-select': '',
+                        'data-search-placeholder': _('Search'),
+                        'data-empty-text': _('No results'),
+                    }
+                )
+
         if not self.is_bound and self.event:
             contact_email = self.event.settings.contact_mail or self.event.email or ''
             if contact_email:
@@ -588,7 +602,7 @@ class EventCloneForm(I18nModelForm):
             self.fields['slug'].widget.organizer = self.organizer
             self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
-        self.fields['timezone'].choices = ((a, a) for a in common_timezones)
+        self.fields['timezone'].choices = ((a, format_timezone_name(a)) for a in common_timezones)
 
         locale_choices = get_language_choices_native_with_ui_name()
         self.fields['locale'].choices = [(code, label) for code, label in locale_choices if code in self.locales]

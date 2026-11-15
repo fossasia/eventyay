@@ -10,6 +10,7 @@
 {% load eventurl %}
 {% load nav_tags %}
 {% load thumb %}
+{% load timezone %}
 {% load rich_text %}
 
 {% with current_event=request.event|default:None %}
@@ -62,7 +63,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_reset.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/base.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
-            <link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />
+            {% block public_fonts_stylesheet %}<link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />{% endblock public_fonts_stylesheet %}
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_tooltip.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_pretalx.css" %}" />
@@ -212,7 +213,7 @@
                                                 {% timezone tz_name %}
                                                     <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                         {% if current_event.settings.show_times %}
-                                                            {{ current_event.date_from|date:"l, j F, Y" }} {{ current_event.date_from|date:"TIME_FORMAT" }} ({{ tz_name }})
+                                                            {{ current_event.date_from|date:"l, j F, Y" }} {{ current_event.date_from|date:"TIME_FORMAT" }} ({{ tz_name|timezone_display }})
                                                         {% else %}
                                                             {{ current_event.date_from|date:"l, j F, Y" }}
                                                         {% endif %}
@@ -220,7 +221,7 @@
                                                     {% if current_event.settings.show_date_to and current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
                                                         <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                             {% if current_event.settings.show_times %}
-                                                                {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }} {{ current_event.date_to|date:"TIME_FORMAT" }} ({{ tz_name }})
+                                                                {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }} {{ current_event.date_to|date:"TIME_FORMAT" }} ({{ tz_name|timezone_display }})
                                                             {% else %}
                                                                 {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }}
                                                             {% endif %}

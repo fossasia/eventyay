@@ -44,7 +44,7 @@ class InvoiceVoucherForm(I18nModelForm):
     event_effect = forms.ModelMultipleChoiceField(
         queryset=Event.objects.none(),
         widget=forms.SelectMultiple(attrs={
-            'class': 'form-control select2-multi',
+            'class': 'form-control select2-static',
             'data-placeholder': _('Search and select events...'),
             'multiple': 'multiple',
         }),
@@ -55,7 +55,7 @@ class InvoiceVoucherForm(I18nModelForm):
     organizer_effect = forms.ModelMultipleChoiceField(
         queryset=Organizer.objects.none(),
         widget=forms.SelectMultiple(attrs={
-            'class': 'form-control select2-multi',
+            'class': 'form-control select2-static',
             'data-placeholder': _('Search and select organisers...'),
             'multiple': 'multiple',
         }),

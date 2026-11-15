@@ -1,6 +1,7 @@
 import datetime as dt
 
 import pytest
+import vobject
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -46,6 +47,18 @@ def test_slot_string(slot, room):
 def test_slot_build_empty_ical(slot):
     slot.room = None
     assert not slot.build_ical(None)
+
+
+@pytest.mark.django_db
+def test_slot_build_ical_description_is_plain_text(slot):
+    with scope(event=slot.submission.event):
+        slot.submission.abstract = '<p>First paragraph &amp; more.</p><p>Second paragraph.</p>'
+        calendar = vobject.iCalendar()
+        slot.build_ical(calendar)
+
+    description = calendar.vevent.description.value
+    assert description == 'First paragraph & more.\n\nSecond paragraph.'
+    assert '<' not in calendar.serialize()
 
 
 @pytest.mark.django_db

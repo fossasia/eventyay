@@ -7,6 +7,7 @@
 {% block title %}{% trans "Vouchers" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
 {% endblock %}
 {% block content %}

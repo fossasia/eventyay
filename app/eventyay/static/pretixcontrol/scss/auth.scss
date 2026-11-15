@@ -101,6 +101,56 @@ body.auth-page nav.navbar .navbar-header > .navbar-brand {
 	}
 }
 
+#organizer-request {
+    padding-bottom: 24px;
+
+    @media (min-width: $screen-sm-min) {
+        max-width: 900px;
+
+        .organizer-request-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0 24px;
+        }
+
+        .organizer-request-field--full {
+            grid-column: 1 / -1;
+        }
+    }
+
+    #slug-preview {
+        margin-top: 20px;
+        overflow-wrap: anywhere;
+    }
+
+    #slug-status:empty {
+        margin: 0;
+    }
+
+    .organizer-request-actions {
+        margin-top: 24px;
+    }
+}
+
+.organizer-request-success {
+    @extend .well;
+
+    background: white;
+    border: 1px solid white;
+    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
+    margin: 1.5vh auto 0;
+    max-width: 420px;
+    text-align: center;
+
+    h1 {
+        margin-top: 0;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+}
+
 .container > .alert {
     max-width: 420px;
     margin: 20px auto 20px;

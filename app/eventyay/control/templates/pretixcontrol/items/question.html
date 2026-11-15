@@ -4,6 +4,10 @@
 {% load escapejson %}
 {% load formset_tags %}
 {% block title %}{% blocktrans with name=question.question %}Question: {{ name }}{% endblocktrans %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
+{% endblock %}
 {% block inside %}
     <h1>
         {% blocktrans with name=question.question %}Question: {{ name }}{% endblocktrans %}
@@ -26,7 +30,7 @@
                 <option value="ne" {% if request.GET.status == "ne" %}selected="selected"{% endif %}>{% trans "Pending or expired" %}</option>
                 <option value="c" {% if request.GET.status == "c" %}selected="selected"{% endif %}>{% trans "Canceled" %}</option>
             </select>
-            <select name="product" class="form-control">
+            <select name="product" class="form-control" data-searchable-select data-search-placeholder="{% trans 'Search' %}" data-empty-text="{% trans 'No results' %}" data-all-label="{% trans 'All products' %}">
                 <option value="">{% trans "All products" %}</option>
                 {% for item in products %}
                     <option value="{{ item.id }}"

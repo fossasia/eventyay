@@ -46,7 +46,7 @@ def team2(admin_user, organizer2):
 
 
 @pytest.mark.django_db
-def test_list_of_cards(organizer, admin_user, client, gift_card):
+def test_list_of_cards(organizer, organizer2, team2, admin_user, client, gift_card):
     client.login(email='dummy@dummy.dummy', password='dummy')
     resp = client.get('/control/organizer/dummy/giftcards')
     assert gift_card.secret in resp.content.decode()
@@ -54,6 +54,30 @@ def test_list_of_cards(organizer, admin_user, client, gift_card):
     assert gift_card.secret in resp.content.decode()
     resp = client.get('/control/organizer/dummy/giftcards?query=1234_FOO')
     assert gift_card.secret not in resp.content.decode()
+    resp = client.get('/control/organizer/dummy/giftcards?ordering=code')
+    assert resp.status_code == 200
+    assert gift_card.secret in resp.content.decode()
+    resp = client.get('/control/organizer/dummy/giftcards?ordering=-code')
+    assert resp.status_code == 200
+    assert gift_card.secret in resp.content.decode()
+
+    # Zero gift cards view test
+    resp = client.get('/control/organizer/partner/giftcards')
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_card_list_pagination(organizer, admin_user, client):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    for _ in range(12):
+        gc = organizer.issued_gift_cards.create(currency='EUR')
+        gc.transactions.create(value=10)
+    resp = client.get('/control/organizer/dummy/giftcards')
+    assert resp.status_code == 200
+    assert 'Showing 10 of 12 gift cards' in resp.content.decode()
+    resp = client.get('/control/organizer/dummy/giftcards?page=2')
+    assert resp.status_code == 200
+    assert 'Showing 2 of 12 gift cards' in resp.content.decode()
 
 
 @pytest.mark.django_db

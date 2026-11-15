@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from csp.decorators import csp_update
 from django.contrib import messages
-from django.contrib.auth import login
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.forms.models import inlineformset_factory
@@ -14,9 +13,10 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from django_scopes import scope
 
 from eventyay.agenda.views.utils import get_schedule_exporters
-from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory, TeamInvite, User
+from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory
 from eventyay.base.models.base import CachedFile
 from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.common.text.phrases import phrases
@@ -28,11 +28,11 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
+    FeedbackSettingsForm,
     MailSettingsForm,
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
     ReviewSettingsForm,
-    FeedbackSettingsForm,
     ScheduleHtmlExportForm,
     WidgetGenerationForm,
     WidgetSettingsForm,
@@ -42,7 +42,6 @@ from eventyay.orga.forms.importers import CSVImportForm
 from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
-from eventyay.person.forms import UserForm
 from eventyay.submission.tasks import recalculate_all_review_scores
 
 from .speaker import SpeakerImportProcessView
@@ -144,20 +143,27 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
 
     @transaction.atomic
     def form_valid(self, form):
+        """Serialize scoring saves and roll back phase and score updates together on rejection."""
         try:
-            phases = self.save_phases()
-            scores = self.save_scores()
+            with scope(event=self.request.event), transaction.atomic():
+                Event.objects.select_for_update().get(pk=self.request.event.pk)
+                phases = self.save_phases()
+                scores = self.save_scores()
+                if not phases or not scores:
+                    raise ValidationError(phrases.base.error_saving_changes)
         except ValidationError as e:
-            messages.error(self.request, e.message)
-            return self.get(self.request, *self.args, **self.kwargs)
-        if not phases or not scores:
-            messages.error(self.request, phrases.base.error_saving_changes)
+            for message in e.messages:
+                messages.error(self.request, message)
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
-            recalculate_all_review_scores.apply_async(
-                kwargs={'event_id': self.request.event.pk},
-                ignore_result=True,
+            event_id = self.request.event.pk
+            transaction.on_commit(
+                lambda: recalculate_all_review_scores.apply_async(
+                    kwargs={'event_id': event_id},
+                    ignore_result=True,
+                ),
+                robust=True,
             )
         messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)
@@ -243,6 +249,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         )
 
     def save_scores(self):
+        """Save valid categories and refresh totals when their contribution changes."""
         if not self.scores_formset.is_valid():
             return False
         weights_changed = False
@@ -250,7 +257,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             if self.scores_formset._should_delete_form(form):
                 continue
             if form.has_changed():
-                if 'weight' in form.changed_data:
+                if {'weight', 'is_independent'} & set(form.changed_data):
                     weights_changed = True
                 form.instance.event = self.request.event
                 form.save()
@@ -270,6 +277,10 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             if form.instance.pk:
                 form.instance.scores.all().delete()
                 form.instance.delete()
+
+        with scope(event=self.request.event):
+            if not self.request.event.score_categories.filter(is_independent=False).exists():
+                raise ValidationError(_('You need to keep at least one non-independent score category!'))
 
         if weights_changed:
             ReviewScoreCategory.recalculate_scores(self.request.event)
@@ -324,47 +335,11 @@ class EventMailSettings(EventSettingsPermission, ActionFromUrl, FormView):
         return super().form_valid(form)
 
 
-class InvitationView(FormView):
-    template_name = 'orga/invitation.html'
-    form_class = UserForm
+class InvitationView(View):
+    """Legacy talk invitation links now open the unified team invitation page."""
 
-    @context
-    @cached_property
-    def invitation(self):
-        return get_object_or_404(TeamInvite, token__iexact=self.kwargs.get('code'))
-
-    @context
-    def password_reset_link(self):
-        return reverse('orga:auth.reset')
-
-    def post(self, *args, **kwargs):
-        if not self.request.user.is_anonymous:
-            self.accept_invite(self.request.user)
-            return redirect(reverse('eventyay_common:dashboard'))
-        return super().post(*args, **kwargs)
-
-    def form_valid(self, form):
-        form.save()
-        user = User.objects.filter(pk=form.cleaned_data.get('user_id')).first()
-        if not user:
-            messages.error(
-                self.request,
-                _('There was a problem with your authentication. Please contact the organizer for further help.'),
-            )
-            return redirect(self.request.event.urls.base)
-
-        self.accept_invite(user)
-        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(reverse('eventyay_common:dashboard'))
-
-    @transaction.atomic()
-    def accept_invite(self, user):
-        invite = self.invitation
-        invite.team.members.add(user)
-        invite.team.save()
-        invite.team.organizer.log_action('eventyay.invite.orga.accept', person=user, orga=True)
-        messages.info(self.request, _('You are now part of the team!'))
-        invite.delete()
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('eventyay_common:auth.invite', kwargs={'token': self.kwargs.get('code')}))
 
 
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
@@ -435,7 +410,7 @@ class EventDeleteTalkData(PermissionRequired, ActionConfirmMixin, TemplateView):
         ) + '#danger-zone-tab'
         return redirect(url)
 
-@method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
+@method_decorator(csp_update({'script-src': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):
     form_class = WidgetSettingsForm
     template_name = 'orga/settings/widget.html'

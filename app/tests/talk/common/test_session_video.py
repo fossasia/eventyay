@@ -5,10 +5,12 @@ from django_scopes import scope
 from eventyay.base.models import Answer, TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
 from eventyay.common.session_video import (
     SESSION_VIDEO_IMPORT_KEY,
+    SESSION_VIDEO_URL_LIMIT,
     ensure_session_video_question,
     get_session_video_question,
     get_submission_video_url,
     get_submission_video_urls,
+    import_submission_video_urls,
     set_submission_video_url,
     set_submission_video_urls,
 )
@@ -143,6 +145,12 @@ def test_set_submission_video_url_rejects_invalid(event, submission):
         assert get_submission_video_url(submission) == ''
 
 
+def test_set_submission_video_urls_rejects_more_than_the_row_limit():
+    urls = [f'https://youtu.be/video{index:05d}' for index in range(SESSION_VIDEO_URL_LIMIT + 1)]
+    with pytest.raises(ValueError, match=str(SESSION_VIDEO_URL_LIMIT)):
+        set_submission_video_urls(None, urls)
+
+
 def test_parse_video_urls_splits_lines_and_dedupes():
     assert parse_video_urls('') == []
     assert parse_video_urls('https://youtu.be/aaa\nhttps://vimeo.com/1') == [
@@ -254,3 +262,16 @@ def test_session_videos_disabled_hides_urls_but_preserves_data(event, submission
         question.is_public = True
         question.save(update_fields=['active', 'is_public'])
         assert get_submission_video_urls(submission) == [url]
+
+
+@pytest.mark.django_db
+def test_import_submission_video_urls_keeps_existing_visibility(event, submission):
+    url = 'https://youtu.be/dQw4w9WgXcQ?t=90'
+    with scope(event=event):
+        question = ensure_session_video_question(event)
+        assert question.is_public is False
+        stored = import_submission_video_urls(submission, url)
+        question.refresh_from_db()
+        assert stored == [url]
+        assert question.is_public is False
+        assert question.active is True

@@ -12,6 +12,7 @@
         <link rel="stylesheet" type="text/css" href="{% static "common/css/_footer.css" %}"/>
     {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static "common/css/password_toggle.css" %}" />
+    {% block extra_css %}{% endblock %}
     {% compress js %}
         <script type="text/javascript" src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
         <script type="text/javascript" src="{% static "bootstrap/js/bootstrap.js" %}"></script>
@@ -65,9 +66,11 @@
         </nav>
     </div>
 <div class="container">
+    {% block logo %}
     <a href="{% url 'auth.login' %}">
         <img src="{% static "pretixbase/img/eventyay-logo.svg" %}" class="logo"/>
     </a>
+    {% endblock %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert {{ message.tags }}">

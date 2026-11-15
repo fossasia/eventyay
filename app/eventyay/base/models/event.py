@@ -2551,10 +2551,11 @@ class Event(
         from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.log import ActivityLog, LogEntry
         from eventyay.base.models.mail import QueuedMail
-        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
         from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.submission import Submission
         from eventyay.base.models.systemlog import SystemLog
 
         self.cartposition_set.filter(addon_to__isnull=False).delete()
@@ -2590,8 +2591,11 @@ class Event(
         self.vouchers.all().delete()
         self.products.all().delete()
         self.subevents.all().delete()
-        self.talkquestions.all().delete()
-        self.submissions.all().delete()
+        from django_scopes import scope
+
+        with scope(event=self):
+            TalkQuestion.all_objects.filter(event=self).delete()
+            Submission.all_objects.filter(event=self).delete()
         self.rooms.all().delete()
         self.tracks.all().delete()
         self.tags.all().delete()
@@ -2630,9 +2634,10 @@ class Event(
         from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.profile import SpeakerProfile
         from eventyay.base.models.feedback import Feedback
-        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.submission import Submission
 
         answers = Answer.objects.filter(question__event=self)
         for answer in answers.only('pk', 'answer_file').iterator():
@@ -2659,8 +2664,11 @@ class Event(
         # Clear unsent (outbox) emails linked to this event
         QueuedMail.objects.filter(event=self, sent__isnull=True).delete()
 
-        self.talkquestions.all().delete()
-        self.submissions.all().delete()
+        from django_scopes import scope
+
+        with scope(event=self):
+            TalkQuestion.all_objects.filter(event=self).delete()
+            Submission.all_objects.filter(event=self).delete()
         self.rooms.all().delete()
         self.tracks.all().delete()
         self.tags.all().delete()
@@ -3264,6 +3272,7 @@ class Event(
 
     update_review_phase.alters_data = True
 
+    @transaction.atomic
     def release_schedule(self, name: str, user=None, notify_speakers: bool = False, comment: str = None):
         """Releases a new :class:`~eventyay.base.models.schedule.Schedule`
         by finalising the current WIP schedule.
@@ -3274,7 +3283,11 @@ class Event(
         :param comment: Public comment for the release
         :type user: :class:`~eventyay.base.models.user.User`
         """
-        self.wip_schedule.freeze(name=name, user=user, notify_speakers=notify_speakers, comment=comment)
+        with scope(event=self):
+            type(self).objects.select_for_update(no_key=True).get(pk=self.pk)
+            with suppress(AttributeError):
+                del self.wip_schedule
+            return self.wip_schedule.freeze(name=name, user=user, notify_speakers=notify_speakers, comment=comment)
 
     release_schedule.alters_data = True
 

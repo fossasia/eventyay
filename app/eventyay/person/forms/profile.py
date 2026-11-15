@@ -359,7 +359,7 @@ class SpeakerProfileForm(
         if avatar and 'avatar' in self.files:
             try:
                 result = optimize_uploaded_image(avatar, 'avatar', None)
-                base_name, _ = os.path.splitext(avatar.name)
+                base_name = os.path.splitext(avatar.name)[0]
                 avatar = SimpleUploadedFile(
                     f"{base_name}.{result.optimized_ext}",
                     result.optimized.read(),
@@ -743,7 +743,10 @@ class UserSpeakerFilterForm(forms.Form):
             .annotate(
                 submission_count=Count(
                     'submissions',
-                    filter=Q(submissions__event__in=events),
+                    filter=Q(
+                        submissions__event__in=events,
+                        submissions__state__in=SubmissionStates.valid_submission_states,
+                    ),
                     distinct=True,
                 ),
                 accepted_submission_count=Count(
