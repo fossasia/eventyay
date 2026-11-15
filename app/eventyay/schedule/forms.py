@@ -15,6 +15,11 @@ from eventyay.base.models.room import rooms_for_talk_assignment, validate_talk_s
 from eventyay.helpers.timezone import format_timezone_name
 
 
+def ends_after_start(start: dt.datetime, end: dt.datetime) -> bool:
+    """Compare in UTC, so the repeated hour when clocks go back is ordered correctly."""
+    return end.astimezone(dt.UTC) > start.astimezone(dt.UTC)
+
+
 class AvailabilitiesFormMixin(forms.Form):
     availabilities = forms.CharField(
         label=_('Availability'),
@@ -109,6 +114,10 @@ class AvailabilitiesFormMixin(forms.Form):
         return obj
 
     def _validate_availability(self, rawavail):
+        """Parse a submitted availability in place and clamp it to the event's dates.
+
+        Raises a ``ValidationError`` if it is malformed or does not end after it starts.
+        """
         message = _('The submitted availability does not comply with the required format.')
         if not isinstance(rawavail, dict):
             raise forms.ValidationError(message)
@@ -122,8 +131,13 @@ class AvailabilitiesFormMixin(forms.Form):
                 raw_value = rawavail[key]
                 if not isinstance(raw_value, dt.datetime):
                     rawavail[key] = self._parse_datetime(raw_value)
-        except (TypeError, ValueError):
+            # Dates at the very edge of the supported range can't be converted to UTC.
+            ends_in_order = ends_after_start(rawavail['start'], rawavail['end'])
+        except (TypeError, ValueError, OverflowError):
             raise forms.ValidationError(_('The submitted availability contains an invalid date.'))
+
+        if not ends_in_order:
+            raise forms.ValidationError(_('The end of an availability must be after its start.'))
 
         timeframe_start = dt.datetime.combine(self.event.date_from, dt.time(), tzinfo=self.event.tz)
         if rawavail['start'] < timeframe_start:
@@ -136,6 +150,7 @@ class AvailabilitiesFormMixin(forms.Form):
         rawavail['end'] = min(rawavail['end'], timeframe_end)
 
     def clean_availabilities(self):
+        """Return the submitted availabilities that fall within the event, merged where they overlap."""
         data = self.cleaned_data.get('availabilities')
         required = 'availabilities' in self.fields and self.fields['availabilities'].required
         availability_required = _('Please fill in your availability!')
@@ -153,7 +168,9 @@ class AvailabilitiesFormMixin(forms.Form):
 
         for rawavail in rawavailabilities:
             self._validate_availability(rawavail)
-            availabilities.append(Availability(event_id=self.event.id, **rawavail))
+            # A slot from dates the event no longer covers is empty once clamped to the event, so it is dropped.
+            if ends_after_start(rawavail['start'], rawavail['end']):
+                availabilities.append(Availability(event_id=self.event.id, **rawavail))
         if not availabilities and required:
             raise forms.ValidationError(availability_required)
         # Remove overlaps by merging availabilities
