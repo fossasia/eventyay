@@ -1,4 +1,3 @@
-import sys
 from datetime import timedelta
 
 from django.db.models import Q
@@ -7,7 +6,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, User, WaitingListEntry
-from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.models.waitinglist import WaitingListException, WaitingListUnavailable
 from eventyay.base.services.tasks import EventTask
 from eventyay.base.signals import order_canceled, order_changed, periodic_task
 from eventyay.celery_app import app
@@ -20,13 +19,11 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
     else:
         user = None
 
-    quota_cache = {}
     gone = set()
 
     qs = (
         WaitingListEntry.objects.filter(event=event, voucher__isnull=True)
         .select_related('product', 'variation', 'subevent')
-        .prefetch_related('product__quotas', 'variation__quotas')
         .order_by('-priority', 'created')
     )
 
@@ -36,45 +33,28 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
 
     sent = 0
 
-    with event.lock():
-        for wle in qs:
-            if (wle.product, wle.variation, wle.subevent) in gone:
-                continue
+    def eligible(entry):
+        """Check automatic assignment rules against the current, locked entry."""
+        date = entry.subevent
+        return (
+            (not subevent_id or not event.has_subevents or entry.subevent_id == subevent_id)
+            and (not date or date.active)
+            and (date or entry.event).presale_is_running
+            and entry.product.is_available()
+        )
 
-            ev = wle.subevent or event
-            if not ev.presale_is_running or (wle.subevent and not wle.subevent.active):
-                continue
-            if wle.subevent and not wle.subevent.presale_is_running:
-                continue
-            if not wle.product.is_available():
-                gone.add((wle.product, wle.variation, wle.subevent))
-                continue
+    for wle in qs:
+        if (wle.product, wle.variation, wle.subevent) in gone:
+            continue
 
-            quotas = (
-                wle.variation.quotas.filter(subevent=wle.subevent)
-                if wle.variation
-                else wle.product.quotas.filter(subevent=wle.subevent)
-            )
-            availability = (
-                wle.variation.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
-                if wle.variation
-                else wle.product.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
-            )
-            if availability[1] is None or availability[1] > 0:
-                try:
-                    wle.send_voucher(quota_cache, user=user)
-                    sent += 1
-                except WaitingListException:  # noqa
-                    continue
-
-                # Reduce affected quotas in cache
-                for q in quotas:
-                    quota_cache[q.pk] = (
-                        quota_cache[q.pk][0] if quota_cache[q.pk][0] > 1 else 0,
-                        quota_cache[q.pk][1] - 1 if quota_cache[q.pk][1] is not None else sys.maxsize,
-                    )
-            else:
-                gone.add((wle.product, wle.variation, wle.subevent))
+        try:
+            wle.send_voucher(user=user, eligible=eligible)
+        except WaitingListUnavailable:
+            gone.add((wle.product, wle.variation, wle.subevent))
+        except WaitingListException:
+            continue
+        else:
+            sent += 1
 
     return sent
 
