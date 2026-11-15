@@ -82,7 +82,7 @@ class CartActionMixin:
                 response = redirect(self.get_error_url())
                 response.status_code = 503
             response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
-            return None, response
+            return (None, False), response
 
     def _rate_limit_response(self):
         message = _(error_messages['voucher_rate_limited'])

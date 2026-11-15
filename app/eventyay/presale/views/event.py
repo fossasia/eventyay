@@ -696,7 +696,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if request.sales_channel.identifier not in request.event.sales_channels:
             raise Http404(_('Tickets for this event cannot be purchased on this sales channel.'))
 
-        if request.GET.get('voucher') and request.event.has_subevents:
+        if request.GET.get('voucher') and request.event.has_subevents and 'subevent' not in kwargs:
             try:
                 self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
             except VoucherRateLimitUnavailable:
@@ -918,16 +918,19 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     def _subevent_list_context(self):
         voucher = None
         raw_voucher = self.request.GET.get('voucher')
-        if raw_voucher and not self._voucher_rate_limited and len(raw_voucher) <= MAX_VOUCHER_CODE_LENGTH:
-            try:
-                voucher = Voucher.objects.get(
-                    code__iexact=raw_voucher.strip(),
-                    event=self.request.event,
-                )
-                release_voucher_attempt(getattr(self, '_voucher_attempt_key', None))
-                self._voucher_attempt_key = None
-            except Voucher.DoesNotExist:
-                pass
+        if raw_voucher and not self._voucher_rate_limited:
+            if len(raw_voucher) > MAX_VOUCHER_CODE_LENGTH:
+                messages.error(self.request, error_messages['voucher_invalid_length'])
+            else:
+                try:
+                    voucher = Voucher.objects.get(
+                        code__iexact=raw_voucher.strip(),
+                        event=self.request.event,
+                    )
+                    release_voucher_attempt(getattr(self, '_voucher_attempt_key', None))
+                    self._voucher_attempt_key = None
+                except Voucher.DoesNotExist:
+                    pass
 
         context = {}
         context['list_type'] = self.request.GET.get('style', self.request.event.settings.event_list_type)

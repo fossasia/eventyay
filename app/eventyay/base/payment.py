@@ -1216,12 +1216,14 @@ class GiftCardPayment(BasePaymentProvider):
         try:
             key, allowed = reserve_voucher_attempt(request)
         except VoucherRateLimitUnavailable:
-            messages.error(request, error_messages['voucher_rate_limit_unavailable'])
-            return None, False
+            response = HttpResponse(error_messages['voucher_rate_limit_unavailable'], status=503)
+            response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+            return None, response
         if not allowed:
-            messages.error(request, error_messages['voucher_rate_limited'])
-            return None, False
-        return key, True
+            response = HttpResponse(error_messages['voucher_rate_limited'], status=429)
+            response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
+            return None, response
+        return key, None
 
     def payment_form_render(self, request: HttpRequest, total: Decimal) -> str:
         return get_template('pretixcontrol/giftcards/checkout.html').render({})
@@ -1283,9 +1285,9 @@ class GiftCardPayment(BasePaymentProvider):
             messages.error(request, _('Please enter a gift card code.'))
             return
 
-        voucher_attempt_key, allowed = self._reserve_gift_card_attempt(request)
-        if not allowed:
-            return
+        voucher_attempt_key, response = self._reserve_gift_card_attempt(request)
+        if response:
+            return response
         if len(raw_gift_card_code) > MAX_VOUCHER_CODE_LENGTH:
             messages.error(request, error_messages['voucher_invalid_length'])
             return
@@ -1382,9 +1384,9 @@ class GiftCardPayment(BasePaymentProvider):
             messages.error(request, _('Please enter a gift card code.'))
             return
 
-        voucher_attempt_key, allowed = self._reserve_gift_card_attempt(request)
-        if not allowed:
-            return
+        voucher_attempt_key, response = self._reserve_gift_card_attempt(request)
+        if response:
+            return response
         if len(raw_gift_card_code) > MAX_VOUCHER_CODE_LENGTH:
             messages.error(request, error_messages['voucher_invalid_length'])
             return
