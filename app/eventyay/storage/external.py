@@ -2,9 +2,10 @@ import ipaddress
 import mimetypes
 import socket
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
+from typing import NamedTuple
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
@@ -180,19 +181,41 @@ def fetch_pinned(session: requests.Session, url: str, addresses: Sequence[str]) 
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         try:
-            return session.get(url, timeout=PREVIEW_HTTP_TIMEOUT, allow_redirects=False)  # TODO: user agent
+            return session.get(
+                url, timeout=PREVIEW_HTTP_TIMEOUT, allow_redirects=False, stream=True
+            )  # TODO: user agent
         except requests.ConnectionError as error:
             last_error = error
     raise last_error
 
 
-def retrieve_url(url):
+class PreviewResponse(NamedTuple):
+    url: str
+    headers: Mapping[str, str]
+    content: bytes
+
+
+def read_limited(response: requests.Response, limit: int) -> bytes | None:
+    """Read at most ``limit`` bytes of the body; ``None`` if it is larger."""
+    content_length = response.headers.get('Content-Length', '')
+    if content_length.isdigit() and int(content_length) > limit:
+        return None
+    content = bytearray()
+    for chunk in response.iter_content(chunk_size=64 * 1024):
+        content += chunk
+        if len(content) > limit:
+            return None
+    return bytes(content)
+
+
+def retrieve_url(url) -> PreviewResponse | None:
     """
     Fetch a URL for a link preview.
 
     Every hop, including redirects, is resolved and checked with
     ``resolve_public_addresses`` and then requested at exactly those addresses.
     One session is used for all hops so cookies set before a redirect are kept.
+    The body is streamed and refused once it exceeds the upload size limit.
     """
     with requests.Session() as session:
         # Environment proxies would connect by hostname and bypass the pinned address.
@@ -202,29 +225,40 @@ def retrieve_url(url):
             addresses = resolve_public_addresses(url) if url else ()
             if not addresses:
                 log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='blocked_url', backend='preview')
-                return
+                return None
             try:
                 response = fetch_pinned(session, url, addresses)
             except requests.RequestException:
                 log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
-                return
+                return None
             if not response.is_redirect:
                 break
+            response.close()
             url = urljoin(url, session.get_redirect_target(response))
         else:
             log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='too_many_redirects', backend='preview')
-            return
-    if response.status_code == 200:
-        return response
-    if response.status_code >= 500:
-        log_event(
-            'video',
-            'connection.get',
-            OUTCOME_FAILURE,
-            error_code='http_error',
-            status=response.status_code,
-            backend='preview',
-        )
+            return None
+        with response:
+            if response.status_code != 200:
+                if response.status_code >= 500:
+                    log_event(
+                        'video',
+                        'connection.get',
+                        OUTCOME_FAILURE,
+                        error_code='http_error',
+                        status=response.status_code,
+                        backend='preview',
+                    )
+                return None
+            try:
+                content = read_limited(response, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER])
+            except requests.RequestException:
+                log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
+                return None
+            if content is None:
+                log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='too_large', backend='preview')
+                return None
+            return PreviewResponse(url=response.url, headers=response.headers, content=content)
 
 
 def fetch_preview_data(url, event):

@@ -27,11 +27,14 @@ def resolve_to(mapping):
     return getaddrinfo
 
 
-def fake_response(status_code=200, location=None):
+def fake_response(status_code=200, location=None, body=b'<html></html>', headers=None):
     response = MagicMock()
     response.status_code = status_code
     response.is_redirect = location is not None
-    response.headers = CaseInsensitiveDict({'Location': location} if location else {})
+    response.headers = CaseInsensitiveDict({'Location': location} if location else headers or {})
+    response.url = 'https://public.example/final'
+    response.iter_content.return_value = [body]
+    response.__enter__.return_value = response
     return response
 
 
@@ -113,7 +116,7 @@ def test_retrieve_url_does_not_request_private_hosts(dns, http_get):
 
 
 def test_retrieve_url_requests_the_validated_address(dns, http_get):
-    assert retrieve_url('https://public.example/page') is http_get.return_value
+    assert retrieve_url('https://public.example/page').content == b'<html></html>'
     assert http_get.call_args.args[1:] == ('https://public.example/page', (PUBLIC_IP,))
 
 
@@ -125,9 +128,9 @@ def test_retrieve_url_blocks_redirect_to_private_host(dns, http_get):
 
 
 def test_retrieve_url_follows_public_relative_redirect(dns, http_get):
-    final = fake_response()
+    final = fake_response(body=b'new')
     http_get.side_effect = [fake_response(301, '/new'), final]
-    assert retrieve_url('https://public.example/old') is final
+    assert retrieve_url('https://public.example/old').content == b'new'
     assert http_get.call_args.args[1:] == ('https://public.example/new', (PUBLIC_IP,))
 
 
@@ -201,7 +204,7 @@ def test_validated_hostname_is_the_requested_hostname(dns, http_get):
     """Python and Requests encode non-ASCII hostnames differently; the requested one is checked."""
     dns['xn--fa-hia.attacker.example'] = [PUBLIC_IP]  # what Requests sends for faß
     dns['fass.attacker.example'] = ['127.0.0.1']  # what getaddrinfo would use for faß
-    assert retrieve_url('http://faß.attacker.example/') is http_get.return_value
+    assert retrieve_url('http://faß.attacker.example/') is not None
     assert http_get.call_args.args[1:] == ('http://xn--fa-hia.attacker.example/', (PUBLIC_IP,))
 
     dns['xn--fa-hia.attacker.example'] = ['127.0.0.1']
@@ -324,3 +327,41 @@ def test_utf8_redirect_target_is_decoded(monkeypatch):
 
     assert response is not None
     assert seen == ['/start', '/caf%C3%A9']
+
+
+def test_retrieve_url_returns_final_url_headers_and_body(dns, http_get):
+    http_get.return_value = fake_response(body=b'<html>hi</html>', headers={'Content-Type': 'text/html'})
+    result = retrieve_url('https://public.example/page')
+    assert result == external.PreviewResponse(
+        url='https://public.example/final',
+        headers=http_get.return_value.headers,
+        content=b'<html>hi</html>',
+    )
+    assert http_get.return_value.headers['Content-Type'] == 'text/html'
+
+
+def test_retrieve_url_refuses_body_over_the_limit(dns, http_get, settings):
+    """The body is streamed and refused once it exceeds the upload limit."""
+    settings.MAX_SIZE_CONFIG = {**settings.MAX_SIZE_CONFIG, external.SizeKey.UPLOAD_SIZE_OTHER: 10}
+    big = fake_response()
+    big.iter_content.return_value = iter([b'x' * 8, b'x' * 8, b'never read'])
+    http_get.return_value = big
+    assert retrieve_url('https://public.example/big.png') is None
+
+    http_get.return_value = fake_response(body=b'x' * 10)
+    assert retrieve_url('https://public.example/ok.png').content == b'x' * 10
+
+
+def test_retrieve_url_refuses_large_content_length_without_reading(dns, http_get, settings):
+    settings.MAX_SIZE_CONFIG = {**settings.MAX_SIZE_CONFIG, external.SizeKey.UPLOAD_SIZE_OTHER: 10}
+    http_get.return_value = fake_response(headers={'Content-Length': '11'})
+    assert retrieve_url('https://public.example/big.png') is None
+    http_get.return_value.iter_content.assert_not_called()
+
+
+def test_fetch_pinned_streams_the_body(dns, monkeypatch):
+    get = MagicMock()
+    monkeypatch.setattr(requests.Session, 'get', get)
+    with requests.Session() as session:
+        fetch_pinned(session, 'https://public.example/', [PUBLIC_IP])
+    assert get.call_args.kwargs['stream'] is True
