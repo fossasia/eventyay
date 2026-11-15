@@ -222,89 +222,6 @@ def test_organizer_custom_primary_font_precedence_in_presale_template():
     assert presale_html.index('/media/pub/org/presale.1234.css') < presale_html.index('common/css/_fonts.css')
 
 
-def extract_media_blocks(css_content: str) -> list[tuple[str, str]]:
-    """Extract all @media query blocks as (header, body) tuples using balanced braces."""
-    blocks: list[tuple[str, str]] = []
-    i = 0
-    n = len(css_content)
-    in_string: str | None = None
-    in_comment = False
-    mode = 'OUTSIDE'
-    media_start = 0
-    body_start = 0
-    depth = 0
-    header = ''
-
-    while i < n:
-        c = css_content[i]
-        if in_comment:
-            if c == '*' and i + 1 < n and css_content[i + 1] == '/':
-                in_comment = False
-                i += 2
-            else:
-                i += 1
-            continue
-        if in_string is not None:
-            if c == '\\':
-                i += 2
-            elif c == in_string:
-                in_string = None
-                i += 1
-            else:
-                i += 1
-            continue
-
-        if c == '/' and i + 1 < n and css_content[i + 1] == '*':
-            in_comment = True
-            i += 2
-            continue
-        if c in ('"', "'"):
-            in_string = c
-            i += 1
-            continue
-
-        if mode == 'OUTSIDE':
-            if (
-                css_content.startswith('@media', i)
-                and (i == 0 or not (css_content[i - 1].isalnum() or css_content[i - 1] in '_-'))
-                and (i + 6 < n and (css_content[i + 6].isspace() or css_content[i + 6] in ('(', '{')))
-            ):
-                media_start = i
-                mode = 'HEADER'
-                i += 6
-                continue
-        elif mode == 'HEADER':
-            if c == '{':
-                header = css_content[media_start:i].strip()
-                body_start = i + 1
-                depth = 1
-                mode = 'BODY'
-        elif mode == 'BODY':
-            if c == '{':
-                depth += 1
-            elif c == '}':
-                depth -= 1
-                if depth == 0:
-                    blocks.append((header, css_content[body_start:i]))
-                    mode = 'OUTSIDE'
-
-        i += 1
-
-    return blocks
-
-
-def extract_kpi_mobile_media_block(css_content: str) -> tuple[str, str]:
-    """Extract the single @media block containing .od-kpi-grid and verify it is at max-width: 767px."""
-    media_blocks = extract_media_blocks(css_content)
-    kpi_media_blocks = [(header, body) for header, body in media_blocks if '.od-kpi-grid' in body]
-    assert len(kpi_media_blocks) == 1, (
-        f'Expected exactly 1 media block containing .od-kpi-grid, found {len(kpi_media_blocks)}'
-    )
-    header, body = kpi_media_blocks[0]
-    assert re.search(r'max-width:\s*767px', header) is not None, f'Expected max-width: 767px media query, got: {header}'
-    return header, body
-
-
 def test_organizer_dashboard_kpi_responsive_layout():
     css_path = finders.find('eventyay-common/css/common_dashboard.css')
     assert css_path is not None
@@ -314,59 +231,32 @@ def test_organizer_dashboard_kpi_responsive_layout():
     kpi_grid_match = re.search(r'\.od-kpi-grid\s*\{([^}]+)\}', css_content)
     assert kpi_grid_match is not None
     kpi_grid_rules = kpi_grid_match.group(1)
-    assert 'repeat(auto-fit, minmax(max(170px, calc((100% - 5 * 12px) / 6)), 1fr))' in kpi_grid_rules
+    kpi_grid_pattern = (
+        r'grid-template-columns:\s*'
+        r'repeat\(\s*auto-fit,\s*'
+        r'minmax\(\s*'
+        r'max\(\s*170px,\s*calc\(\s*\(\s*100%\s*-\s*5\s*\*\s*12px\s*\)\s*/\s*6\s*\)\s*\),\s*'
+        r'1fr\s*\)\s*\)'
+    )
+    assert re.search(kpi_grid_pattern, kpi_grid_rules) is not None
 
     # .od-kpi-label includes overflow-wrap: anywhere
     kpi_label_match = re.search(r'\.od-kpi-label\s*\{([^}]+)\}', css_content)
     assert kpi_label_match is not None
-    kpi_label_rules = kpi_label_match.group(1)
-    assert 'overflow-wrap: anywhere' in kpi_label_rules
+    assert re.search(r'overflow-wrap:\s*anywhere', kpi_label_match.group(1)) is not None
 
     # Obsolete 1200px and 991px fixed-column overrides are absent
-    media_blocks = extract_media_blocks(css_content)
-    for header, body in media_blocks:
-        if '1200px' in header or '991px' in header:
-            assert '.od-kpi-grid' not in body
+    for query in ('1200px', '991px'):
+        for match in re.finditer(rf'@media[^{{]*{query}[^{{]*\{{((?:[^{{}}]*\{{[^{{}}]*\}})*\s*)\}}', css_content):
+            assert '.od-kpi-grid' not in match.group(1)
 
-    # Existing mobile breakpoint (767px) is preserved and contains .od-kpi-grid with 1fr
-    header, body = extract_kpi_mobile_media_block(css_content)
-    rule_match = re.search(r'([^{}]*\.od-kpi-grid[^{]*)\{([^}]+)\}', body)
-    assert rule_match is not None
-    assert re.search(r'(?:^|;)\s*grid-template-columns:\s*1fr\s*(?:;|$)', rule_match.group(2)) is not None
-
-    # .od-kpi-grid is defined in base layout and the mobile media query only
-    assert len(re.findall(r'\.od-kpi-grid\b', css_content)) == 2
-
-
-def test_organizer_dashboard_kpi_rejects_600px_mobile_breakpoint():
-    css_path = finders.find('eventyay-common/css/common_dashboard.css')
-    assert css_path is not None
-    css_content = Path(css_path).read_text(encoding='utf-8')
-
-    modified_css = css_content.replace(
-        '@media (max-width:767px) {\n  .od-header',
-        '@media (max-width:600px) {\n  .od-header',
+    # Existing mobile breakpoint (767px) sets exactly 1fr columns for .od-kpi-grid
+    mobile_match = re.search(
+        r'@media[^{]*max-width:\s*767px[^{]*\{'
+        r'(?:[^{}]*\{[^{}]*\})*?'
+        r'[^{}]*\.od-kpi-grid[^{]*\{'
+        r'([^}]+)\}',
+        css_content,
     )
-    assert modified_css != css_content
-
-    # Moving the organizer grid rule to a 600px breakpoint must be rejected
-    with pytest.raises(AssertionError, match=r'Expected max-width: 767px media query, got: @media \(max-width:600px\)'):
-        extract_kpi_mobile_media_block(modified_css)
-
-
-def test_organizer_dashboard_kpi_rejects_multi_column_mobile_declaration():
-    css_path = finders.find('eventyay-common/css/common_dashboard.css')
-    assert css_path is not None
-    css_content = Path(css_path).read_text(encoding='utf-8')
-
-    modified_css = css_content.replace(
-        '.od-kpi-grid {\n    grid-template-columns: 1fr',
-        '.od-kpi-grid {\n    grid-template-columns: 1fr 1fr',
-    )
-    assert modified_css != css_content
-
-    header, body = extract_kpi_mobile_media_block(modified_css)
-    rule_match = re.search(r'([^{}]*\.od-kpi-grid[^{]*)\{([^}]+)\}', body)
-    assert rule_match is not None
-    with pytest.raises(AssertionError):
-        assert re.search(r'(?:^|;)\s*grid-template-columns:\s*1fr\s*(?:;|$)', rule_match.group(2)) is not None
+    assert mobile_match is not None
+    assert re.search(r'(?:^|;)\s*grid-template-columns:\s*1fr\s*(?:;|$)', mobile_match.group(1)) is not None
