@@ -112,6 +112,8 @@ class Command(BaseCommand):
     help = 'Compress stored raster images larger than a threshold and regenerate thumbnails.'
 
     def add_arguments(self, parser):
+        # Collected once per run, so handle() processes exactly the targets --model accepted.
+        self.image_targets = get_image_targets()
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -131,7 +133,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--model',
             action='append',
-            choices=list(get_image_targets().keys()) + ['settings'],
+            choices=list(self.image_targets.keys()) + ['settings'],
             help='Only process specific models. Can be specified multiple times.',
         )
 
@@ -159,7 +161,7 @@ class Command(BaseCommand):
             if backup_abs == media_abs or backup_abs.startswith(media_abs + os.sep):
                 raise CommandError(f'--backup-dir ({backup_abs}) must not be inside MEDIA_ROOT ({media_abs}).')
                 
-        image_targets = get_image_targets()
+        image_targets = self.image_targets
         models_to_process = options.get('model') or list(image_targets.keys()) + ['settings']
 
         min_bytes = min_size_kb * 1024

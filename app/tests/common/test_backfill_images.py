@@ -92,6 +92,25 @@ def test_model_option_processes_a_plugin_target(plugin_targets, room_with_pictur
     assert 'dry_run=1' in output
 
 
+def test_a_target_accepted_by_model_option_is_processed_even_if_the_receiver_then_fails(room_with_picture):
+    calls = []
+
+    def flaky_receiver(sender, **kwargs):
+        calls.append(sender)
+        if len(calls) > 1:
+            raise RuntimeError('plugin dependency missing')
+        return {'flaky_room_picture': (Room, 'picture', False)}
+
+    register_image_backfill_targets.connect(flaky_receiver, dispatch_uid='test_backfill_flaky_receiver')
+    try:
+        output = dry_run('--model', 'flaky_room_picture')
+    finally:
+        register_image_backfill_targets.disconnect(dispatch_uid='test_backfill_flaky_receiver')
+
+    assert f'WOULD compress Room pk={room_with_picture.pk}' in output
+    assert len(calls) == 1
+
+
 def test_plugin_targets_are_processed_without_model_option(plugin_targets, room_with_picture):
     output = dry_run()
 
