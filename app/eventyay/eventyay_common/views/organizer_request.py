@@ -10,7 +10,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import FormView, TemplateView
 
 from eventyay.base.forms.organizer_request import OrganizerRequestForm, validate_request_slug
-from eventyay.base.models import OrganizerRequest
+from eventyay.base.models.organizer_request import OrganizerRequest
 from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.organizer_requests import notify_submission
 from eventyay.helpers.http import get_client_ip
