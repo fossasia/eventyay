@@ -305,6 +305,7 @@ export default {
 					this.lastFetchedSearch = ''
 					this.totalRecords = 0
 					this.totalPages = 1
+					this.currentPage = 1
 				}
 			} finally {
 				if (this.currentRequestId === requestId) {

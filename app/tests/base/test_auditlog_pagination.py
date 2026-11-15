@@ -151,6 +151,8 @@ async def test_get_audit_log_service_pagination():
         assert result_page3["page"] == 3
         assert result_page3["isLastPage"] is True
         assert len(result_page3["results"]) == 25
+        assert result_page3["results"][0]["id"] == 50
+        assert result_page3["results"][-1]["id"] == 74
 
         mock_qs.order_by.assert_called_with("-timestamp", "-id")
 
@@ -224,16 +226,25 @@ async def test_get_audit_log_service_page_size_capping():
     mock_qs = MagicMock()
     mock_qs.prefetch_related.return_value = mock_qs
     mock_qs.order_by.return_value = mock_qs
-    mock_qs.count.return_value = 0
-    mock_qs.__len__.return_value = 0
-    mock_qs.__getitem__.side_effect = lambda s: []
+
+    mock_items = []
+    for i in range(250):
+        m = MagicMock()
+        m.serialize_public.return_value = {"id": i, "type": f"action.{i}"}
+        mock_items.append(m)
+
+    mock_qs.count.return_value = len(mock_items)
+    mock_qs.__len__.return_value = len(mock_items)
+    mock_qs.__getitem__.side_effect = lambda s: mock_items[s]
 
     with patch.object(AuditLog.objects, "filter", return_value=mock_qs):
         # 200 should be allowed
         result = await get_audit_log(event, page=1, page_size=200)
         assert result["page_size"] == 200
+        assert len(result["results"]) == 200
 
         # > 200 should be capped at 200
         result_capped = await get_audit_log(event, page=1, page_size=500)
         assert result_capped["page_size"] == 200
+        assert len(result_capped["results"]) == 200
 
