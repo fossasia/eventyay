@@ -45,7 +45,18 @@ class OrganizerRequestFeatureToggle(AdministratorPermissionRequiredMixin, View):
 class OrganizerRequestFormOrder(AdministratorPermissionRequiredMixin, View):
     def post(self, request):
         tokens = [part for part in request.POST.get('order', '').split(',') if part]
-        if save_form_order(tokens):
+        success = save_form_order(tokens)
+        if (
+            request.headers.get('x-requested-with') == 'XMLHttpRequest'
+            or 'application/json' in request.headers.get('accept', '')
+        ):
+            if success:
+                return JsonResponse({'ok': True})
+            return JsonResponse(
+                {'error': _('The question order could not be saved. Reload the page and try again.')},
+                status=400,
+            )
+        if success:
             messages.success(request, _('The question order has been saved.'))
         else:
             messages.error(request, _('The question order could not be saved. Reload the page and try again.'))
