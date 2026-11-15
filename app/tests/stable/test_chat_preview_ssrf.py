@@ -1,7 +1,7 @@
 import socket
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -360,8 +360,52 @@ def test_retrieve_url_refuses_large_content_length_without_reading(dns, http_get
 
 
 def test_fetch_pinned_streams_the_body(dns, monkeypatch):
-    get = MagicMock()
-    monkeypatch.setattr(requests.Session, 'get', get)
+    send = MagicMock(return_value=MagicMock(raw=None))
+    monkeypatch.setattr(HTTPAdapter, 'send', send)
     with requests.Session() as session:
         fetch_pinned(session, 'https://public.example/', [PUBLIC_IP])
-    assert get.call_args.kwargs['stream'] is True
+    assert send.call_args.kwargs['stream'] is True
+
+
+def test_redirect_body_is_not_read(monkeypatch):
+    """
+    A redirect announcing a huge body that never completes is followed without reading it.
+    ``Session.send`` would read the whole redirect body even with stream=True.
+    """
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == '/start':
+                self.send_response(302)
+                self.send_header('Location', '/final')
+                self.send_header('Content-Length', str(10**9))
+                self.end_headers()
+                self.wfile.write(b'x' * 1024)
+                self.wfile.flush()
+                time.sleep(3)  # Never finishes the announced body
+            else:
+                self.send_response(200)
+                self.send_header('Content-Length', '4')
+                self.end_headers()
+                self.wfile.write(b'done')
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server.daemon_threads = True
+    server.block_on_close = False
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    monkeypatch.setattr(external, 'resolve_public_addresses', lambda url: ('127.0.0.1',))
+    monkeypatch.setattr(external, 'PREVIEW_HTTP_TIMEOUT', 1)
+    try:
+        start = time.monotonic()
+        response = retrieve_url(f'http://redirect.example:{server.server_address[1]}/start')
+        elapsed = time.monotonic() - start
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert response is not None
+    assert response.content == b'done'
+    assert elapsed < 1

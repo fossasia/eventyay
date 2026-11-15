@@ -11,6 +11,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
+from requests.cookies import extract_cookies_to_jar
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -175,17 +176,28 @@ def normalize_url(url: str) -> str | None:
 
 
 def fetch_pinned(session: requests.Session, url: str, addresses: Sequence[str]) -> requests.Response:
-    """Request ``url`` at the validated addresses, trying the next one if a connection fails."""
+    """
+    Request ``url`` at the validated addresses, trying the next one if a connection fails.
+
+    The request is sent through the adapter directly, not ``Session.send``: even with
+    ``allow_redirects=False`` and ``stream=True``, ``Session.send`` reads the whole body
+    of a redirect response, which would bypass the size limit in ``read_limited``.
+    Session cookies are still sent and updated.
+    """
+    request = session.prepare_request(requests.Request('GET', url))  # TODO: user agent
+    last_error = None
     for address in addresses:
         adapter = PinnedAddressAdapter(address)
+        # Mounted so that closing the session also closes the adapter's connections.
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         try:
-            return session.get(
-                url, timeout=PREVIEW_HTTP_TIMEOUT, allow_redirects=False, stream=True
-            )  # TODO: user agent
+            response = adapter.send(request, stream=True, timeout=PREVIEW_HTTP_TIMEOUT)
         except requests.ConnectionError as error:
             last_error = error
+            continue
+        extract_cookies_to_jar(session.cookies, request, response.raw)
+        return response
     raise last_error
 
 
