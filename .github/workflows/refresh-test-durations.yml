@@ -1,0 +1,84 @@
+name: Refresh stable test durations
+
+# Runs the whole stable suite in one job and uploads a fresh
+# app/tests/stable/.test_durations for pytest-split. Commit the artifact
+# when shard times in "Video & Backend CI" drift apart.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  store-durations:
+    name: Store stable test durations
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: eventyay
+          POSTGRES_PASSWORD: eventyay
+          POSTGRES_DB: eventyay-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventyay -d eventyay-db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: app/uv.lock
+
+      - name: Sync dependencies (including test group)
+        run: uv sync --directory app --group test
+
+      - name: Run pytest and store durations
+        env:
+          EVY_POSTGRES_USER: eventyay
+          EVY_POSTGRES_PASSWORD: eventyay
+          EVY_POSTGRES_DB: eventyay-db
+          EVY_POSTGRES_HOST: localhost
+          EVY_POSTGRES_PORT: "5432"
+          EVY_REDIS_URL: redis://localhost:6379/0
+          EVY_SECRET_KEY: ci-test-secret-key
+          EVY_DEBUG: "true"
+          EVY_RUNNING_ENVIRONMENT: testing
+          DJANGO_SETTINGS_MODULE: eventyay.config.settings
+        working-directory: app
+        run: >-
+          uv run pytest tests/stable --tb=short
+          --store-durations --durations-path tests/stable/.test_durations
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: stable-test-durations
+          path: app/tests/stable/.test_durations
+          include-hidden-files: true
