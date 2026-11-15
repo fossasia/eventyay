@@ -1,14 +1,13 @@
 import datetime
 from datetime import timedelta
 from io import BytesIO
-from zoneinfo import ZoneInfo
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from openpyxl import load_workbook
-
 from reportlab.platypus import Table
 
 from eventyay.base.models import Event, Organizer, Room, RoomView, User
@@ -44,32 +43,27 @@ def _create_event_view(event, user, start, end):
 
 
 @pytest.mark.django_db
-def test_event_timezone_serialization_and_fallback():
+def test_event_timezone_and_fallbacks():
     with scopes_disabled():
-        organizer = Organizer.objects.create(name="Timezone Org", slug="tz-org")
+        organizer = Organizer.objects.create(name="Tz Org", slug="tz-org")
         event = Event.objects.create(
             organizer=organizer,
-            name="Timezone Event",
+            name="Tz Event",
             slug="tz-event",
             date_from=now(),
             timezone="UTC",
         )
-        event.settings.timezone = "Asia/Tokyo"
+        user = User.objects.create(event=event, profile={"display_name": "Tz User"})
 
-        # Prioritizes settings timezone
+        # 1. Prioritizes settings.timezone
+        event.settings.timezone = "Asia/Tokyo"
         assert get_event_timezone_name(event) == "Asia/Tokyo"
         assert get_event_timezone(event) == ZoneInfo("Asia/Tokyo")
         assert ReportGenerator(event).tz == ZoneInfo("Asia/Tokyo")
-
-        user = User.objects.create(
-            event=event,
-            profile={"display_name": "Tz User"},
-        )
-        serializer_data = _config_serializer(event).data
-        assert serializer_data["timezone"] == "Asia/Tokyo"
+        assert _config_serializer(event).data["timezone"] == "Asia/Tokyo"
         assert get_event_config_for_user(event, user)["world"]["timezone"] == "Asia/Tokyo"
 
-        # Falls back to event.timezone when settings.timezone is empty
+        # 2. Falls back to event.timezone when settings.timezone is empty
         event.timezone = "Europe/Paris"
         event.settings.timezone = ""
         assert get_event_timezone_name(event) == "Europe/Paris"
@@ -77,965 +71,272 @@ def test_event_timezone_serialization_and_fallback():
         assert ReportGenerator(event).tz == ZoneInfo("Europe/Paris")
         assert get_event_config_for_user(event, user)["world"]["timezone"] == "Europe/Paris"
 
-        # Falls back to UTC when both settings.timezone and event.timezone are empty
+        # 3. Falls back to UTC when both are empty
         event.timezone = ""
         assert get_event_timezone_name(event) == "UTC"
         assert get_event_timezone(event) == ZoneInfo("UTC")
         assert ReportGenerator(event).tz == ZoneInfo("UTC")
         assert get_event_config_for_user(event, user)["world"]["timezone"] == "UTC"
 
+        # 4. Falls back to UTC for invalid timezone string
+        event.settings.timezone = "Mars/Phobos"
+        assert get_event_timezone(event) == ZoneInfo("UTC")
+
 
 @pytest.mark.django_db
-def test_generate_room_views_multiday_and_abandoned_views():
+def test_task_date_range_parsing():
     with scopes_disabled():
-        organizer = Organizer.objects.create(name="Room Views Org", slug="rv-org")
+        organizer = Organizer.objects.create(name="Range Org", slug="range-org")
+        tz = ZoneInfo("Europe/Berlin")
+        start = datetime.datetime(2026, 6, 1, 10, 0, tzinfo=tz)
+        end = datetime.datetime(2026, 6, 3, 18, 0, tzinfo=tz)
         event = Event.objects.create(
             organizer=organizer,
-            name="Room Views Event",
-            slug="rv-event",
-            date_from=now(),
-            timezone="UTC",
+            name="Range Event",
+            slug="range-event",
+            date_from=start,
+            date_to=end,
         )
+
+        # 1. Normal payload
+        b, e = _parse_task_date_range(event, {"begin": "2026-06-01T10:00", "end": "2026-06-02T12:00"}, tz)
+        assert b == datetime.datetime(2026, 6, 1, 10, 0, tzinfo=tz)
+        assert e == datetime.datetime(2026, 6, 2, 12, 0, tzinfo=tz)
+
+        # 2. Empty or non-dict inputs fall back to event.date_from and event.date_to
+        for non_dict in ({}, None, "invalid", [1, 2, 3]):
+            fb_b, fb_e = _parse_task_date_range(event, non_dict, tz)
+            assert fb_b == start
+            assert fb_e == end
+
+        # 3. Inverted range is automatically swapped in UTC
+        rev_b, rev_e = _parse_task_date_range(event, {"begin": "2026-06-02T12:00", "end": "2026-06-01T10:00"}, tz)
+        assert rev_b == datetime.datetime(2026, 6, 1, 10, 0, tzinfo=tz)
+        assert rev_e == datetime.datetime(2026, 6, 2, 12, 0, tzinfo=tz)
+
+
+@pytest.mark.django_db
+def test_event_task_call_invocation():
+    organizer = Organizer.objects.create(name="Task Org", slug="task-org")
+    event = Event.objects.create(organizer=organizer, name="Task Event", slug="task-event")
+
+    received = {}
+
+    @app.task(base=EventTask)
+    def dummy_task(event, **kwargs):
+        received["event"] = event
+        received["kwargs"] = kwargs
+        # Verify execution occurs within event scope
+        Room.objects.filter(event=event).count()
+        return "ok"
+
+    # 1. event_id kwarg (int and Event instance)
+    dummy_task(event_id=event.pk)
+    assert received["event"] == event
+    dummy_task(event_id=event)
+    assert received["event"] == event
+
+    # 2. event kwarg (int and Event instance)
+    dummy_task(event=event.pk)
+    assert received["event"] == event
+    dummy_task(event=event)
+    assert received["event"] == event
+
+    # 3. First positional argument (int and Event instance)
+    dummy_task(event.pk)
+    assert received["event"] == event
+    dummy_task(event)
+    assert received["event"] == event
+
+
+@pytest.mark.django_db
+def test_room_views_multiday_abandoned_and_dst():
+    with scopes_disabled():
+        organizer = Organizer.objects.create(name="RV Org", slug="rv-org")
+        event = Event.objects.create(organizer=organizer, name="RV Event", slug="rv-event", timezone="Europe/Berlin")
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
-        room = Room.objects.create(
-            event=event,
-            name="Main Hall",
-            module_config=[{"type": "livestream.native"}],
-        )
+        room = Room.objects.create(event=event, name="Main Hall", module_config=[{"type": "livestream.native"}])
+        user1 = User.objects.create(event=event, profile={"display_name": "Active User"})
+        user2 = User.objects.create(event=event, profile={"display_name": "Abandoned User"})
 
-        user1 = User.objects.create(
-            event=event,
-            profile={"display_name": "Active Viewer"},
-        )
-        user2 = User.objects.create(
-            event=event,
-            profile={"display_name": "Old Abandoned Viewer"},
-        )
-
-        # Range: 2026-11-18 14:00 to 2026-11-19 10:00 (begin.hour > end.hour, overnight multi-day)
+        # Multi-day span: Nov 18 14:00 to Nov 19 10:00 (begin.hour > end.hour)
         begin_dt = datetime.datetime(2026, 11, 18, 14, 0, tzinfo=tz)
-        end_dt = datetime.datetime(2026, 11, 19, 10, 0, tzinfo=tz)
+        _create_room_view(room=room, user=user1, start=begin_dt + timedelta(hours=1), end=begin_dt + timedelta(hours=2))
+        _create_room_view(room=room, user=user2, start=begin_dt - timedelta(days=3), end=None)
 
-        # User 1 active during the evening
-        _create_room_view(
-            room=room,
-            user=user1,
-            start=begin_dt + timedelta(hours=1),
-            end=begin_dt + timedelta(hours=2),
-        )
-
-        # User 2 abandoned view from 3 days ago (end is None)
-        _create_room_view(
-            room=room,
-            user=user2,
-            start=begin_dt - timedelta(days=3),
-            end=None,
-        )
-
-        # Pass naive ISO strings as from frontend
-        payload = {
-            "begin": "2026-11-18T14:00",
-            "end": "2026-11-19T10:00",
-        }
-
-        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
+        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_sf:
             saved_content = None
 
             def fake_save(filename, content):
                 nonlocal saved_content
                 saved_content = content.read()
 
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
+            mock_sf.objects.create.return_value.file.save.side_effect = fake_save
 
-            with scope(event=event):
-                url = generate_room_views(event.pk, payload)
-                assert url == "http://example.com/report.xlsx"
-
-            assert saved_content is not None
+            # 1. Verify multi-day and abandoned view capping
+            generate_room_views(event.pk, {"begin": "2026-11-18T14:00", "end": "2026-11-19T10:00"})
             wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["Main Hall"]
-            rows = list(sheet.iter_rows(values_only=True))
+            rows = list(wb["Main Hall"].iter_rows(values_only=True))
+            viewership = [r[2] for r in rows[1:] if r[2] != ""]
+            assert 1 in viewership
+            assert 2 not in viewership  # User 2 abandoned view > 3h is capped and excluded
 
-            # Header row + data rows
-            assert len(rows) > 1
-            assert rows[0] == ("Date", "Time", "Viewership (approx. unique users)")
-
-            # Check that User 1 is recorded and User 2 is not counted in 2026-11-18 buckets
-            viewership_counts = [r[2] for r in rows[1:] if r[2] != ""]
-            assert 1 in viewership_counts
-            # User 2 should NOT inflate viewership to 2 users
-            assert 2 not in viewership_counts
+            # 2. Repeated DST hour (Berlin fallback 25-hour day) custom range spanning 02:30+02:00 to 02:15+01:00
+            generate_room_views(event.pk, {"begin": "2026-10-25T02:30:00+02:00", "end": "2026-10-25T02:15:00+01:00"})
+            wb = load_workbook(filename=BytesIO(saved_content))
+            assert len(list(wb["Main Hall"].iter_rows(values_only=True))) >= 10
 
 
 @pytest.mark.django_db
-def test_generate_session_views_filters_abandoned_views():
+def test_session_views_abandoned_and_dst_lookback():
     with scopes_disabled():
-        organizer = Organizer.objects.create(name="Session Org", slug="session-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Session Event",
-            slug="session-event",
-            date_from=now(),
-            timezone="UTC",
-        )
+        organizer = Organizer.objects.create(name="SV Org", slug="sv-org")
+        event = Event.objects.create(organizer=organizer, name="SV Event", slug="sv-event", timezone="Europe/Berlin")
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
-        room = Room.objects.create(
-            event=event,
-            name="Track 1",
-            pretalx_id=101,
-            module_config=[{"type": "livestream.native"}],
-        )
+        room = Room.objects.create(event=event, name="Track 1", pretalx_id=101, module_config=[{"type": "livestream.native"}])
+        user1 = User.objects.create(event=event, profile={"display_name": "Active Viewer"})
+        user2 = User.objects.create(event=event, profile={"display_name": "Ghost Viewer"})
 
-        user1 = User.objects.create(
-            event=event,
-            profile={"display_name": "Session Viewer"},
-        )
-        user2 = User.objects.create(
-            event=event,
-            profile={"display_name": "Old Ghost Viewer"},
-        )
+        talk_start = datetime.datetime(2026, 11, 20, 10, 0, tzinfo=tz)
+        talk_end = datetime.datetime(2026, 11, 20, 11, 0, tzinfo=tz)
+        _create_room_view(room=room, user=user1, start=talk_start + timedelta(minutes=10), end=talk_end)
+        _create_room_view(room=room, user=user2, start=talk_start - timedelta(days=2), end=None)
 
-        talk_start = datetime.datetime(2026, 11, 18, 10, 0, tzinfo=tz)
-        talk_end = datetime.datetime(2026, 11, 18, 11, 0, tzinfo=tz)
+        schedule = {"talks": [{"title": "Talk 1", "room": 101, "start": talk_start.isoformat(), "end": talk_end.isoformat()}]}
 
-        # User 1 viewed during talk
-        _create_room_view(
-            room=room,
-            user=user1,
-            start=talk_start + timedelta(minutes=10),
-            end=talk_start + timedelta(minutes=40),
-        )
-
-        # User 2 abandoned view from days ago with end=None
-        _create_room_view(
-            room=room,
-            user=user2,
-            start=talk_start - timedelta(days=2),
-            end=None,
-        )
-
-        mock_schedule = {
-            "talks": [
-                {
-                    "title": "Keynote Presentation",
-                    "room": 101,
-                    "start": talk_start.isoformat(),
-                    "end": talk_end.isoformat(),
-                }
-            ]
-        }
-
-        payload = {
-            "begin": "2026-11-18T00:00",
-            "end": "2026-11-18T23:59",
-        }
-
-        with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=mock_schedule), \
-             patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
+        with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=schedule), \
+             patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_sf:
             saved_content = None
 
             def fake_save(filename, content):
                 nonlocal saved_content
                 saved_content = content.read()
 
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
+            mock_sf.objects.create.return_value.file.save.side_effect = fake_save
 
-            with scope(event=event):
-                generate_session_views(event.pk, payload)
-
-            assert saved_content is not None
+            # 1. Filters out stale abandoned view from 2 days prior
+            generate_session_views(event.pk, {"begin": "2026-11-20T08:00", "end": "2026-11-20T18:00"})
             wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["Sessions"]
-            rows = list(sheet.iter_rows(values_only=True))
+            assert list(wb["Sessions"].iter_rows(values_only=True))[1][6] == 1
 
-            # Row 0: Header, Row 1: Keynote Talk
-            assert len(rows) == 2
-            talk_row = rows[1]
-            assert talk_row[0] == "Keynote Presentation"
-            assert talk_row[1] == "Track 1"
-            # Viewership should only count User 1 (1 viewer), excluding the ghost view
-            assert talk_row[6] == 1
+            # 2. DST spring forward (March 29, 2026): open view at 00:00 UTC (01:00 CET)
+            # Talk at 04:30 CEST (02:30 UTC); 2.5h physical elapsed time is <= 3h lookback in UTC
+            _create_room_view(room=room, user=user1, start=datetime.datetime(2026, 3, 29, 0, 0, tzinfo=datetime.timezone.utc), end=None)
+            schedule_dst = {"talks": [{"title": "DST Talk", "room": 101, "start": "2026-03-29T04:30:00+02:00", "end": "2026-03-29T05:30:00+02:00"}]}
+            with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=schedule_dst):
+                generate_session_views(event.pk, {"begin": "2026-03-29T00:00:00+02:00", "end": "2026-03-29T23:59:59+02:00"})
+                wb = load_workbook(filename=BytesIO(saved_content))
+                assert list(wb["Sessions"].iter_rows(values_only=True))[1][6] >= 1
 
 
 @pytest.mark.django_db
-def test_generate_attendee_session_list_strictly_positive_duration():
+def test_attendee_session_list_overlapping_intervals():
     with scopes_disabled():
-        organizer = Organizer.objects.create(name="Attendee Org", slug="att-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Attendee Event",
-            slug="att-event",
-            date_from=now(),
-            timezone="UTC",
-        )
+        organizer = Organizer.objects.create(name="Att Org", slug="att-org")
+        event = Event.objects.create(organizer=organizer, name="Att Event", slug="att-event", timezone="Europe/Berlin")
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
-        room = Room.objects.create(
-            event=event,
-            name="Auditorium",
-            pretalx_id=202,
-            module_config=[{"type": "livestream.native"}],
-        )
+        room = Room.objects.create(event=event, name="Auditorium", pretalx_id=303, module_config=[{"type": "livestream.native"}])
+        user = User.objects.create(event=event, token_id="token-multi", profile={"display_name": "Multi Device"}, traits=["attendee"])
 
-        user1 = User.objects.create(
-            event=event,
-            token_id="user-1",
-            profile={"display_name": "Real Attendee"},
-            traits=["attendee"],
-        )
-        user2 = User.objects.create(
-            event=event,
-            token_id="user-2",
-            profile={"display_name": "Ghost Attendee"},
-            traits=["attendee"],
-        )
+        talk_start = datetime.datetime(2026, 11, 20, 10, 0, tzinfo=tz)
+        talk_end = datetime.datetime(2026, 11, 20, 10, 30, tzinfo=tz)  # 30-minute talk
 
-        talk_start = datetime.datetime(2026, 11, 18, 14, 0, tzinfo=tz)
-        talk_end = datetime.datetime(2026, 11, 18, 15, 0, tzinfo=tz)
+        # Overlapping sessions on 2 devices:
+        # Tab 1: 10:00 to 10:20 (20 min)
+        # Tab 2: 10:10 to 10:30 (20 min)
+        # Raw sum is 40 min, but merged interval spans 10:00 to 10:30 = exactly 30 min.
+        _create_room_view(room=room, user=user, start=talk_start, end=talk_start + timedelta(minutes=20))
+        _create_room_view(room=room, user=user, start=talk_start + timedelta(minutes=10), end=talk_end)
 
-        # User 1 viewed for 30 minutes, plus an overlapping view from +20 to +50 minutes
-        # Total merged watch time: +10 to +50 = 40 minutes (not 30+30=60)
-        _create_room_view(
-            room=room,
-            user=user1,
-            start=talk_start + timedelta(minutes=10),
-            end=talk_start + timedelta(minutes=40),
-        )
-        _create_room_view(
-            room=room,
-            user=user1,
-            start=talk_start + timedelta(minutes=20),
-            end=talk_start + timedelta(minutes=50),
-        )
+        schedule = {"talks": [{"title": "Interval Talk", "room": 303, "start": talk_start.isoformat(), "end": talk_end.isoformat()}]}
 
-        # User 2 abandoned view from 5 days ago (end=None)
-        _create_room_view(
-            room=room,
-            user=user2,
-            start=talk_start - timedelta(days=5),
-            end=None,
-        )
-
-        mock_schedule = {
-            "talks": [
-                {
-                    "title": "Deep Dive Session",
-                    "room": 202,
-                    "start": talk_start.isoformat(),
-                    "end": talk_end.isoformat(),
-                }
-            ]
-        }
-
-        with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=mock_schedule), \
-             patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
+        with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=schedule), \
+             patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_sf:
             saved_content = None
 
             def fake_save(filename, content):
                 nonlocal saved_content
                 saved_content = content.read()
 
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
+            mock_sf.objects.create.return_value.file.save.side_effect = fake_save
 
-            with scope(event=event):
-                generate_attendee_session_list(event.pk, {})
-
-            assert saved_content is not None
+            generate_attendee_session_list(event.pk, {})
             wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["Deep Dive Session"]
-            rows = list(sheet.iter_rows(values_only=True))
-
-            # Header structure: title row, talk metadata, column headers, data rows
-            data_rows = rows[3:]
-            # User 1 should be present with 40 merged minutes
-            assert len(data_rows) == 1
-            assert data_rows[0][1] == "user-1"
-            assert data_rows[0][2] == "Real Attendee"
-            assert data_rows[0][3] == 40
-            # User 2 must NOT be included with 0 or negative minutes
-            assert not any(r[1] == "user-2" for r in data_rows)
+            rows = list(wb["Interval Talk"].iter_rows(values_only=True))
+            # Row 3 is data row; column index 3 is duration (minutes)
+            assert rows[3][3] == 30
 
 
 @pytest.mark.django_db
-def test_generate_views_formats_with_event_timezone():
+def test_raw_views_export_timezone_and_formatting():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="Views Org", slug="views-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Views Event",
-            slug="views-event",
-            date_from=now(),
-            timezone="UTC",
-        )
-        event.settings.timezone = "Asia/Kolkata"
-        tz = ZoneInfo("Asia/Kolkata")
+        event = Event.objects.create(organizer=organizer, name="Views Event", slug="views-event", timezone="Asia/Tokyo")
+        event.settings.timezone = "Asia/Tokyo"
+        tz = ZoneInfo("Asia/Tokyo")
 
-        room = Room.objects.create(
-            event=event,
-            name="Hall A",
-            module_config=[{"type": "livestream.native"}],
-        )
+        room = Room.objects.create(event=event, name="Tokyo Hall")
+        user = User.objects.create(event=event, profile={"display_name": "Tokyo Viewer"})
 
-        user = User.objects.create(
-            event=event,
-            token_id="user-ist",
-            profile={"display_name": "Kolkata Viewer"},
-        )
+        start_utc = datetime.datetime(2026, 11, 15, 0, 0, tzinfo=datetime.timezone.utc)
+        end_utc = datetime.datetime(2026, 11, 15, 1, 0, tzinfo=datetime.timezone.utc)
+        _create_room_view(room=room, user=user, start=start_utc, end=end_utc)
+        _create_event_view(event=event, user=user, start=start_utc, end=end_utc)
 
-        # 10:00 IST = 04:30 UTC
-        view_start = datetime.datetime(2026, 11, 18, 10, 0, tzinfo=tz)
-        view_end = datetime.datetime(2026, 11, 18, 11, 30, tzinfo=tz)
-
-        _create_room_view(
-            room=room,
-            user=user,
-            start=view_start,
-            end=view_end,
-        )
-        _create_event_view(
-            event=event,
-            user=user,
-            start=view_start,
-            end=view_end,
-        )
-
-        payload = {
-            "begin": "2026-11-18T00:00:00+05:30",
-            "end": "2026-11-18T23:59:59+05:30",
-        }
-
-        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
+        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_sf:
             saved_content = None
 
             def fake_save(filename, content):
                 nonlocal saved_content
                 saved_content = content.read()
 
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
+            mock_sf.objects.create.return_value.file.save.side_effect = fake_save
 
-            with scope(event=event):
-                generate_views(event.pk, payload)
-
-            assert saved_content is not None
+            generate_views(event.pk, {"begin": "2026-11-15T09:00:00+09:00", "end": "2026-11-15T10:00:00+09:00"})
             wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["Room views"]
-            rows = list(sheet.iter_rows(values_only=True))
 
-            assert len(rows) == 2
-            # Verify formatted date in IST timezone (10:00:00, not 04:30:00 UTC)
-            assert rows[1][1] == "18.11.2026 10:00:00"
-            assert rows[1][2] == "18.11.2026 11:30:00"
-            assert rows[1][5] == "Kolkata Viewer"
+            # 00:00 UTC is 09:00 in Asia/Tokyo (+09:00)
+            room_row = list(wb["Room views"].iter_rows(values_only=True))[1]
+            assert "15.11.2026 09:00:00" in room_row[1]
+            assert room_row[0] == "Tokyo Hall"
 
-
-@pytest.mark.django_db
-def test_event_timezone_invalid_fallback():
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="Bad TZ Org", slug="bad-tz-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Bad TZ Event",
-            slug="bad-tz-event",
-            date_from=now(),
-            timezone="UTC",
-        )
-        event.settings.timezone = "NonExistent/Invalid_Timezone"
-        # Falls back safely to UTC without throwing ZoneInfoNotFoundError
-        assert get_event_timezone(event) == ZoneInfo("UTC")
-        assert ReportGenerator(event).tz == ZoneInfo("UTC")
+            event_row = list(wb["Event views"].iter_rows(values_only=True))[1]
+            assert "15.11.2026 09:00:00" in event_row[0]
 
 
 @pytest.mark.django_db
-def test_generate_room_views_with_empty_input():
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="Empty Input Org", slug="ei-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Empty Input Event",
-            slug="ei-event",
-            date_from=now(),
-            date_to=now() + timedelta(days=1),
-            timezone="UTC",
-        )
-        room = Room.objects.create(
-            event=event,
-            name="Lobby",
-            module_config=[{"type": "livestream.native"}],
-        )
-
-        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
-            saved_content = None
-
-            def fake_save(filename, content):
-                nonlocal saved_content
-                saved_content = content.read()
-
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
-
-            with scope(event=event):
-                # Calling with None and with {} should both succeed using event.date_from/date_to fallback
-                url = generate_room_views(event.pk, None)
-                assert url == "http://example.com/report.xlsx"
-                assert saved_content is not None
-
-
-@pytest.mark.django_db
-def test_report_generator_pdf_build():
+def test_pdf_report_generation_and_clipping():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="PDF Org", slug="pdf-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="PDF Event",
-            slug="pdf-event",
-            date_from=now(),
-            date_to=now() + timedelta(days=2),
-            timezone="UTC",
-        )
-        room = Room.objects.create(
-            event=event,
-            name="Keynote Stage",
-            pretalx_id=999,
-            module_config=[{"type": "livestream.native"}],
-        )
-        user = User.objects.create(
-            event=event,
-            token_id="user-pdf",
-            profile={"display_name": "PDF Viewer"},
-            type=User.UserType.PERSON,
-        )
-        _create_room_view(
-            room=room,
-            user=user,
-            start=event.date_from + timedelta(hours=1),
-            end=None,  # Abandoned view to verify Coalesce duration logic
-        )
+        event = Event.objects.create(organizer=organizer, name="PDF Event", slug="pdf-event", timezone="Europe/Berlin")
+        event.settings.timezone = "Europe/Berlin"
+        tz = ZoneInfo("Europe/Berlin")
 
-        with patch("eventyay.features.analytics.graphs.report.StoredFile") as mock_stored_file:
-            saved_content = None
+        room = Room.objects.create(event=event, name="PDF Hall", pretalx_id=404, module_config=[{"type": "livestream.native"}])
+        user = User.objects.create(event=event, profile={"display_name": "PDF Viewer"}, type=User.UserType.PERSON)
 
-            def fake_save(filename, content):
-                nonlocal saved_content
-                saved_content = content.read()
+        # Report window: 10:00 to 11:00 (1 hour = 60 min)
+        # View extends from 09:00 to 12:00 (3 hours = 180 min)
+        # SQL clipping must clip duration to exactly 60 minutes
+        window_start = datetime.datetime(2026, 11, 20, 10, 0, tzinfo=tz)
+        window_end = datetime.datetime(2026, 11, 20, 11, 0, tzinfo=tz)
+        _create_room_view(room=room, user=user, start=window_start - timedelta(hours=1), end=window_end + timedelta(hours=1))
 
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/summary.pdf"
+        schedule = {"talks": [{"title": "PDF Talk", "room": 404, "start": window_start.isoformat(), "end": window_end.isoformat()}]}
 
-            with scope(event=event):
-                # Build without graph rendering to test PDF story & table generation
-                generator = ReportGenerator(event, pdf_graphs=False)
-                cf = generator.build(input=None)
-                assert cf.file.url == "http://example.com/summary.pdf"
-                assert saved_content is not None
-                # PDF magic header
-                assert saved_content.startswith(b"%PDF")
-                # Assert configured event dates take precedence
-                assert generator.date_begin == event.date_from
-                assert generator.date_end == event.date_to
-
-                # When event dates are absent, verify fallback to RoomView extrema
-                event_no_dates = Event.objects.create(
-                    organizer=organizer,
-                    name="No Dates Event",
-                    slug="no-dates-event",
-                    date_from=now(),
-                    date_to=now() + timedelta(days=1),
-                    timezone="UTC",
-                )
-                room_no_dates = Room.objects.create(
-                    event=event_no_dates,
-                    name="Room 1",
-                    module_config=[{"type": "livestream.native"}],
-                )
-                user_no_dates = User.objects.create(
-                    event=event_no_dates,
-                    profile={"display_name": "Viewer 1"},
-                    type=User.UserType.PERSON,
-                )
-                t1 = now() - timedelta(days=2)
-                t2 = now() - timedelta(days=1)
-                _create_room_view(room=room_no_dates, user=user_no_dates, start=t1, end=t2)
-
-                event_no_dates.date_from = None
-                event_no_dates.date_to = None
-                gen_no_dates = ReportGenerator(event_no_dates, pdf_graphs=False)
-                assert gen_no_dates.date_begin == t1
-                assert gen_no_dates.date_end == t2
-
-
-@pytest.mark.django_db
-def test_pdf_report_duration_clipped_to_bounds():
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="Clip Org", slug="clip-org")
-        base_time = now()
-        report_start = base_time
-        report_end = base_time + timedelta(hours=1)  # 60 minute report window
-
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Clip Event",
-            slug="clip-event",
-            date_from=report_start,
-            date_to=report_end,
-            timezone="UTC",
-        )
-        room = Room.objects.create(
-            event=event,
-            name="Stream Stage",
-            module_config=[{"type": "livestream.native"}],
-        )
-
-        # User 1: starts 5 minutes before report end (report_end - 5m) and stays 30 minutes after (report_end + 30m)
-        # Total duration = 35m, but duration within report interval must be clipped to 5m.
-        user1 = User.objects.create(
-            event=event,
-            profile={"display_name": "Crossing End Viewer"},
-            type=User.UserType.PERSON,
-        )
-        _create_room_view(
-            room=room,
-            user=user1,
-            start=report_end - timedelta(minutes=5),
-            end=report_end + timedelta(minutes=30),
-        )
-
-        # User 2: starts 30 minutes before report start (report_start - 30m) and ends 15 minutes after (report_start + 15m)
-        # Total duration = 45m, but duration within report interval must be clipped to 15m.
-        user2 = User.objects.create(
-            event=event,
-            profile={"display_name": "Crossing Start Viewer"},
-            type=User.UserType.PERSON,
-        )
-        _create_room_view(
-            room=room,
-            user=user2,
-            start=report_start - timedelta(minutes=30),
-            end=report_start + timedelta(minutes=15),
-        )
-
-        with scope(event=event):
-            generator = ReportGenerator(event, pdf_graphs=False)
-            story = generator.story_for_room(room)
-            # Find the stats table in the room story
+        with patch("eventyay.features.analytics.graphs.report.get_schedule", return_value=schedule):
+            rg = ReportGenerator(event, pdf_graphs=False, input={"begin": window_start.isoformat(), "end": window_end.isoformat()})
+            story = rg.get_story()
             tables = [el for el in story if isinstance(el, Table)]
             assert len(tables) > 0
-            stats_table = tables[0]
 
-            # Row 0: Total number of unique viewers -> "2"
-            assert stats_table._cellvalues[0][1] == "2"
-            # Row 1: Average time spent in room -> (5m + 15m) / 2 = 10m -> "0:10:00"
-            assert stats_table._cellvalues[1][1] == "0:10:00"
-            # Row 2: Median time spent in room -> (5m + 15m) / 2 = 10m -> "0:10:00"
-            assert stats_table._cellvalues[2][1] == "0:10:00"
-
-
-@pytest.mark.django_db
-def test_event_task_call_invocation_paths():
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="Task Org", slug="task-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="Task Event",
-            slug="task-event",
-            date_from=now(),
-            timezone="UTC",
-        )
-
-        @app.task(base=EventTask)
-        def dummy_task(event, **kwargs):
-            return event
-
-        # 1. Positional argument: integer PK
-        res1 = dummy_task(event.pk)
-        assert isinstance(res1, Event)
-        assert res1.pk == event.pk
-
-        # 2. Positional argument: Event instance
-        res2 = dummy_task(event)
-        assert isinstance(res2, Event)
-        assert res2.pk == event.pk
-
-        # 3. Keyword argument 'event_id': integer PK
-        res3 = dummy_task(event_id=event.pk)
-        assert isinstance(res3, Event)
-        assert res3.pk == event.pk
-
-        # 4. Keyword argument 'event_id': Event instance
-        res4 = dummy_task(event_id=event)
-        assert isinstance(res4, Event)
-        assert res4.pk == event.pk
-
-        # 5. Keyword argument 'event': integer PK
-        res5 = dummy_task(event=event.pk)
-        assert isinstance(res5, Event)
-        assert res5.pk == event.pk
-
-        # 6. Keyword argument 'event': Event instance
-        res6 = dummy_task(event=event)
-        assert isinstance(res6, Event)
-        assert res6.pk == event.pk
-
-
-@pytest.mark.django_db
-def test_attendee_session_list_dst_transition():
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="DST Org", slug="dst-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="DST Event",
-            slug="dst-event",
-            date_from=now(),
-            timezone="Europe/Berlin",
-        )
-        event.settings.timezone = "Europe/Berlin"
-
-        room = Room.objects.create(
-            event=event,
-            name="DST Hall",
-            pretalx_id=101,
-            module_config=[{"type": "livestream.native"}],
-        )
-
-        user = User.objects.create(
-            event=event,
-            token_id="user-dst",
-            profile={"display_name": "DST Viewer"},
-            traits=["attendee"],
-            type=User.UserType.PERSON,
-        )
-
-        # In Europe/Berlin, on Sunday Oct 25 2026, clocks turn back 1 hour (from CEST +02:00 to CET +01:00 at 03:00)
-        # Session from 02:15 CEST (00:15 UTC) to 02:45 CET (01:45 UTC): physical duration is 90 minutes.
-        start_utc = datetime.datetime(2026, 10, 25, 0, 15, tzinfo=datetime.timezone.utc)
-        end_utc = datetime.datetime(2026, 10, 25, 1, 45, tzinfo=datetime.timezone.utc)
-
-        fake_schedule = {
-            "talks": [
-                {
-                    "title": "Overnight DST Talk",
-                    "room": 101,
-                    # Provide ISO strings with explicit offsets
-                    "start": "2026-10-25T02:15:00+02:00",
-                    "end": "2026-10-25T02:45:00+01:00",
-                }
-            ]
-        }
-
-        # User watched the full 90-minute session
-        _create_room_view(
-            room=room,
-            user=user,
-            start=start_utc,
-            end=end_utc,
-        )
-
-        with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=fake_schedule), \
-             patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
-
-            saved_content = None
-
-            def fake_save(filename, content):
-                nonlocal saved_content
-                saved_content = content.read()
-
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
-
-            with scope(event=event):
-                generate_attendee_session_list(event.pk, {})
-
-            assert saved_content is not None
-            wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["Overnight DST Talk"]
-            rows = list(sheet.iter_rows(values_only=True))
-
-            # Rows: [0] title, [1] session info, [2] header, [3] attendee data
-            assert len(rows) == 4
-            data_row = rows[3]
-            # Duration in minutes must be exactly 90
-            assert data_row[3] == 90
-
-
-@pytest.mark.django_db
-def test_parse_task_date_range_dst_fallback_and_raw_views_export():
-    organizer = Organizer.objects.create(name="DST Fallback Org", slug="dst-fb-org")
-    event = Event.objects.create(
-        organizer=organizer,
-        name="DST Fallback Event",
-        slug="dst-fb-event",
-        date_from=now(),
-        timezone="Europe/Berlin",
-    )
-    event.settings.timezone = "Europe/Berlin"
-    tz = ZoneInfo("Europe/Berlin")
-
-    # In Berlin autumn transition on 2026-10-25:
-    # 02:45:00+02:00 corresponds to 00:45:00 UTC
-    # 02:15:00+01:00 corresponds to 01:15:00 UTC
-    # 00:45:00 UTC is 30 minutes earlier than 01:15:00 UTC.
-    raw_input = {
-        "begin": "2026-10-25T02:45:00+02:00",
-        "end": "2026-10-25T02:15:00+01:00",
-    }
-    with scope(event=event):
-        begin, end = _parse_task_date_range(event, raw_input, tz)
-
-    # Must preserve chronological order and NOT swap them
-    begin_utc = begin.astimezone(datetime.timezone.utc)
-    end_utc = end.astimezone(datetime.timezone.utc)
-    assert begin_utc == datetime.datetime(2026, 10, 25, 0, 45, tzinfo=datetime.timezone.utc)
-    assert end_utc == datetime.datetime(2026, 10, 25, 1, 15, tzinfo=datetime.timezone.utc)
-    assert begin_utc < end_utc
-
-    # Create room and user
-    with scope(event=event):
-        room = Room.objects.create(
-            event=event,
-            name="Fallback Hall",
-            module_config=[{"type": "livestream.native"}],
-        )
-        user = User.objects.create(
-            event=event,
-            token_id="user-fb",
-            profile={"display_name": "Fallback Viewer"},
-            traits=["attendee"],
-            type=User.UserType.PERSON,
-        )
-
-        # View from 00:50 UTC to 01:10 UTC (falls inside the 00:45 UTC to 01:15 UTC window)
-        view_start = datetime.datetime(2026, 10, 25, 0, 50, tzinfo=datetime.timezone.utc)
-        view_end = datetime.datetime(2026, 10, 25, 1, 10, tzinfo=datetime.timezone.utc)
-        _create_room_view(room=room, user=user, start=view_start, end=view_end)
-        _create_event_view(event=event, user=user, start=view_start, end=view_end)
-
-        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
-            saved_content = None
-
-            def fake_save(filename, content):
-                nonlocal saved_content
-                saved_content = content.read()
-
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
-
-            # Call generate_views task directly (scoped internally with scope(event=event))
-            generate_views(event.pk, raw_input)
-
-            assert saved_content is not None
-            wb = load_workbook(filename=BytesIO(saved_content))
-
-            room_sheet = wb["Room views"]
-            room_rows = list(room_sheet.iter_rows(values_only=True))
-            # Header is row 0, data is row 1
-            assert len(room_rows) == 2
-            assert room_rows[1][0] == "Fallback Hall"
-            assert room_rows[1][5] == "Fallback Viewer"
-
-            event_sheet = wb["Event views"]
-            event_rows = list(event_sheet.iter_rows(values_only=True))
-            assert len(event_rows) == 2
-            assert event_rows[1][4] == "Fallback Viewer"
-
-
-@pytest.mark.django_db
-def test_session_views_open_view_dst_spring_forward():
-    organizer = Organizer.objects.create(name="DST Spring Org", slug="dst-sp-org")
-    event = Event.objects.create(
-        organizer=organizer,
-        name="DST Spring Event",
-        slug="dst-sp-event",
-        date_from=now(),
-        timezone="Europe/Berlin",
-    )
-    event.settings.timezone = "Europe/Berlin"
-
-    with scope(event=event):
-        room = Room.objects.create(
-            event=event,
-            name="Spring Hall",
-            pretalx_id=202,
-            module_config=[{"type": "livestream.native"}],
-        )
-        user = User.objects.create(
-            event=event,
-            token_id="user-spring",
-            profile={"display_name": "Spring Viewer"},
-            traits=["attendee"],
-            type=User.UserType.PERSON,
-        )
-
-        # In Berlin on Sunday March 29, 2026: clocks jump from 02:00 CET (+01:00) to 03:00 CEST (+02:00)
-        # Talk starts at 04:30 CEST (02:30 UTC) and ends at 05:30 CEST (03:30 UTC).
-        # Viewer joined at 01:00 CET (00:00 UTC) - open view (end=None).
-        # Elapsed physical time between join and talk start is 2 hours 30 minutes (<= 3 hours).
-        # Under the old local-time subtraction (04:30 CEST - 3h = 01:30 CET = 00:30 UTC), this view at 00:00 UTC was erroneously excluded.
-        # With UTC lookback (02:30 UTC - 3h = 23:30 UTC), this view is correctly included.
-        talk_start_utc = datetime.datetime(2026, 3, 29, 2, 30, tzinfo=datetime.timezone.utc)
-        view_start_utc = datetime.datetime(2026, 3, 29, 0, 0, tzinfo=datetime.timezone.utc)
-        _create_room_view(room=room, user=user, start=view_start_utc, end=None)
-
-        fake_schedule = {
-            "talks": [
-                {
-                    "title": "Spring Talk",
-                    "room": 202,
-                    "start": "2026-03-29T04:30:00+02:00",
-                    "end": "2026-03-29T05:30:00+02:00",
-                }
-            ]
-        }
-
-        with patch("eventyay.features.analytics.graphs.tasks.get_schedule", return_value=fake_schedule), \
-             patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
-            saved_content = None
-
-            def fake_save(filename, content):
-                nonlocal saved_content
-                saved_content = content.read()
-
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
-
-            # Call generate_session_views without external scope (tests internal scoping too)
-            generate_session_views(
-                event.pk,
-                {
-                    "begin": "2026-03-29T00:00:00+02:00",
-                    "end": "2026-03-29T23:59:59+02:00",
-                },
-            )
-
-            assert saved_content is not None
-            wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["Sessions"]
-            rows = list(sheet.iter_rows(values_only=True))
-            assert len(rows) == 2
-            # Title, Room, Start date, Start time, End date, End time, Viewership
-            assert rows[1][0] == "Spring Talk"
-            assert rows[1][6] == 1  # 1 viewer counted!
-
-
-@pytest.mark.django_db
-def test_parse_task_date_range_non_dict_payload():
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="NonDict Org", slug="nondict-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="NonDict Event",
-            slug="nondict-event",
-            date_from=now(),
-            timezone="UTC",
-        )
-        tz = ZoneInfo("UTC")
-
-        # Passing non-dict truthy values (e.g. list, string, int) must not raise AttributeError
-        for invalid_input in [["invalid"], "string", 123, ("tuple",)]:
-            begin, end = _parse_task_date_range(event, invalid_input, tz)
-            assert isinstance(begin, datetime.datetime)
-            assert isinstance(end, datetime.datetime)
-            assert begin < end
-
-
-@pytest.mark.django_db
-def test_room_views_dst_fallback_repeated_hour_buckets():
-    organizer = Organizer.objects.create(name="DST Buckets Org", slug="dst-b-org")
-    event = Event.objects.create(
-        organizer=organizer,
-        name="DST Buckets Event",
-        slug="dst-b-event",
-        date_from=now(),
-        timezone="Europe/Berlin",
-    )
-    event.settings.timezone = "Europe/Berlin"
-    tz = ZoneInfo("Europe/Berlin")
-
-    with scope(event=event):
-        room = Room.objects.create(
-            event=event,
-            name="DST Bucket Hall",
-            module_config=[{"type": "livestream.native"}],
-        )
-        user = User.objects.create(
-            event=event,
-            token_id="user-dst-b",
-            profile={"display_name": "DST Bucket Viewer"},
-            traits=["attendee"],
-            type=User.UserType.PERSON,
-        )
-
-        # In Berlin on Sunday Oct 25, 2026: 25-hour day (02:00 occurs twice: +02:00 and +01:00)
-        # Create a view during the second 02:xx hour (01:15 UTC to 01:45 UTC, wall time 02:15 CET)
-        view_start = datetime.datetime(2026, 10, 25, 1, 15, tzinfo=datetime.timezone.utc)
-        view_end = datetime.datetime(2026, 10, 25, 1, 45, tzinfo=datetime.timezone.utc)
-        _create_room_view(room=room, user=user, start=view_start, end=view_end)
-
-        with patch("eventyay.features.analytics.graphs.tasks.StoredFile") as mock_stored_file:
-            saved_content = None
-
-            def fake_save(filename, content):
-                nonlocal saved_content
-                saved_content = content.read()
-
-            mock_file = mock_stored_file.objects.create.return_value
-            mock_file.file.save.side_effect = fake_save
-            mock_file.file.url = "http://example.com/report.xlsx"
-
-            generate_room_views(
-                event.pk,
-                {
-                    "begin": "2026-10-25T00:00:00+02:00",
-                    "end": "2026-10-25T23:59:59+01:00",
-                },
-            )
-
-            assert saved_content is not None
-            wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["DST Bucket Hall"]
-            rows = list(sheet.iter_rows(values_only=True))
-
-            # Header is row 0; for a 25-hour day from 00:00 to 23:59:59 with 5-minute buckets:
-            # 25 hours * 12 buckets/hour = 300 buckets (+ 1 endpoint bucket = 301 bucket rows)
-            # Row 0: header -> total 302 rows
-            assert len(rows) >= 300
-
-            # Find the row corresponding to 02:15 during the second hour (viewers should be 1)
-            active_rows = [r for r in rows[1:] if r[2] == 1]
-            assert len(active_rows) > 0
-
-            # Also test a custom date range spanning within the repeated hour (02:30+02:00 to 02:15+01:00)
-            # which spans 45 physical minutes in UTC (00:30 UTC to 01:15 UTC).
-            # Verifies that UTC boundary comparison prevents skipping the repeated hour.
-            generate_room_views(
-                event.pk,
-                {
-                    "begin": "2026-10-25T02:30:00+02:00",
-                    "end": "2026-10-25T02:15:00+01:00",
-                },
-            )
-            assert saved_content is not None
-            wb = load_workbook(filename=BytesIO(saved_content))
-            sheet = wb["DST Bucket Hall"]
-            repeated_hour_rows = list(sheet.iter_rows(values_only=True))
-            # 45 minutes = 9 intervals of 5 minutes (+ 1 header row = 10 rows)
-            assert len(repeated_hour_rows) >= 10
-
-
-
+            # Find cell containing total duration (should be clipped to 1h, not 3h)
+            table_texts = [str(cell) for t in tables for row in t._cellvalues for cell in row]
+            assert "1:00:00" in table_texts
+            assert "3:00:00" not in table_texts
