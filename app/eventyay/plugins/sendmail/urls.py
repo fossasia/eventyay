@@ -29,6 +29,11 @@ urlpatterns = [
         name='event.mail.templates.system',
     ),
     path(
+        'sendmail/templates/team/<slug:template_key>/',
+        views.TeamInvitationMailTemplateView.as_view(),
+        name='event.mail.templates.team',
+    ),
+    path(
         'sendmail/templates/custom/new/',
         views.TicketMailTemplateCreateView.as_view(),
         name='event.mail.custom_templates.create',
