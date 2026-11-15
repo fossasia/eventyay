@@ -348,6 +348,7 @@ export default {
 			scheduleError: false,
 			scheduleUnavailable: false,
 			onHomeServer: false,
+			initialAutoScrollDone: false,
 			loggedIn: false,
 			_initialized: false,
 			apiUrl: null,
@@ -585,7 +586,7 @@ export default {
 			return this.currentDay === todayStr
 		},
 		shouldAutoScrollToNow () {
-			if (this._initialAutoScrollDone) return false
+			if (this.initialAutoScrollDone) return false
 			const fragment = this._initialFragment !== undefined ? this._initialFragment : (window.location.hash || '').slice(1)
 			return shouldAutoScrollSchedule({
 				disableAutoScroll: this.disableAutoScroll,
@@ -1146,16 +1147,19 @@ export default {
 			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return
 			if (this.scheduleNeedsEveryDay) {
 				this.dayLoading = true
+				let loadFailed = false
 				try {
 					await this.ensureAllScheduleDays({ includeText: this.scheduleNeedsText })
 					this.pruneFavsAfterCompactCoverage()
 				} catch (error) {
+					loadFailed = true
 					console.error('Failed to load schedule days', error)
 				} finally {
 					this.dayLoading = false
 				}
-				if (this.shouldAutoScrollToNow || this._pendingGoToNow) {
-					this._initialAutoScrollDone = true
+				if (loadFailed) return
+				if (this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)) {
+					this.initialAutoScrollDone = true
 					this._pendingGoToNow = false
 					this.$nextTick(() => {
 						this.$refs.scheduleDisplay?.scrollToNow?.()
@@ -1187,9 +1191,9 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
-					const shouldScroll = this.shouldAutoScrollToNow || this._pendingGoToNow
+					const shouldScroll = this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)
 					if (shouldScroll) {
-						this._initialAutoScrollDone = true
+						this.initialAutoScrollDone = true
 						this._pendingGoToNow = false
 						this.$refs.scheduleDisplay?.scrollToNow?.()
 					}
@@ -1517,6 +1521,9 @@ export default {
 			document.documentElement.style.scrollBehavior = ''
 		},
 		selectDay (dayId) {
+			if (dayId !== this._pendingGoToNowDay) {
+				this._pendingGoToNow = false
+			}
 			try {
 				window.history.replaceState(null, null, '#' + dayId)
 			} catch (e) {
@@ -1542,14 +1549,14 @@ export default {
 			const today = todayMoment.format('YYYY-MM-DD')
 			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
-			this._pendingGoToNow = true
-			this.changeDay(todayMoment)
-			this.$nextTick(() => {
+			if (this.currentDay === today) {
+				this._pendingGoToNow = false
 				this.$refs.scheduleDisplay?.scrollToNow?.()
-				if (this.currentDay === today && (this.loadedScheduleDays?.[today] || !this.schedule?.compact)) {
-					this._pendingGoToNow = false
-				}
-			})
+				return
+			}
+			this._pendingGoToNow = true
+			this._pendingGoToNowDay = today
+			this.changeDay(todayMoment)
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth

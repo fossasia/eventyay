@@ -489,7 +489,7 @@ export default {
 			currentDay: this.currentDay,
 			now: this.now,
 			timezone: this.timezone
-		})
+		}) && scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)
 		this.rebindDayTracking()
 		await this.$nextTick()
 		this.initScrollSync()
@@ -663,7 +663,8 @@ export default {
 				this.scrollElementIntoViewWithClearance(this.$refs.now)
 				return
 			}
-			const slices = this.$el?.querySelectorAll('.timeslice')
+			if (!scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)) return
+			const slices = this.$el?.querySelectorAll('.grid-viewport .grid > .timeslice')
 			const lastSlice = slices?.[slices.length - 1]
 			if (lastSlice) {
 				this.scrollElementIntoViewWithClearance(lastSlice)
