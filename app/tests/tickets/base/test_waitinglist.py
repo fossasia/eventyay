@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import timedelta
 
 import pytest
@@ -16,6 +17,7 @@ from eventyay.base.models import (
     WaitingListEntry,
 )
 from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.waitinglist import (
     assign_automatically,
     process_waitinglist,
@@ -26,7 +28,8 @@ from tests.testutils.scope import classscope
 @pytest.mark.django_db
 @pytest.mark.parametrize('quota_size', [None, 0, 1])
 @pytest.mark.parametrize('with_variation', [False, True])
-def test_send_voucher_quota_capacity(quota_size, with_variation, monkeypatch):
+@pytest.mark.parametrize('release_failure', [False, True])
+def test_send_voucher_quota_capacity(quota_size, with_variation, release_failure, monkeypatch):
     """Unlimited capacity permits vouchers while exhausted quotas still reject them."""
     organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
     event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
@@ -44,11 +47,23 @@ def test_send_voucher_quota_capacity(quota_size, with_variation, monkeypatch):
         )
         sent = []
         monkeypatch.setattr('eventyay.base.models.waitinglist.mail', lambda *args, **kwargs: sent.append(args[0]))
+        if release_failure:
+            original_lock = Event.lock
+
+            @contextmanager
+            def failing_release(event):
+                """Fail after releasing the booking lock and committing the reservation."""
+                with original_lock(event):
+                    yield
+                raise LockTimeoutException()
+
+            monkeypatch.setattr(Event, 'lock', failing_release)
         if quota_size == 0:
-            with pytest.raises(WaitingListException):
+            with pytest.raises(WaitingListException, match='currently not available'):
                 entry.send_voucher()
             entry.refresh_from_db()
             assert entry.voucher_id is None
+            assert not Voucher.objects.exists()
             assert not sent
         else:
             second_request = WaitingListEntry.objects.get(pk=entry.pk)

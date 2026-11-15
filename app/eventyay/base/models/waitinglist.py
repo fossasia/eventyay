@@ -1,8 +1,7 @@
-from contextlib import nullcontext
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import OperationalError, models, transaction
 from django.db.models import JSONField
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -14,7 +13,7 @@ from eventyay.base.email import get_email_context
 from eventyay.base.i18n import language
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import Voucher
-from eventyay.base.services.locking import LockTimeoutException
+from eventyay.base.services.locking import LockReleaseException, LockTimeoutException
 from eventyay.base.services.mail import mail
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 
@@ -120,12 +119,20 @@ class WaitingListEntry(LoggedModel):
             scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
         return scheme['concatenation'](self.name_parts).strip()
 
-    def send_voucher(self, quota_cache=None, user=None, auth=None, *, event_locked=False):
-        """Reserve and notify once. Automatic assignment already holds the booking lock."""
+    def send_voucher(self, quota_cache=None, user=None, auth=None, *, eligible=None):
+        """Hold the booking lock for one reservation, then notify the recipient."""
+        reserved = False
         try:
-            with nullcontext() if event_locked else self.event.lock():
-                self._reserve_voucher(quota_cache, user, auth)
-        except LockTimeoutException as exc:
+            with self.event.lock():
+                self._reserve_voucher(quota_cache, user, auth, eligible)
+                reserved = True
+        except (LockTimeoutException, LockReleaseException) as exc:
+            if not reserved:
+                raise WaitingListException(_('The event is busy. Please try again.')) from exc
+        except OperationalError as exc:
+            cause = exc.__cause__
+            if (getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)) != '55P03':
+                raise
             raise WaitingListException(_('The event is busy. Please try again.')) from exc
 
         with language(self.locale, self.event.settings.region):
@@ -138,7 +145,7 @@ class WaitingListEntry(LoggedModel):
                 locale=self.locale,
             )
 
-    def _reserve_voucher(self, quota_cache, user, auth):
+    def _reserve_voucher(self, quota_cache, user, auth, eligible):
         """Check the current entry and quota capacity before creating its voucher."""
         with scope(event=self.event, organizer=self.event.organizer), transaction.atomic():
             try:
@@ -149,19 +156,21 @@ class WaitingListEntry(LoggedModel):
                 raise WaitingListException(_('A voucher has already been sent to this person.'))
             if '@' not in self.email:
                 raise WaitingListException(_('This entry is anonymized and can no longer be used.'))
+            if eligible is not None and not eligible(self):
+                raise WaitingListException(_('This waiting list entry is no longer eligible.'))
 
-            target = self.variation or self.product
-            quotas = target.quotas.order_by('pk').select_for_update(of=('self',))
+            # A new quota link must validate its foreign key against this row.
+            model, pk = (ProductVariation, self.variation_id) if self.variation_id else (Product, self.product_id)
+            target = model.objects.select_for_update(of=('self',)).get(pk=pk)
+            # An editor may already hold a quota lock while waiting to link it to the target.
+            quotas = target.quotas.order_by('pk').select_for_update(of=('self',), nowait=True)
             if self.subevent_id:
                 quotas = quotas.filter(subevent_id=self.subevent_id)
             target._subevent_quotas = list(quotas)
             if quota_cache is not None:
                 for quota in target._subevent_quotas:
                     quota_cache.pop(quota.pk, None)
-            try:
-                availability = target.check_quotas(count_waitinglist=False, subevent=self.subevent, _cache=quota_cache)
-            finally:
-                del target._subevent_quotas
+            availability = target.check_quotas(count_waitinglist=False, subevent=self.subevent, _cache=quota_cache)
             if availability[1] is not None and availability[1] < 1:
                 raise WaitingListUnavailable(_('This product is currently not available.'))
 

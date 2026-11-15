@@ -33,28 +33,28 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
 
     sent = 0
 
-    with event.lock():
-        for wle in qs:
-            if (wle.product, wle.variation, wle.subevent) in gone:
-                continue
+    def eligible(entry):
+        """Check automatic assignment rules against the current, locked entry."""
+        date = entry.subevent
+        return (
+            (not subevent_id or not event.has_subevents or entry.subevent_id == subevent_id)
+            and (not date or date.active)
+            and (date or entry.event).presale_is_running
+            and entry.product.is_available()
+        )
 
-            ev = wle.subevent or event
-            if not ev.presale_is_running or (wle.subevent and not wle.subevent.active):
-                continue
-            if wle.subevent and not wle.subevent.presale_is_running:
-                continue
-            if not wle.product.is_available():
-                gone.add((wle.product, wle.variation, wle.subevent))
-                continue
+    for wle in qs:
+        if (wle.product, wle.variation, wle.subevent) in gone:
+            continue
 
-            try:
-                wle.send_voucher(user=user, event_locked=True)
-            except WaitingListUnavailable:
-                gone.add((wle.product, wle.variation, wle.subevent))
-            except WaitingListException:
-                continue
-            else:
-                sent += 1
+        try:
+            wle.send_voucher(user=user, eligible=eligible)
+        except WaitingListUnavailable:
+            gone.add((wle.product, wle.variation, wle.subevent))
+        except WaitingListException:
+            continue
+        else:
+            sent += 1
 
     return sent
 
