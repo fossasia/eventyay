@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import pytest
 from django.core import mail as djmail
+from django.db import OperationalError
 from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scope
@@ -29,7 +30,7 @@ from tests.testutils.scope import classscope
 @pytest.mark.django_db
 @pytest.mark.parametrize('quota_size', [None, 0, 1])
 @pytest.mark.parametrize('with_variation', [False, True])
-@pytest.mark.parametrize('release_failure', [False, True])
+@pytest.mark.parametrize('release_failure', [None, 'lock', 'database timeout', 'database connection'])
 def test_send_voucher_quota_capacity(quota_size, with_variation, release_failure, monkeypatch):
     """Unlimited capacity permits vouchers while exhausted quotas still reject them."""
     organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
@@ -60,6 +61,10 @@ def test_send_voucher_quota_capacity(quota_size, with_variation, release_failure
                     yield
                 assert WaitingListEntry.objects.get(pk=entry.pk).voucher_id is not None
                 release_events.append('failed after reservation')
+                if release_failure.startswith('database'):
+                    cause = OperationalError('database release failed')
+                    cause.sqlstate = '55P03' if release_failure == 'database timeout' else '08006'
+                    raise OperationalError('database release failed') from cause
                 raise LockTimeoutException()
 
             monkeypatch.setattr(Event, 'lock', failing_release)
@@ -133,7 +138,7 @@ def test_automatic_assignment_refreshes_capacity_and_retries(with_variation, sce
         ).get()
         expected = 1 if scenario == 'capacity' else 2
         assert Voucher.objects.count() == len(sent) == expected
-        assert assigned == (1 if scenario == 'busy' else expected)
+        assert assigned == expected
         assert attempts == ([first.pk, second.pk, second.pk] if scenario == 'busy' else [first.pk, second.pk])
         if scenario == 'capacity':
             first.refresh_from_db()

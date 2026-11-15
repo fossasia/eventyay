@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -20,6 +21,9 @@ from eventyay.base.settings import PERSON_NAME_SCHEMES
 from .base import LoggedModel
 from .event import Event, SubEvent
 from .product import Product, ProductVariation
+
+
+logger = logging.getLogger(__name__)
 
 
 class WaitingListException(Exception):  # NOQA: N818
@@ -134,10 +138,12 @@ class WaitingListEntry(LoggedModel):
             if not reserved:
                 raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
         except OperationalError as exc:
-            cause = exc.__cause__
-            if (getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)) != '55P03':
-                raise
-            raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
+            if not reserved:
+                cause = exc.__cause__
+                if (getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)) != '55P03':
+                    raise
+                raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
+            logger.exception('Booking lock release failed after waiting-list reservation')
 
         with language(self.locale, self.event.settings.region):
             mail(

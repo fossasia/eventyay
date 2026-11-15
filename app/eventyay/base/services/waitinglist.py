@@ -13,7 +13,7 @@ from eventyay.celery_app import app
 
 
 @app.task(base=EventTask, bind=True)
-def assign_automatically(self, event: Event, user_id: int = None, subevent_id: int = None):
+def assign_automatically(self, event: Event, user_id: int = None, subevent_id: int = None, *, sent=0):
     """Assign eligible entries, retrying temporary conflicts with serializable identifiers."""
     if user_id:
         user = User.objects.get(id=user_id)
@@ -31,8 +31,6 @@ def assign_automatically(self, event: Event, user_id: int = None, subevent_id: i
         qs = qs.filter(subevent=subevent)
         subevent_id = subevent.pk
 
-    sent = 0
-
     def eligible(entry):
         """Check automatic assignment rules against the current, locked entry."""
         date = entry.subevent
@@ -48,7 +46,7 @@ def assign_automatically(self, event: Event, user_id: int = None, subevent_id: i
             wle.send_voucher(user=user, eligible=eligible)
         except WaitingListBusy as exc:
             raise self.retry(
-                args=(event.pk, user_id, subevent_id), kwargs={}, exc=exc, countdown=5, max_retries=5,
+                args=(event.pk, user_id, subevent_id), kwargs={'sent': sent}, exc=exc, countdown=5, max_retries=5,
             )
         except WaitingListException:
             continue
