@@ -202,6 +202,8 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             return self.render()
         if 'email' in self.contact_form.cleaned_data:
             self.cart_session['email'] = self.contact_form.cleaned_data['email']
+        elif request.user.is_authenticated and request.user.email:
+            self.cart_session['email'] = request.user.email
         else:
             self.cart_session.pop('email', None)
         d = dict(self.contact_form.cleaned_data)
@@ -294,35 +296,36 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                         )
                     return False
 
-            _, attendee_name_required = get_system_question_asked_required(
+            # Don't unpack into _: that would shadow gettext for this whole method.
+            _asked, attendee_name_required = get_system_question_asked_required(
                 self.request.event,
                 'attendee_name_parts',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
             )
-            _, attendee_email_required = get_system_question_asked_required(
+            _asked, attendee_email_required = get_system_question_asked_required(
                 self.request.event,
                 'attendee_email',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
             )
-            _, attendee_company_required = get_system_question_asked_required(
+            _asked, attendee_company_required = get_system_question_asked_required(
                 self.request.event,
                 'company',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
             )
-            _, attendee_job_title_required = get_system_question_asked_required(
+            _asked, attendee_job_title_required = get_system_question_asked_required(
                 self.request.event,
                 'job_title',
                 cp.product,
                 base_states=base_states,
                 product_overrides=product_overrides,
             )
-            _, attendee_address_required = get_system_question_asked_required(
+            _asked, attendee_address_required = get_system_question_asked_required(
                 self.request.event,
                 'street',
                 cp.product,

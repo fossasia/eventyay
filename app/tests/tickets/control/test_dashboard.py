@@ -87,9 +87,11 @@ def test_header_shows_tickets_dashboard_title_and_event_name(client, env):
     # Event name and date range shown inside the header element itself.
     header_extra = _header_extra(content)
     assert 'Conference 2026' in header_extra
-    with scopes_disabled():
+    with scope(organizer=env['organizer'], event=env['event']):
         date_range = env['event'].get_date_range_display()
     assert date_range in header_extra
+    # The separator is decorative, so screen readers skip it.
+    assert '<span aria-hidden="true">&middot;</span>' in header_extra
 
 
 @pytest.mark.django_db
@@ -101,25 +103,30 @@ def test_header_preserves_component_link_navigation(client, env):
     content = response.content.decode()
 
     # The component_link navigation (Home / Tickets / ...) is still rendered,
-    # with the Tickets entry marked active.
+    # with the Tickets entry marked active. Search only the header nav, so a
+    # sidebar link to the same URL cannot satisfy the assertions.
     tickets_url = reverse(
         'control:event.index',
         kwargs={'organizer': env['organizer'].slug, 'event': env['event'].slug},
     )
-    assert f'href="{tickets_url}"' in content
-    assert 'navigation-button' in content
+    nav = re.search(r'<nav id="event-nav".*?</nav>', content, re.DOTALL)
+    assert nav is not None, '#event-nav not found'
+    nav = nav.group(0)
+    assert 'navigation-button' in nav
 
-    # The Tickets entry must carry the "active" class on its anchor.
-    tickets_anchor = re.search(r'<a[^>]*href="' + re.escape(tickets_url) + r'"[^>]*>', content)
-    assert tickets_anchor is not None, 'Tickets navigation anchor not found'
-    anchor_tag = tickets_anchor.group(0)
-    assert 'active' in anchor_tag
+    # The Tickets entry must carry the "active" class on its anchor. Tokenize
+    # the class list so a value like "inactive" does not satisfy the assertion.
+    tickets_anchor = re.search(r'<a[^>]*href="' + re.escape(tickets_url) + r'"[^>]*>', nav)
+    assert tickets_anchor is not None, 'Tickets navigation anchor not found in #event-nav'
+    class_match = re.search(r'class="([^"]*)"', tickets_anchor.group(0))
+    assert class_match is not None, 'Tickets anchor has no class attribute'
+    assert 'active' in class_match.group(1).split()
 
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_header_event_series_branch(client, env):
-    with scopes_disabled():
+    with scope(organizer=env['organizer'], event=env['event']):
         event = env['event']
         event.has_subevents = True
         event.save(update_fields=['has_subevents'])
@@ -136,7 +143,7 @@ def test_header_event_series_branch(client, env):
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_header_meetup_branch(client, env):
-    with scopes_disabled():
+    with scope(organizer=env['organizer'], event=env['event']):
         env['event'].settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
 
     client.force_login(env['user'])
