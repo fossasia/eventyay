@@ -30,6 +30,15 @@ function initVoucherGroupForm() {
             submitBtn.disabled = true;
         }
 
+        const initialQuery = new URLSearchParams(new FormData(form)).toString();
+        const editableControls = Array.from(
+            form.querySelectorAll('input:not([type="hidden"]), select, textarea')
+        );
+        editableControls.forEach((el) => {
+            el.dataset.prevReadonly = el.readOnly ? '1' : '0';
+            el.readOnly = true;
+        });
+
         try {
             const formData = new FormData(form);
             formData.append('ajax_preview', '1');
@@ -87,6 +96,17 @@ function initVoucherGroupForm() {
             }
 
             if (confirmed) {
+                const currentQuery = new URLSearchParams(new FormData(form)).toString();
+                if (currentQuery !== initialQuery) {
+                    delete form.dataset.confirmed;
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                    return;
+                }
+
                 let confirmInput = form.querySelector('input[name="confirm"]');
                 if (!confirmInput) {
                     confirmInput = document.createElement('input');
@@ -103,6 +123,10 @@ function initVoucherGroupForm() {
                 }
             }
         } catch (err) {
+            console.error('Failed to preview voucher group updates:', err, {
+                action: form.action || window.location.href,
+                operation: 'voucher-group-preview',
+            });
             form.dataset.confirmed = '1';
             if (typeof form.requestSubmit === 'function') {
                 form.requestSubmit();
@@ -110,6 +134,12 @@ function initVoucherGroupForm() {
                 form.submit();
             }
         } finally {
+            editableControls.forEach((el) => {
+                if (el.dataset.prevReadonly === '0') {
+                    el.readOnly = false;
+                }
+                delete el.dataset.prevReadonly;
+            });
             if (form.dataset.confirmed !== '1' && submitBtn) {
                 submitBtn.disabled = false;
             }

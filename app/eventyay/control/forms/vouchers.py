@@ -389,6 +389,27 @@ class VoucherGroupForm(VoucherForm):
     def __init__(self, *args, mixed_fields=None, **kwargs):
         self.mixed_fields = set(mixed_fields or ())
         super().__init__(*args, **kwargs)
+        for field_name in self.mixed_fields:
+            if field_name not in self.fields:
+                continue
+            field = self.fields[field_name]
+            field.required = False
+            if isinstance(field, forms.BooleanField):
+                self.fields[field_name] = forms.NullBooleanField(
+                    label=field.label,
+                    help_text=field.help_text,
+                    required=False,
+                    widget=forms.Select(
+                        choices=[
+                            ('', _('Keep unchanged')),
+                            ('true', _('Yes')),
+                            ('false', _('No')),
+                        ],
+                        attrs={'class': 'form-control'},
+                    ),
+                )
+            elif isinstance(field, forms.CharField):
+                field.empty_value = None
 
     class Meta:
         model = Voucher

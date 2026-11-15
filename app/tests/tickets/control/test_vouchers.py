@@ -14,6 +14,7 @@ from eventyay.base.models import (
     Event,
     Product as Item,
     ProductVariation as ItemVariation,
+    LogEntry,
     Order,
     OrderPosition,
     Organizer,
@@ -775,7 +776,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         assert doc.select('.alert-danger')
 
     def test_group_edit_applies_representative_price_to_all_vouchers(self):
-        with scopes_disabled():
+        with scope(event=self.event):
             first = self.event.vouchers.create(
                 code='GROUPONE',
                 tag='group',
@@ -800,7 +801,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         assert '2 vouchers will be updated' in preview.text
         form_data['confirm'] = '1'
         self.post_doc(url, form_data)
-        with scopes_disabled():
+        with scope(event=self.event):
             assert self.event.vouchers.get(pk=second.pk).value == decimal.Decimal('5.00')
             assert LogEntry.objects.filter(
                 action_type='eventyay.voucher.changed',
@@ -808,7 +809,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             ).count() == 2
 
     def test_group_edit_changes_product_and_logs_each_voucher(self):
-        with scopes_disabled():
+        with scope(event=self.event):
             first = self.event.vouchers.create(
                 code='GROUPTHREE',
                 tag='product-group',
@@ -829,7 +830,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         assert '2 vouchers will be updated' in preview.text
         form_data['confirm'] = '1'
         self.post_doc(url, form_data)
-        with scopes_disabled():
+        with scope(event=self.event):
             assert self.event.vouchers.filter(pk__in=[first.pk, second.pk], product=self.shirt).count() == 2
             assert LogEntry.objects.filter(
                 action_type='eventyay.voucher.changed',
@@ -837,8 +838,8 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             ).count() == 2
 
     def test_group_edit_keeps_mixed_tags_when_expiry_changes(self):
-        expiry = now() + datetime.timedelta(days=10)
-        with scopes_disabled():
+        expiry = (now() + datetime.timedelta(days=10)).replace(microsecond=0)
+        with scope(event=self.event):
             first = self.event.vouchers.create(
                 code='TAGONE',
                 tag='first-group',
@@ -857,18 +858,49 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         form_data.update(
             {
                 'voucher_group': [first.pk, second.pk],
-                'valid_until_0': expiry.strftime('%Y-%m-%d'),
-                'valid_until_1': expiry.strftime('%H:%M:%S'),
+                'valid_until_0': f'{expiry:%Y-%m-%d}',
+                'valid_until_1': f'{expiry:%H:%M:%S}',
             }
         )
         preview = self.post_doc(url, form_data)
         assert '2 vouchers will be updated' in preview.text
         form_data['confirm'] = '1'
         self.post_doc(url, form_data)
-        with scopes_disabled():
+        with scope(event=self.event):
             assert self.event.vouchers.get(pk=first.pk).tag == 'first-group'
             assert self.event.vouchers.get(pk=second.pk).tag == 'second-group'
             assert self.event.vouchers.filter(pk__in=[first.pk, second.pk], valid_until=expiry).count() == 2
+
+    def test_voucher_bulk_delete_confirmation_and_execution(self):
+        with scope(event=self.event):
+            unused_1 = self.event.vouchers.create(code='UNUSED1', product=self.ticket)
+            unused_2 = self.event.vouchers.create(code='UNUSED2', product=self.ticket)
+            used = self.event.vouchers.create(code='USED1', product=self.ticket, redeemed=1)
+        url = '/control/event/%s/%s/vouchers/bulk_action' % (self.orga.slug, self.event.slug)
+
+        doc = self.post_doc(url, {'action': 'delete', 'voucher': [unused_1.pk, unused_2.pk, used.pk]})
+        assert '2 unused vouchers will be deleted.' in doc.text
+        assert '1 used voucher will be kept.' in doc.text
+        confirm_btn = doc.select_one('button[value="delete_confirm"]')
+        assert confirm_btn is not None
+        assert 'disabled' not in confirm_btn.attrs
+        assert 'Delete 2 vouchers' in confirm_btn.text
+
+        doc_singular = self.post_doc(url, {'action': 'delete', 'voucher': [unused_1.pk, used.pk]})
+        assert '1 unused voucher will be deleted.' in doc_singular.text
+        confirm_btn_singular = doc_singular.select_one('button[value="delete_confirm"]')
+        assert 'Delete 1 voucher' in confirm_btn_singular.text
+
+        doc_zero = self.post_doc(url, {'action': 'delete', 'voucher': [used.pk]})
+        assert '0 unused vouchers will be deleted.' in doc_zero.text
+        confirm_btn_zero = doc_zero.select_one('button[value="delete_confirm"]')
+        assert 'disabled' in confirm_btn_zero.attrs
+
+        self.post_doc(url, {'action': 'delete_confirm', 'voucher': [unused_1.pk, used.pk]}, follow=True)
+        with scope(event=self.event):
+            assert not self.event.vouchers.filter(pk=unused_1.pk).exists()
+            assert self.event.vouchers.filter(pk=used.pk).exists()
+            assert self.event.vouchers.filter(pk=unused_2.pk).exists()
 
     def test_subevent_optional(self):
         self.event.has_subevents = True

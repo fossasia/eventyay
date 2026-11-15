@@ -87,24 +87,31 @@ function syncGroupCheckbox(groupCheckbox) {
     const groupId = groupCheckbox.dataset.voucherGroupSelect;
     const memberCheckboxes = groupMemberCheckboxes(table, groupId);
     const checkedCount = Array.from(memberCheckboxes).filter((checkbox) => checkbox.checked).length;
+    const isExplicitGroup = groupCheckbox.dataset.explicitGroup === '1';
 
     if (memberCheckboxes.length === 0) {
         groupCheckbox.indeterminate = false;
-    } else if (groupCheckbox.checked && checkedCount === memberCheckboxes.length) {
+    } else if (isExplicitGroup && checkedCount === memberCheckboxes.length) {
+        groupCheckbox.checked = true;
         groupCheckbox.indeterminate = false;
     } else if (checkedCount === 0) {
-        if (!groupHasMoreMembers(table, groupId)) {
-            groupCheckbox.checked = false;
-            groupCheckbox.indeterminate = false;
+        groupCheckbox.dataset.explicitGroup = '0';
+        groupCheckbox.checked = false;
+        groupCheckbox.indeterminate = false;
+    } else if (checkedCount < memberCheckboxes.length) {
+        if (isExplicitGroup) {
+            groupCheckbox.checked = true;
+            groupCheckbox.indeterminate = true;
         } else {
+            groupCheckbox.checked = false;
             groupCheckbox.indeterminate = true;
         }
-    } else if (checkedCount < memberCheckboxes.length) {
-        groupCheckbox.checked = true;
-        groupCheckbox.indeterminate = true;
-    } else if (!groupHasMoreMembers(table, groupId)) {
+    } else if (isExplicitGroup && !groupHasMoreMembers(table, groupId)) {
         groupCheckbox.checked = true;
         groupCheckbox.indeterminate = false;
+    } else if (!isExplicitGroup) {
+        groupCheckbox.checked = false;
+        groupCheckbox.indeterminate = memberCheckboxes.length > 0;
     } else {
         groupCheckbox.indeterminate = false;
     }
@@ -138,9 +145,6 @@ function applyGroupSelection(table, groupId) {
     const groupCheckbox = table.querySelector(
         `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
     );
-    if (groupCheckbox && groupCheckbox.checked) {
-        setGroupMemberSelection(table, groupId, true);
-    }
 
     const toggle = table.querySelector(`${groupToggleSelector}[data-voucher-group-toggle="${groupId}"]`);
     if (toggle) {
@@ -162,15 +166,24 @@ function insertGroupMembers(table, groupId, html) {
         return;
     }
 
-    anchor.insertAdjacentHTML('afterend', html);
+    const template = document.createElement('tbody');
+    template.innerHTML = html;
+    const newMemberRows = Array.from(template.querySelectorAll(`[data-voucher-group-member="${groupId}"]`));
+
+    anchor.after(...template.children);
     if (existingLoadMoreRow) {
         existingLoadMoreRow.remove();
     }
     const groupCheckbox = table.querySelector(
         `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
     );
-    if (groupCheckbox?.checked) {
-        setGroupMemberSelection(table, groupId, true);
+    if (groupCheckbox?.checked && groupCheckbox.dataset.explicitGroup === '1') {
+        newMemberRows.forEach((row) => {
+            const cb = row.querySelector('input[name="voucher"]');
+            if (cb) {
+                cb.checked = true;
+            }
+        });
     }
 }
 
@@ -263,6 +276,7 @@ function setGroupSelection(groupCheckbox) {
         return;
     }
 
+    groupCheckbox.dataset.explicitGroup = groupCheckbox.checked ? '1' : '0';
     groupCheckbox.indeterminate = false;
     setGroupMemberSelection(table, groupId, groupCheckbox.checked);
     updateBatchActions(table);

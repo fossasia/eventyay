@@ -315,8 +315,8 @@ def voucher_group_mixed_fields(objects, instance):
             voucher.quota_id,
             voucher.product_id,
             voucher.variation_id,
-            tuple(voucher.limit_products.values_list('pk', flat=True)),
-            tuple(voucher.limit_variations.values_list('pk', flat=True)),
+            tuple(p.pk for p in voucher.limit_products.all()),
+            tuple(v.pk for v in voucher.limit_variations.all()),
         )
         for voucher in objects
     }
@@ -409,7 +409,8 @@ class VoucherGroupUpdate(EventPermissionRequiredMixin, FormView):
         if instance is None:
             raise Http404(_('The requested vouchers do not exist.'))
         kwargs['instance'] = instance
-        mixed_fields = voucher_group_mixed_fields(objects, instance)
+        prefetched_objects = objects.prefetch_related('limit_products', 'limit_variations')
+        mixed_fields = voucher_group_mixed_fields(prefetched_objects, instance)
         kwargs['mixed_fields'] = mixed_fields
         kwargs.setdefault('initial', {}).update({field: None for field in mixed_fields})
         return kwargs
@@ -423,24 +424,30 @@ class VoucherGroupUpdate(EventPermissionRequiredMixin, FormView):
         context['mixed_fields'] = getattr(context['form'], 'mixed_fields', set())
         return context
 
+    def is_mixed_field_unchanged(self, field, form):
+        val = form.cleaned_data.get(field)
+        return val is None or val == ''
+
     def get_changed_fields(self, objects, form):
         changed_fields = set(form.changed_data) - {'seat'}
         for field in form.mixed_fields:
-            if not form.cleaned_data.get(field):
+            if self.is_mixed_field_unchanged(field, form):
                 changed_fields.discard(field)
         scalar_fields = set(form.cleaned_data) - {'productvar', 'seat'} - form.mixed_fields
-        scalar_fields.update(field for field in form.mixed_fields if form.cleaned_data.get(field))
+        scalar_fields.update(field for field in form.mixed_fields if not self.is_mixed_field_unchanged(field, form))
         for field in scalar_fields:
             if any(getattr(obj, field, None) != form.cleaned_data[field] for obj in objects):
                 changed_fields.add(field)
-        if 'productvar' not in form.mixed_fields or form.cleaned_data.get('productvar'):
+        if 'productvar' not in form.mixed_fields or (
+            form.cleaned_data.get('productvar') and not self.is_mixed_field_unchanged('productvar', form)
+        ):
             product_changed = any(
-            obj.quota_id != form.instance.quota_id
-            or obj.product_id != form.instance.product_id
-            or obj.variation_id != form.instance.variation_id
-            or {p.pk for p in obj.limit_products.all()} != {p.pk for p in form._limit_products}
-            or {v.pk for v in obj.limit_variations.all()} != {v.pk for v in form._limit_variations}
-            for obj in objects
+                obj.quota_id != form.instance.quota_id
+                or obj.product_id != form.instance.product_id
+                or obj.variation_id != form.instance.variation_id
+                or {p.pk for p in obj.limit_products.all()} != {p.pk for p in form._limit_products}
+                or {v.pk for v in obj.limit_variations.all()} != {v.pk for v in form._limit_variations}
+                for obj in objects
             )
             if product_changed:
                 changed_fields.add('productvar')
@@ -547,19 +554,23 @@ class VoucherGroupUpdate(EventPermissionRequiredMixin, FormView):
             remaining_new = max(0, max_usages - obj.redeemed)
             add_targets(targets_for(obj), -remaining_old)
             add_targets(targets_for(obj, new=True), remaining_new)
-        for quota, delta in quota_delta.items():
-            if delta <= 0:
-                continue
-            availability = quota.availability(count_waitinglist=False)
-            if availability[0] != Quota.AVAILABILITY_OK or (
-                availability[1] is not None and availability[1] < delta
-            ):
-                raise ValidationError(
-                    _(
-                        'You cannot create a voucher that blocks quota as the selected product or '
-                        'quota is currently sold out or completely reserved.'
+        lockfn = NoLockManager
+        if any(delta > 0 for delta in quota_delta.values()):
+            lockfn = self.request.event.lock
+        with lockfn():
+            for quota, delta in quota_delta.items():
+                if delta <= 0:
+                    continue
+                availability = quota.availability(count_waitinglist=False)
+                if availability[0] != Quota.AVAILABILITY_OK or (
+                    availability[1] is not None and availability[1] < delta
+                ):
+                    raise ValidationError(
+                        _(
+                            'You cannot create a voucher that blocks quota as the selected product or '
+                            'quota is currently sold out or completely reserved.'
+                        )
                     )
-                )
 
     def preview_context(self, form):
         objects = list(self.get_objects().select_related('seat').prefetch_related('limit_products', 'limit_variations'))
@@ -1100,10 +1111,12 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
             for receiver, response in voucher_form_class.send(request.event, cls=form_class):
                 if response:
                     form_class = response
+            prefetched_objects = self.objects.prefetch_related('limit_products', 'limit_variations')
+            mixed_fields = voucher_group_mixed_fields(prefetched_objects, first)
             form = form_class(
                 instance=first,
-                mixed_fields=voucher_group_mixed_fields(self.objects, first),
-                initial={field: None for field in voucher_group_mixed_fields(self.objects, first)},
+                mixed_fields=mixed_fields,
+                initial={field: None for field in mixed_fields},
             )
             return render(
                 request,

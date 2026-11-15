@@ -57,10 +57,19 @@
               {% endblocktrans %}
             {% else %}
               {% blocktrans count count=skip_count %}
-                <strong>{{ count }}</strong> voucher will be skipped.
+                <strong>{{ count }}</strong> voucher will be skipped:
               {% plural %}
-                <strong>{{ count }}</strong> vouchers will be skipped.
+                <strong>{{ count }}</strong> vouchers will be skipped:
               {% endblocktrans %}
+              {% if fully_used_count %}
+                {% blocktrans count count=fully_used_count %}{{ count }} fully used{% plural %}{{ count }} fully used{% endblocktrans %}{% if max_too_low_count or seat_incompatible_count %}, {% endif %}
+              {% endif %}
+              {% if max_too_low_count %}
+                {% blocktrans count count=max_too_low_count %}{{ count }} maximum usages below redemptions{% plural %}{{ count }} maximum usages below redemptions{% endblocktrans %}{% if seat_incompatible_count %}, {% endif %}
+              {% endif %}
+              {% if seat_incompatible_count %}
+                {% blocktrans count count=seat_incompatible_count %}{{ count }} seat belongs to another product{% plural %}{{ count }} seat belongs to another product{% endblocktrans %}
+              {% endif %}.
             {% endif %}
           </p>
         {% endif %}
