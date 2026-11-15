@@ -874,7 +874,7 @@ body:has(.td-dashboard) #page-content {
     transform: none;
     width: max-content;
     min-width: 0;
-    max-width: min(220px, calc(50vw + 2rem));
+    max-width: min(220px, calc(50vw + 1rem));
   }
   .timeline-step:nth-child(n+4) .timeline-step-links {
     inset-inline-start: auto;
