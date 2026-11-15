@@ -33,6 +33,7 @@ from eventyay.base.models import (
     Submission,
     User,
 )
+from eventyay.base.signals import register_image_backfill_targets
 from eventyay.common.image import invalidate_speaker_avatar_caches, is_svg_filename, process_image
 from eventyay.helpers.image_optimize import QUESTION_IMAGE_EXTENSIONS
 
@@ -49,6 +50,19 @@ IMAGE_TARGETS = {
     'question_answer': (Answer, 'answer_file', False, True),
     'ticket_question_answer': (QuestionAnswer, 'file', False, True),
 }
+
+
+def get_image_targets():
+    """Return core's image targets plus the ones installed plugins register."""
+    targets = dict(IMAGE_TARGETS)
+    for receiver, response in register_image_backfill_targets.send(sender=None):
+        for name, target in (response or {}).items():
+            if name in targets or name == 'settings':
+                logger.warning('Ignoring image backfill target %r from %r: the name is already taken', name, receiver)
+                continue
+            targets[name] = target
+    return targets
+
 
 SETTINGS_KEYS = [
     'logo_image',
@@ -113,7 +127,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--model',
             action='append',
-            choices=list(IMAGE_TARGETS.keys()) + ['settings'],
+            choices=list(get_image_targets().keys()) + ['settings'],
             help='Only process specific models. Can be specified multiple times.',
         )
 
@@ -141,7 +155,8 @@ class Command(BaseCommand):
             if backup_abs == media_abs or backup_abs.startswith(media_abs + os.sep):
                 raise CommandError(f'--backup-dir ({backup_abs}) must not be inside MEDIA_ROOT ({media_abs}).')
                 
-        models_to_process = options.get('model') or list(IMAGE_TARGETS.keys()) + ['settings']
+        image_targets = get_image_targets()
+        models_to_process = options.get('model') or list(image_targets.keys()) + ['settings']
 
         min_bytes = min_size_kb * 1024
         stats = {'compressed': 0, 'failed': 0, 'skipped': 0, 'dry_run': 0}
@@ -227,7 +242,7 @@ class Command(BaseCommand):
 
         with scopes_disabled():
             # 1. Process regular models
-            for model_key, target in IMAGE_TARGETS.items():
+            for model_key, target in image_targets.items():
                 if model_key not in models_to_process:
                     continue
                 model, field_name, generate_thumbnail, *target_options = target
