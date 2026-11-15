@@ -867,25 +867,21 @@ body:has(.td-dashboard) #page-content {
     top: 16px
   }
 
-  /* Keep the step link popups inside the screen on phones */
+    /* Keep the step link popups inside the screen on phones */
   .timeline-step-links {
-    left: 0;
+    left: auto;
+    inset-inline-start: 0;
     transform: none;
     width: max-content;
     min-width: 0;
-    max-width: min(220px, calc(100vw - 3rem));
+    max-width: min(220px, calc(50vw + 2rem));
   }
   .timeline-step:nth-child(n+4) .timeline-step-links {
-    left: auto;
-    right: 0;
+    inset-inline-start: auto;
+    inset-inline-end: 0;
   }
   .timeline-step-links::before {
-    left: 12px;
-    transform: rotate(45deg);
-  }
-  .timeline-step:nth-child(n+4) .timeline-step-links::before {
-    left: auto;
-    right: 12px;
+    display: none;
   }
   .timeline-step-links li a,
   .timeline-step-links li .timeline-step-text {

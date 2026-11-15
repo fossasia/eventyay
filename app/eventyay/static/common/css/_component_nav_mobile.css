@@ -72,7 +72,8 @@
   #event-nav .navigation .navigation-button a.header-nav.btn,
   .navigation-button a.header-nav.btn {
     flex: 1 1 calc(50% - 0.25rem);
+    white-space: normal;
     overflow: visible;
-    text-overflow: clip;
+    overflow-wrap: anywhere;
   }
 }
