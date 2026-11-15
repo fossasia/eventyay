@@ -597,6 +597,28 @@ async def create_room(event, data, creator):
 
         clean_config = {"playback_mode": playback_mode}
         if playback_mode == "always_on":
+            if "autoStart" in config:
+                raw_auto_start = config["autoStart"]
+                if isinstance(raw_auto_start, bool):
+                    clean_config["autoStart"] = raw_auto_start
+                elif isinstance(raw_auto_start, str):
+                    lowered = raw_auto_start.strip().lower()
+                    if lowered in {"true", "1"}:
+                        clean_config["autoStart"] = True
+                    elif lowered in {"false", "0"}:
+                        clean_config["autoStart"] = False
+                    else:
+                        raise ValidationError(
+                            "Invalid autoStart configuration value.",
+                            code="invalid",
+                        )
+                elif isinstance(raw_auto_start, int):
+                    clean_config["autoStart"] = bool(raw_auto_start)
+                else:
+                    raise ValidationError(
+                        "Invalid autoStart configuration value.",
+                        code="invalid",
+                    )
             if module["type"] == "livestream.native":
                 clean_config["hls_url"] = config.get("hls_url", "")
             elif module["type"] == "livestream.youtube":

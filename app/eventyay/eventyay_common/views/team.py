@@ -12,13 +12,10 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_scopes import scopes_disabled
 
-from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
-from eventyay.base.services.mail import SendMailException, mail
-from eventyay.base.services.teams import get_team_invitation_url, send_team_invitation_email
+from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
-from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import TeamForm
 from ...control.permissions import OrganizerPermissionRequiredMixin
@@ -93,24 +90,6 @@ class TeamMemberView(
         ctx['add_token_form'] = self.add_token_form
         return ctx
 
-    def _send_invite(self, instance):
-        try:
-            mail(
-                instance.email,
-                _('eventyay account invitation'),
-                'pretixcontrol/email/invitation.txt',
-                {
-                    'user': self,
-                    'organizer': self.request.organizer.name,
-                    'team': instance.team.name,
-                    'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),
-                },
-                event=None,
-                locale=self.request.LANGUAGE_CODE,
-            )
-        except SendMailException:
-            pass  # Already logged
-
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -168,15 +147,13 @@ class TeamMemberView(
             except (TeamInvite.DoesNotExist, ValueError):
                 messages.error(self.request, _('Invalid invite selected.'))
                 return redirect(self.get_success_url())
-            else:
-                self._send_invite(invite)
-                self.object.log_action(
-                    'eventyay.team.invite.resent',
-                    user=self.request.user,
-                    data={'email': invite.email},
-                )
-                messages.success(self.request, _('The invite has been resent.'))
+            try:
+                resend_team_invite(invite, locale=self.request.LANGUAGE_CODE, log_kwargs={'user': self.request.user})
+            except TeamInviteError as e:
+                messages.error(self.request, str(e))
                 return redirect(self.get_success_url())
+            messages.success(self.request, _('The invite has been resent.'))
+            return redirect(self.get_success_url())
 
         elif 'remove-token' in request.POST:
             try:
@@ -197,61 +174,18 @@ class TeamMemberView(
 
         elif 'user' in self.request.POST and self.add_form.is_valid() and self.add_form.has_changed():
             try:
-                user = User.objects.get(email__iexact=self.add_form.cleaned_data['user'])
-            except User.DoesNotExist:
-                if self.object.invites.filter(email__iexact=self.add_form.cleaned_data['user']).exists():
-                    messages.error(
-                        self.request,
-                        _('This user already has been invited for this team.'),
-                    )
-                    return self.get(request, *args, **kwargs)
-                if 'native' not in get_auth_backends():
-                    messages.error(
-                        self.request,
-                        _('Users need to have a eventyay account before they can be invited.'),
-                    )
-                    return self.get(request, *args, **kwargs)
-
-                invite = self.object.invites.create(email=self.add_form.cleaned_data['user'])
-                self._send_invite(invite)
-                self.object.log_action(
-                    'eventyay.team.invite.created',
-                    user=self.request.user,
-                    data={'email': self.add_form.cleaned_data['user']},
-                )
-                messages.success(self.request, _('The new member has been invited to the team.'))
-                return redirect(self.get_success_url())
-            else:
-                if self.object.members.filter(pk=user.pk).exists():
-                    messages.error(
-                        self.request,
-                        _('This user already has permissions for this team.'),
-                    )
-                    return self.get(request, *args, **kwargs)
-
-                self.object.members.add(user)
-
-                self.object.log_action(
-                    'eventyay.team.member.added',
-                    user=self.request.user,
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
-                )
-                sync_video_traits_for_team(self.object, members=[user])
-
-                send_team_invitation_email(
-                    user=user,
-                    organizer_name=self.request.organizer.name,
-                    team_name=self.object.name,
-                    url=get_team_invitation_url(self.object),
+                invite_to_team(
+                    self.object,
+                    self.add_form.cleaned_data['user'],
+                    invited_by=self.request.user,
                     locale=self.request.LANGUAGE_CODE,
-                    is_registered_user=True,
+                    log_kwargs={'user': self.request.user},
                 )
-
-                messages.success(self.request, _('The new member has been added to the team.'))
-                return redirect(self.get_success_url())
+            except TeamInviteError as e:
+                messages.error(self.request, str(e))
+                return self.get(request, *args, **kwargs)
+            messages.success(self.request, _('The new member has been invited to the team.'))
+            return redirect(self.get_success_url())
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():
             token = self.object.tokens.create(name=self.add_token_form.cleaned_data['name'])
