@@ -117,8 +117,15 @@ def test_task_date_range_parsing():
 
 @pytest.mark.django_db
 def test_event_task_call_invocation():
-    organizer = Organizer.objects.create(name="Task Org", slug="task-org")
-    event = Event.objects.create(organizer=organizer, name="Task Event", slug="task-event")
+    with scopes_disabled():
+        organizer = Organizer.objects.create(name="Task Org", slug="task-org")
+        event = Event.objects.create(
+            organizer=organizer,
+            name="Task Event",
+            slug="task-event",
+            date_from=now(),
+            timezone="UTC",
+        )
 
     received = {}
 
@@ -153,7 +160,13 @@ def test_event_task_call_invocation():
 def test_room_views_multiday_abandoned_and_dst():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="RV Org", slug="rv-org")
-        event = Event.objects.create(organizer=organizer, name="RV Event", slug="rv-event", timezone="Europe/Berlin")
+        event = Event.objects.create(
+            organizer=organizer,
+            name="RV Event",
+            slug="rv-event",
+            date_from=now(),
+            timezone="Europe/Berlin",
+        )
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
@@ -193,7 +206,13 @@ def test_room_views_multiday_abandoned_and_dst():
 def test_session_views_abandoned_and_dst_lookback():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="SV Org", slug="sv-org")
-        event = Event.objects.create(organizer=organizer, name="SV Event", slug="sv-event", timezone="Europe/Berlin")
+        event = Event.objects.create(
+            organizer=organizer,
+            name="SV Event",
+            slug="sv-event",
+            date_from=now(),
+            timezone="Europe/Berlin",
+        )
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
@@ -237,7 +256,13 @@ def test_session_views_abandoned_and_dst_lookback():
 def test_attendee_session_list_overlapping_intervals():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="Att Org", slug="att-org")
-        event = Event.objects.create(organizer=organizer, name="Att Event", slug="att-event", timezone="Europe/Berlin")
+        event = Event.objects.create(
+            organizer=organizer,
+            name="Att Event",
+            slug="att-event",
+            date_from=now(),
+            timezone="Europe/Berlin",
+        )
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
@@ -277,7 +302,13 @@ def test_attendee_session_list_overlapping_intervals():
 def test_raw_views_export_timezone_and_formatting():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="Views Org", slug="views-org")
-        event = Event.objects.create(organizer=organizer, name="Views Event", slug="views-event", timezone="Asia/Tokyo")
+        event = Event.objects.create(
+            organizer=organizer,
+            name="Views Event",
+            slug="views-event",
+            date_from=now(),
+            timezone="Asia/Tokyo",
+        )
         event.settings.timezone = "Asia/Tokyo"
         tz = ZoneInfo("Asia/Tokyo")
 
@@ -314,7 +345,13 @@ def test_raw_views_export_timezone_and_formatting():
 def test_pdf_report_generation_and_clipping():
     with scopes_disabled():
         organizer = Organizer.objects.create(name="PDF Org", slug="pdf-org")
-        event = Event.objects.create(organizer=organizer, name="PDF Event", slug="pdf-event", timezone="Europe/Berlin")
+        event = Event.objects.create(
+            organizer=organizer,
+            name="PDF Event",
+            slug="pdf-event",
+            date_from=now(),
+            timezone="Europe/Berlin",
+        )
         event.settings.timezone = "Europe/Berlin"
         tz = ZoneInfo("Europe/Berlin")
 
