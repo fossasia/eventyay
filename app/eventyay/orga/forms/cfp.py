@@ -691,10 +691,16 @@ class SubmissionTypeForm(NameRequiredMixin, ReadOnlyFlag, I18nHelpText, I18nMode
             raise forms.ValidationError(_('You already have a session type by this name!'))
         return name
 
-    def save(self, *args, **kwargs):
-        instance = super().save(*args, **kwargs)
-        if instance.pk and 'duration' in self.changed_data:
-            instance.update_duration()
+    def save(self, commit=True):
+        """Persist only edited type fields and let the model propagate duration changes."""
+        instance = super().save(commit=False)
+        if commit:
+            update_fields = {field.name for field in instance._meta.concrete_fields if field.name in self.changed_data}
+            if not instance.pk:
+                instance.save()
+            elif update_fields:
+                instance.save(update_fields=update_fields)
+            self.save_m2m()
         return instance
 
     class Meta:
