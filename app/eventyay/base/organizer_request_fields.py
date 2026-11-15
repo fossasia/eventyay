@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -75,12 +76,13 @@ def ordered_form_items():
 
 
 def rewrite_positions(items):
-    for position, (kind, obj, _spec) in enumerate(items):
-        if obj.position == position:
-            continue
-        model = OrganizerRequestFieldSetting if kind == 'field' else OrganizerRequestQuestion
-        model.objects.filter(pk=obj.pk).update(position=position)
-        obj.position = position
+    with transaction.atomic():
+        for position, (kind, obj, _spec) in enumerate(items):
+            if obj.position == position:
+                continue
+            model = OrganizerRequestFieldSetting if kind == 'field' else OrganizerRequestQuestion
+            model.objects.filter(pk=obj.pk).update(position=position)
+            obj.position = position
 
 
 def next_form_position():
