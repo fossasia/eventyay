@@ -278,6 +278,8 @@ def test_action_required_all_items_together(client, env):
         for make in (_overpaid, _pending_but_paid, _pending_refund, _cancellation_request, _pending_approval):
             make(env)
         action = RequiredAction.objects.create(event=env['event'], action_type='test.action')
+        # A second notification in the same minute, so the buttons share a visible time.
+        other = RequiredAction.objects.create(event=env['event'], action_type='other.action')
 
     client.force_login(env['user'])
     section = _action_section(client.get(_url(env)).content.decode())
@@ -303,12 +305,17 @@ def test_action_required_all_items_together(client, env):
     assert re.search(rf'<form method="post" action="{re.escape(discard)}">', card)
     assert 'csrfmiddlewaretoken' in card
     assert 'td-action-btn' not in card
-    # Each Hide message button names its notification's time for screen readers.
-    assert re.search(
-        r'<button type="submit" class="btn btn-default btn-xs">\s*'
+    # Each Hide message button names its notification's time and points at its own
+    # message, so buttons stay distinct even when two notifications share a minute.
+    buttons = re.findall(
+        r'<button type="submit" class="btn btn-default btn-xs" aria-describedby="([^"]+)">\s*'
         r'Hide message<span class="sr-only"> [^<]+</span>\s*</button>',
         card,
     )
+    assert buttons == [f'td-notification-{action.pk}', f'td-notification-{other.pk}']
+    for target, message in zip(buttons, ('test.action', 'other.action')):
+        body = re.search(rf'<div id="{target}" class="td-action-notification-body">(.*?)</div>', card, re.DOTALL)
+        assert body is not None and body.group(1).strip() == message
     # "Show more" names what it opens for screen readers.
     assert re.search(
         rf'href="{re.escape(_url(env, "control:event.requiredactions"))}"\s+class="td-view-all-link"\s+'

@@ -104,12 +104,12 @@
                 </small>
                 <form method="post" action="{% url 'control:event.requiredaction.discard' event=request.event.slug organizer=request.event.organizer.slug id=action.id %}">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-default btn-xs">
+                  <button type="submit" class="btn btn-default btn-xs" aria-describedby="td-notification-{{ action.id }}">
                     {% trans 'Hide message' %}<span class="sr-only"> {{ action.datetime|date:'SHORT_DATETIME_FORMAT' }}</span>
                   </button>
                 </form>
               </div>
-              <div class="td-action-notification-body">{{ action.display|safe }}</div>
+              <div id="td-notification-{{ action.id }}" class="td-action-notification-body">{{ action.display|safe }}</div>
             </li>
           {% endfor %}
         </ul>
