@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from asgiref.sync import sync_to_async
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -117,3 +118,53 @@ def test_edit_during_retrieval_is_not_overwritten(event, chat_event, broadcast, 
     assert chat_event.content == {'type': 'deleted'}
     broadcast[0].assert_not_called()
     broadcast[1].group_send.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_deleted_original_of_an_edit_is_not_overwritten(event, chat_event, broadcast, monkeypatch):
+    """The preview of an edit is skipped if the original message was deleted meanwhile."""
+    with scope(event=event):
+        edit = ChatEvent.objects.create(
+            id=4243,
+            channel=chat_event.channel,
+            event_type='channel.message',
+            content=chat_event.content,
+            replaces=chat_event,
+        )
+
+    def fetch_and_delete_original(url, event):
+        with scope(event=event):
+            ChatEvent.objects.filter(pk=chat_event.pk).update(content={'type': 'deleted'}, edited=now())
+        return {'title': 'Cat', 'url': url}
+
+    monkeypatch.setattr(tasks, 'fetch_preview_data', fetch_and_delete_original)
+
+    retrieve_preview_information.apply(kwargs={'event': str(event.id), 'chat_event_id': edit.id}).get()
+
+    with scope(event=event):
+        edit.refresh_from_db()
+    assert 'preview_card' not in edit.content
+    broadcast[0].assert_not_called()
+
+
+@pytest.mark.django_db
+def test_deletion_before_broadcast_is_sent_again(event, chat_event, broadcast, monkeypatch):
+    """If the message is deleted between saving the preview and broadcasting it, the deletion is re-sent last."""
+    create_event, layer = broadcast
+    monkeypatch.setattr(tasks, 'fetch_preview_data', lambda url, event: {'title': 'Cat', 'url': url})
+
+    async def create_and_delete(**kwargs):
+        if create_event.await_count == 1:
+            await sync_to_async(
+                lambda: ChatEvent.objects.filter(pk=chat_event.pk).update(content={'type': 'deleted'}, edited=now())
+            )()
+        return {'type': 'chat.event', 'content': kwargs['content']}
+
+    create_event.side_effect = create_and_delete
+
+    retrieve_preview_information.apply(kwargs={'event': str(event.id), 'chat_event_id': chat_event.id}).get()
+
+    assert create_event.await_count == 2
+    assert create_event.call_args.kwargs['replaces'] == chat_event.id
+    assert create_event.call_args.kwargs['content'] == {'type': 'deleted'}
+    assert layer.group_send.call_args.args[1]['content'] == {'type': 'deleted'}
