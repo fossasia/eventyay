@@ -3,6 +3,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from i18nfield.fields import I18nCharField
 
 from eventyay.common.urls import EventUrls
@@ -11,6 +12,7 @@ from eventyay.talk_rules.event import can_change_event_settings
 from eventyay.talk_rules.submission import is_cfp_open, orga_can_change_submissions
 
 from .mixins import OrderedModel, PretalxModel
+from .submission import Submission
 
 
 def pleasing_number(number):
@@ -114,13 +116,22 @@ class SubmissionType(OrderedModel, PretalxModel):
         Runs only for submissions that do not override their default
         duration. Should be called whenever ``duration`` changes.
         """
-        for submission in self.submissions.filter(duration__isnull=True):
-            submission.update_duration()
+        with scope(event=self.event):
+            for submission in Submission.all_objects.filter(submission_type=self, duration__isnull=True):
+                submission.update_duration()
 
     update_duration.alters_data = True
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
-        """Auto-assign position for new instances."""
+        """Propagate changed type defaults and inherited draft timings under the event lock."""
+        duration_changed = False
+        if self.pk and (kwargs.get('update_fields') is None or 'default_duration' in kwargs['update_fields']):
+            with scope(event=self.event):
+                duration_changed = type(self).objects.get(pk=self.pk).default_duration != self.default_duration
+                if duration_changed:
+                    type(self.event).objects.select_for_update(no_key=True).get(pk=self.event_id)
+                    duration_changed = type(self).objects.get(pk=self.pk).default_duration != self.default_duration
         if self.position is None and self.event_id:
             # Get the max position for this event, default to 0 if no types exist
             max_position = self.event.submission_types.aggregate(
@@ -128,6 +139,8 @@ class SubmissionType(OrderedModel, PretalxModel):
             )['position__max']
             self.position = (max_position or 0) + 1
         super().save(*args, **kwargs)
+        if duration_changed:
+            self.update_duration()
 
     @staticmethod
     def get_order_queryset(event):
