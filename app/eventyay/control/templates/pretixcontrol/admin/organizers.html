@@ -10,6 +10,7 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
     <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+    <link rel="stylesheet" href="{% static 'orga/css/cfp.css' %}">
     <link rel="stylesheet" href="{% static 'control/css/organizer-form-fields.css' %}">
 {% endblock %}
 {% block content %}
@@ -90,6 +91,7 @@
             {% include "pretixcontrol/admin/includes/organizer_forms_panel.html" %}
         </fieldset>
     </div>
+    <script type="module" src="{% static 'orga/js/dragsort.js' %}"></script>
     <script type="module" src="{% static 'control/js/organizer-form-fields.js' %}"></script>
     <script type="module" src="{% static 'control/js/organizer-request-tabs.js' %}"></script>
 {% endblock %}
