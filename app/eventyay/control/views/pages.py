@@ -1,7 +1,5 @@
 import nh3
-import html
 import json
-import re
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +17,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
+from eventyay.common.system_pages import has_i18n_content
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.forms.pages_admin import (
     ALL_PAGE_I18N_KEYS,
@@ -410,30 +409,6 @@ class ShowPageView(TemplateView):
         return ctx
 
 
-_HTML_TAG_RE = re.compile(r'<[^>]+>')
-_INVISIBLE_CHARS = (' ', '​', '‌', '‍', '﻿')
-
-
-def _has_i18n_content(value):
-    """True when a stored i18n value has visible text in at least one locale.
-
-    Empty rich-text markup (e.g. ``<p></p>``) and invisible characters do not count.
-    """
-    data = getattr(value, 'data', value)
-    values = data.values() if isinstance(data, dict) else (data,)
-    for item in values:
-        if item is None:
-            continue
-        # Decode character references (&nbsp;, &#160;, …) so entity-only markup
-        # does not read as visible text.
-        text = html.unescape(_HTML_TAG_RE.sub('', str(item)))
-        for char in _INVISIBLE_CHARS:
-            text = text.replace(char, '')
-        if text.strip():
-            return True
-    return False
-
-
 class SystemPageView(ShowPageView):
     """Render system pages (terms, privacy, support) from the database or admin-configured content.
 
@@ -457,12 +432,11 @@ class SystemPageView(ShowPageView):
         # A disabled system page returns 404 even if a database Page shares the slug.
         if not gs.get(f'footer_link_{slug}_enabled', as_type=bool, default=True):
             raise Http404(_('The requested page does not exist.'))
-        try:
-            return Page.objects.get(slug=slug)
-        except Page.DoesNotExist:
-            pass
+        db_page = Page.objects.filter(slug=slug).first()
+        if db_page is not None:
+            return db_page
         custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
-        if not _has_i18n_content(custom_text):
+        if not has_i18n_content(custom_text):
             raise Http404(_('The requested page does not exist.'))
         return Page(
             title=self.SYSTEM_PAGE_TITLES.get(slug, slug.capitalize()),
