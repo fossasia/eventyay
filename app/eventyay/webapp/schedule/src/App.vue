@@ -58,7 +58,7 @@
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
 			@goToNow="goToNow")
 		bunt-progress-circular(v-if="dayLoading", size="huge")
-		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",
+		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode && currentDay",
 			:sessions="gridDisplaySessions",
 			:rooms="rooms",
 			:days="days",
@@ -934,18 +934,30 @@ export default {
 			return
 		}
 		this.currentTimezone = this.getSavedTimezone()
+		const resolveCurrentDay = () => {
+			const pool = (this.allDays?.length ? this.allDays : this.days) || []
+			if (pool.length) {
+				const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+				const todayDay = pool.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
+				return todayDay ? todayStr : pool[0].format('YYYY-MM-DD')
+			}
+			if (Array.isArray(this.schedule?.days) && this.schedule.days.length) {
+				const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+				const hasToday = this.schedule.days.includes(todayStr)
+				return hasToday ? todayStr : this.schedule.days[0]
+			}
+			return null
+		}
+		const initialDay = resolveCurrentDay()
+		if (initialDay) this.currentDay = initialDay
 		if (this.schedule.compact) {
 			this.noteCompactPayload(this.schedule)
 			if (this.currentTimezone !== this.schedule.view_timezone) {
 				await this.reloadCompactIndex()
 			}
 		}
-		const knownDays = this.allDays || []
-		if (knownDays.length) {
-			const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
-			const todayDay = knownDays.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
-			this.currentDay = todayDay ? todayStr : knownDays[0].format('YYYY-MM-DD')
-		}
+		const finalDay = resolveCurrentDay()
+		if (finalDay) this.currentDay = finalDay
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 		this.featuredPagingReady = this.isFeaturedPage
@@ -1554,9 +1566,15 @@ export default {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 				return
 			}
-			this._pendingGoToNow = true
-			this._pendingGoToNowDay = today
 			this.changeDay(todayMoment)
+			if (this.schedule?.compact && !this.scheduleNeedsEveryDay) {
+				this._pendingGoToNow = true
+				this._pendingGoToNowDay = today
+				return
+			}
+			this.$nextTick(() => {
+				this.$refs.scheduleDisplay?.scrollToNow?.()
+			})
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
