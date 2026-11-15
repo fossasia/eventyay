@@ -25,9 +25,10 @@
 			.filter-group(v-if="availableLanguages.length > 1")
 				.dropdown-wrapper
 					button.filter-btn(@click="toggleDropdown('language')", :class="{'active': selectedLanguages.length}")
-						svg.filter-icon(viewBox="0 0 24 24", fill="currentColor", aria-hidden="true")
-							path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
-							path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
+						svg.filter-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+							circle(cx="12", cy="12", r="10")
+							line(x1="2", y1="12", x2="22", y2="12")
+							path(d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z")
 						span.btn-label {{ t.language }}
 						span.filter-dot(v-if="selectedLanguages.length")
 					.dropdown-menu(v-if="openDropdown === 'language'")
@@ -190,6 +191,7 @@ import ListPagination from './ListPagination.vue'
 import MarkdownContent from './MarkdownContent'
 import SpeakerSocialLinks from './SpeakerSocialLinks.vue'
 import { logOperational } from '../operationalLog.js'
+import { getLanguageNativeLabel } from '../../../i18n/index.js'
 
 function normalizeLocaleCode (code) {
 	if (!code || typeof code !== 'string') return null
@@ -647,13 +649,7 @@ export default {
 		},
 		formatLanguageLabel(code) {
 			if (!code) return ''
-			try {
-				const locale = document.documentElement.lang || 'en'
-				const displayNames = new Intl.DisplayNames([locale], { type: 'language' })
-				return displayNames.of(code) || code
-			} catch (e) {
-				return code.toString().trim().toLowerCase().replace(/_/g, '-')
-			}
+			return getLanguageNativeLabel(code) || code
 		},
 		clearAllFilters() {
 			this.searchQuery = ''

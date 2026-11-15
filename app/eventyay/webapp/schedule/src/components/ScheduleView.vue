@@ -84,11 +84,11 @@
 				@fav="onFav",
 				@unfav="onUnfav")
 	.schedule-error(v-else-if="hasError")
-		| An error occurred while loading the schedule.
+		| {{ t.load_error }}
 	.schedule-empty(v-else-if="isScheduleLoaded")
 		| {{ t.no_schedule_available }}
 	.schedule-loading(v-else)
-		| Loading…
+		| {{ t.loading }}
 </template>
 
 <script>
@@ -97,6 +97,7 @@ import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
 import { getLocalizedString, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount } from '../utils'
+import { getLanguageNativeLabel } from '../../../i18n/index.js'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -237,7 +238,9 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				no_schedule_available: m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.')
+				no_schedule_available: m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.'),
+				load_error: m.load_error || this.$t('An error occurred while loading the schedule.'),
+				loading: m.loading || this.$t('Loading…'),
 			}
 		},
 		showFavCountOnSchedule() {
@@ -573,8 +576,7 @@ export default {
 			for (const code of eventLocales) {
 				if (!code || langSet.has(code)) continue
 				langSet.add(code)
-				let displayName = code
-				try { displayName = new Intl.DisplayNames([lang], { type: 'language' }).of(code) } catch { /* fallback */ }
+				const displayName = getLanguageNativeLabel(code) || code
 				languages.push({ value: code, label: displayName, selected: false })
 			}
 			// Also include any per-talk locales not already covered by event locales
@@ -582,8 +584,7 @@ export default {
 				const locale = talk.content_locale
 				if (!locale || langSet.has(locale)) continue
 				langSet.add(locale)
-				let displayName = locale
-				try { displayName = new Intl.DisplayNames([lang], { type: 'language' }).of(locale) } catch { /* fallback to raw locale */ }
+				const displayName = getLanguageNativeLabel(locale) || locale
 				languages.push({ value: locale, label: displayName, selected: false })
 			}
 			this.filterState.languages = languages

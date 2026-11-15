@@ -31,7 +31,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: i18next with gettext ``video.po`` files
+**i18n**: i18next with ``locales/<lang>.json`` files
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -246,9 +246,9 @@ Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
 **Supported Languages**: same UI languages as tickets/talk (Django ``LANGUAGES``).
-Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/video.po``.
+Catalogs live in ``app/eventyay/webapp/locales/<lang>.json``.
 
-**Implementation**: i18next loading gettext ``video.po`` catalogs (Weblate)
+**Implementation**: i18next loading JSON catalogs (Weblate)
 
 **Usage**:
 

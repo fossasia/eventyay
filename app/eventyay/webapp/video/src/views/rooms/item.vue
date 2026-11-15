@@ -140,7 +140,7 @@ import LiveCaptions from 'components/LiveCaptions'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
 import { firstCaptionLanguage, pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
-import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
+import { fetchListenerToken } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
 import { hasOrganizerTraits } from 'lib/traitGrants'
 import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
@@ -375,6 +375,13 @@ export default {
 			},
 			immediate: true
 		},
+		'$store.state.world': {
+			handler(newWorld) {
+				if (newWorld && this.room?.id && this.showPluginLanguageDropdown && !this.listenerToken) {
+					this.fetchListenerToken()
+				}
+			}
+		},
 		ccEnabled() {
 			if (!this.ccEnabled) {
 				this.videoGapPx = 0
@@ -419,26 +426,12 @@ export default {
 			}
 		},
 		async fetchListenerToken() {
-			if (!this.room?.id) return;
-			const currentRoomId = this.room.id;
-			// Use interpretationApiUrl + interpretationAuthHeaders so X-CSRFToken is included
-			const url = interpretationApiUrl(this.$store, this.room.id, 'listener-token/');
-			const headers = await interpretationAuthHeaders(true);
-			try {
-				const response = await fetch(url, { method: 'POST', headers, credentials: 'include' });
-				if (this.room?.id !== currentRoomId) return;
-				if (response.ok) {
-					const data = await response.json();
-					if (data && data.token) {
-						this.listenerToken = data.token;
-					}
-				} else {
-					logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status});
-				}
-			} catch (err) {
-				if (this.room?.id === currentRoomId) {
-					logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'network_error'});
-				}
+			if (!this.room?.id) return
+			const currentRoomId = this.room.id
+			const token = await fetchListenerToken(this.$store, currentRoomId)
+			if (this.room?.id !== currentRoomId) return
+			if (token) {
+				this.listenerToken = token
 			}
 		},
 		checkDirectAccess() {
@@ -463,7 +456,7 @@ export default {
 		},
 		handleCcLanguageChange(translationConfig) {
 			this.isManualCCOverride = true
-			this.selectedCcLanguage = this.getLanguageForTranslation(translationConfig, this.pluginLanguages) || 'Original'
+			this.selectedCcLanguage = translationConfig?.language || 'Original'
 		},
 		toggleCc() {
 			this.ccEnabled = !this.ccEnabled
@@ -504,8 +497,26 @@ export default {
 		},
 		clearStaleTranslation() {
 			if (!this.room?.id || !this.currentInterpretation) return
+			const selectedLang = this.activeTranslationConfig?.language
+				|| this.currentInterpretation?.language
+				|| this.selectedPluginLanguage
 			const matchesPlugin = this.getLanguageForTranslation(this.currentInterpretation, this.pluginLanguages)
-			if (!this.showPluginLanguageDropdown || !matchesPlugin) {
+			const sameLang = selectedLang && selectedLang !== 'Original'
+				? this.pluginLanguages.find(l => l.language === selectedLang)
+				: null
+			const audioSource = normalizeAudioTranslationSource(sameLang?.url || sameLang?.youtube_id)
+			if (!this.showPluginLanguageDropdown || !matchesPlugin || (audioSource && audioSource !== this.currentInterpretation.url)) {
+				if (sameLang) {
+					if (audioSource) {
+						this.updateActiveTranslation({
+							...sameLang,
+							url: audioSource,
+							useVideo: Boolean(sameLang.use_video),
+							language: sameLang.language,
+						})
+						return
+					}
+				}
 				this.$store.commit('updateInterpretationAudio', {
 					roomId: this.room.id,
 					interpretation: null
