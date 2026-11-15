@@ -140,7 +140,7 @@ import LiveCaptions from 'components/LiveCaptions'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
 import { firstCaptionLanguage, pluginLanguageStreams, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
-import { interpretationApiUrl, interpretationAuthHeaders } from 'lib/interpretation-api'
+import { fetchListenerToken } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
 import { hasOrganizerTraits } from 'lib/traitGrants'
 import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
@@ -305,10 +305,37 @@ export default {
 			if (!this.ccEnabled) return null
 			const lang = this.pluginLanguages.find(l => l.language === this.selectedCcLanguage)
 			if (!lang?.caption_ws_url) return null
+			if (lang.is_schedule_stream) {
+				return lang.caption_ws_url
+			}
 			// VoxBento caption WS is public; do not require listenerToken (often unavailable with OAuth-only).
 			if (this.listenerToken) {
-				const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
-				return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
+				let isTrusted = false
+				let captionHost = null
+				try {
+					captionHost = new URL(lang.caption_ws_url, window.location.href).host
+				} catch (e) {
+					console.warn('Failed to parse caption WebSocket URL:', lang.caption_ws_url, e)
+				}
+
+				let apiHost = null
+				try {
+					const apiUrl = this.room?.id
+						? interpretationApiUrl(this.$store, this.room.id)
+						: window.location.href
+					apiHost = new URL(apiUrl, window.location.href).host
+				} catch (e) {
+					console.warn('Failed to parse interpretation API URL:', e)
+				}
+
+				if (captionHost && apiHost && captionHost === apiHost) {
+					isTrusted = true
+				}
+
+				if (isTrusted) {
+					const sep = lang.caption_ws_url.includes('?') ? '&' : '?'
+					return `${lang.caption_ws_url}${sep}token=${this.listenerToken}`
+				}
 			}
 			return lang.caption_ws_url
 		},
@@ -359,7 +386,12 @@ export default {
 			immediate: true
 		},
 		'room.currentStream': {
-			handler: 'initializeLanguages'
+			handler: 'initializeLanguages',
+			deep: true
+		},
+		'room.upcomingStream': {
+			handler: 'initializeLanguages',
+			deep: true
 		},
 		'room.interpretation_language_streams': {
 			handler: 'initializeLanguages'
@@ -374,6 +406,13 @@ export default {
 				}
 			},
 			immediate: true
+		},
+		'$store.state.world': {
+			handler(newWorld) {
+				if (newWorld && this.room?.id && this.showPluginLanguageDropdown && !this.listenerToken) {
+					this.fetchListenerToken()
+				}
+			}
 		},
 		ccEnabled() {
 			if (!this.ccEnabled) {
@@ -419,26 +458,12 @@ export default {
 			}
 		},
 		async fetchListenerToken() {
-			if (!this.room?.id) return;
-			const currentRoomId = this.room.id;
-			// Use interpretationApiUrl + interpretationAuthHeaders so X-CSRFToken is included
-			const url = interpretationApiUrl(this.$store, this.room.id, 'listener-token/');
-			const headers = await interpretationAuthHeaders(true);
-			try {
-				const response = await fetch(url, { method: 'POST', headers, credentials: 'include' });
-				if (this.room?.id !== currentRoomId) return;
-				if (response.ok) {
-					const data = await response.json();
-					if (data && data.token) {
-						this.listenerToken = data.token;
-					}
-				} else {
-					logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status});
-				}
-			} catch (err) {
-				if (this.room?.id === currentRoomId) {
-					logOperational({action: 'interpretation.token', outcome: 'failure', backend: 'interpretation', error_code: 'network_error'});
-				}
+			if (!this.room?.id) return
+			const currentRoomId = this.room.id
+			const token = await fetchListenerToken(this.$store, currentRoomId)
+			if (this.room?.id !== currentRoomId) return
+			if (token) {
+				this.listenerToken = token
 			}
 		},
 		checkDirectAccess() {
@@ -491,6 +516,9 @@ export default {
 		},
 		initializeLanguages() {
 			this.pluginLanguages = pluginLanguageStreams(this.room)
+			if (!this.pluginLanguages.some(l => l.language === this.selectedCcLanguage && l.caption_ws_url)) {
+				this.selectedCcLanguage = firstCaptionLanguage(this.pluginLanguages) || 'Original'
+			}
 			this.clearStaleTranslation()
 		},
 		getLanguageForTranslation(translationConfig, languages) {
