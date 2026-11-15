@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 08:24+0000\n"
-"Last-Translator: Goudarz Jafari <hi@goudarzjafari.com>\n"
+"PO-Revision-Date: 2026-11-12 10:18+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Persian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/fa/>\n"
 "Language: fa\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n==0 || n==1);\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -17852,7 +17853,8 @@ msgstr ""
 #, fuzzy
 #| msgid "This field is required when using SendGrid as email vendor."
 msgid "This field is required when using Gmail as email vendor."
-msgstr "این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
+msgstr ""
+"این فیلد هنگام استفاده از SendGrid به‌عنوان ارائه‌دهندهٔ ایمیل لازم است."
 
 #: eventyay/control/forms/global_settings.py:886
 msgid ""
@@ -31266,7 +31268,8 @@ msgstr "فعال کردن حالت آزمایشی صفحات سخنرانی"
 msgid ""
 "You must publish the event main page before enabling public test mode for "
 "tickets."
-msgstr "قبل از فعال‌کردن حالت آزمایشی، بلیت‌ها باید منتشر و راه‌اندازی شده باشند."
+msgstr ""
+"قبل از فعال‌کردن حالت آزمایشی، بلیت‌ها باید منتشر و راه‌اندازی شده باشند."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:66
 #, fuzzy

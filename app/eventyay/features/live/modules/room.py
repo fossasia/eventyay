@@ -29,13 +29,16 @@ from eventyay.base.services.event import (
 from eventyay.base.services.poll import get_polls, get_voted_polls
 from eventyay.base.services.reactions import store_reaction
 from eventyay.base.services.room import (
+    MODERATED_CALL_MODULE_PERMISSIONS,
     delete_room,
     end_view,
     get_viewers,
     normalize_after_priority_change,
     reorder_rooms,
+    restrict_module_config_patch,
     save_room,
     start_view,
+    strip_webhook_secrets,
     validate_room_config_patch,
 )
 from eventyay.base.services.room_creation_gate import (
@@ -651,7 +654,29 @@ class RoomModule(BaseModule):
         ]
     )
     async def config_get(self, body):
-        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(self.room))
+        config = await database_sync_to_async(serialize_room_config)(self.room)
+        if not await self._can_edit_full_room_config():
+            config = strip_webhook_secrets(config)
+        await self.consumer.send_success(config)
+
+    async def _can_edit_full_room_config(self):
+        """Whether the user may change any room setting, not just their call module's."""
+        for permission in (Permission.ROOM_UPDATE, Permission.EVENT_UPDATE):
+            if await self.consumer.event.has_permission_async(
+                user=self.consumer.user, permission=permission, room=self.room
+            ):
+                return True
+        return False
+
+    async def _moderated_module_types(self):
+        """Call module types in this room whose settings the user may moderate."""
+        types = set()
+        for module_type, permission in MODERATED_CALL_MODULE_PERMISSIONS.items():
+            if await self.consumer.event.has_permission_async(
+                user=self.consumer.user, permission=permission, room=self.room
+            ):
+                types.add(module_type)
+        return types
 
     @command("config.patch")
     @room_action(
@@ -666,10 +691,31 @@ class RoomModule(BaseModule):
     )
     async def config_patch(self, body):
         """Handle live room configuration patch after validating module entitlements."""
+        full_edit = await self._can_edit_full_room_config()
+        if not full_edit:
+            # The cached room may be up to 30s old; merge against the current stored config.
+            await self.room.refresh_from_db_if_outdated()
+            module_config = (
+                restrict_module_config_patch(
+                    self.room.module_config,
+                    body.get("module_config"),
+                    await self._moderated_module_types(),
+                )
+                if set(body) <= {"room", "channel", "module_config"}
+                else None
+            )
+            if module_config is None:
+                log_event('video', 'room.config', OUTCOME_FAILURE, error_code='denied', event_id=getattr(self.consumer.event, 'pk', None))
+                await self.consumer.send_error(code="protocol.denied")
+                return
+            body = {"module_config": module_config}
         if 'module_config' in body:
             module_config = body['module_config']
             if not isinstance(module_config, list) or not all(
-                isinstance(module, dict) and isinstance(module.get('type'), str) for module in module_config
+                isinstance(module, dict)
+                and isinstance(module.get('type'), str)
+                and isinstance(module.get('config', {}), dict)
+                for module in module_config
             ):
                 log_event('video', 'room.config', OUTCOME_FAILURE, error_code='invalid', event_id=getattr(self.consumer.event, 'pk', None))
                 await self.consumer.send_error(code='config.invalid')
@@ -721,13 +767,15 @@ class RoomModule(BaseModule):
         old = await database_sync_to_async(serialize_room_config)(self.room)
         validated_data, update_fields = await database_sync_to_async(
             validate_room_config_patch
-        )(self.room, body)
+        )(self.room, body, sanitize_interaction_modules=full_edit)
         if validated_data is not None:
             for field in update_fields:
                 setattr(self.room, field, validated_data[field])
 
             # Validate webhook URL via challenge verification when module_config changes
-            if "module_config" in update_fields:
+            # Restricted patches restore every non-moderated module from the stored config,
+            # so webhooks cannot have changed and need no re-verification.
+            if full_edit and "module_config" in update_fields:
                 try:
                     await self._verify_webhook_challenges(
                         old.get("module_config") or [],
@@ -753,7 +801,7 @@ class RoomModule(BaseModule):
             # implicit participant-role permissions (chat, questions, polls, BBB/join, etc.) work.
             # Only upgrade viewer: [] rooms missing participant; trait-restricted rooms unchanged.
             # Skip when the client sent trait_grants so explicit viewer-only configs stay put.
-            if "module_config" in update_fields and "trait_grants" not in body:
+            if full_edit and "module_config" in update_fields and "trait_grants" not in body:
                 trait_grants = dict(self.room.trait_grants or {})
                 viewer_is_open = trait_grants.get("viewer") == []
                 if viewer_is_open and "participant" not in trait_grants:
@@ -778,6 +826,8 @@ class RoomModule(BaseModule):
                     fields=["sorting_priority"]
                 )
                 new = await database_sync_to_async(serialize_room_config)(self.room)
+            if not full_edit:
+                new = strip_webhook_secrets(new)
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:
