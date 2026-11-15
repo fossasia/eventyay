@@ -482,18 +482,18 @@ export default {
 		}
 	},
 	async mounted () {
-		this.rebindDayTracking()
-		await this.$nextTick()
-		this.initScrollSync()
-		if (!this.$refs.now) return
 		const fragment = (window.location.hash || '').slice(1)
-		if (!shouldAutoScrollSchedule({
+		const autoScroll = shouldAutoScrollSchedule({
 			disableAutoScroll: this.disableAutoScroll,
 			fragment,
 			currentDay: this.currentDay,
 			now: this.now,
 			timezone: this.timezone
-		})) return
+		})
+		this.rebindDayTracking()
+		await this.$nextTick()
+		this.initScrollSync()
+		if (!autoScroll) return
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},
@@ -659,8 +659,15 @@ export default {
 			}
 		},
 		scrollToNow() {
-			if (!this.$refs.now) return
-			this.scrollElementIntoViewWithClearance(this.$refs.now)
+			if (this.$refs.now) {
+				this.scrollElementIntoViewWithClearance(this.$refs.now)
+				return
+			}
+			const slices = this.$el?.querySelectorAll('.timeslice')
+			const lastSlice = slices?.[slices.length - 1]
+			if (lastSlice) {
+				this.scrollElementIntoViewWithClearance(lastSlice)
+			}
 		},
 		toolbarBottomY () {
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')

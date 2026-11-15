@@ -579,8 +579,14 @@ export default {
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery || this.onlyFavs
 				|| this.hasActiveFilterSelections || this.recordingFilter !== 'all'
 		},
+		isTodayActive () {
+			if (!this.currentDay || !this.resolvedNow) return false
+			const todayStr = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+			return this.currentDay === todayStr
+		},
 		shouldAutoScrollToNow () {
-			const fragment = (window.location.hash || '').slice(1)
+			if (this._initialAutoScrollDone) return false
+			const fragment = this._initialFragment !== undefined ? this._initialFragment : (window.location.hash || '').slice(1)
 			return shouldAutoScrollSchedule({
 				disableAutoScroll: this.disableAutoScroll,
 				fragment,
@@ -819,6 +825,7 @@ export default {
 		this._compactTimezoneGeneration = 0
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
+		this._initialFragment = fragment
 		await changeScheduleLanguage(this.locale)
 		this.readRecordingQueryParam()
 		moment.locale(this.locale)
@@ -1147,7 +1154,9 @@ export default {
 				} finally {
 					this.dayLoading = false
 				}
-				if (this.shouldAutoScrollToNow) {
+				if (this.shouldAutoScrollToNow || this._pendingGoToNow) {
+					this._initialAutoScrollDone = true
+					this._pendingGoToNow = false
 					this.$nextTick(() => {
 						this.$refs.scheduleDisplay?.scrollToNow?.()
 					})
@@ -1178,12 +1187,15 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
-					if (this.shouldAutoScrollToNow) {
+					const shouldScroll = this.shouldAutoScrollToNow || this._pendingGoToNow
+					if (shouldScroll) {
+						this._initialAutoScrollDone = true
+						this._pendingGoToNow = false
 						this.$refs.scheduleDisplay?.scrollToNow?.()
 					}
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
-					if (!navigatingTo && !this.shouldAutoScrollToNow) await this.maybeLoadPreviousGridDay()
+					if (!navigatingTo && !shouldScroll) await this.maybeLoadPreviousGridDay()
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
@@ -1451,7 +1463,7 @@ export default {
 			if (scroller) this.bindScrollParent(scroller)
 			else this.bindScrollParent(this._pageScrollParent || null)
 			this.$nextTick(() => {
-				if (this.shouldAutoScrollToNow) {
+				if (scroller && this.isTodayActive && !this.disableAutoScroll) {
 					this.$refs.scheduleDisplay?.scrollToNow?.()
 				} else {
 					this.forceScrollDay++
@@ -1530,9 +1542,13 @@ export default {
 			const today = todayMoment.format('YYYY-MM-DD')
 			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
+			this._pendingGoToNow = true
 			this.changeDay(todayMoment)
 			this.$nextTick(() => {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
+				if (this.currentDay === today && (this.loadedScheduleDays?.[today] || !this.schedule?.compact)) {
+					this._pendingGoToNow = false
+				}
 			})
 		},
 		onWindowResize () {

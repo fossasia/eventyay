@@ -208,16 +208,17 @@ export default {
 		}
 	},
 	async mounted () {
-		await this.$nextTick()
-		this.rebindDayTracking()
 		const fragment = (window.location.hash || '').slice(1)
-		if (!shouldAutoScrollSchedule({
+		const autoScroll = shouldAutoScrollSchedule({
 			disableAutoScroll: this.disableAutoScroll,
 			fragment,
 			currentDay: this.currentDay,
 			now: this.now,
 			timezone: this.timezone
-		})) return
+		})
+		await this.$nextTick()
+		this.rebindDayTracking()
+		if (!autoScroll) return
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},
@@ -307,7 +308,7 @@ export default {
 			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
 		},
 		scrollToNow() {
-			if (!this.sessionBuckets?.length) return
+			if (!this.includeDateSortKey || !this.sessionBuckets?.length) return
 			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
 			const nowBucket = nowIndex < 0
 				? this.sessionBuckets[this.sessionBuckets.length - 1]
