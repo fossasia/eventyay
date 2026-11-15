@@ -232,7 +232,7 @@ class BankTransfer(BasePaymentProvider):
                 'bank_details_sepa_bic',
                 'bank_details_sepa_iban',
             ):
-                key = 'payment_banktransfer_%s' % f
+                key = f'payment_banktransfer_{f}'
                 if not cleaned_data.get(key):
                     errors[key] = _('Please fill out your bank account details.')
             if errors:
@@ -240,7 +240,7 @@ class BankTransfer(BasePaymentProvider):
         else:
             if not cleaned_data.get('payment_banktransfer_bank_details'):
                 raise ValidationError(
-                    {'payment_banktransfer_bank_details': _('Please enter your bank account details.')}
+                    {'payment_banktransfer_bank_details': _('Please fill out your bank account details.')}
                 )
         return cleaned_data
 

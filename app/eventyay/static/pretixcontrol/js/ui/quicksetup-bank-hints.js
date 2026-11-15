@@ -43,7 +43,9 @@ function setHint(selector, required) {
 }
 
 function updateBankTransferHints() {
-  const sepaRadio = document.getElementById('id_payment_banktransfer_bank_details_type_0')
+  const sepaRadio = document.querySelector(
+    "input[name='payment_banktransfer_bank_details_type'][value='sepa']"
+  )
   if (!sepaRadio) return
   const isSepa = sepaRadio.checked
   // Account type always has a selection, so show it as required
@@ -51,7 +53,7 @@ function updateBankTransferHints() {
   for (const f of ['name', 'iban', 'bic', 'bank']) {
     setHint(`#id_payment_banktransfer_bank_details_sepa_${f}`, isSepa)
   }
-  setHint("textarea[name^='payment_banktransfer_bank_details']", !isSepa)
+  setHint("textarea[name^='payment_banktransfer_bank_details_']", !isSepa)
 }
 
 for (const radio of document.querySelectorAll("input[name='payment_banktransfer_bank_details_type']")) {
