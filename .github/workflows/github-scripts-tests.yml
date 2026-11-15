@@ -8,12 +8,14 @@ on:
   pull_request:
     paths:
       - ".github/scripts/**"
+      - ".github/actions/**"
       - ".github/workflows/approval-labels*.yml"
       - ".github/workflows/github-scripts-tests.yml"
   push:
     branches: [dev, main]
     paths:
       - ".github/scripts/**"
+      - ".github/actions/**"
       - ".github/workflows/approval-labels*.yml"
       - ".github/workflows/github-scripts-tests.yml"
 
@@ -35,3 +37,6 @@ jobs:
           persist-credentials: false
 
       - run: node --test .github/scripts/*.test.mjs
+
+      - name: Migrated test database cache key
+        run: .github/actions/migrated-test-db/cache-key.test.sh

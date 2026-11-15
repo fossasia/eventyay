@@ -103,7 +103,8 @@ jobs:
       EVY_SECRET_KEY: ci-test-secret-key
       EVY_DEBUG: "true"
       EVY_RUNNING_ENVIRONMENT: testing
-      DJANGO_SETTINGS_MODULE: eventyay.config.settings
+      # DJANGO_SETTINGS_MODULE is set only where pytest runs: plugin builds in
+      # uv sync read it and fail before eventyay is installed.
     services:
       postgres:
         image: postgres:16
@@ -154,6 +155,9 @@ jobs:
           postgres-container: ${{ job.services.postgres.id }}
 
       - name: Run pytest
+        env:
+          # Overrides the tests.tickets.settings default in pyproject.toml.
+          DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
         # Each shard has its own Postgres and Redis services. duration_based_chunks keeps
         # files contiguous, so module-scoped fixtures are not rebuilt in several shards.

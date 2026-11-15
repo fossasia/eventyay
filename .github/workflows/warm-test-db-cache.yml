@@ -40,7 +40,8 @@ jobs:
       EVY_SECRET_KEY: ci-test-secret-key
       EVY_DEBUG: "true"
       EVY_RUNNING_ENVIRONMENT: testing
-      DJANGO_SETTINGS_MODULE: eventyay.config.settings
+      # No DJANGO_SETTINGS_MODULE here: plugin builds in uv sync read it and fail
+      # before eventyay is installed. manage.py sets its own default.
     services:
       postgres:
         image: postgres:16
