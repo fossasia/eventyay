@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:12+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:28+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Marathi <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/mr/>\n"
 "Language: mr\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -30050,7 +30051,8 @@ msgstr ""
 #| "choose a different one."
 msgid ""
 "You already have an event with this short name. Please choose another one."
-msgstr "या ई-मेल पत्त्याशी संबंधित खाते आधीपासूनच आहे. कृपया वेगळा ई-मेल पत्ता निवडा."
+msgstr ""
+"या ई-मेल पत्त्याशी संबंधित खाते आधीपासूनच आहे. कृपया वेगळा ई-मेल पत्ता निवडा."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -30933,7 +30935,8 @@ msgstr "टॉक चाचणी मोड सक्षम करा"
 msgid ""
 "You must publish the event main page before enabling public test mode for "
 "tickets."
-msgstr "टेस्ट मोड सक्षम करण्यापूर्वी तिकिटे प्रकाशित व सेट अप केलेली असणे आवश्यक आहे."
+msgstr ""
+"टेस्ट मोड सक्षम करण्यापूर्वी तिकिटे प्रकाशित व सेट अप केलेली असणे आवश्यक आहे."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:66
 #, fuzzy
