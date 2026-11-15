@@ -217,6 +217,17 @@ def display_name_sort_key(prefix: str = '') -> Lower:
     )
 
 
+# Profile keys only visible to admins (exposed via admin fields, not the public profile).
+PRIVATE_PROFILE_KEYS = frozenset({'contact_email'})
+
+
+def public_profile(profile):
+    """Return the profile without server-only keys; non-dict values are returned unchanged."""
+    if not isinstance(profile, dict):
+        return profile
+    return {k: v for k, v in profile.items() if k not in PRIVATE_PROFILE_KEYS}
+
+
 class User(
     PermissionsMixin,
     LoggingMixin,
@@ -1280,7 +1291,7 @@ the eventyay team"""
         # For performance reasons, it does not use this method directly.
         d = {
             "id": str(self.id),
-            "profile": self.profile,
+            "profile": public_profile(self.profile),
             "pretalx_id": self.pretalx_id,
             "deleted": self.deleted,
             "badges": (
@@ -1303,7 +1314,12 @@ the eventyay team"""
         if include_admin_info:
             d["moderation_state"] = self.moderation_state
             d["token_id"] = self.token_id
-            d["email"] = self.email
+            contact_email = (
+                str(self.profile.get("contact_email") or "").strip()
+                if isinstance(self.profile, dict)
+                else ""
+            )
+            d["email"] = contact_email or self.email
             d["wikimedia_username"] = self.wikimedia_username
         if include_client_state:
             d["client_state"] = self.client_state

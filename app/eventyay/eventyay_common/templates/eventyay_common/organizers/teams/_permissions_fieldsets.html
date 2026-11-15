@@ -204,21 +204,22 @@
     <legend>{% translate "TeamShifts Permissions" %}</legend>
     <div class="form-group">
         <div class="col-md-offset-3 col-md-9">
-            <div class="radio">
+            <input type='hidden' name='{{ form.teamshifts_role.html_name }}' value=''>
+            <div class='checkbox'>
                 <label>
-                    <input type="radio" name="{{ form.teamshifts_role.html_name }}" value="coordinator" {% if form.teamshifts_role.value == "coordinator" %}checked{% endif %}>
-                    {% translate "Event Coordinator" %}
+                    <input type='checkbox' name='{{ form.teamshifts_role.html_name }}' value='coordinator' {% if form.teamshifts_role.value == 'coordinator' %}checked{% endif %}>
+                    {% translate 'Event Coordinator' %}
                 </label>
-                <p class="help-block">
+                <p class='help-block'>
                     {% translate "Full access to everything in TeamShifts — create and edit roles and shifts, manage the call for applicants, accept and reject applications, send custom emails, and assign members to shifts. Always has access to all roles." %}
                 </p>
             </div>
-            <div class="radio">
+            <div class='checkbox'>
                 <label>
-                    <input type="radio" name="{{ form.teamshifts_role.html_name }}" value="lead" {% if form.teamshifts_role.value == "lead" %}checked{% endif %}>
-                    {% translate "Team Lead" %}
+                    <input type='checkbox' name='{{ form.teamshifts_role.html_name }}' value='lead' {% if form.teamshifts_role.value == 'lead' %}checked{% endif %}>
+                    {% translate 'Team Lead' %}
                 </label>
-                <p class="help-block">
+                <p class='help-block'>
                     {% translate "Can create and edit shifts, assign members to shifts, and send custom emails. Cannot manage applications or create roles." %}
                 </p>
             </div>
