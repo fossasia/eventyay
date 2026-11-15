@@ -38,6 +38,13 @@ class TeamForm(forms.ModelForm):
         self.organizer = organizer
         super().__init__(*args, **kwargs)
         self.fields['limit_events'].queryset = organizer.events.all().order_by('-has_subevents', '-date_from')
+        # The model field is blank=True, but clean() requires either "All events" or at least one event.
+        # Mark it as required in the label (without making the field itself required, since
+        # "All events" makes the selection unnecessary) and explain the rule.
+        self.fields['limit_events']._required = True
+        self.fields['limit_events'].help_text = _(
+            'Select at least one event, or tick "All events" above.'
+        )
         tracks_qs = (
             Track.objects.filter(event__organizer=organizer)
             .select_related('event')
