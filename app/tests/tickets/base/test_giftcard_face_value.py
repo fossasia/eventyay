@@ -274,6 +274,25 @@ def test_cancelling_parent_and_addon_together_reverses_card_once(gift_order):
 
 
 @pytest.mark.django_db
+def test_cancel_reinstate_cancel_leaves_no_spendable_credit(gift_order):
+    """cancel -> reinstate -> cancel in one batch must end with the card fully reversed."""
+    event, order, position = gift_order
+    product = Product.objects.create(event=event, name='Other', default_price=0)
+    OrderPosition.objects.create(order=order, product=product, price=0)
+    OrderPosition.objects.create(order=order, product=product, price=0)
+    signal_listener_issue_giftcards(event, order)
+    card = position.issued_gift_cards.get()
+    manager = OrderChangeManager(order)
+    manager.cancel(position)
+    manager.reinstate(position)
+    manager.cancel(position)
+    manager.commit(check_quotas=False)
+    assert card.value == 0
+    position.refresh_from_db()
+    assert position.canceled
+
+
+@pytest.mark.django_db
 def test_signal_establishes_event_scope(gift_order):
     event, order, position = gift_order
     with scope(event=None, organizer=None):
