@@ -592,7 +592,7 @@ msgid "Speaker profile"
 msgstr ""
 
 #: eventyay/static/pretixpresale/js/ui/popover.js:163
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr ""
 
 #: eventyay/static/pretixpresale/js/ui/popover.js:182

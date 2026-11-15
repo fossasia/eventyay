@@ -9,11 +9,13 @@ from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.signing import dumps
+from django.db import DatabaseError
 from django.urls import reverse
 from sentry_sdk import configure_scope
 
 from eventyay.base.models import User
 from eventyay.base.models.auth import ShortToken
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.core.permissions import Permission
 from eventyay.base.services.announcement import get_announcements
 from eventyay.features.live.modules.announcement import is_announcements_enabled
@@ -50,6 +52,18 @@ from eventyay.features.live.modules.base import BaseModule
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 logger = logging.getLogger(__name__)
+
+DROP_EXCESS_CHANNELS_LUA = """
+local total_channels = redis.call("LLEN", KEYS[1])
+local connection_limit = tonumber(ARGV[1])
+if total_channels <= connection_limit then
+    return {}
+end
+local num_to_drop = total_channels - connection_limit
+local channels_to_drop = redis.call("LRANGE", KEYS[1], 0, num_to_drop - 1)
+redis.call("LTRIM", KEYS[1], num_to_drop, -1)
+return channels_to_drop
+"""
 
 
 class AuthModule(BaseModule):
@@ -210,12 +224,6 @@ class AuthModule(BaseModule):
             r["id"] for r in login_result.event_config["rooms"]
         }
 
-        if not await self.consumer.event.has_permission_async(
-            user=self.consumer.user,
-            permission=Permission.EVENT_CONNECTIONS_UNLIMITED,
-        ):
-            await self._enforce_connection_limit()
-
         await self.consumer.channel_layer.group_add(
             GROUP_USER.format(id=self.consumer.user.id),
             self.consumer.channel_name,
@@ -224,6 +232,12 @@ class AuthModule(BaseModule):
             GROUP_EVENT.format(id=self.consumer.event.id),
             self.consumer.channel_name,
         )
+
+        if not await self.consumer.event.has_permission_async(
+            user=self.consumer.user,
+            permission=Permission.EVENT_CONNECTIONS_UNLIMITED,
+        ):
+            await self._enforce_connection_limit()
 
         await ChatService(self.consumer.event).enforce_forced_joins(self.consumer.user)
 
@@ -245,7 +259,27 @@ class AuthModule(BaseModule):
                     )
 
     async def _enforce_connection_limit(self):
-        connection_limit = self._event_config().get("connection_limit")
+        event_cfg = self._event_config()
+        event_limit = event_cfg.get("connection_limit")
+
+        def _get_global_limit():
+            try:
+                gs = GlobalSettingsObject()
+                return gs.settings.get("video_max_connections_per_user", as_type=int, default=0)
+            except (DatabaseError, ValueError, TypeError):
+                logger.exception("Failed to load video_max_connections_per_user global setting")
+                return 0
+
+        global_limit = await database_sync_to_async(_get_global_limit)()
+
+        if global_limit and global_limit > 0:
+            if event_limit is not None and event_limit > 0:
+                connection_limit = min(event_limit, global_limit)
+            else:
+                connection_limit = global_limit
+        else:
+            connection_limit = event_limit if (event_limit is not None and event_limit > 0) else 0
+
         if not connection_limit:
             return
 
@@ -253,13 +287,13 @@ class AuthModule(BaseModule):
 
         if settings.REDIS_USE_PUBSUB:
             async with aredis() as redis:
-                channels_to_drop = await redis.lrange(
-                    f"connections.list.user:{self.consumer.user.id}",
-                    0,
-                    -1 * connection_limit - 1,
+                key = f"connections.list.user:{self.consumer.user.id}"
+                channels_to_drop = await redis.eval(
+                    DROP_EXCESS_CHANNELS_LUA, 1, key, connection_limit
                 )
-                for c in channels_to_drop:
-                    await self.consumer.channel_layer.send(c.decode(), message)
+                for c in (channels_to_drop or []):
+                    channel_name = c.decode() if isinstance(c, bytes) else str(c)
+                    await self.consumer.channel_layer.send(channel_name, message)
         else:
             channel_names = []
             group = GROUP_USER.format(id=self.consumer.user.id)
@@ -274,13 +308,11 @@ class AuthModule(BaseModule):
                     x.decode("utf8") for x in await connection.zrange(key, 0, -1)
                 ]
 
-            if len(channel_names) < connection_limit:
+            if len(channel_names) <= connection_limit:
                 return
 
-            if connection_limit == 1:
-                channels_to_drop = channel_names
-            else:
-                channels_to_drop = channel_names[: -1 * (connection_limit - 1)]
+            num_to_drop = len(channel_names) - connection_limit
+            channels_to_drop = channel_names[:num_to_drop]
 
             (
                 connection_to_channel_keys,

@@ -1260,7 +1260,7 @@ def test_orga_can_add_speaker_to_submission(
     response = client.post(
         submission.event.api_urls.submissions + f"{submission.code}/add-speaker/",
         follow=True,
-        data=json.dumps({"email": speaker.email}),
+        data=json.dumps({"email": speaker.email, "name": speaker.fullname}),
         content_type="application/json",
         headers={
             "Authorization": f"Token {orga_user_write_token.token}",
@@ -1275,6 +1275,70 @@ def test_orga_can_add_speaker_to_submission(
             .filter(action_type="eventyay.submission.speakers.add")
             .exists()
         )
+
+
+@pytest.mark.django_db
+def test_orga_add_speaker_api_replaces_html_empty_biography(
+    client, orga_user_write_token, submission, speaker
+):
+    with scope(event=submission.event):
+        submission.event.cfp.fields["biography"] = {"visibility": "required"}
+        submission.event.cfp.save()
+        profile = speaker.event_profile(submission.event)
+        profile.biography = "<p></p>"
+        profile.save(update_fields=["biography"])
+        submission.speakers.remove(speaker)
+
+    response = client.post(
+        submission.event.api_urls.submissions + f"{submission.code}/add-speaker/",
+        follow=True,
+        data=json.dumps({
+            "email": speaker.email,
+            "name": speaker.fullname,
+            "biography": "Updated non-empty biography.",
+        }),
+        content_type="application/json",
+        headers={
+            "Authorization": f"Token {orga_user_write_token.token}",
+        },
+    )
+    assert response.status_code == 200, response.text
+    with scope(event=submission.event):
+        profile.refresh_from_db()
+        assert profile.biography == "Updated non-empty biography."
+
+
+@pytest.mark.django_db
+def test_orga_add_speaker_api_rejects_empty_biography_when_required(
+    client, orga_user_write_token, submission, speaker
+):
+    with scope(event=submission.event):
+        submission.event.cfp.fields["biography"] = {"visibility": "required"}
+        submission.event.cfp.save()
+        profile = speaker.event_profile(submission.event)
+        profile.biography = "<p></p>"
+        profile.save(update_fields=["biography"])
+        submission.speakers.remove(speaker)
+
+    response = client.post(
+        submission.event.api_urls.submissions + f"{submission.code}/add-speaker/",
+        follow=True,
+        data=json.dumps({
+            "email": speaker.email,
+            "name": speaker.fullname,
+            "biography": "<p></p>",
+        }),
+        content_type="application/json",
+        headers={
+            "Authorization": f"Token {orga_user_write_token.token}",
+        },
+    )
+    assert response.status_code == 400, response.text
+    content = json.loads(response.text)
+    assert "biography" in content
+    with scope(event=submission.event):
+        profile.refresh_from_db()
+        assert profile.biography == "<p></p>"
 
 
 @pytest.mark.django_db

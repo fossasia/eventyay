@@ -1,7 +1,6 @@
 <template lang="pug">
 .c-auditlog
 	.ui-page-header
-		bunt-icon-button(@click="$router.push({name: 'organizer'})", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h1 {{ $t('Logs') }}
 	bunt-input.search(name="search", :placeholder="$t('Search log')", icon="search", v-model="search")
 	.auditlog-list

@@ -278,7 +278,10 @@ const languages = computed(() => resolveLanguageOptions(config.locales))
 const currentLanguageMeta = computed(() => {
 	return languages.value.find(locale => locale.code === currentLanguage.value) || languages.value[0]
 })
-const currentLanguageCode = computed(() => (currentLanguage.value || 'en').slice(0, 2).toUpperCase())
+const currentLanguageCode = computed(() => {
+	const code = (currentLanguage.value || 'en').slice(0, 2)
+	return code.charAt(0).toUpperCase() + code.slice(1).toLowerCase()
+})
 const currentLanguageLabel = computed(() => currentLanguageMeta.value?.nativeLabel || currentLanguage.value)
 
 function getCsrfToken() {
@@ -526,10 +529,11 @@ onBeforeUnmount(() => {
 		font-size: 14px
 		color: var(--app-bar-text)
 		cursor: pointer
-		&:hover
-			background-color: rgba(0, 0, 0, 0.08)
+		transition: color 0.15s ease-in-out, opacity 0.15s ease-in-out
+		&:hover, &:focus-visible, &.open
+			color: #ffffff
 		&:focus-visible
-			outline: 2px solid var(--clr-primary)
+			outline: 2px solid var(--clr-primary, #2185d0)
 			outline-offset: -2px
 		&.open .fa-caret-down
 			transform: rotate(180deg)
@@ -543,31 +547,74 @@ onBeforeUnmount(() => {
 		position: absolute
 		top: calc(100% + 2px)
 		right: 0
-		min-width: 180px
-		max-height: 320px
+		min-width: 160px
+		max-width: 400px
+		width: max-content
+		max-height: 400px
 		overflow-y: auto
+		overscroll-behavior: contain
 		background: white
 		color: #495057
 		border: 1px solid #e9ecef
 		border-radius: var(--size-border-radius, 0.25rem)
 		box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1))
 		z-index: 120
-		padding: 4px 0
+		padding: 0
+		font-size: 15px
+		user-select: none
+		&::before,
+		&::after
+			position: absolute
+			display: inline-block
+			content: " "
+		&::before
+			top: -16px
+			right: 12px
+			border: 8px solid transparent
+			border-bottom-color: rgb(27 31 35 / 0.15)
+		&::after
+			top: -14px
+			right: 13px
+			border: 7px solid transparent
+			border-bottom-color: white
 	.language-option
 		appearance: none
 		background: none
 		border: none
-		display: block
+		display: flex
+		align-items: center
 		width: 100%
+		box-sizing: border-box
 		text-align: left
-		padding: 8px 16px
+		padding: 8px 18px
+		min-height: 0
+		height: auto
+		line-height: 1.25
 		font: inherit
-		color: inherit
+		font-size: 15px
+		font-weight: 400
+		overflow: hidden
+		text-overflow: ellipsis
+		white-space: nowrap
+		color: var(--clr-primary, #2185d0)
 		cursor: pointer
-		&:hover, &.active
-			background-color: rgba(0, 0, 0, 0.06)
+		text-decoration: none
+		transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out
+		&:hover, &:focus-visible
+			background-color: var(--clr-primary, #2185d0)
+			color: #fff
+			text-decoration: none
+			outline: none
 		&.active
+			background-color: var(--clr-primary, #2185d0)
+			color: #fff
 			font-weight: 600
+		&:first-child
+			border-top-left-radius: var(--size-border-radius, 0.25rem)
+			border-top-right-radius: var(--size-border-radius, 0.25rem)
+		&:last-child
+			border-bottom-left-radius: var(--size-border-radius, 0.25rem)
+			border-bottom-right-radius: var(--size-border-radius, 0.25rem)
 	.sr-only
 		position: absolute
 		width: 1px

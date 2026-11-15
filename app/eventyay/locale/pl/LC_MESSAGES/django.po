@@ -15134,7 +15134,7 @@ msgstr "Moje zgłoszenia"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "Adres e-mail prelegenta"
 
 #: eventyay/common/templates/common/base.html:189

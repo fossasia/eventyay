@@ -13,9 +13,9 @@ from eventyay.control.forms import SplitDateTimeField
 
 WAIVER_TYPE_CHOICES = [
     ('none', _('No effect')),
-    ('percent_100', _('Waive all platform fees (100%)')),
-    ('percent', _('Percentage platform fee discount')),
-    ('subtract', _('Fixed platform fee credit')),
+    ('percent_100', _('Waive in full (100%)')),
+    ('percent', _('Percentage discount')),
+    ('subtract', _('Fixed credit')),
 ]
 
 SCOPE_TYPE_CHOICES = [
@@ -44,7 +44,7 @@ class InvoiceVoucherForm(I18nModelForm):
     event_effect = forms.ModelMultipleChoiceField(
         queryset=Event.objects.none(),
         widget=forms.SelectMultiple(attrs={
-            'class': 'form-control select2-multi',
+            'class': 'form-control select2-static',
             'data-placeholder': _('Search and select events...'),
             'multiple': 'multiple',
         }),
@@ -55,7 +55,7 @@ class InvoiceVoucherForm(I18nModelForm):
     organizer_effect = forms.ModelMultipleChoiceField(
         queryset=Organizer.objects.none(),
         widget=forms.SelectMultiple(attrs={
-            'class': 'form-control select2-multi',
+            'class': 'form-control select2-static',
             'data-placeholder': _('Search and select organisers...'),
             'multiple': 'multiple',
         }),
@@ -77,6 +77,7 @@ class InvoiceVoucherForm(I18nModelForm):
             'max_usages',
             'budget',
             'allow_partial_usage',
+            'applies_to_platform_fees',
             'event_effect',
             'organizer_effect',
         ]

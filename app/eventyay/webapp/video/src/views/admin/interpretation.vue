@@ -1,20 +1,21 @@
 <template lang="pug">
 .c-admin-interpretation
 	.ui-page-header
-		bunt-icon-button(@click="goBack", :tooltip="$t('Back to Overview')", tooltip-placement="bottom-start", :tooltip-fixed="true") arrow-left
 		h1 {{ $t('Interpretation') }}
 	bunt-progress-circular(size="huge", v-if="!isReady")
 	.unauthorized-notice(v-else-if="!hasAccess")
 		p {{ $t('You do not have permission to view interpretation settings.') }}
+	.unauthorized-notice(v-else-if="!isPluginEnabled")
+		p {{ $t('The interpretation plugin is not enabled for this event.') }}
 	iframe(v-else, ref="iframe", :src="iframeUrl", class="interpretation-iframe")
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
+import { interpretationRouting } from 'lib/interpretation-api'
 
-const router = useRouter()
 const route = useRoute()
 const store = useStore()
 const iframe = ref(null)
@@ -30,8 +31,17 @@ const hasAccess = computed(() => Boolean(
 	store.getters['hasPermission']?.('world:update')
 ))
 
+const isPluginEnabled = computed(() => Boolean(store.getters['isInterpretationEnabled']))
+
 const iframeUrl = computed(() => {
+	if (!isPluginEnabled.value) return ''
 	let url = window.eventyay?.interpretationUrl || ''
+	if (!url) {
+		const { organizer, event } = interpretationRouting(store)
+		if (organizer && event) {
+			url = `/video/plugins/${organizer}/${event}/interpretation/`
+		}
+	}
 	if (url) {
 		const queryStr = Object.keys(route.query).map(key => `${key}=${route.query[key]}`).join('&')
 		if (queryStr) {
@@ -43,10 +53,6 @@ const iframeUrl = computed(() => {
 	}
 	return url
 })
-
-function goBack() {
-	router.push({ name: 'organizer' })
-}
 </script>
 
 <style scoped>

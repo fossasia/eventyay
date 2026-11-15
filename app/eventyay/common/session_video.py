@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import re
+
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
@@ -16,7 +20,12 @@ from eventyay.base.models import (
 )
 from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
 
+
 SESSION_VIDEO_IMPORT_KEY = 'session_video'
+_IMPORTED_VIDEO_SPLIT_RE = re.compile(r'[,;]\s*(?=https?://)', re.IGNORECASE)
+# Each edit-form row is its own POST field. Stay far under Django's
+# DATA_UPLOAD_MAX_NUMBER_FIELDS so a long list still saves.
+SESSION_VIDEO_URL_LIMIT = 20
 
 
 def session_videos_enabled(event) -> bool:
@@ -75,28 +84,37 @@ def get_session_video_question(event, *, create: bool = False):
         if not create:
             return None
 
-        return TalkQuestion.all_objects.create(
-            event=event,
-            variant=TalkQuestionVariant.VIDEO,
-            target=TalkQuestionTarget.SUBMISSION,
-            question=LazyI18nString.from_gettext(_('Video')),
-            help_text=LazyI18nString.from_gettext(
-                _(
-                    'YouTube, Vimeo, or Wikimedia Commons URLs (one per line). '
-                    'Publish this field to embed the videos on the public session page.'
-                )
-            ),
-            question_required=TalkQuestionRequired.OPTIONAL,
-            is_public=False,
-            active=True,
-            contains_personal_data=False,
-            is_visible_to_reviewers=True,
-            import_key=SESSION_VIDEO_IMPORT_KEY,
-            is_imported=False,
-        )
+        try:
+            with transaction.atomic():
+                return _create_session_video_question(event)
+        except IntegrityError:
+            return questions.get(import_key=SESSION_VIDEO_IMPORT_KEY)
+
+
+def _create_session_video_question(event):
+    return TalkQuestion.all_objects.create(
+        event=event,
+        variant=TalkQuestionVariant.VIDEO,
+        target=TalkQuestionTarget.SUBMISSION,
+        question=LazyI18nString.from_gettext(_('Video')),
+        help_text=LazyI18nString.from_gettext(
+            _(
+                'YouTube, Vimeo, or Wikimedia Commons URLs (one per line). '
+                'Publish this field to embed the videos on the public session page.'
+            )
+        ),
+        question_required=TalkQuestionRequired.OPTIONAL,
+        is_public=False,
+        active=True,
+        contains_personal_data=False,
+        is_visible_to_reviewers=True,
+        import_key=SESSION_VIDEO_IMPORT_KEY,
+        is_imported=False,
+    )
 
 
 def _deactivate_extra_session_video_fields(questions, keep):
+    """Deactivate all session video questions except the one to keep."""
     extras = [q for q in questions if q.pk != keep.pk and q.active]
     for extra in extras:
         extra.active = False
@@ -109,6 +127,7 @@ def ensure_session_video_question(event):
 
 
 def get_submission_video_answer(submission):
+    """Return the Answer object for the canonical session video question, if any."""
     question = get_session_video_question(submission.event, create=False)
     if not question:
         return None
@@ -121,6 +140,7 @@ def get_submission_video_answer(submission):
 
 
 def get_submission_video_urls(submission) -> list[str]:
+    """Return the list of stored video URLs for the submission."""
     if not session_videos_enabled(submission.event):
         return []
     answer = get_submission_video_answer(submission)
@@ -132,11 +152,17 @@ def get_submission_video_url(submission) -> str:
     return '\n'.join(get_submission_video_urls(submission))
 
 
-def set_submission_video_urls(submission, urls: list[str] | None) -> list[str]:
+def set_submission_video_urls(
+    submission,
+    urls: list[str] | None,
+    *,
+    publish: bool = True,
+) -> list[str]:
     """Create/update/clear session video answers.
 
     Empty ``urls`` clears the answer. Each non-empty value must be an embeddable
     YouTube, Vimeo, or Wikimedia Commons URL. Returns the stored URL list (empty when cleared).
+    When ``publish`` is True, storing URLs also marks the canonical field public.
     """
     cleaned: list[str] = []
     seen: set[str] = set()
@@ -148,6 +174,11 @@ def set_submission_video_urls(submission, urls: list[str] | None) -> list[str]:
             raise ValueError(gettext('Please enter a valid YouTube, Vimeo, or Wikimedia Commons URL.'))
         seen.add(raw)
         cleaned.append(raw)
+
+    if len(cleaned) > SESSION_VIDEO_URL_LIMIT:
+        raise ValueError(
+            gettext('You can add at most %(limit)s video links.') % {'limit': SESSION_VIDEO_URL_LIMIT}
+        )
 
     stored = '\n'.join(cleaned)
     if not session_videos_enabled(submission.event):
@@ -170,10 +201,62 @@ def set_submission_video_urls(submission, urls: list[str] | None) -> list[str]:
             answer.save(update_fields=['answer'])
         else:
             Answer.objects.create(question=question, submission=submission, answer=stored)
-        if not question.is_public:
+        if publish and not question.is_public:
             question.is_public = True
             question.save(update_fields=['is_public'])
         return cleaned
+
+
+def _split_imported_video_urls(text: str | None) -> tuple[list[str], list[str]]:
+    urls: list[str] = []
+    invalid: list[str] = []
+    seen: set[str] = set()
+    for line in parse_video_urls(text):
+        parts = _IMPORTED_VIDEO_SPLIT_RE.split(line) if line.lower().count('http') > 1 else [line]
+        for part in parts:
+            raw = part.strip()
+            if not raw or raw in seen:
+                continue
+            seen.add(raw)
+            if get_video_embed_info(raw) is None:
+                invalid.append(raw)
+            else:
+                urls.append(raw)
+    return urls, invalid
+
+
+def parse_imported_video_urls(text: str | None) -> list[str]:
+    """Parse exported session-video cells (newlines or comma-separated URLs)."""
+    return _split_imported_video_urls(text)[0]
+
+
+def activate_imported_session_video_question(event):
+    """Enable the canonical session video field, keeping a reactivated field private."""
+    question = ensure_session_video_question(event)
+    if not question.active:
+        question.active = True
+        question.is_public = False
+        question.save(update_fields=['active', 'is_public'])
+    return question
+
+
+def import_submission_video_urls(submission, raw: str | None) -> list[str]:
+    """Enable the canonical session video field and store imported URLs.
+
+    Raises ``ValueError`` when the cell contains a link that cannot be embedded.
+    """
+    urls, invalid = _split_imported_video_urls(raw)
+    if invalid:
+        raise ValueError(
+            gettext('Invalid session video URL "{url}". Use a YouTube, Vimeo, or Wikimedia Commons link.').format(
+                url=invalid[0]
+            )
+        )
+    if not urls:
+        return get_submission_video_urls(submission)
+
+    activate_imported_session_video_question(submission.event)
+    return set_submission_video_urls(submission, urls, publish=False)
 
 
 def set_submission_video_url(submission, url: str | None) -> str:
@@ -206,6 +289,7 @@ def prefetch_submission_video_urls(queryset, event):
 
 
 def video_urls_from_prefetched_submission(submission) -> list[str]:
+    """Return the list of video URLs using prefetched answers if available."""
     if not session_videos_enabled(submission.event):
         return []
     answers = getattr(submission, '_session_video_answers', None)
@@ -217,4 +301,5 @@ def video_urls_from_prefetched_submission(submission) -> list[str]:
 
 
 def video_url_from_prefetched_submission(submission) -> str:
+    """Return stored video URLs as newline-joined string using prefetched answers."""
     return '\n'.join(video_urls_from_prefetched_submission(submission))

@@ -12,6 +12,7 @@ from email.parser import BytesParser
 from itertools import groupby
 from pathlib import Path
 from smtplib import SMTPResponseException
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 import qrcode
@@ -25,6 +26,7 @@ from django.db.models import Count
 from django.dispatch import receiver
 from django.template.loader import get_template
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now as djnow
 from django.utils.translation import gettext_lazy as _
 from sendgrid import SendGridAPIClient
@@ -552,7 +554,7 @@ def render_qr_code_img(payload: str, *, alt: str, size: int = 160) -> str:
     buffer = io.BytesIO()
     image.save(buffer, format='PNG')
     data_uri = f'data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode("ascii")}'
-    return (
+    return mark_safe(
         f'<img src="{data_uri}" alt="{escape(alt)}" '
         f'width="{int(size)}" height="{int(size)}">'
     )
@@ -584,7 +586,7 @@ def render_order_qr_html(order) -> str:
                 continue
             label = position.attendee_name or str(position.product.name)
             parts.append(f'<strong>{escape(label)}</strong><br>{render_ticket_qr_html(position)}')
-    return '<br>'.join(parts)
+    return mark_safe('<br>'.join(parts))
 
 
 def get_combined_ticket_output_identifier(event: Event) -> str:
@@ -600,6 +602,28 @@ def get_combined_ticket_output_identifier(event: Event) -> str:
             return 'pdf'
         enabled_ids.append(provider.identifier)
     return enabled_ids[0] if enabled_ids else 'pdf'
+
+
+def voucher_redemption_urls(event: Event, voucher_list: Sequence[str]) -> str:
+    """Clickable redemption links, one per voucher code."""
+    from eventyay.multidomain.urlreverse import build_absolute_uri
+
+    links = []
+    for code in voucher_list:
+        url = f'{build_absolute_uri(event, "presale:event.redeem")}?voucher={quote(code)}'
+        safe_url = escape(url)
+        links.append(f'<a href="{safe_url}">{safe_url}</a>')
+    # Trusted HTML (inputs escaped above): mark explicitly so previews keep it.
+    return mark_safe('<br>'.join(links))
+
+
+def format_voucher_list(voucher_list: Sequence[str]) -> str:
+    """Render voucher codes for an HTML email body, one code per line."""
+    codes = '<br>'.join(escape(code) for code in voucher_list)
+    if not codes:
+        return ''
+    # Trusted HTML (codes escaped above): mark explicitly so previews keep it.
+    return mark_safe(f'<span>{codes}</span>')
 
 
 def download_tickets_button_label(output: str) -> str:
@@ -622,7 +646,7 @@ def render_download_tickets_pdf_button(event: Event, order) -> str:
         },
     )
     label = escape(download_tickets_button_label(output))
-    return f'<a href="{escape(url)}" class="button">{label}</a>'
+    return mark_safe(f'<a href="{escape(url)}" class="button">{label}</a>')
 
 
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_mail_placeholders')
@@ -633,7 +657,7 @@ def base_placeholders(sender: Event, **kwargs):
     )
     def render_video_join_link(event: Event, order) -> str:
         url = build_join_video_url(event, order)
-        return f'<a href="{url}" class="button">{_("Join online event")}</a>'
+        return mark_safe(f'<a href="{escape(url)}" class="button">{escape(_("Join online event"))}</a>')
 
     def sample_ticket_qr(event=None):
         return render_qr_code_img(
@@ -642,7 +666,8 @@ def base_placeholders(sender: Event, **kwargs):
         )
 
     def sample_download_pdf(event):
-        return (
+        # Trusted HTML sample: mark explicitly so previews pass it through unescaped.
+        return mark_safe(
             f'<a href="{escape(build_absolute_uri(event, "presale:event.index"))}" class="button">'
             f'{escape(download_tickets_button_label("pdf"))}</a>'
         )
@@ -903,11 +928,16 @@ def base_placeholders(sender: Event, **kwargs):
             '68CYU2H6ZTP3WLK5',
         ),
         SimpleFunctionalMailTextPlaceholder(
-            # join vouchers with two spaces at end of line so markdown-parser inserts a <br>
             'voucher_list',
             ['voucher_list'],
-            lambda voucher_list: '  \n'.join(voucher_list),
-            '    68CYU2H6ZTP3WLK5\n    7MB94KKPVEPSMVF2',
+            format_voucher_list,
+            format_voucher_list(['68CYU2H6ZTP3WLK5', '7MB94KKPVEPSMVF2']),
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'voucher_url',
+            ['event', 'voucher_list'],
+            voucher_redemption_urls,
+            lambda event: voucher_redemption_urls(event, ['68CYU2H6ZTP3WLK5', '7MB94KKPVEPSMVF2']),
         ),
         SimpleFunctionalMailTextPlaceholder(
             'url',

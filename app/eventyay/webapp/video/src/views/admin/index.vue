@@ -252,7 +252,7 @@ export default {
 	display: flex
 	flex-direction: column
 	flex: auto
-	background-color: #f8f8f8
+	background-color: #ffffff
 	min-height: 0
 	height: 100%
 	box-sizing: border-box

@@ -17,6 +17,7 @@ ALLOWED_TYPES = {
     'image/gif': {'.gif'},
     'image/jpeg': {'.jpg', '.jpeg'},
     'image/png': {'.png'},
+    'image/webp': {'.webp'},
     'application/pdf': {'.pdf'},
 }
 
@@ -35,10 +36,14 @@ class UploadView(APIView):
         if 'file' not in request.data:
             raise ValidationError('No file has been submitted.')
         file_obj = request.data['file']
-        content_type = file_obj.content_type.split(';')[0]  # ignore e.g. "; charset=…"
+        # ignore e.g. "; charset=…"
+        content_type = file_obj.content_type.split(';')[0].strip().lower()
         if content_type not in ALLOWED_TYPES:
             raise ValidationError('Content type "{type}" is not allowed'.format(type=content_type))
-        if not any(file_obj.name.endswith(ext) for ext in ALLOWED_TYPES[content_type]):
+        valid_extensions = ALLOWED_TYPES[content_type]
+        if not any(
+            file_obj.name.lower().endswith(ext) for ext in valid_extensions
+        ):
             raise ValidationError(
                 'File name "{name}" has an invalid extension for type "{type}"'.format(
                     name=file_obj.name, type=content_type

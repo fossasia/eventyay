@@ -198,6 +198,9 @@ def monthly_billing_collect(self):
                 collect_billing_response = collect_billing_invoice(event, last_month_date, ticket_rate, invoice_voucher)
                 if collect_billing_response.status:
                     total_voucher_discount += collect_billing_response.voucher_discount
+                    if invoice_voucher:
+                        # Count the discount right away so the next event sees the remaining budget.
+                        invoice_voucher.budget_used += collect_billing_response.voucher_discount
 
             if total_voucher_discount > 0:
                 # Invoice voucher is used, update redeemed count
@@ -362,12 +365,14 @@ def calculate_ticket_fee(
     def _apply_voucher(
         ticket_fee: Decimal, voucher_discount: Decimal, invoice_voucher: InvoiceVoucher
     ) -> Tuple[Decimal, Decimal]:
-        final_ticket_fee = invoice_voucher.calculate_price(original_price=ticket_fee, event=event)
+        final_ticket_fee = invoice_voucher.calculate_price(
+            original_price=ticket_fee, max_discount=invoice_voucher.remaining_budget(), event=event
+        )
         voucher_discount = ticket_fee - final_ticket_fee
         return final_ticket_fee, voucher_discount
 
     def _is_voucher_valid_for_event(invoice_voucher: InvoiceVoucher, event: Event) -> bool:
-        if not invoice_voucher or not invoice_voucher.is_active():
+        if not invoice_voucher or not invoice_voucher.is_active() or not invoice_voucher.applies_to_platform_fees:
             return False
 
         # If voucher is not limited to specific events, it's valid for all

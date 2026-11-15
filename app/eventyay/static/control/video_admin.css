@@ -401,3 +401,91 @@
     font-weight: 500;
     border-radius: 6px;
 }
+
+/* Provider Table & Limit Form Styles */
+.col-provider-name {
+    width: 45%;
+}
+
+.col-provider-status {
+    width: 35%;
+}
+
+.col-provider-actions {
+    width: 20%;
+}
+
+.provider-media {
+    margin: 0;
+}
+
+.provider-media-icon {
+    padding-right: 12px;
+    vertical-align: middle;
+}
+
+.provider-title {
+    margin: 0 0 4px;
+    font-weight: 600;
+}
+
+.provider-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.provider-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.provider-toggle-wrap .toggle-status-label {
+    font-size: 13px;
+}
+
+.provider-help-block {
+    margin: 4px 0 0;
+    font-size: 11px;
+}
+
+.video-limit-input {
+    max-width: 200px;
+}
+
+.organizer-admin-tabs > .tab-pane {
+    padding: 0;
+}
+
+.organizer-request-status-tabs.nav-tabs {
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #ebebeb;
+}
+
+.organizer-request-status-tabs.nav-tabs > li > a {
+    border: none;
+    border-radius: 0;
+    color: #555;
+    font-weight: 500;
+    padding: 10px 15px;
+    margin-right: 2px;
+    margin-bottom: -2px;
+    background-color: transparent;
+}
+
+.organizer-request-status-tabs.nav-tabs > li > a:hover {
+    background-color: transparent;
+    color: #337ab7;
+    border: none;
+    border-bottom: 2px solid #337ab7;
+}
+
+.organizer-request-status-tabs.nav-tabs > li.active > a,
+.organizer-request-status-tabs.nav-tabs > li.active > a:focus,
+.organizer-request-status-tabs.nav-tabs > li.active > a:hover {
+    border: none;
+    border-bottom: 2px solid #337ab7;
+    color: #337ab7;
+    background-color: transparent;
+}

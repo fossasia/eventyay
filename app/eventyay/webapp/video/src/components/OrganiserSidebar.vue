@@ -30,7 +30,7 @@ aside.c-organiser-sidebar(
 				li
 					router-link.nav-link(:to="{name: 'organizer'}", exact, @click="onNavClick")
 						span.fa.mdi.mdi-view-dashboard-outline(aria-hidden="true")
-						span.sidebar-text {{ $t('Overview') }}
+						span.sidebar-text {{ $t('Video Overview') }}
 
 				//- 2. Rooms & Stages (collapsible)
 				li.nav-fold(v-if="hasPermission('room:update') || hasPermission('world:rooms.create.stage') || isAdminMode")
@@ -39,7 +39,7 @@ aside.c-organiser-sidebar(
 							span.fa.mdi.mdi-door-open(aria-hidden="true")
 							span.sidebar-text {{ $t('Rooms & Stages') }}
 						button.arrow-btn(type="button", :aria-expanded="String(openFolds.rooms)", @click.stop="toggleFold('rooms')")
-							i.fa(:class="openFolds.rooms ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+							i.fa.fa-angle-down(aria-hidden="true")
 					transition(name="fold")
 						.nav-sub-list(v-show="openFolds.rooms")
 							router-link.nav-sub-link(
@@ -58,9 +58,6 @@ aside.c-organiser-sidebar(
 								span.room-name(v-html="$emojify(room.name)")
 								span.room-disabled-icon(v-if="isRoomDisabled(room)", :title="$t('This feature is no longer available')", :aria-label="$t('Disabled')")
 									i.mdi.mdi-cancel(aria-hidden="true")
-								span.viewer-count-badge(v-else, :title="getOccupancyTitle(room)", :aria-label="getOccupancyTitle(room)")
-									i.mdi.mdi-account-outline(aria-hidden="true")
-									span {{ getOccupancyCount(room) }}
 							router-link.nav-sub-link.nav-sub-link--add.nav-sub-link--nested(:to="{name: 'admin:rooms:new'}", @click="onNavClick")
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Room') }}
@@ -78,7 +75,7 @@ aside.c-organiser-sidebar(
 							span.fa.mdi.mdi-chat-processing-outline(aria-hidden="true")
 							span.sidebar-text {{ $t('Chat rooms') }}
 						button.arrow-btn(type="button", :aria-expanded="String(openFolds.chat)", @click.stop="toggleFold('chat')")
-							i.fa(:class="openFolds.chat ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+							i.fa.fa-angle-down(aria-hidden="true")
 					transition(name="fold")
 						.nav-sub-list(v-show="openFolds.chat")
 							router-link.nav-sub-link(
@@ -95,9 +92,6 @@ aside.c-organiser-sidebar(
 								@click="onNavClick"
 							)
 								span.room-name(v-html="$emojify(channel.name)")
-								span.viewer-count-badge(:title="getOccupancyTitle(channel)", :aria-label="getOccupancyTitle(channel)")
-									i.mdi.mdi-account-outline(aria-hidden="true")
-									span {{ getOccupancyCount(channel) }}
 							router-link.nav-sub-link.nav-sub-link--add.nav-sub-link--nested(:to="{name: 'admin:chat:new'}", @click="onNavClick")
 								span.mdi.mdi-plus(aria-hidden="true")
 								span {{ $t('New Channel') }}
@@ -109,7 +103,7 @@ aside.c-organiser-sidebar(
 							span.fa.mdi.mdi-monitor-dashboard(aria-hidden="true")
 							span.sidebar-text {{ $t('Kiosks') }}
 						button.arrow-btn(type="button", :aria-expanded="String(openFolds.kiosks)", @click.stop="toggleFold('kiosks')")
-							i.fa(:class="openFolds.kiosks ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+							i.fa.fa-angle-down(aria-hidden="true")
 					transition(name="fold")
 						.nav-sub-list(v-show="openFolds.kiosks")
 							router-link.nav-sub-link(
@@ -137,7 +131,7 @@ aside.c-organiser-sidebar(
 							span.fa.mdi.mdi-account-multiple-outline(aria-hidden="true")
 							span.sidebar-text {{ $t('Direct Messages') }}
 						button.arrow-btn(type="button", :aria-expanded="String(openFolds.dms)", @click.stop="toggleFold('dms')")
-							i.fa(:class="openFolds.dms ? 'fa-angle-down' : 'fa-angle-left'", aria-hidden="true")
+							i.fa.fa-angle-down(aria-hidden="true")
 					transition(name="fold")
 						.nav-sub-list(v-show="openFolds.dms")
 							router-link.nav-sub-link(
@@ -651,12 +645,12 @@ export default {
 					appearance: none
 					background: transparent
 					border: none
-					color: #337ab7
+					color: var(--color-primary, #337ab7)
 					cursor: pointer
 					display: flex
 					align-items: center
 					justify-content: center
-					width: 36px
+					width: 40px
 					min-height: 41px
 					height: 41px
 					padding: 0
@@ -665,16 +659,18 @@ export default {
 					flex-shrink: 0
 					transition: background-color 0.15s ease, color 0.15s ease
 
-					.fa
-						font-size: 12px
-						color: #337ab7
-						transition: color 0.15s ease
+					i, .fa
+						font-size: 14px
+						color: inherit
+						transform: rotate(90deg)
+						transition: transform 0.2s
+
+					&[aria-expanded="true"] i, &[aria-expanded="true"] .fa
+						transform: rotate(0)
 
 					&:hover, &:focus
 						color: #23527c
 						background-color: #eeeeee
-						.fa
-							color: #23527c
 
 			.nav-sub-list
 				display: flex
@@ -745,7 +741,7 @@ export default {
 
 					&.nav-sub-link--nested
 						> .room-name, > span:first-child
-							padding-left: 2.6em
+							padding-left: 2.4em
 
 					&.nav-sub-link--add, &.nav-sub-link--action
 						font-style: italic
@@ -765,7 +761,7 @@ export default {
 							> span:first-child
 								padding-left: 0 !important
 							.mdi
-								margin-left: 2.6em
+								margin-left: 2.4em
 
 						> span:last-child
 							flex: auto

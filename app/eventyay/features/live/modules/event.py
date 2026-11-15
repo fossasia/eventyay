@@ -4,6 +4,7 @@ import time
 from asgiref.sync import sync_to_async
 from celery.result import AsyncResult
 from channels.db import database_sync_to_async
+from django_scopes import scope
 
 from eventyay.core.permissions import Permission
 from eventyay.base.services.event import (
@@ -15,6 +16,27 @@ from eventyay.base.services.event import (
     notify_event_change,
     save_event,
 )
+from eventyay.base.settings import is_video_provider_enabled_for_organizer
+
+is_video_provider_enabled_for_organizer_async = database_sync_to_async(
+    is_video_provider_enabled_for_organizer
+)
+
+
+@database_sync_to_async
+def _get_serialized_config(event):
+    with scope(event=event):
+        return _config_serializer(event).data
+
+
+@database_sync_to_async
+def _validate_event_config(event, body):
+    with scope(event=event):
+        old = _config_serializer(event).data
+        s = _config_serializer(event, data=body, partial=True)
+        is_valid = s.is_valid()
+        return old, is_valid, (s.validated_data if is_valid else None), (s.errors if not is_valid else None)
+
 from eventyay.features.analytics.graphs.tasks import (
     generate_attendee_list,
     generate_attendee_session_list,
@@ -135,7 +157,16 @@ class EventModule(BaseModule):
         ]
     )
     async def config_get(self, body):
-        data = _config_serializer(self.consumer.event).data
+        data = await _get_serialized_config(self.consumer.event)
+        for prov, def_key in (
+            ("bbb", "bbb_defaults"),
+            ("zoom", "zoom_defaults"),
+            ("jitsi", "jitsi_defaults"),
+            ("janus", "janus_defaults"),
+        ):
+            if not await is_video_provider_enabled_for_organizer_async(prov):
+                data.pop(def_key, None)
+
         has_general_update = await self.consumer.event.has_permission_async(
             user=self.consumer.user, permission=Permission.EVENT_UPDATE
         )
@@ -169,6 +200,20 @@ class EventModule(BaseModule):
             )
             return
 
+        for prov, def_key in (
+            ("bbb", "bbb_defaults"),
+            ("zoom", "zoom_defaults"),
+            ("jitsi", "jitsi_defaults"),
+            ("janus", "janus_defaults"),
+        ):
+            if def_key in body and not await is_video_provider_enabled_for_organizer_async(prov):
+                log_event('video', 'event.config', OUTCOME_FAILURE, error_code='provider_disabled', event_id=getattr(self.consumer.event, 'pk', None), user_id=getattr(self.consumer.user, 'pk', None))
+                await self.consumer.send_error(
+                    code="provider.disabled",
+                    message=f"Video provider '{prov}' is disabled by platform administrator.",
+                )
+                return
+
         has_general_update = await self.consumer.event.has_permission_async(
             user=self.consumer.user, permission=Permission.EVENT_UPDATE
         )
@@ -195,9 +240,8 @@ class EventModule(BaseModule):
         elif "track_world_views" in body and "track_event_views" not in body:
             body["track_event_views"] = body["track_world_views"]
 
-        old = _config_serializer(self.consumer.event).data
-        s = _config_serializer(self.consumer.event, data=body, partial=True)
-        if s.is_valid():
+        old, is_valid, validated_data, errors = await _validate_event_config(self.consumer.event, body)
+        if is_valid:
             config_fields = (
                 "date_locale",
                 "connection_limit",
@@ -224,12 +268,12 @@ class EventModule(BaseModule):
 
             for incoming, target in model_fields.items():
                 if incoming in body:
-                    setattr(self.consumer.event, target, s.validated_data[incoming])
+                    setattr(self.consumer.event, target, validated_data[incoming])
                     update_fields.add(target)
 
             for f in config_fields:
                 if f in body:
-                    self.consumer.event.config[f] = s.validated_data[f]
+                    self.consumer.event.config[f] = validated_data[f]
                     update_fields.add("config")
 
             await database_sync_to_async(self.consumer.event.save)(
@@ -241,6 +285,15 @@ class EventModule(BaseModule):
                 by_user=self.consumer.user,
                 old_data=old,
             )
+            for prov, def_key in (
+                ("bbb", "bbb_defaults"),
+                ("zoom", "zoom_defaults"),
+                ("jitsi", "jitsi_defaults"),
+                ("janus", "janus_defaults"),
+            ):
+                if not await is_video_provider_enabled_for_organizer_async(prov):
+                    new.pop(def_key, None)
+
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
 
@@ -254,7 +307,7 @@ class EventModule(BaseModule):
             log_event('video', 'event.config', OUTCOME_FAILURE, error_code='config_invalid', event_id=getattr(self.consumer.event, 'pk', None), user_id=getattr(self.consumer.user, 'pk', None))
             await self.consumer.send_error(
                 code="config.invalid",
-                details=s.errors,
+                details=errors,
             )
 
     @command("tokens.generate")

@@ -11,7 +11,7 @@ from eventyay.base.models.room import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.services.event import notify_event_change
-from eventyay.base.services.room import broadcast_stream_change
+from eventyay.base.services.room import publish_room_stream_schedule
 
 
 @extend_schema_view(
@@ -89,14 +89,9 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
         try:
-            previous_stream = room.get_current_stream()
             instance = serializer.save(room=room)
             log_event('video', 'stream_schedule.create', OUTCOME_SUCCESS, event_id=room.event_id, object_id=instance.pk)
-            current_stream = instance.room.get_current_stream()
-            if previous_stream != current_stream:
-                async_to_sync(broadcast_stream_change)(
-                    instance.room.pk, current_stream, reload=True
-                )
+            publish_room_stream_schedule(instance.room)
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
             return Response(StreamScheduleSerializer(instance).data, status=201)
@@ -119,14 +114,9 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
         try:
-            previous_stream = instance.room.get_current_stream()
             instance = serializer.save()
             log_event('video', 'stream_schedule.update', OUTCOME_SUCCESS, event_id=instance.room.event_id, object_id=instance.pk)
-            current_stream = instance.room.get_current_stream()
-            if previous_stream != current_stream:
-                async_to_sync(broadcast_stream_change)(
-                    instance.room.pk, current_stream, reload=True
-                )
+            publish_room_stream_schedule(instance.room)
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
             return Response(StreamScheduleSerializer(instance).data)
@@ -143,15 +133,10 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         room_id = instance.room.pk
         event_id = instance.room.event_id
         object_id = instance.pk
-        current_stream = instance.room.get_current_stream()
-        was_current = current_stream and current_stream.pk == instance.pk
         instance.delete()
         log_event('video', 'stream_schedule.delete', OUTCOME_SUCCESS, event_id=event_id, object_id=object_id)
-        room = None
-        if was_current:
-            room = Room.objects.get(pk=room_id)
-            new_current = room.get_current_stream()
-            async_to_sync(broadcast_stream_change)(room_id, new_current, reload=True)
+        room = Room.objects.get(pk=room_id)
+        publish_room_stream_schedule(room)
         if self.event:
             event_id = self.event.id
         else:

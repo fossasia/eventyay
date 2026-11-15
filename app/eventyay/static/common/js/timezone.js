@@ -13,6 +13,8 @@ const detectBrowserTimezone = () => {
     }
 };
 
+const formatTimezoneLabel = (timezone) => timezone.replace(/_/g, ' ');
+
 const setBrowserTimezoneFields = () => {
     const timezone = detectBrowserTimezone();
     document.querySelectorAll('.browser-timezone-field').forEach((field) => {
@@ -25,13 +27,13 @@ const updateIndicator = () => {
     if (!indicator) {
         return;
     }
-    indicator.textContent = `(${detectBrowserTimezone()})`;
+    indicator.textContent = `(${formatTimezoneLabel(detectBrowserTimezone())})`;
 };
 
 const updateInlineIndicators = () => {
     const timezone = detectBrowserTimezone();
     document.querySelectorAll('.tz-indicator-inline').forEach((element) => {
-        element.textContent = `(${timezone})`;
+        element.textContent = `(${formatTimezoneLabel(timezone)})`;
     });
 };
 
@@ -85,4 +87,4 @@ if (document.readyState === 'loading') {
     initTimezoneUtilities();
 }
 
-export { detectBrowserTimezone, setBrowserTimezoneFields, updateIndicator, updateInlineIndicators, convertDateTimes };
+export { detectBrowserTimezone, formatTimezoneLabel, setBrowserTimezoneFields, updateIndicator, updateInlineIndicators, convertDateTimes };

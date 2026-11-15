@@ -14931,7 +14931,7 @@ msgstr "Omat ehdotukset"
 #: eventyay/common/templates/common/fragment_header_user.html:121
 #, fuzzy
 #| msgid "Speaker email"
-msgid "Speaker Emails"
+msgid "Speaker emails"
 msgstr "Puhujan sähköposti"
 
 #: eventyay/common/templates/common/base.html:189

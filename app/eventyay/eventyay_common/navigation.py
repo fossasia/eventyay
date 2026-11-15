@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Event
-from eventyay.control.navigation import merge_in
+from eventyay.control.navigation import global_nav_label_key, merge_in
 from eventyay.control.signals import nav_event_common, nav_global, nav_organizer
 
 
@@ -30,19 +30,19 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
         return []
     nav = [
         {
-            'label': _('My Tickets'),
+            'label': _('My orders'),
             'url': reverse('eventyay_common:orders'),
             'active': 'orders' in url.url_name,
-            'icon': 'ticket',
+            'icon': 'shopping-cart',
         },
         {
-            'label': _('My Sessions'),
+            'label': _('My sessions'),
             'url': reverse('eventyay_common:sessions'),
             'active': 'sessions' in url.url_name,
             'icon': 'sticky-note-o',
         },
         {
-            'label': _('My Events'),
+            'label': _('My events'),
             'url': reverse('eventyay_common:events'),
             'active': 'events' in url.url_name,
             'icon': 'calendar',
@@ -60,13 +60,15 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
                     self.request = request
             show_organizers = _PermChecker(request)._can_create_organizer(request.user)
 
+    organizers_item = None
     if show_organizers:
-        nav.append({
+        organizers_item = {
             'label': _('Organizers'),
             'url': reverse('eventyay_common:organizers'),
             'active': 'organizers' in url.url_name,
             'icon': 'group',
-        })
+        }
+        nav.append(organizers_item)
 
     # Merge plugin-provided navigation items
     plugin_responses = nav_global.send(request, request=request)
@@ -76,10 +78,16 @@ def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
             plugin_nav_items.extend(response)
 
     # Sort navigation items, prioritizing non-parent items and alphabetically
-    sorted_plugin_items = sorted(plugin_nav_items, key=lambda r: (1 if r.get('parent') else 0, r['label']))
+    sorted_plugin_items = sorted(
+        plugin_nav_items, key=lambda r: (1 if r.get('parent') else 0, global_nav_label_key(r['label']))
+    )
 
     # Merge plugin items into default navigation
     merge_in(nav, sorted_plugin_items)
+
+    if organizers_item is not None:
+        nav.remove(organizers_item)
+        nav.append(organizers_item)
 
     return nav
 

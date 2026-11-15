@@ -8,6 +8,7 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scope
 
+from eventyay.base.middleware import _parse_csp
 from eventyay.base.models import Event
 
 _FORM_OPEN = re.compile(r"<form(?:\s|>)", re.I)
@@ -906,6 +907,15 @@ def test_speaker_cannot_see_event_suggestions(speaker_client, event):
     content = json.loads(response.text)["results"]
     assert len(content) == 1
     assert content[0]["type"] == "user"
+
+
+@pytest.mark.django_db
+def test_widget_settings_uses_valid_csp_directive(event, orga_client):
+    response = orga_client.get(event.orga_urls.widget_settings, follow=True)
+
+    assert response.status_code == 200
+    assert 'SCRIPT_SRC' not in response['Content-Security-Policy']
+    assert "'unsafe-eval'" in _parse_csp(response['Content-Security-Policy'])['script-src']
 
 
 @pytest.mark.django_db

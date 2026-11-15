@@ -30,6 +30,50 @@ export function findScrollParent (node) {
 	if (isScrolling(node)) return node
 	return findScrollParent(node.parentNode)
 }
+
+export function isDocumentScroller (el) {
+	return !el || el === document.documentElement || el === document.body
+}
+
+export function readScrollOffset (el) {
+	return isDocumentScroller(el) ? window.scrollY : el.scrollTop
+}
+
+export function writeScrollOffset (el, top) {
+	if (isDocumentScroller(el)) window.scrollTo(0, top)
+	else el.scrollTop = top
+}
+
+// Restoring scroll-behavior in the same turn lets the page's smooth scroll win.
+export function runWithoutSmoothScroll (el, apply) {
+	const scroller = isDocumentScroller(el) ? document.documentElement : el
+	const previous = scroller.style.scrollBehavior
+	scroller.style.scrollBehavior = 'auto'
+	try {
+		apply()
+	} finally {
+		requestAnimationFrame(() => {
+			if (scroller.style.scrollBehavior === 'auto') scroller.style.scrollBehavior = previous
+		})
+	}
+}
+
+export function bindPassiveScroll (el, onScroll) {
+	const target = isDocumentScroller(el) ? window : el
+	let frame = 0
+	const handler = () => {
+		if (frame) return
+		frame = requestAnimationFrame(() => {
+			frame = 0
+			onScroll()
+		})
+	}
+	target.addEventListener('scroll', handler, { passive: true })
+	return () => {
+		if (frame) cancelAnimationFrame(frame)
+		target.removeEventListener('scroll', handler)
+	}
+}
 export function getPrettyDuration (start, end) {
 	const minLabel = translate('min')
 	const hourLabel = translate('h')

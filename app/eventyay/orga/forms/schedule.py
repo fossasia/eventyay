@@ -8,6 +8,12 @@ from i18nfield.forms import I18nModelForm
 from eventyay.common.forms.mixins import I18nHelpText
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple
+from eventyay.common.session_video import (
+    exclude_session_video_from_cfp_questions,
+    get_submission_video_answer,
+    prefetch_submission_video_urls,
+    session_videos_enabled,
+)
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import MailTemplateRoles
 from eventyay.orga.forms.export import ExportForm
@@ -25,6 +31,7 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
     notify_speakers = forms.BooleanField(label=_('Notify speakers of changes'), required=False, initial=True)
 
     def __init__(self, *args, event=None, **kwargs):
+        """Initialize release defaults and notification help for the event."""
         super().__init__(*args, **kwargs)
         self.event = event
         self.fields['version'].required = True
@@ -39,7 +46,10 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
             self.fields['version'].initial = guess_schedule_version(self.event)
 
     def clean_version(self):
-        version = self.cleaned_data.get('version')
+        """Reject reserved or previously used version names before schedule release."""
+        version = self.cleaned_data['version'].strip()
+        if version.lower() in ('wip', 'latest'):
+            raise forms.ValidationError(_('This schedule version is reserved. Please choose a different name.'))
         if self.event.schedules.filter(version__iexact=version).exists():
             raise forms.ValidationError(_('This schedule version was used already, please choose a different one.'))
         return version
@@ -152,11 +162,22 @@ class ScheduleExportForm(ExportForm):
             label=_('Resources'),
             help_text=_('Resources provided by the speaker, either as links or as uploaded files'),
         )
+        self.fields['session_videos'] = forms.BooleanField(
+            required=False,
+            initial=True,
+            label=_('Session videos'),
+            help_text=_('YouTube or Vimeo links stored on the session'),
+        )
 
     @cached_property
     def questions(self):
-        return self.event.talkquestions.filter(
-            target='submission',
+        # Include inactive questions so organisers can still export answers
+        # after a custom field was switched off. Session-video fields stay
+        # on the dedicated session_videos column instead.
+        return exclude_session_video_from_cfp_questions(
+            self.event.talkquestions(manager='all_objects').filter(
+                target='submission',
+            )
         ).prefetch_related('answers', 'answers__submission', 'options', 'answers__options')
 
     @cached_property
@@ -178,6 +199,7 @@ class ScheduleExportForm(ExportForm):
             'median_score',
             'mean_score',
             'resources',
+            'session_videos',
         ]
 
     def get_queryset(self):
@@ -188,13 +210,15 @@ class ScheduleExportForm(ExportForm):
         queryset = queryset.prefetch_related(
             Prefetch('slots', queryset=TalkSlot.objects.select_related('room', 'schedule'))
         )
-        
-        return (
+        queryset = (
             queryset.prefetch_related('tags', 'speakers')
             .select_related('submission_type', 'track', 'event')
             .prefetch_related('resources')
             .order_by('code')
         )
+        if self.cleaned_data.get('session_videos'):
+            queryset = prefetch_submission_video_urls(queryset, self.event)
+        return queryset
 
     def get_answer(self, question, obj):
         return question.answers.filter(submission=obj).first()
@@ -273,3 +297,17 @@ class ScheduleExportForm(ExportForm):
 
     def _get_resources_value(self, obj):
         return [resource.url for resource in obj.active_resources if resource.url]
+
+    @cached_property
+    def _session_videos_enabled(self):
+        return session_videos_enabled(self.event)
+
+    def _get_session_videos_value(self, obj):
+        if not self._session_videos_enabled:
+            return ''
+        answers = getattr(obj, '_session_video_answers', None)
+        if answers is not None:
+            answer = answers[0] if answers else None
+        else:
+            answer = get_submission_video_answer(obj)
+        return (answer.answer or '').strip() if answer else ''

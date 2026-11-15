@@ -5,6 +5,7 @@
 {% load static %}
 {% load eventsignal %}
 {% block title %}{{ request.event.name }}{% endblock %}
+{% block body_class %}dashboard-print{% endblock %}
 {% block content %}
     {% if is_meetup_event %}
         {% trans "Meetup" as date_range %}

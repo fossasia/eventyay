@@ -11,7 +11,7 @@
 			bunt-input.display-name(name="displayName", :label="`${$t('Display name')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
 			template(v-if="languages")
 				h2 {{ $t('Interface Language') }}
-				bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
+				bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel", :placeholder="$t('Select Language')")
 			h2 {{ $t('Profile Visibility') }}
 			p {{ $t('Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden.') }}
 			bunt-switch#switch-show-publicly(
@@ -46,7 +46,7 @@ import { mapState } from 'vuex'
 import { cloneDeep } from 'lodash'
 import { useVuelidate } from '@vuelidate/core'
 import config from 'config'
-import { resolveLanguageOptions } from 'locales'
+import { resolveLanguageOptions, resolveCurrentLanguage } from 'locales'
 import Avatar from 'components/Avatar'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from 'components/profile/ChangeAvatar'
@@ -58,7 +58,7 @@ export default {
 	data() {
 		return {
 			profile: null,
-			interfaceLanguage: this.$i18n.resolvedLanguage,
+			interfaceLanguage: null,
 			notificationSettings: cloneDeep(this.$store.state.notifications.settings),
 			autoplay: true,
 			showChangeAvatar: false,
@@ -89,9 +89,20 @@ export default {
 			return options.length ? options : null
 		}
 	},
+	watch: {
+		languages: {
+			handler(langs) {
+				if (!this.interfaceLanguage && langs?.length) {
+					this.interfaceLanguage = this.resolveInitialLanguage()
+				}
+			},
+			immediate: true
+		}
+	},
 	created() {
 		this.profile = Object.assign({}, this.user.profile)
 		this.autoplay = this.$store.getters.autoplay
+		this.interfaceLanguage = this.resolveInitialLanguage()
 		if (!this.profile.avatar || (!this.profile.avatar.url && !this.profile.avatar.identicon)) {
 			this.profile.avatar = {
 				identicon: this.user.id
@@ -99,6 +110,12 @@ export default {
 		}
 	},
 	methods: {
+		resolveInitialLanguage() {
+			return resolveCurrentLanguage(
+				this.languages,
+				this.$store?.state?.userLocale || this.$i18n?.language || this.$i18n?.resolvedLanguage || config.defaultLocale || config.locale || 'en'
+			)
+		},
 		async toggleVisibility(value) {
 			await this.$store.dispatch('setProfileVisibility', value)
 		},
