@@ -95,3 +95,13 @@ def test_team_form_selected_track_ids_from_post(organizer, event_with_tracks):
         organizer=organizer,
     )
     assert form.selected_track_ids == {tracks[0].pk, tracks[1].pk}
+
+    
+@pytest.mark.django_db
+def test_limit_events_shows_required_marker_and_help_text(organizer):
+    form = TeamForm(organizer=organizer)
+    field = form.fields['limit_events']
+
+    assert field._required is True
+    assert field.required is False
+    assert 'Select at least one event' in str(field.help_text)
