@@ -253,6 +253,8 @@ export default {
 			} catch (err) {
 				this.loading = false
 				this.error = err
+				// Setup failed after admission: give the room slot back.
+				this.releaseRoomSlot()
 				// Websocket errors carry the server's code on err.apiError.
 				const serverCode = err?.apiError?.code || err?.code
 				const errorCode = serverCode === 'jitsi.join.missing_profile'
@@ -298,7 +300,9 @@ export default {
 			// Tell the server this user left the call so the room stops counting toward the plan.
 			if (!this.admitted) return
 			this.admitted = false
-			api.call('jitsi.leave', { room: this.room.id }).catch(() => {})
+			api.call('jitsi.leave', { room: this.room.id }).catch(() => {
+				logOperational({action: 'jitsi.leave', outcome: 'failure', backend: 'jitsi', error_code: 'leave_failed'})
+			})
 		},
 		hangup() {
 			this.userHungUp = true

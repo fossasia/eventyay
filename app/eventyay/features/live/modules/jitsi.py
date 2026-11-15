@@ -312,7 +312,7 @@ class JitsiModule(BaseModule):
 
         # Admit last, so a failure while building the config never takes a room slot.
         decision = await database_sync_to_async(admit_to_jitsi_room)(
-            self.room, self.consumer.user
+            self.room, self.consumer.user, self._current_view()
         )
         if not decision.allowed:
             error_code = (
@@ -334,11 +334,18 @@ class JitsiModule(BaseModule):
         log_event('video', 'connection.room_config', OUTCOME_SUCCESS, event_id=getattr(self.consumer.event, 'pk', None), backend='jitsi')
         await self.consumer.send_success(result)
 
+    def _current_view(self):
+        """This connection's open view of the room, so admissions follow one browser."""
+        room_module = getattr(self.consumer, "components", {}).get("room")
+        return getattr(room_module, "current_views", {}).get(self.room)
+
     @command("leave")
     @room_action()
     async def leave(self, body):
         """Free the caller's place in the room's Jitsi call after they hang up."""
-        await database_sync_to_async(release_jitsi_room)(self.room, self.consumer.user)
+        await database_sync_to_async(release_jitsi_room)(
+            self.room, self.consumer.user, self._current_view()
+        )
         await self.consumer.send_success({})
 
     def _build_jwt(

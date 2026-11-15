@@ -69,7 +69,12 @@ def running_jitsi_room_ids(organizer, exclude_room=None) -> set:
     return set(views.values_list('room_id', flat=True).distinct())
 
 
-def admit_to_jitsi_room(room, user) -> EntitlementDecision:
+def _lock_organizer(organizer_id) -> None:
+    """Serialize admission changes for one organizer."""
+    Organizer.objects.select_for_update().filter(pk=organizer_id).first()
+
+
+def admit_to_jitsi_room(room, user, view=None) -> EntitlementDecision:
     """
     Admit ``user`` to the Jitsi call of ``room`` within the organizer's room limit.
 
@@ -77,14 +82,17 @@ def admit_to_jitsi_room(room, user) -> EntitlementDecision:
     checks ``video.jitsi.concurrent_rooms`` with the total number of running
     Jitsi rooms across the organizer's events, including this one. When allowed,
     the user's open view of the room is marked as admitted so the room counts as
-    running until everyone admitted has left.
+    running until everyone admitted has left. Pass ``view`` to admit only the
+    calling connection's view.
     """
     event = room.event
     organizer = event.organizer
     with transaction.atomic():
         # Serialize admissions per organizer so two calls cannot both take the last room.
-        Organizer.objects.select_for_update().filter(pk=organizer.pk).first()
+        _lock_organizer(organizer.pk)
         user_views = RoomView.objects.filter(room=room, user=user, end__isnull=True)
+        if view is not None:
+            user_views = user_views.filter(pk=view.pk)
         if not user_views.exists():
             # Without an open view the call could not be counted, so it is not admitted.
             return EntitlementDecision(
@@ -110,8 +118,31 @@ def admit_to_jitsi_room(room, user) -> EntitlementDecision:
     return decision
 
 
-def release_jitsi_room(room, user) -> None:
-    """Stop counting ``user`` in the Jitsi call of ``room`` after they leave the call."""
-    RoomView.objects.filter(
-        room=room, user=user, end__isnull=True, jitsi_joined_at__isnull=False
-    ).update(jitsi_joined_at=None)
+def release_jitsi_room(room, user, view=None) -> None:
+    """
+    Stop counting ``user`` in the Jitsi call of ``room`` after they leave the call.
+
+    Pass ``view`` to release only the calling connection's view, so another browser
+    of the same user that is still in the call keeps the room counted.
+    """
+    with transaction.atomic():
+        _lock_organizer(room.event.organizer_id)
+        views = RoomView.objects.filter(
+            room=room, user=user, end__isnull=True, jitsi_joined_at__isnull=False
+        )
+        if view is not None:
+            views = views.filter(pk=view.pk)
+        views.update(jitsi_joined_at=None)
+
+
+def carry_jitsi_admission(room, user, previous_views) -> bool:
+    """
+    Return whether a replacement view should stay admitted to the room's Jitsi call.
+
+    Checked under the organizer lock so a concurrent ``jitsi.leave`` cannot be
+    undone by the replacement view.
+    """
+    if not previous_views.filter(jitsi_joined_at__isnull=False).exists():
+        return False
+    _lock_organizer(room.event.organizer_id)
+    return previous_views.filter(jitsi_joined_at__isnull=False).exists()

@@ -12,10 +12,12 @@ from eventyay.base import entitlements
 from eventyay.base.entitlements import EntitlementDecision
 from eventyay.base.models import Event, Organizer, User
 from eventyay.base.models.room import Room, RoomView
+from eventyay.base.services import video_entitlements as jitsi_entitlements
 from eventyay.base.services.room import start_view
 from eventyay.base.services.video_entitlements import (
     JITSI_CONCURRENT_ROOMS_CAPABILITY,
     admit_to_jitsi_room,
+    carry_jitsi_admission,
     release_jitsi_room,
     running_jitsi_room_ids,
 )
@@ -241,6 +243,49 @@ def test_second_browser_keeps_the_call_counted(room_limit, setup):
     assert admit_to_jitsi_room(setup.room_a, setup.alice).allowed
 
 
+def test_leaving_in_one_browser_keeps_the_other_counted(room_limit, setup):
+    first = enter(setup.room_a, setup.alice)
+    second = enter(setup.room_a, setup.alice)
+    admit_to_jitsi_room(setup.room_a, setup.alice, first)
+    admit_to_jitsi_room(setup.room_a, setup.alice, second)
+
+    release_jitsi_room(setup.room_a, setup.alice, first)
+
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert first.jitsi_joined_at is None
+    assert second.jitsi_joined_at is not None
+    enter(setup.room_b, setup.bob)
+    assert not admit_to_jitsi_room(setup.room_b, setup.bob).allowed
+
+
+def test_admission_with_a_view_marks_only_that_view(room_limit, setup):
+    first = enter(setup.room_a, setup.alice)
+    second = enter(setup.room_a, setup.alice)
+
+    assert admit_to_jitsi_room(setup.room_a, setup.alice, second).allowed
+
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert first.jitsi_joined_at is None
+    assert second.jitsi_joined_at is not None
+
+
+def test_admission_carry_rechecks_after_a_concurrent_leave(setup):
+    view = enter(setup.room_a, setup.alice)
+    RoomView.objects.filter(pk=view.pk).update(jitsi_joined_at=now())
+    previous = RoomView.objects.filter(pk=view.pk)
+    original_lock = jitsi_entitlements._lock_organizer
+
+    def leave_while_waiting_for_the_lock(organizer_id):
+        # The call ends between the unlocked read and the locked re-check.
+        RoomView.objects.filter(pk=view.pk).update(jitsi_joined_at=None)
+        original_lock(organizer_id)
+
+    with patch.object(jitsi_entitlements, "_lock_organizer", leave_while_waiting_for_the_lock):
+        assert carry_jitsi_admission(setup.room_a, setup.alice, previous) is False
+
+
 def make_jitsi_module():
     consumer = MagicMock()
     consumer.event.pk = 1
@@ -248,7 +293,7 @@ def make_jitsi_module():
     consumer.user = SimpleNamespace(pk=1, profile={}, email="alice@example.com", fullname="Alice")
     consumer.send_success = AsyncMock()
     module = JitsiModule(consumer)
-    module.room = SimpleNamespace(id=7, name="A")
+    module.room = Room(pk=7, name="A")
     module.module_config = {}
     return module, consumer
 
@@ -291,14 +336,16 @@ def test_room_config_failure_before_admission_takes_no_slot():
     admit.assert_not_called()
 
 
-def test_leave_command_releases_the_call():
+def test_leave_command_releases_this_connections_view():
     module, consumer = make_jitsi_module()
+    view = object()
+    consumer.components = {"room": SimpleNamespace(current_views={module.room: view})}
     leave = inspect.unwrap(JitsiModule.leave)
 
     with patch.object(jitsi_module, "release_jitsi_room") as release:
         async_to_sync(leave)(module, {})
 
-    release.assert_called_once_with(module.room, consumer.user)
+    release.assert_called_once_with(module.room, consumer.user, view)
     consumer.send_success.assert_called_once_with({})
 
 
