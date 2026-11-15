@@ -1566,6 +1566,10 @@ export default {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 				return
 			}
+			if (this._toolbarDay) {
+				window.clearTimeout(this._toolbarJumpTimer)
+				this.releaseToolbarJump(this._toolbarDay)
+			}
 			this.changeDay(todayMoment)
 			if (this.schedule?.compact && !this.scheduleNeedsEveryDay) {
 				this._pendingGoToNow = true
