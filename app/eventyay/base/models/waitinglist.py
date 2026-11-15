@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -6,13 +7,14 @@ from django.db.models import JSONField
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
-from django_scopes import ScopedManager
+from django_scopes import ScopedManager, scope
 from phonenumber_field.modelfields import PhoneNumberField
 
 from eventyay.base.email import get_email_context
 from eventyay.base.i18n import language
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import Voucher
+from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.mail import mail
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 
@@ -25,6 +27,10 @@ class WaitingListException(Exception):  # NOQA: N818
     def __init__(self, *args):
         super().__init__(*args)
         log_event('tickets', 'waitinglist.error', OUTCOME_FAILURE, error_code='waitinglist_error')
+
+
+class WaitingListUnavailable(WaitingListException):
+    """The ticket has no remaining quota for a waiting-list reservation."""
 
 
 class WaitingListEntry(LoggedModel):
@@ -114,20 +120,51 @@ class WaitingListEntry(LoggedModel):
             scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
         return scheme['concatenation'](self.name_parts).strip()
 
-    def send_voucher(self, quota_cache=None, user=None, auth=None):
-        availability = (
-            self.variation.check_quotas(count_waitinglist=False, subevent=self.subevent, _cache=quota_cache)
-            if self.variation
-            else self.product.check_quotas(count_waitinglist=False, subevent=self.subevent, _cache=quota_cache)
-        )
-        if availability[1] is not None and availability[1] < 1:
-            raise WaitingListException(_('This product is currently not available.'))
-        if self.voucher:
-            raise WaitingListException(_('A voucher has already been sent to this person.'))
-        if '@' not in self.email:
-            raise WaitingListException(_('This entry is anonymized and can no longer be used.'))
+    def send_voucher(self, quota_cache=None, user=None, auth=None, *, event_locked=False):
+        """Reserve and notify once. Automatic assignment already holds the booking lock."""
+        try:
+            with nullcontext() if event_locked else self.event.lock():
+                self._reserve_voucher(quota_cache, user, auth)
+        except LockTimeoutException as exc:
+            raise WaitingListException(_('The event is busy. Please try again.')) from exc
 
-        with transaction.atomic():
+        with language(self.locale, self.event.settings.region):
+            mail(
+                self.email,
+                _('You have been selected from the waitinglist for {event}').format(event=str(self.event)),
+                self.event.settings.mail_text_waiting_list,
+                get_email_context(event=self.event, waiting_list_entry=self),
+                self.event,
+                locale=self.locale,
+            )
+
+    def _reserve_voucher(self, quota_cache, user, auth):
+        """Check the current entry and quota capacity before creating its voucher."""
+        with scope(event=self.event, organizer=self.event.organizer), transaction.atomic():
+            try:
+                self.refresh_from_db(from_queryset=type(self).objects.select_for_update(of=('self',)))
+            except type(self).DoesNotExist as exc:
+                raise WaitingListException(_('Waiting list entry not found.')) from exc
+            if self.voucher_id:
+                raise WaitingListException(_('A voucher has already been sent to this person.'))
+            if '@' not in self.email:
+                raise WaitingListException(_('This entry is anonymized and can no longer be used.'))
+
+            target = self.variation or self.product
+            quotas = target.quotas.order_by('pk').select_for_update(of=('self',))
+            if self.subevent_id:
+                quotas = quotas.filter(subevent_id=self.subevent_id)
+            target._subevent_quotas = list(quotas)
+            if quota_cache is not None:
+                for quota in target._subevent_quotas:
+                    quota_cache.pop(quota.pk, None)
+            try:
+                availability = target.check_quotas(count_waitinglist=False, subevent=self.subevent, _cache=quota_cache)
+            finally:
+                del target._subevent_quotas
+            if availability[1] is not None and availability[1] < 1:
+                raise WaitingListUnavailable(_('This product is currently not available.'))
+
             v = Voucher.objects.create(
                 event=self.event,
                 max_usages=1,
@@ -158,16 +195,6 @@ class WaitingListEntry(LoggedModel):
             self.log_action('eventyay.waitinglist.voucher', user=user, auth=auth)
             self.voucher = v
             self.save()
-
-        with language(self.locale, self.event.settings.region):
-            mail(
-                self.email,
-                _('You have been selected from the waitinglist for {event}').format(event=str(self.event)),
-                self.event.settings.mail_text_waiting_list,
-                get_email_context(event=self.event, waiting_list_entry=self),
-                self.event,
-                locale=self.locale,
-            )
 
     @staticmethod
     def clean_productvar(event, product, variation):

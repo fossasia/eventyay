@@ -51,8 +51,12 @@ def test_send_voucher_quota_capacity(quota_size, with_variation, monkeypatch):
             assert entry.voucher_id is None
             assert not sent
         else:
+            second_request = WaitingListEntry.objects.get(pk=entry.pk)
             entry.send_voucher()
+            with pytest.raises(WaitingListException, match='already been sent'):
+                second_request.send_voucher()
             entry.refresh_from_db()
+            assert Voucher.objects.count() == 1
             assert entry.voucher.product == product
             assert entry.voucher.variation == variation
             assert entry.voucher.block_quota
