@@ -1,7 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from django_scopes import scopes_disabled
+from django.utils.timezone import now
+from django_scopes import scope
 
 from eventyay.base.models import ChatEvent
 from eventyay.base.models.chat import Channel
@@ -16,7 +17,7 @@ PNG = b'\x89PNG\r\n\x1a\n' + b'\x00' * 32
 
 @pytest.fixture
 def chat_event(event):
-    with scopes_disabled():
+    with scope(event=event):
         channel = Channel.objects.create(event=event)
         return ChatEvent.objects.create(
             id=4242,
@@ -44,7 +45,7 @@ def test_preview_is_stored_for_the_message(event, chat_event, broadcast, monkeyp
 
     retrieve_preview_information.apply(kwargs={'event': str(event.id), 'chat_event_id': chat_event.id}).get()
 
-    with scopes_disabled():
+    with scope(event=event):
         chat_event.refresh_from_db()
         stored = StoredFile.objects.get()
     assert stored.event == event
@@ -74,7 +75,45 @@ def test_failed_preview_is_logged_and_skipped(event, chat_event, broadcast, monk
     retrieve_preview_information.apply(kwargs={'event': str(event.id), 'chat_event_id': chat_event.id}).get()
 
     assert 'Could not build a link preview' in caplog.text
-    with scopes_disabled():
+    with scope(event=event):
         chat_event.refresh_from_db()
     assert 'preview_card' not in chat_event.content
     broadcast[0].assert_not_called()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'content',
+    [{'type': 'deleted'}, {'type': 'text'}, {'type': 'text', 'body': None}, {'type': 'call', 'body': {}}],
+)
+def test_non_text_message_is_skipped(event, chat_event, broadcast, monkeypatch, content):
+    """The message may be deleted or changed before the queued task loads it."""
+    with scope(event=event):
+        ChatEvent.objects.filter(pk=chat_event.pk).update(content=content)
+    fetch = MagicMock()
+    monkeypatch.setattr(tasks, 'fetch_preview_data', fetch)
+
+    retrieve_preview_information.apply(kwargs={'event': str(event.id), 'chat_event_id': chat_event.id}).get()
+
+    fetch.assert_not_called()
+    broadcast[0].assert_not_called()
+
+
+@pytest.mark.django_db
+def test_edit_during_retrieval_is_not_overwritten(event, chat_event, broadcast, monkeypatch):
+    """A message deleted while the preview is fetched stays deleted and is not re-broadcast."""
+
+    def fetch_and_delete(url, event):
+        with scope(event=event):
+            ChatEvent.objects.filter(pk=chat_event.pk).update(content={'type': 'deleted'}, edited=now())
+        return {'title': 'Cat', 'url': url}
+
+    monkeypatch.setattr(tasks, 'fetch_preview_data', fetch_and_delete)
+
+    retrieve_preview_information.apply(kwargs={'event': str(event.id), 'chat_event_id': chat_event.id}).get()
+
+    with scope(event=event):
+        chat_event.refresh_from_db()
+    assert chat_event.content == {'type': 'deleted'}
+    broadcast[0].assert_not_called()
+    broadcast[1].group_send.assert_not_called()
