@@ -53,8 +53,8 @@
 
 	teleport(to="body")
 		template(v-if="dropdownOpen")
-			.date-range-blocker(@click="cancelDropdown")
-			.date-range-popover(ref="dropdownMenu")
+			.date-range-blocker(aria-hidden="true", @click="cancelDropdown")
+			.date-range-popover(ref="dropdownMenu", role="dialog", aria-modal="true", :aria-label="$t('Date range picker')")
 				.popover-body
 					.presets-column
 						button.preset-btn(
@@ -173,7 +173,7 @@
 									span {{ $t('All times in') }} {{ eventTimezoneLabel }}
 				.popover-footer
 					bunt-button.btn-cancel(@click="cancelDropdown") {{ $t('Cancel') }}
-					bunt-button.btn-apply(@click="applyDropdown") {{ $t('Apply') }}
+					bunt-button.btn-apply(@click="applyDropdown", :disabled="!isDraftRangeValid") {{ $t('Apply') }}
 
 	transition(name="prompt")
 		prompt.report-result-prompt(v-if="running || result", @close="clear")
@@ -219,6 +219,7 @@ export default {
 			error: false,
 			timeout: null,
 			task: null,
+			nowTick: Date.now(),
 		}
 	},
 	computed: {
@@ -297,7 +298,7 @@ export default {
 		},
 		dateRangeOptions() {
 			const tz = this.eventTimezone
-			const now = moment().tz(tz)
+			const now = moment(this.nowTick).tz(tz)
 			const options = []
 
 			const rawFrom = this.eventDateFrom
@@ -307,9 +308,7 @@ export default {
 
 			if (dateFrom && dateTo && dateTo.isSameOrAfter(dateFrom)) {
 				const eventStart = dateFrom.clone()
-				const eventEnd = (dateTo.hours() === 0 && dateTo.minutes() === 0)
-					? dateTo.clone().endOf('day')
-					: dateTo.clone()
+				const eventEnd = dateTo.clone()
 
 				options.push({
 					id: 'entire_event',
@@ -370,6 +369,13 @@ export default {
 
 			return options
 		},
+		isDraftRangeValid() {
+			if (!this.draftStart || !this.draftEnd) return false
+			const tz = this.eventTimezone
+			const startM = moment.tz(this.draftStart, tz)
+			const endM = moment.tz(this.draftEnd, tz)
+			return startM.isValid() && endM.isValid() && endM.isSameOrAfter(startM)
+		},
 		activeRangeDisplayLabel() {
 			if (this.activePreset === 'custom') {
 				if (this.datetimeStart && this.datetimeEnd) {
@@ -412,7 +418,7 @@ export default {
 			const end = this.draftEnd ? moment.tz(this.draftEnd, tz) : null
 			if (start && end && start.isValid() && end.isValid()) {
 				if (start.isSame(end, 'day')) {
-					return `${start.format('D MMM YYYY')} (00:00 – 23:59)`
+					return `${start.format('D MMM YYYY')} (${start.format('HH:mm')} – ${end.format('HH:mm')})`
 				}
 				return `${start.format('D MMM')} – ${end.format('D MMM')}`
 			}
@@ -474,14 +480,38 @@ export default {
 	},
 	unmounted() {
 		window.clearTimeout(this.timeout)
-		window.removeEventListener('keydown', this.onEscKey)
+		window.removeEventListener('keydown', this.onKeydown)
 		this.destroyPopper()
 	},
 	methods: {
-		onEscKey(event) {
-			if (event.key === 'Escape' && this.dropdownOpen) {
+		onKeydown(event) {
+			if (!this.dropdownOpen) return
+			if (event.key === 'Escape') {
 				event.preventDefault()
 				this.cancelDropdown()
+				return
+			}
+			if (event.key === 'Tab') {
+				const menu = this.$refs.dropdownMenu
+				if (!menu) return
+				const focusableElements = Array.from(
+					menu.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex="0"]')
+				).filter(el => el.offsetParent !== null)
+				if (focusableElements.length === 0) return
+				const firstEl = focusableElements[0]
+				const lastEl = focusableElements[focusableElements.length - 1]
+
+				if (event.shiftKey) {
+					if (document.activeElement === firstEl || !menu.contains(document.activeElement)) {
+						event.preventDefault()
+						lastEl.focus()
+					}
+				} else {
+					if (document.activeElement === lastEl || !menu.contains(document.activeElement)) {
+						event.preventDefault()
+						firstEl.focus()
+					}
+				}
 			}
 		},
 		formatDateTime(m) {
@@ -521,20 +551,38 @@ export default {
 				this.cancelDropdown()
 				return
 			}
+			this.nowTick = Date.now()
 			this.draftPreset = this.activePreset
 			if (this.activePreset && this.activePreset.startsWith('day_')) {
 				this.selectedDayId = this.activePreset
 			} else if (this.eventDays.length > 0 && !this.selectedDayId) {
 				this.selectedDayId = this.eventDays[0].id
 			}
-			this.draftStart = this.datetimeStart
-			this.draftEnd = this.datetimeEnd
+			if (this.activePreset && this.activePreset !== 'custom') {
+				const activeOption = this.dateRangeOptions.find(o => o.id === this.activePreset)
+				if (activeOption?.start && activeOption?.end) {
+					this.draftStart = this.formatDateTime(activeOption.start)
+					this.draftEnd = this.formatDateTime(activeOption.end)
+				} else {
+					this.draftStart = this.datetimeStart
+					this.draftEnd = this.datetimeEnd
+				}
+			} else {
+				this.draftStart = this.datetimeStart
+				this.draftEnd = this.datetimeEnd
+			}
 			this.dropdownOpen = true
-			window.addEventListener('keydown', this.onEscKey)
+			window.addEventListener('keydown', this.onKeydown)
 			await this.$nextTick()
 			this.initPopper()
 			requestAnimationFrame(() => {
 				this.popperInstance?.forceUpdate?.()
+				const menu = this.$refs.dropdownMenu
+				if (menu) {
+					const target = menu.querySelector('.preset-btn.active') ||
+						menu.querySelector('button:not([disabled]), input:not([disabled])')
+					target?.focus?.()
+				}
 			})
 		},
 		initPopper() {
@@ -553,7 +601,9 @@ export default {
 					{
 						name: 'preventOverflow',
 						options: {
-							padding: 12
+							padding: 12,
+							altAxis: true,
+							tether: false
 						}
 					},
 					{
@@ -572,11 +622,15 @@ export default {
 			}
 		},
 		closeDropdown() {
-			window.removeEventListener('keydown', this.onEscKey)
+			window.removeEventListener('keydown', this.onKeydown)
 			this.destroyPopper()
 			this.dropdownOpen = false
+			this.$nextTick(() => {
+				this.$refs.dropdownButton?.focus?.()
+			})
 		},
 		applyDropdown() {
+			if (!this.isDraftRangeValid) return
 			this.activePreset = this.draftPreset
 			this.datetimeStart = this.draftStart
 			this.datetimeEnd = this.draftEnd
@@ -592,9 +646,12 @@ export default {
 			this.closeDropdown()
 		},
 		getDateTimePayload() {
+			const tz = this.eventTimezone
+			const startM = this.datetimeStart ? moment.tz(this.datetimeStart, tz) : null
+			const endM = this.datetimeEnd ? moment.tz(this.datetimeEnd, tz) : null
 			return {
-				begin: this.datetimeStart,
-				end: this.datetimeEnd,
+				begin: startM?.isValid() ? startM.format() : this.datetimeStart,
+				end: endM?.isValid() ? endM.format() : this.datetimeEnd,
 			}
 		},
 		generateReport(type) {
@@ -855,12 +912,17 @@ export default {
 	flex-direction: column
 	min-width: 480px
 	max-width: 540px
+	max-height: calc(100vh - 24px)
+	max-height: calc(100dvh - 24px)
 
 	.popover-body
 		display: flex
 		padding: 16px
 		gap: 16px
 		border-bottom: 1px solid $clr-grey-200
+		overflow-y: auto
+		min-height: 0
+		flex: 1
 
 	.presets-column
 		display: flex
@@ -1054,6 +1116,7 @@ export default {
 		padding: 10px 16px
 		background: $clr-grey-50
 		border-top: 1px solid $clr-grey-200
+		flex-shrink: 0
 
 		button
 			font-size: 13px
@@ -1067,6 +1130,10 @@ export default {
 
 		.btn-apply
 			themed-button-primary()
+			&[disabled], &.disabled
+				opacity: 0.5
+				cursor: not-allowed
+				pointer-events: none
 
 @keyframes spinner-rotate
 	100%
