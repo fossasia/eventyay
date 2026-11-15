@@ -2,6 +2,7 @@ import ipaddress
 import mimetypes
 import socket
 import uuid
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from urllib.parse import urljoin, urlparse, urlunparse
@@ -85,23 +86,25 @@ def is_public_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) ->
             address = address.ipv4_mapped
         elif address in NAT64_NETWORK:
             address = ipaddress.IPv4Address(int(address) & 0xFFFFFFFF)
+        elif address.is_site_local:  # Deprecated fec0::/10, still reported as global by Python
+            return False
     return address.is_global and not address.is_multicast
 
 
-def resolve_public_address(url: str) -> str | None:
+def resolve_public_addresses(url: str) -> tuple[str, ...]:
     """
-    Resolve the host of an http(s) URL and return an address to connect to.
+    Resolve the host of an http(s) URL and return the addresses to connect to.
 
     Link previews are fetched server-side for any URL posted in chat, so the URL is
-    refused (``None``) unless its host resolves exclusively to public addresses (SSRF).
+    refused (empty tuple) unless its host resolves exclusively to public addresses (SSRF).
     """
     try:
         parsed = urlparse(url)
         port = parsed.port
     except ValueError:
-        return None
+        return ()
     if parsed.scheme not in ('http', 'https') or not parsed.hostname:
-        return None
+        return ()
     future = dns_executor.submit(
         socket.getaddrinfo,
         parsed.hostname,
@@ -112,21 +115,20 @@ def resolve_public_address(url: str) -> str | None:
         infos = future.result(timeout=PREVIEW_DNS_TIMEOUT)
     except FuturesTimeoutError:
         future.cancel()
-        return None
+        return ()
     except (socket.gaierror, UnicodeError):
-        return None
-    if not infos:
-        return None
+        return ()
     addresses = []
     for info in infos:
         try:
             address = ipaddress.ip_address(info[4][0])
         except ValueError:
-            return None
+            return ()
         if not is_public_address(address):
-            return None
-        addresses.append(address)
-    return str(addresses[0])
+            return ()
+        if str(address) not in addresses:
+            addresses.append(str(address))
+    return tuple(addresses)
 
 
 class PinnedAddressAdapter(HTTPAdapter):
@@ -169,11 +171,17 @@ def normalize_url(url: str) -> str | None:
         return None
 
 
-def fetch_pinned(session: requests.Session, url: str, address: str) -> requests.Response:
-    adapter = PinnedAddressAdapter(address)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session.get(url, timeout=PREVIEW_HTTP_TIMEOUT, allow_redirects=False)  # TODO: user agent
+def fetch_pinned(session: requests.Session, url: str, addresses: Sequence[str]) -> requests.Response:
+    """Request ``url`` at the validated addresses, trying the next one if a connection fails."""
+    for address in addresses:
+        adapter = PinnedAddressAdapter(address)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        try:
+            return session.get(url, timeout=PREVIEW_HTTP_TIMEOUT, allow_redirects=False)  # TODO: user agent
+        except requests.ConnectionError as error:
+            last_error = error
+    raise last_error
 
 
 def retrieve_url(url):
@@ -181,7 +189,7 @@ def retrieve_url(url):
     Fetch a URL for a link preview.
 
     Every hop, including redirects, is resolved and checked with
-    ``resolve_public_address`` and then requested at exactly that address.
+    ``resolve_public_addresses`` and then requested at exactly those addresses.
     One session is used for all hops so cookies set before a redirect are kept.
     """
     with requests.Session() as session:
@@ -189,18 +197,18 @@ def retrieve_url(url):
         session.trust_env = False
         for _ in range(MAX_PREVIEW_REDIRECTS + 1):
             url = normalize_url(url)
-            address = resolve_public_address(url) if url else None
-            if not address:
+            addresses = resolve_public_addresses(url) if url else ()
+            if not addresses:
                 log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='blocked_url', backend='preview')
                 return
             try:
-                response = fetch_pinned(session, url, address)
+                response = fetch_pinned(session, url, addresses)
             except requests.RequestException:
                 log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
                 return
             if not response.is_redirect:
                 break
-            url = urljoin(url, response.headers['Location'])
+            url = urljoin(url, session.get_redirect_target(response))
         else:
             log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='too_many_redirects', backend='preview')
             return

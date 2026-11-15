@@ -7,9 +7,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 from requests.adapters import HTTPAdapter
+from requests.structures import CaseInsensitiveDict
 
 from eventyay.storage import external
-from eventyay.storage.external import PinnedAddressAdapter, fetch_pinned, resolve_public_address, retrieve_url
+from eventyay.storage.external import PinnedAddressAdapter, fetch_pinned, resolve_public_addresses, retrieve_url
 
 
 PUBLIC_IP = '93.184.216.34'
@@ -30,7 +31,7 @@ def fake_response(status_code=200, location=None):
     response = MagicMock()
     response.status_code = status_code
     response.is_redirect = location is not None
-    response.headers = {'Location': location} if location else {}
+    response.headers = CaseInsensitiveDict({'Location': location} if location else {})
     return response
 
 
@@ -63,12 +64,13 @@ def http_get(monkeypatch):
         ['2002:7f00:1::'],  # 6to4 for 127.0.0.1
         ['0.0.0.0'],
         ['224.0.0.1'],
+        ['fec0::1'],  # site-local, reported as global by Python 3.12
         [PUBLIC_IP, '10.0.0.5'],
     ],
 )
 def test_non_public_addresses_are_refused(dns, addresses):
     dns['internal.example'] = addresses
-    assert resolve_public_address('http://internal.example/') is None
+    assert resolve_public_addresses('http://internal.example/') == ()
 
 
 @pytest.mark.parametrize(
@@ -82,16 +84,16 @@ def test_non_public_addresses_are_refused(dns, addresses):
     ],
 )
 def test_invalid_urls_are_refused(dns, url):
-    assert resolve_public_address(url) is None
+    assert resolve_public_addresses(url) == ()
 
 
 def test_public_url_returns_resolved_address(dns):
-    assert resolve_public_address('https://public.example/page') == PUBLIC_IP
+    assert resolve_public_addresses('https://public.example/page') == (PUBLIC_IP,)
 
 
 def test_nat64_of_public_address_is_allowed(dns):
     dns['nat64.example'] = ['64:ff9b::5db8:d822']  # NAT64 for 93.184.216.34
-    assert resolve_public_address('https://nat64.example/') == '64:ff9b::5db8:d822'
+    assert resolve_public_addresses('https://nat64.example/') == ('64:ff9b::5db8:d822',)
 
 
 def test_slow_dns_is_refused(monkeypatch):
@@ -101,7 +103,7 @@ def test_slow_dns_is_refused(monkeypatch):
 
     monkeypatch.setattr(external.socket, 'getaddrinfo', slow_getaddrinfo)
     monkeypatch.setattr(external, 'PREVIEW_DNS_TIMEOUT', 0.05)
-    assert resolve_public_address('http://slow.example/') is None
+    assert resolve_public_addresses('http://slow.example/') == ()
 
 
 def test_retrieve_url_does_not_request_private_hosts(dns, http_get):
@@ -112,7 +114,7 @@ def test_retrieve_url_does_not_request_private_hosts(dns, http_get):
 
 def test_retrieve_url_requests_the_validated_address(dns, http_get):
     assert retrieve_url('https://public.example/page') is http_get.return_value
-    assert http_get.call_args.args[1:] == ('https://public.example/page', PUBLIC_IP)
+    assert http_get.call_args.args[1:] == ('https://public.example/page', (PUBLIC_IP,))
 
 
 def test_retrieve_url_blocks_redirect_to_private_host(dns, http_get):
@@ -126,7 +128,7 @@ def test_retrieve_url_follows_public_relative_redirect(dns, http_get):
     final = fake_response()
     http_get.side_effect = [fake_response(301, '/new'), final]
     assert retrieve_url('https://public.example/old') is final
-    assert http_get.call_args.args[1:] == ('https://public.example/new', PUBLIC_IP)
+    assert http_get.call_args.args[1:] == ('https://public.example/new', (PUBLIC_IP,))
 
 
 def test_retrieve_url_limits_redirects(dns, http_get):
@@ -166,7 +168,8 @@ def test_fetch_pinned_connects_to_address_without_resolving_hostname(monkeypatch
     monkeypatch.setattr(socket, 'getaddrinfo', no_dns)
     try:
         with requests.Session() as session:
-            response = fetch_pinned(session, f'http://rebind.example:{port}/page?x=1', '127.0.0.1')
+            session.trust_env = False
+            response = fetch_pinned(session, f'http://rebind.example:{port}/page?x=1', ['127.0.0.1'])
     finally:
         server.shutdown()
         server.server_close()
@@ -199,7 +202,7 @@ def test_validated_hostname_is_the_requested_hostname(dns, http_get):
     dns['xn--fa-hia.attacker.example'] = [PUBLIC_IP]  # what Requests sends for faß
     dns['fass.attacker.example'] = ['127.0.0.1']  # what getaddrinfo would use for faß
     assert retrieve_url('http://faß.attacker.example/') is http_get.return_value
-    assert http_get.call_args.args[1:] == ('http://xn--fa-hia.attacker.example/', PUBLIC_IP)
+    assert http_get.call_args.args[1:] == ('http://xn--fa-hia.attacker.example/', (PUBLIC_IP,))
 
     dns['xn--fa-hia.attacker.example'] = ['127.0.0.1']
     dns['fass.attacker.example'] = [PUBLIC_IP]
@@ -229,7 +232,7 @@ def test_cookies_are_kept_across_redirects(monkeypatch):
     server = HTTPServer(('127.0.0.1', 0), Handler)
     port = server.server_address[1]
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    monkeypatch.setattr(external, 'resolve_public_address', lambda url: '127.0.0.1')
+    monkeypatch.setattr(external, 'resolve_public_addresses', lambda url: ('127.0.0.1',))
     try:
         response = retrieve_url(f'http://cookie.example:{port}/start')
     finally:
@@ -238,3 +241,79 @@ def test_cookies_are_kept_across_redirects(monkeypatch):
 
     assert response is not None
     assert response.url == f'http://cookie.example:{port}/article'
+
+
+def test_retrieve_url_blocks_redirect_to_site_local_host(dns, http_get):
+    dns['sitelocal.example'] = ['fec0::1']
+    http_get.return_value = fake_response(302, 'http://sitelocal.example/')
+    assert retrieve_url('https://public.example/page') is None
+    http_get.assert_called_once()
+    assert retrieve_url('http://[fec0::1]/') is None
+
+
+def serve(handler_class):
+    server = HTTPServer(('127.0.0.1', 0), handler_class)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
+def test_fetch_pinned_falls_back_to_next_validated_address(monkeypatch):
+    """If the first validated address refuses the connection, the next one is used."""
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    original_send = PinnedAddressAdapter.send
+
+    def send(self, request, **kwargs):
+        if self.address == '192.0.2.1':
+            raise requests.ConnectionError('unreachable')
+        return original_send(self, request, **kwargs)
+
+    monkeypatch.setattr(PinnedAddressAdapter, 'send', send)
+    server = serve(Handler)
+    try:
+        with requests.Session() as session:
+            session.trust_env = False
+            url = f'http://multi.example:{server.server_address[1]}/'
+            response = fetch_pinned(session, url, ['192.0.2.1', '127.0.0.1'])
+            assert response.status_code == 200
+            with pytest.raises(requests.ConnectionError):
+                fetch_pinned(session, url, ['192.0.2.1'])
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_utf8_redirect_target_is_decoded(monkeypatch):
+    """A UTF-8 Location header is decoded like Requests does before it is followed."""
+    seen = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen.append(self.path)
+            if self.path == '/start':
+                self.send_response(302)
+                self.send_header('Location', '/café'.encode().decode('latin-1'))
+            else:
+                self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    monkeypatch.setattr(external, 'resolve_public_addresses', lambda url: ('127.0.0.1',))
+    server = serve(Handler)
+    try:
+        response = retrieve_url(f'http://utf8.example:{server.server_address[1]}/start')
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert response is not None
+    assert seen == ['/start', '/caf%C3%A9']
