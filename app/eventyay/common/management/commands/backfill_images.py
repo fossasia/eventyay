@@ -55,7 +55,11 @@ IMAGE_TARGETS = {
 def get_image_targets():
     """Return core's image targets plus the ones installed plugins register."""
     targets = dict(IMAGE_TARGETS)
-    for receiver, response in register_image_backfill_targets.send(sender=None):
+    for receiver, response in register_image_backfill_targets.send_robust(sender=None):
+        if isinstance(response, Exception):
+            # One broken plugin shouldn't stop core and other plugins' images from being processed.
+            logger.error('Could not load image backfill targets from %r', receiver, exc_info=response)
+            continue
         for name, target in (response or {}).items():
             if name in targets or name == 'settings':
                 logger.warning('Ignoring image backfill target %r from %r: the name is already taken', name, receiver)

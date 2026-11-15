@@ -1,9 +1,13 @@
-from io import StringIO
+from io import BytesIO, StringIO
 
 import pytest
+from django.core.files.base import ContentFile
 from django.core.management import call_command
+from django.utils.timezone import now
+from django_scopes import scope
+from PIL import Image
 
-from eventyay.base.models import Room
+from eventyay.base.models import Event, Organizer, Room
 from eventyay.base.signals import register_image_backfill_targets
 from eventyay.common.management.commands.backfill_images import IMAGE_TARGETS, get_image_targets
 
@@ -43,16 +47,53 @@ def test_plugins_can_register_image_targets(plugin_targets):
     assert set(IMAGE_TARGETS) < set(targets)
 
 
+def test_a_failing_receiver_does_not_drop_other_targets(plugin_targets):
+    def broken_receiver(sender, **kwargs):
+        raise RuntimeError('plugin dependency missing')
+
+    register_image_backfill_targets.connect(broken_receiver, dispatch_uid='test_backfill_broken_receiver')
+    try:
+        targets = get_image_targets()
+    finally:
+        register_image_backfill_targets.disconnect(dispatch_uid='test_backfill_broken_receiver')
+
+    assert set(IMAGE_TARGETS) < set(targets)
+    assert 'plugin_room_picture' in targets
+
+
 def test_get_image_targets_does_not_change_core_targets(plugin_targets):
     get_image_targets()
 
     assert 'plugin_room_picture' not in IMAGE_TARGETS
 
 
-@pytest.mark.django_db
-def test_model_option_accepts_plugin_targets(plugin_targets):
+@pytest.fixture
+def room_with_picture(db):
+    organizer = Organizer.objects.create(name='Dummy', slug='dummy')
+    event = Event.objects.create(organizer=organizer, name='Test Event', slug='test-event', date_from=now())
+    buffer = BytesIO()
+    Image.new('RGB', (60, 60), color='blue').save(buffer, format='PNG')
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Stage')
+        room.picture.save('stage.png', ContentFile(buffer.getvalue()), save=True)
+    return room
+
+
+def dry_run(*args):
     out = StringIO()
+    call_command('backfill_images', '--dry-run', '--min-size-kb', '0', *args, stdout=out)
+    return out.getvalue()
 
-    call_command('backfill_images', '--dry-run', '--model', 'plugin_room_picture', stdout=out)
 
-    assert 'Done.' in out.getvalue()
+def test_model_option_processes_a_plugin_target(plugin_targets, room_with_picture):
+    output = dry_run('--model', 'plugin_room_picture')
+
+    assert f'WOULD compress Room pk={room_with_picture.pk}' in output
+    assert 'dry_run=1' in output
+
+
+def test_plugin_targets_are_processed_without_model_option(plugin_targets, room_with_picture):
+    output = dry_run()
+
+    # The picture is listed once for core's room target and once for the plugin's.
+    assert output.count(f'WOULD compress Room pk={room_with_picture.pk}') == 2
