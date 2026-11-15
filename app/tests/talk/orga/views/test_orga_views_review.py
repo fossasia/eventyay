@@ -2,6 +2,7 @@ import json
 import re
 import tempfile
 import pytest
+from bs4 import BeautifulSoup
 from django_scopes import scope
 from eventyay.base.models import Review, ReviewScore, ReviewScoreCategory, SubmissionStates, User
 from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
@@ -380,6 +381,67 @@ def test_dashboard_independent_score_aggregation(
     assert submissions[submission.pk].independent_scores == [expected]
     assert submissions[submission.pk].current_score == 1
     assert submissions[other_submission.pk].independent_scores == [None]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "client_name, reviews_open, has_reviewed",
+    (
+        # Organiser who may see all reviews but is not a reviewer.
+        ("orga_client", True, False),
+        # Reviewer while the review phase does not allow reviewing.
+        ("review_client", False, False),
+        # Reviewer who can review.
+        ("review_client", True, False),
+        # Reviewer with an existing review after reviewing has closed.
+        ("review_client", False, True),
+    ),
+)
+def test_dashboard_table_columns_match_headers(
+    request,
+    review_user,
+    client_name,
+    reviews_open,
+    has_reviewed,
+    submission,
+    other_submission,
+):
+    client = request.getfixturevalue(client_name)
+    event = submission.event
+    with scope(event=event):
+        ReviewScoreCategory.objects.create(
+            event=event, name="Relevance", is_independent=True
+        )
+        if has_reviewed:
+            Review.objects.create(user=review_user, submission=submission)
+        phase = event.active_review_phase
+        phase.can_review = reviews_open
+        phase.save()
+
+    response = client.get(event.orga_urls.reviews)
+
+    assert response.status_code == 200
+    table = BeautifulSoup(response.text, "html.parser").select_one("table.review-table")
+    headers = table.select("thead tr th")
+    assert len(table.select("colgroup col")) == len(headers)
+    rows = table.select("tbody tr")
+    assert rows
+
+    def positions(cells, css_class):
+        return [i for i, cell in enumerate(cells) if css_class in cell.get("class", [])]
+
+    marker_classes = (
+        "col-score-avg",
+        "col-score-user",
+        "col-review-count",
+        "col-speakers",
+        "col-state",
+    )
+    for row in rows:
+        cells = row.find_all("td")
+        assert len(cells) == len(headers)
+        for css_class in marker_classes:
+            assert positions(cells, css_class) == positions(headers, css_class), css_class
 
 
 @pytest.mark.django_db

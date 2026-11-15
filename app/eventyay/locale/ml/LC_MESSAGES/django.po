@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:24+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:28+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Malayalam <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ml/>\n"
 "Language: ml\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -30229,8 +30230,7 @@ msgstr ""
 msgid ""
 "You already have an event with this short name. Please choose another one."
 msgstr ""
-"ഈ ഇ-മെയിൽ വിലാസവുമായി ബന്ധപ്പെട്ട ഒരു അക്കൗണ്ട് ഇതിനകം നിലവിലുണ്ട്. മറ്റൊരു വിലാസം "
-"തിരഞ്ഞെടുക്കുക."
+"ഈ ഇ-മെയിൽ വിലാസവുമായി ബന്ധപ്പെട്ട ഒരു അക്കൗണ്ട് ഇതിനകം നിലവിലുണ്ട്. മറ്റൊരു വിലാസം തിരഞ്ഞെടുക്കുക."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -31119,7 +31119,8 @@ msgstr "ടോക്ക് ടെസ്റ്റ് മോഡ് സജീവമ
 msgid ""
 "You must publish the event main page before enabling public test mode for "
 "tickets."
-msgstr "ടെസ്റ്റ് മോഡ് സജ്ജമാക്കുന്നതിന് മുമ്പ് ടിക്കറ്റുകൾ പ്രസിദ്ധീകരിക്കുകയും സജ്ജമാക്കുകയും വേണം."
+msgstr ""
+"ടെസ്റ്റ് മോഡ് സജ്ജമാക്കുന്നതിന് മുമ്പ് ടിക്കറ്റുകൾ പ്രസിദ്ധീകരിക്കുകയും സജ്ജമാക്കുകയും വേണം."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:66
 #, fuzzy
@@ -31127,7 +31128,8 @@ msgstr "ടെസ്റ്റ് മോഡ് സജ്ജമാക്കുന�
 msgid ""
 "You must set up ticketing and create at least one product before enabling "
 "test mode."
-msgstr "ടെസ്റ്റ് മോഡ് പ്രവർത്തനക്ഷമമാക്കുന്നതിന് മുമ്പ് ടിക്കറ്റിംഗ് സജ്ജീകരിക്കുക."
+msgstr ""
+"ടെസ്റ്റ് മോഡ് പ്രവർത്തനക്ഷമമാക്കുന്നതിന് മുമ്പ് ടിക്കറ്റിംഗ് സജ്ജീകരിക്കുക."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:78
 #, fuzzy
@@ -31147,13 +31149,15 @@ msgstr "ടിക്കറ്റുകൾ പ്രസിദ്ധീകരി�
 #| msgid "You have unpaid invoices, please pay them before going live."
 msgid ""
 "You must set up ticketing and create at least one product before going live."
-msgstr "അടച്ചിട്ടില്ലാത്ത ഇന്‍വോയിസുകള്‍ ഉണ്ട്; ലൈവിലേക്കു പോകുന്നതിന് മുമ്പ് അവ അടയ്ക്കുക."
+msgstr ""
+"അടച്ചിട്ടില്ലാത്ത ഇന്‍വോയിസുകള്‍ ഉണ്ട്; ലൈവിലേക്കു പോകുന്നതിന് മുമ്പ് അവ അടയ്ക്കുക."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:89
 #, fuzzy
 #| msgid "Please resolve the ticketing issues before publishing tickets."
 msgid "Please resolve the following issues before publishing tickets:"
-msgstr "ടിക്കറ്റുകൾ പ്രസിദ്ധീകരിക്കുന്നതിന് മുമ്പ് ടിക്കറ്റിംഗിലെ പ്രശ്നങ്ങൾ പരിഹരിക്കുക."
+msgstr ""
+"ടിക്കറ്റുകൾ പ്രസിദ്ധീകരിക്കുന്നതിന് മുമ്പ് ടിക്കറ്റിംഗിലെ പ്രശ്നങ്ങൾ പരിഹരിക്കുക."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:106
 #, fuzzy
@@ -31417,8 +31421,8 @@ msgstr ""
 msgid ""
 "Publishing exposes the Schedule, Sessions, Speakers, and Call for Speakers."
 msgstr ""
-"പ്രീസെയിൽ പേജിൽ ഷെഡ്യൂൾ, സെഷനുകൾ, സ്പീക്കർമാർ, സ്പീക്കർമാർക്കുള്ള ക്ഷണം എന്നിവ കാണിക്കാൻ "
-"ടോക്ക് പേജുകൾ പ്രസിദ്ധീകരിക്കുക."
+"പ്രീസെയിൽ പേജിൽ ഷെഡ്യൂൾ, സെഷനുകൾ, സ്പീക്കർമാർ, സ്പീക്കർമാർക്കുള്ള ക്ഷണം എന്നിവ കാണിക്കാൻ ടോക്ക് "
+"പേജുകൾ പ്രസിദ്ധീകരിക്കുക."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:312
 #, fuzzy
@@ -31481,8 +31485,8 @@ msgid ""
 "speaker info."
 msgstr ""
 "ടോക്കുകൾക്കായി സ്വകാര്യ ടെസ്റ്റ് മോഡ് സജീവമാണ്. ഓർഗനൈസർമാർക്കും റിവ്യൂവേഴ്സിനും സിസ്റ്റം "
-"അഡ്മിനിസ്ട്രേറ്റർമാർക്കും മാത്രമാണ് ഷെഡ്യൂൾ, സെഷനുകൾ, സ്പീക്കർമാർ, സ്പീക്കർമാർക്കുള്ള ക്ഷണം "
-"എന്നിവ ആക്സസ് ചെയ്യാൻ കഴിയുക."
+"അഡ്മിനിസ്ട്രേറ്റർമാർക്കും മാത്രമാണ് ഷെഡ്യൂൾ, സെഷനുകൾ, സ്പീക്കർമാർ, സ്പീക്കർമാർക്കുള്ള ക്ഷണം എന്നിവ "
+"ആക്സസ് ചെയ്യാൻ കഴിയുക."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:388
 #, fuzzy
