@@ -1,5 +1,8 @@
+import ipaddress
 import mimetypes
+import socket
 import uuid
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -61,11 +64,62 @@ def store_image(response, event):  # TODO deduplicate
     return stored_file.file.url
 
 
-def retrieve_url(url):
+MAX_PREVIEW_REDIRECTS = 3
+
+
+def is_public_http_url(url: str) -> bool:
+    """
+    Return True only for http(s) URLs whose host resolves exclusively to public addresses.
+
+    Link previews are fetched server-side for any URL posted in chat, so private,
+    loopback, link-local and other non-global targets must be refused (SSRF).
+    """
     try:
-        response = requests.get(url, timeout=10)  # TODO: user agent
-    except requests.RequestException:
-        log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
+        parsed = urlparse(url)
+        port = parsed.port
+    except ValueError:
+        return False
+    if parsed.scheme not in ('http', 'https') or not parsed.hostname:
+        return False
+    try:
+        infos = socket.getaddrinfo(parsed.hostname, port or (443 if parsed.scheme == 'https' else 80))
+    except (socket.gaierror, UnicodeError):
+        return False
+    if not infos:
+        return False
+    for info in infos:
+        try:
+            address = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+            address = address.ipv4_mapped
+        if not address.is_global or address.is_multicast:
+            return False
+    return True
+
+
+def retrieve_url(url):
+    """
+    Fetch a URL for a link preview.
+
+    Redirects are followed manually so that every hop is checked with
+    ``is_public_http_url`` before a request is sent to it.
+    """
+    for _ in range(MAX_PREVIEW_REDIRECTS + 1):
+        if not is_public_http_url(url):
+            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='blocked_url', backend='preview')
+            return
+        try:
+            response = requests.get(url, timeout=10, allow_redirects=False)  # TODO: user agent
+        except requests.RequestException:
+            log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='request_error', backend='preview')
+            return
+        if not response.is_redirect:
+            break
+        url = urljoin(url, response.headers['Location'])
+    else:
+        log_event('video', 'connection.get', OUTCOME_FAILURE, error_code='too_many_redirects', backend='preview')
         return
     if response.status_code == 200:
         return response
