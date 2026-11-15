@@ -1030,14 +1030,14 @@ wheels = [
 
 [[package]]
 name = "django-scopes"
-version = "2.1.0"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/03/8032bb05788e91a7cbe7dcfa796b9692add0bd82a7fec3011ad8cec33eb9/django_scopes-2.1.0.tar.gz", hash = "sha256:dedd74c8ba09a5dad607d0f9e9a9407d92aaf94eea6a963f1ec11c98f007bbb3", size = 15599, upload-time = "2026-07-24T11:06:37.905Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/b0/f5e573e98f7943cdc49b22012a00d16f8faa83392b6b6af17dd2cddfbb6a/django_scopes-2.2.0.tar.gz", hash = "sha256:0ae1e31854624f0f6ee5fd6d4a1566cd9e33cbb323f9236a9ee26f4b0aa27d85", size = 15775, upload-time = "2026-11-12T15:36:04.09Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/60/64e5561647399f06cdea4a6500db358647e0aae957dd59152380e1064017/django_scopes-2.1.0-py3-none-any.whl", hash = "sha256:c44b9ee8a00ab2755e9a4e96c2b1b1ee4d0d0cc762f68c24fbeb1c023d219d6d", size = 12737, upload-time = "2026-07-24T11:06:36.747Z" },
+    { url = "https://files.pythonhosted.org/packages/87/23/d80cbc2726d8838fea6509347c7fd786a36a3a906efa6709f97abc315df6/django_scopes-2.2.0-py3-none-any.whl", hash = "sha256:9fb075b34853a1ccdfae852edbc9b5316e9c7b57cfb2e218d3be750318509661", size = 12738, upload-time = "2026-11-12T15:36:03.07Z" },
 ]
 
 [[package]]
