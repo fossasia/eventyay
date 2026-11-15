@@ -18,7 +18,8 @@
   body:not(.sidebar-minimized) .sidebar .nav > li > a.arrow {
     display: block;
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
+    inset-inline-start: auto;
     top: 0;
   }
   body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse {
@@ -29,7 +30,8 @@
     display: block;
   }
   body:not(.sidebar-minimized) .sidebar .nav > li > a.has-children {
-    margin-right: 40px;
+    margin-inline-end: 40px;
+    margin-inline-start: 0;
   }
 
   #event-nav .navigation .navigation-button,
