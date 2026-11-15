@@ -74,6 +74,7 @@ event_router = routers.DefaultRouter()
 event_router.register(r'subevents', event.SubEventViewSet, basename='subevents')
 event_router.register(r'clone', event.CloneEventViewSet, basename='clone')
 event_router.register(r'products', product.ProductViewSet)
+event_router.register(r'items', product.ProductViewSet, basename='item')
 event_router.register(r'categories', product.ProductCategoryViewSet)
 event_router.register(r'questions', product.QuestionViewSet)
 event_router.register(r'quotas', product.QuotaViewSet)
@@ -185,6 +186,10 @@ urlpatterns = [
     ),
     path(
         'organizers/<orgslug:organizer>/events/<slug:event>/products/<slug:product>/',
+        include(product_router.urls),
+    ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/items/<slug:product>/',
         include(product_router.urls),
     ),
     path(

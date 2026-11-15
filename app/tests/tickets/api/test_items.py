@@ -1,13 +1,11 @@
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from unittest import mock
 
 import pytest
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
-import datetime
-UTC = datetime.timezone.utc
 
 from eventyay.base.models import (
     CartPosition,
@@ -388,6 +386,11 @@ def test_item_detail_addons(token_client, organizer, event, team, item, category
     resp = token_client.get('/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk))
     assert resp.status_code == 200
     assert res['addons'] == resp.data['addons']
+
+    # Verify backward-compatible /items/ alias
+    resp_items = token_client.get('/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk))
+    assert resp_items.status_code == 200
+    assert res['addons'] == resp_items.data['addons']
 
 
 @pytest.mark.django_db
@@ -1073,6 +1076,26 @@ def test_item_update_with_addon(token_client, organizer, event, item, category):
         'the dedicated nested endpoint."]}'
     )
 
+    # Verify backward-compatible /items/ alias
+    resp_items = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk),
+        {
+            'addons': [
+                {
+                    'addon_category': category.pk,
+                    'min_count': 0,
+                    'max_count': 10,
+                    'position': 0,
+                    'multi_allowed': False,
+                    'price_included': True,
+                }
+            ]
+        },
+        format='json',
+    )
+    assert resp_items.status_code == 400
+    assert resp_items.content.decode() == resp.content.decode()
+
 
 @pytest.mark.django_db
 def test_items_delete(token_client, organizer, event, item):
@@ -1475,6 +1498,13 @@ def test_addons_list(token_client, organizer, event, item, addon, category):
     assert res['min_count'] == resp.data['results'][0]['min_count']
     assert res['max_count'] == resp.data['results'][0]['max_count']
     assert res['position'] == resp.data['results'][0]['position']
+
+    # Verify backward-compatible /items/ alias
+    resp_items = token_client.get(
+        '/api/v1/organizers/{}/events/{}/items/{}/addons/'.format(organizer.slug, event.slug, item.pk)
+    )
+    assert resp_items.status_code == 200
+    assert resp_items.data == resp.data
 
 
 @pytest.mark.django_db
