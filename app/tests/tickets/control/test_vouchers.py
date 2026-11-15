@@ -1,14 +1,22 @@
 import datetime
 import decimal
 import json
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+from types import SimpleNamespace
 
+import pytest
+from django.apps import apps
 from django.core import mail as djmail
+from django.core.exceptions import ValidationError
+from django.db import connection, connections
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
 from eventyay.control.forms.vouchers import VoucherBulkForm
+from eventyay.control.views.vouchers import VoucherBulkCreate
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 from eventyay.base.models import (
@@ -935,6 +943,52 @@ class VoucherBulkCodeValidationTest(TestCase):
                 else:
                     assert form.cleaned_data['codes'] == expected
                 assert not event.vouchers.exists()
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
+@pytest.mark.parametrize('second_code', ['ABCDE', 'abcde'])
+@pytest.mark.parametrize('prefix', [False, True])
+def test_concurrent_bulk_codes_are_revalidated(second_code, prefix):
+    """Only one prevalidated request may save the same event's case-insensitive code."""
+    organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
+    event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
+    barrier = Barrier(2)
+
+    def create(code):
+        """Use a separate request and database connection for each prevalidated form."""
+        try:
+            with scope(event=event, organizer=organizer):
+                form = VoucherBulkForm(
+                    instance=Voucher(event=event),
+                    data={
+                        'codes': code,
+                        'max_usages': 1,
+                        'price_mode': 'none',
+                        'tag': 'TAG',
+                        'use_tag_as_prefix': prefix,
+                    },
+                )
+                assert form.is_valid(), form.errors
+                barrier.wait(timeout=15)
+                view = VoucherBulkCreate()
+                view.request = SimpleNamespace(event=event, user=None)
+                task = SimpleNamespace(request=SimpleNamespace(called_directly=True))
+                try:
+                    view.async_form_valid(task, form)
+                except ValidationError as exc:
+                    assert 'A voucher with one of these codes already exists.' in str(exc)
+                    return 'rejected'
+                return 'created'
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        requests = [pool.submit(create, code) for code in ('ABCDE', second_code)]
+        assert sorted(request.result(timeout=30) for request in requests) == ['created', 'rejected']
+    with scope(event=event, organizer=organizer):
+        codes = list(event.vouchers.values_list('code', flat=True))
+        assert [code.upper() for code in codes] == ['TAGABCDE' if prefix else 'ABCDE']
 
 
 class InvoiceVoucherFormTest(TestCase):

@@ -28,7 +28,7 @@ from django.views.generic import (
     View,
 )
 
-from eventyay.base.models import CartPosition, LogEntry, Voucher
+from eventyay.base.models import CartPosition, Event, LogEntry, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
@@ -452,6 +452,7 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
         return form_kwargs
 
     def async_form_valid(self, task, form):
+        """Revalidate and create the bulk batch in one serialized transaction."""
         lockfn = NoLockManager
         if form.data.get('block_quota'):
             lockfn = self.request.event.lock
@@ -489,6 +490,8 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
 
         voucherids = []
         with lockfn(), transaction.atomic():
+            Event.objects.select_for_update(of=('self',), no_key=True).get(pk=self.request.event.pk)
+            form.full_clean()
             if not form.is_valid():
                 raise ValidationError(form.errors)
             total_num = len(form.cleaned_data['codes'])
