@@ -1172,9 +1172,9 @@ export default {
 				if (loadFailed) return
 				if (this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)) {
 					this.initialAutoScrollDone = true
-					this._pendingGoToNow = false
 					this.$nextTick(() => {
 						this.$refs.scheduleDisplay?.scrollToNow?.()
+						this._pendingGoToNow = false
 					})
 				}
 				return
@@ -1206,8 +1206,8 @@ export default {
 					const shouldScroll = this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)
 					if (shouldScroll) {
 						this.initialAutoScrollDone = true
-						this._pendingGoToNow = false
 						this.$refs.scheduleDisplay?.scrollToNow?.()
+						this._pendingGoToNow = false
 					}
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
@@ -1579,8 +1579,8 @@ export default {
 				return
 			}
 			this.$nextTick(() => {
-				this._pendingGoToNow = false
 				this.$refs.scheduleDisplay?.scrollToNow?.()
+				this._pendingGoToNow = false
 			})
 		},
 		onWindowResize () {
