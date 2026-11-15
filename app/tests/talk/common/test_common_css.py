@@ -222,6 +222,141 @@ def test_organizer_custom_primary_font_precedence_in_presale_template():
     assert presale_html.index('/media/pub/org/presale.1234.css') < presale_html.index('common/css/_fonts.css')
 
 
+def extract_media_blocks(css_content: str) -> list[tuple[str, str]]:
+    """Extract all @media query blocks as (header, body) tuples using balanced braces."""
+    blocks: list[tuple[str, str]] = []
+    i = 0
+    n = len(css_content)
+    in_string: str | None = None
+    in_comment = False
+
+    while i < n:
+        c = css_content[i]
+        if in_comment:
+            if c == '*' and i + 1 < n and css_content[i + 1] == '/':
+                in_comment = False
+                i += 2
+            else:
+                i += 1
+            continue
+        if in_string is not None:
+            if c == '\\':
+                i += 2
+            elif c == in_string:
+                in_string = None
+                i += 1
+            else:
+                i += 1
+            continue
+
+        if c == '/' and i + 1 < n and css_content[i + 1] == '*':
+            in_comment = True
+            i += 2
+            continue
+        if c in ('"', "'"):
+            in_string = c
+            i += 1
+            continue
+
+        if (
+            css_content.startswith('@media', i)
+            and (i == 0 or not (css_content[i - 1].isalnum() or css_content[i - 1] in '_-'))
+            and (i + 6 < n and (css_content[i + 6].isspace() or css_content[i + 6] in ('(', '{')))
+        ):
+            media_idx = i
+            open_brace = -1
+            scan_pos = i + 6
+            scan_str: str | None = None
+            scan_comment = False
+
+            while scan_pos < n:
+                sc = css_content[scan_pos]
+                if scan_comment:
+                    if sc == '*' and scan_pos + 1 < n and css_content[scan_pos + 1] == '/':
+                        scan_comment = False
+                        scan_pos += 2
+                    else:
+                        scan_pos += 1
+                    continue
+                if scan_str is not None:
+                    if sc == '\\':
+                        scan_pos += 2
+                    elif sc == scan_str:
+                        scan_str = None
+                        scan_pos += 1
+                    else:
+                        scan_pos += 1
+                    continue
+                if sc == '/' and scan_pos + 1 < n and css_content[scan_pos + 1] == '*':
+                    scan_comment = True
+                    scan_pos += 2
+                    continue
+                if sc in ('"', "'"):
+                    scan_str = sc
+                    scan_pos += 1
+                    continue
+                if sc == '{':
+                    open_brace = scan_pos
+                    break
+                scan_pos += 1
+
+            if open_brace == -1:
+                break
+
+            header = css_content[media_idx:open_brace].strip()
+            depth = 1
+            pos = open_brace + 1
+            body_string: str | None = None
+            body_comment = False
+            while pos < n and depth > 0:
+                c = css_content[pos]
+                if body_comment:
+                    if c == '*' and pos + 1 < n and css_content[pos + 1] == '/':
+                        body_comment = False
+                        pos += 1
+                elif body_string is not None:
+                    if c == '\\':
+                        pos += 1
+                    elif c == body_string:
+                        body_string = None
+                else:
+                    if c == '/' and pos + 1 < n and css_content[pos + 1] == '*':
+                        body_comment = True
+                        pos += 1
+                    elif c in ('"', "'"):
+                        body_string = c
+                    elif c == '{':
+                        depth += 1
+                    elif c == '}':
+                        depth -= 1
+                pos += 1
+
+            if depth == 0:
+                body = css_content[open_brace + 1 : pos - 1]
+                blocks.append((header, body))
+                i = pos
+                continue
+            else:
+                i = open_brace + 1
+                continue
+
+        i += 1
+
+    return blocks
+
+
+def extract_kpi_mobile_media_block(css_content: str) -> tuple[str, str]:
+    """Extract the single @media block containing .od-kpi-grid and verify it is at max-width: 767px."""
+    media_blocks = extract_media_blocks(css_content)
+    kpi_media_blocks = [(header, body) for header, body in media_blocks if '.od-kpi-grid' in body]
+    assert len(kpi_media_blocks) == 1, (
+        f'Expected exactly 1 media block containing .od-kpi-grid, found {len(kpi_media_blocks)}'
+    )
+    header, body = kpi_media_blocks[0]
+    assert re.search(r'max-width:\s*767px', header) is not None, f'Expected max-width: 767px media query, got: {header}'
+    return header, body
+
+
 def test_organizer_dashboard_kpi_responsive_layout():
     css_path = finders.find('eventyay-common/css/common_dashboard.css')
     assert css_path is not None
@@ -240,16 +375,32 @@ def test_organizer_dashboard_kpi_responsive_layout():
     assert 'overflow-wrap: anywhere' in kpi_label_rules
 
     # Obsolete 1200px and 991px fixed-column overrides are absent
-    for query in ('1200px', '991px'):
-        for match in re.finditer(rf'@media[^{{]*{query}[^{{]*\{{([\s\S]*?\n\}})', css_content):
-            assert '.od-kpi-grid' not in match.group(1)
+    media_blocks = extract_media_blocks(css_content)
+    for header, body in media_blocks:
+        if '1200px' in header or '991px' in header:
+            assert '.od-kpi-grid' not in body
 
-    # Existing mobile breakpoint (767px) is preserved
-    mobile_match = re.search(
-        r'@media[^{]*max-width:\s*767px[^{]*\{[\s\S]*?\.od-kpi-grid[^{]*\{[^}]*grid-template-columns:\s*1fr',
-        css_content,
-    )
-    assert mobile_match is not None
+    # Existing mobile breakpoint (767px) is preserved and contains .od-kpi-grid with 1fr
+    header, body = extract_kpi_mobile_media_block(css_content)
+    rule_match = re.search(r'([^{}]*\.od-kpi-grid[^{]*)\{([^}]+)\}', body)
+    assert rule_match is not None
+    assert 'grid-template-columns: 1fr' in rule_match.group(2)
 
     # .od-kpi-grid is defined in base layout and the mobile media query only
     assert len(re.findall(r'\.od-kpi-grid\b', css_content)) == 2
+
+
+def test_organizer_dashboard_kpi_rejects_600px_mobile_breakpoint():
+    css_path = finders.find('eventyay-common/css/common_dashboard.css')
+    assert css_path is not None
+    css_content = Path(css_path).read_text(encoding='utf-8')
+
+    modified_css = css_content.replace(
+        '@media (max-width:767px) {\n  .od-header',
+        '@media (max-width:600px) {\n  .od-header',
+    )
+    assert modified_css != css_content
+
+    # Moving the organizer grid rule to a 600px breakpoint must be rejected
+    with pytest.raises(AssertionError, match=r'Expected max-width: 767px media query, got: @media \(max-width:600px\)'):
+        extract_kpi_mobile_media_block(modified_css)
