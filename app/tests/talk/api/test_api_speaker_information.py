@@ -6,6 +6,7 @@ from django.core.files.storage import default_storage
 from django.dispatch import Signal
 from django_scopes import scope
 
+from eventyay.api.serializers import speaker_information as speaker_information_serializers
 from eventyay.api.serializers.speaker_information import SpeakerInformationSerializer
 from eventyay.base import entitlements
 
@@ -434,3 +435,49 @@ def test_orga_can_replace_speaker_information_resource(
     assert not default_storage.exists(old_name)
     with default_storage.open(new_name) as new_file:
         assert new_file.read() == b"%PDF-1.4 new"
+
+
+@pytest.mark.django_db
+def test_orga_can_add_resource_to_speaker_information_without_one(
+    client, event, settings, tmp_path, monkeypatch, allow_all_entitlements, django_capture_on_commit_callbacks
+):
+    settings.MEDIA_ROOT = tmp_path
+    deleted_names = []
+    monkeypatch.setattr(speaker_information_serializers, "delete_stored_file", deleted_names.append)
+    with scope(event=event):
+        team = event.organizer.teams.filter(can_change_organizer_settings=True, is_reviewer=False).first()
+        team_token = team.tokens.create(name="testtoken")
+        speaker_info = event.information.create(
+            title="Test Info",
+            text="This is some test information",
+            target_group="accepted",
+        )
+    assert not speaker_info.resource
+
+    response = client.post(
+        "/api/v1/upload",
+        data={"file": ContentFile(b"%PDF-1.4 first", name="first.pdf")},
+        headers={"Authorization": f"Token {team_token.token}"},
+    )
+    assert response.status_code == 201, response.content
+    file_id = response.json()["id"]
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.patch(
+            event.api_urls.speaker_information + f"{speaker_info.pk}/",
+            follow=True,
+            data=json.dumps({"resource": file_id}),
+            headers={
+                "Authorization": f"Token {team_token.token}",
+                "Content-Type": "application/json",
+            },
+        )
+    assert response.status_code == 200, response.text
+    assert deleted_names == []
+
+    with scope(event=event):
+        speaker_info.refresh_from_db()
+        new_name = speaker_info.resource.name
+    assert new_name
+    with default_storage.open(new_name) as new_file:
+        assert new_file.read() == b"%PDF-1.4 first"
