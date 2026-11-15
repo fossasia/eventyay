@@ -255,6 +255,7 @@ def test_system_page_view_custom_content():
     {'footer_page_terms_text': '{}'},
     {'footer_page_terms_text': 'null'},
     {'footer_page_terms_text': '{"en": ""}'},
+    {'footer_page_terms_text': '{"en": null}'},
 ])
 def test_system_page_view_unconfigured_returns_404(stored):
     # An enabled system page without content in any locale returns 404, not a placeholder.
