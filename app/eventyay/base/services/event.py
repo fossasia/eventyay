@@ -2,6 +2,7 @@ import copy
 import datetime
 import uuid
 from contextlib import suppress
+from typing import Any, TypedDict
 
 import jwt
 from asgiref.sync import sync_to_async
@@ -900,8 +901,17 @@ def save_event(event, update_fields, old_data, by_user):
         return new
 
 
+class AuditLogPaginationResult(TypedDict):
+    results: list[dict[str, Any]]
+    total: int
+    page: int
+    total_pages: int
+    page_size: int
+    isLastPage: bool
+
+
 @database_sync_to_async
-def get_audit_log(event, page=1, page_size=50, search="", order="desc"):
+def get_audit_log(event, page=1, page_size=50, search="", order="desc") -> AuditLogPaginationResult:
     with scope(event=event):
         qs = AuditLog.objects.filter(event_id=event.id).prefetch_related("user")
 

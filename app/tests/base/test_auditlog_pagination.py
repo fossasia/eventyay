@@ -3,6 +3,7 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from django.db.models import Q
 
 from eventyay.base.models.audit import AuditLog
 from eventyay.base.models.auth import User
@@ -178,6 +179,13 @@ async def test_get_audit_log_service_search_and_asc_order():
         assert result["isLastPage"] is True
         mock_qs.annotate.assert_called_once()
         mock_qs.filter.assert_called_once()
+        filter_q = mock_qs.filter.call_args[0][0]
+        assert isinstance(filter_q, Q)
+        assert filter_q.connector == Q.OR
+        assert ("type__icontains", "my_search") in filter_q.children
+        assert ("user__profile__display_name__icontains", "my_search") in filter_q.children
+        assert ("user_id_text__icontains", "my_search") in filter_q.children
+        assert ("data_text__icontains", "my_search") in filter_q.children
         mock_qs.order_by.assert_called_with("timestamp", "id")
 
 

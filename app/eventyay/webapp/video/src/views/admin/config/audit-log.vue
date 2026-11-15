@@ -43,6 +43,9 @@
 			.type {{ $t('Action type') }}
 			.data {{ $t('Data') }}
 		bunt-progress-circular.main-loading(v-if="entries === null", size="huge", :page="true", role="status", :aria-label="$t('Loading')")
+		.empty-state.error-state(v-else-if="error")
+			p {{ $t('Failed to load audit logs') }}
+			bunt-button.btn-retry(@click="fetchEntries") {{ $t('Retry') }}
 		.empty-state(v-else-if="displayedEntries.length === 0")
 			p {{ $t('No audit logs found') }}
 		RecycleScroller.tbody.bunt-scrollbar(
@@ -70,7 +73,7 @@
 						.name.empty-user(v-else) –
 					.type(:title="entry.type") {{ entry.type }}
 					.data(:title="formatData(entry.data)") {{ formatData(entry.data) }}
-	.pagination-bar(v-if="entries !== null")
+	.pagination-bar(v-if="entries !== null && !error")
 		.record-info
 			span(v-if="searchScope === 'page' && search.trim()") {{ $t('Showing') }} {{ displayedEntries.length }} {{ $t('matches on this page (of') }} {{ totalRecords }} {{ $t('total)') }}
 			span(v-else-if="totalRecords > 0") {{ $t('Showing') }} {{ recordRangeStart }}–{{ recordRangeEnd }} {{ $t('of') }} {{ totalRecords }} {{ $t('records') }}
@@ -164,6 +167,7 @@ export default {
 			pageSize: 50,
 			order: 'desc',
 			loading: false,
+			error: false,
 			debouncedSearch: null,
 			currentRequestId: 0,
 			lastFetchedSearch: ''
@@ -277,6 +281,7 @@ export default {
 		async fetchEntries() {
 			const requestId = ++this.currentRequestId
 			this.loading = true
+			this.error = false
 			try {
 				const payload = {
 					page: this.currentPage,
@@ -293,6 +298,7 @@ export default {
 
 				const results = res?.results || []
 				this.entries = results
+				this.error = false
 				this.lastFetchedSearch = activeSearch
 				this.totalRecords = Number(res?.total != null ? res.total : results.length)
 				const calculatedPages = Math.max(1, Math.ceil((this.totalRecords || 0) / this.pageSize))
@@ -306,6 +312,7 @@ export default {
 					this.totalRecords = 0
 					this.totalPages = 1
 					this.currentPage = 1
+					this.error = true
 				}
 			} finally {
 				if (this.currentRequestId === requestId) {
@@ -557,11 +564,19 @@ export default {
 
 		.empty-state
 			display: flex
+			flex-direction: column
+			gap: 12px
 			align-items: center
 			justify-content: center
 			padding: 48px 16px
 			color: #64748b
 			font-size: 14px
+
+			&.error-state
+				color: $clr-danger
+
+				.btn-retry
+					themed-button-secondary()
 
 	.pagination-bar
 		display: flex
