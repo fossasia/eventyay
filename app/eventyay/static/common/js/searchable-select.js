@@ -177,11 +177,18 @@ const initSearchableSelect = function(select) {
   }
 
   const applyFilter = function() {
-    const query = normalize(search.value.trim())
+    const rawQuery = search.value.trim()
+    const query = normalize(rawQuery)
+    const queryWithSpaces = normalize(rawQuery.replace(/_/g, ' '))
     let choiceMatches = 0
     options().forEach(function(option) {
       const isAll = allLabel && option.dataset.value === ''
-      const matchesQuery = !query || normalize(option.textContent).includes(query)
+      const text = normalize(option.textContent)
+      const val = option.dataset.value ? normalize(option.dataset.value) : ''
+      const matchesQuery = !query ||
+        text.includes(query) ||
+        text.includes(queryWithSpaces) ||
+        Boolean(val && (val.includes(query) || val.replace(/_/g, ' ').includes(queryWithSpaces)))
       option.hidden = !(isAll || matchesQuery)
       if (!isAll && query && matchesQuery && !isDisabledItem(option)) {
         choiceMatches += 1
