@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django import forms as dj_forms
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.http import Http404
 from django.template.loader import render_to_string
 
 from eventyay.base.forms import I18nMarkdownTextarea
@@ -248,20 +249,38 @@ def test_system_page_view_custom_content():
             assert str(page.text) == '# Custom Privacy Content'
 
 
-def test_system_page_view_default_fallback_content():
-    # Verify SystemPageView fallback content does not duplicate the page title
+@pytest.mark.parametrize('stored', [
+    {},
+    {'footer_page_terms_text': ''},
+    {'footer_page_terms_text': '{}'},
+    {'footer_page_terms_text': 'null'},
+    {'footer_page_terms_text': '{"en": ""}'},
+])
+def test_system_page_view_unconfigured_returns_404(stored):
+    # An enabled system page without content in any locale returns 404, not a placeholder.
     view = SystemPageView()
     view.slug = 'terms'
 
     with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
         with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
-            mock_settings = _make_mock_settings()
-            mock_gso.return_value.settings = mock_settings
-            page = view.get_page()
-            assert page.title == 'Terms of Service'
-            assert 'Content for this page has not been configured yet.' in str(page.text)
-            assert 'Terms of Service' not in str(page.text)
-            assert '<h1' not in str(page.text)
+            mock_gso.return_value.settings = _make_mock_settings(stored)
+            with pytest.raises(Http404):
+                view.get_page()
+
+
+def test_system_page_view_disabled_returns_404():
+    # A disabled system page returns 404 even if content exists.
+    view = SystemPageView()
+    view.slug = 'terms'
+
+    with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
+        with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+            mock_gso.return_value.settings = _make_mock_settings({
+                'footer_link_terms_enabled': False,
+                'footer_page_terms_text': 'Still here',
+            })
+            with pytest.raises(Http404):
+                view.get_page()
 
 
 def test_core_footer_template_structure():
