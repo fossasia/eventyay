@@ -1212,22 +1212,16 @@ class GiftCardPayment(BasePaymentProvider):
     def order_change_allowed(self, order: Order) -> bool:
         return super().order_change_allowed(order) and self.event.organizer.has_gift_cards
 
-    def _voucher_attempt_response(self, request: HttpRequest, unavailable: bool = False) -> HttpResponse:
-        message = error_messages['voucher_rate_limit_unavailable' if unavailable else 'voucher_rate_limited']
-        status = 503 if unavailable else 429
-        messages.error(request, message)
-        response = HttpResponse(message, status=status)
-        response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
-        return response
-
     def _reserve_gift_card_attempt(self, request: HttpRequest):
         try:
             key, allowed = reserve_voucher_attempt(request)
         except VoucherRateLimitUnavailable:
-            return None, self._voucher_attempt_response(request, unavailable=True)
+            messages.error(request, error_messages['voucher_rate_limit_unavailable'])
+            return None, False
         if not allowed:
-            return None, self._voucher_attempt_response(request)
-        return key, None
+            messages.error(request, error_messages['voucher_rate_limited'])
+            return None, False
+        return key, True
 
     def payment_form_render(self, request: HttpRequest, total: Decimal) -> str:
         return get_template('pretixcontrol/giftcards/checkout.html').render({})
@@ -1289,9 +1283,9 @@ class GiftCardPayment(BasePaymentProvider):
             messages.error(request, _('Please enter a gift card code.'))
             return
 
-        voucher_attempt_key, response = self._reserve_gift_card_attempt(request)
-        if response:
-            return response
+        voucher_attempt_key, allowed = self._reserve_gift_card_attempt(request)
+        if not allowed:
+            return
         if len(raw_gift_card_code) > MAX_VOUCHER_CODE_LENGTH:
             messages.error(request, error_messages['voucher_invalid_length'])
             return
@@ -1388,9 +1382,9 @@ class GiftCardPayment(BasePaymentProvider):
             messages.error(request, _('Please enter a gift card code.'))
             return
 
-        voucher_attempt_key, response = self._reserve_gift_card_attempt(request)
-        if response:
-            return response
+        voucher_attempt_key, allowed = self._reserve_gift_card_attempt(request)
+        if not allowed:
+            return
         if len(raw_gift_card_code) > MAX_VOUCHER_CODE_LENGTH:
             messages.error(request, error_messages['voucher_invalid_length'])
             return

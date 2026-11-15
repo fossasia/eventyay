@@ -656,6 +656,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         self.subevent = None
         self._voucher_attempt_key = None
+        self._voucher_rate_limited = False
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
@@ -699,11 +700,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             try:
                 self._voucher_attempt_key, allowed = reserve_voucher_attempt(request)
             except VoucherRateLimitUnavailable:
-                response = HttpResponse(error_messages['voucher_rate_limit_unavailable'], status=503)
+                messages.error(request, error_messages['voucher_rate_limit_unavailable'])
+                self._voucher_rate_limited = True
+                response = super().get(request, *args, **kwargs)
+                response.status_code = 503
                 response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
                 return response
             if not allowed:
-                response = HttpResponse(error_messages['voucher_rate_limited'], status=429)
+                messages.error(request, error_messages['voucher_rate_limited'])
+                self._voucher_rate_limited = True
+                response = super().get(request, *args, **kwargs)
+                response.status_code = 429
                 response['Retry-After'] = str(VOUCHER_RATE_LIMIT_WINDOW)
                 return response
 
@@ -911,7 +918,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     def _subevent_list_context(self):
         voucher = None
         raw_voucher = self.request.GET.get('voucher')
-        if raw_voucher and len(raw_voucher) <= MAX_VOUCHER_CODE_LENGTH:
+        if raw_voucher and not self._voucher_rate_limited and len(raw_voucher) <= MAX_VOUCHER_CODE_LENGTH:
             try:
                 voucher = Voucher.objects.get(
                     code__iexact=raw_voucher.strip(),

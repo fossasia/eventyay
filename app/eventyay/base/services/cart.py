@@ -173,7 +173,7 @@ error_messages = {
 MAX_VOUCHER_CODE_LENGTH = Voucher._meta.get_field('code').max_length
 VOUCHER_RATE_LIMIT_MAX = settings.VOUCHER_RATE_LIMIT_MAX
 VOUCHER_RATE_LIMIT_WINDOW = settings.VOUCHER_RATE_LIMIT_WINDOW
-# shortcut: one-second buckets approximate a sliding window without a new limiter dependency.
+# shortcut: 30-second buckets approximate a sliding window without a new limiter dependency.
 VOUCHER_RATE_LIMIT_BUCKET = settings.VOUCHER_RATE_LIMIT_BUCKET
 
 
@@ -194,35 +194,21 @@ def _voucher_rate_limit_key(request):
     client_ip = peer
     if any(peer_ip.version == network.version and peer_ip in network for network in trusted_proxies):
         forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
-        try:
-            chain = [ipaddress.ip_address(value.strip()) for value in forwarded_for.split(',') if value.strip()]
-        except ValueError:
-            chain = []
-        if chain:
-            chain.append(peer_ip)
-            for address in reversed(chain):
-                if not any(
-                    address.version == network.version and address in network for network in trusted_proxies
-                ):
-                    client_ip = str(address)
-                    break
-            else:
-                client_ip = str(peer_ip)
-        else:
-            client_ip = str(peer_ip)
+        client_ip = None
+        for value in reversed(forwarded_for.split(',')):
+            if not value.strip():
+                continue
+            try:
+                address = ipaddress.ip_address(value.strip())
+            except ValueError:
+                break
+            if not any(address.version == network.version and address in network for network in trusted_proxies):
+                client_ip = str(address)
+                break
+        if not client_ip:
+            raise VoucherRateLimitUnavailable
     value = f'{event.pk}:{client_ip}'.encode()
     return f'voucher_redeem_fail:{hashlib.sha256(value).hexdigest()}'
-
-
-def is_voucher_rate_limited(request):
-    key = _voucher_rate_limit_key(request)
-    if not key:
-        return False
-    try:
-        return _voucher_rate_limit_count(key) > VOUCHER_RATE_LIMIT_MAX
-    except (RedisError, TimeoutError, ValueError, ConnectionError):
-        logger.exception('Could not read voucher rate limit')
-        raise VoucherRateLimitUnavailable from None
 
 
 def _voucher_bucket_keys(key, timestamp=None):
@@ -253,17 +239,6 @@ def _increment_voucher_counter(key):
     raise ValueError('voucher rate-limit bucket expired during increment')
 
 
-def record_voucher_failure(request):
-    key = _voucher_rate_limit_key(request)
-    if not key:
-        return
-    try:
-        _increment_voucher_counter(key)
-    except (RedisError, TimeoutError, ValueError, ConnectionError):
-        logger.exception('Could not record voucher rate limit')
-        raise VoucherRateLimitUnavailable from None
-
-
 def reserve_voucher_attempt(request):
     """Reserve one failed-voucher attempt before performing a lookup."""
 
@@ -273,10 +248,6 @@ def reserve_voucher_attempt(request):
     try:
         count, bucket_key = _increment_voucher_counter(key)
         if count > VOUCHER_RATE_LIMIT_MAX:
-            try:
-                cache.decr(bucket_key)
-            except (RedisError, TimeoutError, ValueError, ConnectionError):
-                pass
             return key, False
         reservation_key = f'{key}:reservation:{uuid.uuid4().hex}'
         if not cache.add(reservation_key, bucket_key, timeout=VOUCHER_RATE_LIMIT_WINDOW):

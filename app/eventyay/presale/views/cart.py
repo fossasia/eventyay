@@ -244,17 +244,6 @@ class CartActionMixin:
             if isinstance(raw_products, list):
                 products.extend(product for product in raw_products if isinstance(product, dict))
 
-        for product in products:
-            voucher = product.get('voucher')
-            if voucher is not None and not isinstance(voucher, str):
-                messages.error(self.request, error_messages['voucher_invalid'])
-                self._voucher_validation_error = error_messages['voucher_invalid']
-                return
-            if isinstance(voucher, str) and len(voucher) > MAX_VOUCHER_CODE_LENGTH:
-                messages.error(self.request, error_messages['voucher_invalid_length'])
-                self._voucher_validation_error = error_messages['voucher_invalid_length']
-                return
-
         for key, values in req_products:
             for value in values:
                 try:

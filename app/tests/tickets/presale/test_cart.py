@@ -43,13 +43,12 @@ from eventyay.base.services.cart import (
     VOUCHER_RATE_LIMIT_WINDOW,
     _increment_voucher_counter,
     error_messages,
-    is_voucher_rate_limited,
-    record_voucher_failure,
     release_voucher_attempt,
     reserve_voucher_attempt,
     update_tax_rates,
     _voucher_rate_limit_key,
     _voucher_bucket_keys,
+    _voucher_rate_limit_count,
 )
 from tests.testutils.scope import classscope
 from tests.testutils.sessions import get_cart_session_key
@@ -2304,17 +2303,22 @@ class CartTest(CartTestMixin, TestCase):
             }
         }
     )
-    def test_voucher_rate_limit_counts_failures(self):
+    def test_voucher_rate_limit_remains_blocked_after_limit(self):
         cache.clear()
         request = RequestFactory().get('/')
         request.event = self.event
         request.META['REMOTE_ADDR'] = '192.0.2.1'
-        self.assertFalse(is_voucher_rate_limited(request))
         for _ in range(VOUCHER_RATE_LIMIT_MAX):
-            record_voucher_failure(request)
-        self.assertFalse(is_voucher_rate_limited(request))
-        record_voucher_failure(request)
-        self.assertTrue(is_voucher_rate_limited(request))
+            key, allowed = reserve_voucher_attempt(request)
+            self.assertTrue(allowed)
+            self.assertTrue(key)
+        with patch('eventyay.base.services.cart.cache.decr') as decrement:
+            _, allowed = reserve_voucher_attempt(request)
+            self.assertFalse(allowed)
+            _, allowed = reserve_voucher_attempt(request)
+            self.assertFalse(allowed)
+        decrement.assert_not_called()
+        self.assertGreater(_voucher_rate_limit_count(_voucher_rate_limit_key(request)), VOUCHER_RATE_LIMIT_MAX)
         cache.clear()
 
     @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
@@ -2328,6 +2332,25 @@ class CartTest(CartTestMixin, TestCase):
         direct_request.event = self.event
         direct_request.META['REMOTE_ADDR'] = '192.0.2.55'
         self.assertEqual(key, _voucher_rate_limit_key(direct_request))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
+    def test_voucher_rate_limit_keeps_valid_client_before_malformed_forwarded_hop(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='invalid, 192.0.2.55, 10.0.0.2, ')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '10.0.0.1'
+
+        direct_request = RequestFactory().get('/')
+        direct_request.event = self.event
+        direct_request.META['REMOTE_ADDR'] = '192.0.2.55'
+        self.assertEqual(_voucher_rate_limit_key(request), _voucher_rate_limit_key(direct_request))
+
+    @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
+    def test_voucher_rate_limit_rejects_malformed_chain_without_client_hop(self):
+        request = RequestFactory().get('/', HTTP_X_FORWARDED_FOR='203.0.113.8, invalid, 10.0.0.2')
+        request.event = self.event
+        request.META['REMOTE_ADDR'] = '10.0.0.1'
+        with self.assertRaises(VoucherRateLimitUnavailable):
+            _voucher_rate_limit_key(request)
 
     @override_settings(VOUCHER_RATE_LIMIT_TRUSTED_PROXIES=(ip_network('10.0.0.0/8'),))
     def test_voucher_rate_limit_ignores_forwarded_header_from_untrusted_peer(self):
@@ -2390,6 +2413,25 @@ class CartTest(CartTestMixin, TestCase):
         self.assertTrue(allowed)
         release_voucher_attempt(key)
         self.assertIsNone(cache.get(key))
+        cache.clear()
+
+    @override_settings(
+        CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'voucher-rate-limit-event-view',
+            }
+        }
+    )
+    def test_subevent_rate_limited_voucher_renders_event_page(self):
+        self.event.has_subevents = True
+        self.event.save()
+        with patch('eventyay.presale.views.event.reserve_voucher_attempt', return_value=(None, False)):
+            response = self.client.get(f'/{self.orga.slug}/{self.event.slug}/?voucher=invalid')
+
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response['Retry-After'], str(VOUCHER_RATE_LIMIT_WINDOW))
+        self.assertContains(response, 'alert-danger', status_code=429)
         cache.clear()
 
     def test_voucher_quota_empty(self):

@@ -162,7 +162,7 @@ class BaseSettings(_BaseSettings):
     cache_tickets_hours: int = Field(default=24, ge=1)
     voucher_rate_limit_max: int = Field(default=10, ge=1)
     voucher_rate_limit_window: int = Field(default=300, ge=1)
-    voucher_rate_limit_bucket: int = Field(default=1, ge=1)
+    voucher_rate_limit_bucket: int = Field(default=30, ge=1)
     # Set only to CIDRs of proxies that sanitize/append X-Forwarded-For.
     voucher_rate_limit_trusted_proxies: tuple[IPvAnyNetwork, ...] = ()
     # Days of the month to send unpaid billing invoice reminders.
