@@ -9,25 +9,31 @@
 {% load getitem %}
 
 {% block title %}{{ request.event.name }}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/common_dashboard.css' %}">
+{% endblock %}
 {% block body_class %}dashboard-print{% endblock %}
 {% block content %}
+    {# Modern dashboard header: 'Tickets dashboard' title with event name and date range. #}
     {% if is_meetup_event %}
-        {% trans "Meetup" as date_text %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
-        {% endwith %}
+        {% trans 'Meetup' as date_text %}
     {% elif request.event.has_subevents %}
-        {% trans "Event series" as date_text %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
-        {% endwith %}
+        {% trans 'Event series' as date_text %}
     {% else %}
-        {% with date_text=request.event.get_date_range_display %}
-        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
-            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
-        {% endwith %}
-        {% endwith %}
+        {% firstof request.event.get_date_range_display as date_text %}
     {% endif %}
+    <div class="modern-dashboard">
+        <nav id="event-nav" class="header-nav">
+            <div class="navigation">
+                <div class="navigation-title">
+                    <h2>{% trans 'Tickets dashboard' %}</h2>
+                    <div class="text-muted dashboard-header-extra">{{ request.event.name }}{% if date_text %} &middot; {{ date_text }}{% endif %}</div>
+                </div>
+                {% include 'pretixcontrol/event/component_link.html' %}
+            </div>
+        </nav>
+    </div>
     {% if has_overpaid_orders %}
         <div class="alert alert-warning">
             {% blocktrans trimmed %}
@@ -107,6 +113,12 @@
                     {% trans "Show more" %}
                 </a>
             </div>
+        </div>
+    {% endif %}
+
+    {% if at_a_glance %}
+        <div class="td-dashboard pt-0">
+            {% include 'pretixcontrol/event/includes/dashboard_kpi_cards.html' %}
         </div>
     {% endif %}
 
