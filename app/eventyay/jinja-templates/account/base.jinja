@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html{% if rtl %} dir='rtl' class='rtl'{% endif %}>
+<html lang='{{ html_locale() }}'{% if is_rtl() %} dir='rtl' class='rtl'{% endif %}>
 <head>
   <meta charset='utf-8'>
   <title>{% block head_title %}{% endblock head_title %} :: {{ settings.INSTANCE_NAME }}</title>
