@@ -137,11 +137,15 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
         for receiver, response in order_meta_from_request.send(sender=request.event, request=request):
             meta_info.update(response)
 
+        email = self.cart_session.get('email')
+        if not email and request.user.is_authenticated:
+            email = request.user.email
+
         return self.do(
             self.request.event.id,
             self.payment_provider.identifier if self.payment_provider else None,
             [p.id for p in self.positions],
-            self.cart_session.get('email'),
+            email,
             translation.get_language(),
             self.invoice_address.pk,
             meta_info,
