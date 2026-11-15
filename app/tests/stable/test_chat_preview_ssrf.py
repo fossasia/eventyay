@@ -248,7 +248,14 @@ def test_retrieve_url_blocks_redirect_to_site_local_host(dns, http_get):
     http_get.return_value = fake_response(302, 'http://sitelocal.example/')
     assert retrieve_url('https://public.example/page') is None
     http_get.assert_called_once()
-    assert retrieve_url('http://[fec0::1]/') is None
+
+
+@pytest.mark.parametrize('literal', ['fec0::1', '2002:7f00:1::', '2002:5db8:d822::'])
+def test_retrieve_url_blocks_ipv6_literals(dns, http_get, literal):
+    """IP literals resolve to themselves, so the address check itself must refuse them."""
+    dns[literal] = [literal]
+    assert retrieve_url(f'http://[{literal}]/') is None
+    http_get.assert_not_called()
 
 
 def serve(handler_class):

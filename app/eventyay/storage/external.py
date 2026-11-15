@@ -86,6 +86,8 @@ def is_public_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) ->
             address = address.ipv4_mapped
         elif address in NAT64_NETWORK:
             address = ipaddress.IPv4Address(int(address) & 0xFFFFFFFF)
+        elif address.sixtofour is not None:  # 2002::/16, reported as global before Python 3.12.4
+            return False
         elif address.is_site_local:  # Deprecated fec0::/10, still reported as global by Python
             return False
     return address.is_global and not address.is_multicast
