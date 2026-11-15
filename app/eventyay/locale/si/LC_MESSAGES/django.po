@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 17:08+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:25+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Sinhala <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/si/>\n"
 "Language: si\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -30181,7 +30182,8 @@ msgstr ""
 #| "choose a different one."
 msgid ""
 "You already have an event with this short name. Please choose another one."
-msgstr "මෙම ඊ-තැපැල් ලිපිනයට සම්බන්ධ ගිණුමක් දැනටමත් ඇත. කරුණාකර වෙනත් එකක් තෝරන්න."
+msgstr ""
+"මෙම ඊ-තැපැල් ලිපිනයට සම්බන්ධ ගිණුමක් දැනටමත් ඇත. කරුණාකර වෙනත් එකක් තෝරන්න."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -31061,7 +31063,8 @@ msgstr "කතා පරීක්ෂණ ප්‍රකාරය සක්‍ර
 msgid ""
 "You must publish the event main page before enabling public test mode for "
 "tickets."
-msgstr "පරීක්ෂණ මාදිලිය සක්‍රිය කිරීමට පෙර ටිකට් ප්‍රකාශයට පත් කර සකස් කර තිබිය යුතුය."
+msgstr ""
+"පරීක්ෂණ මාදිලිය සක්‍රිය කිරීමට පෙර ටිකට් ප්‍රකාශයට පත් කර සකස් කර තිබිය යුතුය."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:66
 #, fuzzy
@@ -31359,8 +31362,7 @@ msgstr ""
 msgid ""
 "Publishing exposes the Schedule, Sessions, Speakers, and Call for Speakers."
 msgstr ""
-"පෙරවිකුණුම් පිටුවේ කාලසටහන, සැසි, කථිකයන් සහ කථිකයන් සඳහා ආරාධනාව පෙන්වීමට කථා පිටු ප්‍රකාශනය "
-"කරන්න."
+"පෙරවිකුණුම් පිටුවේ කාලසටහන, සැසි, කථිකයන් සහ කථිකයන් සඳහා ආරාධනාව පෙන්වීමට කථා පිටු ප්‍රකාශනය කරන්න."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:312
 #, fuzzy
@@ -31422,8 +31424,8 @@ msgid ""
 "pages. Users with appropriate permissions can propose sessions or add "
 "speaker info."
 msgstr ""
-"කතා සඳහා පුද්ගලික පරීක්ෂණ ප්‍රකාරය සක්‍රියයි. කාලසටහන, සැසි, කථිකයින් සහ කථිකයින් සඳහා ආරාධනය "
-"වෙත ප්‍රවේශ විය හැක්කේ සංවිධායකයින්, සමාලෝචකයින් සහ පද්ධති පරිපාලකයින්ට පමණි."
+"කතා සඳහා පුද්ගලික පරීක්ෂණ ප්‍රකාරය සක්‍රියයි. කාලසටහන, සැසි, කථිකයින් සහ කථිකයින් සඳහා ආරාධනය වෙත "
+"ප්‍රවේශ විය හැක්කේ සංවිධායකයින්, සමාලෝචකයින් සහ පද්ධති පරිපාලකයින්ට පමණි."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:388
 #, fuzzy
