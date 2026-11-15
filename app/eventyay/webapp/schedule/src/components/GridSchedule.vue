@@ -91,7 +91,7 @@ import moment from 'moment-timezone'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
-import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll } from '../utils'
+import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll, shouldAutoScrollSchedule } from '../utils'
 import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
@@ -486,9 +486,14 @@ export default {
 		await this.$nextTick()
 		this.initScrollSync()
 		if (!this.$refs.now) return
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
+		const fragment = (window.location.hash || '').slice(1)
+		if (!shouldAutoScrollSchedule({
+			disableAutoScroll: this.disableAutoScroll,
+			fragment,
+			currentDay: this.currentDay,
+			now: this.now,
+			timezone: this.timezone
+		})) return
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},

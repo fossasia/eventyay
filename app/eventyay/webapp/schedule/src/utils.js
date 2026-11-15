@@ -648,6 +648,18 @@ export function sessionIntersectsDay (session, day, timezone) {
 	return daysOccupiedBySession(session, timezone).includes(day)
 }
 
+export function shouldAutoScrollSchedule ({ disableAutoScroll = false, fragment = '', currentDay, now, timezone } = {}) {
+	if (disableAutoScroll) return false
+	if (fragment && fragment.length === 10) {
+		const initialDay = timezone ? moment.tz(fragment, timezone) : moment(fragment)
+		if (initialDay.isValid()) return false
+	}
+	if (!currentDay || !now) return false
+	const todayStr = (timezone ? now.clone().tz(timezone) : now.clone()).format('YYYY-MM-DD')
+	return currentDay === todayStr
+}
+
+
 // Schedule runs as a web component without Font Awesome; use inline SVG icons.
 export const SOCIAL_ICON_SVG = {
 	website: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20zm7.9 9h-3.2a15.4 15.4 0 00-1.3-5 8.03 8.03 0 014.5 5zM12 4c.9 0 2.3 1.9 3 5H9c.7-3.1 2.1-5 3-5zM4.1 11h3.2a15.4 15.4 0 011.3-5 8.03 8.03 0 00-4.5 5zM7.3 13H4.1a8.03 8.03 0 004.5 5 15.4 15.4 0 01-1.3-5zm1.7 0h6c-.7 3.1-2.1 5-3 5s-2.3-1.9-3-5zm8.7 0h3.2a8.03 8.03 0 01-4.5 5c.6-1.5 1.1-3.2 1.3-5zM12 20c-.9 0-2.3-1.9-3-5h6c-.7 3.1-2.1 5-3 5z"/></svg>',

@@ -151,7 +151,7 @@ import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
 import ListPagination from '~/components/ListPagination.vue'
-import { findScrollParent, isDocumentScroller, readScrollOffset, writeScrollOffset, runWithoutSmoothScroll, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay } from '~/utils'
+import { findScrollParent, isDocumentScroller, readScrollOffset, writeScrollOffset, runWithoutSmoothScroll, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay, shouldAutoScrollSchedule } from '~/utils'
 const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersList'))
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
@@ -578,6 +578,16 @@ export default {
 			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return false
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery || this.onlyFavs
 				|| this.hasActiveFilterSelections || this.recordingFilter !== 'all'
+		},
+		shouldAutoScrollToNow () {
+			const fragment = (window.location.hash || '').slice(1)
+			return shouldAutoScrollSchedule({
+				disableAutoScroll: this.disableAutoScroll,
+				fragment,
+				currentDay: this.currentDay,
+				now: this.resolvedNow,
+				timezone: this.currentTimezone,
+			})
 		},
 		scheduleNeedsText () {
 			if (!this.schedule?.compact) return false
@@ -1137,6 +1147,11 @@ export default {
 				} finally {
 					this.dayLoading = false
 				}
+				if (this.shouldAutoScrollToNow) {
+					this.$nextTick(() => {
+						this.$refs.scheduleDisplay?.scrollToNow?.()
+					})
+				}
 				return
 			}
 			if (!this.currentDay) return
@@ -1163,9 +1178,12 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
+					if (this.shouldAutoScrollToNow) {
+						this.$refs.scheduleDisplay?.scrollToNow?.()
+					}
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
-					if (!navigatingTo) await this.maybeLoadPreviousGridDay()
+					if (!navigatingTo && !this.shouldAutoScrollToNow) await this.maybeLoadPreviousGridDay()
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
@@ -1432,7 +1450,13 @@ export default {
 			const scroller = this.fullscreenScroller()
 			if (scroller) this.bindScrollParent(scroller)
 			else this.bindScrollParent(this._pageScrollParent || null)
-			this.$nextTick(() => { this.forceScrollDay++ })
+			this.$nextTick(() => {
+				if (this.shouldAutoScrollToNow) {
+					this.$refs.scheduleDisplay?.scrollToNow?.()
+				} else {
+					this.forceScrollDay++
+				}
+			})
 		},
 		fullscreenScroller () {
 			const root = this.$el
