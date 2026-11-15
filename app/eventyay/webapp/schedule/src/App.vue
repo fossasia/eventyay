@@ -1220,6 +1220,7 @@ export default {
 				})
 				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
+				this._pendingGoToNow = false
 				console.error('Failed to load schedule day', requestedDay, error)
 			} finally {
 				if (this._coverageGeneration === generation) this.dayLoading = false
@@ -1505,6 +1506,7 @@ export default {
 		setCurrentDay (day) {
 			const dayStr = day.format('YYYY-MM-DD')
 			if (this._toolbarDay && dayStr !== this._toolbarDay) return
+			if (this._pendingGoToNow && dayStr !== this._pendingGoToNowDay) return
 			const pool = (this.allDays && this.allDays.length) ? this.allDays : (this.days || [])
 			const matchingDays = pool.filter(d => d.format('YYYY-MM-DD') === dayStr)
 			if (!matchingDays.length) return
@@ -1570,13 +1572,14 @@ export default {
 				window.clearTimeout(this._toolbarJumpTimer)
 				this.releaseToolbarJump(this._toolbarDay)
 			}
+			this._pendingGoToNow = true
+			this._pendingGoToNowDay = today
 			this.changeDay(todayMoment)
 			if (this.schedule?.compact && !this.scheduleNeedsEveryDay) {
-				this._pendingGoToNow = true
-				this._pendingGoToNowDay = today
 				return
 			}
 			this.$nextTick(() => {
+				this._pendingGoToNow = false
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 			})
 		},
