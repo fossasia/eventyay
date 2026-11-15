@@ -21,6 +21,7 @@
 
         {% block scripts %}{% endblock scripts %}
 
+        {% include 'common/includes/external_links.html' %}
     </head>
     <body>
         <div id="wrapper"{% if request.event.visible_primary_color %} style="background-color: {{ request.event.visible_primary_color }}"{% endif %}>
