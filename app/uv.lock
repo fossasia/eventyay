@@ -2836,11 +2836,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "7.0.0"
+version = "7.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/01/19/3e8223d0618bd441eb2b3e105de83ce4187e76f5823d876f60a109ee9072/pypdf-7.0.0.tar.gz", hash = "sha256:061aa78dec270854c912dde80c6bc060486fa955399d643da27ea30afeb6571b", size = 7201622, upload-time = "2026-11-06T12:10:03.447Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/c2/4c34b3229abae3e2fcc7809e6cf80fdea159771a37142f475fbf1009c809/pypdf-7.0.1.tar.gz", hash = "sha256:0a78bb99efb41e9088260e9a8e5da134a5cbb9a322014744177bf29b5267ea6d", size = 7206748, upload-time = "2026-11-10T11:47:22.582Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/21/e83122a25e334c718a4da67004fa94acd7215fe9f8e63a9d7c7f979eb52b/pypdf-7.0.0-py3-none-any.whl", hash = "sha256:112a2c7cbabefd8dfe498f7a13977e575e762d58cdb0d832acb8886922602c6f", size = 413949, upload-time = "2026-11-06T12:10:01.205Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/a9/ae11deef21eaac5113f8c3848da1c42423b7abeca0abc349bfec7abf4c4e/pypdf-7.0.1-py3-none-any.whl", hash = "sha256:6131b764b046282357037309e7ef2a1b7679d4a5c53eed3db2bfbf7c673ddc2b", size = 416136, upload-time = "2026-11-10T11:47:20.716Z" },
 ]
 
 [[package]]
