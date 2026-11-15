@@ -55,7 +55,7 @@ class ReportGenerator:
     def build(self, input=None):
         if input is not None:
             self.input = input or {}
-        self.schedule = get_schedule(self.event)
+        _ = self.schedule
 
         with tempfile.NamedTemporaryFile(suffix=".pdf") as f:
             doc = self.get_doc_template()(
@@ -166,6 +166,10 @@ class ReportGenerator:
             self.pagesize[0] - 15 * mm,
             self.pagesize[1] - 17 * mm,
         )
+
+    @cached_property
+    def schedule(self):
+        return get_schedule(self.event)
 
     @cached_property
     def tz(self) -> ZoneInfo:
