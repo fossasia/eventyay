@@ -9,6 +9,7 @@ from eventyay.base.models.room import RoomView
 
 
 JITSI_CONCURRENT_ROOMS_CAPABILITY = 'video.jitsi.concurrent_rooms'
+JITSI_MODULE_FILTER = [{'type': 'call.jitsi'}]
 
 VIDEO_MODULE_CAPABILITIES = {
     'livestream.youtube': 'video.youtube',
@@ -51,10 +52,15 @@ def filter_stream_by_entitlement(event, data):
 
 
 def running_jitsi_room_ids(organizer, exclude_room=None) -> set:
-    """Return the organizer's rooms that have someone admitted to their Jitsi call."""
+    """
+    Return the organizer's rooms that have someone admitted to their Jitsi call.
+
+    Only rooms that still use Jitsi count. Soft-deleted rooms keep counting while
+    admitted participants remain, since deleting a room does not end the call.
+    """
     views = RoomView.objects.filter(
         room__event__organizer=organizer,
-        room__deleted=False,
+        room__module_config__contains=JITSI_MODULE_FILTER,
         end__isnull=True,
         jitsi_joined_at__isnull=False,
     )
@@ -78,6 +84,14 @@ def admit_to_jitsi_room(room, user) -> EntitlementDecision:
     with transaction.atomic():
         # Serialize admissions per organizer so two calls cannot both take the last room.
         Organizer.objects.select_for_update().filter(pk=organizer.pk).first()
+        user_views = RoomView.objects.filter(room=room, user=user, end__isnull=True)
+        if not user_views.exists():
+            # Without an open view the call could not be counted, so it is not admitted.
+            return EntitlementDecision(
+                allowed=False,
+                reason_code='not_in_room',
+                message=_('Enter the room before joining its video call.'),
+            )
         already_running = RoomView.objects.filter(
             room=room, end__isnull=True, jitsi_joined_at__isnull=False
         ).exists()
@@ -92,7 +106,12 @@ def admit_to_jitsi_room(room, user) -> EntitlementDecision:
             )
             if not decision.allowed:
                 return decision
-        RoomView.objects.filter(
-            room=room, user=user, end__isnull=True, jitsi_joined_at__isnull=True
-        ).update(jitsi_joined_at=now())
+        user_views.filter(jitsi_joined_at__isnull=True).update(jitsi_joined_at=now())
     return decision
+
+
+def release_jitsi_room(room, user) -> None:
+    """Stop counting ``user`` in the Jitsi call of ``room`` after they leave the call."""
+    RoomView.objects.filter(
+        room=room, user=user, end__isnull=True, jitsi_joined_at__isnull=False
+    ).update(jitsi_joined_at=None)

@@ -42,7 +42,8 @@ export default {
 			conferenceJoined: false,
 			userHungUp: false,
 			hasEmittedConnected: false,
-			normalLeave: false
+			normalLeave: false,
+			admitted: false
 		}
 	},
 	async mounted() {
@@ -51,6 +52,7 @@ export default {
 	beforeUnmount() {
 		this.isDestroyed = true
 		this.cleanupMedia()
+		this.releaseRoomSlot()
 	},
 	methods: {
 		async joinJitsi() {
@@ -66,7 +68,11 @@ export default {
 
 			try {
 				const config = await api.call('jitsi.room_config', { room: this.room.id })
-				if (this.isDestroyed) return
+				this.admitted = true
+				if (this.isDestroyed) {
+					this.releaseRoomSlot()
+					return
+				}
 
 				const isHttp = (config.protocol && config.protocol.startsWith('http:')) || (config.url && config.url.startsWith('http:'))
 				if (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:' && isHttp) {
@@ -229,6 +235,7 @@ export default {
 				this.jitsiApi.addListener('videoConferenceLeft', () => {
 					this.conferenceJoined = false
 					this.normalLeave = true
+					this.releaseRoomSlot()
 				})
 
 				this.jitsiApi.addListener('readyToClose', () => {
@@ -246,18 +253,20 @@ export default {
 			} catch (err) {
 				this.loading = false
 				this.error = err
-				const errorCode = err?.code === 'jitsi.join.missing_profile'
+				// Websocket errors carry the server's code on err.apiError.
+				const serverCode = err?.apiError?.code || err?.code
+				const errorCode = serverCode === 'jitsi.join.missing_profile'
 					? 'missing_profile'
-					: (err?.code === 'jitsi.server_unavailable'
+					: (serverCode === 'jitsi.server_unavailable'
 						? 'server_unavailable'
-						: (err?.code === 'jitsi.concurrent_rooms_exceeded' ? 'concurrent_rooms_exceeded' : 'join_failed'))
+						: (serverCode === 'jitsi.concurrent_rooms_exceeded' ? 'concurrent_rooms_exceeded' : 'join_failed'))
 				logOperational({action: 'jitsi.join', outcome: 'failure', backend: 'jitsi', error_code: errorCode})
-				if (err?.code === 'jitsi.join.missing_profile') {
+				if (serverCode === 'jitsi.join.missing_profile') {
 					this.errorMsg = this.$t('Please update your display name in your profile to join.')
-				} else if (err?.code === 'jitsi.server_unavailable') {
+				} else if (serverCode === 'jitsi.server_unavailable') {
 					this.errorMsg = this.$t('No active meeting server available.')
-				} else if (err?.code === 'jitsi.concurrent_rooms_exceeded') {
-					this.errorMsg = this.$t('All video rooms included in this event\'s plan are in use. Please try again when another room has ended.')
+				} else if (serverCode === 'jitsi.concurrent_rooms_exceeded') {
+					this.errorMsg = this.$t('All video rooms included in the organizer\'s plan are in use, including rooms in its other events. Please try again when another room has ended.')
 				} else {
 					this.errorMsg = this.$t('Could not establish connection with meeting server.')
 				}
@@ -284,6 +293,12 @@ export default {
 			if (this.$refs.jitsiContainer) {
 				this.$refs.jitsiContainer.innerHTML = ''
 			}
+		},
+		releaseRoomSlot() {
+			// Tell the server this user left the call so the room stops counting toward the plan.
+			if (!this.admitted) return
+			this.admitted = false
+			api.call('jitsi.leave', { room: this.room.id }).catch(() => {})
 		},
 		hangup() {
 			this.userHungUp = true

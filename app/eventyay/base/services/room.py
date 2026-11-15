@@ -263,11 +263,14 @@ def start_view(room: Room, user: User, delete=False):
     # the way ``end_view`` is implemented, the session from browser A will still be corrected with the accurate
     # time as soon as browser A leaves.
     previous = RoomView.objects.filter(room=room, user=user, end__isnull=True)
+    # Another browser of the same user may still be in the room's Jitsi call; keep
+    # counting that call on the replacement view.
+    in_jitsi_call = previous.filter(jitsi_joined_at__isnull=False).exists()
     if delete:
         previous.delete()
     else:
         previous.update(end=now())
-    r = RoomView.objects.create(room=room, user=user)
+    r = RoomView.objects.create(room=room, user=user, jitsi_joined_at=now() if in_jitsi_call else None)
     c = RoomView.objects.filter(room=room, end__isnull=True).values("user_id").distinct().count()
     return r, c
 
