@@ -1,6 +1,12 @@
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from cssutils import CSSParser
+from cssutils.css import CSSMediaRule
 
 import eventyay
+from eventyay.presale.style import compile_scss
 
 
 EVENTYAY = Path(eventyay.__file__).parent
@@ -18,20 +24,6 @@ def indented_block(source, selector):
     return '\n'.join(block)
 
 
-def css_block(source, selector):
-    start = source.index(selector)
-    opening = source.index('{', start)
-    depth = 1
-    for index in range(opening + 1, len(source)):
-        if source[index] == '{':
-            depth += 1
-        elif source[index] == '}':
-            depth -= 1
-            if depth == 0:
-                return source[opening + 1:index]
-    raise AssertionError(f'Unclosed CSS block for {selector}')
-
-
 def test_featured_speakers_mobile_layout_stays_within_viewport():
     """Keep embedded speaker cards constrained on narrow screens."""
     source = (
@@ -40,9 +32,15 @@ def test_featured_speakers_mobile_layout_stays_within_viewport():
 
     style_source = source.split('<style lang="stylus">', 1)[1]
     mobile = indented_block(style_source, '@media (max-width: 600px)')
-    embedded = indented_block(indented_block(mobile, '.c-speakers-list'), '&.is-embedded')
-    mobile_grid = indented_block(embedded, '.featured-speakers-grid')
-    mobile_card = indented_block(embedded, '.featured-speaker-card')
+    mobile_list = indented_block(mobile, '.c-speakers-list')
+    embedded = indented_block(mobile_list, '&.is-embedded')
+    mobile_grid = indented_block(mobile_list, '.speakers-details .featured-speakers-grid')
+    mobile_stack = indented_block(mobile_list, '.speakers-details .featured-speaker-stack')
+    mobile_column = indented_block(mobile_list, '.speakers-details .featured-speaker-column')
+    mobile_card = indented_block(mobile_list, '.speakers-details .featured-speaker-card')
+    standalone_stack = indented_block(
+        mobile_list, '&:not(.is-embedded) .speakers-details .featured-speaker-stack'
+    )
 
     details = indented_block(style_source, '.speakers-details')
     desktop_grid = indented_block(details, '.featured-speakers-grid')
@@ -50,9 +48,13 @@ def test_featured_speakers_mobile_layout_stays_within_viewport():
 
     assert 'justify-content: flex-start' in desktop_grid
     assert 'justify-content: center' in mobile_grid
-    assert 'padding: 0 1rem' in embedded
-    assert 'width: 100%' in embedded
-    assert 'max-width: 100%' in embedded
+    assert 'padding: 0 0.1rem' in embedded
+    assert 'box-sizing: border-box' in mobile_list
+    assert 'featured-speakers-grid' not in embedded
+    assert 'min-width: 0' in mobile_grid
+    assert 'min-width: 0' in mobile_stack
+    assert 'min-width: 0' in mobile_column
+    assert 'max-width: 100%' in standalone_stack
     assert 'max-width: 100vw' not in embedded
     assert 'overflow-x: hidden' not in embedded
     assert 'width: 100%' in desktop_card
@@ -60,14 +62,26 @@ def test_featured_speakers_mobile_layout_stays_within_viewport():
     assert 'max-width: 100%' in mobile_card
 
 
-def test_mobile_ticket_status_row_removes_horizontal_overflow():
-    """Keep the mobile ticket status row inside the presale container."""
-    source = (
-        EVENTYAY / 'static' / 'pretixpresale' / 'scss' / '_event.scss'
-    ).read_text(encoding='utf-8')
+def test_mobile_ticket_status_row_rule_is_scoped_to_front_page():
+    """Ensure the compiled mobile override targets the front-page status row."""
+    with patch('eventyay.presale.style.settings.STATIC_ROOT', EVENTYAY / 'static'):
+        css, _ = compile_scss(SimpleNamespace(settings={}), fonts=False)
+    stylesheet = CSSParser(raiseExceptions=False, validate=False).parseString(css)
 
-    mobile_rules = css_block(source, '@media (max-width: $screen-sm-max)')
-    row_rules = css_block(mobile_rules, '.order-status-row')
+    mobile_rule = next(
+        rule
+        for rule in stylesheet.cssRules
+        if isinstance(rule, CSSMediaRule)
+        and any(
+            getattr(nested, 'selectorText', '') == '.front-page .order-status-row'
+            for nested in rule.cssRules
+        )
+    )
+    row_rule = next(
+        nested
+        for nested in mobile_rule.cssRules
+        if getattr(nested, 'selectorText', '') == '.front-page .order-status-row'
+    )
 
-    assert 'margin-left: 0;' in row_rules
-    assert 'margin-right: 0;' in row_rules
+    assert row_rule.style.getPropertyValue('margin-left') == '0'
+    assert row_rule.style.getPropertyValue('margin-right') == '0'
