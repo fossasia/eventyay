@@ -2003,6 +2003,9 @@ class OrderChangeManager:
     def _perform_operations(self):
         nextposid = self.order.all_positions.aggregate(m=Max('positionid'))['m'] + 1
         split_positions = []
+        # Cards a cancellation already reversed in this batch, so a parent and an
+        # explicit add-on operation do not reverse the same card twice.
+        reversed_card_pks = set()
 
         for op in self._operations:
             if isinstance(op, self.ProductOperation):
@@ -2187,6 +2190,8 @@ class OrderChangeManager:
             elif isinstance(op, self.CancelOperation):
                 for position in [op.position] + list(op.position.addons.filter(canceled=False)):
                     for card in position.issued_gift_cards.select_for_update():
+                        if card.pk in reversed_card_pks:
+                            continue
                         if card.value < card.issued_value:
                             raise OrderError(
                                 _(
@@ -2195,6 +2200,7 @@ class OrderChangeManager:
                                 ).format(card=card.secret)
                             )
                         card.transactions.create(value=-card.issued_value, order=self.order)
+                        reversed_card_pks.add(card.pk)
 
                 for opa in op.position.addons.filter(canceled=False):
                     self.order.log_action(
