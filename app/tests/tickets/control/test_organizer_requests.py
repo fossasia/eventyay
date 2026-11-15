@@ -217,7 +217,21 @@ def test_reject(application, admin, django_capture_on_commit_callbacks):
     assert result.status == 'rejected' and result.reviewed_by == admin
     assert not User.objects.filter(email=application.email).exists()
     assert result.organizer is None
-    assert 'Please tell us more' in mail.call_args.args[3]['body']
+    body = mail.call_args.args[3]['body']
+    assert 'was not approved' in body
+    assert 'Reason from the reviewer: Please tell us more' in body
+    assert reverse('organizer_request.create') in body
+
+
+def test_reject_without_reason_says_so(application, admin, django_capture_on_commit_callbacks):
+    with (
+        patch('eventyay.base.services.organizer_requests.mail') as mail,
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        review_request(application.pk, admin, approve=False)
+    body = mail.call_args.args[3]['body']
+    assert 'did not give a reason' in body
+    assert 'Reason from the reviewer' not in body
 
 
 def test_admin_review_pages(client, application, admin):
@@ -416,7 +430,9 @@ def test_submission_email_rendering(client, data, mailoutbox, django_capture_on_
     with django_capture_on_commit_callbacks(execute=True):
         assert client.post('/invite', data).status_code == 302
     assert len(mailoutbox) == 1
-    assert 'within a few business days' in mailoutbox[0].body
+    body = mailoutbox[0].body
+    assert 'within a few business days' in body
+    assert 'we will email you at this address' in body
 
 
 def test_welcome_email_password_link(client, application, admin, mailoutbox, django_capture_on_commit_callbacks):
@@ -538,6 +554,7 @@ def test_staff_notification_excludes_applicant_text(client, data, admin, django_
     assert 'untrusted.example' not in body
     assert data['name'] not in body
     assert '/admin/organizer-requests/' in body
+    assert 'approve or reject pending requests from the list' in body
 
 
 def test_required_question_is_stored_with_the_request(client, data):
