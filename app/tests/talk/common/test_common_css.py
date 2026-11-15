@@ -229,6 +229,11 @@ def extract_media_blocks(css_content: str) -> list[tuple[str, str]]:
     n = len(css_content)
     in_string: str | None = None
     in_comment = False
+    mode = 'OUTSIDE'
+    media_start = 0
+    body_start = 0
+    depth = 0
+    header = ''
 
     while i < n:
         c = css_content[i]
@@ -258,87 +263,30 @@ def extract_media_blocks(css_content: str) -> list[tuple[str, str]]:
             i += 1
             continue
 
-        if (
-            css_content.startswith('@media', i)
-            and (i == 0 or not (css_content[i - 1].isalnum() or css_content[i - 1] in '_-'))
-            and (i + 6 < n and (css_content[i + 6].isspace() or css_content[i + 6] in ('(', '{')))
-        ):
-            media_idx = i
-            open_brace = -1
-            scan_pos = i + 6
-            scan_str: str | None = None
-            scan_comment = False
-
-            while scan_pos < n:
-                sc = css_content[scan_pos]
-                if scan_comment:
-                    if sc == '*' and scan_pos + 1 < n and css_content[scan_pos + 1] == '/':
-                        scan_comment = False
-                        scan_pos += 2
-                    else:
-                        scan_pos += 1
-                    continue
-                if scan_str is not None:
-                    if sc == '\\':
-                        scan_pos += 2
-                    elif sc == scan_str:
-                        scan_str = None
-                        scan_pos += 1
-                    else:
-                        scan_pos += 1
-                    continue
-                if sc == '/' and scan_pos + 1 < n and css_content[scan_pos + 1] == '*':
-                    scan_comment = True
-                    scan_pos += 2
-                    continue
-                if sc in ('"', "'"):
-                    scan_str = sc
-                    scan_pos += 1
-                    continue
-                if sc == '{':
-                    open_brace = scan_pos
-                    break
-                scan_pos += 1
-
-            if open_brace == -1:
-                break
-
-            header = css_content[media_idx:open_brace].strip()
-            depth = 1
-            pos = open_brace + 1
-            body_string: str | None = None
-            body_comment = False
-            while pos < n and depth > 0:
-                c = css_content[pos]
-                if body_comment:
-                    if c == '*' and pos + 1 < n and css_content[pos + 1] == '/':
-                        body_comment = False
-                        pos += 1
-                elif body_string is not None:
-                    if c == '\\':
-                        pos += 1
-                    elif c == body_string:
-                        body_string = None
-                else:
-                    if c == '/' and pos + 1 < n and css_content[pos + 1] == '*':
-                        body_comment = True
-                        pos += 1
-                    elif c in ('"', "'"):
-                        body_string = c
-                    elif c == '{':
-                        depth += 1
-                    elif c == '}':
-                        depth -= 1
-                pos += 1
-
-            if depth == 0:
-                body = css_content[open_brace + 1 : pos - 1]
-                blocks.append((header, body))
-                i = pos
+        if mode == 'OUTSIDE':
+            if (
+                css_content.startswith('@media', i)
+                and (i == 0 or not (css_content[i - 1].isalnum() or css_content[i - 1] in '_-'))
+                and (i + 6 < n and (css_content[i + 6].isspace() or css_content[i + 6] in ('(', '{')))
+            ):
+                media_start = i
+                mode = 'HEADER'
+                i += 6
                 continue
-            else:
-                i = open_brace + 1
-                continue
+        elif mode == 'HEADER':
+            if c == '{':
+                header = css_content[media_start:i].strip()
+                body_start = i + 1
+                depth = 1
+                mode = 'BODY'
+        elif mode == 'BODY':
+            if c == '{':
+                depth += 1
+            elif c == '}':
+                depth -= 1
+                if depth == 0:
+                    blocks.append((header, css_content[body_start:i]))
+                    mode = 'OUTSIDE'
 
         i += 1
 
