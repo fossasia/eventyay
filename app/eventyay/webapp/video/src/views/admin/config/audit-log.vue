@@ -741,8 +741,9 @@ export default {
 			pre
 				margin: 0
 				padding: 14px
-				background-color: #0f172a
-				color: #e2e8f0
+				background-color: #f8fafc
+				color: #0f172a
+				border: 1px solid #e2e8f0
 				border-radius: 6px
 				font-size: 12.5px
 				line-height: 1.5
