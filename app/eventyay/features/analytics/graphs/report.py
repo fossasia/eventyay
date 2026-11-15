@@ -376,7 +376,7 @@ class ReportGenerator:
             day_end = day.replace(hour=23, minute=59, second=59, microsecond=0)
             gds = max(self.date_begin, day_start)
             gde = min(self.date_end, day_end)
-            if gds >= gde:
+            if gds.astimezone(datetime.timezone.utc) >= gde.astimezone(datetime.timezone.utc):
                 day += timedelta(days=1)
                 continue
             fig = Figure(figsize=(7, 4))
@@ -561,7 +561,7 @@ class ReportGenerator:
             day_end = day.replace(hour=23, minute=59, second=59, microsecond=0)
             gds = max(self.date_begin, day_start)
             gde = min(self.date_end, day_end)
-            if gds >= gde:
+            if gds.astimezone(datetime.timezone.utc) >= gde.astimezone(datetime.timezone.utc):
                 day += timedelta(days=1)
                 continue
             fig = Figure(figsize=(7, 4))

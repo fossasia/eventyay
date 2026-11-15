@@ -70,7 +70,15 @@ def test_event_timezone_serialization_and_fallback():
         assert get_event_config_for_user(event, user)["world"]["timezone"] == "Asia/Tokyo"
 
         # Falls back to event.timezone when settings.timezone is empty
+        event.timezone = "Europe/Paris"
         event.settings.timezone = ""
+        assert get_event_timezone_name(event) == "Europe/Paris"
+        assert get_event_timezone(event) == ZoneInfo("Europe/Paris")
+        assert ReportGenerator(event).tz == ZoneInfo("Europe/Paris")
+        assert get_event_config_for_user(event, user)["world"]["timezone"] == "Europe/Paris"
+
+        # Falls back to UTC when both settings.timezone and event.timezone are empty
+        event.timezone = ""
         assert get_event_timezone_name(event) == "UTC"
         assert get_event_timezone(event) == ZoneInfo("UTC")
         assert ReportGenerator(event).tz == ZoneInfo("UTC")
@@ -875,10 +883,12 @@ def test_session_views_open_view_dst_spring_forward():
 
         # In Berlin on Sunday March 29, 2026: clocks jump from 02:00 CET (+01:00) to 03:00 CEST (+02:00)
         # Talk starts at 04:30 CEST (02:30 UTC) and ends at 05:30 CEST (03:30 UTC).
-        # Viewer joined at 01:45 CET (00:45 UTC) - open view (end=None).
-        # Elapsed physical time between join and talk start is 1 hour 45 minutes (<= 3 hours).
+        # Viewer joined at 01:00 CET (00:00 UTC) - open view (end=None).
+        # Elapsed physical time between join and talk start is 2 hours 30 minutes (<= 3 hours).
+        # Under the old local-time subtraction (04:30 CEST - 3h = 01:30 CET = 00:30 UTC), this view at 00:00 UTC was erroneously excluded.
+        # With UTC lookback (02:30 UTC - 3h = 23:30 UTC), this view is correctly included.
         talk_start_utc = datetime.datetime(2026, 3, 29, 2, 30, tzinfo=datetime.timezone.utc)
-        view_start_utc = datetime.datetime(2026, 3, 29, 0, 45, tzinfo=datetime.timezone.utc)
+        view_start_utc = datetime.datetime(2026, 3, 29, 0, 0, tzinfo=datetime.timezone.utc)
         _create_room_view(room=room, user=user, start=view_start_utc, end=None)
 
         fake_schedule = {
@@ -1009,6 +1019,23 @@ def test_room_views_dst_fallback_repeated_hour_buckets():
             # Find the row corresponding to 02:15 during the second hour (viewers should be 1)
             active_rows = [r for r in rows[1:] if r[2] == 1]
             assert len(active_rows) > 0
+
+            # Also test a custom date range spanning within the repeated hour (02:30+02:00 to 02:15+01:00)
+            # which spans 45 physical minutes in UTC (00:30 UTC to 01:15 UTC).
+            # Verifies that UTC boundary comparison prevents skipping the repeated hour.
+            generate_room_views(
+                event.pk,
+                {
+                    "begin": "2026-10-25T02:30:00+02:00",
+                    "end": "2026-10-25T02:15:00+01:00",
+                },
+            )
+            assert saved_content is not None
+            wb = load_workbook(filename=BytesIO(saved_content))
+            sheet = wb["DST Bucket Hall"]
+            repeated_hour_rows = list(sheet.iter_rows(values_only=True))
+            # 45 minutes = 9 intervals of 5 minutes (+ 1 header row = 10 rows)
+            assert len(repeated_hour_rows) >= 10
 
 
 

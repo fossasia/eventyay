@@ -467,9 +467,9 @@ export default {
 				} else if (this.activePreset !== 'custom') {
 					const currentOption = newOptions.find(o => o.id === this.activePreset)
 					if (currentOption?.start && currentOption?.end) {
-						this.datetimeStart = this.formatDateTime(currentOption.start)
-						this.datetimeEnd = this.formatDateTime(currentOption.end)
 						if (!this.dropdownOpen) {
+							this.datetimeStart = this.formatDateTime(currentOption.start)
+							this.datetimeEnd = this.formatDateTime(currentOption.end)
 							this.draftStart = this.datetimeStart
 							this.draftEnd = this.datetimeEnd
 						}
@@ -551,6 +551,9 @@ export default {
 				this.cancelDropdown()
 				return
 			}
+			this._appliedStartOnOpen = this.datetimeStart
+			this._appliedEndOnOpen = this.datetimeEnd
+			this.dropdownOpen = true
 			this.nowTick = Date.now()
 			this.draftPreset = this.activePreset
 			if (this.activePreset && this.activePreset.startsWith('day_')) {
@@ -571,7 +574,6 @@ export default {
 				this.draftStart = this.datetimeStart
 				this.draftEnd = this.datetimeEnd
 			}
-			this.dropdownOpen = true
 			window.addEventListener('keydown', this.onKeydown)
 			await this.$nextTick()
 			this.initPopper()
@@ -634,12 +636,18 @@ export default {
 			this.activePreset = this.draftPreset
 			this.datetimeStart = this.draftStart
 			this.datetimeEnd = this.draftEnd
+			this._appliedStartOnOpen = this.datetimeStart
+			this._appliedEndOnOpen = this.datetimeEnd
 			this.closeDropdown()
 		},
 		cancelDropdown() {
 			this.draftPreset = this.activePreset
 			if (this.activePreset && this.activePreset.startsWith('day_')) {
 				this.selectedDayId = this.activePreset
+			}
+			if (this._appliedStartOnOpen !== undefined) {
+				this.datetimeStart = this._appliedStartOnOpen
+				this.datetimeEnd = this._appliedEndOnOpen
 			}
 			this.draftStart = this.datetimeStart
 			this.draftEnd = this.datetimeEnd

@@ -272,7 +272,7 @@ def generate_room_views(event, input=None):
                     day_end = day.replace(hour=23, minute=59, second=59, microsecond=0)
                     gds = max(begin, day_start)
                     gde = min(end, day_end)
-                    if gds >= gde:
+                    if gds.astimezone(datetime.timezone.utc) >= gde.astimezone(datetime.timezone.utc):
                         day += timedelta(days=1)
                         continue
 
