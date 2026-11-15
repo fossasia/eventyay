@@ -141,6 +141,11 @@ def system_information(request):
         ('support', _('Support'), '/support'),
     ]
 
+    from i18nfield.strings import LazyI18nString
+
+    from eventyay.control.forms.pages_admin import CONTENT_PAGE_SLUGS
+    from eventyay.control.views.pages import _has_i18n_content
+
     core_footer_links = []
     for key, label, default_url in core_footer_items:
         enabled = gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
@@ -148,6 +153,11 @@ def system_information(request):
         if key == 'pricing' and not main_site_route_exists(url):
             # Core has no pricing page; a plugin such as eventyay-business provides it.
             continue
+        # A content page served from its default local route 404s when it has no
+        # content, so do not link to it from the footer in that case.
+        if key in CONTENT_PAGE_SLUGS and url == default_url:
+            if not _has_i18n_content(gs.get(f'footer_page_{key}_text', as_type=LazyI18nString)):
+                continue
         if enabled and url:
             core_footer_links.append({
                 'key': key,
