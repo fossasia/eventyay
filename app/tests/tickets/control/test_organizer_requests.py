@@ -679,3 +679,55 @@ def test_organizer_request_form_order_ajax(client, admin):
     )
     assert invalid_response.status_code == 400
     assert 'error' in invalid_response.json()
+
+
+def test_every_default_field_has_a_settings_button(client, admin):
+    page = client.get(reverse('eventyay_admin:admin.organizer_forms')).content.decode()
+    for key in ('name', 'email', 'organizer_name', 'slug', 'affiliation', 'events'):
+        url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=[key])
+        assert f'href="{url}"' in page
+    assert page.count('aria-label="Settings for ') == 6
+
+
+def test_field_settings_override_label_and_help_text(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    page = client.get(url)
+    assert page.status_code == 200
+    response = client.post(url, {'label': '  Your group  ', 'help_text': 'Tell us who you organise with.'})
+    assert response.status_code == 302
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    assert setting.label == 'Your group'
+    assert setting.help_text == 'Tell us who you organise with.'
+    public = client.get('/invite').content.decode()
+    assert 'Your group' in public
+    assert 'Tell us who you organise with.' in public
+    assert 'Your group' in client.get(reverse('eventyay_admin:admin.organizer_forms')).content.decode()
+
+
+def test_field_settings_can_change_a_locked_field_text(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['name'])
+    assert client.post(url, {'label': 'Full name', 'help_text': ''}).status_code == 302
+    assert 'Full name' in client.get('/invite').content.decode()
+    assert OrganizerRequestFieldSetting.objects.get(key='name').active is True
+
+
+def test_field_settings_reset_restores_defaults(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
+    client.post(url, {'label': 'Our events', 'help_text': 'Custom help.'})
+    assert client.post(url, {'action': 'reset'}).status_code == 302
+    setting = OrganizerRequestFieldSetting.objects.get(key='events')
+    assert (setting.label, setting.help_text) == ('', '')
+    assert 'Events you organise' in client.get('/invite').content.decode()
+
+
+def test_field_settings_unknown_key_is_404(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['nope'])
+    assert client.get(url).status_code == 404
+
+
+def test_field_settings_require_admin(client, application):
+    client.force_login(User.objects.create_user('other@example.com'))
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
+    assert client.get(url).status_code == 403
+    assert client.post(url, {'label': 'X', 'help_text': ''}).status_code == 403
+    assert OrganizerRequestFieldSetting.objects.filter(key='events', label='X').count() == 0

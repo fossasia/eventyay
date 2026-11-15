@@ -115,8 +115,9 @@ def organiser_form_rows():
             required = spec['locked'] or obj.required
             rows.append(
                 {
-                    'label': spec['label'],
-                    'help_text': spec['help_text'],
+                    'label': obj.label or spec['label'],
+                    'help_text': obj.help_text or spec['help_text'],
+                    'settings_url': reverse('eventyay_admin:admin.organizer_forms.field.settings', kwargs={'key': obj.key}),
                     'locked': spec['locked'],
                     'active': spec['locked'] or obj.active,
                     'required': required,

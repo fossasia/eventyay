@@ -74,6 +74,11 @@
                 </div>
               </td>
               <td class="text-right" data-label="{% trans 'Settings' %}">
+                {% if row.settings_url %}
+                  <a href="{{ row.settings_url }}" class="btn btn-sm btn-default" title="{% trans 'Settings' %}" aria-label="{% blocktrans with label=row.label %}Settings for {{ label }}{% endblocktrans %}">
+                    <i class="fa fa-cog" aria-hidden="true"></i>
+                  </a>
+                {% endif %}
                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% trans 'Move item' %}" aria-label="{% blocktrans with label=row.label %}Move {{ label }}{% endblocktrans %}">
                   <i class="fa fa-arrows" aria-hidden="true"></i>
                 </button>
