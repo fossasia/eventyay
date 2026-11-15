@@ -18,7 +18,7 @@ from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
@@ -579,6 +579,11 @@ class VoucherGroupUpdate(EventPermissionRequiredMixin, FormView):
             'preview': True,
         }
 
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or self.request.POST.get('ajax_preview') == '1':
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        return super().form_invalid(form)
+
     @transaction.atomic
     def form_valid(self, form):
         object_ids = list(self.get_objects().values_list('pk', flat=True))
@@ -587,6 +592,111 @@ class VoucherGroupUpdate(EventPermissionRequiredMixin, FormView):
             .prefetch_related('limit_products', 'limit_variations')
             .select_for_update()
         )
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or self.request.POST.get('ajax_preview') == '1':
+            changed_fields = self.get_changed_fields(objects, form)
+            skipped_ids, reasons = self.skipped_object_ids(objects, form, changed_fields)
+            eligible_objects = [obj for obj in objects if obj.pk not in skipped_ids]
+            try:
+                self.validate_quota_delta(eligible_objects, form, changed_fields)
+            except ValidationError as exc:
+                msg = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+
+            if not changed_fields:
+                return JsonResponse({
+                    'success': True,
+                    'has_changes': False,
+                    'message': _('No voucher changes were submitted.'),
+                })
+
+            update_count = len(objects) - len(skipped_ids)
+            skip_count = len(skipped_ids)
+            update_text = ngettext(
+                '%(count)d voucher will be updated.',
+                '%(count)d vouchers will be updated.',
+                update_count,
+            ) % {'count': update_count}
+            lines = [update_text]
+            html_lines = [
+                f'<div class="confirm-stat confirm-stat--success"><i class="fa fa-check-circle text-success" aria-hidden="true"></i> <span><strong>{update_count}</strong> {escape(ngettext("voucher will be updated.", "vouchers will be updated.", update_count))}</span></div>'
+            ]
+
+            if skip_count:
+                only_fully_used = reasons['fully_used'] == skip_count
+                only_max_too_low = reasons['max_too_low'] == skip_count
+                only_seat_incompatible = reasons['seat_incompatible'] == skip_count
+
+                if only_fully_used:
+                    detail = _('fully used')
+                elif only_max_too_low:
+                    detail = _('maximum usages below redemptions')
+                elif only_seat_incompatible:
+                    detail = _('seat belongs to another product')
+                else:
+                    parts = []
+                    if reasons['fully_used']:
+                        parts.append(
+                            ngettext('%(count)d fully used', '%(count)d fully used', reasons['fully_used'])
+                            % {'count': reasons['fully_used']}
+                        )
+                    if reasons['max_too_low']:
+                        parts.append(
+                            ngettext(
+                                '%(count)d maximum usages below redemptions',
+                                '%(count)d maximum usages below redemptions',
+                                reasons['max_too_low'],
+                            )
+                            % {'count': reasons['max_too_low']}
+                        )
+                    if reasons['seat_incompatible']:
+                        parts.append(
+                            ngettext(
+                                '%(count)d seat belongs to another product',
+                                '%(count)d seat belongs to another product',
+                                reasons['seat_incompatible'],
+                            )
+                            % {'count': reasons['seat_incompatible']}
+                        )
+                    detail = ', '.join(parts)
+
+                if detail:
+                    skip_text = ngettext(
+                        '%(count)d voucher will be skipped (%(detail)s).',
+                        '%(count)d vouchers will be skipped (%(detail)s).',
+                        skip_count,
+                    ) % {'count': skip_count, 'detail': detail}
+                    skip_suffix = ngettext(
+                        'voucher will be skipped (%(detail)s).',
+                        'vouchers will be skipped (%(detail)s).',
+                        skip_count,
+                    ) % {'detail': detail}
+                else:
+                    skip_text = ngettext(
+                        '%(count)d voucher will be skipped.',
+                        '%(count)d vouchers will be skipped.',
+                        skip_count,
+                    ) % {'count': skip_count}
+                    skip_suffix = ngettext(
+                        'voucher will be skipped.',
+                        'vouchers will be skipped.',
+                        skip_count,
+                    )
+                lines.append(skip_text)
+                html_lines.append(
+                    f'<div class="confirm-stat confirm-stat--warning"><i class="fa fa-exclamation-triangle text-warning" aria-hidden="true"></i> <span><strong>{skip_count}</strong> {escape(skip_suffix)}</span></div>'
+                )
+
+            html_message = f'<div class="confirm-dialog-stats">{"".join(html_lines)}</div>'
+
+            return JsonResponse({
+                'success': True,
+                'has_changes': True,
+                'update_count': update_count,
+                'skip_count': skip_count,
+                'message': '\n'.join(lines),
+                'html_message': html_message,
+            })
+
         if self.request.POST.get('confirm') != '1':
             return self.render_to_response(self.preview_context(form))
         changed_fields = self.get_changed_fields(objects, form)

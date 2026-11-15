@@ -4,11 +4,18 @@
 {% load eventsignal %}
 {% load bootstrap3 %}
 {% load static %}
+{% block custom_header %}
+  {{ block.super }}
+  <script type='module' src="{% static 'pretixcontrol/js/ui/voucher-group.js' %}"></script>
+{% endblock %}
 {% block title %}{% trans 'Edit multiple vouchers' %}{% endblock %}
 {% block inside %}
   {% trans 'Edit multiple vouchers' as header_title %}
   {% include 'common/includes/header_nav.html' with header_title=header_title header_component_link='pretixcontrol/event/component_link.html' %}
-  <form action='{{ action_url|default:"" }}' method='post' class='form-horizontal'>
+  <form action='{{ action_url|default:"" }}' method='post' class='form-horizontal' data-voucher-group-form
+        data-confirm-title="{% trans 'Confirm voucher updates' %}"
+        data-confirm-label="{% trans 'Confirm and save' %}"
+        data-cancel-label="{% trans 'Cancel' %}">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
     {% for voucher_id in selection_voucher_ids %}<input type='hidden' name='voucher' value='{{ voucher_id }}'>{% endfor %}
@@ -28,38 +35,33 @@
             <strong>{{ count }}</strong> vouchers will be updated.
           {% endblocktrans %}
         </p>
-        <p>
-          {% blocktrans count count=skip_count %}
-            <strong>{{ count }}</strong> voucher will be skipped.
-          {% plural %}
-            <strong>{{ count }}</strong> vouchers will be skipped.
-          {% endblocktrans %}
-        </p>
-        {% if fully_used_count %}
+        {% if skip_count %}
           <p>
-            {% blocktrans count count=fully_used_count %}
-              {{ count }} fully used voucher will be skipped.
-            {% plural %}
-              {{ count }} fully used vouchers will be skipped.
-            {% endblocktrans %}
-          </p>
-        {% endif %}
-        {% if max_too_low_count %}
-          <p>
-            {% blocktrans count count=max_too_low_count %}
-              {{ count }} voucher will be skipped because maximum usages is below its redemptions.
-            {% plural %}
-              {{ count }} vouchers will be skipped because maximum usages is below their redemptions.
-            {% endblocktrans %}
-          </p>
-        {% endif %}
-        {% if seat_incompatible_count %}
-          <p>
-            {% blocktrans count count=seat_incompatible_count %}
-              {{ count }} voucher will be skipped because its seat belongs to another product.
-            {% plural %}
-              {{ count }} vouchers will be skipped because their seats belong to another product.
-            {% endblocktrans %}
+            {% if fully_used_count == skip_count %}
+              {% blocktrans count count=skip_count %}
+                <strong>{{ count }}</strong> voucher will be skipped (fully used).
+              {% plural %}
+                <strong>{{ count }}</strong> vouchers will be skipped (fully used).
+              {% endblocktrans %}
+            {% elif max_too_low_count == skip_count %}
+              {% blocktrans count count=skip_count %}
+                <strong>{{ count }}</strong> voucher will be skipped (maximum usages below redemptions).
+              {% plural %}
+                <strong>{{ count }}</strong> vouchers will be skipped (maximum usages below redemptions).
+              {% endblocktrans %}
+            {% elif seat_incompatible_count == skip_count %}
+              {% blocktrans count count=skip_count %}
+                <strong>{{ count }}</strong> voucher will be skipped (seat belongs to another product).
+              {% plural %}
+                <strong>{{ count }}</strong> vouchers will be skipped (seat belongs to another product).
+              {% endblocktrans %}
+            {% else %}
+              {% blocktrans count count=skip_count %}
+                <strong>{{ count }}</strong> voucher will be skipped.
+              {% plural %}
+                <strong>{{ count }}</strong> vouchers will be skipped.
+              {% endblocktrans %}
+            {% endif %}
           </p>
         {% endif %}
       </div>
@@ -119,7 +121,7 @@
     <div class='form-group submit-group'>
       <a href="{% url 'control:event.vouchers' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-default btn-cancel'>{% trans 'Cancel' %}</a>
       <button type='submit'{% if preview %} name='confirm' value='1'{% endif %} class='btn btn-primary btn-save'>
-        {% if preview %}{% trans 'Confirm and save' %}{% else %}{% trans 'Review changes' %}{% endif %}
+        {% if preview %}{% trans 'Confirm and save' %}{% else %}{% trans 'Save' %}{% endif %}
       </button>
     </div>
   </form>
