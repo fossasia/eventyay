@@ -1,5 +1,6 @@
 import nh3
 import json
+import re
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -408,12 +409,26 @@ class ShowPageView(TemplateView):
         return ctx
 
 
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+_INVISIBLE_CHARS = (' ', '​', '‌', '‍', '﻿')
+
+
 def _has_i18n_content(value):
-    """True when a stored i18n value has non-empty text in at least one locale."""
+    """True when a stored i18n value has visible text in at least one locale.
+
+    Empty rich-text markup (e.g. ``<p></p>``) and invisible characters do not count.
+    """
     data = getattr(value, 'data', value)
-    if isinstance(data, dict):
-        return any(item is not None and str(item).strip() for item in data.values())
-    return bool(data and str(data).strip())
+    values = data.values() if isinstance(data, dict) else (data,)
+    for item in values:
+        if item is None:
+            continue
+        text = _HTML_TAG_RE.sub('', str(item)).replace('&nbsp;', '')
+        for char in _INVISIBLE_CHARS:
+            text = text.replace(char, '')
+        if text.strip():
+            return True
+    return False
 
 
 class SystemPageView(ShowPageView):
@@ -435,13 +450,14 @@ class SystemPageView(ShowPageView):
 
     def get_page(self):
         slug = self.get_slug()
+        gs = GlobalSettingsObject().settings
+        # A disabled system page returns 404 even if a database Page shares the slug.
+        if not gs.get(f'footer_link_{slug}_enabled', as_type=bool, default=True):
+            raise Http404(_('The requested page does not exist.'))
         try:
             return Page.objects.get(slug=slug)
         except Page.DoesNotExist:
             pass
-        gs = GlobalSettingsObject().settings
-        if not gs.get(f'footer_link_{slug}_enabled', as_type=bool, default=True):
-            raise Http404(_('The requested page does not exist.'))
         custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
         if not _has_i18n_content(custom_text):
             raise Http404(_('The requested page does not exist.'))
