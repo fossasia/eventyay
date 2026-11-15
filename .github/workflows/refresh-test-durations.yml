@@ -33,11 +33,13 @@ env:
 jobs:
   store-durations:
     name: Store stable test durations
-    # Forks inherit the schedule; only the main repository should refresh.
-    if: github.repository == 'fossasia/eventyay'
+    # Forks inherit the schedule; only the main repository refreshes on it.
+    # Manual runs work anywhere.
+    if: github.event_name != 'schedule' || github.repository == 'fossasia/eventyay'
     runs-on: ubuntu-latest
     outputs:
       refresh: ${{ steps.drift.outputs.refresh }}
+      baseline: ${{ steps.baseline.outputs.sha256 }}
     services:
       postgres:
         image: postgres:16
@@ -86,7 +88,10 @@ jobs:
         run: uv sync --directory app --group test
 
       - name: Keep the committed durations
-        run: cp app/tests/stable/.test_durations "$RUNNER_TEMP/committed_durations.json"
+        id: baseline
+        run: |
+          cp app/tests/stable/.test_durations "$RUNNER_TEMP/committed_durations.json"
+          echo "sha256=$(sha256sum app/tests/stable/.test_durations | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Run pytest and store durations
         env:
@@ -112,7 +117,7 @@ jobs:
           EVY_DEBUG: "true"
           EVY_RUNNING_ENVIRONMENT: testing
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
-          FORCE: ${{ inputs.force }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
           OUT: ${{ runner.temp }}/durations
         working-directory: app
         run: |
@@ -123,13 +128,9 @@ jobs:
           uv run python ../.github/scripts/test_durations_drift.py \
             "$RUNNER_TEMP/committed_durations.json" "$OUT/test_durations.json" "$RUNNER_TEMP/nodeids.txt" \
             --splits "$SPLITS" --min-gain "$MIN_GAIN_SECONDS" \
-            --summary "$OUT/summary.md" | tee "$RUNNER_TEMP/drift.txt"
+            --summary "$OUT/summary.md" $FORCE | tee "$RUNNER_TEMP/drift.txt"
           cat "$OUT/summary.md" >> "$GITHUB_STEP_SUMMARY"
-          if [ "$FORCE" = "true" ]; then
-            echo "refresh=true" >> "$GITHUB_OUTPUT"
-          else
-            grep '^refresh=' "$RUNNER_TEMP/drift.txt" >> "$GITHUB_OUTPUT"
-          fi
+          grep '^refresh=' "$RUNNER_TEMP/drift.txt" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -155,7 +156,24 @@ jobs:
           name: stable-test-durations
           path: ${{ runner.temp }}/durations
 
+      - name: Check the baseline is unchanged
+        id: current
+        env:
+          BASELINE: ${{ needs.store-durations.outputs.baseline }}
+        run: |
+          # The comparison was made against the file the suite ran with. If dev got
+          # a newer durations file meanwhile, that comparison no longer holds, so
+          # skip instead of overwriting it; the next run compares against it.
+          current=$(sha256sum app/tests/stable/.test_durations | cut -d' ' -f1)
+          if [ "$current" = "$BASELINE" ]; then
+            echo "unchanged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "unchanged=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::app/tests/stable/.test_durations changed on dev during this run; not opening a pull request. Run the workflow again to compare against the new file."
+          fi
+
       - name: Copy refreshed durations
+        if: steps.current.outputs.unchanged == 'true'
         id: summary
         run: |
           cp "$RUNNER_TEMP/durations/test_durations.json" app/tests/stable/.test_durations
@@ -166,6 +184,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create or update pull request
+        if: steps.current.outputs.unchanged == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           # Pull requests opened with GITHUB_TOKEN do not start other workflows.
