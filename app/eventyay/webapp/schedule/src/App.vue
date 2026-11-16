@@ -1222,6 +1222,11 @@ export default {
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
+					if (shouldScroll) {
+						await this.$nextTick()
+						await new Promise(resolve => requestAnimationFrame(resolve))
+						this.$refs.scheduleDisplay?.scrollToNow?.()
+					}
 					if (this._toolbarJumpTimer) window.clearTimeout(this._toolbarJumpTimer)
 					this._toolbarJumpTimer = window.setTimeout(() => this.releaseToolbarJump(navigatingTo), 180)
 				})

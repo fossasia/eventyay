@@ -473,6 +473,7 @@ export default {
 				this._scrollDayUpdate = false
 				return
 			}
+			this._initialAutoScrollActive = false
 			if (this.pendingGoToNow) {
 				this.$nextTick(async () => {
 					await new Promise(resolve => requestAnimationFrame(resolve))
@@ -483,6 +484,7 @@ export default {
 			this.scrollToDayStart(day)
 		},
 		forceScrollDay () {
+			this._initialAutoScrollActive = false
 			if (this.pendingGoToNow) {
 				this.$nextTick(async () => {
 					await new Promise(resolve => requestAnimationFrame(resolve))
@@ -509,10 +511,17 @@ export default {
 		await this.$nextTick()
 		this.initScrollSync()
 		if (!autoScroll) return
+		this._initialAutoScrollActive = true
+		if (this._initialAutoScrollTimer) clearTimeout(this._initialAutoScrollTimer)
+		this._initialAutoScrollTimer = setTimeout(() => {
+			this._initialAutoScrollActive = false
+		}, 1000)
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},
 	beforeUnmount () {
+		if (this._initialAutoScrollTimer) clearTimeout(this._initialAutoScrollTimer)
+		this._initialAutoScrollActive = false
 		this._scrollGeneration = (this._scrollGeneration || 0) + 1
 		if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
 		this._scrollAnim = null
@@ -593,7 +602,7 @@ export default {
 				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
 			}
 		},
-		getStickyHeaderClearance () {
+		getStickyHeaderClearance (margin = 6) {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
 			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
@@ -615,7 +624,7 @@ export default {
 				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
 				versionWarning = Number.isFinite(vh) ? vh : 0
 			}
-			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
+			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + margin
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -657,23 +666,25 @@ export default {
 			return slice.date.clone().tz(this.timezone).format('h:mm A')
 		},
 		changeDay (day) {
+			this._initialAutoScrollActive = false
 			this.scrollToDayStart(day)
 		},
-		scrollElementIntoViewWithClearance (el) {
+		scrollElementIntoViewWithClearance (el, { targetTop, margin = 6 } = {}) {
 			if (!el) return
 			this._scrollGeneration = (this._scrollGeneration || 0) + 1
 			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
 			this._scrollAnim = null
-			const clearance = this.getStickyHeaderClearance()
+			const clearance = this.getStickyHeaderClearance(margin)
 			const rect = el.getBoundingClientRect()
+			const top = targetTop !== undefined ? targetTop : rect.top
 			const scrollEl = this.scrollParent
 			const isWindowScroll = !scrollEl || scrollEl === document.documentElement || scrollEl === document.body
 			if (!isWindowScroll) {
 				const parentRect = scrollEl.getBoundingClientRect()
-				const delta = rect.top - parentRect.top - clearance
+				const delta = top - parentRect.top - clearance
 				scrollEl.scrollTop += delta
 			} else {
-				window.scrollBy({ top: rect.top - clearance })
+				window.scrollBy({ top: top - clearance })
 			}
 		},
 		scrollToNow() {
@@ -681,7 +692,14 @@ export default {
 			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
 			this._scrollAnim = null
 			if (this.$refs.now) {
-				this.scrollElementIntoViewWithClearance(this.$refs.now)
+				const el = this.$refs.now
+				const rect = el.getBoundingClientRect()
+				const arrow = el.querySelector?.('.now-arrow svg')
+				const offset = this.nowSlice?.offset ?? 0
+				const nowLineTop = arrow
+					? arrow.getBoundingClientRect().top + (arrow.getBoundingClientRect().height / 2)
+					: rect.top + (offset * rect.height)
+				this.scrollElementIntoViewWithClearance(el, { targetTop: nowLineTop, margin: 14 })
 				return
 			}
 			if (!scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)) return
@@ -770,7 +788,12 @@ export default {
 			const viewport = this.$refs.gridViewport
 			if (!viewport) return
 			this.updateScrollbar()
-			this._gridResizeObserver = new ResizeObserver(() => this.updateScrollbar())
+			this._gridResizeObserver = new ResizeObserver(() => {
+				this.updateScrollbar()
+				if (this._initialAutoScrollActive) {
+					this.scrollToNow()
+				}
+			})
 			const grid = viewport.querySelector('.grid')
 			if (grid) this._gridResizeObserver.observe(grid)
 			setTimeout(() => this.updateScrollbar(), 200)
