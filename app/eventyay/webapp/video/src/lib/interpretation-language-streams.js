@@ -1,12 +1,20 @@
+import ISO6391 from 'iso-639-1'
 import { apiErrorDetail, interpretationApiUrl, interpretationAuthHeaders } from './interpretation-api.js'
 import { logOperational } from './operationalLog.js'
 import { normalizeYoutubeVideoId, toYoutubeWatchUrl } from './validators.js'
 
 export async function fetchInterpretationLanguageStreams(store, roomId) {
-	const response = await fetch(interpretationApiUrl(store, roomId, 'streams/'), {
+	const url = interpretationApiUrl(store, roomId, 'streams/')
+	if (!url) {
+		throw new Error('Interpretation API route unavailable')
+	}
+	const response = await fetch(url, {
 		headers: await interpretationAuthHeaders(),
 		credentials: 'include',
 	})
+	if (response.status === 404) {
+		return { unsupported: true, use_plugin_language_streams: false, language_streams: [] }
+	}
 	const data = await response.json().catch(() => ({}))
 	if (!response.ok) {
 		logOperational({action: 'interpretation.config', outcome: 'failure', backend: 'interpretation', error_code: 'http_error', status: response.status})
@@ -16,7 +24,11 @@ export async function fetchInterpretationLanguageStreams(store, roomId) {
 }
 
 export async function saveInterpretationLanguageStreams(store, roomId, languageStreams) {
-	const response = await fetch(interpretationApiUrl(store, roomId, 'config/'), {
+	const url = interpretationApiUrl(store, roomId, 'config/')
+	if (!url) {
+		throw new Error('Could not save interpretation language streams: missing routing parameters')
+	}
+	const response = await fetch(url, {
 		method: 'PATCH',
 		headers: await interpretationAuthHeaders(true),
 		credentials: 'include',
@@ -85,8 +97,47 @@ export function defaultLanguageStreamEntry() {
 	return { language: '', url: '', youtube_id: '', use_video: false }
 }
 
+export function getWhepUrlForLanguage(language, fallbackEntries = []) {
+	if (!language || typeof language !== 'string') return ''
+	const rawLang = language.trim()
+	if (!rawLang) return ''
+
+	const langName = rawLang.toLowerCase()
+	let langCode = (ISO6391.getCode(rawLang) || '').toLowerCase()
+	if (!langCode && rawLang.length <= 3) {
+		langCode = rawLang.toLowerCase()
+	}
+
+	if (!Array.isArray(fallbackEntries) || fallbackEntries.length === 0) {
+		return ''
+	}
+
+	// Only return a WHEP URL if an active booth exists in fallbackEntries for this language.
+	// If no booth exists yet, leave it empty so the URL is populated only after save creates the booth.
+	for (const entry of fallbackEntries) {
+		if (!entry || typeof entry !== 'object') continue
+		const entryLang = (entry.language || '').trim().toLowerCase()
+		let entryCode = (ISO6391.getCode(entry.language) || entry.language_code || '').toLowerCase()
+		if (!entryCode && (entry.language || '').trim().length <= 3) {
+			entryCode = (entry.language || '').trim().toLowerCase()
+		}
+		const entryUrl = (entry.url || entry.youtube_id || '').trim()
+		if (!entryUrl) continue
+
+		if (entryUrl.includes('/whep') && (entryLang === langName || (langCode && entryCode === langCode))) {
+			return entryUrl
+		}
+	}
+
+	return ''
+}
+
 export async function syncInterpretationServices(store, roomId) {
-	const response = await fetch(interpretationApiUrl(store, roomId, 'sync/'), {
+	const url = interpretationApiUrl(store, roomId, 'sync/')
+	if (!url) {
+		throw new Error('Could not sync interpretation services: missing routing parameters')
+	}
+	const response = await fetch(url, {
 		method: 'POST',
 		headers: await interpretationAuthHeaders(),
 		credentials: 'include',

@@ -42,6 +42,7 @@ from eventyay.api.serializers.schedule import (
 )
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.talk_rules.tracks import (
     apply_track_limit_to_slots,
     schedule_cache_user_scope,
@@ -228,16 +229,15 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
-        """Validate release data before accessing or creating the draft schedule."""
+        """Validate release data, then release the current draft under the event lock."""
         serializer = ScheduleReleaseSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
-        wip_schedule = request.event.wip_schedule
         version_name = serializer.validated_data.get('version')
         comment = serializer.validated_data.get('comment')
 
         try:
-            schedule, _ = wip_schedule.freeze(
+            schedule, _ = request.event.release_schedule(
                 name=version_name,
                 user=request.user,
                 notify_speakers=False,
@@ -374,7 +374,10 @@ class TalkSlotViewSet(
         )
         if not self.is_orga:
             queryset = (
-                queryset.filter(is_visible=True).exclude(room__deleted=True).exclude(schedule__version__isnull=True)
+                queryset.filter(is_visible=True)
+                .exclude(room__deleted=True)
+                .exclude(schedule__version__isnull=True)
+                .exclude(submission__state=SubmissionStates.DELETED)
             )
 
         expanded_fields = list(
