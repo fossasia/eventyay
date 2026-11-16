@@ -954,6 +954,7 @@ class VoucherBulkCodeValidationTest(TestCase):
     ('bulk', 'ABCDE', False), ('bulk', 'abcde', False),
     ('bulk', 'ABCDE', True), ('bulk', 'abcde', True),
     ('form', 'ABCDE', False), ('api', 'ABCDE', False),
+    ('api batch', 'ABCDE', False),
 ])
 @pytest.mark.parametrize('no_key_supported', [False, True])
 def test_concurrent_bulk_codes_are_revalidated(other_path, second_code, prefix, no_key_supported, monkeypatch):
@@ -988,12 +989,13 @@ def test_concurrent_bulk_codes_are_revalidated(other_path, second_code, prefix, 
                     assert response.status_code == 200
                     assert 'A voucher with this code already exists.' in str(response.context_data['form'].errors)
                     return 'rejected'
-                if path == 'api':
-                    request = SimpleNamespace(event=event, user=None, auth=None, data=data)
+                if path in ('api', 'api batch'):
+                    payload = [data, {**data, 'code': 'BATCH2'}] if path == 'api batch' else data
+                    request = SimpleNamespace(event=event, user=None, auth=None, data=payload)
                     view = VoucherViewSet()
                     view.request, view.format_kwarg = request, None
                     try:
-                        response = view.create(request)
+                        response = view.batch_create(request) if path == 'api batch' else view.create(request)
                     except APIValidationError as exc:
                         assert 'A voucher with this code already exists.' in str(exc)
                         return 'rejected'
@@ -1014,10 +1016,14 @@ def test_concurrent_bulk_codes_are_revalidated(other_path, second_code, prefix, 
     with ThreadPoolExecutor(max_workers=2) as pool:
         first_code = 'ABCDE' if other_path == 'bulk' else 'abcde'
         requests = [pool.submit(create, first_code, 'bulk'), pool.submit(create, second_code, other_path)]
-        assert sorted(request.result(timeout=30) for request in requests) == ['created', 'rejected']
+        results = [request.result(timeout=30) for request in requests]
+        assert sorted(results) == ['created', 'rejected']
     with scope(event=event, organizer=organizer):
         codes = list(event.vouchers.values_list('code', flat=True))
-        assert [code.upper() for code in codes] == ['TAGABCDE' if prefix else 'ABCDE']
+        expected = ['TAGABCDE' if prefix else 'ABCDE']
+        if other_path == 'api batch' and results[1] == 'created':
+            expected.append('BATCH2')
+        assert sorted(code.upper() for code in codes) == sorted(expected)
 
 
 class InvoiceVoucherFormTest(TestCase):

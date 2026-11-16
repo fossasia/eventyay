@@ -140,21 +140,24 @@ class VoucherViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'])
     def batch_create(self, request, *args, **kwargs):
+        """Validate and create voucher batches under the shared event-row lock."""
         if any(self._predict_quota_check(d, None) for d in request.data):
             lockfn = request.event.lock
         else:
             lockfn = contextlib.suppress  # noop context manager
-        with lockfn():
+        with scope(event=request.event), lockfn(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=request.event.pk,
+            )
             serializer = self.get_serializer(data=request.data, many=True)
             serializer.is_valid(raise_exception=True)
-            with transaction.atomic():
-                serializer.save(event=self.request.event)
-                for i, v in enumerate(serializer.instance):
-                    v.log_action(
-                        'eventyay.voucher.added',
-                        user=self.request.user,
-                        auth=self.request.auth,
-                        data=self.request.data[i],
-                    )
+            serializer.save(event=self.request.event)
+            for i, v in enumerate(serializer.instance):
+                v.log_action(
+                    'eventyay.voucher.added',
+                    user=self.request.user,
+                    auth=self.request.auth,
+                    data=self.request.data[i],
+                )
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
