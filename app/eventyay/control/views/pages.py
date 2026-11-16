@@ -432,8 +432,9 @@ class SystemPageView(ShowPageView):
         # A disabled system page returns 404 even if a database Page shares the slug.
         if not gs.get(f'footer_link_{slug}_enabled', as_type=bool, default=True):
             raise Http404(_('The requested page does not exist.'))
-        db_page = Page.objects.filter(slug=slug).first()
-        if db_page is not None:
+        # slug is not unique on Page, so order deterministically before taking one.
+        db_page = Page.objects.filter(slug=slug).order_by('pk').first()
+        if db_page is not None and has_i18n_content(db_page.text):
             return db_page
         custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
         if not has_i18n_content(custom_text):

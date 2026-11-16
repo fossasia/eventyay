@@ -9,14 +9,12 @@ from django.urls import Resolver404, resolve
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from django_scopes import get_scope
-from i18nfield.strings import LazyI18nString
 
 from eventyay.base.meetup import has_video_stream, is_meetup_event
-from eventyay.base.models.page import Page
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.cfp.signals import footer_link, html_head
-from eventyay.common.system_pages import SYSTEM_CONTENT_SLUGS, has_i18n_content
+from eventyay.common.system_pages import SYSTEM_CONTENT_SLUGS, available_system_page_slugs
 from eventyay.helpers.formats.variants import get_day_month_date_format
 from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
 
@@ -144,17 +142,16 @@ def system_information(request):
         ('support', _('Support'), '/support'),
     ]
 
-    # Content pages 404 when they have neither settings text nor a database Page,
-    # so resolve availability once (one batched query) and skip dead footer links.
-    empty_content_slugs = [
-        key for key in SYSTEM_CONTENT_SLUGS
-        if not has_i18n_content(gs.get(f'footer_page_{key}_text', as_type=LazyI18nString))
+    # A content page on its default local route 404s when it has no content, so
+    # resolve availability (one query, only for enabled default-route candidates
+    # that lack settings text) and skip dead footer links.
+    content_defaults = {key: url for key, _label, url in core_footer_items if key in SYSTEM_CONTENT_SLUGS}
+    content_candidates = [
+        key for key, default_url in content_defaults.items()
+        if gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
+        and gs.get(f'footer_link_{key}_url', as_type=str, default=default_url).strip().rstrip('/') == default_url
     ]
-    db_backed_slugs = (
-        set(Page.objects.filter(slug__in=empty_content_slugs).values_list('slug', flat=True))
-        if empty_content_slugs else set()
-    )
-    unavailable_slugs = set(empty_content_slugs) - db_backed_slugs
+    unavailable_slugs = set(content_candidates) - available_system_page_slugs(content_candidates, gs)
 
     core_footer_links = []
     for key, label, default_url in core_footer_items:
@@ -163,9 +160,7 @@ def system_information(request):
         if key == 'pricing' and not main_site_route_exists(url):
             # Core has no pricing page; a plugin such as eventyay-business provides it.
             continue
-        # A content page on its default local route 404s when unavailable, so do
-        # not link to it from the footer in that case.
-        if key in unavailable_slugs and url.rstrip('/') == default_url:
+        if key in unavailable_slugs:
             continue
         if enabled and url:
             core_footer_links.append({
