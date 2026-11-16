@@ -34,8 +34,9 @@ export function matchesFilterItem (item, val) {
 	const lowerVal = cleanVal.toLowerCase()
 
 	// 1. Check ID or id-prefixed value (e.g. "42", "42-ai")
-	if (item.id !== undefined && item.id !== null) {
-		const strId = String(item.id)
+	const itemId = item.id != null ? item.id : item.value
+	if (itemId != null) {
+		const strId = String(itemId)
 		if (strId === cleanVal) return true
 		if (cleanVal.startsWith(strId + '-') || cleanVal.startsWith(strId + '_')) return true
 	}
@@ -85,9 +86,14 @@ export function getFilterItemSlug (item, allItems = []) {
 	const labelText = item.label || (typeof item.name === 'string' ? item.name : '')
 	const slug = slugify(labelText)
 	if (slug) {
-		if (Array.isArray(allItems) && allItems.length > 1 && item.id != null) {
-			const duplicate = allItems.some(other => other !== item && other.id != null && other.id !== item.id && slugify(other.label || (typeof other.name === 'string' ? other.name : '')) === slug)
-			if (duplicate) return `${item.id}-${slug}`
+		const itemId = item.id != null ? item.id : item.value
+		if (Array.isArray(allItems) && allItems.length > 1 && itemId != null) {
+			const duplicate = allItems.some(other => {
+				if (other === item) return false
+				const otherId = other.id != null ? other.id : other.value
+				return otherId != null && otherId !== itemId && slugify(other.label || (typeof other.name === 'string' ? other.name : '')) === slug
+			})
+			if (duplicate) return `${itemId}-${slug}`
 		}
 		return slug
 	}

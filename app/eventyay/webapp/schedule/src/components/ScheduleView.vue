@@ -35,7 +35,7 @@
 			v-model:includePopularitySortKey="sortIncludePopularity",
 			:popularityFeatureEnabled="popularityFeatureEnabled",
 			:popularitySortAvailable="popularitySortAvailable",
-			@selectDay="changeDay($event)",
+			@selectDay="selectDay($event)",
 			@goToNow="goToNow",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
@@ -435,9 +435,6 @@ export default {
 		}
 	},
 	watch: {
-		recordingFilter() {
-			this.writeRecordingQueryParam()
-		},
 		sortIncludeDate() {
 			try {
 				localStorage.setItem('schedule-include-datetime', String(this.sortIncludeDate))
@@ -564,6 +561,7 @@ export default {
 			if (!schedule) return
 			const lang = localStorage.getItem('userLanguage') || 'en'
 			this.filterState.tracks = (schedule.tracks || []).map(t => ({
+				id: t.id,
 				value: t.id,
 				name: t.name,
 				label: this.getI18nName(t.name, lang),
@@ -571,6 +569,7 @@ export default {
 				selected: false
 			}))
 			this.filterState.rooms = (schedule.rooms || []).map(r => ({
+				id: r.id,
 				value: r.id,
 				name: r.name,
 				label: this.getI18nName(r.name, lang),
@@ -615,8 +614,9 @@ export default {
 			if (typeof name === 'object' && name) return name[lang] || name.en || Object.values(name)[0] || ''
 			return ''
 		},
-		changeDay(day) {
-			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
+		selectDay(day) {
+			const dayStr = day?.format ? day.format('YYYY-MM-DD') : (day ? String(day) : null)
+			if (!dayStr) return
 			const isToggleOff = this.selectedDay === dayStr
 			if (isToggleOff) {
 				this.selectedDay = null
@@ -629,21 +629,42 @@ export default {
 				this.forceScrollDay++
 			}
 		},
+		changeDay(day) {
+			this.setCurrentDay(day)
+			if (this.linearScheduleGroupByDay) {
+				this.forceScrollDay++
+			}
+		},
+		setCurrentDay(day) {
+			if (this.selectedDay) return
+			const dayStr = day?.format ? day.format('YYYY-MM-DD') : (day ? String(day) : null)
+			if (!dayStr || dayStr === this.currentDay) return
+			this.currentDay = dayStr
+			try {
+				const hashUrl = window.location.pathname + window.location.search + '#' + dayStr
+				window.history.replaceState(null, null, hashUrl)
+			} catch (e) {
+				window.location.hash = dayStr
+			}
+		},
+		dayScrolled(day) {
+			this.setCurrentDay(day)
+		},
 		goToNow() {
 			const today = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
 			const todayExists = this.computedDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
-			this.changeDay(today)
+			if (this.selectedDay && this.selectedDay !== today) {
+				this.selectedDay = today
+				this.writeFiltersToUrl({ pushState: true })
+			}
+			this.setCurrentDay(today)
+			if (this.linearScheduleGroupByDay) {
+				this.forceScrollDay++
+			}
 			this.$nextTick(() => {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 			})
-		},
-		setCurrentDay(day) {
-			this.changeDay(day)
-		},
-		dayScrolled(day) {
-			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
-			this.currentDay = dayStr
 		},
 		toggleFavs() {
 			this.onlyFavs = !this.onlyFavs
