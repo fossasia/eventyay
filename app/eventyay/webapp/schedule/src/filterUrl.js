@@ -26,44 +26,61 @@ export function slugify (text) {
 		.replace(/^-+|-+$/g, '')
 }
 
-export function matchesFilterItem (item, val) {
+export const MAX_FILTER_VALUES = 200
+export const MAX_FILTER_PARAM_LENGTH = 300
+
+function hasExactFilterMatch (item, cleanVal, slugVal, lowerVal) {
+	const itemId = item.id != null ? item.id : item.value
+	if (itemId != null && String(itemId) === cleanVal) return true
+	if (item.value !== undefined && item.value !== null && String(item.value) === cleanVal) return true
+	if (item.label) {
+		const strLabel = item.label.toString()
+		if (strLabel === cleanVal || strLabel.toLowerCase() === lowerVal) return true
+		if (slugify(strLabel) === slugVal) return true
+	}
+	if (typeof item.name === 'string') {
+		if (item.name === cleanVal || item.name.toLowerCase() === lowerVal || slugify(item.name) === slugVal) return true
+	}
+	return false
+}
+
+export function matchesFilterItem (item, val, allItems = []) {
 	if (!item || val === undefined || val === null) return false
 	const cleanVal = val.toString().trim()
 	if (!cleanVal) return false
 	const slugVal = slugify(cleanVal)
 	const lowerVal = cleanVal.toLowerCase()
 
-	// 1. Check ID or id-prefixed value (e.g. "42", "42-ai")
-	const itemId = item.id != null ? item.id : item.value
-	if (itemId != null) {
-		const strId = String(itemId)
-		if (strId === cleanVal) return true
-		if (cleanVal.startsWith(strId + '-') || cleanVal.startsWith(strId + '_')) return true
-	}
-	if (item.value !== undefined && item.value !== null) {
-		const strVal = String(item.value)
-		if (strVal === cleanVal) return true
-		if (slugify(strVal) === slugVal) return true
+	// 1. Check exact match on this item
+	if (hasExactFilterMatch(item, cleanVal, slugVal, lowerVal)) {
+		if (Array.isArray(allItems) && allItems.length > 1) {
+			const rawExactThis = (item.value != null && String(item.value) === cleanVal) || (item.label && item.label.toString() === cleanVal)
+			const rawExactOther = allItems.some(other => other !== item && ((other.value != null && String(other.value) === cleanVal) || (other.label && other.label.toString() === cleanVal)))
+			if (!rawExactThis && rawExactOther) return false
+		}
+		return true
 	}
 
-	// 2. Check label
-	if (item.label) {
-		const itemSlug = slugify(item.label)
-		if (itemSlug && itemSlug === slugVal) return true
-		if (item.label.toString().toLowerCase() === lowerVal) return true
-	}
-
-	// 3. Check name (string or localized object)
-	if (typeof item.name === 'string') {
-		if (slugify(item.name) === slugVal || item.name.toLowerCase() === lowerVal) return true
-	}
+	// 2. Check localized name object
 	const nameObj = (item.name && typeof item.name === 'object') ? item.name : (item.raw && typeof item.raw === 'object' ? item.raw : null)
 	if (nameObj) {
 		for (const v of Object.values(nameObj)) {
 			if (typeof v === 'string') {
-				if (slugify(v) === slugVal || v.toLowerCase() === lowerVal) return true
+				if (v === cleanVal || slugify(v) === slugVal || v.toLowerCase() === lowerVal) return true
 			}
 		}
+	}
+
+	// 3. Fallback: ID prefix (e.g. "42-ai" or "1-workshop" for duplicate slugs)
+	// Do NOT accept ID prefix if any item in allItems had an exact match for cleanVal
+	if (Array.isArray(allItems) && allItems.some(other => hasExactFilterMatch(other, cleanVal, slugVal, lowerVal))) {
+		return false
+	}
+
+	const itemId = item.id != null ? item.id : item.value
+	if (itemId != null) {
+		const strId = String(itemId)
+		if (cleanVal.startsWith(strId + '-') || cleanVal.startsWith(strId + '_')) return true
 	}
 
 	return false
@@ -101,10 +118,26 @@ export function getFilterItemSlug (item, allItems = []) {
 	return item.value !== undefined && item.value !== null ? String(item.value) : ''
 }
 
-export function getTypeItemSlug (item) {
+export function getTypeItemSlug (item, allItems = []) {
 	if (!item) return ''
-	const slug = slugify(item.label || item.value)
-	if (slug) return slug
+	const rawText = item.label || item.value || ''
+	const slug = slugify(rawText)
+	if (slug) {
+		const itemId = item.id != null ? item.id : item.value
+		if (Array.isArray(allItems) && allItems.length > 1) {
+			const duplicate = allItems.some(other => {
+				if (other === item) return false
+				const otherId = other.id != null ? other.id : other.value
+				const otherSlug = slugify(other.label || other.value || '')
+				return otherId !== itemId && otherSlug === slug
+			})
+			if (duplicate) {
+				if (item.id != null) return `${item.id}-${slug}`
+				return String(item.value || rawText)
+			}
+		}
+		return slug
+	}
 	return item.value !== undefined && item.value !== null ? String(item.value) : ''
 }
 
@@ -113,7 +146,7 @@ export function getLanguageItemSlug (item) {
 	return item.value || slugify(item.label) || ''
 }
 
-export function getQueryParamValues (searchParams, key, maxValues = 50) {
+export function getQueryParamValues (searchParams, key, maxValues = MAX_FILTER_VALUES, maxLength = MAX_FILTER_PARAM_LENGTH) {
 	if (!searchParams) return []
 	const raw = searchParams.getAll(key)
 	const values = []
@@ -121,7 +154,7 @@ export function getQueryParamValues (searchParams, key, maxValues = 50) {
 		for (const part of entry.split(',')) {
 			if (values.length >= maxValues) return values
 			const trimmed = part.trim()
-			if (trimmed && trimmed.length <= 100) values.push(trimmed)
+			if (trimmed && trimmed.length <= maxLength) values.push(trimmed)
 		}
 	}
 	return values
@@ -136,6 +169,7 @@ export function serializeScheduleFiltersToUrl (currentHref, {
 	filteredLanguages = [],
 	allTracks = [],
 	allRooms = [],
+	allTypes = [],
 	selectedDay = null,
 	recordingFilter = 'all',
 } = {}) {
@@ -146,24 +180,24 @@ export function serializeScheduleFiltersToUrl (currentHref, {
 			url.searchParams.delete(key)
 		}
 		// Tracks
-		for (const t of filteredTracks) {
+		for (const t of filteredTracks.slice(0, MAX_FILTER_VALUES)) {
 			const slug = getFilterItemSlug(t, allTracks)
-			if (slug) url.searchParams.append('track', slug)
+			if (slug) url.searchParams.append('track', slug.slice(0, MAX_FILTER_PARAM_LENGTH))
 		}
 		// Rooms
-		for (const r of filteredRooms) {
+		for (const r of filteredRooms.slice(0, MAX_FILTER_VALUES)) {
 			const slug = getFilterItemSlug(r, allRooms)
-			if (slug) url.searchParams.append('room', slug)
+			if (slug) url.searchParams.append('room', slug.slice(0, MAX_FILTER_PARAM_LENGTH))
 		}
 		// Types
-		for (const tp of filteredTypes) {
-			const slug = getTypeItemSlug(tp)
-			if (slug) url.searchParams.append('type', slug)
+		for (const tp of filteredTypes.slice(0, MAX_FILTER_VALUES)) {
+			const slug = getTypeItemSlug(tp, allTypes)
+			if (slug) url.searchParams.append('type', slug.slice(0, MAX_FILTER_PARAM_LENGTH))
 		}
 		// Languages
-		for (const l of filteredLanguages) {
+		for (const l of filteredLanguages.slice(0, MAX_FILTER_VALUES)) {
 			const slug = getLanguageItemSlug(l)
-			if (slug) url.searchParams.append('language', slug)
+			if (slug) url.searchParams.append('language', slug.slice(0, MAX_FILTER_PARAM_LENGTH))
 		}
 		// Day
 		if (selectedDay) {
@@ -203,7 +237,7 @@ export function parseScheduleFiltersFromUrl (currentHref, {
 		// Apply to tracks
 		if (trackVals.length) {
 			for (const t of allTracks) {
-				t.selected = trackVals.some(v => matchesFilterItem(t, v))
+				t.selected = trackVals.some(v => matchesFilterItem(t, v, allTracks))
 			}
 		} else {
 			for (const t of allTracks) t.selected = false
@@ -211,7 +245,7 @@ export function parseScheduleFiltersFromUrl (currentHref, {
 		// Apply to rooms
 		if (roomVals.length) {
 			for (const r of allRooms) {
-				r.selected = roomVals.some(v => matchesFilterItem(r, v))
+				r.selected = roomVals.some(v => matchesFilterItem(r, v, allRooms))
 			}
 		} else {
 			for (const r of allRooms) r.selected = false
@@ -219,7 +253,7 @@ export function parseScheduleFiltersFromUrl (currentHref, {
 		// Apply to types
 		if (typeVals.length) {
 			for (const tp of allTypes) {
-				tp.selected = typeVals.some(v => matchesFilterItem(tp, v))
+				tp.selected = typeVals.some(v => matchesFilterItem(tp, v, allTypes))
 			}
 		} else {
 			for (const tp of allTypes) tp.selected = false

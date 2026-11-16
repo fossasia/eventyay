@@ -145,6 +145,13 @@ export default {
 	},
 	emits: ['fav', 'unfav', 'export'],
 	data() {
+		const userTz = moment.tz.guess()
+		let initialTz = userTz
+		try {
+			initialTz = localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || userTz
+		} catch {
+			initialTz = this.timezone || this.scheduleData?.timezone || userTz
+		}
 		return {
 			currentDay: null,
 			selectedDay: null,
@@ -152,8 +159,8 @@ export default {
 			onlyFavs: false,
 			shareStarredSessions: false,
 			scrollParentWidth: Infinity,
-			currentTimezone: null,
-			userTimezone: null,
+			currentTimezone: initialTz,
+			userTimezone: userTz,
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
 			recordingFilter: 'all',
@@ -380,21 +387,25 @@ export default {
 				.filter(s => { if (!s.room || seen.has(s.room.id)) return false; seen.add(s.room.id); return true })
 				.map(s => s.room)
 		},
-		computedDays() {
+		allScheduleDays() {
 			if (this.days) return this.days
 			const days = []
 			const seen = new Set()
 			const sourceSessions = this.enrichedSessions.length ? this.enrichedSessions : this.filteredSessions
+			const tz = this.currentTimezone || moment.tz.guess()
 			for (const session of sourceSessions) {
 				if (!session.start) continue
-				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
+				const day = session.start.clone().tz(tz).startOf('day')
 				const key = day.valueOf()
 				if (!seen.has(key)) {
 					seen.add(key)
 					days.push(day)
 				}
 			}
-			const sortedDays = days.sort((a, b) => a.diff(b))
+			return days.sort((a, b) => a.diff(b))
+		},
+		computedDays() {
+			const sortedDays = this.allScheduleDays
 			if ((this.linearOnly || this.sessionsMode) && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
 				return sortedDays.length ? [sortedDays[0]] : []
 			}
@@ -468,16 +479,16 @@ export default {
 		}
 	},
 	created() {
-		this.userTimezone = moment.tz.guess()
-		this.currentTimezone = localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || this.userTimezone
-		if (this.computedDays?.length) {
+		this.userTimezone = this.userTimezone || moment.tz.guess()
+		this.currentTimezone = this.currentTimezone || localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || this.userTimezone
+		if (this.allScheduleDays?.length) {
 			const today = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
 			const fragment = window.location.hash.slice(1)
-			const fragmentDay = /^\d{4}-\d{2}-\d{2}$/.test(fragment) && this.computedDays.some(day => day.format('YYYY-MM-DD') === fragment)
+			const fragmentDay = /^\d{4}-\d{2}-\d{2}$/.test(fragment) && this.allScheduleDays.some(day => day.format('YYYY-MM-DD') === fragment)
 				? fragment
 				: null
-			const todayExists = this.computedDays.some(day => day.format('YYYY-MM-DD') === today)
-			this.currentDay = fragmentDay || (todayExists ? today : this.computedDays[0].format('YYYY-MM-DD'))
+			const todayExists = this.allScheduleDays.some(day => day.format('YYYY-MM-DD') === today)
+			this.currentDay = fragmentDay || (todayExists ? today : this.allScheduleDays[0].format('YYYY-MM-DD'))
 		}
 	},
 	mounted() {
@@ -519,7 +530,7 @@ export default {
 					allRooms: this.filterState.rooms,
 					allTypes: this.filterState.types,
 					allLanguages: this.filterState.languages,
-					availableDays: this.computedDays,
+					availableDays: this.allScheduleDays,
 				})
 				this.recordingFilter = result.recordingFilter
 				if (result.selectedDay) {
@@ -527,6 +538,11 @@ export default {
 					this.currentDay = result.selectedDay
 				} else {
 					this.selectedDay = null
+					const fragment = window.location.hash.slice(1)
+					const daysList = this.allScheduleDays || []
+					if (/^\d{4}-\d{2}-\d{2}$/.test(fragment) && daysList.some(day => day.format('YYYY-MM-DD') === fragment)) {
+						this.currentDay = fragment
+					}
 				}
 			} catch (error) {
 				console.error('Failed to parse schedule filters from URL', error)
@@ -544,6 +560,7 @@ export default {
 					filteredLanguages: this.filterState.languages.filter(l => l.selected),
 					allTracks: this.filterState.tracks,
 					allRooms: this.filterState.rooms,
+					allTypes: this.filterState.types,
 					selectedDay: this.selectedDay,
 					recordingFilter: this.recordingFilter,
 				})
@@ -668,7 +685,10 @@ export default {
 		},
 		toggleFavs() {
 			this.onlyFavs = !this.onlyFavs
-			if (this.onlyFavs) this.resetFilters()
+			if (this.onlyFavs) {
+				this.resetFilters()
+				this.writeFiltersToUrl({ pushState: true })
+			}
 		},
 		async updateShareStarredSessions(value) {
 			const previous = this.shareStarredSessions

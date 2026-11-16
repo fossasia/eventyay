@@ -1430,6 +1430,7 @@ export default {
 					filteredLanguages: this.filteredLanguages,
 					allTracks: this.allTracks,
 					allRooms: this.allRooms,
+					allTypes: this.allTypes,
 					selectedDay: this.selectedDay,
 					recordingFilter: this.recordingFilter,
 				})
