@@ -373,9 +373,9 @@ class EnhancedSelectMultiple(EnhancedSelectMixin, SelectMultiple):
 
 def get_count(value, label):
     instance = getattr(value, 'instance', None)
-    if instance is not None and hasattr(instance, 'count'):
-        return instance.count
-    count = getattr(label, 'count', 0)
+    count = getattr(instance, 'count', None)
+    if count is None:
+        count = getattr(label, 'count', 0)
     return count if isinstance(count, int) else 0
 
 

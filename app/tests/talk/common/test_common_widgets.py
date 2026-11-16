@@ -27,3 +27,8 @@ def test_get_count_ignores_plain_string_label():
 
 def test_get_count_reads_countable_label():
     assert get_count('1', SimpleNamespace(count=3)) == 3
+
+
+def test_get_count_ignores_callable_instance_count():
+    value = SimpleNamespace(instance=SimpleNamespace(count=lambda *args: 5))
+    assert get_count(value, 'Design & UX') == 0
