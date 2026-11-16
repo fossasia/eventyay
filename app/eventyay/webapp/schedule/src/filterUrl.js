@@ -151,10 +151,19 @@ export function getQueryParamValues (searchParams, key, maxValues = MAX_FILTER_V
 	const raw = searchParams.getAll(key)
 	const values = []
 	for (const entry of raw) {
-		for (const part of entry.split(',')) {
+		const trimmedEntry = entry.trim()
+		if (trimmedEntry && trimmedEntry.length <= maxLength) {
 			if (values.length >= maxValues) return values
-			const trimmed = part.trim()
-			if (trimmed && trimmed.length <= maxLength) values.push(trimmed)
+			values.push(trimmedEntry)
+		}
+		if (entry.includes(',')) {
+			for (const part of entry.split(',')) {
+				if (values.length >= maxValues) return values
+				const trimmed = part.trim()
+				if (trimmed && trimmed.length <= maxLength && trimmed !== trimmedEntry) {
+					values.push(trimmed)
+				}
+			}
 		}
 	}
 	return values
