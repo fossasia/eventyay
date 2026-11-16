@@ -58,7 +58,6 @@
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
-			@copyLinkFailed="pushErrorMessage($t('Failed to copy schedule link to clipboard'))",
 			@goToNow="goToNow")
 		bunt-progress-circular(v-if="dayLoading", size="huge")
 		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",

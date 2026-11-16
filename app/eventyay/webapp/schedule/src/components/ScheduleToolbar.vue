@@ -110,18 +110,6 @@
 					line(x1="7" y1="9" x2="17" y2="9")
 					line(x1="10" y1="14" x2="14" y2="14")
 					path(d="M17 17l4 4m0-4l-4 4")
-			button.toolbar-btn.icon-only.copy-link-btn(
-				v-if="showCopyLink",
-				:class="{copied: linkCopied}",
-				@click="copyFilteredLink",
-				:title="linkCopied ? t.link_copied : t.copy_link",
-				:aria-label="linkCopied ? t.link_copied : t.copy_link")
-				svg.tb-icon(v-if="!linkCopied", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
-					path(d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71")
-					path(d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71")
-				svg.tb-icon(v-else, viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
-					polyline(points="20 6 9 17 4 12")
-				span.copy-link-toast(v-if="linkCopied", role="status") {{ t.link_copied }}
 			.sort-area(v-if="sessionsMode", ref="sortDropdown")
 				button.toolbar-btn.icon-only.sort-btn(
 					@click="sortOpen = !sortOpen",
@@ -411,10 +399,9 @@ export default {
 		timeDensityMinutes: { type: Number, default: 30 },
 		isFeaturedPage: { type: Boolean, default: false },
 		isListView: { type: Boolean, default: false },
-		selectedDay: { type: String, default: null },
-		showCopyLink: { type: Boolean, default: true }
+		selectedDay: { type: String, default: null }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes', 'copyLinkFailed'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -433,7 +420,6 @@ export default {
 			mobileFiltersOpen: false,
 			mobileMoreOpen: false,
 			cachedOtherTimezones: null,
-			linkCopied: false,
 		}
 	},
 	computed: {
@@ -447,8 +433,6 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				copy_link: m.copy_link || this.$t('Copy link'),
-				link_copied: m.link_copied || this.$t('Link copied'),
 				no_matching_options: m.no_matching_options || this.$t('Sorry, no matching options.'),
 				other_timezones: m.other_timezones || this.$t('Other Timezones'),
 				view_changelog: m.view_changelog || this.$t('View Changelog'),
@@ -727,7 +711,6 @@ export default {
 			cancelAnimationFrame(this._toolbarLayoutRaf)
 			this._toolbarLayoutRaf = null
 		}
-		if (this._linkCopiedTimer) clearTimeout(this._linkCopiedTimer)
 		this._versionBannerResizeObserver?.disconnect?.()
 	},
 	methods: {
@@ -987,42 +970,6 @@ export default {
 			}
 			return this.currentDay === dayId
 		},
-		async copyFilteredLink() {
-			const url = window.location.href
-			let copied = false
-			try {
-				if (navigator?.clipboard?.writeText) {
-					await navigator.clipboard.writeText(url)
-					copied = true
-				}
-			} catch (err) {
-				console.warn('Clipboard API failed, using fallback copy method', err)
-			}
-			if (!copied) {
-				try {
-					const textarea = document.createElement('textarea')
-					textarea.value = url
-					textarea.style.position = 'fixed'
-					textarea.style.opacity = '0'
-					document.body.appendChild(textarea)
-					textarea.select()
-					copied = Boolean(document.execCommand('copy'))
-					document.body.removeChild(textarea)
-				} catch (err) {
-					console.error('Failed to copy schedule link to clipboard', err)
-				}
-			}
-			if (copied) {
-				this.linkCopied = true
-				if (this._linkCopiedTimer) clearTimeout(this._linkCopiedTimer)
-				this._linkCopiedTimer = setTimeout(() => {
-					this.linkCopied = false
-				}, 2000)
-			} else {
-				console.error('Failed to copy schedule link to clipboard')
-				this.$emit('copyLinkFailed')
-			}
-		},
 		ensureCurrentDayVisible() {
 			if (!this.days || this.days.length <= 1) return
 			if (!this.showDayArrows) {
@@ -1211,24 +1158,6 @@ export default {
 				height: 18px
 		.clear-filters-btn
 			color: #666
-		.copy-link-btn
-			color: #666
-			position: relative
-			&.copied
-				color: var(--pretalx-clr-primary, #3aa57c)
-			.copy-link-toast
-				position: absolute
-				top: calc(100% + 4px)
-				left: 50%
-				transform: translateX(-50%)
-				background-color: rgba(0, 0, 0, 0.87)
-				color: #fff
-				padding: 4px 8px
-				border-radius: 4px
-				font-size: 12px
-				white-space: nowrap
-				pointer-events: none
-				z-index: 1001
 		.filter-dropdown-area
 			position: relative
 			> .toolbar-btn:not(.icon-only)
