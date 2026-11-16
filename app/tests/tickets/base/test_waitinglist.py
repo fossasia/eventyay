@@ -1,13 +1,20 @@
-from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager, nullcontext
 from datetime import timedelta
+from threading import Event as ThreadEvent
+from types import SimpleNamespace
 
 import pytest
+from django.apps import apps
 from django.core import mail as djmail
-from django.db import OperationalError
+from django.db import OperationalError, connection, connections, transaction
 from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scope
+from rest_framework.exceptions import PermissionDenied
 
+from eventyay.api.serializers.waitinglist import WaitingListSerializer
+from eventyay.api.views.waitinglist import WaitingListViewSet
 from eventyay.base.models import (
     Event,
     Product as Item,
@@ -116,6 +123,14 @@ def test_automatic_assignment_refreshes_capacity_and_retries(with_variation, sce
                 email=f'waiting{i}@example.test', priority=2 - i,
             ) for i in range(2)
         ]
+        other_date = SubEvent.objects.create(
+            event=event, name='Other day', active=True, date_from=event.date_from, date_to=event.date_from,
+        )
+        other_quota = Quota.objects.create(event=event, subevent=other_date, name='Other date', size=2)
+        (other_quota.variations if variation else other_quota.products).add(variation or product)
+        unselected = WaitingListEntry.objects.create(
+            event=event, product=product, variation=variation, subevent=other_date, email='other@example.test',
+        )
         original_send = WaitingListEntry.send_voucher
         attempts, sent = [], []
 
@@ -139,10 +154,88 @@ def test_automatic_assignment_refreshes_capacity_and_retries(with_variation, sce
         expected = 1 if scenario == 'capacity' else 2
         assert Voucher.objects.count() == len(sent) == expected
         assert assigned == expected
+        unselected.refresh_from_db()
+        assert unselected.voucher_id is None
         assert attempts == ([first.pk, second.pk, second.pk] if scenario == 'busy' else [first.pk, second.pk])
         if scenario == 'capacity':
             first.refresh_from_db()
             assert first.voucher_id is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('sqlstate', [
+    '08006', '40001', '40P01', '57P03', 'XX000', '08007', None,
+])
+def test_reservation_database_error_classification(sqlstate, monkeypatch):
+    """Retry recognized transient failures while preserving unknown and persistent errors."""
+    organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
+    event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
+    entry = WaitingListEntry(event=event)
+    cause = OperationalError('database error')
+    cause.sqlstate = sqlstate
+
+    def fail(*args, **kwargs):
+        """Raise the database error before a reservation can complete."""
+        raise OperationalError('reservation failed') from cause
+
+    monkeypatch.setattr(Event, 'lock', lambda event: nullcontext())
+    monkeypatch.setattr(entry, '_reserve_voucher', fail)
+    expected = OperationalError if sqlstate in {'XX000', '08007', None} else WaitingListBusy
+    with pytest.raises(expected) as error:
+        entry.send_voucher()
+    assert isinstance(error.value.__cause__, OperationalError)
+    with scope(event=event, organizer=organizer):
+        assert not Voucher.objects.exists()
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
+def test_api_update_waits_for_assignment(monkeypatch):
+    """An edit validated before assignment must not replace the assigned entry's data."""
+    organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
+    event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
+    ready = ThreadEvent()
+    sent = []
+    monkeypatch.setattr('eventyay.base.models.waitinglist.mail', lambda *args, **kwargs: sent.append(args[0]))
+    with scope(event=event, organizer=organizer):
+        product = Item.objects.create(event=event, name='Ticket', default_price=23)
+        quota = Quota.objects.create(event=event, name='Tickets', size=None)
+        quota.products.add(product)
+        entry = WaitingListEntry.objects.create(event=event, product=product, email='original@example.test')
+
+    def update():
+        """Validate the stale PATCH before waiting for the reservation's transaction."""
+        try:
+            with scope(event=event, organizer=organizer):
+                request = SimpleNamespace(event=event, user=None, auth=None)
+                serializer = WaitingListSerializer(
+                    WaitingListEntry.objects.get(pk=entry.pk),
+                    data={'email': 'changed@example.test'}, partial=True,
+                    context={'event': event, 'request': request},
+                )
+                assert serializer.is_valid(), serializer.errors
+                view = WaitingListViewSet()
+                view.request = request
+                ready.set()
+                with pytest.raises(PermissionDenied):
+                    view.perform_update(serializer)
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with scope(event=event, organizer=organizer), transaction.atomic():
+            WaitingListEntry.objects.select_for_update(of=('self',)).get(pk=entry.pk)
+            future = pool.submit(update)
+            assert ready.wait(timeout=15)
+            entry.send_voucher()
+        future.result(timeout=30)
+    with scope(event=event, organizer=organizer):
+        entry.refresh_from_db()
+        assert entry.email == 'original@example.test'
+        assert entry.voucher_id is not None
+        assert entry.voucher.product_id == product.pk
+        assert Voucher.objects.count() == 1
+    assert sent == ['original@example.test']
 
 
 class WaitingListTestCase(TestCase):

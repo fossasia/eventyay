@@ -140,7 +140,8 @@ class WaitingListEntry(LoggedModel):
         except OperationalError as exc:
             if not reserved:
                 cause = exc.__cause__
-                if (getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)) != '55P03':
+                sqlstate = getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)
+                if sqlstate not in {'08000', '08001', '08003', '08006', '40001', '40P01', '53300', '55P03', '57P03'}:
                     raise
                 raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
             logger.exception('Booking lock release failed after waiting-list reservation')
