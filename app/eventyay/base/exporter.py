@@ -18,7 +18,7 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, KNOWN_TYPES
 from eventyay.base.models import Event
 
 
-SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '\t', '\r', '\n', '＝', '＋', '－', '＠')
+SPREADSHEET_FORMULA_PREFIXES = ('=', '+', '-', '@', '|', '%', '＝', '＋', '－', '＠')
 NUMERIC_TEXT_RE = re.compile(r'^[+-]?[0-9,.]+$')
 
 
