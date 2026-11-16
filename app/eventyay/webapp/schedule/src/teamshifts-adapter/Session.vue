@@ -124,6 +124,7 @@ import {
 	membersUrl,
 	getErrorMessage,
 } from './index'
+import { registerStickyLabels } from './stickyLabels'
 
 export default {
 	name: 'TeamshiftsSession',
@@ -184,6 +185,13 @@ export default {
 			members: [],
 			sendEmail: true,
 		}
+	},
+	mounted () {
+		// Keeps the title and start time in view while a long card is scrolled (see stickyLabels.js).
+		this.stopStickyLabels = registerStickyLabels(this.$el)
+	},
+	beforeUnmount () {
+		if (this.stopStickyLabels) this.stopStickyLabels()
 	},
 	computed: {
 		effectiveTimezone () {
@@ -769,6 +777,10 @@ export default {
 		background-color: $clr-white
 		min-width: 0
 		.title-row
+			// Moved down while the card is scrolled (stickyLabels.js), so it must cover what slides under it.
+			position: relative
+			z-index: 1
+			background-color: $clr-white
 			display: flex
 			align-items: flex-start
 			justify-content: space-between
