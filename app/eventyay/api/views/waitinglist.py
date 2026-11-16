@@ -53,14 +53,16 @@ class WaitingListViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        """Recheck assignment on the locked entry before applying an API edit."""
+        """Revalidate API edits and assignment state on the locked entry."""
         with scope(event=self.request.event, organizer=self.request.event.organizer), transaction.atomic():
-            serializer.instance = get_object_or_404(
+            instance = get_object_or_404(
                 self.get_queryset().select_for_update(of=('self',)), pk=serializer.instance.pk,
             )
-            if serializer.instance.voucher_id:
+            if instance.voucher_id:
                 raise PermissionDenied('This entry can not be changed as it has already been assigned a voucher.')
-            serializer.save(event=self.request.event)
+            current = self.get_serializer(instance, data=serializer.initial_data, partial=serializer.partial)
+            current.is_valid(raise_exception=True)
+            serializer.instance = current.save(event=self.request.event)
             serializer.instance.log_action(
                 'eventyay.event.orders.waitinglist.changed',
                 user=self.request.user,

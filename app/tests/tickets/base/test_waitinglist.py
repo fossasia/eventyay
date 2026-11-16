@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scope
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import ValidationError as APIValidationError
 
 from eventyay.api.serializers.waitinglist import WaitingListSerializer
 from eventyay.api.views.waitinglist import WaitingListViewSet
@@ -190,8 +191,9 @@ def test_reservation_database_error_classification(sqlstate, monkeypatch):
 
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
 @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
-def test_api_update_waits_for_assignment(monkeypatch):
-    """An edit validated before assignment must not replace the assigned entry's data."""
+@pytest.mark.parametrize('competing_action', ['assignment', 'product change'])
+def test_api_update_revalidates_locked_entry(monkeypatch, competing_action):
+    """Recheck a stale PATCH after a competing assignment or product change commits."""
     organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
     event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
     ready = ThreadEvent()
@@ -202,22 +204,38 @@ def test_api_update_waits_for_assignment(monkeypatch):
         quota = Quota.objects.create(event=event, name='Tickets', size=None)
         quota.products.add(product)
         entry = WaitingListEntry.objects.create(event=event, product=product, email='original@example.test')
+        if competing_action == 'product change':
+            first_variant = ItemVariation.objects.create(product=product, value='First')
+            second_variant = ItemVariation.objects.create(product=product, value='Second')
+            other_product = Item.objects.create(event=event, name='Other ticket', default_price=23)
+            other_variant = ItemVariation.objects.create(product=other_product, value='Other')
+            quota.variations.add(first_variant, second_variant, other_variant)
+            quota.size = 0
+            quota.save(update_fields=['size'])
+            entry.variation = first_variant
+            entry.save()
 
     def update():
-        """Validate the stale PATCH before waiting for the reservation's transaction."""
+        """Validate the stale PATCH before waiting for the competing transaction."""
         try:
             with scope(event=event, organizer=organizer):
                 request = SimpleNamespace(event=event, user=None, auth=None)
                 serializer = WaitingListSerializer(
                     WaitingListEntry.objects.get(pk=entry.pk),
-                    data={'email': 'changed@example.test'}, partial=True,
+                    data=(
+                        {'email': 'changed@example.test'} if competing_action == 'assignment'
+                        else {'variation': second_variant.pk}
+                    ),
+                    partial=True,
                     context={'event': event, 'request': request},
                 )
                 assert serializer.is_valid(), serializer.errors
                 view = WaitingListViewSet()
                 view.request = request
+                view.format_kwarg = None
                 ready.set()
-                with pytest.raises(PermissionDenied):
+                expected = PermissionDenied if competing_action == 'assignment' else APIValidationError
+                with pytest.raises(expected):
                     view.perform_update(serializer)
         finally:
             connections.close_all()
@@ -227,15 +245,32 @@ def test_api_update_waits_for_assignment(monkeypatch):
             WaitingListEntry.objects.select_for_update(of=('self',)).get(pk=entry.pk)
             future = pool.submit(update)
             assert ready.wait(timeout=15)
-            entry.send_voucher()
+            if competing_action == 'assignment':
+                entry.send_voucher()
+            else:
+                view = WaitingListViewSet()
+                view.request = SimpleNamespace(event=event, user=None, auth=None)
+                view.format_kwarg = None
+                serializer = view.get_serializer(
+                    entry, data={'product': other_product.pk, 'variation': other_variant.pk}, partial=True,
+                )
+                assert serializer.is_valid(), serializer.errors
+                view.perform_update(serializer)
+                assert serializer.data['product'] == other_product.pk
+                assert serializer.data['variation'] == other_variant.pk
         future.result(timeout=30)
     with scope(event=event, organizer=organizer):
         entry.refresh_from_db()
         assert entry.email == 'original@example.test'
-        assert entry.voucher_id is not None
-        assert entry.voucher.product_id == product.pk
-        assert Voucher.objects.count() == 1
-    assert sent == ['original@example.test']
+        if competing_action == 'assignment':
+            assert entry.voucher_id is not None
+            assert entry.voucher.product_id == product.pk
+            assert Voucher.objects.count() == 1
+            assert sent == ['original@example.test']
+        else:
+            assert (entry.product_id, entry.variation_id) == (other_product.pk, other_variant.pk)
+            assert not Voucher.objects.exists()
+            assert not sent
 
 
 class WaitingListTestCase(TestCase):
