@@ -267,7 +267,7 @@ export default {
 						key: `${base}-${i}`,
 						session,
 						style: { 'grid-row': placement.gridRow, 'grid-column': placement.gridColumn },
-						props: { continuation: placement.continuation, segmentStart: placement.segmentStart, segmentEnd: placement.segmentEnd },
+						props: { continuation: placement.continuation },
 					})
 				})
 			})

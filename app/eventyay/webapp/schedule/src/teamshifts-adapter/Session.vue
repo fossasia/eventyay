@@ -1,6 +1,6 @@
 <template lang="pug">
 div.c-linear-schedule-session.is-shift-session(
-	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'is-continuation': continuation}",
+	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending}",
 	:style="style")
 	.time-box
 		.start.schedule-pending(v-if="isSchedulePending")
@@ -156,8 +156,6 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		segmentStart: Object,
-		segmentEnd: Object,
 	},
 	inject: {
 		eventUrl: { default: null },
