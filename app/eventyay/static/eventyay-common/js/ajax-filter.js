@@ -320,14 +320,26 @@ const handlePaginationClick = function(event) {
     fetchAndReplace(url, true, formInTab || tabPane || defaultForm);
 };
 
+/**
+ * Intercepts clicks on column sort header links within table headers or results regions,
+ * loading sorted results asynchronously and updating browser history via pushState.
+ *
+ * @param {MouseEvent} event - The click event.
+ */
 const handleSortClick = function(event) {
-    const sortLink = event.target.closest('thead a[href]');
+    const sortLink = event.target.closest(
+        'thead a[href], [data-ajax-results-region] th a[href], .table-sort a[href], .gc-sort-arrows a[href]'
+    );
     if (!sortLink) {
         return;
     }
 
     const url = sortLink.getAttribute('href');
-    if (!url || !url.startsWith('?')) {
+    if (!url || url === '#' || url.startsWith('javascript:')) {
+        return;
+    }
+
+    if (!url.startsWith('?') && !url.includes('ordering=') && !url.includes('sort=')) {
         return;
     }
 

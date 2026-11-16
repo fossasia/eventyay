@@ -86,6 +86,9 @@ def test_giftcards_ajax_markup(organizer, admin_user, client, gift_card):
     assert region is not None
     assert region.select_one('.gc-table-card') is not None
     assert region.select_one('.gc-accepted-card') is not None
+    copy_btn = region.select_one('.gc-copy-btn')
+    assert copy_btn is not None
+    assert copy_btn.get('aria-label') == 'Copy to clipboard'
 
 
 @pytest.mark.django_db
