@@ -3085,7 +3085,6 @@ body:has(.od-dashboard) #page-content {
   border: 1px solid var(--od-border);
   border-radius: var(--od-radius);
   box-shadow: var(--od-shadow);
-  padding: 14px;
   text-decoration: none;
   color: inherit;
   display: flex;
@@ -3096,7 +3095,7 @@ body:has(.od-dashboard) #page-content {
   height: 100%;
   box-sizing: border-box;
   transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease;
-  padding: 0 10px;
+  padding: 14px 10px;
 }
 
 
