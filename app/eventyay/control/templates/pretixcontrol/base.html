@@ -7,13 +7,14 @@
 {% load rich_text %}
 {% load timezone %}
 <!DOCTYPE html>
-<html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
+<html lang='{{ html_locale }}'{% if rtl %} dir='rtl' class='rtl'{% endif %}>
 	<head>
 		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ django_settings.INSTANCE_NAME }}</title>
          <script src="https://js.stripe.com/v3/"></script>
 		{% compress css %}
     		<link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_fonts.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
@@ -121,6 +122,7 @@
         <meta name="referrer" content="origin">
 
         {% block custom_header %}{% endblock %}
+	    {% include 'common/includes/external_links.html' %}
 	</head>
 	<body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
             data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"
