@@ -724,7 +724,7 @@ _LANGUAGES_CONFIG = {
         'bidi': True,
         'official': False,
         'percentage': 99,
-        'public_code': 'fa_IR',
+        'public_code': 'fa-IR',
         'incubating': False,
     },
     'fi': {
@@ -789,7 +789,7 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 69,
-        'public_code': 'jp',
+        'public_code': 'ja',
         'incubating': False,
     },
     'ko': {
