@@ -154,6 +154,53 @@ const syncMarkedRegions = function(oldContext, newContext) {
     });
 };
 
+/**
+ * Synchronizes filter form controls from the fetched document into the current DOM form(s).
+ * Restores input and select values during browser history navigation (popstate).
+ *
+ * @param {Element|Document} oldContext - The current container or document.
+ * @param {Element|Document} newContext - The freshly fetched container or document.
+ */
+const syncFormControls = function(oldContext, newContext) {
+    if (!oldContext || !newContext) return;
+
+    const oldForms = getFilterForms(oldContext);
+    const newForms = getFilterForms(newContext);
+    if (!oldForms.length || !newForms.length) return;
+
+    oldForms.forEach(function(oldForm, index) {
+        const newForm = newForms[index];
+        if (!newForm) return;
+
+        const newControlsMap = new Map();
+        newForm.querySelectorAll('input, select, textarea').forEach(function(ctrl) {
+            if (ctrl.name) {
+                newControlsMap.set(ctrl.name, ctrl);
+            }
+        });
+
+        oldForm.querySelectorAll('input, select, textarea').forEach(function(oldCtrl) {
+            if (!oldCtrl.name || (oldCtrl.type === 'hidden' && oldCtrl.name === 'csrfmiddlewaretoken')) {
+                return;
+            }
+            const newCtrl = newControlsMap.get(oldCtrl.name);
+            if (!newCtrl) {
+                return;
+            }
+
+            if (oldCtrl.type === 'checkbox' || oldCtrl.type === 'radio') {
+                if (oldCtrl.checked !== newCtrl.checked) {
+                    oldCtrl.checked = newCtrl.checked;
+                    oldCtrl.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (oldCtrl.value !== newCtrl.value) {
+                oldCtrl.value = newCtrl.value;
+                oldCtrl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+};
+
 const fetchAndReplace = async function(url, replaceUrlParams, form) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
@@ -203,6 +250,10 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
 
         syncFilterBadge(tabContext.context, newContext); 
         syncMarkedRegions(tabContext.context, newContext);
+
+        if (!replaceUrlParams) {
+            syncFormControls(tabContext.context, newContext);
+        }
 
         reinitializeBehaviors(resultsContainer);
 
