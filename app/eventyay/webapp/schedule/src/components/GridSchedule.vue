@@ -409,8 +409,8 @@ export default {
 				const next = this.timeslices[index + 1]
 				let height = baseSliceHeight
 				if (slice.gap) {
-					height = 100 * (minimumSliceMins / 30)
-			} else if (slice.datebreak) {
+					height = 40 * (minimumSliceMins / 30)
+				} else if (slice.datebreak) {
 					height = 36 * (minimumSliceMins / 30)
 				} else if (next) {
 					height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
@@ -564,7 +564,7 @@ export default {
 				const next = this.timeslices[index + 1]
 				let height = 60
 				if (slice.gap) {
-					height = 100
+					height = 40
 				} else if (slice.datebreak) {
 					height = 36
 				} else if (next) {
@@ -1026,14 +1026,15 @@ export default {
 			&::before
 				content: ''
 				display: block
-				width: 6px
-				height: calc(100% - 30px - 12px)
+				width: 4px
+				height: calc(100% - 24px - 4px)
 				position: absolute
-				top: 30px
+				top: 24px
 				left: 50%
+				transform: translateX(-50%)
 				background-image: radial-gradient(circle closest-side, $clr-grey-500 calc(100% - .5px), transparent 100%)
-				background-position: 0 0
-				background-size: 5px 15px
+				background-position: center 0
+				background-size: 4px 7px
 				background-repeat: repeat-y
 
 	.timeline
@@ -1080,6 +1081,9 @@ export default {
 	.timeslice
 		padding: 4px 6px 0 10px
 		font-size: 12px
+		&.gap::before
+			top: 16px
+			height: calc(100% - 16px - 2px)
 	.rooms-bar .rooms-inner > .room
 		font-size: 14px
 		padding: 4px 2px
@@ -1097,6 +1101,9 @@ export default {
 	.timeslice
 		padding: 12px 14px 0 20px
 		font-size: 16px
+		&.gap::before
+			top: 28px
+			height: calc(100% - 28px - 4px)
 	.rooms-bar .rooms-inner > .room
 		font-size: 20px
 		padding: 12px 6px
