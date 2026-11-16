@@ -31,12 +31,30 @@ def event_has_exhibition(event):
     return bool(re.search(EXHIBITION_PLUGIN_REGEX, event.plugins or ''))
 
 
+def event_track_group(event):
+    """Header data for one event in the "Restrict access to tracks" list."""
+    return {
+        'id': event.pk,
+        'name': str(event.name),
+        'slug': event.slug,
+        'date': event.get_date_range_display() if not event.has_subevents else _('Event series'),
+        'tracks': [],
+    }
+
+
 class TeamForm(forms.ModelForm):
+    all_tracks = forms.BooleanField(
+        label=_('All tracks (including newly created ones)'),
+        required=False,
+    )
+
     @scopes_disabled()
     def __init__(self, *args, **kwargs):
         organizer = kwargs.pop('organizer')
         self.organizer = organizer
         super().__init__(*args, **kwargs)
+        # An empty track selection means access to all tracks, so the toggle mirrors that.
+        self.fields['all_tracks'].initial = not (self.instance.pk and self.instance.limit_tracks.exists())
         self.fields['limit_events'].queryset = organizer.events.all().order_by('-has_subevents', '-date_from')
         tracks_qs = (
             Track.objects.filter(event__organizer=organizer)
@@ -46,7 +64,7 @@ class TeamForm(forms.ModelForm):
         self.fields['limit_tracks'].queryset = tracks_qs
 
         events_qs = organizer.events.all().order_by('-date_from', 'name')
-        self._events_with_tracks = self._build_events_with_tracks(events_qs, tracks_qs)
+        self._events_with_tracks = self._build_events_with_tracks(events_qs, tracks_qs, with_color=True)
 
         # Cache selected track IDs now (inside scopes_disabled context)
         # so the template can use them without scope issues
@@ -119,38 +137,38 @@ class TeamForm(forms.ModelForm):
         return any(event_has_exhibition(event) for event in data.get('limit_events') or [])
 
     @staticmethod
-    def _build_events_with_tracks(events_qs, tracks_qs):
+    def _build_events_with_tracks(events_qs, tracks_qs, with_color=False):
         """Build per-event track groups for the organiser team permissions UI.
 
         Includes every organiser event so the UI can show an empty state when
         an event has no tracks. Tracks are grouped using select_related data
-        from ``tracks_qs`` to avoid N+1 queries.
+        from ``tracks_qs`` to avoid N+1 queries. Also used for TeamShifts roles,
+        which have no colour, so ``with_color`` is only set for tracks.
         """
         events = OrderedDict()
         for event in events_qs:
-            events[event.pk] = {
-                'id': event.pk,
-                'name': str(event.name),
-                'slug': event.slug,
-                'tracks': [],
-            }
+            events[event.pk] = event_track_group(event)
         for track in tracks_qs:
             evt_pk = track.event_id
             if evt_pk not in events:
-                event = track.event
-                events[evt_pk] = {
-                    'id': evt_pk,
-                    'name': str(event.name),
-                    'slug': event.slug,
-                    'tracks': [],
-                }
-            events[evt_pk]['tracks'].append(
-                {
-                    'id': track.pk,
-                    'name': str(track.name),
-                }
-            )
+                events[evt_pk] = event_track_group(track.event)
+            item = {'id': track.pk, 'name': str(track.name)}
+            if with_color:
+                item['color'] = track.color
+            events[evt_pk]['tracks'].append(item)
         return list(events.values())
+
+    @property
+    def changed_data(self):
+        # ``all_tracks`` is not a model field; callers map changed_data to model fields for the audit log.
+        # Toggling it changes the saved track limits, so report that as a ``limit_tracks`` change.
+        changed = super().changed_data
+        if 'all_tracks' not in changed:
+            return changed
+        changed = [name for name in changed if name != 'all_tracks']
+        if 'limit_tracks' not in changed:
+            changed.append('limit_tracks')
+        return changed
 
     @property
     def events_with_tracks(self):
@@ -270,6 +288,29 @@ class TeamForm(forms.ModelForm):
                 self.fields['limit_teamshifts_roles'] = limit_field
         return instance
 
+    def _clean_track_limits(self, data):
+        if data.get('all_tracks'):
+            data['limit_tracks'] = []
+            return
+        event_ids = None
+        if not data.get('all_events'):
+            event_ids = {event.pk for event in data.get('limit_events') or []}
+            # Drop tracks of events the team cannot access, so they don't apply if the event is added later.
+            with scopes_disabled():
+                data['limit_tracks'] = [
+                    track for track in data.get('limit_tracks') or [] if track.event_id in event_ids
+                ]
+        scope_has_tracks = any(
+            event_data['tracks'] and (event_ids is None or event_data['id'] in event_ids)
+            for event_data in self._events_with_tracks
+        )
+        has_talk_permission = data.get('is_reviewer') or data.get('can_change_submissions')
+        if has_talk_permission and scope_has_tracks and not data.get('limit_tracks'):
+            self.add_error(
+                'limit_tracks',
+                forms.ValidationError(_('Please select at least one track, or grant access to all tracks.')),
+            )
+
     def clean(self):
         data = super().clean()
         all_events = data.get('all_events')
@@ -279,6 +320,8 @@ class TeamForm(forms.ModelForm):
                 _('Please either pick some events for this team, or grant access to all your events!')
             )
             self.add_error('limit_events', error)
+
+        self._clean_track_limits(data)
 
         all_teamshifts_roles = data.get('all_teamshifts_roles')
         if isinstance(all_teamshifts_roles, str):
