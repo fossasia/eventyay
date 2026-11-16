@@ -650,12 +650,12 @@ export function sessionIntersectsDay (session, day, timezone) {
 
 export function shouldAutoScrollSchedule ({ disableAutoScroll = false, fragment = '', currentDay, now, timezone } = {}) {
 	if (disableAutoScroll) return false
+	const todayStr = (timezone ? now.clone().tz(timezone) : now.clone()).format('YYYY-MM-DD')
 	if (fragment && fragment.length === 10) {
 		const initialDay = timezone ? moment.tz(fragment, timezone) : moment(fragment)
-		if (initialDay.isValid()) return false
+		if (initialDay.isValid() && initialDay.format('YYYY-MM-DD') !== todayStr) return false
 	}
 	if (!currentDay || !now) return false
-	const todayStr = (timezone ? now.clone().tz(timezone) : now.clone()).format('YYYY-MM-DD')
 	return currentDay === todayStr
 }
 

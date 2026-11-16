@@ -473,8 +473,7 @@ export default {
 				this._scrollDayUpdate = false
 				return
 			}
-			this._initialAutoScrollActive = false
-			if (this.pendingGoToNow) {
+			if (this.pendingGoToNow || this._initialAutoScrollActive) {
 				this.$nextTick(async () => {
 					await new Promise(resolve => requestAnimationFrame(resolve))
 					this.scrollToNow()
@@ -484,8 +483,7 @@ export default {
 			this.scrollToDayStart(day)
 		},
 		forceScrollDay () {
-			this._initialAutoScrollActive = false
-			if (this.pendingGoToNow) {
+			if (this.pendingGoToNow || this._initialAutoScrollActive) {
 				this.$nextTick(async () => {
 					await new Promise(resolve => requestAnimationFrame(resolve))
 					this.scrollToNow()
@@ -602,7 +600,7 @@ export default {
 				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
 			}
 		},
-		getStickyHeaderClearance (margin = 6) {
+		getStickyHeaderClearance () {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
 			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
@@ -624,7 +622,7 @@ export default {
 				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
 				versionWarning = Number.isFinite(vh) ? vh : 0
 			}
-			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + margin
+			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -669,22 +667,21 @@ export default {
 			this._initialAutoScrollActive = false
 			this.scrollToDayStart(day)
 		},
-		scrollElementIntoViewWithClearance (el, { targetTop, margin = 6 } = {}) {
+		scrollElementIntoViewWithClearance (el) {
 			if (!el) return
 			this._scrollGeneration = (this._scrollGeneration || 0) + 1
 			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
 			this._scrollAnim = null
-			const clearance = this.getStickyHeaderClearance(margin)
+			const clearance = this.getStickyHeaderClearance()
 			const rect = el.getBoundingClientRect()
-			const top = targetTop !== undefined ? targetTop : rect.top
 			const scrollEl = this.scrollParent
 			const isWindowScroll = !scrollEl || scrollEl === document.documentElement || scrollEl === document.body
 			if (!isWindowScroll) {
 				const parentRect = scrollEl.getBoundingClientRect()
-				const delta = top - parentRect.top - clearance
+				const delta = rect.top - parentRect.top - clearance
 				scrollEl.scrollTop += delta
 			} else {
-				window.scrollBy({ top: top - clearance })
+				window.scrollBy({ top: rect.top - clearance })
 			}
 		},
 		scrollToNow() {
@@ -692,14 +689,7 @@ export default {
 			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
 			this._scrollAnim = null
 			if (this.$refs.now) {
-				const el = this.$refs.now
-				const rect = el.getBoundingClientRect()
-				const arrow = el.querySelector?.('.now-arrow svg')
-				const offset = this.nowSlice?.offset ?? 0
-				const nowLineTop = arrow
-					? arrow.getBoundingClientRect().top + (arrow.getBoundingClientRect().height / 2)
-					: rect.top + (offset * rect.height)
-				this.scrollElementIntoViewWithClearance(el, { targetTop: nowLineTop, margin: 14 })
+				this.scrollElementIntoViewWithClearance(this.$refs.now)
 				return
 			}
 			if (!scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)) return
