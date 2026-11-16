@@ -71,6 +71,15 @@ test('returns null for shifts without times or a room', () => {
 	assert.equal(computeShiftPlacements({ id: 'y', room: null, start: at(1), end: at(2) }, sessions, layout), null)
 })
 
+// Parses "from / to" and fails the test on anything that is not a valid, non-empty column range.
+function columnRange (placement) {
+	assert.match(placement.gridColumn, /^\d+ \/ \d+$/, `malformed gridColumn: ${placement.gridColumn}`)
+	const [from, to] = placement.gridColumn.split(' / ').map(Number)
+	assert.ok(Number.isFinite(from) && Number.isFinite(to), `non-finite column in ${placement.gridColumn}`)
+	assert.ok(from >= 1 && from < to, `empty or reversed column range ${placement.gridColumn}`)
+	return [from, to]
+}
+
 test('other rooms do not affect the split', () => {
 	const other = { id: 2 }
 	const sessions = [
@@ -80,6 +89,54 @@ test('other rooms do not affect the split', () => {
 	]
 	const layout = computeShiftColumnLayout([room, other], sessions)
 	assert.equal(computeShiftPlacements(sessions[2], sessions, layout), null)
+})
+
+test('shifts in another room, even a busy one, leave the split of this room unchanged', () => {
+	const other = { id: 2 }
+	const inRoom = [shift('a', at(9), at(12)), shift('b', at(10), at(11))]
+	const before = placementsFor(inRoom, [room])
+
+	// A second room with its own overlap that runs during the same hours.
+	const busyElsewhere = [
+		shift('x', at(9), at(12), other),
+		shift('y', at(9, 30), at(11, 30), other),
+		shift('z', at(10), at(11), other),
+	]
+	const after = placementsFor([...inRoom, ...busyElsewhere], [room, other])
+
+	assert.deepEqual(summary(after.a), summary(before.a))
+	assert.deepEqual(summary(after.b), summary(before.b))
+	// The other room is laid out on its own columns, to the right of this room.
+	for (const s of busyElsewhere) {
+		for (const p of after[s.id]) assert.ok(columnRange(p)[0] >= 4, `${s.id} left its room: ${p.gridColumn}`)
+	}
+})
+
+test('when the first shift ends, the ones still running fill the room with no blank column', () => {
+	// a ends early. b and c keep running, so column 0 would be empty if they kept their old tracks.
+	const sessions = [
+		shift('a', at(9), at(10)),
+		shift('b', at(9), at(13)),
+		shift('c', at(9), at(13)),
+	]
+	const layout = computeShiftColumnLayout([room], sessions)
+	const { colStart, colSpan } = layout.get(1)
+	assert.equal(colSpan, 3)
+	const result = placementsFor(sessions)
+	const pieces = sessions.flatMap(s => result[s.id].map(p => {
+		const [from, to] = columnRange(p)
+		return { id: s.id, from, to, start: p.segmentStart.valueOf(), end: p.segmentEnd.valueOf() }
+	}))
+
+	const edges = [...new Set(pieces.flatMap(p => [p.start, p.end]))].sort((x, y) => x - y)
+	for (let i = 0; i < edges.length - 1; i++) {
+		const mid = (edges[i] + edges[i + 1]) / 2
+		const covered = new Array(colSpan).fill(0)
+		for (const p of pieces) {
+			if (p.start <= mid && mid < p.end) for (let col = p.from; col < p.to; col++) covered[col - colStart]++
+		}
+		assert.deepEqual(covered, new Array(colSpan).fill(1), `columns not filled exactly once at ${new Date(mid).toISOString()}`)
+	}
 })
 
 test('three overlapping shifts never share a column at the same time and every stretch is covered', () => {
@@ -93,9 +150,10 @@ test('three overlapping shifts never share a column at the same time and every s
 	const result = placementsFor(sessions)
 
 	const pieces = sessions.flatMap(s => result[s.id].map(p => {
-		const [from, to] = p.gridColumn.split(' / ').map(Number)
+		const [from, to] = columnRange(p)
 		return { id: s.id, from, to, start: p.segmentStart.valueOf(), end: p.segmentEnd.valueOf() }
 	}))
+	assert.ok(pieces.length >= sessions.length, 'every shift should produce at least one piece')
 
 	for (const a of pieces) {
 		for (const b of pieces) {

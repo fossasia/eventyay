@@ -879,8 +879,6 @@ export default {
 	--room-col-min: 320px
 	&.is-shift-mode
 		--room-col-min: 420px
-		// Top edge for shift cards' sticky title and time: just under the rooms bar.
-		--shift-sticky-top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) + 56px)
 	.sticky-header
 		position: sticky
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
