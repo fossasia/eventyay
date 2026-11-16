@@ -6,6 +6,8 @@ from django.db import transaction
 from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scopes_disabled
+from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.base.models.devices import Gate
 
 from eventyay.base.models import Event, Organizer, Team, User
 from tests.tickets.base import SoupTest, extract_form_fields
@@ -164,3 +166,50 @@ class OrganizerTest(SoupTest):
         self.orga1.settings.flush()
         assert self.orga1.settings.primary_color == '#33c33c'
         assert called
+
+
+
+# empty gate testing
+    def test_organizer_gates_empty_state(self):
+        url = reverse(
+            'eventyay_common:organizer.gates',
+            kwargs={'organizer': self.orga1.slug},
+        )
+        doc = self.get_doc(url)
+
+        self.assertIn(
+            'No gates created yet. Create a new gate to view it here.',
+            doc.text,
+        )
+
+    def test_organizer_gates_list(self):
+        with scopes_disabled():
+            gate = Gate.objects.create(
+                organizer=self.orga1,
+                name='Main Gate',
+            )
+
+        url = reverse(
+            'eventyay_common:organizer.gates',
+            kwargs={'organizer': self.orga1.slug},
+        )
+        doc = self.get_doc(url)
+
+        self.assertIn('Main Gate', doc.text)
+        self.assertNotIn(
+            'No gates created yet. Create a new gate to view it here.',
+            doc.text,
+        )
+
+        edit_url = reverse(
+            'eventyay_common:organizer.gates.edit',
+            kwargs={
+                'organizer': self.orga1.slug,
+                'gate': gate.pk,
+            },
+        )
+
+        self.assertEqual(
+            doc.select_one('table tbody tr td strong a')['href'],
+            edit_url,
+        )

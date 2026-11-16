@@ -25,9 +25,9 @@
                 <tr>
                     <td>
                         <strong>
-                            <a href="{% url 'eventyay_common:organizer.gates.add' organizer=request.organizer.slug %}">
-                                {{ g.name }}
-                            </a>
+                            <a href="{% url 'eventyay_common:organizer.gates.edit' organizer=request.organizer.slug gate=g.id %}">
+                            {{ g.name }}
+                            </a> 
                         </strong>
                     </td>
                     <td class="text-right flip">
