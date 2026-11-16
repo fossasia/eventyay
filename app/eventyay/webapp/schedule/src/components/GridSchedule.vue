@@ -127,6 +127,7 @@ export default {
 		},
 		currentDay: String,
 		forceScrollDay: { type: Number, default: 0 },
+		pendingGoToNow: { type: Boolean, default: false },
 		now: Object,
 		timezone: String,
 		locale: String,
@@ -472,9 +473,23 @@ export default {
 				this._scrollDayUpdate = false
 				return
 			}
+			if (this.pendingGoToNow) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDayStart(day)
 		},
 		forceScrollDay () {
+			if (this.pendingGoToNow) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDayStart(this.currentDay)
 		},
 		scrollParent () {
@@ -483,13 +498,13 @@ export default {
 	},
 	async mounted () {
 		const fragment = (window.location.hash || '').slice(1)
-		const autoScroll = shouldAutoScrollSchedule({
+		const autoScroll = (shouldAutoScrollSchedule({
 			disableAutoScroll: this.disableAutoScroll,
 			fragment,
 			currentDay: this.currentDay,
 			now: this.now,
 			timezone: this.timezone
-		}) && scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)
+		}) || this.pendingGoToNow) && scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)
 		this.rebindDayTracking()
 		await this.$nextTick()
 		this.initScrollSync()
@@ -646,6 +661,9 @@ export default {
 		},
 		scrollElementIntoViewWithClearance (el) {
 			if (!el) return
+			this._scrollGeneration = (this._scrollGeneration || 0) + 1
+			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
+			this._scrollAnim = null
 			const clearance = this.getStickyHeaderClearance()
 			const rect = el.getBoundingClientRect()
 			const scrollEl = this.scrollParent
@@ -659,6 +677,9 @@ export default {
 			}
 		},
 		scrollToNow() {
+			this._scrollGeneration = (this._scrollGeneration || 0) + 1
+			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
+			this._scrollAnim = null
 			if (this.$refs.now) {
 				this.scrollElementIntoViewWithClearance(this.$refs.now)
 				return

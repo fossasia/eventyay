@@ -52,6 +52,7 @@ export default {
 		},
 		currentDay: String,
 		forceScrollDay: { type: Number, default: 0 },
+		pendingGoToNow: { type: Boolean, default: false },
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
@@ -190,6 +191,13 @@ export default {
 	},
 	watch: {
 		forceScrollDay () {
+			if (this.pendingGoToNow) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDay(this.currentDay, { force: true })
 		},
 		async sortObserverKey () {
@@ -204,6 +212,13 @@ export default {
 				this._scrollDayUpdate = false
 				return
 			}
+			if (this.pendingGoToNow) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDay(day)
 		}
 	},
@@ -215,7 +230,7 @@ export default {
 			currentDay: this.currentDay,
 			now: this.now,
 			timezone: this.timezone
-		})
+		}) || this.pendingGoToNow
 		await this.$nextTick()
 		this.rebindDayTracking()
 		if (!autoScroll) return

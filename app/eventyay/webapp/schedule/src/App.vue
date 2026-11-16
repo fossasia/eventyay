@@ -73,6 +73,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
+			:pendingGoToNow="pendingGoToNow",
 			:density="'default'",
 			:timeDensityMinutes="timeDensityMinutes",
 			@changeDay="setCurrentDay($event)",
@@ -96,6 +97,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
+			:pendingGoToNow="pendingGoToNow",
 			:showBreaks="!sessionsMode",
 			:density="'default'",
 			@changeDay="setCurrentDay($event)",
@@ -349,6 +351,7 @@ export default {
 			scheduleUnavailable: false,
 			onHomeServer: false,
 			initialAutoScrollDone: false,
+			pendingGoToNow: false,
 			loggedIn: false,
 			_initialized: false,
 			apiUrl: null,
@@ -1172,8 +1175,10 @@ export default {
 				if (loadFailed) return
 				if (this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)) {
 					this.initialAutoScrollDone = true
-					this.$nextTick(() => {
+					this.$nextTick(async () => {
+						await new Promise(resolve => requestAnimationFrame(resolve))
 						this.$refs.scheduleDisplay?.scrollToNow?.()
+						this.pendingGoToNow = false
 						this._pendingGoToNow = false
 					})
 				}
@@ -1206,7 +1211,9 @@ export default {
 					const shouldScroll = this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)
 					if (shouldScroll) {
 						this.initialAutoScrollDone = true
+						await new Promise(resolve => requestAnimationFrame(resolve))
 						this.$refs.scheduleDisplay?.scrollToNow?.()
+						this.pendingGoToNow = false
 						this._pendingGoToNow = false
 					}
 					// A date click has already moved to that day. Prepending the
@@ -1220,6 +1227,7 @@ export default {
 				})
 				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
+				this.pendingGoToNow = false
 				this._pendingGoToNow = false
 				console.error('Failed to load schedule day', requestedDay, error)
 			} finally {
@@ -1504,13 +1512,13 @@ export default {
 			return host
 		},
 		setCurrentDay (day) {
-			const dayStr = day.format('YYYY-MM-DD')
+			const dayStr = typeof day === 'string' ? day : (day.format ? day.format('YYYY-MM-DD') : String(day))
 			if (this._toolbarDay && dayStr !== this._toolbarDay) return
 			if (this._pendingGoToNow && dayStr !== this._pendingGoToNowDay) return
 			const pool = (this.allDays && this.allDays.length) ? this.allDays : (this.days || [])
-			const matchingDays = pool.filter(d => d.format('YYYY-MM-DD') === dayStr)
+			const matchingDays = pool.filter(d => (typeof d === 'string' ? d : d.format('YYYY-MM-DD')) === dayStr)
 			if (!matchingDays.length) return
-			const nextDay = matchingDays[0].format('YYYY-MM-DD')
+			const nextDay = typeof matchingDays[0] === 'string' ? matchingDays[0] : matchingDays[0].format('YYYY-MM-DD')
 			if (nextDay === this.currentDay) return
 			this._fromScrollDay = true
 			this.currentDay = nextDay
@@ -1536,6 +1544,7 @@ export default {
 		},
 		selectDay (dayId) {
 			if (dayId !== this._pendingGoToNowDay) {
+				this.pendingGoToNow = false
 				this._pendingGoToNow = false
 			}
 			try {
@@ -1563,23 +1572,33 @@ export default {
 			const today = todayMoment.format('YYYY-MM-DD')
 			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
-			if (this.currentDay === today) {
-				this._pendingGoToNow = false
-				this.$refs.scheduleDisplay?.scrollToNow?.()
-				return
-			}
 			if (this._toolbarDay) {
 				window.clearTimeout(this._toolbarJumpTimer)
 				this.releaseToolbarJump(this._toolbarDay)
 			}
+			if (this.currentDay === today) {
+				this.pendingGoToNow = true
+				this._pendingGoToNow = true
+				this._pendingGoToNowDay = today
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.$refs.scheduleDisplay?.scrollToNow?.()
+					this.pendingGoToNow = false
+					this._pendingGoToNow = false
+				})
+				return
+			}
+			this.pendingGoToNow = true
 			this._pendingGoToNow = true
 			this._pendingGoToNowDay = today
 			this.changeDay(todayMoment)
 			if (this.schedule?.compact && !this.scheduleNeedsEveryDay) {
 				return
 			}
-			this.$nextTick(() => {
+			this.$nextTick(async () => {
+				await new Promise(resolve => requestAnimationFrame(resolve))
 				this.$refs.scheduleDisplay?.scrollToNow?.()
+				this.pendingGoToNow = false
 				this._pendingGoToNow = false
 			})
 		},
