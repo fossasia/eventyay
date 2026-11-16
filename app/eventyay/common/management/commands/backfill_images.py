@@ -180,7 +180,9 @@ class Command(BaseCommand):
             lock = transaction.atomic() if model else nullcontext()
             with lock:
                 if model:
-                    instance = model.objects.select_for_update().filter(pk=pk).first()
+                    # Lock only this row: a model's default ordering can join nullable relations
+                    # (Product orders by category__position), which FOR UPDATE can't lock.
+                    instance = model.objects.select_for_update(of=('self',)).filter(pk=pk).first()
                     if not instance:
                         stats['skipped'] += 1
                         return

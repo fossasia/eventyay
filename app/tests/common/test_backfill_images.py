@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django_scopes import scope
 from PIL import Image
 
-from eventyay.base.models import Event, Organizer, Room
+from eventyay.base.models import Event, Organizer, Product, Room
 from eventyay.base.signals import register_image_backfill_targets
 from eventyay.common.management.commands.backfill_images import IMAGE_TARGETS, get_image_targets
 
@@ -116,3 +116,17 @@ def test_plugin_targets_are_processed_without_model_option(plugin_targets, room_
 
     # The picture is listed once for core's room target and once for the plugin's.
     assert output.count(f'WOULD compress Room pk={room_with_picture.pk}') == 2
+
+
+def test_product_pictures_can_be_locked_for_processing(room_with_picture):
+    event = room_with_picture.event
+    buffer = BytesIO()
+    Image.new('RGB', (60, 60), color='green').save(buffer, format='PNG')
+    with scope(event=event):
+        # No category: Product's default ordering then needs an outer join to the category table.
+        product = Product.objects.create(event=event, name='Ticket', default_price=10)
+        product.picture.save('ticket.png', ContentFile(buffer.getvalue()), save=True)
+
+    output = dry_run('--model', 'product')
+
+    assert f'WOULD compress Product pk={product.pk}' in output
