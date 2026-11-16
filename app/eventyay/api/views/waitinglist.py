@@ -63,6 +63,8 @@ class WaitingListViewSet(viewsets.ModelViewSet):
             current = self.get_serializer(instance, data=serializer.initial_data, partial=serializer.partial)
             current.is_valid(raise_exception=True)
             serializer.instance = current.save(event=self.request.event)
+            if hasattr(serializer, '_data'):
+                del serializer._data
             serializer.instance.log_action(
                 'eventyay.event.orders.waitinglist.changed',
                 user=self.request.user,

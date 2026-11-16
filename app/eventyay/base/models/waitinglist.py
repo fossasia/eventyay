@@ -139,7 +139,7 @@ class WaitingListEntry(LoggedModel):
                 raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
         except OperationalError as exc:
             if not reserved:
-                cause = exc.__cause__
+                cause = exc.__cause__ or exc
                 sqlstate = getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)
                 if sqlstate not in {'08000', '08001', '08003', '08006', '40001', '40P01', '53300', '55P03', '57P03'}:
                     raise
@@ -160,7 +160,11 @@ class WaitingListEntry(LoggedModel):
         """Check the current entry and quota capacity before creating its voucher."""
         with scope(event=self.event, organizer=self.event.organizer), transaction.atomic():
             try:
-                self.refresh_from_db(from_queryset=type(self).objects.select_for_update(of=('self',)))
+                self.refresh_from_db(
+                    from_queryset=type(self).objects.select_for_update(of=('self',)).select_related(
+                        'product', 'variation', 'subevent',
+                    ),
+                )
             except type(self).DoesNotExist as exc:
                 raise WaitingListException(_('Waiting list entry not found.')) from exc
             if self.voucher_id:

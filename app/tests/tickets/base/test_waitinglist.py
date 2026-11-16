@@ -164,27 +164,34 @@ def test_automatic_assignment_refreshes_capacity_and_retries(with_variation, sce
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('wrapped', [False, True])
 @pytest.mark.parametrize('sqlstate', [
     '08006', '40001', '40P01', '57P03', 'XX000', '08007', None,
 ])
-def test_reservation_database_error_classification(sqlstate, monkeypatch):
+def test_reservation_database_error_classification(sqlstate, wrapped, monkeypatch):
     """Retry recognized transient failures while preserving unknown and persistent errors."""
     organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
     event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
     entry = WaitingListEntry(event=event)
     cause = OperationalError('database error')
     cause.sqlstate = sqlstate
+    failure = OperationalError('reservation failed') if wrapped else cause
+    if wrapped:
+        failure.__cause__ = cause
 
     def fail(*args, **kwargs):
         """Raise the database error before a reservation can complete."""
-        raise OperationalError('reservation failed') from cause
+        raise failure
 
     monkeypatch.setattr(Event, 'lock', lambda event: nullcontext())
     monkeypatch.setattr(entry, '_reserve_voucher', fail)
     expected = OperationalError if sqlstate in {'XX000', '08007', None} else WaitingListBusy
     with pytest.raises(expected) as error:
         entry.send_voucher()
-    assert isinstance(error.value.__cause__, OperationalError)
+    if expected is WaitingListBusy:
+        assert error.value.__cause__ is failure
+    else:
+        assert error.value is failure
     with scope(event=event, organizer=organizer):
         assert not Voucher.objects.exists()
 
@@ -255,6 +262,8 @@ def test_api_update_revalidates_locked_entry(monkeypatch, competing_action):
                     entry, data={'product': other_product.pk, 'variation': other_variant.pk}, partial=True,
                 )
                 assert serializer.is_valid(), serializer.errors
+                assert serializer.data['product'] == product.pk
+                assert serializer.data['variation'] == first_variant.pk
                 view.perform_update(serializer)
                 assert serializer.data['product'] == other_product.pk
                 assert serializer.data['variation'] == other_variant.pk
