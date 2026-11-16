@@ -867,7 +867,7 @@ body:has(.td-dashboard) #page-content {
     top: 16px
   }
 
-    /* Keep the step link popups inside the screen on phones */
+  /* Keep the step link popups inside the screen on phones */
   .timeline-step-links {
     left: auto;
     inset-inline-start: 0;
