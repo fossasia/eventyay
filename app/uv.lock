@@ -3657,15 +3657,15 @@ wheels = [
 
 [[package]]
 name = "textile"
-version = "4.0.4"
+version = "4.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nh3" },
     { name = "regex", marker = "implementation_name != 'pypy'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/97/32/3126869580204c8b8fe019a5e43f70e4f36e90d0f530033be2746c2c7a1e/textile-4.0.4.tar.gz", hash = "sha256:89428d848712b041cf4e354c0a6332339810d519a5c3109cb42a0c594f882a0d", size = 57322, upload-time = "2026-05-10T20:55:31.133Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3d/6e/232df5b68957ae3f0605b2958a498808af0156662e970fa8e12f6250bf12/textile-4.0.5.tar.gz", hash = "sha256:640bb9e99f51209986e98442e50adcddaf6ec8ed1da7e4317bf2662c2fb260d7", size = 59093, upload-time = "2026-11-11T21:12:58.806Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/0a/4c58eea9ef7ccb96e588fddcb9540c1657f944028f8901931003b498b1c5/textile-4.0.4-py3-none-any.whl", hash = "sha256:a09e3696405b82c79e1323ce892c78975943f3ee681b0570dab7878407434da7", size = 30654, upload-time = "2026-05-10T20:55:30.181Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/ab/1d517f5ac54980a5b0d571e40ed97947e688fdc86127946b2f5aa8d3698d/textile-4.0.5-py3-none-any.whl", hash = "sha256:95ecd6bc944e7be2c410fc2bf854dc689d761fbf5e72a47682811d87018b9cf2", size = 30843, upload-time = "2026-11-11T21:12:57.689Z" },
 ]
 
 [[package]]
