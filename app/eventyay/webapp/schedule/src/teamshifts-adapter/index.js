@@ -369,6 +369,19 @@ export function computeShiftPlacements (session, allSessions, columnLayout) {
 	}))
 }
 
+/**
+ * The grid items for one shift's pieces: where each goes on the grid and whether it is a continuation card.
+ * `base` is the shift's key; each piece gets its own key under it.
+ */
+export function placementGridItems (base, session, placements) {
+	return placements.map((placement, i) => ({
+		key: `${base}-${i}`,
+		session,
+		style: { 'grid-row': placement.gridRow, 'grid-column': placement.gridColumn },
+		props: { continuation: placement.continuation },
+	}))
+}
+
 function getSliceName (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
 }

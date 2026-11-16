@@ -69,6 +69,14 @@ function schedule () {
 }
 
 /**
+ * Recomputes every label offset now. Call it when the layout changes without a scroll or window resize,
+ * for example when the grid rows or the rooms bar change size.
+ */
+export function refreshStickyLabels () {
+	if (entries.size) schedule()
+}
+
+/**
  * Starts keeping the labels of one shift card in view. Returns a function that stops it.
  * One shared, throttled scroll listener serves every card.
  */

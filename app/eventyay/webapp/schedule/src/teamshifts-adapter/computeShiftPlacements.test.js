@@ -4,7 +4,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { computeShiftColumnLayout, computeShiftPlacements } from './index.js'
+import { computeShiftColumnLayout, computeShiftPlacements, placementGridItems } from './index.js'
 
 const pad = n => String(n).padStart(2, '0')
 
@@ -171,4 +171,24 @@ test('three overlapping shifts never share a column at the same time and every s
 		for (let i = 1; i < own.length; i++) assert.equal(own[i][0], own[i - 1][1])
 		assert.equal(result[s.id].filter(p => !p.continuation).length, 1)
 	}
+})
+
+test('grid items carry the continuation flag, a unique key and the grid placement of each piece', () => {
+	const sessions = [
+		shift('afternoon', at(18), at(23)),
+		shift('evening', at(22, 30), at(2, 30, 1)),
+	]
+	const placements = placementsFor(sessions).afternoon
+	const items = placementGridItems('afternoon', sessions[0], placements)
+
+	assert.equal(items.length, placements.length)
+	assert.deepEqual(items.map(item => item.key), ['afternoon-0', 'afternoon-1'])
+	assert.deepEqual(items.map(item => item.props.continuation), [false, true])
+	assert.deepEqual(items.map(item => item.style), [
+		{ 'grid-row': 'slice-11-29-18-00 / slice-11-29-22-30', 'grid-column': '2 / 4' },
+		{ 'grid-row': 'slice-11-29-22-30 / slice-11-29-23-00', 'grid-column': '2 / 3' },
+	])
+	assert.ok(items.every(item => item.session === sessions[0]))
+	// Every key is unique, so Vue can tell the pieces of one shift apart.
+	assert.equal(new Set(items.map(item => item.key)).size, items.length)
 })

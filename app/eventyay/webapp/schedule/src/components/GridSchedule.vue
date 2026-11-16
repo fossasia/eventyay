@@ -93,7 +93,8 @@ import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll } from '../utils'
-import { isShiftSchedule, computeShiftPlacements, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
+import { isShiftSchedule, computeShiftPlacements, placementGridItems, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
+import { refreshStickyLabels } from '../teamshifts-adapter/stickyLabels'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
@@ -262,14 +263,7 @@ export default {
 					items.push({ key: base, session, style: this.getSessionStyle(session), props: {} })
 					return
 				}
-				placements.forEach((placement, i) => {
-					items.push({
-						key: `${base}-${i}`,
-						session,
-						style: { 'grid-row': placement.gridRow, 'grid-column': placement.gridColumn },
-						props: { continuation: placement.continuation },
-					})
-				})
+				items.push(...placementGridItems(base, session, placements))
 			})
 			return items
 		},
@@ -752,9 +746,15 @@ export default {
 			const viewport = this.$refs.gridViewport
 			if (!viewport) return
 			this.updateScrollbar()
-			this._gridResizeObserver = new ResizeObserver(() => this.updateScrollbar())
+			this._gridResizeObserver = new ResizeObserver(() => {
+				this.updateScrollbar()
+				// A density change or a wrapping room name resizes the grid or the rooms bar without any scroll.
+				refreshStickyLabels()
+			})
 			const grid = viewport.querySelector('.grid')
 			if (grid) this._gridResizeObserver.observe(grid)
+			const header = this.$el.querySelector('.sticky-header')
+			if (header) this._gridResizeObserver.observe(header)
 			setTimeout(() => this.updateScrollbar(), 200)
 		},
 		updateScrollbar () {
