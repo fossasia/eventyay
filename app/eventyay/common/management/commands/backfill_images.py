@@ -60,7 +60,16 @@ def get_image_targets():
             # One broken plugin shouldn't stop core and other plugins' images from being processed.
             logger.error('Could not load image backfill targets from %r', receiver, exc_info=response)
             continue
-        for name, target in (response or {}).items():
+        if response is None:
+            continue
+        if not isinstance(response, dict):
+            logger.warning(
+                'Ignoring image backfill targets from %r: expected a dict, got %s',
+                receiver,
+                type(response).__name__,
+            )
+            continue
+        for name, target in response.items():
             if name in targets or name == 'settings':
                 logger.warning('Ignoring image backfill target %r from %r: the name is already taken', name, receiver)
                 continue
@@ -161,7 +170,8 @@ class Command(BaseCommand):
             if backup_abs == media_abs or backup_abs.startswith(media_abs + os.sep):
                 raise CommandError(f'--backup-dir ({backup_abs}) must not be inside MEDIA_ROOT ({media_abs}).')
                 
-        image_targets = self.image_targets
+        # add_arguments() fills this when the command runs through call_command() or the CLI.
+        image_targets = getattr(self, 'image_targets', None) or get_image_targets()
         models_to_process = options.get('model') or list(image_targets.keys()) + ['settings']
 
         min_bytes = min_size_kb * 1024

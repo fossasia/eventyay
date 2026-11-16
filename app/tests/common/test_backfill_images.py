@@ -9,7 +9,7 @@ from PIL import Image
 
 from eventyay.base.models import Event, Organizer, Product, Room
 from eventyay.base.signals import register_image_backfill_targets
-from eventyay.common.management.commands.backfill_images import IMAGE_TARGETS, get_image_targets
+from eventyay.common.management.commands.backfill_images import IMAGE_TARGETS, Command, get_image_targets
 
 
 def test_backfill_includes_remaining_image_fields():
@@ -59,6 +59,31 @@ def test_a_failing_receiver_does_not_drop_other_targets(plugin_targets):
 
     assert set(IMAGE_TARGETS) < set(targets)
     assert 'plugin_room_picture' in targets
+
+
+def test_a_receiver_returning_a_non_dict_is_ignored(plugin_targets):
+    def list_receiver(sender, **kwargs):
+        return [('list_room_picture', (Room, 'picture', False))]
+
+    register_image_backfill_targets.connect(list_receiver, dispatch_uid='test_backfill_list_receiver')
+    try:
+        targets = get_image_targets()
+        help_text = StringIO()
+        with pytest.raises(SystemExit):
+            call_command('backfill_images', '--help', stdout=help_text)
+    finally:
+        register_image_backfill_targets.disconnect(dispatch_uid='test_backfill_list_receiver')
+
+    assert 'list_room_picture' not in targets
+    assert 'plugin_room_picture' in targets
+
+
+def test_handle_works_without_add_arguments(room_with_picture):
+    out = StringIO()
+    command = Command(stdout=out)
+    command.handle(dry_run=True, min_size_kb=0, model=['room'])
+
+    assert f'WOULD compress Room pk={room_with_picture.pk}' in out.getvalue()
 
 
 def test_get_image_targets_does_not_change_core_targets(plugin_targets):
