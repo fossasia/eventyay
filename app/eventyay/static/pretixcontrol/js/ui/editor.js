@@ -129,6 +129,7 @@ var editor = {
     _history_pos: 0,
     _history_modification_in_progress: false,
     _toolbox_update_in_progress: false,
+    _color_picker_open: false,
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
@@ -817,15 +818,22 @@ var editor = {
         $("#toolbox-content-other").hide();
         $(".add-buttons button").prop('disabled', false);
 
-        if (dump) {
-            editor.load(dump);
-        } else {
-            var data = $.trim($("#editor-data").text());
-            if (data) {
-                editor.load(JSON.parse(data));
+        editor._history_modification_in_progress = true;
+        try {
+            if (dump) {
+                editor.load(dump);
+            } else {
+                var data = $.trim($("#editor-data").text());
+                if (data) {
+                    editor.load(JSON.parse(data));
+                }
             }
+        } finally {
+            editor._history_modification_in_progress = false;
         }
+        // The layout as loaded is the oldest state Undo can return to.
         editor.history = [];
+        editor._history_pos = 0;
         editor._create_savepoint();
         editor.dirty = !!dump;
 
@@ -1013,8 +1021,12 @@ var editor = {
             if ($("#toolbox-poweredby-style").val() !== o.content) {
                 var data = editor.dump([o]);
                 data[0].content = $("#toolbox-poweredby-style").val();
+                // Swapping the object is one edit; the caller records it once both steps are done.
+                var historyPaused = editor._history_modification_in_progress;
+                editor._history_modification_in_progress = true;
                 var newo = editor._add_from_data(data[0]);
                 editor.fabric.remove(o);
+                editor._history_modification_in_progress = historyPaused;
                 editor.fabric.discardActiveObject();
                 editor.fabric.setActiveObject(newo);
             }
@@ -1426,20 +1438,6 @@ var editor = {
                 editor._select_all();
                 handled = true;
                 break;
-            case 89:  /* Y */
-                if (!cmd) {
-                    return;
-                }
-                editor._redo();
-                handled = true;
-                break;
-            case 90:  /* Z */
-                if (!cmd) {
-                    return;
-                }
-                editor._undo();
-                handled = true;
-                break;
             case 88:  /* X */
                 if (!cmd || !thing) {
                     return;
@@ -1471,37 +1469,120 @@ var editor = {
         }
     },
 
+    _current_history_state: function () {
+        return editor.history[editor.history.length - 1 - editor._history_pos];
+    },
+
     _create_savepoint: function () {
-        if (editor._history_modification_in_progress) {
+        // Skip while a snapshot is being restored, while the toolbox is being filled from the
+        // selected object (which fires "change" on its inputs), and while the colour picker is
+        // open (it fires "change" on every drag step; the final colour is saved when it closes).
+        if (
+            editor._history_modification_in_progress ||
+            editor._toolbox_update_in_progress ||
+            editor._color_picker_open ||
+            !editor.fabric
+        ) {
             return;
         }
         var state = editor.dump();
+        var current = editor._current_history_state();
+        if (current && JSON.stringify(current) === JSON.stringify(state)) {
+            // Nothing changed, e.g. "change" fired on blur or object:added before an explicit savepoint.
+            return;
+        }
         if (editor._history_pos > 0) {
             editor.history.splice(-1 * editor._history_pos, editor._history_pos);
             editor._history_pos = 0;
         }
         editor.history.push(state);
         editor.dirty = true;
+        editor._update_history_buttons();
     },
 
-    _undo: function undo() {
-        if (editor._history_pos < editor.history.length - 1) {
-            editor._history_modification_in_progress = true;
-            editor._history_pos += 1;
-            editor.fabric.clear().renderAll();
-            editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
-            editor._history_modification_in_progress = false;
-            editor.dirty = true;
+    _can_undo: function () {
+        return editor._history_pos < editor.history.length - 1;
+    },
+
+    _can_redo: function () {
+        return editor._history_pos > 0;
+    },
+
+    _update_history_buttons: function () {
+        var undoButton = document.getElementById("toolbox-undo");
+        var redoButton = document.getElementById("toolbox-redo");
+        if (undoButton) {
+            undoButton.disabled = !editor._can_undo();
+        }
+        if (redoButton) {
+            redoButton.disabled = !editor._can_redo();
         }
     },
 
-    _redo: function redo() {
-        if (editor._history_pos > 0) {
-            editor._history_modification_in_progress = true;
-            editor._history_pos -= 1;
-            editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
+    _restore_history_state: function () {
+        editor._history_modification_in_progress = true;
+        try {
+            editor.load(editor._current_history_state());
+            // load() selects each text object it adds; leave nothing selected afterwards.
+            editor.fabric.discardActiveObject();
+            editor.fabric.renderAll();
+            editor._update_toolbox();
+        } finally {
             editor._history_modification_in_progress = false;
-            editor.dirty = true;
+        }
+        editor.dirty = true;
+        editor._update_history_buttons();
+    },
+
+    _undo: function undo() {
+        if (!editor.fabric || !editor._can_undo()) {
+            return;
+        }
+        editor._history_pos += 1;
+        editor._restore_history_state();
+    },
+
+    _redo: function redo() {
+        if (!editor.fabric || !editor._can_redo()) {
+            return;
+        }
+        editor._history_pos -= 1;
+        editor._restore_history_state();
+    },
+
+    _history_action_for_key: function (e) {
+        // Ctrl/Cmd+Z undoes, Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y redo. AltGr reports as Ctrl+Alt on
+        // some layouts, so Alt combinations are left alone.
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) {
+            return null;
+        }
+        var key = (e.key || '').toLowerCase();
+        if (key === 'z' || (!key && e.keyCode === 90)) {
+            return e.shiftKey ? 'redo' : 'undo';
+        }
+        if (key === 'y' || (!key && e.keyCode === 89)) {
+            return 'redo';
+        }
+        return null;
+    },
+
+    _on_history_keydown: function (e) {
+        if (!editor.fabric || !editor._is_hotkey_target()) {
+            return;
+        }
+        // Text fields keep the browser's own undo for what is being typed.
+        if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) {
+            return;
+        }
+        var action = editor._history_action_for_key(e);
+        if (!action) {
+            return;
+        }
+        e.preventDefault();
+        if (action === 'redo') {
+            editor._redo();
+        } else {
+            editor._undo();
         }
     },
 
@@ -1581,7 +1662,16 @@ var editor = {
     },
 
     _source_save: function () {
-        editor.load(JSON.parse($("#source-textarea").val()));
+        editor._history_modification_in_progress = true;
+        try {
+            editor.load(JSON.parse($("#source-textarea").val()));
+            editor.fabric.discardActiveObject();
+            editor.fabric.renderAll();
+            editor._update_toolbox();
+        } finally {
+            editor._history_modification_in_progress = false;
+        }
+        editor._create_savepoint();
         $("#source-container").hide();
     },
 
@@ -1686,12 +1776,20 @@ var editor = {
             editor._create_savepoint();
         });
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
+        $("#toolbox .colorpickerfield").on('showPicker', function () {
+            editor._color_picker_open = true;
+        }).on('hidePicker', function () {
+            editor._color_picker_open = false;
+            editor._create_savepoint();
+        });
         $("#toolbox-copy").bind('click', editor._copy);
         $("#toolbox-cut").bind('click', editor._cut);
         $("#toolbox-delete").bind('click', editor._delete);
         $("#toolbox-paste").bind('click', editor._paste);
         $("#toolbox-undo").bind('click', editor._undo);
         $("#toolbox-redo").bind('click', editor._redo);
+        document.addEventListener('keydown', editor._on_history_keydown);
+        editor._update_history_buttons();
         $("#toolbox-source").bind('click', editor._source_show);
         $("#source-close").bind('click', editor._source_close);
         $("#source-save").bind('click', editor._source_save);
