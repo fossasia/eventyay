@@ -933,9 +933,10 @@ class OrganizerBillingModel(models.Model):
 
     invoice_voucher = models.ForeignKey(
         'base.InvoiceVoucher',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='billing',
         null=True,
+        blank=True,
     )
 
     stripe_customer_id = models.CharField(
