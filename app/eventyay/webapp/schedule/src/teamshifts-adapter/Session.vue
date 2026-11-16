@@ -1,6 +1,6 @@
 <template lang="pug">
 div.c-linear-schedule-session.is-shift-session(
-	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending}",
+	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'is-continuation': continuation}",
 	:style="style")
 	.time-box
 		.start.schedule-pending(v-if="isSchedulePending")
@@ -11,7 +11,7 @@ div.c-linear-schedule-session.is-shift-session(
 				line(x1="3", y1="10", x2="21", y2="10")
 			.schedule-pending-label
 				span.schedule-pending-text {{ schedulePendingText }}
-		template(v-else)
+		template(v-else-if="!continuation")
 			.start(:class="{'has-ampm': effectiveHasAmPm}")
 				.date(v-if="showDate")
 					.weekday {{ weekdayLabel }}
@@ -24,14 +24,15 @@ div.c-linear-schedule-session.is-shift-session(
 	.info
 		.title-row
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-			.organizer-actions(v-if="canManageShifts")
+			.organizer-actions(v-if="canManageShifts && !continuation")
 				button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openEditDialog", :title="$t('Edit shift')", :aria-label="$t('Edit shift')")
 					svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
 						path(fill="currentColor", d="M6.58 20.57 l1.22 -1.22 l-3.15 -3.15 l-1.22 1.22 v1.43 h1.71 v1.71 h1.43 z M13.58 8.14 q0 -0.29 -0.29 -0.29 q-0.13 0 -0.23 0.09 l-7.26 7.26 q-0.09 0.09 -0.09 0.23 q0 0.29 0.29 0.29 q0.13 0 0.23 -0.09 l7.26 -7.26 q0.09 -0.09 0.09 -0.23 z M12.86 5.57 l5.57 5.57 l-11.14 11.14 h-5.57 v-5.57 z M22 6.86 q0 0.71 -0.5 1.21 l-2.22 2.22 l-5.57 -5.57 l2.22 -2.21 q0.48 -0.51 1.21 -0.51 q0.71 0 1.22 0.51 l3.15 3.13 q0.5 0.52 0.5 1.22 z")
 				button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openDeleteConfirm", :title="$t('Delete shift')", :aria-label="$t('Delete shift')")
 					svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
 						path(fill="currentColor", d="M9.43 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M12.86 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M16.29 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M9 5.14 h6 l-0.64 -1.57 q-0.09 -0.12 -0.23 -0.15 h-4.25 q-0.13 0.03 -0.23 0.15 z M21.43 5.57 v0.86 q0 0.19 -0.12 0.31 t-0.31 0.12 h-1.29 v12.7 q0 1.11 -0.63 1.92 t-1.51 0.81 h-11.14 q-0.88 0 -1.51 -0.78 t-0.63 -1.9 v-12.75 h-1.29 q-0.19 0 -0.31 -0.12 t-0.12 -0.31 v-0.86 q0 -0.19 0.12 -0.31 t0.31 -0.12 h4.14 l0.94 -2.24 q0.2 -0.5 0.72 -0.84 t1.06 -0.35 h4.29 q0.54 0 1.06 0.35 t0.72 0.84 l0.94 2.24 h4.14 q0.19 0 0.31 0.12 t0.12 0.31 z")
-		.roles-list(v-if="session.roles && session.roles.length")
+		.continuation-range(v-if="continuation") {{ shiftRangeLabel }}
+		.roles-list(v-if="!continuation && session.roles && session.roles.length")
 			.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
 				.role-content
 					.role-name-group
@@ -148,6 +149,14 @@ export default {
 		},
 		locale: String,
 		timezone: String,
+		// One shift can be drawn as several pieces (see computeShiftPlacements). Only the
+		// main piece carries roles and actions; the others are compact and just name the shift.
+		continuation: {
+			type: Boolean,
+			default: false,
+		},
+		segmentStart: Object,
+		segmentEnd: Object,
 	},
 	inject: {
 		eventUrl: { default: null },
@@ -273,6 +282,16 @@ export default {
 			const end = this.session.end.clone().tz(tz).locale(locale)
 			const endStr = this.effectiveHasAmPm ? `${end.format('h:mm')} ${end.format('A')}` : end.format('LT')
 			return `${date}, ${startStr} – ${endStr}`
+		},
+		shiftRangeLabel () {
+			if (!this.session.start || !this.session.end) return ''
+			const tz = this.effectiveTimezone
+			const locale = this.locale || 'en'
+			const fmt = (m) => {
+				const d = m.clone().tz(tz).locale(locale)
+				return this.effectiveHasAmPm ? `${d.format('h:mm')} ${d.format('A')}` : d.format('LT')
+			}
+			return `${fmt(this.session.start)} – ${fmt(this.session.end)}`
 		},
 		shiftLocationLabel () {
 			return getLocalizedString(this.session.room?.name) || '—'
@@ -765,6 +784,10 @@ export default {
 		.title
 			font-size: 16px
 			font-weight: 500
+		.continuation-range
+			font-size: 12px
+			color: $clr-secondary-text-light
+			font-variant-numeric: tabular-nums
 		.organizer-actions
 			display: flex
 			flex-shrink: 0

@@ -21,30 +21,31 @@
 				.now-arrow
 					svg(viewBox="0 0 10 10", :title="nowHoverTime")
 						path(d="M 0 0 L 10 5 L 0 10 z")
-			template(v-for="session of gridSessions")
+			template(v-for="item of gridItems", :key="item.key")
 				component(
 					:is="SessionComponent",
-					v-if="isProperSession(session)",
-					:session="session",
+					v-if="isProperSession(item.session)",
+					v-bind="item.props",
+					:session="item.session",
 					:now="now",
 					:locale="locale",
 					:timezone="timezone",
-					:style="getSessionStyle(session)",
+					:style="item.style",
 					:showAbstract="false", :showRoom="false",
 					:showSessionType="true",
 					:showFavCount="showFavCount",
-					:faved="favSet.has(session.id)",
+					:faved="favSet.has(item.session.id)",
 					:hasAmPm="hasAmPm",
 					:onHomeServer="onHomeServer",
-					@fav="$emit('fav', session.id)",
-					@unfav="$emit('unfav', session.id)"
+					@fav="$emit('fav', item.session.id)",
+					@unfav="$emit('unfav', item.session.id)"
 				)
 				grid-break(
 					v-else,
-					:session="session",
+					:session="item.session",
 					:timezone="timezone",
 					:hasAmPm="hasAmPm",
-					:style="getSessionStyle(session)"
+					:style="item.style"
 				)
 	.print-grids
 		template(v-for="(chunk, chunkIdx) of printRoomChunks", :key="chunkIdx")
@@ -92,7 +93,7 @@ import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll } from '../utils'
-import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
+import { isShiftSchedule, computeShiftPlacements, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
@@ -249,6 +250,28 @@ export default {
 				windowDays.add(days[i])
 			}
 			return windowDays
+		},
+		gridItems () {
+			const items = []
+			this.gridSessions.forEach((session, index) => {
+				const base = session.id ?? `break-${index}`
+				const placements = this.isShiftMode && session.id
+					? computeShiftPlacements(session, this.sessions, this.shiftColumnLayout)
+					: null
+				if (!placements) {
+					items.push({ key: base, session, style: this.getSessionStyle(session), props: {} })
+					return
+				}
+				placements.forEach((placement, i) => {
+					items.push({
+						key: `${base}-${i}`,
+						session,
+						style: { 'grid-row': placement.gridRow, 'grid-column': placement.gridColumn },
+						props: { continuation: placement.continuation, segmentStart: placement.segmentStart, segmentEnd: placement.segmentEnd },
+					})
+				})
+			})
+			return items
 		},
 		gridSessions () {
 			if (this.isShiftMode || !this.currentDay) return this.sessions
@@ -554,13 +577,6 @@ export default {
 			const roomIndex = this.roomIndexLookup.has(session.room) ? this.roomIndexLookup.get(session.room) : -1
 			const data = this.scheduleData?.value ?? this.scheduleData
 			if (isShiftSchedule(data) && session.start && session.end) {
-				const placement = computeShiftOverlapPlacement(session, this.sessions, this.shiftColumnLayout)
-				if (placement) {
-					return {
-						'grid-row': placement.gridRow,
-						'grid-column': placement.gridColumn,
-					}
-				}
 				const layout = this.shiftColumnLayout.get(session.room?.id ?? session.room)
 				const col = layout ? layout.colStart : (roomIndex > -1 ? roomIndex + 2 : null)
 				return {
