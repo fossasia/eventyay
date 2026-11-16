@@ -68,7 +68,7 @@
     "webrtc-adapter": "^9.0.6"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.10",
+    "@vitejs/plugin-vue": "^6.0.11",
     "@vue-macros/reactivity-transform": "^3.1.2",
     "@vue/language-plugin-pug": "^3.3.14",
     "eslint": "^10.13.0",
@@ -78,7 +78,7 @@
     "i18next-conv": "^17.0.0",
     "pug": "^3.0.4",
     "rollup-plugin-visualizer": "^7.1.3",
-    "sass": "^1.108.1",
+    "sass": "^1.108.2",
     "stylus": "^0.64.0",
     "vite": "^8.3.8",
     "vite-plugin-eslint": "^1.8.1",
