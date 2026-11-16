@@ -949,8 +949,10 @@ class VoucherBulkCodeValidationTest(TestCase):
 @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
 @pytest.mark.parametrize('second_code', ['ABCDE', 'abcde'])
 @pytest.mark.parametrize('prefix', [False, True])
-def test_concurrent_bulk_codes_are_revalidated(second_code, prefix):
+@pytest.mark.parametrize('no_key_supported', [False, True])
+def test_concurrent_bulk_codes_are_revalidated(second_code, prefix, no_key_supported, monkeypatch):
     """Only one prevalidated request may save the same event's case-insensitive code."""
+    monkeypatch.setattr(type(connection.features), 'has_select_for_no_key_update', no_key_supported)
     organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
     event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
     barrier = Barrier(2)
@@ -977,7 +979,7 @@ def test_concurrent_bulk_codes_are_revalidated(second_code, prefix):
                 try:
                     view.async_form_valid(task, form)
                 except ValidationError as exc:
-                    assert 'A voucher with one of these codes already exists.' in str(exc)
+                    assert 'A voucher with one of these codes already exists.' in view.get_error_message(exc)
                     return 'rejected'
                 return 'created'
         finally:

@@ -490,7 +490,9 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
 
         voucherids = []
         with lockfn(), transaction.atomic():
-            Event.objects.select_for_update(of=('self',), no_key=True).get(pk=self.request.event.pk)
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=self.request.event.pk,
+            )
             form.full_clean()
             if not form.is_valid():
                 raise ValidationError(form.errors)
