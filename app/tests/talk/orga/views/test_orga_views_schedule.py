@@ -460,6 +460,33 @@ def test_orga_can_toggle_schedule_visibility(orga_client, event):
 
 
 @pytest.mark.django_db
+def test_toggle_schedule_visibility_saves_locally_without_sync_task(orga_client, event, mocker):
+    from eventyay.base.models import Event
+
+    apply_async = mocker.patch("celery.app.task.Task.apply_async")
+    log_event = mocker.patch("eventyay.orga.views.schedule.log_event")
+
+    response = orga_client.post(event.orga_urls.toggle_schedule)
+    assert response.status_code == 302
+    event = Event.objects.get(pk=event.pk)
+    with scope(event=event):
+        assert event.feature_flags["show_schedule"] is False
+        assert event.settings.talk_schedule_public is False
+
+    response = orga_client.post(event.orga_urls.toggle_schedule)
+    assert response.status_code == 302
+    event = Event.objects.get(pk=event.pk)
+    with scope(event=event):
+        assert event.feature_flags["show_schedule"] is True
+        assert event.settings.talk_schedule_public is True
+
+    apply_async.assert_not_called()
+    logged = [call.args[1] for call in log_event.call_args_list]
+    assert "connection.schedule_public" not in logged
+    assert logged.count("video.feature_flag") == 2
+
+
+@pytest.mark.django_db
 def test_toggle_schedule_visibility_rejects_get(orga_client, event):
     from eventyay.base.models import Event
 
