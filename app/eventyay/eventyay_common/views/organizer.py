@@ -281,11 +281,28 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 )
         return self._team_queryset
 
+    def _user_can_manage_team_membership(self, team: Team) -> bool:
+        """Check if acting user holds at least the permissions that the team holds."""
+        if getattr(self.request.user, 'is_superuser', False):
+            return True
+        if hasattr(self.request.user, 'has_active_staff_session') and self.request.user.has_active_staff_session(
+            self.request.session.session_key if hasattr(self.request, 'session') else None
+        ):
+            return True
+        user_perms = self.request.user.get_organizer_permission_set(self.request.organizer)
+        team_perms = team.permission_set()
+        return team_perms.issubset(user_perms)
+
     def _get_team_create_form(self):
         if self._team_create_form_override is not None:
             return self._team_create_form_override
         with scopes_disabled():
-            return TeamForm(prefix='team-create', organizer=self.request.organizer)
+            return TeamForm(
+                prefix='team-create',
+                organizer=self.request.organizer,
+                user=self.request.user,
+                request=self.request,
+            )
 
     def _accepted_invite_user_ids_by_team(self, teams) -> dict[int, frozenset[int]]:
         accepted: dict[int, set[int]] = {}
@@ -313,6 +330,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                     prefix=self._team_form_prefix(team),
                     organizer=self.request.organizer,
                     instance=team,
+                    user=self.request.user,
+                    request=self.request,
                 )
         invite_form = override.get('invite_form') or InviteForm(
             prefix=self._invite_form_prefix(team),
@@ -331,6 +350,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             'accepted_invite_user_ids': accepted_invite_user_ids,
             'tokens': team.active_tokens,
             'can_delete': self._can_delete_team(team),
+            'can_manage_membership': self._user_can_manage_team_membership(team),
             'is_permissions_open': open_permissions,
             'is_members_open': open_members,
         }
@@ -410,6 +430,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 data=self.request.POST,
                 organizer=self.request.organizer,
                 prefix='team-create',
+                user=self.request.user,
+                request=self.request,
             )
         if form.is_valid():
             with transaction.atomic():
@@ -445,6 +467,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 organizer=self.request.organizer,
                 instance=team,
                 prefix=self._team_form_prefix(team),
+                user=self.request.user,
+                request=self.request,
             )
         self._forced_section = 'permissions'
 
@@ -480,6 +504,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
 
     def _handle_team_members(self):
         team = self._get_team_from_post()
+        if not self._user_can_manage_team_membership(team):
+            raise PermissionDenied(_('You cannot manage members of a team with permissions beyond your own.'))
         self._forced_section = 'permissions'
         invite_form_prefix = self._invite_form_prefix(team)
         prefixed_user_field = f'{invite_form_prefix}-user'
@@ -601,6 +627,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
 
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
+        if not self._user_can_manage_team_membership(team):
+            raise PermissionDenied(_('You cannot manage tokens of a team with permissions beyond your own.'))
         self._forced_section = 'permissions'
         token_form_prefix = self._token_form_prefix(team)
         prefixed_name_field = f'{token_form_prefix}-name'
