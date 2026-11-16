@@ -3,6 +3,8 @@ from django.conf import settings
 from django.template.defaultfilters import date
 from jinja2 import Environment
 
+from eventyay.common.redirects import external_link_origin
+from eventyay.helpers.i18n import get_html_locale, is_rtl
 from eventyay.helpers.templatetags.thumb import thumb
 
 from .helpers.jinja import static_url, turnstile_script, turnstile_widget, url_for
@@ -10,10 +12,13 @@ from .helpers.jinja import static_url, turnstile_script, turnstile_widget, url_f
 
 jj_globals = {
     'url_for': url_for,
+    'external_link_origin': external_link_origin,
     'settings': settings,
     'site_url': settings.SITE_URL,
     'INSTANCE_NAME': settings.INSTANCE_NAME,
     'static_url': static_url,
+    'html_locale': get_html_locale,
+    'is_rtl': is_rtl,
     'turnstile_widget': turnstile_widget,
     'turnstile_script': turnstile_script,
 }
