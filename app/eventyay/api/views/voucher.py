@@ -1,6 +1,6 @@
 import contextlib
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import F, Q
 from django.utils.timezone import now
 from django_filters.rest_framework import (
@@ -8,7 +8,7 @@ from django_filters.rest_framework import (
     DjangoFilterBackend,
     FilterSet,
 )
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -16,7 +16,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from eventyay.api.serializers.voucher import VoucherSerializer
-from eventyay.base.models import Voucher
+from eventyay.base.models import Event, Voucher
 
 with scopes_disabled():
 
@@ -82,11 +82,15 @@ class VoucherViewSet(viewsets.ModelViewSet):
         return True
 
     def create(self, request, *args, **kwargs):
+        """Validate and create vouchers under the shared event-row lock."""
         if self._predict_quota_check(request.data, None):
             lockfn = request.event.lock
         else:
             lockfn = contextlib.suppress  # noop context manager
-        with lockfn():
+        with scope(event=request.event), lockfn(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=request.event.pk,
+            )
             return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):

@@ -9,14 +9,17 @@ import pytest
 from django.apps import apps
 from django.core import mail as djmail
 from django.core.exceptions import ValidationError
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.db import connection, connections
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
+from rest_framework.exceptions import ValidationError as APIValidationError
 
+from eventyay.api.views.voucher import VoucherViewSet
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
 from eventyay.control.forms.vouchers import VoucherBulkForm
-from eventyay.control.views.vouchers import VoucherBulkCreate
+from eventyay.control.views.vouchers import VoucherBulkCreate, VoucherCreate
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 from eventyay.base.models import (
@@ -947,32 +950,55 @@ class VoucherBulkCodeValidationTest(TestCase):
 
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
 @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
-@pytest.mark.parametrize('second_code', ['ABCDE', 'abcde'])
-@pytest.mark.parametrize('prefix', [False, True])
+@pytest.mark.parametrize('other_path,second_code,prefix', [
+    ('bulk', 'ABCDE', False), ('bulk', 'abcde', False),
+    ('bulk', 'ABCDE', True), ('bulk', 'abcde', True),
+    ('form', 'ABCDE', False), ('api', 'ABCDE', False),
+])
 @pytest.mark.parametrize('no_key_supported', [False, True])
-def test_concurrent_bulk_codes_are_revalidated(second_code, prefix, no_key_supported, monkeypatch):
-    """Only one prevalidated request may save the same event's case-insensitive code."""
+def test_concurrent_bulk_codes_are_revalidated(other_path, second_code, prefix, no_key_supported, monkeypatch):
+    """Bulk, single-form and API requests must share case-insensitive code validation."""
     monkeypatch.setattr(type(connection.features), 'has_select_for_no_key_update', no_key_supported)
     organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
     event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
     barrier = Barrier(2)
 
-    def create(code):
+    def create(code, path):
         """Use a separate request and database connection for each prevalidated form."""
         try:
             with scope(event=event, organizer=organizer):
-                form = VoucherBulkForm(
-                    instance=Voucher(event=event),
-                    data={
-                        'codes': code,
-                        'max_usages': 1,
-                        'price_mode': 'none',
-                        'tag': 'TAG',
-                        'use_tag_as_prefix': prefix,
-                    },
-                )
-                assert form.is_valid(), form.errors
+                data = {'code': code, 'max_usages': 1, 'price_mode': 'none', 'block_quota': False}
+                if path == 'bulk':
+                    form = VoucherBulkForm(
+                        instance=Voucher(event=event),
+                        data={**data, 'codes': code, 'tag': 'TAG', 'use_tag_as_prefix': prefix},
+                    )
+                    assert form.is_valid(), form.errors
                 barrier.wait(timeout=15)
+                if path == 'form':
+                    request = RequestFactory().post('/', data)
+                    request.event, request.organizer, request.user = event, organizer, None
+                    request.session = {}
+                    request._messages = FallbackStorage(request)
+                    view = VoucherCreate()
+                    view.setup(request)
+                    response = view.post(request)
+                    if response.status_code == 302:
+                        return 'created'
+                    assert response.status_code == 200
+                    assert 'A voucher with this code already exists.' in str(response.context_data['form'].errors)
+                    return 'rejected'
+                if path == 'api':
+                    request = SimpleNamespace(event=event, user=None, auth=None, data=data)
+                    view = VoucherViewSet()
+                    view.request, view.format_kwarg = request, None
+                    try:
+                        response = view.create(request)
+                    except APIValidationError as exc:
+                        assert 'A voucher with this code already exists.' in str(exc)
+                        return 'rejected'
+                    assert response.status_code == 201
+                    return 'created'
                 view = VoucherBulkCreate()
                 view.request = SimpleNamespace(event=event, user=None)
                 task = SimpleNamespace(request=SimpleNamespace(called_directly=True))
@@ -986,7 +1012,8 @@ def test_concurrent_bulk_codes_are_revalidated(second_code, prefix, no_key_suppo
             connections.close_all()
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        requests = [pool.submit(create, code) for code in ('ABCDE', second_code)]
+        first_code = 'ABCDE' if other_path == 'bulk' else 'abcde'
+        requests = [pool.submit(create, first_code, 'bulk'), pool.submit(create, second_code, other_path)]
         assert sorted(request.result(timeout=30) for request in requests) == ['created', 'rejected']
     with scope(event=event, organizer=organizer):
         codes = list(event.vouchers.values_list('code', flat=True))

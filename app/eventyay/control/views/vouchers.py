@@ -27,6 +27,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from django_scopes import scope
 
 from eventyay.base.models import CartPosition, Event, LogEntry, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
@@ -367,8 +368,12 @@ class VoucherCreate(EventPermissionRequiredMixin, CreateView):
         return ret
 
     def post(self, request, *args, **kwargs):
+        """Serialize single-voucher creation with the other voucher creation views."""
         # TODO: Transform this into an asynchronous call?
-        with request.event.lock():
+        with scope(event=request.event), request.event.lock(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=request.event.pk,
+            )
             return super().post(request, *args, **kwargs)
 
 
@@ -489,7 +494,7 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
             set_progress(len(voucherids) / total_num * (50.0 if form.cleaned_data['send'] else 100.0))
 
         voucherids = []
-        with lockfn(), transaction.atomic():
+        with scope(event=self.request.event), lockfn(), transaction.atomic():
             Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
                 pk=self.request.event.pk,
             )
