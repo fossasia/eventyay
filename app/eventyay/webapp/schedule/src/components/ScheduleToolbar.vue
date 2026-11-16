@@ -110,6 +110,17 @@
 					line(x1="7" y1="9" x2="17" y2="9")
 					line(x1="10" y1="14" x2="14" y2="14")
 					path(d="M17 17l4 4m0-4l-4 4")
+			button.toolbar-btn.icon-only.copy-link-btn(
+				:class="{copied: linkCopied}",
+				@click="copyFilteredLink",
+				:title="linkCopied ? t.link_copied : t.copy_link",
+				:aria-label="linkCopied ? t.link_copied : t.copy_link")
+				svg.tb-icon(v-if="!linkCopied", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					path(d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71")
+					path(d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71")
+				svg.tb-icon(v-else, viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					polyline(points="20 6 9 17 4 12")
+				span.copy-link-toast(v-if="linkCopied", role="status") {{ t.link_copied }}
 			.sort-area(v-if="sessionsMode", ref="sortDropdown")
 				button.toolbar-btn.icon-only.sort-btn(
 					@click="sortOpen = !sortOpen",
@@ -161,14 +172,14 @@
 						line(x1="3", y1="12", x2="3.01", y2="12")
 						line(x1="3", y1="18", x2="3.01", y2="18")
 				span.sessions-toggle-label {{ sessionsMode ? t.cal : t.list }}
-		.toolbar-center(v-if="!isListView && days && days.length > 1", ref="dayNavCenter")
+		.toolbar-center(v-if="!isFeaturedPage && days && days.length > 1", ref="dayNavCenter")
 			button.day-arrow(v-if="showDayArrows", :disabled="dayWindowStart <= 0", @click="shiftDays(-1)", :title="t.previous_days", :aria-label="t.previous_days")
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M15 18l-6-6 6-6")
 			button.day-btn(
 				v-for="day in visibleDays",
 				:key="day.id",
-				:class="{active: currentDay === day.id}",
+				:class="{active: isDayActive(day.id)}"
 				@click="$emit('selectDay', day.id)")
 				| {{ day.label }}
 			button.day-arrow(v-if="showDayArrows", :disabled="dayWindowStart + dayWindowSize >= days.length", @click="shiftDays(1)", :title="t.next_days", :aria-label="t.next_days")
@@ -398,7 +409,8 @@ export default {
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
 		timeDensityMinutes: { type: Number, default: 30 },
 		isFeaturedPage: { type: Boolean, default: false },
-		isListView: { type: Boolean, default: false }
+		isListView: { type: Boolean, default: false },
+		selectedDay: { type: String, default: null }
 	},
 	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
@@ -419,6 +431,7 @@ export default {
 			mobileFiltersOpen: false,
 			mobileMoreOpen: false,
 			cachedOtherTimezones: null,
+			linkCopied: false,
 		}
 	},
 	computed: {
@@ -427,11 +440,13 @@ export default {
 				group.refKey !== 'language' && Array.isArray(group.data) && group.data.some(item => item.selected)
 			);
 			const recordingActive = this.showRecordingFilter && this.recordingModel !== 'all';
-			return groupActive || recordingActive;
+			return groupActive || recordingActive || !!this.selectedDay;
 		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
+				copy_link: m.copy_link || this.$t('Copy link'),
+				link_copied: m.link_copied || this.$t('Link copied'),
 				no_matching_options: m.no_matching_options || this.$t('Sorry, no matching options.'),
 				other_timezones: m.other_timezones || this.$t('Other Timezones'),
 				view_changelog: m.view_changelog || this.$t('View Changelog'),
@@ -710,6 +725,7 @@ export default {
 			cancelAnimationFrame(this._toolbarLayoutRaf)
 			this._toolbarLayoutRaf = null
 		}
+		if (this._linkCopiedTimer) clearTimeout(this._linkCopiedTimer)
 		this._versionBannerResizeObserver?.disconnect?.()
 	},
 	methods: {
@@ -960,6 +976,48 @@ export default {
 			item.selected = !item.selected
 			this.$emit('filterToggle', item)
 		},
+		isDayActive(dayId) {
+			if (this.selectedDay) {
+				return this.selectedDay === dayId
+			}
+			if (this.sessionsMode) {
+				return false
+			}
+			return this.currentDay === dayId
+		},
+		async copyFilteredLink() {
+			const url = window.location.href
+			let copied = false
+			try {
+				if (navigator?.clipboard?.writeText) {
+					await navigator.clipboard.writeText(url)
+					copied = true
+				}
+			} catch {
+				// fallback below
+			}
+			if (!copied) {
+				try {
+					const textarea = document.createElement('textarea')
+					textarea.value = url
+					textarea.style.position = 'fixed'
+					textarea.style.opacity = '0'
+					document.body.appendChild(textarea)
+					textarea.select()
+					copied = document.execCommand('copy')
+					document.body.removeChild(textarea)
+				} catch (err) {
+					console.error('Failed to copy schedule link to clipboard', err)
+				}
+			}
+			if (copied) {
+				this.linkCopied = true
+				if (this._linkCopiedTimer) clearTimeout(this._linkCopiedTimer)
+				this._linkCopiedTimer = setTimeout(() => {
+					this.linkCopied = false
+				}, 2000)
+			}
+		},
 		ensureCurrentDayVisible() {
 			if (!this.days || this.days.length <= 1) return
 			if (!this.showDayArrows) {
@@ -1148,6 +1206,24 @@ export default {
 				height: 18px
 		.clear-filters-btn
 			color: #666
+		.copy-link-btn
+			color: #666
+			position: relative
+			&.copied
+				color: var(--pretalx-clr-primary, #3aa57c)
+			.copy-link-toast
+				position: absolute
+				top: calc(100% + 4px)
+				left: 50%
+				transform: translateX(-50%)
+				background-color: rgba(0, 0, 0, 0.87)
+				color: #fff
+				padding: 4px 8px
+				border-radius: 4px
+				font-size: 12px
+				white-space: nowrap
+				pointer-events: none
+				z-index: 1001
 		.filter-dropdown-area
 			position: relative
 			> .toolbar-btn:not(.icon-only)
