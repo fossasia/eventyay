@@ -866,11 +866,10 @@ body:has(.td-dashboard) #page-content {
   .timeline-step::after {
     top: 16px
   }
-
   /* Keep the step link popups inside the screen on phones */
   .timeline-step-links {
     left: auto;
-    inset-inline-start: 0;
+    inset-inline-start: calc(50% - 16px);
     transform: none;
     width: max-content;
     min-width: 0;
@@ -878,14 +877,23 @@ body:has(.td-dashboard) #page-content {
   }
   .timeline-step:nth-child(n+4) .timeline-step-links {
     inset-inline-start: auto;
-    inset-inline-end: 0;
+    inset-inline-end: calc(50% - 16px);
   }
+  /* The icon is centred in its step and is 32px wide, so its centre is
+     16px from the popup's anchored edge. Put the arrow there. */
   .timeline-step-links::before {
-    display: none;
+    left: auto;
+    inset-inline-start: 11px;
+    transform: rotate(45deg);
+  }
+  .timeline-step:nth-child(n+4) .timeline-step-links::before {
+    inset-inline-start: auto;
+    inset-inline-end: 11px;
   }
   .timeline-step-links li a,
   .timeline-step-links li .timeline-step-text {
     white-space: normal;
+    overflow-wrap: anywhere;
   }
 
 }
