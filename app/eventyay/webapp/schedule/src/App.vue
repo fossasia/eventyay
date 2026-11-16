@@ -1397,6 +1397,7 @@ export default {
 		},
 		readFiltersFromUrl ({ isPopState = false, isInitial = false } = {}) {
 			this._isApplyingUrlFilters = true
+			const hadActiveFilters = this.hasActiveFilterSelections
 			try {
 				const availableDays = (this.allDays?.length ? this.allDays : this.days) || (this.schedule?.days || [])
 				const result = parseScheduleFiltersFromUrl(window.location.href, {
@@ -1413,7 +1414,7 @@ export default {
 				} else {
 					this.selectedDay = null
 				}
-				if (this._initialized && this.schedule?.compact && (result.hasFilters || this.hasActiveFilterSelections)) {
+				if (this._initialized && this.schedule?.compact && (result.hasFilters || this.hasActiveFilterSelections || hadActiveFilters || isPopState)) {
 					this.syncCompactCoverage()
 				}
 			} finally {
