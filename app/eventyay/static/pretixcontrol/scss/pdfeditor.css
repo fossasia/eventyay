@@ -36,9 +36,13 @@ body {
 #toolbox[data-type=poweredby] .poweredby,
 #toolbox[data-type=text] .text,
 #toolbox[data-type=textarea] .text,
+#toolbox[data-type=group].group-all-text .text-format,
 #toolbox[data-type] .object-buttons,
 #toolbox[data-type=group] .group-align {
     display: block;
+}
+#toolbox[data-type=group] .text-individual {
+    display: none !important;
 }
 #toolbox[data-type] .editor-hint {
     display: none;
@@ -95,7 +99,8 @@ body {
     margin-top: 2px;
 }
 
-#pdf-info-lock-aspect.active {
+#pdf-info-lock-aspect.active,
+#toolbox-pin.active {
     color: #fff;
     background-color: #337ab7;
     border-color: #2e6da4;

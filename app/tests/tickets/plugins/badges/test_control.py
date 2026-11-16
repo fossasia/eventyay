@@ -1,5 +1,7 @@
 import datetime
+import json
 
+from django.test import override_settings
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Product as Item, Organizer, Team, User
@@ -7,6 +9,7 @@ from eventyay.plugins.badges.models import BadgeProduct as BadgeItem
 from tests.tickets.base import SoupTest, extract_form_fields
 
 
+@override_settings(SITE_URL='https://testserver')
 class BadgeLayoutFormTest(SoupTest):
     def setUp(self):
         super().setUp()
@@ -197,3 +200,53 @@ class BadgeLayoutFormTest(SoupTest):
         for edge in ('left', 'center', 'right', 'top', 'middle', 'bottom'):
             assert align.select_one('button[data-align=%s]' % edge) is not None
         assert 'Shift-click' in doc.select_one('#toolbox').text
+
+    def test_editor_exposes_pin_and_group_text_controls(self):
+        with scopes_disabled():
+            layout = self.event1.badge_layouts.create(name='Layout 1', default=True)
+        doc = self.get_doc(
+            '/control/event/%s/%s/badges/%s/editor' % (self.orga1.slug, self.event1.slug, layout.id)
+        )
+        pin_btn = doc.select_one('#toolbox-pin')
+        assert pin_btn is not None
+        assert pin_btn.select_one('.fa-thumb-tack') is not None
+        assert doc.select_one('.text-format #toolbox-fontsize') is not None
+        assert doc.select_one('.text-format #toolbox-col') is not None
+        assert doc.select_one('.text-individual #toolbox-content') is not None
+
+    def test_editor_save_persists_pinned_state(self):
+        with scopes_disabled():
+            layout = self.event1.badge_layouts.create(name='Layout 1', default=True)
+        posted_data = [
+            {
+                'type': 'textarea',
+                'left': '10.00',
+                'bottom': '20.00',
+                'fontsize': '16.0',
+                'color': [0, 0, 0],
+                'fontfamily': 'Open Sans',
+                'bold': False,
+                'italic': False,
+                'width': '50.00',
+                'downward': False,
+                'autofit_width': False,
+                'content': 'event_name',
+                'text': 'Sample Event',
+                'rotation': 0,
+                'align': 'left',
+                'pinned': True,
+            }
+        ]
+        resp = self.client.post(
+            '/control/event/%s/%s/badges/%s/editor' % (self.orga1.slug, self.event1.slug, layout.id),
+            {'data': json.dumps(posted_data)},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            follow=True,
+        )
+        assert resp.status_code == 200
+        assert resp.json().get('status') == 'ok'
+        with scopes_disabled():
+            layout.refresh_from_db()
+            saved_layout = json.loads(layout.layout)
+            assert len(saved_layout) == 1
+            assert saved_layout[0].get('pinned') is True
