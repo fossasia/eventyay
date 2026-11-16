@@ -674,6 +674,10 @@ export default {
 		flex-direction: column
 		align-items: center
 		.start
+			// Keep the start time and duration in view while a long shift is
+			// scrolled, so the coloured block never reads as an anonymous bar.
+			position: sticky
+			top: var(--shift-sticky-top, 0px)
 			color: $clr-primary-text-dark
 			display: flex
 			flex-direction: column
@@ -748,6 +752,11 @@ export default {
 		background-color: $clr-white
 		min-width: 0
 		.title-row
+			// Stays visible under the rooms bar while the shift is scrolled.
+			position: sticky
+			top: var(--shift-sticky-top, 0px)
+			z-index: 1
+			background-color: $clr-white
 			display: flex
 			align-items: flex-start
 			justify-content: space-between
