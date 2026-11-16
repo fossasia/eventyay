@@ -17,6 +17,42 @@ function groupMemberCheckboxes(table, groupId) {
     return table.querySelectorAll(`[data-voucher-group-member="${groupId}"] input[name="voucher"]`);
 }
 
+function setGroupMemberSelection(table, groupId, checked) {
+    groupMemberCheckboxes(table, groupId).forEach((checkbox) => {
+        checkbox.checked = checked;
+    });
+    const form = table.closest('form');
+    form?.querySelectorAll(`input[name="voucher_exclude"][data-voucher-group-exclude="${groupId}"]`).forEach((input) => {
+        input.remove();
+    });
+}
+
+function syncGroupExclusions(table, groupId) {
+    const form = table.closest('form');
+    if (!form) {
+        return;
+    }
+    form.querySelectorAll(`input[name="voucher_exclude"][data-voucher-group-exclude="${groupId}"]`).forEach((input) => {
+        input.remove();
+    });
+    const groupCheckbox = table.querySelector(
+        `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
+    );
+    if (!groupCheckbox?.checked) {
+        return;
+    }
+    groupMemberCheckboxes(table, groupId).forEach((checkbox) => {
+        if (!checkbox.checked) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'voucher_exclude';
+            input.value = checkbox.value;
+            input.dataset.voucherGroupExclude = groupId;
+            form.appendChild(input);
+        }
+    });
+}
+
 function groupHasMoreMembers(table, groupId) {
     return !!table.querySelector(`${loadMoreRowSelector}[data-voucher-group-load-more="${groupId}"]`);
 }
@@ -51,21 +87,35 @@ function syncGroupCheckbox(groupCheckbox) {
     const groupId = groupCheckbox.dataset.voucherGroupSelect;
     const memberCheckboxes = groupMemberCheckboxes(table, groupId);
     const checkedCount = Array.from(memberCheckboxes).filter((checkbox) => checkbox.checked).length;
+    const isExplicitGroup = groupCheckbox.dataset.explicitGroup === '1';
 
     if (memberCheckboxes.length === 0) {
         groupCheckbox.indeterminate = false;
-    } else if (groupCheckbox.checked && checkedCount === memberCheckboxes.length) {
-        groupCheckbox.indeterminate = false;
-    } else if (checkedCount === 0) {
-        groupCheckbox.checked = false;
-        groupCheckbox.indeterminate = false;
-    } else if (!groupHasMoreMembers(table, groupId) && checkedCount === memberCheckboxes.length) {
+    } else if (isExplicitGroup && checkedCount === memberCheckboxes.length) {
         groupCheckbox.checked = true;
         groupCheckbox.indeterminate = false;
-    } else {
+    } else if (checkedCount === 0) {
+        groupCheckbox.dataset.explicitGroup = '0';
         groupCheckbox.checked = false;
-        groupCheckbox.indeterminate = true;
+        groupCheckbox.indeterminate = false;
+    } else if (checkedCount < memberCheckboxes.length) {
+        if (isExplicitGroup) {
+            groupCheckbox.checked = true;
+            groupCheckbox.indeterminate = true;
+        } else {
+            groupCheckbox.checked = false;
+            groupCheckbox.indeterminate = true;
+        }
+    } else if (isExplicitGroup && !groupHasMoreMembers(table, groupId)) {
+        groupCheckbox.checked = true;
+        groupCheckbox.indeterminate = false;
+    } else if (!isExplicitGroup) {
+        groupCheckbox.checked = false;
+        groupCheckbox.indeterminate = memberCheckboxes.length > 0;
+    } else {
+        groupCheckbox.indeterminate = false;
     }
+    syncGroupExclusions(table, groupId);
 }
 
 function syncGroupCheckboxes(table) {
@@ -95,11 +145,6 @@ function applyGroupSelection(table, groupId) {
     const groupCheckbox = table.querySelector(
         `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
     );
-    if (groupCheckbox && groupCheckbox.checked) {
-        groupMemberCheckboxes(table, groupId).forEach((checkbox) => {
-            checkbox.checked = true;
-        });
-    }
 
     const toggle = table.querySelector(`${groupToggleSelector}[data-voucher-group-toggle="${groupId}"]`);
     if (toggle) {
@@ -121,9 +166,24 @@ function insertGroupMembers(table, groupId, html) {
         return;
     }
 
-    anchor.insertAdjacentHTML('afterend', html);
+    const template = document.createElement('tbody');
+    template.innerHTML = html;
+    const newMemberRows = Array.from(template.querySelectorAll(`[data-voucher-group-member="${groupId}"]`));
+
+    anchor.after(...template.children);
     if (existingLoadMoreRow) {
         existingLoadMoreRow.remove();
+    }
+    const groupCheckbox = table.querySelector(
+        `${groupCheckboxSelector}[data-voucher-group-select="${groupId}"]`
+    );
+    if (groupCheckbox?.checked && groupCheckbox.dataset.explicitGroup === '1') {
+        newMemberRows.forEach((row) => {
+            const cb = row.querySelector('input[name="voucher"]');
+            if (cb) {
+                cb.checked = true;
+            }
+        });
     }
 }
 
@@ -212,12 +272,30 @@ async function loadMoreMembers(button) {
 function setGroupSelection(groupCheckbox) {
     const table = groupCheckbox.closest(voucherTableSelector);
     const groupId = groupCheckbox.dataset.voucherGroupSelect;
+    if (!table) {
+        return;
+    }
 
+    groupCheckbox.dataset.explicitGroup = groupCheckbox.checked ? '1' : '0';
     groupCheckbox.indeterminate = false;
-    groupMemberCheckboxes(table, groupId).forEach((memberCheckbox) => {
-        memberCheckbox.checked = groupCheckbox.checked;
-    });
+    setGroupMemberSelection(table, groupId, groupCheckbox.checked);
     updateBatchActions(table);
+
+    if (!groupCheckbox.checked) {
+        return;
+    }
+
+    const group = groupRow(table, groupId);
+    if (!group) {
+        return;
+    }
+
+    loadInitialGroupMembers(group).then((loaded) => {
+        if (loaded && groupCheckbox.checked) {
+            setGroupMemberSelection(table, groupId, true);
+            updateBatchActions(table);
+        }
+    });
 }
 
 function syncMemberGroupCheckbox(memberCheckbox) {
@@ -278,6 +356,12 @@ document.addEventListener('change', (event) => {
         }
     }
 });
+
+document.addEventListener('pointerdown', (event) => {
+    if (event.target instanceof Element && event.target.closest(groupCheckboxSelector)) {
+        event.stopPropagation();
+    }
+}, true);
 
 document.addEventListener('pointerdown', (event) => {
     if (event.target instanceof Element) {
