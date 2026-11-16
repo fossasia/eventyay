@@ -25,7 +25,8 @@
 			:fullscreenTarget="$el",
 			:filterGroups="filterGroups",
 			:showRecordingFilter="showRecordingFilter",
-			v-model:recordingFilter="recordingFilter",
+			:recordingFilter="recordingFilter",
+			@update:recordingFilter="onRecordingFilterChange",
 			:sortOptions="sortOptions",
 			v-model:sortBy="sortBy",
 			:favsCount="favs.length",
@@ -57,6 +58,7 @@
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
+			@copyLinkFailed="pushErrorMessage($t('Failed to copy schedule link to clipboard'))",
 			@goToNow="goToNow")
 		bunt-progress-circular(v-if="dayLoading", size="huge")
 		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",
@@ -428,8 +430,11 @@ export default {
 		filteredLanguages () {
 			return this.allLanguages.filter(l => l.selected)
 		},
+		hasActiveAttributeFilters () {
+			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0
+		},
 		hasActiveFilterSelections () {
-			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0 || !!this.selectedDay
+			return this.hasActiveAttributeFilters || !!this.selectedDay
 		},
 		showRecordingFilter () {
 			if (!this.schedule?.talks?.length) return false
@@ -514,14 +519,12 @@ export default {
 					const primary = localePrimary(normalized)
 					if (!langExact.has(normalized) && !(primary && langPrimary.has(primary))) continue
 				}
-				if (!isTalkSchedulePending(talk)) {
+				if (isTalkSchedulePending(talk)) {
+					if (this.selectedDay) continue
+				} else {
 					const start = moment.tz(talk.start, this.currentTimezone)
 					if (displayDateSet && !displayDateSet.has(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
-					if (this.selectedDay) {
-						const dayStrTz = start.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
-						const dayStrSched = start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD')
-						if (dayStrTz !== this.selectedDay && dayStrSched !== this.selectedDay) continue
-					}
+					if (this.selectedDay && start.format('YYYY-MM-DD') !== this.selectedDay) continue
 				}
 				sessions.push(talkToSession(talk, sessionContext))
 			}
@@ -567,7 +570,7 @@ export default {
 		scheduleNeedsEveryDay () {
 			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return false
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery || this.onlyFavs
-				|| this.hasActiveFilterSelections || this.recordingFilter !== 'all'
+				|| this.hasActiveAttributeFilters || this.recordingFilter !== 'all'
 		},
 		scheduleNeedsText () {
 			if (!this.schedule?.compact) return false
@@ -576,7 +579,8 @@ export default {
 		scheduleCoverageComplete () {
 			if (!this.schedule?.compact) return true
 			if (this.schedule.view_timezone !== this.currentTimezone) return false
-			const days = this.scheduleNeedsEveryDay ? this.schedule.days : [this.currentDay]
+			const targetDay = this.selectedDay || this.currentDay
+			const days = this.scheduleNeedsEveryDay ? this.schedule.days : [targetDay]
 			return !!days?.length && days.every(day => this.loadedScheduleDays[day]
 				&& (!this.scheduleNeedsText || this.textReadyDays[day]))
 		},
@@ -596,15 +600,6 @@ export default {
 		// Passed to the toolbar so day-picker buttons are never hidden by the
 		// 'Include datetime' sort toggle.
 		allDays () {
-			if (
-				this.schedule?.compact
-				&& this.currentTimezone
-				&& Array.isArray(this.schedule.days)
-				&& this.schedule.days.length
-				&& this.schedule.view_timezone === this.currentTimezone
-			) {
-				return this.schedule.days.map(day => moment.tz(day, this.currentTimezone).startOf('day'))
-			}
 			if (Array.isArray(this.schedule?.days) && this.schedule.days.length) {
 				return this.schedule.days.map(day => moment.tz(day, this.currentTimezone).startOf('day'))
 			}
@@ -766,7 +761,6 @@ export default {
 			})
 		},
 		recordingFilter () {
-			this.writeFiltersToUrl({ pushState: true })
 			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
 		},
 		sortIncludeDate () {
@@ -819,7 +813,6 @@ export default {
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
-		this.readFiltersFromUrl({ isInitial: true })
 		moment.locale(this.locale)
 		this.userTimezone = moment.tz.guess()
 		// If opened via old /sessions/ URL, activate sessions mode
@@ -1157,10 +1150,10 @@ export default {
 				}
 				return
 			}
-			if (!this.currentDay) return
+			const requestedDay = this.selectedDay || this.currentDay
+			if (!requestedDay) return
 			// Record the click that started this load. A later click must not
 			// be released or scrolled by this one when the request returns.
-			const requestedDay = this.currentDay
 			const navigatingTo = this._toolbarDay
 			const generation = (this._coverageGeneration || 0) + 1
 			this._coverageGeneration = generation
@@ -1320,8 +1313,10 @@ export default {
 				if (room?.id == null || knownRooms.has(room.id)) return
 				knownRooms.add(room.id)
 				this.allRooms.push({
+					...room,
 					id: room.id,
 					value: room.id,
+					name: room.name,
 					label: getLocalizedString(room.name),
 					selected: false,
 				})
@@ -1339,14 +1334,14 @@ export default {
 				const typeLabel = getSessionTypeLabel(type)
 				if (typeLabel && !knownTypes.has(typeLabel)) {
 					knownTypes.add(typeLabel)
-					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+					this.allTypes.push({ value: typeLabel, label: typeLabel, raw: type, selected: false })
 				}
 			})
 			;(schedule.talks || []).forEach(talk => {
 				const typeLabel = getSessionTypeLabel(talk.session_type)
 				if (typeLabel && !knownTypes.has(typeLabel)) {
 					knownTypes.add(typeLabel)
-					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+					this.allTypes.push({ value: typeLabel, label: typeLabel, raw: talk.session_type, selected: false })
 				}
 				addLanguage(talk.content_locale)
 			})
@@ -1433,6 +1428,8 @@ export default {
 					filteredRooms: this.filteredRooms,
 					filteredTypes: this.filteredTypes,
 					filteredLanguages: this.filteredLanguages,
+					allTracks: this.allTracks,
+					allRooms: this.allRooms,
 					selectedDay: this.selectedDay,
 					recordingFilter: this.recordingFilter,
 				})
@@ -1449,6 +1446,12 @@ export default {
 			}
 		},
 		onFilterToggle (item) {
+			this.onlyFavs = false
+			this.writeFiltersToUrl({ pushState: true })
+			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
+		},
+		onRecordingFilterChange (value) {
+			this.recordingFilter = value
 			this.onlyFavs = false
 			this.writeFiltersToUrl({ pushState: true })
 			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
@@ -1511,7 +1514,8 @@ export default {
 			this._fromScrollDay = true
 			this.currentDay = nextDay
 			try {
-				window.history.replaceState(null, null, '#' + nextDay)
+				const hashUrl = window.location.pathname + window.location.search + '#' + nextDay
+				window.history.replaceState(null, null, hashUrl)
 			} catch (e) {
 				window.location.hash = nextDay
 			}
@@ -1521,7 +1525,8 @@ export default {
 			this.currentDay = day.clone().startOf('day').format('YYYY-MM-DD')
 			if (this.selectedDay) return
 			try {
-				window.history.replaceState(null, null, '#' + day.format('YYYY-MM-DD'))
+				const hashUrl = window.location.pathname + window.location.search + '#' + day.format('YYYY-MM-DD')
+				window.history.replaceState(null, null, hashUrl)
 			} catch (e) {
 				window.location.hash = day.format('YYYY-MM-DD')
 			}

@@ -55,8 +55,10 @@ export function matchesFilterItem (item, val) {
 	// 3. Check name (string or localized object)
 	if (typeof item.name === 'string') {
 		if (slugify(item.name) === slugVal || item.name.toLowerCase() === lowerVal) return true
-	} else if (item.name && typeof item.name === 'object') {
-		for (const v of Object.values(item.name)) {
+	}
+	const nameObj = (item.name && typeof item.name === 'object') ? item.name : (item.raw && typeof item.raw === 'object' ? item.raw : null)
+	if (nameObj) {
+		for (const v of Object.values(nameObj)) {
 			if (typeof v === 'string') {
 				if (slugify(v) === slugVal || v.toLowerCase() === lowerVal) return true
 			}
@@ -78,11 +80,17 @@ export function matchesLanguageItem (item, val) {
 	return false
 }
 
-export function getFilterItemSlug (item) {
+export function getFilterItemSlug (item, allItems = []) {
 	if (!item) return ''
 	const labelText = item.label || (typeof item.name === 'string' ? item.name : '')
 	const slug = slugify(labelText)
-	if (slug) return slug
+	if (slug) {
+		if (Array.isArray(allItems) && allItems.length > 1 && item.id != null) {
+			const duplicate = allItems.some(other => other !== item && other.id != null && other.id !== item.id && slugify(other.label || (typeof other.name === 'string' ? other.name : '')) === slug)
+			if (duplicate) return `${item.id}-${slug}`
+		}
+		return slug
+	}
 	if (item.id !== undefined && item.id !== null) return String(item.id)
 	return item.value !== undefined && item.value !== null ? String(item.value) : ''
 }
@@ -99,14 +107,15 @@ export function getLanguageItemSlug (item) {
 	return item.value || slugify(item.label) || ''
 }
 
-export function getQueryParamValues (searchParams, key) {
+export function getQueryParamValues (searchParams, key, maxValues = 50) {
 	if (!searchParams) return []
 	const raw = searchParams.getAll(key)
 	const values = []
 	for (const entry of raw) {
 		for (const part of entry.split(',')) {
+			if (values.length >= maxValues) return values
 			const trimmed = part.trim()
-			if (trimmed) values.push(trimmed)
+			if (trimmed && trimmed.length <= 100) values.push(trimmed)
 		}
 	}
 	return values
@@ -119,6 +128,8 @@ export function serializeScheduleFiltersToUrl (currentHref, {
 	filteredRooms = [],
 	filteredTypes = [],
 	filteredLanguages = [],
+	allTracks = [],
+	allRooms = [],
 	selectedDay = null,
 	recordingFilter = 'all',
 } = {}) {
@@ -130,12 +141,12 @@ export function serializeScheduleFiltersToUrl (currentHref, {
 		}
 		// Tracks
 		for (const t of filteredTracks) {
-			const slug = getFilterItemSlug(t)
+			const slug = getFilterItemSlug(t, allTracks)
 			if (slug) url.searchParams.append('track', slug)
 		}
 		// Rooms
 		for (const r of filteredRooms) {
-			const slug = getFilterItemSlug(r)
+			const slug = getFilterItemSlug(r, allRooms)
 			if (slug) url.searchParams.append('room', slug)
 		}
 		// Types
@@ -156,8 +167,8 @@ export function serializeScheduleFiltersToUrl (currentHref, {
 		if (recordingFilter === 'yes' || recordingFilter === 'no') {
 			url.searchParams.set('recording', recordingFilter)
 		}
-		// If a day hash was in url.hash, clear the redundant day hash
-		if (url.hash && /^\/?#?\d{4}-\d{2}-\d{2}$/.test(url.hash.replace(/^#/, ''))) {
+		// Clear date hash only when a day query parameter is written
+		if (selectedDay && url.hash && /^\/?#?\d{4}-\d{2}-\d{2}$/.test(url.hash.replace(/^#/, ''))) {
 			url.hash = ''
 		}
 		return url.pathname + url.search + url.hash
@@ -184,20 +195,36 @@ export function parseScheduleFiltersFromUrl (currentHref, {
 		const recordingParam = url.searchParams.get('recording')?.trim() || null
 
 		// Apply to tracks
-		for (const t of allTracks) {
-			t.selected = trackVals.some(v => matchesFilterItem(t, v))
+		if (trackVals.length) {
+			for (const t of allTracks) {
+				t.selected = trackVals.some(v => matchesFilterItem(t, v))
+			}
+		} else {
+			for (const t of allTracks) t.selected = false
 		}
 		// Apply to rooms
-		for (const r of allRooms) {
-			r.selected = roomVals.some(v => matchesFilterItem(r, v))
+		if (roomVals.length) {
+			for (const r of allRooms) {
+				r.selected = roomVals.some(v => matchesFilterItem(r, v))
+			}
+		} else {
+			for (const r of allRooms) r.selected = false
 		}
 		// Apply to types
-		for (const tp of allTypes) {
-			tp.selected = typeVals.some(v => matchesFilterItem(tp, v))
+		if (typeVals.length) {
+			for (const tp of allTypes) {
+				tp.selected = typeVals.some(v => matchesFilterItem(tp, v))
+			}
+		} else {
+			for (const tp of allTypes) tp.selected = false
 		}
 		// Apply to languages
-		for (const l of allLanguages) {
-			l.selected = langVals.some(v => matchesLanguageItem(l, v))
+		if (langVals.length) {
+			for (const l of allLanguages) {
+				l.selected = langVals.some(v => matchesLanguageItem(l, v))
+			}
+		} else {
+			for (const l of allLanguages) l.selected = false
 		}
 
 		// Day validation

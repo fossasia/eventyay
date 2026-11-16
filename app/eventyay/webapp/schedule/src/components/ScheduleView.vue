@@ -9,12 +9,13 @@
 			:versions="resolvedMeta.versions || []",
 			:filterGroups="filterGroups",
 			:showRecordingFilter="showRecordingFilter",
-			v-model:recordingFilter="recordingFilter",
+			:recordingFilter="recordingFilter",
+			@update:recordingFilter="onRecordingFilterChange",
 			:favsCount="resolvedFavs.length",
 			:onlyFavs="onlyFavs",
 			v-model:shareStarredSessions="shareStarredSessions",
 			:scheduleUserLoggedIn="scheduleUserLoggedIn",
-			:hasActiveFilters="onlyFavs || activeFilterCount > 0 || recordingFilter !== 'all'",
+			:hasActiveFilters="onlyFavs || activeFilterCount > 0 || recordingFilter !== 'all' || !!selectedDay",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="resolvedSchedule.timezone",
 			:userTimezone="userTimezone",
@@ -22,6 +23,7 @@
 			:fullscreenTarget="$refs.scheduleRoot",
 			:days="computedDays",
 			:currentDay="currentDay",
+			:selectedDay="selectedDay",
 			:now="resolvedNow",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
@@ -96,26 +98,8 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount } from '../utils'
+import { getLocalizedString, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, serializeScheduleFiltersToUrl, parseScheduleFiltersFromUrl, normalizeLocaleCode, localePrimary, localesMatch } from '../utils'
 import { getLanguageNativeLabel } from '../../../i18n/index.js'
-
-function normalizeLocaleCode (code) {
-	if (!code) return ''
-	return code.toString().trim().toLowerCase().replace(/_/g, '-')
-}
-
-function localePrimary (code) {
-	const normalized = normalizeLocaleCode(code)
-	return normalized.split('-')[0] || normalized
-}
-
-function localesMatch (filterValue, sessionValue) {
-	const a = normalizeLocaleCode(filterValue)
-	const b = normalizeLocaleCode(sessionValue)
-	if (!a || !b) return false
-	if (a === b) return true
-	return localePrimary(a) === localePrimary(b)
-}
 
 
 export default {
@@ -163,6 +147,8 @@ export default {
 	data() {
 		return {
 			currentDay: null,
+			selectedDay: null,
+			_isApplyingUrlFilters: false,
 			onlyFavs: false,
 			shareStarredSessions: false,
 			scrollParentWidth: Infinity,
@@ -370,6 +356,9 @@ export default {
 					return [title, abstract, description, speakers, track, room, tags].some(f => f.includes(q))
 				})
 			}
+			if (this.selectedDay) {
+				sessions = sessions.filter(s => s.start && s.start.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === this.selectedDay)
+			}
 			return sessions
 		},
 		computedRooms() {
@@ -395,7 +384,9 @@ export default {
 			if (this.days) return this.days
 			const days = []
 			const seen = new Set()
-			for (const session of this.filteredSessions) {
+			const sourceSessions = this.enrichedSessions.length ? this.enrichedSessions : this.filteredSessions
+			for (const session of sourceSessions) {
+				if (!session.start) continue
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				const key = day.valueOf()
 				if (!seen.has(key)) {
@@ -482,7 +473,6 @@ export default {
 	created() {
 		this.userTimezone = moment.tz.guess()
 		this.currentTimezone = localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || this.userTimezone
-		this.readRecordingQueryParam()
 		if (this.computedDays?.length) {
 			const today = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
 			const fragment = window.location.hash.slice(1)
@@ -497,6 +487,8 @@ export default {
 		this.onResize()
 		this._resizeObserver = new ResizeObserver(() => this.onResize())
 		this._resizeObserver.observe(this.$el)
+		this._onPopState = () => this.readFiltersFromUrl()
+		window.addEventListener('popstate', this._onPopState)
 		if (this.loadStarredSharingPreference) {
 			this.loadStarredSharingPreference().then((enabled) => {
 				this.shareStarredSessions = !!enabled
@@ -504,6 +496,10 @@ export default {
 		}
 	},
 	beforeUnmount() {
+		if (this._onPopState) {
+			window.removeEventListener('popstate', this._onPopState)
+			this._onPopState = null
+		}
 		this._resizeObserver?.disconnect()
 	},
 	methods: {
@@ -518,27 +514,49 @@ export default {
 				// ignore localStorage access errors
 			}
 		},
-		readRecordingQueryParam() {
+		readFiltersFromUrl() {
+			this._isApplyingUrlFilters = true
 			try {
-				const url = new URL(window.location.href)
-				const value = url.searchParams.get('recording')
-				if (value === 'yes' || value === 'no' || value === 'all') {
-					this.recordingFilter = value
+				const result = parseScheduleFiltersFromUrl(window.location.href, {
+					allTracks: this.filterState.tracks,
+					allRooms: this.filterState.rooms,
+					allTypes: this.filterState.types,
+					allLanguages: this.filterState.languages,
+					availableDays: this.computedDays,
+				})
+				this.recordingFilter = result.recordingFilter
+				if (result.selectedDay) {
+					this.selectedDay = result.selectedDay
+					this.currentDay = result.selectedDay
+				} else {
+					this.selectedDay = null
 				}
-			} catch {
-				// ignore invalid URL contexts (e.g. non-browser env)
+			} catch (error) {
+				console.error('Failed to parse schedule filters from URL', error)
+			} finally {
+				this._isApplyingUrlFilters = false
 			}
 		},
-		writeRecordingQueryParam() {
+		writeFiltersToUrl({ pushState = false } = {}) {
+			if (this._isApplyingUrlFilters) return
 			try {
-				const url = new URL(window.location.href)
-				const value = (this.recordingFilter === 'yes' || this.recordingFilter === 'no' || this.recordingFilter === 'all')
-					? this.recordingFilter
-					: 'all'
-				url.searchParams.set('recording', value)
-				window.history.replaceState({}, '', url.pathname + url.search + url.hash)
-			} catch {
-				// ignore invalid URL contexts
+				const newUrl = serializeScheduleFiltersToUrl(window.location.href, {
+					filteredTracks: this.filterState.tracks.filter(t => t.selected),
+					filteredRooms: this.filterState.rooms.filter(r => r.selected),
+					filteredTypes: this.filterState.types.filter(t => t.selected),
+					filteredLanguages: this.filterState.languages.filter(l => l.selected),
+					allTracks: this.filterState.tracks,
+					allRooms: this.filterState.rooms,
+					selectedDay: this.selectedDay,
+					recordingFilter: this.recordingFilter,
+				})
+				const currentRelative = window.location.pathname + window.location.search + window.location.hash
+				if (newUrl !== currentRelative) {
+					if (pushState) window.history.pushState({}, '', newUrl)
+					else window.history.replaceState({}, '', newUrl)
+				}
+			} catch (error) {
+				console.error('Failed to update schedule filters in URL', error)
 			}
 		},
 		buildFilterState() {
@@ -547,12 +565,14 @@ export default {
 			const lang = localStorage.getItem('userLanguage') || 'en'
 			this.filterState.tracks = (schedule.tracks || []).map(t => ({
 				value: t.id,
+				name: t.name,
 				label: this.getI18nName(t.name, lang),
 				color: t.color,
 				selected: false
 			}))
 			this.filterState.rooms = (schedule.rooms || []).map(r => ({
 				value: r.id,
+				name: r.name,
 				label: this.getI18nName(r.name, lang),
 				selected: false
 			}))
@@ -564,7 +584,7 @@ export default {
 				const label = getSessionTypeLabel(st)
 				if (label && !typeSet.has(label)) {
 					typeSet.add(label)
-					types.push({ value: label, label, selected: false })
+					types.push({ value: label, label, raw: st, selected: false })
 				}
 			}
 			this.filterState.types = types
@@ -588,6 +608,7 @@ export default {
 				languages.push({ value: locale, label: displayName, selected: false })
 			}
 			this.filterState.languages = languages
+			this.readFiltersFromUrl()
 		},
 		getI18nName(name, lang) {
 			if (typeof name === 'string') return name
@@ -596,7 +617,14 @@ export default {
 		},
 		changeDay(day) {
 			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
-			this.currentDay = dayStr
+			const isToggleOff = this.selectedDay === dayStr
+			if (isToggleOff) {
+				this.selectedDay = null
+			} else {
+				this.selectedDay = dayStr
+				this.currentDay = dayStr
+			}
+			this.writeFiltersToUrl({ pushState: true })
 			if (this.linearScheduleGroupByDay) {
 				this.forceScrollDay++
 			}
@@ -636,6 +664,8 @@ export default {
 			this.onlyFavs = false
 			this.resetFilters()
 			this.recordingFilter = 'all'
+			this.selectedDay = null
+			this.writeFiltersToUrl({ pushState: true })
 		},
 		resetFilters() {
 			for (const group of Object.values(this.filterState)) {
@@ -644,6 +674,12 @@ export default {
 		},
 		onFilterChange() {
 			this.onlyFavs = false
+			this.writeFiltersToUrl({ pushState: true })
+		},
+		onRecordingFilterChange(value) {
+			this.recordingFilter = value
+			this.onlyFavs = false
+			this.writeFiltersToUrl({ pushState: true })
 		},
 		saveTimezone() {
 			localStorage.setItem('userTimezone', this.currentTimezone)

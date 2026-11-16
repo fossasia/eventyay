@@ -111,6 +111,7 @@
 					line(x1="10" y1="14" x2="14" y2="14")
 					path(d="M17 17l4 4m0-4l-4 4")
 			button.toolbar-btn.icon-only.copy-link-btn(
+				v-if="showCopyLink",
 				:class="{copied: linkCopied}",
 				@click="copyFilteredLink",
 				:title="linkCopied ? t.link_copied : t.copy_link",
@@ -410,9 +411,10 @@ export default {
 		timeDensityMinutes: { type: Number, default: 30 },
 		isFeaturedPage: { type: Boolean, default: false },
 		isListView: { type: Boolean, default: false },
-		selectedDay: { type: String, default: null }
+		selectedDay: { type: String, default: null },
+		showCopyLink: { type: Boolean, default: true }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes', 'copyLinkFailed'],
 	data() {
 		return {
 			exportOpen: false,
@@ -993,8 +995,8 @@ export default {
 					await navigator.clipboard.writeText(url)
 					copied = true
 				}
-			} catch {
-				// fallback below
+			} catch (err) {
+				console.warn('Clipboard API failed, using fallback copy method', err)
 			}
 			if (!copied) {
 				try {
@@ -1004,7 +1006,7 @@ export default {
 					textarea.style.opacity = '0'
 					document.body.appendChild(textarea)
 					textarea.select()
-					copied = document.execCommand('copy')
+					copied = Boolean(document.execCommand('copy'))
 					document.body.removeChild(textarea)
 				} catch (err) {
 					console.error('Failed to copy schedule link to clipboard', err)
@@ -1016,6 +1018,9 @@ export default {
 				this._linkCopiedTimer = setTimeout(() => {
 					this.linkCopied = false
 				}, 2000)
+			} else {
+				console.error('Failed to copy schedule link to clipboard')
+				this.$emit('copyLinkFailed')
 			}
 		},
 		ensureCurrentDayVisible() {
