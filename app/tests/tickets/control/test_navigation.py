@@ -227,8 +227,7 @@ def test_admin_navigation_structure_and_hierarchy(rf):
         'Business',
         'Task management',
         'Video',
-        'Organisers',
-        'Platform Data',
+        'Platform data',
         'Users',
         'Message center',
     ]
