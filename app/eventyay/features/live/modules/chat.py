@@ -723,7 +723,7 @@ class ChatModule(BaseModule):
                 )(
                     kwargs={
                         "event": str(self.consumer.event.id),
-                        "event_id": event["event_id"],
+                        "chat_event_id": event["event_id"],
                     }
                 )
 
