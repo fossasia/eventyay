@@ -177,9 +177,23 @@ const showSelectedList = () => {
     updatePreviewRequests()
 }
 
+let fileReadGeneration = 0
+
 const showFileColumns = async (input) => {
     const file = input.files?.[0]
-    const parsed = file ? readListFile(await file.text()) : { names: [], sample: {} }
+    fileReadGeneration += 1
+    const generation = fileReadGeneration
+    let parsed = { names: [], sample: {} }
+    if (file) {
+        try {
+            parsed = readListFile(await file.text())
+        } catch (error) {
+            console.error('Reading the chosen link list file failed', file.name, error)
+        }
+    }
+    if (generation !== fileReadGeneration || input.files?.[0] !== file) {
+        return
+    }
     fileColumns = parsed.names
     fileSample = parsed.sample
     refreshEditorMenus()
