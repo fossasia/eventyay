@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import dateutil.parser
 import nh3
@@ -946,7 +947,11 @@ class CheckinLogList(ListExporter):
             'list',
             'device',
         ).order_by('datetime', 'pk')
-        tz = self.event.tz
+        tz = (
+            ZoneInfo(self.event.settings.timezone)
+            if getattr(self.event, 'settings', None) and self.event.settings.timezone
+            else self.event.tz
+        )
         for ci in qs.iterator():
             try:
                 ia = ci.position.order.invoice_address

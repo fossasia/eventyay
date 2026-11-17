@@ -290,7 +290,7 @@ def test_csv_includes_all_checkins(event):
             'questions': [],
         }
     )
-    rows = [line for line in clean(content.decode()).split('\n') if line.startswith('"FOO"')]
+    rows = [line for line in content.decode().splitlines() if 'Peter A Jones' in line]
     assert len(rows) == 2
     assert '2019-02-22' in rows[0]
     assert '2019-02-22' in rows[1]
@@ -299,10 +299,7 @@ def test_csv_includes_all_checkins(event):
 
 @pytest.mark.django_db
 def test_checkinlog_includes_all_checkins(event):
-    event.timezone = 'Europe/Berlin'
-    event.__dict__.pop('tz', None)
-    event.save()
-    event.settings.set('timezone', 'Europe/Berlin')
+    event.settings.set('timezone', 'Asia/Kolkata')
     cl = event.checkin_lists.first()
     with scope(organizer=event.organizer):
         op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
@@ -312,11 +309,12 @@ def test_checkinlog_includes_all_checkins(event):
             type=Checkin.TYPE_ENTRY,
             datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=datetime.timezone.utc),
         )
+        # 23:30 UTC crosses midnight to 05:00 next day in Asia/Kolkata (UTC+5:30)
         Checkin.objects.create(
             position=op,
             list=cl,
             type=Checkin.TYPE_ENTRY,
-            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime=datetime.datetime(2019, 2, 22, 23, 30, 0, tzinfo=datetime.timezone.utc),
         )
 
     exporter = CheckinLogList(event)
@@ -327,8 +325,11 @@ def test_checkinlog_includes_all_checkins(event):
             '_format': 'default',
         }
     )
-    rows = [line for line in content.decode().splitlines() if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
+    rows = [line for line in content.decode().splitlines() if 'Peter A Jones' in line]
     assert len(rows) == 2
-    # In Europe/Berlin (UTC+1 in February), 15:00 UTC is 16:00 and 16:00 UTC is 17:00
-    assert '16:00' in rows[0]
-    assert '17:00' in rows[1]
+    # In Asia/Kolkata: 15:00 UTC -> 20:30 on 2019-02-22
+    assert '2019-02-22' in rows[0]
+    assert '20:30' in rows[0]
+    # 23:30 UTC -> 05:00 on next day 2019-02-23
+    assert '2019-02-23' in rows[1]
+    assert '05:00' in rows[1]
