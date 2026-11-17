@@ -4,7 +4,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import escape
@@ -423,7 +423,12 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
 
     @cached_property
     def link_lists(self):
-        return list(MailLinkList.objects.filter(event=self.event))
+        return list(
+            MailLinkList.objects.filter(event=self.event).annotate(
+                row_total=Count('rows'),
+                row_used=Count('rows', filter=Q(rows__assigned_email__isnull=False)),
+            )
+        )
 
     @cached_property
     def link_list_columns(self):
@@ -434,7 +439,11 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
     def link_list_panels(self):
         """Each saved list with its counts and placeholders, for the manage dialog and the placeholder drawer."""
         return [
-            {'list': link_list, 'counts': link_list.counts(), 'placeholders': link_list.placeholders}
+            {
+                'list': link_list,
+                'counts': {'used': link_list.row_used, 'left': link_list.row_total - link_list.row_used},
+                'placeholders': link_list.placeholders,
+            }
             for link_list in self.link_lists
         ]
 
