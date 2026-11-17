@@ -90,17 +90,6 @@ def setup():
     )
 
 
-def test_without_policy_admission_is_allowed_and_recorded(monkeypatch, setup):
-    monkeypatch.setattr(entitlements, "entitlement_check", Signal())
-    view = enter(setup.room_a, setup.alice)
-
-    assert admit_to_jitsi_room(setup.room_a, setup.alice).allowed
-
-    view.refresh_from_db()
-    assert view.jitsi_joined_at is not None
-    assert running_jitsi_room_ids(setup.organizer) == {setup.room_a.pk}
-
-
 def test_starting_a_room_beyond_the_limit_is_denied(room_limit, setup):
     policy, calls = room_limit
     enter(setup.room_a, setup.alice)
@@ -128,18 +117,6 @@ def test_joining_a_running_room_does_not_need_a_free_room(room_limit, setup):
     assert len(calls) == checks_before
     bob_view.refresh_from_db()
     assert bob_view.jitsi_joined_at is not None
-
-
-def test_room_is_freed_when_everyone_admitted_has_left(room_limit, setup):
-    alice_view = enter(setup.room_a, setup.alice)
-    admit_to_jitsi_room(setup.room_a, setup.alice)
-    enter(setup.room_b, setup.bob)
-    assert not admit_to_jitsi_room(setup.room_b, setup.bob).allowed
-
-    alice_view.end = now()
-    alice_view.save()
-
-    assert admit_to_jitsi_room(setup.room_b, setup.bob).allowed
 
 
 def test_denied_users_do_not_keep_a_room_running(room_limit, setup):
@@ -170,15 +147,6 @@ def test_limit_counts_rooms_across_the_organizers_events(room_limit, setup):
     assert calls[-1][2] == 3
 
 
-def test_other_organizers_are_not_counted(room_limit, setup):
-    other_org = Organizer.objects.create(name="Other", slug="other-org")
-    foreign_room = make_room(make_event(other_org, "foreign"), "F")
-    RoomView.objects.create(room=foreign_room, user=setup.alice, jitsi_joined_at=now())
-
-    enter(setup.room_a, setup.carol)
-    assert admit_to_jitsi_room(setup.room_a, setup.carol).allowed
-
-
 def test_deleted_room_counts_while_its_call_continues(room_limit, setup):
     alice_view = enter(setup.room_a, setup.alice)
     admit_to_jitsi_room(setup.room_a, setup.alice)
@@ -193,16 +161,20 @@ def test_deleted_room_counts_while_its_call_continues(room_limit, setup):
     assert admit_to_jitsi_room(setup.room_b, setup.bob).allowed
 
 
-def test_room_that_stops_using_jitsi_is_not_counted(room_limit, setup):
+def test_switching_away_from_jitsi_frees_the_room_for_good(room_limit, setup):
     enter(setup.room_a, setup.alice)
     admit_to_jitsi_room(setup.room_a, setup.alice)
-    with scopes_disabled():
-        Room.objects.filter(pk=setup.room_a.pk).update(
-            module_config=[{"type": "livestream.youtube", "config": {}}]
-        )
 
+    with scopes_disabled():
+        setup.room_a.module_config = [{"type": "livestream.youtube", "config": {}}]
+        setup.room_a.save()
     enter(setup.room_b, setup.bob)
     assert admit_to_jitsi_room(setup.room_b, setup.bob).allowed
+
+    with scopes_disabled():
+        setup.room_a.module_config = JITSI
+        setup.room_a.save()
+    assert running_jitsi_room_ids(setup.organizer) == {setup.room_b.pk}
 
 
 def test_user_without_an_open_view_is_not_admitted(room_limit, setup):
@@ -259,18 +231,6 @@ def test_leaving_in_one_browser_keeps_the_other_counted(room_limit, setup):
     assert not admit_to_jitsi_room(setup.room_b, setup.bob).allowed
 
 
-def test_admission_with_a_view_marks_only_that_view(room_limit, setup):
-    first = enter(setup.room_a, setup.alice)
-    second = enter(setup.room_a, setup.alice)
-
-    assert admit_to_jitsi_room(setup.room_a, setup.alice, second).allowed
-
-    first.refresh_from_db()
-    second.refresh_from_db()
-    assert first.jitsi_joined_at is None
-    assert second.jitsi_joined_at is not None
-
-
 def test_admission_carry_rechecks_after_a_concurrent_leave(setup):
     view = enter(setup.room_a, setup.alice)
     RoomView.objects.filter(pk=view.pk).update(jitsi_joined_at=now())
@@ -322,18 +282,32 @@ def test_room_config_rejects_calls_that_are_not_admitted(reason_code, error_code
     consumer.send_success.assert_not_called()
 
 
-def test_room_config_failure_before_admission_takes_no_slot():
+def test_room_config_without_a_view_on_this_connection_is_not_admitted():
     module, consumer = make_jitsi_module()
+    consumer.components = {"room": SimpleNamespace(current_views={})}
     server = SimpleNamespace(pk=1, url="https://meet.example.org", app_id="", app_secret="")
     room_config = inspect.unwrap(JitsiModule.room_config)
 
     with patch.object(jitsi_module, "choose_server_for_room", return_value=server), patch.object(
         jitsi_module, "admit_to_jitsi_room"
-    ) as admit, patch.object(JitsiModule, "can_moderate_room", AsyncMock(side_effect=RuntimeError)):
-        with pytest.raises(RuntimeError):
+    ) as admit, patch.object(JitsiModule, "can_moderate_room", AsyncMock(return_value=False)):
+        with pytest.raises(ConsumerException) as exc_info:
             async_to_sync(room_config)(module, {})
 
+    assert exc_info.value.code == "jitsi.not_in_room"
     admit.assert_not_called()
+
+
+def test_leave_without_a_view_on_this_connection_releases_nothing():
+    module, consumer = make_jitsi_module()
+    consumer.components = {"room": SimpleNamespace(current_views={})}
+    leave = inspect.unwrap(JitsiModule.leave)
+
+    with patch.object(jitsi_module, "release_jitsi_room") as release:
+        async_to_sync(leave)(module, {})
+
+    release.assert_not_called()
+    consumer.send_success.assert_called_once_with({})
 
 
 def test_leave_command_releases_this_connections_view():

@@ -10,7 +10,11 @@ from eventyay.base.services.jitsi import (
     normalize_server_url,
 )
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
-from eventyay.base.services.video_entitlements import admit_to_jitsi_room, release_jitsi_room
+from eventyay.base.services.video_entitlements import (
+    admit_to_jitsi_room,
+    not_in_room_decision,
+    release_jitsi_room,
+)
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
@@ -310,10 +314,13 @@ class JitsiModule(BaseModule):
             "jwt": jwt_token,
         }
 
-        # Admit last, so a failure while building the config never takes a room slot.
-        decision = await database_sync_to_async(admit_to_jitsi_room)(
-            self.room, self.consumer.user, self._current_view()
-        )
+        view = self._current_view()
+        if view is None:
+            decision = not_in_room_decision()
+        else:
+            decision = await database_sync_to_async(admit_to_jitsi_room)(
+                self.room, self.consumer.user, view
+            )
         if not decision.allowed:
             error_code = (
                 'not_in_room' if decision.reason_code == 'not_in_room' else 'concurrent_rooms_exceeded'
@@ -343,9 +350,9 @@ class JitsiModule(BaseModule):
     @room_action()
     async def leave(self, body):
         """Free the caller's place in the room's Jitsi call after they hang up."""
-        await database_sync_to_async(release_jitsi_room)(
-            self.room, self.consumer.user, self._current_view()
-        )
+        view = self._current_view()
+        if view is not None:
+            await database_sync_to_async(release_jitsi_room)(self.room, self.consumer.user, view)
         await self.consumer.send_success({})
 
     def _build_jwt(

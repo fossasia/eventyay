@@ -428,6 +428,14 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
         if self.is_unscheduled:
             validate_is_unscheduled_change(self)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        modules = self.module_config if isinstance(self.module_config, list) else []
+        if not any(isinstance(m, dict) and m.get('type') == 'call.jitsi' for m in modules):
+            RoomView.objects.filter(room=self, end__isnull=True, jitsi_joined_at__isnull=False).update(
+                jitsi_joined_at=None
+            )
+
     @property
     def log_parent(self):
         return self.event
@@ -520,8 +528,6 @@ class RoomView(models.Model):
         null=True, db_index=True
     )  # index required for control/ dashboard
     user = models.ForeignKey(to="user", related_name="views", on_delete=models.CASCADE)
-    # Set when this view was admitted to the room's Jitsi call. A room with an
-    # open admitted view counts as a running Jitsi room for the organizer's plan.
     jitsi_joined_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

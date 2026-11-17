@@ -69,6 +69,14 @@ def running_jitsi_room_ids(organizer, exclude_room=None) -> set:
     return set(views.values_list('room_id', flat=True).distinct())
 
 
+def not_in_room_decision() -> EntitlementDecision:
+    return EntitlementDecision(
+        allowed=False,
+        reason_code='not_in_room',
+        message=_('Enter the room before joining its video call.'),
+    )
+
+
 def _lock_organizer(organizer_id) -> None:
     """Serialize admission changes for one organizer."""
     Organizer.objects.select_for_update().filter(pk=organizer_id).first()
@@ -88,18 +96,12 @@ def admit_to_jitsi_room(room, user, view=None) -> EntitlementDecision:
     event = room.event
     organizer = event.organizer
     with transaction.atomic():
-        # Serialize admissions per organizer so two calls cannot both take the last room.
         _lock_organizer(organizer.pk)
         user_views = RoomView.objects.filter(room=room, user=user, end__isnull=True)
         if view is not None:
             user_views = user_views.filter(pk=view.pk)
         if not user_views.exists():
-            # Without an open view the call could not be counted, so it is not admitted.
-            return EntitlementDecision(
-                allowed=False,
-                reason_code='not_in_room',
-                message=_('Enter the room before joining its video call.'),
-            )
+            return not_in_room_decision()
         already_running = RoomView.objects.filter(
             room=room, end__isnull=True, jitsi_joined_at__isnull=False
         ).exists()

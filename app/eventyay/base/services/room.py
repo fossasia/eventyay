@@ -268,8 +268,6 @@ def start_view(room: Room, user: User, delete=False):
     # time as soon as browser A leaves.
     with atomic():
         previous = RoomView.objects.filter(room=room, user=user, end__isnull=True)
-        # Another browser of the same user may still be in the room's Jitsi call; keep
-        # counting that call on the replacement view.
         in_jitsi_call = carry_jitsi_admission(room, user, previous)
         if delete:
             previous.delete()
