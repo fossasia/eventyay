@@ -269,6 +269,10 @@ var editor = {
         if (o.initDimensions) {
             o.initDimensions();
         }
+        if (o._clearCache) {
+            o._clearCache();
+        }
+        o.dirty = true;
     },
 
     _csrf_token: function () {
@@ -1104,6 +1108,13 @@ var editor = {
 
             if (action === "left" || action === "center" || action === "right") {
                 object.set("textAlign", action);
+                if (object.initDimensions) {
+                    object.initDimensions();
+                }
+                if (object._clearCache) {
+                    object._clearCache();
+                }
+                object.dirty = true;
             }
 
             object.setCoords();
