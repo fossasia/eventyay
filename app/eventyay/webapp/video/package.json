@@ -71,7 +71,7 @@
     "@vitejs/plugin-vue": "^6.0.11",
     "@vue-macros/reactivity-transform": "^3.1.2",
     "@vue/language-plugin-pug": "^3.3.14",
-    "eslint": "^10.13.0",
+    "eslint": "^10.15.0",
     "eslint-plugin-vue": "^10.12.1",
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
     "globals": "^17.14.0",
