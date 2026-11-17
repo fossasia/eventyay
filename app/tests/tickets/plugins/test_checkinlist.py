@@ -10,7 +10,7 @@ from eventyay.base.models import (
     Checkin,
     Event,
     InvoiceAddress,
-    Product as Item,
+    Product,
     Order,
     OrderPosition,
     Organizer,
@@ -46,10 +46,10 @@ def event():
             total=33,
             locale='en',
         )
-        item_ticket = Item.objects.create(event=event, name='Ticket', default_price=23, admission=True)
+        item_ticket = Product.objects.create(event=event, name='Ticket', default_price=23, admission=True)
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={
@@ -62,7 +62,7 @@ def event():
         )
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('13'),
             attendee_name_parts={
@@ -174,7 +174,7 @@ def test_csv_order_by_inherited_name_parts(event):  # noqa
         )
         OrderPosition.objects.create(
             order=order2,
-            item=event.items.first(),
+            product=event.products.first(),
             variation=None,
             company='BARCORP',
             price=Decimal('23'),
@@ -299,6 +299,10 @@ def test_csv_includes_all_checkins(event):
 
 @pytest.mark.django_db
 def test_checkinlog_includes_all_checkins(event):
+    event.timezone = 'Europe/Berlin'
+    event.__dict__.pop('tz', None)
+    event.save()
+    event.settings.set('timezone', 'Europe/Berlin')
     cl = event.checkin_lists.first()
     with scope(organizer=event.organizer):
         op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
@@ -319,9 +323,12 @@ def test_checkinlog_includes_all_checkins(event):
     _, _, content = exporter.render(
         {
             'list': cl.pk,
-            'products': [event.items.first().pk],
+            'products': [event.products.first().pk],
             '_format': 'default',
         }
     )
-    rows = [line for line in clean(content.decode()).split('\n') if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
+    rows = [line for line in content.decode().splitlines() if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
     assert len(rows) == 2
+    # In Europe/Berlin (UTC+1 in February), 15:00 UTC is 16:00 and 16:00 UTC is 17:00
+    assert '16:00' in rows[0]
+    assert '17:00' in rows[1]
