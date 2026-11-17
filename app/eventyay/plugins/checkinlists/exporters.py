@@ -20,7 +20,7 @@ from django.db.models.functions import Coalesce, NullIf
 from django.template.defaultfilters import truncatechars, truncatechars_html
 from django.urls import reverse
 from django.utils.formats import date_format
-from django.utils.timezone import is_aware, make_aware
+from django.utils.timezone import is_aware, make_aware, override
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, pgettext
 import datetime
@@ -952,10 +952,13 @@ class CheckinLogList(ListExporter):
             except InvoiceAddress.DoesNotExist:
                 ia = InvoiceAddress()
 
-            event_datetime = ci.datetime.astimezone(self.event.tz)
+            with override(self.event.tz):
+                event_datetime = ci.datetime.astimezone(self.event.tz)
+                formatted_date = date_format(event_datetime, 'SHORT_DATE_FORMAT')
+                formatted_time = date_format(event_datetime, 'TIME_FORMAT')
             yield [
-                date_format(event_datetime, 'SHORT_DATE_FORMAT'),
-                date_format(event_datetime, 'TIME_FORMAT'),
+                formatted_date,
+                formatted_time,
                 str(ci.list),
                 ci.get_type_display(),
                 ci.position.order.code,
