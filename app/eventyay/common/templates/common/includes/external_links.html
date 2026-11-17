@@ -1,0 +1,5 @@
+{% load external_links static %}
+{% external_link_origin request as return_origin %}
+<script type='module' blocking='render' src='{% static "common/js/external-links.js" %}'
+        data-external-link-url='{% url "eventyay_common:external-link" %}'
+        data-external-link-redirect-url='{% url "redirect" %}' data-external-link-origin='{{ return_origin }}'></script>
