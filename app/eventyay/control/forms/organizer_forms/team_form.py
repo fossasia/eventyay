@@ -419,6 +419,20 @@ class TeamForm(forms.ModelForm):
                             forms.ValidationError(_('You cannot grant permissions that you do not hold yourself.')),
                         )
 
+            if self.instance and self.instance.pk and self.user and getattr(self.user, 'is_authenticated', False):
+                with scopes_disabled():
+                    is_member = self.instance.members.filter(pk=self.user.pk).exists()
+                if is_member:
+                    for privacy_field in ('force_hide_speaker_names', 'force_hide_speaker_emails'):
+                        if getattr(self.instance, privacy_field, False) and not data.get(privacy_field):
+                            target_field = privacy_field if privacy_field in self.fields else None
+                            self.add_error(
+                                target_field,
+                                forms.ValidationError(
+                                    _('You cannot remove speaker privacy restrictions from a team you belong to.')
+                                ),
+                            )
+
         has_any_permission = any(data.get(permission) for permission in effective_permissions)
         if not has_any_permission and not data.get('teamshifts_role'):
             if any(data.get(permission) for permission in EXHIBITION_PERMISSIONS):

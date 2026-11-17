@@ -498,3 +498,53 @@ def test_organizer_teams_view_cannot_escalate_permissions(organizer, client):
     # The team should not have been created with financial permissions
     assert not Team.objects.filter(organizer=organizer, name='Hacked Team').exists()
 
+
+@pytest.mark.django_db
+def test_team_form_cannot_clear_speaker_privacy_if_member(organizer):
+    team = Team.objects.create(
+        organizer=organizer,
+        name='Reviewer Team',
+        all_events=True,
+        can_change_teams=True,
+        is_reviewer=True,
+        force_hide_speaker_names=True,
+        force_hide_speaker_emails=True,
+    )
+    user = User.objects.create_user('reviewer@dummy.dummy', 'dummy')
+    team.members.add(user)
+
+    # Actor who belongs to this team cannot uncheck force_hide_speaker_names
+    form = TeamForm(
+        instance=team,
+        data={
+            'name': 'Reviewer Team',
+            'all_events': True,
+            'can_change_teams': True,
+            'is_reviewer': True,
+            'force_hide_speaker_names': False,
+            'force_hide_speaker_emails': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    assert not form.is_valid()
+    assert 'force_hide_speaker_names' in form.errors
+
+    # Superuser CAN clear it
+    superuser = User.objects.create_superuser('super2@dummy.dummy', 'dummy')
+    form_super = TeamForm(
+        instance=team,
+        data={
+            'name': 'Reviewer Team',
+            'all_events': True,
+            'can_change_teams': True,
+            'is_reviewer': True,
+            'force_hide_speaker_names': False,
+            'force_hide_speaker_emails': True,
+        },
+        organizer=organizer,
+        user=superuser,
+    )
+    assert form_super.is_valid()
+
+
