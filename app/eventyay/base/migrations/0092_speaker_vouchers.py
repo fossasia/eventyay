@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0090_team_invite_state'),
+        ('base', '0091_auditlog_event_timestamp_idx'),
     ]
 
     operations = [
