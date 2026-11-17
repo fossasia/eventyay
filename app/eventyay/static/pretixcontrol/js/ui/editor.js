@@ -148,19 +148,19 @@ var editor = {
     _NUDGE_SHIFT_MM: 10,
 
     _px2mm: function (v) {
-        return v / editor.pdf_scale / 72 * editor.pdf_page.userUnit * 25.4;
+        return v / editor.pdf_scale / 72 * (editor.pdf_page ? editor.pdf_page.userUnit : 1) * 25.4;
     },
 
     _mm2px: function (v) {
-        return v * editor.pdf_scale * 72 / editor.pdf_page.userUnit / 25.4;
+        return v * editor.pdf_scale * 72 / (editor.pdf_page ? editor.pdf_page.userUnit : 1) / 25.4;
     },
 
     _px2pt: function (v) {
-        return v / editor.pdf_scale * editor.pdf_page.userUnit;
+        return v / editor.pdf_scale * (editor.pdf_page ? editor.pdf_page.userUnit : 1);
     },
 
     _pt2px: function (v) {
-        return v * editor.pdf_scale / editor.pdf_page.userUnit;
+        return v * editor.pdf_scale / (editor.pdf_page ? editor.pdf_page.userUnit : 1);
     },
 
     _get_text_max_font_pt: function (o) {
@@ -168,6 +168,49 @@ var editor = {
             return o.maxFontPt;
         }
         return editor._px2pt(o.fontSize);
+    },
+
+    _all_selected_are_text: function (objects) {
+        return !!objects &&
+            objects.length > 1 &&
+            objects.every(function (obj) {
+                return (
+                    obj.type === "textarea" ||
+                    obj.type === "text" ||
+                    obj.type === "textbox" ||
+                    obj.type === "i-text" ||
+                    (typeof obj.type === "string" && obj.type.toLowerCase().indexOf("text") !== -1)
+                );
+            });
+    },
+
+    _pin_object: function (object, pinned) {
+        pinned = !!pinned;
+        object.pinned = pinned;
+        object.set({
+            editable: !pinned,
+            lockMovementX: pinned,
+            lockMovementY: pinned,
+            lockRotation: pinned,
+            lockScalingX: pinned,
+            lockScalingY: pinned,
+            hasControls: !pinned
+        });
+    },
+
+    _toggle_pin: function () {
+        var objects = editor.fabric ? editor.fabric.getActiveObjects() : [];
+        if (objects.length !== 1) {
+            return;
+        }
+        var o = objects[0];
+        var newPinned = o.pinned !== true;
+        editor._pin_object(o, newPinned);
+        $("#toolbox-pin")
+            .toggleClass("active is-pinned btn-info", newPinned)
+            .toggleClass("btn-default", !newPinned);
+        editor.fabric.renderAll();
+        editor._create_savepoint();
     },
 
     _parse_autofit_width: function (value) {
@@ -482,6 +525,7 @@ var editor = {
                     text: o.content === "other" ? (o.placeholder_text || o.text) : o.text,
                     rotation: o.angle,
                     align: o.textAlign,
+                    pinned: o.pinned || false,
                 });
             } else  if (o.type === "imagearea") {
                 d.push({
@@ -491,6 +535,7 @@ var editor = {
                     height: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     width: editor._px2mm(o.width * o.scaleX).toFixed(2),
                     content: o.content,
+                    pinned: o.pinned || false,
                 });
             } else  if (o.type === "barcodearea") {
                 d.push({
@@ -499,6 +544,7 @@ var editor = {
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     size: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     content: o.content,
+                    pinned: o.pinned || false,
                 });
             } else  if (o.type === "poweredby") {
                 d.push({
@@ -507,6 +553,7 @@ var editor = {
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     size: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     content: o.content,
+                    pinned: o.pinned || false,
                 });
             }
         }
@@ -575,6 +622,9 @@ var editor = {
         o.set('left', editor._mm2px(d.left));
         o.set('top', new_top);
         o.setCoords();
+        if (d.pinned) {
+            editor._pin_object(o, true);
+        }
         return o;
     },
 
@@ -812,6 +862,26 @@ var editor = {
         editor.fabric.on('object:modified', editor._update_toolbox_values);
         editor.fabric.on('mouse:down', editor._on_canvas_mouse_down);
         editor.fabric.on('object:moving', editor._on_object_moving);
+        editor.fabric.on('mouse:down:before', function (opt) {
+            if (opt.target) {
+                editor._pinned_objects = null;
+                return;
+            }
+            editor._pinned_objects = editor.fabric.getObjects().filter(function (obj) {
+                return obj.pinned === true;
+            });
+            editor._pinned_objects.forEach(function (obj) {
+                obj.selectable = false;
+            });
+        });
+        editor.fabric.on('mouse:up', function () {
+            if (editor._pinned_objects) {
+                editor._pinned_objects.forEach(function (obj) {
+                    obj.selectable = true;
+                });
+                editor._pinned_objects = null;
+            }
+        });
         editor._update_toolbox();
 
         $("#toolbox-content-other").hide();
@@ -890,6 +960,29 @@ var editor = {
             var groupBottom = editor.pdf_viewport.height - bound.height - bound.top;
             setVal("#toolbox-position-x", editor._px2mm(bound.left).toFixed(2));
             setVal("#toolbox-position-y", editor._px2mm(groupBottom).toFixed(2));
+
+            if (editor._all_selected_are_text(editor.fabric.getActiveObjects())) {
+                var textObjs = editor.fabric.getActiveObjects();
+                var first = textObjs[0];
+                if (first.fill) {
+                    var col = (new fabric.Color(first.fill))._source;
+                    var hexColor = "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1);
+                    setVal("#toolbox-col", hexColor);
+                    var $colorInput = $("#toolbox-col");
+                    if ($colorInput.data('colorpicker')) {
+                        $colorInput.colorpicker('setValue', hexColor);
+                    }
+                    $colorInput.closest('.colorpicker-preview-group').find('.colorpicker-preview').css('background-color', hexColor);
+                }
+                setVal("#toolbox-fontsize", editor._get_text_max_font_pt(first).toFixed(1));
+                setVal("#toolbox-fontfamily", first.fontFamily);
+                $("#toolbox").find("button[data-action=bold]").toggleClass('active', first.fontWeight === 'bold');
+                $("#toolbox").find("button[data-action=italic]").toggleClass('active', first.fontStyle === 'italic');
+                $("#toolbox").find("button[data-action=left]").toggleClass('active', first.textAlign === 'left');
+                $("#toolbox").find("button[data-action=center]").toggleClass('active', first.textAlign === 'center');
+                $("#toolbox").find("button[data-action=right]").toggleClass('active', first.textAlign === 'right');
+            }
+
             editor._toolbox_update_in_progress = false;
             return;
         }
@@ -947,8 +1040,123 @@ var editor = {
         editor._toolbox_update_in_progress = false;
     },
 
-    _update_values_from_toolbox: function () {
+    _apply_group_formatting: function (event) {
+        if (!editor.fabric) {
+            return;
+        }
+        var objects = editor.fabric.getActiveObjects();
+        if (!editor._all_selected_are_text(objects)) {
+            return;
+        }
+
+        var control = event && event.currentTarget;
+        var action = control && control.getAttribute("data-action");
+        var controlId = control && control.id;
+        var fontSize;
+        var fontFamily;
+        var isBold;
+        var isItalic;
+
+        if (controlId === "toolbox-fontsize") {
+            fontSize = parseFloat($("#toolbox-fontsize").val());
+            if (isNaN(fontSize)) {
+                return;
+            }
+        } else if (controlId === "toolbox-fontfamily") {
+            fontFamily = $("#toolbox-fontfamily").val();
+            if (!fontFamily) {
+                return;
+            }
+        } else if (action === "bold") {
+            isBold = $(control).is(".active");
+        } else if (action === "italic") {
+            isItalic = $(control).is(".active");
+        } else if (action !== "left" && action !== "center" && action !== "right") {
+            return;
+        }
+
+        objects.forEach(function (object) {
+            if (object.pinned) {
+                return;
+            }
+
+            if (controlId === "toolbox-fontfamily") {
+                object.set("fontFamily", fontFamily);
+                editor._apply_autofit_fontsize(object);
+            }
+
+            if (controlId === "toolbox-fontsize") {
+                editor._apply_autofit_fontsize(object, fontSize);
+            }
+
+            if (action === "bold") {
+                object.set("fontWeight", isBold ? "bold" : "normal");
+                editor._apply_autofit_fontsize(object);
+            }
+
+            if (action === "italic") {
+                object.set("fontStyle", isItalic ? "italic" : "normal");
+                editor._apply_autofit_fontsize(object);
+            }
+
+            if (action === "left" || action === "center" || action === "right") {
+                object.set("textAlign", action);
+            }
+
+            object.setCoords();
+        });
+
+        editor.fabric.renderAll();
+        editor._create_savepoint();
+    },
+
+    _apply_group_color: function () {
+        if (!editor.fabric) {
+            return;
+        }
+        var objects = editor.fabric.getActiveObjects();
+        if (!editor._all_selected_are_text(objects)) {
+            return;
+        }
+        var color = $("#toolbox-col").val();
+        if (!color) {
+            return;
+        }
+        objects.forEach(function (object) {
+            if (object.pinned) {
+                return;
+            }
+            object.set("fill", color);
+            object.setCoords();
+        });
+        editor.fabric.renderAll();
+        editor._create_savepoint();
+    },
+
+    _update_values_from_toolbox: function (e) {
         if (editor._toolbox_update_in_progress) {
+            return;
+        }
+        var target = e && e.target;
+        var isTypographyControl = target && (
+            target.id === "toolbox-col" ||
+            target.id === "toolbox-fontsize" ||
+            target.id === "toolbox-fontfamily" ||
+            (
+                typeof target.closest === "function" &&
+                target.closest(
+                    "#toolbox button[data-action=bold], " +
+                    "#toolbox button[data-action=italic], " +
+                    "#toolbox-align button[data-action]"
+                )
+            )
+        );
+
+        if (
+            isTypographyControl &&
+            editor.fabric &&
+            editor._all_selected_are_text(editor.fabric.getActiveObjects())
+        ) {
             return;
         }
         var o = editor._get_toolbox_target_object(true);
@@ -1060,8 +1268,13 @@ var editor = {
     _update_toolbox: function () {
         var selected = editor.fabric.getActiveObjects();
         if (selected.length > 1) {
-            $("#toolbox").attr("data-type", "group");
-            $("#toolbox-heading").text(gettext("Group of objects"));
+            if (editor._all_selected_are_text(selected)) {
+                $("#toolbox").attr("data-type", "group-text");
+                $("#toolbox-heading").text(gettext("Group of text objects"));
+            } else {
+                $("#toolbox").attr("data-type", "group");
+                $("#toolbox-heading").text(gettext("Group of objects"));
+            }
         } else if (selected.length == 1) {
             var o = selected[0];
             editor._last_active_object = o;
@@ -1081,6 +1294,19 @@ var editor = {
             $("#toolbox").removeAttr("data-type");
             $("#toolbox-heading").text(gettext("Ticket design"));
         }
+
+        var $pin = $("#toolbox-pin");
+        if (selected.length === 1) {
+            var pinned = selected[0].pinned === true;
+            $pin.show()
+                .toggleClass("active is-pinned btn-info", pinned)
+                .toggleClass("btn-default", !pinned);
+        } else {
+            $pin.hide()
+                .removeClass("active is-pinned btn-info")
+                .addClass("btn-default");
+        }
+
         var isSingleText = selected.length === 1 && (selected[0].type === "textarea" || selected[0].type === "text");
         if (isSingleText) {
             editor._update_disabled_placeholder_warning();
@@ -1405,6 +1631,9 @@ var editor = {
             case 37:  /* Left arrow */
             case 39:  /* Right arrow */
                 e.preventDefault();
+                if (thing && thing.pinned) {
+                    return;
+                }
                 editor._nudge_active(
                     e.keyCode === 37 ? -1 : e.keyCode === 39 ? 1 : 0,
                     e.keyCode === 38 ? -1 : e.keyCode === 40 ? 1 : 0,
@@ -1413,7 +1642,7 @@ var editor = {
                 handled = true;
                 break;
             case 46:  /* Delete */
-                if (!thing) {
+                if (!thing || thing.pinned) {
                     return;
                 }
                 editor._delete();
@@ -1441,7 +1670,7 @@ var editor = {
                 handled = true;
                 break;
             case 88:  /* X */
-                if (!cmd || !thing) {
+                if (!cmd || !thing || thing.pinned) {
                     return;
                 }
                 editor._cut();
@@ -1695,6 +1924,24 @@ var editor = {
         $("#toolbox-source").bind('click', editor._source_show);
         $("#source-close").bind('click', editor._source_close);
         $("#source-save").bind('click', editor._source_save);
+        $("#toolbox-pin").bind('click', editor._toggle_pin);
+
+        $("#toolbox")
+            .on(
+                "change.group_format input.group_format keyup.group_format",
+                "#toolbox-fontsize, #toolbox-fontfamily",
+                editor._apply_group_formatting
+            )
+            .on(
+                "change.group_format input.group_format keyup.group_format changeColor.group_format",
+                "#toolbox-col",
+                editor._apply_group_color
+            )
+            .on(
+                "click.group_format",
+                "#toolbox button[data-action=bold], #toolbox button[data-action=italic], #toolbox-align button[data-action]",
+                editor._apply_group_formatting
+            );
     }
 };
 

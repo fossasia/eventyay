@@ -161,6 +161,10 @@
                                     title="{% trans "Copy" %}">
                                 <span class="fa fa-copy"></span>
                             </button>
+                            <button type="button" class="btn btn-default btn-xs toggling" id="toolbox-pin"
+                                    title="{% trans "Pin/unpin object" %}" style="display:none">
+                                <span class="fa fa-thumb-tack"></span>
+                            </button>
                             <button type="button" class="btn btn-delete btn-danger btn-xs" id="toolbox-delete"
                                     title="{% trans "Delete" %}">
                                 <span class="fa fa-trash"></span>
@@ -329,7 +333,7 @@
                             </p>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text typography">
                         <div class="col-sm-12">
                             <label>{% trans "Font size (pt)" %}</label><br>
                             <input type="number" value="13" class="input-block-level form-control show-spinner" step="0.1"
@@ -347,7 +351,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text typography">
                         <div class="col-sm-12">
                             <label>{% trans "Font style" %}</label><br>
                             <div class="btn-group btn-group-justified" role="group">
@@ -370,14 +374,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text form-group">
+                    <div class="row control-group text form-group typography">
                         <div class="col-xs-12">
                             <label>{% trans "Text color" %}</label><br>
                             <input type="text" value="#000000" class="input-block-level form-control colorpickerfield"
                                     id="toolbox-col">
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text typography">
                         <div class="col-sm-12">
                             <label>{% trans "Alignment" %}</label><br>
                             <div class="btn-group btn-group-justified" id="toolbox-align">
@@ -399,7 +403,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text typography">
                         <div class="col-sm-12">
                             <label>{% trans "Font" %}</label><br>
                             <select class="input-block-level form-control" id="toolbox-fontfamily">

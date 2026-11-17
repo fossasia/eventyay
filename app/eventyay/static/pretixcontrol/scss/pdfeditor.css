@@ -36,15 +36,28 @@ body {
 #toolbox[data-type=poweredby] .poweredby,
 #toolbox[data-type=text] .text,
 #toolbox[data-type=textarea] .text,
+#toolbox[data-type=group-text] .typography,
 #toolbox[data-type] .object-buttons,
-#toolbox[data-type=group] .group-align {
+#toolbox[data-type=group] .group-align,
+#toolbox[data-type=group-text] .group-align {
     display: block;
 }
 #toolbox[data-type] .editor-hint {
     display: none;
 }
-#toolbox[data-type=group] .editor-hint {
+#toolbox[data-type=group] .editor-hint,
+#toolbox[data-type=group-text] .editor-hint {
     display: block;
+}
+#toolbox[data-type=group-text] button[data-action=downward] {
+    display: none;
+}
+#toolbox-pin.active,
+#toolbox-pin.is-pinned,
+#toolbox-pin.btn-info {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
 }
 #toolbox-object-align .btn-group-justified + .btn-group-justified {
     margin-top: 4px;

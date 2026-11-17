@@ -9,11 +9,15 @@ from pypdf import PdfReader
 
 from eventyay.base.models import (
     Event,
-    Product as Item,
-    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
+)
+from eventyay.base.models import (
+    Product as Item,
+)
+from eventyay.base.models import (
+    ProductVariation as ItemVariation,
 )
 from eventyay.plugins.ticketoutputpdf.ticketoutput import PdfTicketOutput
 
@@ -75,7 +79,7 @@ def test_generate_pdf_currency_symbol_fallback(env0, monkeypatch):
         event.settings.set('ticketoutput_pdf_code_x', 30)
         event.settings.set('ticketoutput_pdf_code_y', 50)
         event.settings.set('ticketoutput_pdf_code_s', 2)
-        
+
         o = PdfTicketOutput(event)
         # Force a font that lacks the currency symbol
         o.override_layout = [
@@ -94,18 +98,18 @@ def test_generate_pdf_currency_symbol_fallback(env0, monkeypatch):
                 'align': 'left',
             }
         ]
-        
+
         # Test 1: Font does NOT support symbol (fallback applies)
         monkeypatch.setattr('eventyay.base.pdf.font_supports_text', lambda f, t: False)
         fname, ftype, buf = o.generate(order.positions.first())
         assert ftype == 'application/pdf'
         pdf = PdfReader(BytesIO(buf))
         assert len(pdf.pages) == 1
-        
+
         text = ''
         for page in pdf.pages:
             text += page.extract_text()
-            
+
         # Verify the fallback regex substitutes the ISO code
         assert 'INR' in text
         # Ensure the symbol does not appear in the PDF bytes when ISO code is used
@@ -116,9 +120,74 @@ def test_generate_pdf_currency_symbol_fallback(env0, monkeypatch):
         fname2, ftype2, buf2 = o.generate(order.positions.first())
         assert ftype2 == 'application/pdf'
         pdf2 = PdfReader(BytesIO(buf2))
-        
+
         text2 = ''
         for page in pdf2.pages:
             text2 += page.extract_text()
-            
+
         assert 'INR' not in text2
+
+
+@pytest.mark.django_db
+def test_generate_pdf_with_pinned_and_grouped_layout(env0):
+    event, order = env0
+    with scope(organizer=event.organizer, event=event):
+        event.settings.set('ticketoutput_pdf_code_x', 30)
+        event.settings.set('ticketoutput_pdf_code_y', 50)
+        event.settings.set('ticketoutput_pdf_code_s', 2)
+
+        o = PdfTicketOutput(event)
+        o.override_layout = [
+            {
+                'type': 'textarea',
+                'left': '10.00',
+                'bottom': '10.00',
+                'fontsize': '20.0',
+                'color': [0, 0, 0, 1],
+                'fontfamily': 'Open Sans',
+                'bold': True,
+                'italic': False,
+                'width': '100.00',
+                'content': 'event_name',
+                'text': 'Test Event Title',
+                'align': 'left',
+                'pinned': True,
+            },
+            {
+                'type': 'textarea',
+                'left': '10.00',
+                'bottom': '30.00',
+                'fontsize': '20.0',
+                'color': [0, 0, 0, 1],
+                'fontfamily': 'Open Sans',
+                'bold': False,
+                'italic': True,
+                'width': '100.00',
+                'content': 'other',
+                'text': 'Pinned Object Text',
+                'align': 'center',
+                'pinned': True,
+            },
+            {
+                'type': 'textarea',
+                'left': '10.00',
+                'bottom': '50.00',
+                'fontsize': '20.0',
+                'color': [0, 0, 0, 1],
+                'fontfamily': 'Open Sans',
+                'bold': False,
+                'italic': False,
+                'width': '100.00',
+                'content': 'other',
+                'text': 'Unpinned Object Text',
+                'align': 'right',
+                'pinned': False,
+            },
+        ]
+        fname, ftype, buf = o.generate(order.positions.first())
+        assert ftype == 'application/pdf'
+        pdf = PdfReader(BytesIO(buf))
+        assert len(pdf.pages) == 1
+        text = ''.join(page.extract_text() for page in pdf.pages)
+        assert 'Pinned Object Text' in text
+        assert 'Unpinned Object Text' in text
