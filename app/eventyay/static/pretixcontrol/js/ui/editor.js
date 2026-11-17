@@ -130,6 +130,7 @@ var editor = {
     _history_modification_in_progress: false,
     _toolbox_update_in_progress: false,
     dirty: false,
+    change_version: 0,
     pdf_url: null,
     uploaded_file_id: null,
     page_width_mm: null,
@@ -307,22 +308,44 @@ var editor = {
     },
 
     _update_pin_button_state: function (selected) {
-        var $pinBtn = $("#toolbox-pin");
+        var pinBtn = document.getElementById("toolbox-pin");
+        var disableIds = [
+            "toolbox-position-x", "toolbox-position-y", "toolbox-width", "toolbox-height",
+            "toolbox-squaresize", "toolbox-textwidth", "toolbox-textrotation"
+        ];
+        var alignBtns = document.querySelectorAll("#toolbox-object-align button, #toolbox-delete, #toolbox-cut");
+
         if (!selected || !selected.length) {
-            $pinBtn.removeClass("active").attr("aria-pressed", "false").attr("title", gettext("Pin object in place"));
-            $("#toolbox-position-x, #toolbox-position-y, #toolbox-width, #toolbox-height, #toolbox-squaresize, #toolbox-textwidth, #toolbox-textrotation").prop("disabled", false);
-            $("#toolbox-object-align button, #toolbox-delete, #toolbox-cut").prop("disabled", false);
+            if (pinBtn) {
+                pinBtn.classList.remove("active");
+                pinBtn.setAttribute("aria-pressed", "false");
+                pinBtn.setAttribute("title", gettext("Pin object in place"));
+            }
+            disableIds.forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) { el.disabled = false; }
+            });
+            alignBtns.forEach(function (btn) {
+                btn.disabled = false;
+            });
             return;
         }
         var allPinned = selected.every(function (o) { return !!o.pinned; });
         var anyPinned = selected.some(function (o) { return !!o.pinned; });
 
-        $pinBtn.toggleClass("active", allPinned)
-               .attr("aria-pressed", allPinned ? "true" : "false")
-               .attr("title", allPinned ? gettext("Unpin object") : gettext("Pin object in place"));
+        if (pinBtn) {
+            pinBtn.classList.toggle("active", allPinned);
+            pinBtn.setAttribute("aria-pressed", allPinned ? "true" : "false");
+            pinBtn.setAttribute("title", allPinned ? gettext("Unpin object") : gettext("Pin object in place"));
+        }
 
-        $("#toolbox-position-x, #toolbox-position-y, #toolbox-width, #toolbox-height, #toolbox-squaresize, #toolbox-textwidth, #toolbox-textrotation").prop("disabled", anyPinned);
-        $("#toolbox-object-align button, #toolbox-delete, #toolbox-cut").prop("disabled", anyPinned);
+        disableIds.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) { el.disabled = anyPinned; }
+        });
+        alignBtns.forEach(function (btn) {
+            btn.disabled = anyPinned;
+        });
     },
 
     _toggle_pin: function () {
@@ -481,18 +504,21 @@ var editor = {
         editor.page_height_mm = size.height;
         editor._update_page_aspect_ratio();
         editor.uploaded_file_id = data.id;
+        editor.change_version += 1;
         editor.dirty = true;
         editor._replace_pdf_file(data.url, keepPageSizeFields);
     },
 
-    _finish_save_button: function ($btn, defaultLabel, ok) {
+    _finish_save_button: function ($btn, defaultLabel, ok, savedVersion) {
         $btn.find("span.fa-spin").remove();
         $btn.prop("disabled", false);
         if (!ok) {
             alert(gettext("Saving failed."));
             return;
         }
-        editor.dirty = false;
+        if (typeof savedVersion === "undefined" || editor.change_version === savedVersion) {
+            editor.dirty = false;
+        }
         editor.uploaded_file_id = null;
         $btn.html('<span class="fa fa-check"></span> ' + gettext("Saved"));
         window.setTimeout(function () {
@@ -998,11 +1024,18 @@ var editor = {
                 });
                 if (sameCol) {
                     setVal("#toolbox-col", firstHex);
-                    var $colorInput = $("#toolbox-col");
-                    if ($colorInput.data('colorpicker')) {
-                        $colorInput.colorpicker('setValue', firstHex);
+                    var colEl = document.getElementById("toolbox-col");
+                    if (colEl) {
+                        var $colorInput = $(colEl);
+                        if ($colorInput.data('colorpicker')) {
+                            $colorInput.colorpicker('setValue', firstHex);
+                        }
+                        var previewGroup = colEl.closest('.colorpicker-preview-group');
+                        if (previewGroup) {
+                            var preview = previewGroup.querySelector('.colorpicker-preview');
+                            if (preview) { preview.style.backgroundColor = firstHex; }
+                        }
                     }
-                    $colorInput.closest('.colorpicker-preview-group').find('.colorpicker-preview').css('background-color', firstHex);
                 } else {
                     setVal("#toolbox-col", "");
                 }
@@ -1013,22 +1046,29 @@ var editor = {
                 setVal("#toolbox-fontfamily", sameFont ? first.fontFamily : "");
 
                 var sameBold = selected.every(function (item) { return item.fontWeight === 'bold'; });
-                $("#toolbox").find("button[data-action=bold]").toggleClass('active', sameBold);
+                var boldBtn = document.querySelector('#toolbox button[data-action=bold]');
+                if (boldBtn) { boldBtn.classList.toggle('active', sameBold); }
 
                 var sameItalic = selected.every(function (item) { return item.fontStyle === 'italic'; });
-                $("#toolbox").find("button[data-action=italic]").toggleClass('active', sameItalic);
+                var italicBtn = document.querySelector('#toolbox button[data-action=italic]');
+                if (italicBtn) { italicBtn.classList.toggle('active', sameItalic); }
 
                 var sameDownward = selected.every(function (item) { return !!item.downward; });
-                $("#toolbox").find("button[data-action=downward]").toggleClass('active', sameDownward);
+                var downwardBtn = document.querySelector('#toolbox button[data-action=downward]');
+                if (downwardBtn) { downwardBtn.classList.toggle('active', sameDownward); }
 
                 var sameAutofit = selected.every(function (item) { return editor._parse_autofit_width(item.autofit_width); });
-                $("#toolbox-autofit-width").prop('checked', sameAutofit);
+                var autofitEl = document.getElementById('toolbox-autofit-width');
+                if (autofitEl) { autofitEl.checked = sameAutofit; }
 
                 var firstAlign = first.textAlign;
                 var sameAlign = selected.every(function (item) { return item.textAlign === firstAlign; });
-                $("#toolbox").find("button[data-action=left]").toggleClass('active', sameAlign && firstAlign === 'left');
-                $("#toolbox").find("button[data-action=center]").toggleClass('active', sameAlign && firstAlign === 'center');
-                $("#toolbox").find("button[data-action=right]").toggleClass('active', sameAlign && firstAlign === 'right');
+                ['left', 'center', 'right'].forEach(function (act) {
+                    var btn = document.querySelector('#toolbox button[data-action=' + act + ']');
+                    if (btn) {
+                        btn.classList.toggle('active', sameAlign && firstAlign === act);
+                    }
+                });
             }
 
             editor._update_pin_button_state(selected);
@@ -1124,9 +1164,10 @@ var editor = {
             }
 
             if (allText) {
-                var target = e && e.target ? $(e.target) : null;
-                var targetId = target ? (target.attr('id') || target.closest('[id]').attr('id')) : null;
-                var targetAction = target ? target.closest('button[data-action]').attr('data-action') : null;
+                var targetEl = e && e.target ? (e.target.nodeType === 1 ? e.target : e.target.parentElement) : null;
+                var targetId = targetEl ? (targetEl.id || (targetEl.closest('[id]') ? targetEl.closest('[id]').id : null)) : null;
+                var actionBtn = targetEl ? targetEl.closest('button[data-action]') : null;
+                var targetAction = actionBtn ? actionBtn.getAttribute('data-action') : null;
                 var isColorpicker = e && e.type === 'changeColor';
 
                 var shouldUpdateFontSize = targetId === 'toolbox-fontsize';
@@ -1138,14 +1179,23 @@ var editor = {
                 var shouldUpdateAutofit = targetId === 'toolbox-autofit-width';
                 var shouldUpdateAlign = targetAction === 'left' || targetAction === 'center' || targetAction === 'right';
 
-                var newPt = parseFloat($("#toolbox-fontsize").val());
-                var newCol = $("#toolbox-col").val();
-                var newFont = $("#toolbox-fontfamily").val();
-                var isBold = $("#toolbox").find("button[data-action=bold]").is('.active');
-                var isItalic = $("#toolbox").find("button[data-action=italic]").is('.active');
-                var isDownward = $("#toolbox").find("button[data-action=downward]").is('.active');
-                var isAutofit = $("#toolbox-autofit-width").prop('checked');
-                var align = $("#toolbox-align").find(".active").attr("data-action");
+                var fontSizeEl = document.getElementById('toolbox-fontsize');
+                var colEl = document.getElementById('toolbox-col');
+                var fontFamEl = document.getElementById('toolbox-fontfamily');
+                var boldBtn = document.querySelector('#toolbox button[data-action=bold]');
+                var italicBtn = document.querySelector('#toolbox button[data-action=italic]');
+                var downwardBtn = document.querySelector('#toolbox button[data-action=downward]');
+                var autofitEl = document.getElementById('toolbox-autofit-width');
+                var activeAlignBtn = document.querySelector('#toolbox-align button.active');
+
+                var newPt = fontSizeEl ? parseFloat(fontSizeEl.value) : NaN;
+                var newCol = colEl ? colEl.value : '';
+                var newFont = fontFamEl ? fontFamEl.value : '';
+                var isBold = boldBtn ? boldBtn.classList.contains('active') : false;
+                var isItalic = italicBtn ? italicBtn.classList.contains('active') : false;
+                var isDownward = downwardBtn ? downwardBtn.classList.contains('active') : false;
+                var isAutofit = autofitEl ? autofitEl.checked : false;
+                var align = activeAlignBtn ? activeAlignBtn.getAttribute('data-action') : null;
 
                 var hasChanges = false;
                 selected.forEach(function (textObj) {
@@ -1290,19 +1340,22 @@ var editor = {
         var allText = selected.length > 1 && selected.every(function (item) {
             return item.type === "textarea" || item.type === "text";
         });
+        var toolboxEl = document.getElementById("toolbox");
         if (selected.length > 1) {
-            $("#toolbox").attr("data-type", "group");
-            $("#toolbox").toggleClass("group-all-text", allText);
-            if (allText) {
-                $("#toolbox-heading").text(gettext("Group of text objects"));
-            } else {
-                $("#toolbox-heading").text(gettext("Group of objects"));
+            if (toolboxEl) {
+                toolboxEl.setAttribute("data-type", "group");
+                toolboxEl.classList.toggle("group-all-text", allText);
             }
+            $("#toolbox-heading").text(allText ? gettext("Group of text objects") : gettext("Group of objects"));
         } else if (selected.length == 1) {
-            $("#toolbox").removeClass("group-all-text");
+            if (toolboxEl) {
+                toolboxEl.classList.remove("group-all-text");
+            }
             var o = selected[0];
             editor._last_active_object = o;
-            $("#toolbox").attr("data-type", o.type);
+            if (toolboxEl) {
+                toolboxEl.setAttribute("data-type", o.type);
+            }
             if (o.type === "textarea" || o.type === "text") {
                 $("#toolbox-heading").text(gettext("Text object"));
             } else if (o.type === "barcodearea") {
@@ -1315,8 +1368,10 @@ var editor = {
                 $("#toolbox-heading").text(gettext("Object"));
             }
         } else {
-            $("#toolbox").removeClass("group-all-text");
-            $("#toolbox").removeAttr("data-type");
+            if (toolboxEl) {
+                toolboxEl.classList.remove("group-all-text");
+                toolboxEl.removeAttribute("data-type");
+            }
             $("#toolbox-heading").text(gettext("Ticket design"));
         }
         var active = editor.fabric.getActiveObject();
@@ -1758,6 +1813,7 @@ var editor = {
             editor._history_pos = 0;
         }
         editor.history.push(state);
+        editor.change_version += 1;
         editor.dirty = true;
     },
 
@@ -1768,6 +1824,7 @@ var editor = {
             editor.fabric.clear().renderAll();
             editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
             editor._history_modification_in_progress = false;
+            editor.change_version += 1;
             editor.dirty = true;
         }
     },
@@ -1778,6 +1835,7 @@ var editor = {
             editor._history_pos -= 1;
             editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
             editor._history_modification_in_progress = false;
+            editor.change_version += 1;
             editor.dirty = true;
         }
     },
@@ -1801,10 +1859,11 @@ var editor = {
         if (editor.uploaded_file_id) {
             payload.background = editor.uploaded_file_id;
         }
+        var inFlightVersion = editor.change_version;
         $.post(window.location.href, payload, function (data) {
-            editor._finish_save_button($btn, defaultLabel, data.status === "ok");
+            editor._finish_save_button($btn, defaultLabel, data.status === "ok", inFlightVersion);
         }, "json").fail(function () {
-            editor._finish_save_button($btn, defaultLabel, false);
+            editor._finish_save_button($btn, defaultLabel, false, inFlightVersion);
         });
         return false;
     },
@@ -1962,7 +2021,10 @@ var editor = {
             editor._update_values_from_toolbox(e);
             editor._create_savepoint();
         });
-        $("#toolbox-pin").bind('click', editor._toggle_pin);
+        var pinBtn = document.getElementById("toolbox-pin");
+        if (pinBtn) {
+            pinBtn.addEventListener("click", editor._toggle_pin);
+        }
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
         $("#toolbox-copy").bind('click', editor._copy);
         $("#toolbox-cut").bind('click', editor._cut);

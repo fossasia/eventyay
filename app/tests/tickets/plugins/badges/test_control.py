@@ -214,7 +214,24 @@ class BadgeLayoutFormTest(SoupTest):
         assert doc.select_one('.text-format #toolbox-col') is not None
         assert doc.select_one('.text-individual #toolbox-content') is not None
 
+        from django.contrib.staticfiles import finders
+        css_path = finders.find('pretixcontrol/scss/pdfeditor.css')
+        assert css_path is not None
+        with open(css_path, 'r', encoding='utf-8') as f:
+            css_content = f.read()
+        assert '#toolbox[data-type=group].group-all-text .text-format' in css_content
+        assert '#toolbox[data-type=group] .text-individual' in css_content
+        assert '#toolbox-pin.active' in css_content
+
     def test_editor_save_persists_pinned_state(self):
+        from django.contrib.staticfiles import finders
+        js_path = finders.find('pretixcontrol/js/ui/editor.js')
+        assert js_path is not None
+        with open(js_path, 'r', encoding='utf-8') as f:
+            js_content = f.read()
+        assert 'pinned: !!o.pinned' in js_content
+        assert 'editor._set_object_pinned(o, true)' in js_content
+
         with scopes_disabled():
             layout = self.event1.badge_layouts.create(name='Layout 1', default=True)
         posted_data = [
