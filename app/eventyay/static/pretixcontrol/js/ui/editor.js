@@ -1069,8 +1069,11 @@ var editor = {
             return;
         }
 
-        var control = event && event.currentTarget;
-        var action = control && control.getAttribute("data-action");
+        var control = (event && (event.currentTarget || event.target)) || this;
+        if (control && typeof control.closest === "function" && !control.getAttribute("data-action")) {
+            control = control.closest("button[data-action]") || control;
+        }
+        var action = control && typeof control.getAttribute === "function" ? control.getAttribute("data-action") : null;
         var controlId = control && control.id;
         var fontSize;
         var fontFamily;
@@ -1088,9 +1091,9 @@ var editor = {
                 return;
             }
         } else if (action === "bold") {
-            isBold = $(control).is(".active");
+            isBold = $(control).hasClass("active") || $(control).is(".active");
         } else if (action === "italic") {
-            isItalic = $(control).is(".active");
+            isItalic = $(control).hasClass("active") || $(control).is(".active");
         } else if (action !== "left" && action !== "center" && action !== "right") {
             return;
         }
@@ -1163,7 +1166,7 @@ var editor = {
         if (editor._toolbox_update_in_progress) {
             return;
         }
-        var target = e && e.target;
+        var target = (e && (e.target || e.currentTarget)) || null;
         var isTypographyControl = target && (
             target.id === "toolbox-col" ||
             target.id === "toolbox-fontsize" ||
@@ -1980,15 +1983,19 @@ var editor = {
         $("#toolbox-content").bind('change', editor._update_values_from_toolbox);
         $("#toolbox-content-other").bind('change keyup input blur', editor._update_values_from_toolbox);
         $("#toolbox-content, #toolbox-content-other").bind('change', editor._create_savepoint);
-        $("#toolbox button.toggling").bind('click change', function () {
+        $("#toolbox button.toggling").bind('click change', function (e) {
             if ($(this).is(".option")) {
                 $(this).addClass("active");
                 $(this).parent().siblings().find("button").removeClass("active");
             } else {
                 $(this).toggleClass("active");
             }
-            editor._update_values_from_toolbox();
-            editor._create_savepoint();
+            if (editor.fabric && editor._all_selected_are_text(editor.fabric.getActiveObjects())) {
+                editor._apply_group_formatting(e || { currentTarget: this });
+            } else {
+                editor._update_values_from_toolbox(e);
+                editor._create_savepoint();
+            }
         });
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
         $("#toolbox-copy").bind('click', editor._copy);
@@ -2071,11 +2078,6 @@ var editor = {
                 "change.group_format keyup.group_format changeColor.group_format",
                 "#toolbox-col",
                 editor._apply_group_color
-            )
-            .on(
-                "click.group_format",
-                "#toolbox button[data-action=bold], #toolbox button[data-action=italic], #toolbox-align button[data-action]",
-                editor._apply_group_formatting
             );
 
         editor._update_undo_redo_buttons();
