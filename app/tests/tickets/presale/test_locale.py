@@ -1,7 +1,9 @@
 from django.conf import settings
-from django.urls import reverse
 from django.test import Client, TestCase
+from django.urls import reverse
+from django.utils import translation
 from django.utils.timezone import now
+from django.utils.translation import gettext
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event, Organizer
@@ -161,4 +163,59 @@ class EventLanguageEnforceDefaultTest(TestCase):
         self.assertEqual(response.cookies[self.enforce_cookie].value, '0')
 
 
+class HausaLanguageSupportTest(TestCase):
+    """Hausa is a platform UI language and an event content language."""
+
+    def setUp(self):
+        super().setUp()
+        self.organizer = Organizer.objects.create(name='Hausa Org', slug='hausaorg')
+        self.event = Event.objects.create(
+            organizer=self.organizer,
+            name=LazyI18nString({'en': 'English Event Name', 'ha': 'Sunan Taron Hausa'}),
+            slug='hausaev',
+            date_from=now(),
+            live=True,
+            locale='en',
+            locale_array='en,ha',
+        )
+        self.event.settings.set('locales', ['en', 'ha'])
+        self.event.settings.set('locale', 'en')
+
+    def test_ui_language_falls_back_when_hausa_strings_are_missing(self):
+        client = Client()
+        client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'ha'
+        response = client.get('/control/login')
+        self.assertEqual(response['Content-Language'], 'ha')
+        with translation.override('ha'):
+            self.assertEqual(gettext('Login'), 'Login')
+
+    def test_organiser_can_store_and_show_hausa_event_content(self):
+        content_codes = [code for code, __ in self.event.available_content_locales]
+        self.assertIn('ha', content_codes)
+
+        client = Client()
+        client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'ha'
+        response = client.get(f'/{self.organizer.slug}/{self.event.slug}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.wsgi_request.event_language_enforce_ui)
+        self.assertEqual(response.wsgi_request.event_language, 'ha')
+        self.assertEqual(response['Content-Language'], 'ha')
+        self.assertContains(response, 'Sunan Taron Hausa</a>')
+
+    def test_link_languages_keeps_hausa_ui_when_event_has_no_hausa(self):
+        self.event.name = LazyI18nString({'en': 'English Event Name', 'de': 'Deutscher Name'})
+        self.event.locale = 'de'
+        self.event.locale_array = 'de,en'
+        self.event.save()
+        self.event.settings.set('locales', ['de', 'en'])
+        self.event.settings.set('locale', 'de')
+
+        client = Client()
+        client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'ha'
+        response = client.get(f'/{self.organizer.slug}/{self.event.slug}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.wsgi_request.event_language_enforce_ui)
+        self.assertEqual(response.wsgi_request.event_language, 'de')
+        self.assertEqual(response['Content-Language'], 'ha')
+        self.assertContains(response, 'Deutscher Name</a>')
 
