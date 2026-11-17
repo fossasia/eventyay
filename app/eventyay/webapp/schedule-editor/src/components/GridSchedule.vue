@@ -924,7 +924,7 @@ const roomHeaderStyles = computed(() => {
   return map
 })
 
-let isScrollDayUpdate = false
+let scrollDrivenDay: string | null = null
 
 const getStickyHeaderClearance = (): number => {
   const roomEl = rootEl.value?.querySelector('.room')
@@ -944,7 +944,13 @@ const scrollToDayStart = (day: Moment | null) => {
   const rect = el.getBoundingClientRect()
   const parentRect = scrollParent.value.getBoundingClientRect()
   const delta = rect.top - parentRect.top - clearance
-  scrollParent.value.scrollTop += delta
+  const parentCanScroll = scrollParent.value.scrollHeight > scrollParent.value.clientHeight &&
+    ['auto', 'scroll'].includes(getComputedStyle(scrollParent.value).overflowY)
+  if (parentCanScroll) {
+    scrollParent.value.scrollTop += delta
+  } else {
+    window.scrollBy(0, rect.top - clearance)
+  }
   scrolledDay.value = day
 }
 
@@ -993,16 +999,17 @@ const onIntersect = (entries: IntersectionObserverEntry[]) => {
   scrolledDay.value = day
   // Only update the active day indicator — don't trigger a scroll jump.
   // scrollToDayStart is only called from toolbar clicks.
-  isScrollDayUpdate = true
+  scrollDrivenDay = day.format('YYYY-MM-DD')
   emit('changeDay', day)
 }
 
 watch(() => props.currentDay, (day) => {
   // Only scroll when triggered by toolbar click, not by scroll-based observer
-  if (isScrollDayUpdate) {
-    isScrollDayUpdate = false
+  if (day && scrollDrivenDay === day.format('YYYY-MM-DD')) {
+    scrollDrivenDay = null
     return
   }
+  scrollDrivenDay = null
   scrollToDayStart(day)
 })
 
@@ -1034,6 +1041,7 @@ onMounted(async () => {
     observer?.observe(el)
   })
   scrollParent.value?.addEventListener('scroll', onScroll, { passive: true })
+  scrollToDayStart(props.currentDay)
 })
 
 onUnmounted(() => {

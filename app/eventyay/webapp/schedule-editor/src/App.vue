@@ -9,7 +9,7 @@
 				:session="draggedSession",
 				:isDragClone="true"
 			)
-	teleport(to="#schedule-timezone-mount", v-if="isMounted && schedule")
+	teleport(to="#schedule-timezone-mount", v-if="isMounted && schedule && hasTimezoneMount")
 		.schedule-timezone-selector(ref="timezoneDropdownRef")
 			button.timezone-btn(
 				type="button",
@@ -49,7 +49,7 @@
 					)
 						span.tz-option-name {{ opt.label }}
 						i.fa.fa-check(v-if="currentTimezone === opt.id", aria-hidden="true")
-	teleport(to="#schedule-fullscreen-mount", v-if="isMounted && schedule")
+	teleport(to="#schedule-fullscreen-mount", v-if="isMounted && schedule && hasFullscreenMount")
 		button#schedule-fullscreen-btn.btn.btn-sm(
 			type="button",
 			@click="toggleFullscreen",
@@ -153,9 +153,9 @@
 							type="button",
 							role="tab",
 							:id="`day-tab-${day.format('YYYY-MM-DD')}`",
-							:class="{ active: currentDay && day.isSame(currentDay, 'day') }",
-							:aria-selected="currentDay && day.isSame(currentDay, 'day') ? 'true' : 'false'",
-							@click="changeDay(day)"
+							:class="{ active: currentDay && day.format('YYYY-MM-DD') === currentDay.format('YYYY-MM-DD') }",
+							:aria-selected="currentDay && day.format('YYYY-MM-DD') === currentDay.format('YYYY-MM-DD') ? 'true' : 'false'",
+							@click="changeDay(day.format('YYYY-MM-DD'))"
 						)
 							| {{ day.format(dateFormat) }}
 				grid-schedule(:sessions="sessions",
@@ -170,7 +170,7 @@
 					:draggedSession="draggedSession",
 					:isUnassigning="isUnassigning",
 					:allowOverlap="caps.allowOverlap",
-					@changeDay="changeDay",
+					@changeDay="changeDayFromGrid",
 					@startDragging="caps.canDrag ? startDragging($event) : null",
 					@rescheduleSession="caps.canDrag ? rescheduleSession($event) : null",
 					@createSession="caps.canEdit ? createSession($event) : null",
@@ -669,6 +669,8 @@ function onGlobalPointerUp(e: PointerEvent) {
 }
 
 const isMounted = ref<boolean>(false)
+const hasTimezoneMount = ref<boolean>(false)
+const hasFullscreenMount = ref<boolean>(false)
 const unscheduleHint = ref<string>('')
 let unscheduleHintTimer: ReturnType<typeof setTimeout> | null = null
 const locales = ref<string[]>(['en'])
@@ -1104,18 +1106,34 @@ async function fetchAdditionalScheduleData(): Promise<void> {
   replaceWarnings(await api.fetchWarnings() as Record<string, Warning[]> | undefined)
 }
 
-function changeDay(day: Moment): void {
-  const targetDay = day.clone().tz(eventTimezone.value ?? 'UTC').startOf('day')
-  if (currentDay.value && targetDay.isSame(currentDay.value, 'day')) return
-  currentDay.value = targetDay
-  window.location.hash = day.format('YYYY-MM-DD')
+function changeDay(date: string): void {
+  const day = days.value.find((item) => item.format('YYYY-MM-DD') === date)
+  if (!day) return
+  if (currentDay.value?.format('YYYY-MM-DD') !== date) currentDay.value = day.clone()
+  if (window.location.hash !== `#${date}`) window.location.hash = date
+}
+
+function changeDayFromGrid(day: Moment): void {
+  changeDay(day.format('YYYY-MM-DD'))
+}
+
+function syncCurrentDayFromHash(): void {
+  changeDay(window.location.hash.slice(1))
 }
 
 watch(currentDay, (newDay) => {
   if (!newDay) return
   nextTick(() => {
     const tabEl = document.getElementById(`day-tab-${newDay.format('YYYY-MM-DD')}`)
-    tabEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    const selectorEl = tabEl?.parentElement
+    if (!tabEl || !selectorEl) return
+    const selectorRect = selectorEl.getBoundingClientRect()
+    const tabRect = tabEl.getBoundingClientRect()
+    if (tabRect.left < selectorRect.left) {
+      selectorEl.scrollBy({ left: tabRect.left - selectorRect.left, behavior: 'smooth' })
+    } else if (tabRect.right > selectorRect.right) {
+      selectorEl.scrollBy({ left: tabRect.right - selectorRect.right, behavior: 'smooth' })
+    }
   })
 })
 
@@ -1826,7 +1844,8 @@ onBeforeMount(async () => {
   currentTimezone.value = savedTz || schedule.value.timezone || 'UTC'
   moment.tz.setDefault(currentTimezone.value)
   locales.value = schedule.value.locales
-  currentDay.value = days.value[0]
+  const hashDate = window.location.hash.slice(1)
+  currentDay.value = days.value.find((day) => day.format('YYYY-MM-DD') === hashDate) || days.value[0]
   pollTimeoutId = window.setTimeout(pollUpdates, 5000)
   await fetchAdditionalScheduleData()
   await new Promise<void>((resolve) => {
@@ -1909,7 +1928,10 @@ function updateActionsWidth(): void {
 }
 
 onMounted(() => {
+	hasTimezoneMount.value = !!document.getElementById('schedule-timezone-mount')
+	hasFullscreenMount.value = !!document.getElementById('schedule-fullscreen-mount')
   isMounted.value = true
+  window.addEventListener('hashchange', syncCurrentDayFromHash)
   updateActionsWidth()
   const unassignedEl = document.getElementById('unassigned')
   if (unassignedEl && typeof ResizeObserver !== 'undefined') {
@@ -1943,6 +1965,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   isUnmounted = true
+  window.removeEventListener('hashchange', syncCurrentDayFromHash)
   resetDragAvatar()
   if (unassignedResizeObserver) {
     unassignedResizeObserver.disconnect()
