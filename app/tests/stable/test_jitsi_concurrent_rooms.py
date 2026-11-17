@@ -177,6 +177,23 @@ def test_switching_away_from_jitsi_frees_the_room_for_good(room_limit, setup):
     assert running_jitsi_room_ids(setup.organizer) == {setup.room_b.pk}
 
 
+def test_saving_other_fields_from_a_stale_room_keeps_admissions(room_limit, setup):
+    with scopes_disabled():
+        stale = Room.objects.get(pk=setup.room_a.pk)
+        Room.objects.filter(pk=stale.pk).update(module_config=[{"type": "livestream.youtube"}])
+        stale.module_config = [{"type": "livestream.youtube"}]
+        Room.objects.filter(pk=stale.pk).update(module_config=JITSI)
+    view = enter(setup.room_a, setup.alice)
+    admit_to_jitsi_room(setup.room_a, setup.alice)
+
+    with scopes_disabled():
+        stale.name = "Renamed"
+        stale.save(update_fields=["name"])
+
+    view.refresh_from_db()
+    assert view.jitsi_joined_at is not None
+
+
 def test_user_without_an_open_view_is_not_admitted(room_limit, setup):
     policy, calls = room_limit
     decision = admit_to_jitsi_room(setup.room_a, setup.alice)

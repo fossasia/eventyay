@@ -430,6 +430,9 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'module_config' not in update_fields:
+            return
         modules = self.module_config if isinstance(self.module_config, list) else []
         if not any(isinstance(m, dict) and m.get('type') == 'call.jitsi' for m in modules):
             RoomView.objects.filter(room=self, end__isnull=True, jitsi_joined_at__isnull=False).update(
