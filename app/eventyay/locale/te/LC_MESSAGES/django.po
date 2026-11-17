@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:46+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:29+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Telugu <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "te/>\n"
 "Language: te\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -14133,7 +14134,8 @@ msgstr "ఈ ఇమెయిల్ ఇప్పటికే పంపబడిం
 msgid ""
 "Upload a valid SVG image. The file you uploaded was either not an SVG or a "
 "corrupted SVG."
-msgstr "చెల్లుబాటు అయ్యే చిత్రాన్ని అప్‌లోడ్ చేయండి. అప్‌లోడ్ చేసిన ఫైల్ చిత్రం కాదు లేదా దెబ్బతిన్న చిత్రం."
+msgstr ""
+"చెల్లుబాటు అయ్యే చిత్రాన్ని అప్‌లోడ్ చేయండి. అప్‌లోడ్ చేసిన ఫైల్ చిత్రం కాదు లేదా దెబ్బతిన్న చిత్రం."
 
 #: eventyay/common/image.py:187 eventyay/common/image.py:196
 msgid ""
@@ -26543,7 +26545,8 @@ msgstr ""
 #| "Your order requires approval by the event organizer before it can be "
 #| "confirmed and forms a valid contract."
 msgid "Orders that require approval by an organizer before they can be paid."
-msgstr "ఆర్డర్‌ను నిర్ధారించి చెల్లుబాటు అయ్యే ఒప్పందంగా మారడానికి ముందు ఈవెంట్ నిర్వాహకుడి ఆమోదం అవసరం."
+msgstr ""
+"ఆర్డర్‌ను నిర్ధారించి చెల్లుబాటు అయ్యే ఒప్పందంగా మారడానికి ముందు ఈవెంట్ నిర్వాహకుడి ఆమోదం అవసరం."
 
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:156
 msgctxt "subevent"
@@ -30117,7 +30120,8 @@ msgstr ""
 #| "choose a different one."
 msgid ""
 "You already have an event with this short name. Please choose another one."
-msgstr "ఈ ఈ-మెయిల్ చిరునామాతో ఇప్పటికే ఒక ఖాతా ముడిపడిఉంది. దయచేసి వేరే ఒకటి ఎంచుకోండి."
+msgstr ""
+"ఈ ఈ-మెయిల్ చిరునామాతో ఇప్పటికే ఒక ఖాతా ముడిపడిఉంది. దయచేసి వేరే ఒకటి ఎంచుకోండి."
 
 #: eventyay/eventyay_common/forms/filters.py:62
 msgid "Search by session name"
@@ -31000,7 +31004,8 @@ msgstr "టాక్ టెస్ట్ మోడ్‌ను ప్రారం
 msgid ""
 "You must publish the event main page before enabling public test mode for "
 "tickets."
-msgstr "టెస్ట్ మోడ్‌ను ప్రారంభించే ముందు టికెట్లు ప్రచురించబడి, సెటప్ చేయబడి ఉండాలి."
+msgstr ""
+"టెస్ట్ మోడ్‌ను ప్రారంభించే ముందు టికెట్లు ప్రచురించబడి, సెటప్ చేయబడి ఉండాలి."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:66
 #, fuzzy
@@ -31028,7 +31033,8 @@ msgstr "టికెట్లను ప్రచురించే ముంద�
 #| msgid "You have unpaid invoices, please pay them before going live."
 msgid ""
 "You must set up ticketing and create at least one product before going live."
-msgstr "చెల్లించని ఇన్వాయిస్‌లు ఉన్నాయి, లైవ్‌కు వెళ్లే ముందు వాటిని చెల్లించండి."
+msgstr ""
+"చెల్లించని ఇన్వాయిస్‌లు ఉన్నాయి, లైవ్‌కు వెళ్లే ముందు వాటిని చెల్లించండి."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/includes/live_error_dialogs.html:89
 #, fuzzy

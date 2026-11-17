@@ -661,38 +661,21 @@ def get_admin_navigation(request):
         )
     # --------------------------------------------------------------------------
 
-    organiser_children = [
-        {
-            'label': _('Organiser requests'),
-            'url': reverse('eventyay_admin:admin.organizer_requests'),
-            'active': (url.url_name or '').startswith('admin.organizer_requests'),
-        },
-        {
-            'label': _('Organiser forms'),
-            'url': reverse('eventyay_admin:admin.organizer_forms'),
-            'active': (url.url_name or '').startswith('admin.organizer_forms'),
-        },
-    ]
-    nav.append(
-        {
-            'label': _('Organisers'),
-            'url': reverse('eventyay_admin:admin.organizer_requests'),
-            'active': any(child['active'] for child in organiser_children),
-            'icon': 'group',
-            'children': organiser_children,
-        }
-    )
-
+    url_name = url.url_name or ''
     platform_data_children = [
         {
             'label': _('Events'),
             'url': reverse('eventyay_admin:admin.events'),
-            'active': 'events' in url.url_name,
+            'active': 'events' in url_name,
         },
         {
             'label': _('Organizers'),
             'url': reverse('eventyay_admin:admin.organizers'),
-            'active': url.url_name == 'admin.organizers',
+            'active': (
+                url_name == 'admin.organizers'
+                or url_name.startswith('admin.organizer_requests')
+                or url_name.startswith('admin.organizer_forms')
+            ),
         },
         {
             'label': _('Attendees'),
@@ -714,7 +697,7 @@ def get_admin_navigation(request):
     nav.extend(
         [
             {
-                'label': _('Platform Data'),
+                'label': _('Platform data'),
                 'url': reverse('eventyay_admin:admin.events'),
                 'active': any(c['active'] for c in platform_data_children),
                 'icon': 'database',
