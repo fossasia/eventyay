@@ -963,7 +963,8 @@ const scrollToDayStart = (day: Moment | null) => {
 }
 
 const onScroll = () => {
-  syncCachedGridToScroll()
+  if (scrollEventTarget === window) cachedGrid = null
+  else syncCachedGridToScroll()
   scheduleHoverUpdate()
 }
 
