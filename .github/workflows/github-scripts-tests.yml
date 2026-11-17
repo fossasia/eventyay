@@ -1,6 +1,7 @@
 # Runs the unit tests for the helper modules in .github/scripts/ (used by
-# github-script workflows). Tests use node:test with a fake GitHub client, so they
-# need no token and no network.
+# github-script workflows) and the Python helpers. The JS tests use node:test with a
+# fake GitHub client and the Python tests use fixed data, so they need no token and
+# no network.
 
 name: GitHub scripts tests
 
@@ -8,15 +9,23 @@ on:
   pull_request:
     paths:
       - ".github/scripts/**"
+      - ".github/workflows/approval-labels*.yml"
       - ".github/workflows/github-scripts-tests.yml"
   push:
     branches: [dev, main]
     paths:
       - ".github/scripts/**"
+      - ".github/workflows/approval-labels*.yml"
       - ".github/workflows/github-scripts-tests.yml"
 
 permissions:
   contents: read
+
+concurrency:
+  # PRs: a new push cancels checks still running for older commits of the same PR.
+  # Branch pushes: grouped per commit, so they never cancel or replace each other.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
@@ -27,3 +36,8 @@ jobs:
           persist-credentials: false
 
       - run: node --test .github/scripts/*.test.mjs
+
+      - uses: astral-sh/setup-uv@v7
+
+      # Python helpers (test_durations_drift.py). The pytest-split version matches app/uv.lock.
+      - run: uvx --with pytest-split==0.11.0 python -m unittest discover -s .github/scripts -p '*_test.py' -v

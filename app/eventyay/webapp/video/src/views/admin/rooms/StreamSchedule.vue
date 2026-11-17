@@ -11,6 +11,9 @@
 				:entries="pluginLanguageStreamEntries"
 				:roomId="roomId"
 				:settingsRoute="{ name: 'admin:interpretation', query: { room: roomId }, hash: '#room-' + roomId }"
+				:fallbackEntries="pluginLanguageStreamEntries"
+				:interpreter="currentInterpreter"
+				:autoPopulateWhep="currentInterpreter === 'voxbento'"
 			)
 			p.plugin-language-streams-hint {{ $t('Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.') }}
 		.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules && streamSchedules.length > 0")
@@ -51,6 +54,9 @@
 							:subtitle="$t('Add multi-language audio or video interpretation channels specifically for this stream.')"
 							:entries="formData.config.language_streams"
 							:roomId="roomId"
+							:fallbackEntries="pluginLanguageStreamEntries"
+							:interpreter="currentInterpreter"
+							:autoPopulateWhep="currentInterpreter === 'voxbento'"
 						)
 						p.schedule-interpretation-hint {{ $t('Channels configured here apply specifically to this stream schedule. If empty, room-level channels will be used as fallback.') }}
 					.form-error(v-if="saveError")
@@ -119,6 +125,9 @@ export default {
 		};
 	},
 	computed: {
+		currentInterpreter() {
+			return this.interpretationAdmin?.interpreter || this.config?.interpretation_interpreter || ''
+		},
 		showPluginLanguageStreams() {
 			return Boolean(this.config?.interpretation_use_plugin_streams)
 		},
