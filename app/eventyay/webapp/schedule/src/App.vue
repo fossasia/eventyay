@@ -58,7 +58,7 @@
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
 			@goToNow="goToNow")
 		bunt-progress-circular(v-if="dayLoading", size="huge")
-		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",
+		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode && currentDay",
 			:sessions="gridDisplaySessions",
 			:rooms="rooms",
 			:days="days",
@@ -73,6 +73,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
+			:pendingGoToNow="pendingGoToNow",
 			:density="'default'",
 			:timeDensityMinutes="timeDensityMinutes",
 			@changeDay="setCurrentDay($event)",
@@ -96,6 +97,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
+			:pendingGoToNow="pendingGoToNow",
 			:showBreaks="!sessionsMode",
 			:density="'default'",
 			@changeDay="setCurrentDay($event)",
@@ -151,7 +153,7 @@ import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
 import ListPagination from '~/components/ListPagination.vue'
-import { findScrollParent, isDocumentScroller, readScrollOffset, writeScrollOffset, runWithoutSmoothScroll, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay } from '~/utils'
+import { findScrollParent, isDocumentScroller, readScrollOffset, writeScrollOffset, runWithoutSmoothScroll, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay, shouldAutoScrollSchedule } from '~/utils'
 const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersList'))
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
@@ -348,6 +350,8 @@ export default {
 			scheduleError: false,
 			scheduleUnavailable: false,
 			onHomeServer: false,
+			initialAutoScrollDone: false,
+			pendingGoToNow: false,
 			loggedIn: false,
 			_initialized: false,
 			apiUrl: null,
@@ -579,6 +583,22 @@ export default {
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery || this.onlyFavs
 				|| this.hasActiveFilterSelections || this.recordingFilter !== 'all'
 		},
+		isTodayActive () {
+			if (!this.currentDay || !this.resolvedNow) return false
+			const todayStr = this.resolvedNow.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+			return this.currentDay === todayStr
+		},
+		shouldAutoScrollToNow () {
+			if (this.initialAutoScrollDone) return false
+			const fragment = this._initialFragment !== undefined ? this._initialFragment : (window.location.hash || '').slice(1)
+			return shouldAutoScrollSchedule({
+				disableAutoScroll: this.disableAutoScroll,
+				fragment,
+				currentDay: this.currentDay,
+				now: this.resolvedNow,
+				timezone: this.currentTimezone,
+			})
+		},
 		scheduleNeedsText () {
 			if (!this.schedule?.compact) return false
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery
@@ -809,6 +829,7 @@ export default {
 		this._compactTimezoneGeneration = 0
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
+		this._initialFragment = fragment
 		await changeScheduleLanguage(this.locale)
 		this.readRecordingQueryParam()
 		moment.locale(this.locale)
@@ -916,18 +937,30 @@ export default {
 			return
 		}
 		this.currentTimezone = this.getSavedTimezone()
+		const resolveCurrentDay = () => {
+			const pool = (this.allDays?.length ? this.allDays : this.days) || []
+			if (pool.length) {
+				const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+				const todayDay = pool.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
+				return todayDay ? todayStr : pool[0].format('YYYY-MM-DD')
+			}
+			if (Array.isArray(this.schedule?.days) && this.schedule.days.length) {
+				const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+				const hasToday = this.schedule.days.includes(todayStr)
+				return hasToday ? todayStr : this.schedule.days[0]
+			}
+			return null
+		}
+		const initialDay = resolveCurrentDay()
+		if (initialDay) this.currentDay = initialDay
 		if (this.schedule.compact) {
 			this.noteCompactPayload(this.schedule)
 			if (this.currentTimezone !== this.schedule.view_timezone) {
 				await this.reloadCompactIndex()
 			}
 		}
-		const knownDays = this.allDays || []
-		if (knownDays.length) {
-			const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
-			const todayDay = knownDays.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
-			this.currentDay = todayDay ? todayStr : knownDays[0].format('YYYY-MM-DD')
-		}
+		const finalDay = resolveCurrentDay()
+		if (finalDay) this.currentDay = finalDay
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 		this.featuredPagingReady = this.isFeaturedPage
@@ -1129,13 +1162,25 @@ export default {
 			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return
 			if (this.scheduleNeedsEveryDay) {
 				this.dayLoading = true
+				let loadFailed = false
 				try {
 					await this.ensureAllScheduleDays({ includeText: this.scheduleNeedsText })
 					this.pruneFavsAfterCompactCoverage()
 				} catch (error) {
+					loadFailed = true
 					console.error('Failed to load schedule days', error)
 				} finally {
 					this.dayLoading = false
+				}
+				if (loadFailed) return
+				if (this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)) {
+					this.initialAutoScrollDone = true
+					this.$nextTick(async () => {
+						await new Promise(resolve => requestAnimationFrame(resolve))
+						this.$refs.scheduleDisplay?.scrollToNow?.()
+						this.pendingGoToNow = false
+						this._pendingGoToNow = false
+					})
 				}
 				return
 			}
@@ -1163,17 +1208,32 @@ export default {
 				this.$nextTick(async () => {
 					if (!ownsRequest()) return
 					if (navigatingTo && navigatingTo === this.currentDay) this.forceScrollDay++
+					const shouldScroll = this.shouldAutoScrollToNow || (this._pendingGoToNow && this.isTodayActive)
+					if (shouldScroll) {
+						this.initialAutoScrollDone = true
+						await new Promise(resolve => requestAnimationFrame(resolve))
+						this.$refs.scheduleDisplay?.scrollToNow?.()
+						this.pendingGoToNow = false
+						this._pendingGoToNow = false
+					}
 					// A date click has already moved to that day. Prepending the
 					// previous day here pushes it back under the old room bar.
-					if (!navigatingTo) await this.maybeLoadPreviousGridDay()
+					if (!navigatingTo && !shouldScroll) await this.maybeLoadPreviousGridDay()
 					if (!ownsRequest()) return
 					await this.maybeLoadNextGridDay()
 					if (!ownsRequest()) return
+					if (shouldScroll) {
+						await this.$nextTick()
+						await new Promise(resolve => requestAnimationFrame(resolve))
+						this.$refs.scheduleDisplay?.scrollToNow?.()
+					}
 					if (this._toolbarJumpTimer) window.clearTimeout(this._toolbarJumpTimer)
 					this._toolbarJumpTimer = window.setTimeout(() => this.releaseToolbarJump(navigatingTo), 180)
 				})
 				this.pruneFavsAfterCompactCoverage()
 			} catch (error) {
+				this.pendingGoToNow = false
+				this._pendingGoToNow = false
 				console.error('Failed to load schedule day', requestedDay, error)
 			} finally {
 				if (this._coverageGeneration === generation) this.dayLoading = false
@@ -1432,7 +1492,13 @@ export default {
 			const scroller = this.fullscreenScroller()
 			if (scroller) this.bindScrollParent(scroller)
 			else this.bindScrollParent(this._pageScrollParent || null)
-			this.$nextTick(() => { this.forceScrollDay++ })
+			this.$nextTick(() => {
+				if (scroller && this.isTodayActive && !this.disableAutoScroll) {
+					this.$refs.scheduleDisplay?.scrollToNow?.()
+				} else {
+					this.forceScrollDay++
+				}
+			})
 		},
 		fullscreenScroller () {
 			const root = this.$el
@@ -1451,12 +1517,13 @@ export default {
 			return host
 		},
 		setCurrentDay (day) {
-			const dayStr = day.format('YYYY-MM-DD')
+			const dayStr = typeof day === 'string' ? day : (day.format ? day.format('YYYY-MM-DD') : String(day))
 			if (this._toolbarDay && dayStr !== this._toolbarDay) return
+			if (this._pendingGoToNow && dayStr !== this._pendingGoToNowDay) return
 			const pool = (this.allDays && this.allDays.length) ? this.allDays : (this.days || [])
-			const matchingDays = pool.filter(d => d.format('YYYY-MM-DD') === dayStr)
+			const matchingDays = pool.filter(d => (typeof d === 'string' ? d : d.format('YYYY-MM-DD')) === dayStr)
 			if (!matchingDays.length) return
-			const nextDay = matchingDays[0].format('YYYY-MM-DD')
+			const nextDay = typeof matchingDays[0] === 'string' ? matchingDays[0] : matchingDays[0].format('YYYY-MM-DD')
 			if (nextDay === this.currentDay) return
 			this._fromScrollDay = true
 			this.currentDay = nextDay
@@ -1481,6 +1548,10 @@ export default {
 			document.documentElement.style.scrollBehavior = ''
 		},
 		selectDay (dayId) {
+			if (dayId !== this._pendingGoToNowDay) {
+				this.pendingGoToNow = false
+				this._pendingGoToNow = false
+			}
 			try {
 				window.history.replaceState(null, null, '#' + dayId)
 			} catch (e) {
@@ -1506,9 +1577,34 @@ export default {
 			const today = todayMoment.format('YYYY-MM-DD')
 			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
+			if (this._toolbarDay) {
+				window.clearTimeout(this._toolbarJumpTimer)
+				this.releaseToolbarJump(this._toolbarDay)
+			}
+			if (this.currentDay === today) {
+				this.pendingGoToNow = true
+				this._pendingGoToNow = true
+				this._pendingGoToNowDay = today
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.$refs.scheduleDisplay?.scrollToNow?.()
+					this.pendingGoToNow = false
+					this._pendingGoToNow = false
+				})
+				return
+			}
+			this.pendingGoToNow = true
+			this._pendingGoToNow = true
+			this._pendingGoToNowDay = today
 			this.changeDay(todayMoment)
-			this.$nextTick(() => {
+			if (this.schedule?.compact && !this.scheduleNeedsEveryDay) {
+				return
+			}
+			this.$nextTick(async () => {
+				await new Promise(resolve => requestAnimationFrame(resolve))
 				this.$refs.scheduleDisplay?.scrollToNow?.()
+				this.pendingGoToNow = false
+				this._pendingGoToNow = false
 			})
 		},
 		onWindowResize () {

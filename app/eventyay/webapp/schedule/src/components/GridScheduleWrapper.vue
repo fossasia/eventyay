@@ -17,6 +17,7 @@
 		:onHomeServer="onHomeServer",
 		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
+		:pendingGoToNow="pendingGoToNow",
 		:density="density",
 		:timeDensityMinutes="timeDensityMinutes"
 		@changeDay="$emit('changeDay', $event)",
@@ -52,6 +53,7 @@ export default {
 			default: false,
 		},
 		disableAutoScroll: Boolean,
+		pendingGoToNow: Boolean,
 		forceScrollDay: { type: Number, default: 0 },
 		density: {
 			type: String,
@@ -118,10 +120,10 @@ export default {
 		}
 	},
 	methods: {
-		scrollToNow() {
+		scrollToNow(opts) {
 			const grids = this.$refs.gridSchedules || []
 			for (const grid of grids) {
-				grid?.scrollToNow?.()
+				grid?.scrollToNow?.(opts)
 			}
 		}
 	},
