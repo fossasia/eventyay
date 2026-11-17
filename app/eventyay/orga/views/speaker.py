@@ -768,13 +768,10 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
         return _('The speaker import was successful.')
 
 
-class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
-    template_name = 'orga/speaker/vouchers.html'
-    form_class = SpeakerVoucherSettingsForm
+class SpeakerVoucherPermissionMixin(EventPermissionRequired):
     permission_required = 'base.update_speakerprofile'
 
     def has_permission(self):
-        # Do not allow event-access sessions to bypass organiser permission.
         request = getattr(self, 'request', None)
         if (
             request
@@ -783,7 +780,15 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
             and request.user.has_active_staff_session(request.session.session_key)
         ):
             return True
-        return super(PermissionRequired, self).has_permission()
+        event = getattr(request, 'event', None)
+        if not event or not hasattr(request, 'user'):
+            return False
+        return request.user.has_perm(self.permission_required, event)
+
+
+class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
+    template_name = 'orga/speaker/vouchers.html'
+    form_class = SpeakerVoucherSettingsForm
 
     def get_success_url(self):
         return self.request.event.orga_urls.speaker_vouchers
@@ -909,20 +914,7 @@ class SpeakerVoucherSettingsView(EventPermissionRequired, FormView):
         return super().form_valid(form)
 
 
-class SpeakerVoucherBulkSendView(EventPermissionRequired, View):
-    permission_required = 'base.update_speakerprofile'
-
-    def has_permission(self):
-        # Do not allow event-access sessions to bypass organiser permission.
-        request = getattr(self, 'request', None)
-        if (
-            request
-            and hasattr(request, 'user')
-            and hasattr(request.user, 'has_active_staff_session')
-            and request.user.has_active_staff_session(request.session.session_key)
-        ):
-            return True
-        return super(PermissionRequired, self).has_permission()
+class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
 
     def post(self, request, *args, **kwargs):
         event = request.event

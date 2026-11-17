@@ -182,8 +182,8 @@ def _claim_assignment_for_send(assignment: SpeakerVoucher) -> tuple[SpeakerVouch
     """
     with transaction.atomic():
         locked = (
-            SpeakerVoucher.objects.select_for_update(skip_locked=True)
-            .select_related('voucher', 'speaker_profile', 'speaker_profile__user')
+            SpeakerVoucher.objects.select_for_update(of=('self',), skip_locked=True)
+            .select_related('voucher')
             .filter(pk=assignment.pk)
             .first()
         )
@@ -201,7 +201,8 @@ def _claim_assignment_for_send(assignment: SpeakerVoucher) -> tuple[SpeakerVouch
             return None
 
         locked.status = SpeakerVoucherStatus.SENDING
-        locked.save(update_fields=['status'])
+        locked.updated = now()
+        locked.save(update_fields=['status', 'updated'])
         return locked, was_already_sent
 
 
@@ -209,6 +210,7 @@ def _release_send_claim(assignment: SpeakerVoucher, *, restore_status: str, sent
     SpeakerVoucher.objects.filter(pk=assignment.pk, status=SpeakerVoucherStatus.SENDING).update(
         status=restore_status,
         sent_at=sent_at,
+        updated=now(),
     )
 
 

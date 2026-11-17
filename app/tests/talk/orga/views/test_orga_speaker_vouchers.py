@@ -5,7 +5,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.utils.timezone import now
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import CartPosition, Product, QueuedMail, SpeakerProfile, Voucher
 from eventyay.base.models.mail import MailTemplateRoles
@@ -279,7 +279,8 @@ def test_usable_batch_excludes_vouchers_reserved_in_cart(event, speaker_voucher_
             expires=now() + timedelta(minutes=30),
             voucher=reserved,
         )
-        usable_ids = set(usable_batch_vouchers(event, 'speakers').values_list('pk', flat=True))
+        with scopes_disabled():
+            usable_ids = set(usable_batch_vouchers(event, 'speakers').values_list('pk', flat=True))
         assert reserved.pk not in usable_ids
         assert usable_ids == {speaker_voucher_batch[1].pk, speaker_voucher_batch[2].pk}
 
@@ -381,7 +382,8 @@ def test_usable_batch_requires_single_use_unused_codes(event):
             price_mode='set',
             value=Decimal('0.00'),
         )
-        usable_ids = set(usable_batch_vouchers(event, 'speakers').values_list('pk', flat=True))
+        with scopes_disabled():
+            usable_ids = set(usable_batch_vouchers(event, 'speakers').values_list('pk', flat=True))
         assert usable_ids == {ok.pk}
         assert multi.pk not in usable_ids
         assert used.pk not in usable_ids
@@ -428,3 +430,12 @@ def test_pending_send_counts_include_expired_replacements(
         assert new_needed == 1
         assert remaining == 2
         assert remaining_after == 1
+
+
+@pytest.mark.django_db
+def test_user_without_permission_cannot_access_or_send(review_client, event):
+    response = review_client.get(event.orga_urls.speaker_vouchers, follow=True)
+    assert response.status_code == 404
+
+    response = review_client.post(event.orga_urls.speaker_vouchers_send, follow=True)
+    assert response.status_code == 404
