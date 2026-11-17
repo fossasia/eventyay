@@ -127,8 +127,16 @@ var editor = {
     pdf_scale: 1,
     pdf_viewport: null,
     _history_pos: 0,
+    _history_floor: 0,
     _history_modification_in_progress: false,
     _toolbox_update_in_progress: false,
+    _loading: false,
+    _group_fontsize_editing: false,
+    _group_fontsize_changed: false,
+    _group_fontsize_committing: false,
+    _color_picker_active: false,
+    _color_picker_pending: false,
+    _saving_group_color: false,
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
@@ -629,13 +637,22 @@ var editor = {
     },
 
     load: function(data) {
-        editor.fabric.clear();
-        for (var i in data) {
-            var d = data[i], o;
-            editor._add_from_data(d);
+        var prevHistoryInProgress = editor._history_modification_in_progress;
+        var prevLoading = editor._loading;
+        editor._history_modification_in_progress = true;
+        editor._loading = true;
+        try {
+            editor.fabric.clear();
+            for (var i in data) {
+                var d = data[i], o;
+                editor._add_from_data(d);
+            }
+            editor.fabric.renderAll();
+            editor._update_toolbox_values();
+        } finally {
+            editor._history_modification_in_progress = prevHistoryInProgress;
+            editor._loading = prevLoading;
         }
-        editor.fabric.renderAll();
-        editor._update_toolbox_values();
     },
 
     _normalize_text_content: function (key) {
@@ -896,7 +913,10 @@ var editor = {
             }
         }
         editor.history = [];
-        editor._create_savepoint();
+        editor._history_floor = 0;
+        editor._history_pos = 0;
+        editor._create_savepoint(true);
+        editor._update_undo_redo_buttons();
         editor.dirty = !!dump;
 
         if ($("#loading-upload").is(":visible")) {
@@ -1040,7 +1060,7 @@ var editor = {
         editor._toolbox_update_in_progress = false;
     },
 
-    _apply_group_formatting: function (event) {
+    _apply_group_formatting: function (event, shouldSavepoint) {
         if (!editor.fabric) {
             return;
         }
@@ -1107,7 +1127,9 @@ var editor = {
         });
 
         editor.fabric.renderAll();
-        editor._create_savepoint();
+        if (shouldSavepoint !== false) {
+            editor._create_savepoint();
+        }
     },
 
     _apply_group_color: function () {
@@ -1130,6 +1152,10 @@ var editor = {
             object.setCoords();
         });
         editor.fabric.renderAll();
+        if (editor._color_picker_active) {
+            editor._color_picker_pending = true;
+            return;
+        }
         editor._create_savepoint();
     },
 
@@ -1666,7 +1692,11 @@ var editor = {
                 if (!cmd) {
                     return;
                 }
-                editor._undo();
+                if (e.shiftKey) {
+                    editor._redo();
+                } else {
+                    editor._undo();
+                }
                 handled = true;
                 break;
             case 88:  /* X */
@@ -1700,10 +1730,50 @@ var editor = {
         }
     },
 
-    _create_savepoint: function () {
-        if (editor._history_modification_in_progress) {
+    _update_undo_redo_buttons: function () {
+        var history = editor.history || [];
+        var historyFloor = typeof editor._history_floor === "number"
+            ? editor._history_floor
+            : 0;
+        var currentHistoryIndex = history.length - 1 - editor._history_pos;
+        var canUndo = currentHistoryIndex > historyFloor;
+        var canRedo = editor._history_pos > 0;
+
+        $("#toolbox-undo")
+            .prop("disabled", !canUndo)
+            .toggleClass("disabled", !canUndo)
+            .attr("aria-disabled", String(!canUndo));
+        $("#toolbox-redo")
+            .prop("disabled", !canRedo)
+            .toggleClass("disabled", !canRedo)
+            .attr("aria-disabled", String(!canRedo));
+    },
+
+    _create_savepoint: function (force) {
+        if (editor._history_modification_in_progress || editor._loading) {
             return;
         }
+
+        var isForce = force === true;
+        if (!isForce && editor._group_fontsize_editing && !editor._group_fontsize_committing) {
+            return;
+        }
+
+        if (!isForce && editor._color_picker_active && !editor._saving_group_color) {
+            return;
+        }
+
+        if (editor.fabric && editor.history && editor.history.length) {
+            var historyIndex = editor.history.length - 1 - editor._history_pos;
+            if (
+                historyIndex >= 0 &&
+                JSON.stringify(editor.dump()) === JSON.stringify(editor.history[historyIndex])
+            ) {
+                editor._update_undo_redo_buttons();
+                return;
+            }
+        }
+
         var state = editor.dump();
         if (editor._history_pos > 0) {
             editor.history.splice(-1 * editor._history_pos, editor._history_pos);
@@ -1711,16 +1781,20 @@ var editor = {
         }
         editor.history.push(state);
         editor.dirty = true;
+        editor._update_undo_redo_buttons();
     },
 
     _undo: function undo() {
-        if (editor._history_pos < editor.history.length - 1) {
+        var historyFloor = typeof editor._history_floor === "number" ? editor._history_floor : 0;
+        var currentHistoryIndex = (editor.history ? editor.history.length : 0) - 1 - editor._history_pos;
+        if (currentHistoryIndex > historyFloor) {
             editor._history_modification_in_progress = true;
             editor._history_pos += 1;
             editor.fabric.clear().renderAll();
             editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
             editor._history_modification_in_progress = false;
             editor.dirty = true;
+            editor._update_undo_redo_buttons();
         }
     },
 
@@ -1728,9 +1802,11 @@ var editor = {
         if (editor._history_pos > 0) {
             editor._history_modification_in_progress = true;
             editor._history_pos -= 1;
+            editor.fabric.clear().renderAll();
             editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
             editor._history_modification_in_progress = false;
             editor.dirty = true;
+            editor._update_undo_redo_buttons();
         }
     },
 
@@ -1926,14 +2002,73 @@ var editor = {
         $("#source-save").bind('click', editor._source_save);
         $("#toolbox-pin").bind('click', editor._toggle_pin);
 
+        $("#toolbox-fontsize")
+            .on("focusin", function () {
+                editor._group_fontsize_editing = true;
+                editor._group_fontsize_changed = false;
+            })
+            .on("focusout", function () {
+                if (!editor._group_fontsize_editing) {
+                    return;
+                }
+                editor._group_fontsize_editing = false;
+                if (!editor._group_fontsize_changed) {
+                    return;
+                }
+                editor._group_fontsize_changed = false;
+                editor._group_fontsize_committing = true;
+                try {
+                    editor._create_savepoint(true);
+                } finally {
+                    editor._group_fontsize_committing = false;
+                }
+            })
+            .on("keydown", function (e) {
+                if (e.keyCode === 13) {
+                    $(this).blur();
+                }
+            })
+            .on("input", function (event) {
+                editor._group_fontsize_editing = true;
+                editor._group_fontsize_changed = true;
+                if (editor.fabric && editor._all_selected_are_text(editor.fabric.getActiveObjects())) {
+                    editor._apply_group_formatting(event, false);
+                }
+            });
+
         $("#toolbox")
+            .on("showPicker", "#toolbox-col", function () {
+                editor._color_picker_active = true;
+                editor._color_picker_pending = false;
+            })
+            .on("hidePicker", "#toolbox-col", function () {
+                editor._color_picker_active = false;
+                if (editor._color_picker_pending) {
+                    editor._color_picker_pending = false;
+                    editor._saving_group_color = true;
+                    try {
+                        editor._create_savepoint(true);
+                    } finally {
+                        editor._saving_group_color = false;
+                    }
+                }
+            })
             .on(
-                "change.group_format input.group_format keyup.group_format",
-                "#toolbox-fontsize, #toolbox-fontfamily",
+                "change.group_format keyup.group_format",
+                "#toolbox-fontfamily",
                 editor._apply_group_formatting
             )
             .on(
-                "change.group_format input.group_format keyup.group_format changeColor.group_format",
+                "change.group_format",
+                "#toolbox-fontsize",
+                function (event) {
+                    if (!editor._group_fontsize_editing) {
+                        editor._apply_group_formatting(event);
+                    }
+                }
+            )
+            .on(
+                "change.group_format keyup.group_format changeColor.group_format",
                 "#toolbox-col",
                 editor._apply_group_color
             )
@@ -1942,6 +2077,8 @@ var editor = {
                 "#toolbox button[data-action=bold], #toolbox button[data-action=italic], #toolbox-align button[data-action]",
                 editor._apply_group_formatting
             );
+
+        editor._update_undo_redo_buttons();
     }
 };
 
