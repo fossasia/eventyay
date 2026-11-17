@@ -279,6 +279,7 @@ def expand_email_preview_placeholders(
 
 
 UNSAFE_URL_SCHEMES = ('javascript:', 'vbscript:', 'data:')
+EMBEDDED_IMAGE_PREFIX = 'data:image/'
 
 
 def drop_unsafe_url_attributes(html_body: str) -> str:
@@ -288,7 +289,8 @@ def drop_unsafe_url_attributes(html_body: str) -> str:
     for tag in soup.find_all(True):
         for attribute in ('href', 'src'):
             value = re.sub(r'[\s\x00-\x1f]+', '', tag.get(attribute) or '').lower()
-            if value.startswith(UNSAFE_URL_SCHEMES):
+            embedded_image = attribute == 'src' and value.startswith(EMBEDDED_IMAGE_PREFIX)
+            if value.startswith(UNSAFE_URL_SCHEMES) and not embedded_image:
                 del tag[attribute]
                 changed = True
     return str(soup) if changed else html_body
