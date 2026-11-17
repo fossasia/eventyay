@@ -1,3 +1,4 @@
+import html
 import logging
 from urllib.parse import urlencode
 
@@ -1139,7 +1140,8 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
                 with language(l, event.settings.region):
                     context_dict = build_email_preview_context(event, base_placeholders)
                     if self.object.link_list_id:
-                        context_dict.update(self.object.link_list.sample_values())
+                        sample = self.object.link_list.sample_values()
+                        context_dict.update({key: html.escape(str(value)) for key, value in sample.items()})
 
                     subject_text = subject.localize(l) if subject else ''
                     if not str(subject_text).strip():
