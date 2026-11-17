@@ -346,7 +346,7 @@ def test_migration_counts_calls_running_at_deploy(setup):
 
     from django.apps import apps
 
-    migration = import_module("eventyay.base.migrations.0091_roomview_jitsi_joined_at")
+    migration = import_module("eventyay.base.migrations.0092_roomview_jitsi_joined_at")
     youtube_room = make_room(setup.event, "Stream")
     with scopes_disabled():
         Room.objects.filter(pk=youtube_room.pk).update(module_config=[{"type": "livestream.youtube"}])
