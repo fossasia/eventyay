@@ -313,7 +313,7 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
             request.user,
             speaker=speaker.user,
             wip_preview=getattr(self, 'wip_preview', False),
-        ).select_related('room', 'submission')
+        ).select_related('room', 'submission', 'submission__event__cfp')
         if not slots.exists():
             raise Http404()
         netloc = urlparse(settings.SITE_URL).netloc
@@ -321,8 +321,9 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//eventyay//{netloc}//{request.event.slug}//{speaker.code}'
 
+        show_abstract = getattr(request.event.cfp, 'public_abstract', True) if hasattr(request.event, 'cfp') else True
         for slot in slots:
-            slot.build_ical(cal)
+            slot.build_ical(cal, show_abstract=show_abstract)
 
         try:
             speaker_name = Storage().get_valid_name(name=speaker.user.fullname or speaker.user.code)

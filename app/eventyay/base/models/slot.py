@@ -220,7 +220,7 @@ class TalkSlot(PretalxModel):
             INSTANCE_IDENTIFIER = GlobalSettings().get_instance_identifier()
         return uuid.uuid5(INSTANCE_IDENTIFIER, self.submission.code + self.id_suffix)
 
-    def build_ical(self, calendar, creation_time=None, netloc=None):
+    def build_ical(self, calendar, creation_time=None, netloc=None, show_abstract=None):
         if not self.start or not self.local_end or not self.submission or not calendar:
             return
         creation_time = creation_time or dt.datetime.now(ZoneInfo('UTC'))
@@ -237,7 +237,8 @@ class TalkSlot(PretalxModel):
 
         vevent.add('dtstart').value = self.local_start
         vevent.add('dtend').value = self.local_end
-        show_abstract = getattr(self.event.cfp, 'public_abstract', True) if hasattr(self.event, 'cfp') else True
+        if show_abstract is None:
+            show_abstract = getattr(self.event.cfp, 'public_abstract', True) if hasattr(self.event, 'cfp') else True
         if show_abstract and self.submission.abstract:
             vevent.add('description').value = rich_text_to_plain_text(self.submission.abstract)
         vevent.add('url').value = self.submission.urls.public.full()
