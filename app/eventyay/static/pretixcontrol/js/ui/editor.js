@@ -1519,35 +1519,35 @@ var editor = {
         }
     },
 
-    _restore_history_state: function () {
+    _restore_history_state: function (pos) {
         editor._history_modification_in_progress = true;
         try {
-            editor.load(editor._current_history_state());
+            editor.load(editor.history[editor.history.length - 1 - pos]);
+            // Move only once the snapshot has loaded, so a failed load keeps the old position.
+            editor._history_pos = pos;
+            editor.dirty = true;
             // load() selects each text object it adds; leave nothing selected afterwards.
             editor.fabric.discardActiveObject();
             editor.fabric.renderAll();
             editor._update_toolbox();
         } finally {
             editor._history_modification_in_progress = false;
+            editor._update_history_buttons();
         }
-        editor.dirty = true;
-        editor._update_history_buttons();
     },
 
     _undo: function undo() {
         if (!editor.fabric || !editor._can_undo()) {
             return;
         }
-        editor._history_pos += 1;
-        editor._restore_history_state();
+        editor._restore_history_state(editor._history_pos + 1);
     },
 
     _redo: function redo() {
         if (!editor.fabric || !editor._can_redo()) {
             return;
         }
-        editor._history_pos -= 1;
-        editor._restore_history_state();
+        editor._restore_history_state(editor._history_pos - 1);
     },
 
     _history_action_for_key: function (e) {
@@ -1567,7 +1567,8 @@ var editor = {
     },
 
     _on_history_keydown: function (e) {
-        if (!editor.fabric || !editor._is_hotkey_target()) {
+        // Bootstrap marks the body while a modal (e.g. the preview) is open; the layout is hidden then.
+        if (!editor.fabric || !editor._is_hotkey_target() || document.body.classList.contains('modal-open')) {
             return;
         }
         // Text fields keep the browser's own undo for what is being typed.
