@@ -9,6 +9,7 @@ import {
 	resolveLocaleLoader,
 	toGettextLocale,
 } from './load.js'
+import { getLanguageNativeLabel, locales } from './locales.js'
 
 const {default: i18next} = await importFromApp('i18next')
 
@@ -103,3 +104,9 @@ test('i18next still returns English after a Hindi fallback merge', async () => {
 	assert.equal(i18n.t('Save'), 'Save')
 	assert.equal(i18n.t(hindi.Save || 'Save'), 'Save')
 })
+
+test('Hausa locale is registered in webapp locales and resolves correctly', () => {
+	assert.ok(locales.some(l => l.code === 'ha' && l.nativeLabel === 'Hausa'))
+	assert.equal(getLanguageNativeLabel('ha'), 'Hausa')
+})
+
