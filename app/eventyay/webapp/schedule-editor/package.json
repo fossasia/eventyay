@@ -12,6 +12,7 @@
     "lint:stylelint": "stylelint \"**/*.styl\"",
     "lint:tsc": "tsc --noEmit",
     "test:i18n": "node --test \"../i18n/*.test.js\"",
+    "test:navigation": "node --experimental-strip-types src/dateNavigation.test.mjs",
     "i18n:extract": "node ../i18n/extract.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "analyze": "ANALYZE=true npm run build",

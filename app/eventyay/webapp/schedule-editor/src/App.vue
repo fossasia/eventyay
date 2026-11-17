@@ -303,6 +303,7 @@
 <script lang="ts" setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
+import { dayForHash, horizontalTabScrollDelta, updateDayHash } from './dateNavigation'
 import GridSchedule from '~/components/GridSchedule.vue'
 import TalkSession from '~/components/Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
@@ -1106,15 +1107,16 @@ async function fetchAdditionalScheduleData(): Promise<void> {
   replaceWarnings(await api.fetchWarnings() as Record<string, Warning[]> | undefined)
 }
 
-function changeDay(date: string): void {
-  const day = days.value.find((item) => item.format('YYYY-MM-DD') === date)
+function changeDay(date: string, replaceHistory = false): void {
+  const day = dayForHash(days.value, date)
   if (!day) return
-  if (currentDay.value?.format('YYYY-MM-DD') !== date) currentDay.value = day.clone()
-  if (window.location.hash !== `#${date}`) window.location.hash = date
+  const selectedDate = day.format('YYYY-MM-DD')
+  if (currentDay.value?.format('YYYY-MM-DD') !== selectedDate) currentDay.value = day.clone()
+  if (date) updateDayHash(date, replaceHistory)
 }
 
 function changeDayFromGrid(day: Moment): void {
-  changeDay(day.format('YYYY-MM-DD'))
+  changeDay(day.format('YYYY-MM-DD'), true)
 }
 
 function syncCurrentDayFromHash(): void {
@@ -1129,11 +1131,8 @@ watch(currentDay, (newDay) => {
     if (!tabEl || !selectorEl) return
     const selectorRect = selectorEl.getBoundingClientRect()
     const tabRect = tabEl.getBoundingClientRect()
-    if (tabRect.left < selectorRect.left) {
-      selectorEl.scrollBy({ left: tabRect.left - selectorRect.left, behavior: 'smooth' })
-    } else if (tabRect.right > selectorRect.right) {
-      selectorEl.scrollBy({ left: tabRect.right - selectorRect.right, behavior: 'smooth' })
-    }
+    const delta = horizontalTabScrollDelta(selectorRect.left, selectorRect.right, tabRect.left, tabRect.right)
+    if (delta) selectorEl.scrollBy({ left: delta, behavior: 'smooth' })
   })
 })
 
@@ -1845,7 +1844,7 @@ onBeforeMount(async () => {
   moment.tz.setDefault(currentTimezone.value)
   locales.value = schedule.value.locales
   const hashDate = window.location.hash.slice(1)
-  currentDay.value = days.value.find((day) => day.format('YYYY-MM-DD') === hashDate) || days.value[0]
+  currentDay.value = dayForHash(days.value, hashDate) || days.value[0]
   pollTimeoutId = window.setTimeout(pollUpdates, 5000)
   await fetchAdditionalScheduleData()
   await new Promise<void>((resolve) => {
@@ -1932,6 +1931,7 @@ onMounted(() => {
 	hasFullscreenMount.value = !!document.getElementById('schedule-fullscreen-mount')
   isMounted.value = true
   window.addEventListener('hashchange', syncCurrentDayFromHash)
+  syncCurrentDayFromHash()
   updateActionsWidth()
   const unassignedEl = document.getElementById('unassigned')
   if (unassignedEl && typeof ResizeObserver !== 'undefined') {

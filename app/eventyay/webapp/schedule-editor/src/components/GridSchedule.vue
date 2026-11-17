@@ -54,6 +54,7 @@ import TalkSession from './Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
 import { resolveMode, computeShiftColumnLayout, buildShiftGridTemplateColumns, computeShiftOverlapSubcolumn, assignRoomTracks } from '~/teamshifts-adapter'
 import { getLocalizedString } from '~/utils'
+import { isVerticallyScrollable } from '~/dateNavigation'
 
 const mode = resolveMode()
 const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
@@ -228,6 +229,7 @@ watch(() => props.rooms, () => applyRoomFocusFromQuery(), { immediate: true })
 let observer: IntersectionObserver | null = null
 const layoutObservers: ResizeObserver[] = []
 let windowResizeListener: (() => void) | null = null
+let scrollEventTarget: HTMLElement | Window | null = null
 let gridOffsetFrame: number | null = null
 
 const refreshGridOffset = () => {
@@ -252,7 +254,10 @@ const observeElementResize = (element: HTMLElement | null) => {
   if (!element || typeof ResizeObserver === 'undefined') {
     return
   }
-  const resizeObserver = new ResizeObserver(scheduleRefreshGridOffset)
+  const resizeObserver = new ResizeObserver(() => {
+    scheduleRefreshGridOffset()
+    updateScrollObservation()
+  })
   resizeObserver.observe(element)
   layoutObservers.push(resizeObserver)
 }
@@ -944,8 +949,11 @@ const scrollToDayStart = (day: Moment | null) => {
   const rect = el.getBoundingClientRect()
   const parentRect = scrollParent.value.getBoundingClientRect()
   const delta = rect.top - parentRect.top - clearance
-  const parentCanScroll = scrollParent.value.scrollHeight > scrollParent.value.clientHeight &&
-    ['auto', 'scroll'].includes(getComputedStyle(scrollParent.value).overflowY)
+  const parentCanScroll = isVerticallyScrollable(
+    scrollParent.value.scrollHeight,
+    scrollParent.value.clientHeight,
+    getComputedStyle(scrollParent.value).overflowY,
+  )
   if (parentCanScroll) {
     scrollParent.value.scrollTop += delta
   } else {
@@ -1003,6 +1011,29 @@ const onIntersect = (entries: IntersectionObserverEntry[]) => {
   emit('changeDay', day)
 }
 
+const updateScrollObservation = () => {
+  const parent = scrollParent.value
+  const parentCanScroll = parent && isVerticallyScrollable(
+    parent.scrollHeight,
+    parent.clientHeight,
+    getComputedStyle(parent).overflowY,
+  )
+  const nextScrollTarget = parentCanScroll ? parent : window
+  if (observer && scrollEventTarget === nextScrollTarget) return
+
+  observer?.disconnect()
+  scrollEventTarget?.removeEventListener('scroll', onScroll)
+  observer = new IntersectionObserver(onIntersect, {
+    root: parentCanScroll ? parent : null,
+    rootMargin: '-45% 0px',
+  })
+  timesliceRefs.value.forEach((el) => {
+    if (el.dataset?.slice && el.classList.contains('datebreak')) observer?.observe(el)
+  })
+  scrollEventTarget = nextScrollTarget
+  scrollEventTarget.addEventListener('scroll', onScroll, { passive: true })
+}
+
 watch(() => props.currentDay, (day) => {
   // Only scroll when triggered by toolbar click, not by scroll-based observer
   if (day && scrollDrivenDay === day.format('YYYY-MM-DD')) {
@@ -1017,6 +1048,7 @@ onMounted(async () => {
   await nextTick()
 
   refreshGridOffset()
+  observeElementResize(scrollParent.value)
   observeElementResize(rootEl.value)
   const layoutRoot = rootEl.value?.closest('#page-content') ?? rootEl.value?.closest('.pretalx-schedule')
   if (layoutRoot instanceof HTMLElement && layoutRoot !== rootEl.value) {
@@ -1025,29 +1057,22 @@ onMounted(async () => {
   windowResizeListener = () => {
     cachedGrid = null
     scheduleRefreshGridOffset()
+    updateScrollObservation()
   }
   window.addEventListener('resize', windowResizeListener)
 
   // Listen on document level so touch drags (where pointer is captured elsewhere) work
   document.addEventListener('pointermove', onDocPointerMove)
 
-  observer = new IntersectionObserver(onIntersect, {
-    root: scrollParent.value,
-    rootMargin: '-45% 0px',
-  })
-
-  timesliceRefs.value.forEach(el => {
-    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
-    observer?.observe(el)
-  })
-  scrollParent.value?.addEventListener('scroll', onScroll, { passive: true })
+  updateScrollObservation()
   scrollToDayStart(props.currentDay)
 })
 
 onUnmounted(() => {
   timesliceRefs.value = []
   document.removeEventListener('pointermove', onDocPointerMove)
-  scrollParent.value?.removeEventListener('scroll', onScroll)
+  scrollEventTarget?.removeEventListener('scroll', onScroll)
+  scrollEventTarget = null
   if (pointerRaf !== null) {
     cancelAnimationFrame(pointerRaf)
     pointerRaf = null
