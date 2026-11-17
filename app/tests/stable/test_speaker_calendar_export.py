@@ -174,3 +174,52 @@ def test_speaker_webcal_redirect(speaker_with_sessions, client, event):
     assert response.status_code == 302
     assert response['Location'].startswith('webcal://')
     assert 'talks.ics' in response['Location']
+
+
+@pytest.mark.django_db
+def test_speaker_export_feed_handles_roomless_session(speaker_with_sessions, client, event):
+    profile, sub1, sub2, _ = speaker_with_sessions
+    with scope(event=event):
+        slot2 = TalkSlot.objects.get(submission=sub2, schedule=event.current_schedule)
+        slot2.room = None
+        slot2.save()
+
+    url = reverse(
+        'agenda:speaker.talks.google-calendar',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'code': profile.user.code},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert 'cid=' in response['Location']
+
+    ical_url = reverse(
+        'agenda:speaker.talks.ical',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'code': profile.user.code},
+    )
+    ical_response = client.get(ical_url)
+    assert ical_response.status_code == 200
+    content = ical_response.content.decode()
+    # RFC 5545 escapes commas in TEXT values as '\,'
+    assert 'Docker Up' in content
+    assert sub2.title in content
+
+
+@pytest.mark.django_db
+def test_speaker_export_feed_respects_public_abstract_false(speaker_with_sessions, client, event):
+    profile, sub1, sub2, _ = speaker_with_sessions
+    with scope(event=event):
+        cfp = event.cfp
+        fields = dict(cfp.fields)
+        fields['abstract'] = {**fields.get('abstract', {}), 'public': False}
+        cfp.fields = fields
+        cfp.save()
+
+    ical_url = reverse(
+        'agenda:speaker.talks.ical',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug, 'code': profile.user.code},
+    )
+    ical_response = client.get(ical_url)
+    assert ical_response.status_code == 200
+    content = ical_response.content.decode()
+    assert sub1.abstract not in content
+    assert sub2.abstract not in content
