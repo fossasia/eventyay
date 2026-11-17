@@ -129,7 +129,7 @@ var editor = {
     _history_pos: 0,
     _history_modification_in_progress: false,
     _toolbox_update_in_progress: false,
-    _color_picker_open: false,
+    _color_picker_dragging: false,
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
@@ -1475,12 +1475,12 @@ var editor = {
 
     _create_savepoint: function () {
         // Skip while a snapshot is being restored, while the toolbox is being filled from the
-        // selected object (which fires "change" on its inputs), and while the colour picker is
-        // open (it fires "change" on every drag step; the final colour is saved when it closes).
+        // selected object (which fires "change" on its inputs), and while the pointer is down in
+        // the colour picker (it fires "change" on every drag step; the colour is saved on release).
         if (
             editor._history_modification_in_progress ||
             editor._toolbox_update_in_progress ||
-            editor._color_picker_open ||
+            editor._color_picker_dragging ||
             !editor.fabric
         ) {
             return;
@@ -1584,6 +1584,21 @@ var editor = {
         } else {
             editor._undo();
         }
+    },
+
+    _on_color_picker_pointerdown: function (e) {
+        // Listened for in the capture phase, because the picker stops the mousedown on its sliders.
+        if (e.target && e.target.closest && e.target.closest('.colorpicker')) {
+            editor._color_picker_dragging = true;
+        }
+    },
+
+    _on_color_picker_pointerup: function () {
+        if (!editor._color_picker_dragging) {
+            return;
+        }
+        editor._color_picker_dragging = false;
+        editor._create_savepoint();
     },
 
     _save: function (e) {
@@ -1776,12 +1791,9 @@ var editor = {
             editor._create_savepoint();
         });
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
-        $("#toolbox .colorpickerfield").on('showPicker', function () {
-            editor._color_picker_open = true;
-        }).on('hidePicker', function () {
-            editor._color_picker_open = false;
-            editor._create_savepoint();
-        });
+        document.addEventListener('pointerdown', editor._on_color_picker_pointerdown, true);
+        document.addEventListener('pointerup', editor._on_color_picker_pointerup, true);
+        document.addEventListener('pointercancel', editor._on_color_picker_pointerup, true);
         $("#toolbox-copy").bind('click', editor._copy);
         $("#toolbox-cut").bind('click', editor._cut);
         $("#toolbox-delete").bind('click', editor._delete);
