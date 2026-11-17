@@ -79,6 +79,10 @@ const ScheduleRoleSchema = z.object({
   is_restricted: z.boolean().optional().default(false)
 });
 
+export const WarningSchema = z.object({
+  message: z.string(),
+});
+
 export const TalkSchema = z.object({
   id: z.number(),
   code: z.string().optional(),
@@ -108,11 +112,16 @@ export const TalkSchema = z.object({
   duration: z.number().optional(),
   do_not_record: z.union([z.boolean(), z.null()]).optional().transform(val => val === true).default(false),
   roles: z.array(RoleAssignmentSchema).nullable().optional().default([]),
+  warnings: z.array(WarningSchema).nullish(),
   kind: z.enum(['talk', 'break', 'shift']).optional(),
-});
-
-export const WarningSchema = z.object({
-  message: z.string(),
+  session_type: z.union([
+    LocalizedTextSchema,
+    z.string().transform(val => ({ en: val })),
+  ]).nullable().optional(),
+  submission_type: z.union([
+    LocalizedTextSchema,
+    z.string().transform(val => ({ en: val })),
+  ]).nullable().optional(),
 });
 
 const WarningRecordSchema = z.record(z.string(), z.array(WarningSchema));

@@ -1181,7 +1181,7 @@ $(function () {
         }
     });
 
-    $("a[data-expandlogs], a[data-expandrefund], a[data-expandpayment]").click(function (e) {
+    $(document).on("click", "a[data-expandlogs], a[data-expandrefund], a[data-expandpayment]", function (e) {
         e.preventDefault();
         var $a = $(this);
         var id = $(this).attr("data-id");

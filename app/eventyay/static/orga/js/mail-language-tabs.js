@@ -15,9 +15,11 @@ const getLocales = (group) => {
 
 const toggleLocaleField = (input, hidden) => {
     input.classList.toggle("d-none", hidden)
+    input.hidden = hidden
     const wrapper = input.closest(".tiptap-wrapper")
     if (wrapper) {
         wrapper.classList.toggle("d-none", hidden)
+        wrapper.hidden = hidden
     }
 }
 

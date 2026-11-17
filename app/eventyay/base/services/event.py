@@ -2,6 +2,7 @@ import copy
 import datetime
 import uuid
 from contextlib import suppress
+from typing import Any, TypedDict
 
 import jwt
 from asgiref.sync import sync_to_async
@@ -9,8 +10,11 @@ from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.paginator import InvalidPage, Paginator
 from django.db import transaction
-from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django.db.models import Count, Max, OuterRef, Q, Subquery, TextField
+from django.db.models.functions import Cast
+from django_scopes import scope
 from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
@@ -23,6 +27,11 @@ from eventyay.base.services.room_creation_gate import (
     user_can_create_server_backed_room_during_development,
 )
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.base.services.video_entitlements import (
+    check_video_entitlements,
+    filter_stream_by_entitlement,
+    require_video_entitlements,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     get_provider_for_module_type,
@@ -295,11 +304,13 @@ def count_chat_participants(channel_id):
 
 
 def get_room_config(room, permissions, *, current_stream=_UNSET):
+    """Build room configuration dictionary filtered by module entitlements."""
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     if current_stream is _UNSET:
         stream_data = get_room_current_stream_data(room)
     else:
         stream_data = current_stream
+    stream_data = filter_stream_by_entitlement(room.event, stream_data)
     visible_to_attendee = is_room_visible_for_attendee(room)
     room_config = {
         "id": str(room.id),
@@ -328,6 +339,8 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
         room_config["users"] = 0
 
     for module in room.module_config:
+        if not check_video_entitlements(room.event, [module]).allowed:
+            continue
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
@@ -430,6 +443,8 @@ def get_event_config_for_user(event, user):
 @database_sync_to_async
 @transaction.atomic()
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
+    """Create a room instance after verifying video module entitlements."""
+    require_video_entitlements(data['event'], data.get('module_config'))
     if "sorting_priority" not in data:
         data["sorting_priority"] = (
             Room.objects.filter(event=data["event"], deleted=False).aggregate(
@@ -518,7 +533,11 @@ is_video_provider_enabled_for_organizer_async = sync_to_async(
 
 
 async def create_room(event, data, creator):
-    for module in data.get("modules", []):
+    if "modules" not in data and "module_config" in data:
+        data["modules"] = data["module_config"]
+
+    modules = data.get("modules") or []
+    for module in modules:
         if isinstance(module, dict):
             provider = get_provider_for_module_type(module.get("type"))
             if provider and not await is_video_provider_enabled_for_organizer_async(provider):
@@ -527,7 +546,7 @@ async def create_room(event, data, creator):
                     code="denied",
                 )
 
-    types = {m["type"] for m in data.get("modules", [])}
+    types = {m["type"] for m in modules}
     livestream_types = {
         "livestream.native",
         "livestream.youtube",
@@ -581,6 +600,28 @@ async def create_room(event, data, creator):
 
         clean_config = {"playback_mode": playback_mode}
         if playback_mode == "always_on":
+            if "autoStart" in config:
+                raw_auto_start = config["autoStart"]
+                if isinstance(raw_auto_start, bool):
+                    clean_config["autoStart"] = raw_auto_start
+                elif isinstance(raw_auto_start, str):
+                    lowered = raw_auto_start.strip().lower()
+                    if lowered in {"true", "1"}:
+                        clean_config["autoStart"] = True
+                    elif lowered in {"false", "0"}:
+                        clean_config["autoStart"] = False
+                    else:
+                        raise ValidationError(
+                            "Invalid autoStart configuration value.",
+                            code="invalid",
+                        )
+                elif isinstance(raw_auto_start, int):
+                    clean_config["autoStart"] = bool(raw_auto_start)
+                else:
+                    raise ValidationError(
+                        "Invalid autoStart configuration value.",
+                        code="invalid",
+                    )
             if module["type"] == "livestream.native":
                 clean_config["hls_url"] = config.get("hls_url", "")
             elif module["type"] == "livestream.youtube":
@@ -836,34 +877,82 @@ def _config_serializer(event, *args, **kwargs):
 @database_sync_to_async
 @transaction.atomic
 def save_event(event, update_fields, old_data, by_user):
-    event.save(update_fields=update_fields)
-    new = _config_serializer(event).data
+    with scope(event=event):
+        event.save(update_fields=update_fields)
+        new = _config_serializer(event).data
 
-    AuditLog.objects.create(
-        event_id=event.id,
-        user=by_user,
-        type="event.updated",
-        data={
-            "old": old_data,
-            "new": new,
-        },
-    )
-    if update_fields and 'feature_flags' in update_fields:
-        log_event(
-            'video',
-            'video.feature_flag',
-            OUTCOME_SUCCESS,
-            event_id=event.pk,
-            user_id=getattr(by_user, 'pk', None),
+        AuditLog.objects.create(
+            event_id=event.id,
+            user=by_user,
+            type="event.updated",
+            data={
+                "old": old_data,
+                "new": new,
+            },
         )
-    return new
+        if update_fields and 'feature_flags' in update_fields:
+            log_event(
+                'video',
+                'video.feature_flag',
+                OUTCOME_SUCCESS,
+                event_id=event.pk,
+                user_id=getattr(by_user, 'pk', None),
+            )
+        return new
+
+
+class AuditLogPaginationResult(TypedDict):
+    results: list[dict[str, Any]]
+    total: int
+    page: int
+    total_pages: int
+    page_size: int
+    isLastPage: bool
 
 
 @database_sync_to_async
-def get_audit_log(event):
-    return [
-        a.serialize_public()
-        for a in AuditLog.objects.filter(
-            event_id=event.id,
-        ).prefetch_related("user")
-    ]
+def get_audit_log(event, page=1, page_size=50, search="", order="desc") -> AuditLogPaginationResult:
+    with scope(event=event):
+        qs = AuditLog.objects.filter(event_id=event.id).prefetch_related("user")
+
+        if search:
+            qs = qs.annotate(
+                data_text=Cast("data", TextField()),
+                user_id_text=Cast("user_id", TextField()),
+            ).filter(
+                Q(type__icontains=search)
+                | Q(user__profile__display_name__icontains=search)
+                | Q(user_id_text__icontains=search)
+                | Q(data_text__icontains=search)
+            )
+
+        order_field = "-timestamp" if order == "desc" else "timestamp"
+        secondary_field = "-id" if order == "desc" else "id"
+        qs = qs.order_by(order_field, secondary_field)
+
+        try:
+            page_size = max(1, min(int(page_size), 200))
+        except (ValueError, TypeError):
+            page_size = 50
+
+        try:
+            page = max(1, int(page))
+        except (ValueError, TypeError):
+            page = 1
+
+        paginator = Paginator(qs, page_size)
+        try:
+            p = paginator.page(page)
+            results = [a.serialize_public() for a in p.object_list]
+        except InvalidPage:
+            results = []
+            p = None
+
+        return {
+            "results": results,
+            "total": paginator.count,
+            "page": page,
+            "total_pages": paginator.num_pages,
+            "page_size": page_size,
+            "isLastPage": not p.has_next() if p else True,
+        }

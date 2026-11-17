@@ -26,10 +26,11 @@
     <table class="table table-condensed">
     <thead>
     <tr>
-        <th>{% trans "Timestamp" %}</th>
-        <th>{% trans "Method" %}</th>
-        <th>{% trans "URL" %}</th>
-        <th>{% trans "On behalf of" %}</th>
+        <th class="col-md-2">{% trans "Timestamp" %}</th>
+        <th class="col-md-1">{% trans "Method" %}</th>
+        <th class="col-md-4">{% trans "URL" %}</th>
+        <th class="col-md-2">{% trans "On behalf of" %}</th>
+        <th class="col-md-3">{% trans "Data payload" %}</th>
     </tr>
     </thead>
     <tbody>
@@ -37,8 +38,16 @@
         <tr>
         <td>{{ log.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
         <td>{{ log.method }}</td>
-        <td>{{ log.url }}</td>
+        <td class="break-all">{{ log.url }}</td>
         <td>{{ log.impersonating|default:"" }}</td>
+        <td class="break-all">
+            {% if log.post_data %}
+            <details>
+                <summary>{% trans "View payload" %}</summary>
+                <pre class="mb-0"><code>{{ log.post_data }}</code></pre>
+            </details>
+            {% endif %}
+        </td>
         </tr>
     {% endfor %}
     </tbody>

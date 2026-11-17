@@ -23,6 +23,7 @@ function syncPrefix(form, preserveExisting = false) {
     }
 
     prefixInput.value = tagInput.value.trim();
+    prefixInput.setCustomValidity('');
 }
 
 function formFor(target) {
@@ -55,6 +56,9 @@ document.addEventListener(
 document.addEventListener(
     'input',
     (event) => {
+        if (event.target.matches(`${formSelector} #voucher-bulk-codes-prefix`)) {
+            event.target.setCustomValidity('');
+        }
         if (event.target.matches(`${formSelector} ${tagSelector}`)) {
             syncPrefix(formFor(event.target), false);
         }
@@ -97,6 +101,21 @@ document.addEventListener('click', async (event) => {
         num = '5';
         if (numInput) {
             numInput.value = '5';
+        }
+    }
+
+    if (numInput && !numInput.reportValidity()) {
+        return;
+    }
+    if (prefixInput) {
+        const lengthError = prefixInput.dataset.lengthError || (
+            window.gettext ? window.gettext('The prefix is too long.') : 'The prefix is too long.'
+        );
+        prefixInput.setCustomValidity(
+            prefixInput.maxLength >= 0 && prefix.length > prefixInput.maxLength ? lengthError : ''
+        );
+        if (!prefixInput.reportValidity()) {
+            return;
         }
     }
 

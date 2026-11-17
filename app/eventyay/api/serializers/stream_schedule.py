@@ -7,6 +7,7 @@ from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.stream_schedule import StreamSchedule
+from eventyay.base.services.video_entitlements import check_video_entitlements
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -28,7 +29,16 @@ class StreamScheduleSerializer(PretalxSerializer):
         read_only_fields = ('room', 'created_at', 'updated_at')
 
     def validate(self, data):
+        """Validate stream schedule data and ensure YouTube streaming is entitled."""
         data = super().validate(data)
+        room = self._get_room()
+        stream_type = data.get('stream_type', self.instance.stream_type if self.instance else 'youtube')
+        if room and stream_type == 'youtube':
+            decision = check_video_entitlements(room.event, [{'type': 'livestream.youtube'}])
+            if not decision.allowed:
+                raise serializers.ValidationError({
+                    'stream_type': decision.message or _('Your plan does not include YouTube streaming.')
+                })
 
         start_time = data.get('start_time')
         end_time = data.get('end_time')

@@ -1,5 +1,6 @@
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Prefetch
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -11,6 +12,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_flex_fields import is_expanded
 from eventyay.api.throttles import EventyayUserRateThrottle, PublicScheduleThrottle
@@ -40,6 +42,7 @@ from eventyay.api.serializers.schedule import (
 )
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.talk_rules.tracks import (
     apply_track_limit_to_slots,
     schedule_cache_user_scope,
@@ -226,19 +229,22 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
-        wip_schedule = request.event.wip_schedule
+        """Validate release data, then release the current draft under the event lock."""
         serializer = ScheduleReleaseSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
         version_name = serializer.validated_data.get('version')
         comment = serializer.validated_data.get('comment')
 
-        schedule, _ = wip_schedule.freeze(
-            name=version_name,
-            user=request.user,
-            notify_speakers=False,
-            comment=comment,
-        )
+        try:
+            schedule, _ = request.event.release_schedule(
+                name=version_name,
+                user=request.user,
+                notify_speakers=False,
+                comment=comment,
+            )
+        except DjangoValidationError as exc:
+            raise ValidationError({'version': exc.messages}) from exc
 
         response_serializer = ScheduleSerializer(schedule, context=self.get_serializer_context())
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -368,7 +374,10 @@ class TalkSlotViewSet(
         )
         if not self.is_orga:
             queryset = (
-                queryset.filter(is_visible=True).exclude(room__deleted=True).exclude(schedule__version__isnull=True)
+                queryset.filter(is_visible=True)
+                .exclude(room__deleted=True)
+                .exclude(schedule__version__isnull=True)
+                .exclude(submission__state=SubmissionStates.DELETED)
             )
 
         expanded_fields = list(

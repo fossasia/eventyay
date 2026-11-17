@@ -8,7 +8,9 @@
 
 {% block schedule_content %}
     <form method="post">
-        {% include "common/forms/errors.html" %}
+        {% if form.non_field_errors %}
+            {% include 'common/forms/errors.html' %}
+        {% endif %}
         {% csrf_token %}
         <h2>
             {% translate "Release new schedule" %}
@@ -28,8 +30,8 @@
 
         <ul>
             <li>
-                {% if request.event.wip_schedule.previous_schedule.version %}
-                    {% blocktranslate with prev=request.event.wip_schedule.previous_schedule.version since=request.event.wip_schedule.previous_schedule.published|timesince trimmed %}
+                {% if request.event.current_schedule.version %}
+                    {% blocktranslate with prev=request.event.current_schedule.version since=request.event.current_schedule.published|timesince trimmed %}
                         The previous schedule ({{ prev }}) was released {{ since }} ago.
                     {% endblocktranslate %}
                 {% else %}
@@ -123,7 +125,9 @@
                 <div class="flex-next-column">
                     {{ form.comment.as_field_group }}
                 </div>
-                {% include "agenda/changelog_block.html" with schedule=request.event.wip_schedule %}
+                {% if draft_schedule %}
+                    {% include 'agenda/changelog_block.html' with schedule=draft_schedule %}
+                {% endif %}
             </div>
         </details>
 

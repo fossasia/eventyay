@@ -23,8 +23,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import JSONField, Q
-from django.db.models.functions import Coalesce
+from django.db.models import JSONField, Q, Value
+from django.db.models.functions import Cast, Coalesce, Concat, Lower, NullIf, Trim
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.crypto import get_random_string, salted_hmac
@@ -46,6 +46,7 @@ from eventyay.common.image import (
     get_thumbnail_field_name,
     is_svg_filename,
 )
+from eventyay.common.redirects import safe_redirect_url
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
@@ -200,6 +201,32 @@ def generate_short_token():
 class SuperuserPermissionSet:
     def __contains__(self, item):
         return True
+
+
+def display_name_sort_key(prefix: str = '') -> Lower:
+    """Case-insensitive SQL version of ``User.get_display_name``, for ordering users.
+
+    Follows the same fallbacks as ``User.__str__``. ``prefix`` points at the user
+    from a related model, e.g. ``'user__'``.
+    """
+    return Lower(
+        Coalesce(
+            *(NullIf(Trim(f'{prefix}{field}'), Value('')) for field in ('fullname', 'email', 'nick', 'client_id')),
+            Concat(Value('user:'), Cast(f'{prefix}pk', models.CharField())),
+            output_field=models.CharField(),
+        )
+    )
+
+
+# Profile keys only visible to admins (exposed via admin fields, not the public profile).
+PRIVATE_PROFILE_KEYS = frozenset({'contact_email'})
+
+
+def public_profile(profile):
+    """Return the profile without server-only keys; non-dict values are returned unchanged."""
+    if not isinstance(profile, dict):
+        return profile
+    return {k: v for k, v in profile.items() if k not in PRIVATE_PROFILE_KEYS}
 
 
 class User(
@@ -552,7 +579,7 @@ class User(
         except SendMailException:
             pass  # Already logged
 
-    def send_password_reset(self, request: HttpRequest, *, sync_send: bool = False):
+    def send_password_reset(self, request: HttpRequest, *, sync_send: bool = False, next_url: str | None = None):
         from eventyay.base.services.mail import mail
 
         subject = _('Password recovery')
@@ -562,8 +589,12 @@ class User(
             'id': self.id,
             'token': security_token,
         }
+        if next_url:
+            params['next'] = safe_redirect_url(request, next_url)
         action_url = request.build_absolute_uri(f'{base_action_url}?{urlencode(params)}')
-        logger.info('Action URL for %s to reset password: %s', self.email, action_url)
+        if settings.DEBUG:
+            # The link is a credential, so only print it for local development.
+            logger.info('Action URL for %s to reset password: %s', self.email, action_url)
         context = {'user': self, 'url': action_url}
         mail(
             self.email,
@@ -1263,7 +1294,7 @@ the eventyay team"""
         # For performance reasons, it does not use this method directly.
         d = {
             "id": str(self.id),
-            "profile": self.profile,
+            "profile": public_profile(self.profile),
             "pretalx_id": self.pretalx_id,
             "deleted": self.deleted,
             "badges": (
@@ -1286,7 +1317,12 @@ the eventyay team"""
         if include_admin_info:
             d["moderation_state"] = self.moderation_state
             d["token_id"] = self.token_id
-            d["email"] = self.email
+            contact_email = (
+                str(self.profile.get("contact_email") or "").strip()
+                if isinstance(self.profile, dict)
+                else ""
+            )
+            d["email"] = contact_email or self.email
             d["wikimedia_username"] = self.wikimedia_username
         if include_client_state:
             d["client_state"] = self.client_state
@@ -1435,6 +1471,7 @@ class StaffSessionAuditLog(models.Model):
     url = models.CharField(max_length=255)
     method = models.CharField(max_length=255)
     impersonating = models.ForeignKey('User', null=True, blank=True, on_delete=models.PROTECT)
+    post_data = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ('datetime',)

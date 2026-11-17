@@ -1,5 +1,5 @@
 <template lang="pug">
-prompt.c-profile-greeting-prompt(:allowCancel="false")
+prompt.c-profile-greeting-prompt(:allowCancel="true", @close="$emit('close')")
 	.content
 		.step-display-name(v-if="activeStep === 'displayName'")
 			h1 {{ $t('Hi there!') }}
@@ -12,7 +12,7 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 		.step-display-language(v-else-if="activeStep === 'displayLanguage'")
 			h2 {{ $t('Interface Language') }}
 			p {{ $t('Please select your language. You can change it later in your profile.') }}
-			bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
+			bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel", :placeholder="$t('Select Language')")
 		.actions
 			bunt-button#btn-back(v-if="previousStep", @click="activeStep = previousStep") {{ $t('back') }}
 			bunt-button#btn-continue(v-if="nextStep", :class="{invalid: v$.$invalid && v$.$dirty}", :disabled="blockSave || v$.$invalid && v$.$dirty", :loading="processingStep", :key="activeStep", @click="toNextStep") {{ $t('continue') }}
@@ -23,7 +23,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { mapState } from 'vuex'
 import { required } from 'lib/validators'
 import config from 'config'
-import { resolveLanguageOptions } from 'locales'
+import { resolveLanguageOptions, resolveCurrentLanguage } from 'locales'
 import Prompt from 'components/Prompt'
 import ChangeAvatar from './ChangeAvatar'
 
@@ -38,7 +38,7 @@ export default {
 			processingStep: false,
 			blockSave: false,
 			saving: false,
-			interfaceLanguage: this.$i18n.resolvedLanguage,
+			interfaceLanguage: null,
 		}
 	},
 	validations() {
@@ -71,8 +71,19 @@ export default {
 			return options.length ? options : null
 		}
 	},
+	watch: {
+		languages: {
+			handler(langs) {
+				if (!this.interfaceLanguage && langs?.length) {
+					this.interfaceLanguage = this.resolveInitialLanguage()
+				}
+			},
+			immediate: true
+		}
+	},
 	async created() {
 		this.activeStep = this.steps[0]
+		this.interfaceLanguage = this.resolveInitialLanguage()
 		// Determine default display name:
 		// 1. Use existing saved display_name if available (even if empty string)
 		// 2. Otherwise, use wikimedia_username if available
@@ -96,6 +107,12 @@ export default {
 		}
 	},
 	methods: {
+		resolveInitialLanguage() {
+			return resolveCurrentLanguage(
+				this.languages,
+				this.$store?.state?.userLocale || this.$i18n?.language || this.$i18n?.resolvedLanguage || config.defaultLocale || config.locale || 'en'
+			)
+		},
 		async toNextStep() {
 			this.v$.$touch()
 			if (this.v$.$invalid) return
@@ -116,10 +133,20 @@ export default {
 			if (this.$refs.step?.update) {
 				await this.$refs.step.update()
 			}
-			this.profile.greeted = true // override even if explicitly set to false by server
 			await this.$store.dispatch('updateUser', {profile: this.profile})
-			await this.$store.dispatch('updateUserLocale', this.interfaceLanguage)
-			// TODO error handling
+			if (this.interfaceLanguage) {
+				await this.$store.dispatch('updateUserLocale', this.interfaceLanguage)
+			}
+			this.profile.greeted = true // override even if explicitly set to false by server
+			const worldKey = this.world?.id || this.world?.slug
+			const userKey = this.user?.id
+			if (worldKey && userKey && typeof localStorage !== 'undefined') {
+				try {
+					localStorage.setItem(`eventyay_video_greeted_${worldKey}_${userKey}`, 'true')
+				} catch (err) {
+					console.warn('Failed to store greeting marker in localStorage:', err)
+				}
+			}
 			this.$emit('close')
 		}
 	}

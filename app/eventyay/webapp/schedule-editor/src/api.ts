@@ -179,13 +179,20 @@ const api = {
       }
     }
 
-    const response = await this.http<Talk>(action, url, payload)
+    const response = await this.http<Talk | { error?: string; success?: boolean }>(action, url, payload)
+
+    if (response && typeof response === 'object' && 'error' in response && (response as { error?: unknown }).error) {
+      throw new Error(String((response as { error?: unknown }).error))
+    }
 
     if (action !== 'DELETE') {
-      if (response && typeof response === 'object' && 'id' in response && 'title' in response) {
-        return TalkSchema.parse(response)
+      const saved = resolveMode() !== 'talks' && response && typeof response === 'object' && 'talk' in response
+        ? (response as { talk: unknown }).talk
+        : response
+      if (saved && typeof saved === 'object' && 'id' in saved && 'title' in saved) {
+        return TalkSchema.parse(saved)
       }
-      return response
+      return saved as Talk
     }
   },
 

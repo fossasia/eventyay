@@ -418,7 +418,13 @@ class EmailQueue(models.Model):
         Resolve and return the full list of unique email addresses
         this queued mail will send to.
         """
-        return sorted(set(r.email.strip().lower() for r in self.recipients.all() if r.email))
+        emails = set()
+        for r in self.recipients.all():
+            if r.email:
+                cleaned = r.email.strip().lower()
+                if cleaned:
+                    emails.add(cleaned)
+        return sorted(emails)
 
     def populate_to_users(self, save=True):
         """
@@ -451,43 +457,42 @@ class EmailQueue(models.Model):
                     continue
                 if individual_positions is not None and pos.pk not in individual_positions:
                     continue
-                if pos.attendee_email:
+                pos_email = (pos.attendee_email or "").strip().lower()
+                if pos_email:
                     attendee_found = True
-                    email = pos.attendee_email.strip().lower()
-                    recipients[email]["orders"].add(order.pk)
-                    recipients[email]["positions"].add(pos.pk)
-                    recipients[email]["products"].add(pos.product.pk)
+                    recipients[pos_email]["orders"].add(order.pk)
+                    recipients[pos_email]["positions"].add(pos.pk)
+                    recipients[pos_email]["products"].add(pos.product.pk)
                 else:
-                    # No attendee email; maybe fallback later
+                    # No valid attendee email; fallback later
                     order_fallback_needed = True
 
+            order_email = (order.email or "").strip().lower()
             # Fallback to order email if needed
             if (
                 order_fallback_needed and
                 not attendee_found and
                 recipients_mode in ("attendees", "individual") and
-                order.email
+                order_email
             ):
-                email = order.email.strip().lower()
-                recipients[email]["orders"].add(order.pk)
+                recipients[order_email]["orders"].add(order.pk)
                 for pos in order.all_positions.all():
                     if pos.canceled:
                         continue
                     if individual_positions is not None and pos.pk not in individual_positions:
                         continue
-                    recipients[email]["positions"].add(pos.pk)
-                    recipients[email]["products"].add(pos.product_id)
+                    recipients[order_email]["positions"].add(pos.pk)
+                    recipients[order_email]["products"].add(pos.product_id)
 
             # Explicit inclusion of orders (include positions so QR/attendee
             # placeholders can resolve for buyer/order contact emails).
-            if recipients_mode in ("both", "orders") and order.email:
-                email = order.email.strip().lower()
-                recipients[email]["orders"].add(order.pk)
+            if recipients_mode in ("both", "orders") and order_email:
+                recipients[order_email]["orders"].add(order.pk)
                 for pos in order.all_positions.all():
                     if pos.canceled:
                         continue
-                    recipients[email]["positions"].add(pos.pk)
-                    recipients[email]["products"].add(pos.product_id)
+                    recipients[order_email]["positions"].add(pos.pk)
+                    recipients[order_email]["products"].add(pos.product_id)
 
         # Clear and insert fresh records
         self.recipients.all().delete()
@@ -503,6 +508,7 @@ class EmailQueue(models.Model):
                 error=None,
             )
             for email, data in recipients.items()
+            if email and email.strip()
         ]
 
         EmailQueueToUser.objects.bulk_create(objs)

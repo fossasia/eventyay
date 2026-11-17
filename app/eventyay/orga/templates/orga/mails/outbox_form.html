@@ -1,13 +1,14 @@
 {% extends "orga/mails/base.html" %}
 {% load i18n %}
 {% load rich_text %}
+{% load timezone %}
 
 {% block extra_title %}{% translate "Mail Editor" %} :: {% endblock extra_title %}
 
 {% block mail_content %}
     {% if form.instance.sent %}
         <div class="alert alert-info">
-            {% blocktranslate trimmed with timestamp=form.instance.sent timezone=request.event.timezone %}
+            {% blocktranslate trimmed with timestamp=form.instance.sent timezone=request.event.timezone|timezone_display %}
                 This email was sent on {{ timestamp }} ({{ timezone }}).
             {% endblocktranslate %}
         </div>

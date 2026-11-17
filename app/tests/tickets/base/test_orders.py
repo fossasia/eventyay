@@ -316,6 +316,35 @@ def test_expiring_paid_invoice(event):
 
 
 @pytest.mark.django_db
+def test_create_external_refund_exact_balance_marks_refund_done(event):
+    order = Order.objects.create(
+        code='FOO',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PAID,
+        locale='en',
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=Decimal('100.00'),
+    )
+    payment = order.payments.create(
+        provider='banktransfer',
+        state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+        amount=Decimal('120.00'),
+    )
+    assert order.pending_sum == Decimal('-20.00')
+
+    refund = payment.create_external_refund(amount=Decimal('20.00'))
+
+    refund.refresh_from_db()
+    assert refund.state == OrderRefund.REFUND_STATE_DONE
+    order.refresh_from_db()
+    assert order.pending_sum == Decimal('0.00')
+    payment.refresh_from_db()
+    assert payment.state == OrderPayment.PAYMENT_STATE_CONFIRMED
+
+
+@pytest.mark.django_db
 def test_expire_twice(event):
     o2 = Order.objects.create(
         code='FO2',

@@ -1,4 +1,5 @@
 import datetime
+import json
 
 import pytest
 from django.core import mail as djmail
@@ -7,6 +8,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
+from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models import (
     Checkin,
     Event,
@@ -17,6 +19,10 @@ from eventyay.base.models import (
     Team,
     User,
 )
+from eventyay.base.services.mail import render_mail
+from eventyay.base.templatetags.rich_text import compile_email_body, email_body_to_editor_html
+from eventyay.common.forms.widgets import I18nEmailEditorWidget
+from eventyay.plugins.sendmail.forms import MailContentSettingsForm
 
 
 @pytest.fixture
@@ -840,3 +846,1090 @@ def test_ticket_mail_template_form_validates_reply_to_and_bcc(event):
     )
     assert valid.is_valid(), valid.errors
     assert valid.cleaned_data['bcc'] == 'a@example.com, b@example.com'
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_allowed_records_usage(logged_in_client, sendmail_url, event, order, pos):
+    from eventyay.base.signals import entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Allowed test subject',
+                'text_0': 'Message for outbox.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'alert-success' in response.rendered_content
+
+        queue = EmailQueue.objects.filter(event=event, is_draft=False).first()
+        assert queue is not None
+        assert str(queue.subject) == 'Allowed test subject'
+
+        assert len(usage_events) == 1
+        sender, kwargs = usage_events[0]
+        assert sender == event.organizer
+        assert kwargs['capability'] == 'email.bulk.monthly'
+        assert kwargs['quantity'] == 1
+        assert kwargs['unit'] == 'emails'
+        assert kwargs['source_type'] == 'ticket_bulk_email'
+        assert kwargs['source_id'] == str(queue.pk)
+        assert kwargs['idempotency_key'] == f'ticket_bulk_mail_{queue.pk}'
+        assert kwargs['event'] == event
+    finally:
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_denied_by_entitlement(logged_in_client, sendmail_url, event, order, pos):
+    from eventyay.base.entitlements import EntitlementDecision
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    def on_check(sender, capability, **kwargs):
+        if capability == 'email.bulk.monthly':
+            return EntitlementDecision(
+                allowed=False,
+                reason_code='limit_reached',
+                message='Monthly bulk email quota exceeded for plan.',
+            )
+        return EntitlementDecision(allowed=True)
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Denied test subject',
+                'text_0': 'This message should not be sent.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'Monthly bulk email quota exceeded for plan.' in response.rendered_content
+        # Ensure temporary queue item was cleaned up and not saved to outbox
+        assert EmailQueue.objects.filter(event=event).count() == 0
+        assert len(usage_events) == 0
+    finally:
+        entitlement_check.disconnect(on_check)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_unique_recipient_deduplication(logged_in_client, sendmail_url, event, order, pos, item):
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    # Create a second order with the same email address in UPPERCASE
+    order2 = Order.objects.create(
+        event=item.event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='DUMMY2',
+        email=order.email.upper(),
+        datetime=now(),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=order2, product=item, price=13)
+
+    check_quantities = []
+
+    def on_check(sender, capability, quantity=1, **kwargs):
+        if capability == 'email.bulk.monthly':
+            check_quantities.append(quantity)
+        return None
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Deduplication test',
+                'text_0': 'Testing deduplicated recipients.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'alert-success' in response.rendered_content
+
+        queue = EmailQueue.objects.filter(event=event, is_draft=False).first()
+        assert queue is not None
+        assert queue.get_recipient_emails() == [order.email.lower()]
+
+        # 2 orders but only 1 unique recipient
+        assert check_quantities == [1]
+        assert len(usage_events) == 1
+        assert usage_events[0][1]['quantity'] == 1
+    finally:
+        entitlement_check.disconnect(on_check)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_draft_and_test_exempt(logged_in_client, sendmail_url, event, order, pos):
+    from eventyay.base.entitlements import EntitlementDecision
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    check_calls = []
+
+    def on_check(sender, capability, **kwargs):
+        check_calls.append((sender, capability, kwargs))
+        if capability == 'email.bulk.monthly':
+            return EntitlementDecision(allowed=False, message='Should not trigger for draft or test')
+        return EntitlementDecision(allowed=True)
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        # 1. Draft save should be exempt
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Draft subject',
+                'text_0': 'Draft message.',
+                'action': 'draft',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'alert-success' in response.rendered_content
+        draft = EmailQueue.objects.filter(event=event, is_draft=True).first()
+        assert draft is not None
+        assert len(check_calls) == 0
+        assert len(usage_events) == 0
+
+        # 2. Preview should be exempt
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Preview subject',
+                'text_0': 'Preview message.',
+                'action': 'preview',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert len(check_calls) == 0
+        assert len(usage_events) == 0
+
+        # 3. Single test email should be exempt
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Test email subject',
+                'text_0': 'Test email message.',
+                'test_email': 'testpreview@example.com',
+                'action': 'test',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'alert-success' in response.rendered_content
+        assert len(check_calls) == 0
+        assert len(usage_events) == 0
+    finally:
+        entitlement_check.disconnect(on_check)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_preserve_existing_draft_on_denial(logged_in_client, sendmail_url, event, order, pos):
+    from eventyay.base.entitlements import EntitlementDecision
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter
+
+    # Create an existing draft
+    draft = EmailQueue.objects.create(
+        event=event,
+        composing_for=ComposingFor.ATTENDEES,
+        subject='Existing Draft Subject',
+        message='Existing Draft Message',
+        is_draft=True,
+    )
+    EmailQueueFilter.objects.create(
+        mail=draft,
+        recipients='orders',
+        order_status=['na'],
+        orders=[order.pk],
+        products=[pos.product_id],
+    )
+
+    def on_check(sender, capability, **kwargs):
+        if capability == 'email.bulk.monthly':
+            return EntitlementDecision(
+                allowed=False,
+                reason_code='limit_reached',
+                message='Quota denied for sending.',
+            )
+        return EntitlementDecision(allowed=True)
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        # User attempts to send the draft to outbox
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'draft_id': draft.pk,
+                'order_status': 'na',
+                'recipients': 'orders',
+                'products': [pos.product_id],
+                'subject_0': 'Updated Draft Subject',
+                'text_0': 'Updated Draft Message',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'Quota denied for sending.' in response.rendered_content
+
+        # Verify draft was NOT deleted and remains marked as draft
+        draft.refresh_from_db()
+        assert draft.is_draft is True
+        assert str(draft.subject) == 'Updated Draft Subject'
+        assert len(usage_events) == 0
+    finally:
+        entitlement_check.disconnect(on_check)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_teams_entitlement_and_deduplication(logged_in_client, event):
+    from eventyay.base.entitlements import EntitlementDecision
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue
+
+    # Create 1 user in 2 teams to verify recipient deduplication across teams
+    u1 = User.objects.create(email='colleague@example.com')
+    team1 = Team.objects.create(organizer=event.organizer, name='Operations', can_view_orders=True)
+    team2 = Team.objects.create(organizer=event.organizer, name='Logistics', can_view_orders=True)
+    team1.members.add(u1)
+    team2.members.add(u1)
+
+    compose_teams_url = reverse(
+        'control:event.mail.compose_teams',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+
+    # 1. Test denial
+    def on_check_deny(sender, capability, **kwargs):
+        if capability == 'email.bulk.monthly':
+            return EntitlementDecision(allowed=False, message='Team email monthly quota exceeded')
+        return EntitlementDecision(allowed=True)
+
+    entitlement_check.connect(on_check_deny)
+    try:
+        response = logged_in_client.post(
+            compose_teams_url,
+            {
+                'teams': [team1.pk, team2.pk],
+                'subject_0': 'Team Update',
+                'message_0': 'Important team update message.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'Team email monthly quota exceeded' in response.rendered_content
+        assert EmailQueue.objects.filter(event=event, composing_for=ComposingFor.TEAMS).count() == 0
+    finally:
+        entitlement_check.disconnect(on_check_deny)
+
+    # 2. Test allowed with recipient deduplication
+    check_quantities = []
+
+    def on_check_allow(sender, capability, quantity=1, **kwargs):
+        if capability == 'email.bulk.monthly':
+            check_quantities.append(quantity)
+        return None
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check_allow)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            compose_teams_url,
+            {
+                'teams': [team1.pk, team2.pk],
+                'subject_0': 'Team Update Allowed',
+                'message_0': 'Important team update message.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'alert-success' in response.rendered_content
+
+        queue = EmailQueue.objects.filter(event=event, composing_for=ComposingFor.TEAMS, is_draft=False).first()
+        assert queue is not None
+        assert queue.get_recipient_emails() == ['colleague@example.com']
+
+        # User was in 2 selected teams but deduplicated to 1 unique recipient
+        assert check_quantities == [1]
+        assert len(usage_events) == 1
+        assert usage_events[0][1]['quantity'] == 1
+        assert usage_events[0][1]['source_type'] == 'ticket_bulk_email'
+        assert usage_events[0][1]['source_id'] == str(queue.pk)
+        assert usage_events[0][1]['idempotency_key'] == f'ticket_bulk_mail_{queue.pk}'
+    finally:
+        entitlement_check.disconnect(on_check_allow)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_teams_preserve_existing_draft_on_denial(logged_in_client, event):
+    from eventyay.base.entitlements import EntitlementDecision
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter
+
+    u = User.objects.create(email='crew@example.com')
+    team = Team.objects.create(organizer=event.organizer, name='Crew', can_view_orders=True)
+    team.members.add(u)
+
+    draft = EmailQueue.objects.create(
+        event=event,
+        composing_for=ComposingFor.TEAMS,
+        subject='Team Draft Subject',
+        message='Team Draft Message',
+        is_draft=True,
+    )
+    EmailQueueFilter.objects.create(
+        mail=draft,
+        teams=[team.pk],
+    )
+
+    compose_teams_url = reverse(
+        'control:event.mail.compose_teams',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+
+    def on_check(sender, capability, **kwargs):
+        if capability == 'email.bulk.monthly':
+            return EntitlementDecision(allowed=False, message='Quota denied for team mail.')
+        return EntitlementDecision(allowed=True)
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            compose_teams_url,
+            {
+                'draft_id': draft.pk,
+                'teams': [team.pk],
+                'subject_0': 'Updated Team Draft Subject',
+                'message_0': 'Updated Team Draft Message',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'Quota denied for team mail.' in response.rendered_content
+
+        draft.refresh_from_db()
+        assert draft.is_draft is True
+        assert str(draft.subject) == 'Updated Team Draft Subject'
+        assert len(usage_events) == 0
+    finally:
+        entitlement_check.disconnect(on_check)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_attendee_whitespace_only_recipients_rejected(logged_in_client, sendmail_url, event, item):
+    from eventyay.base.signals import entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    event.settings.attendee_emails_asked = True
+
+    order_blank = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='BLANK1',
+        email='   ',
+        datetime=now(),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=order_blank, product=item, price=13, attendee_email='   ')
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'both',
+                'products': [item.pk],
+                'subject_0': 'Blank recipient test',
+                'text_0': 'Testing blank recipients rejection.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'There are no valid email addresses for the selected recipients.' in response.rendered_content
+        assert EmailQueue.objects.filter(event=event, is_draft=False).count() == 0
+        assert len(usage_events) == 0
+    finally:
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_team_whitespace_only_recipients_rejected(logged_in_client, event):
+    from eventyay.base.signals import entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    u_blank = User.objects.create(email='   ')
+    team = Team.objects.create(organizer=event.organizer, name='BlankTeam', can_view_orders=True)
+    team.members.add(u_blank)
+
+    compose_teams_url = reverse(
+        'control:event.mail.compose_teams',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            compose_teams_url,
+            {
+                'teams': [team.pk],
+                'subject_0': 'Blank team recipient test',
+                'message_0': 'Testing blank team recipients rejection.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'There are no valid recipients for the selected teams.' in response.rendered_content
+        assert EmailQueue.objects.filter(event=event, is_draft=False).count() == 0
+        assert len(usage_events) == 0
+    finally:
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_mixed_recipients_whitespace_and_duplicates(logged_in_client, sendmail_url, event, item):
+    from eventyay.base.signals import entitlement_check, entitlement_usage_recorded
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    event.settings.attendee_emails_asked = True
+
+    o1 = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='MIX1',
+        email='valid1@example.com',
+        datetime=now(),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=o1, product=item, price=13)
+
+    o2 = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='MIX2',
+        email='   ',
+        datetime=now(),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=o2, product=item, price=13, attendee_email='   ')
+
+    o3 = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='MIX3',
+        email='VALID1@EXAMPLE.COM',
+        datetime=now(),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=o3, product=item, price=13)
+
+    o4 = Order.objects.create(
+        event=event,
+        status=Order.STATUS_PENDING,
+        expires=now() + datetime.timedelta(hours=1),
+        total=13,
+        code='MIX4',
+        email='valid2@example.com',
+        datetime=now(),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=o4, product=item, price=13)
+
+    checked_quantities = []
+
+    def on_check(sender, capability, quantity=1, **kwargs):
+        if capability == 'email.bulk.monthly':
+            checked_quantities.append(quantity)
+        return None
+
+    usage_events = []
+
+    def on_usage(sender, **kwargs):
+        usage_events.append((sender, kwargs))
+
+    entitlement_check.connect(on_check)
+    entitlement_usage_recorded.connect(on_usage)
+    try:
+        response = logged_in_client.post(
+            sendmail_url,
+            {
+                'order_status': 'na',
+                'recipients': 'both',
+                'products': [item.pk],
+                'subject_0': 'Mixed recipient test',
+                'text_0': 'Testing mixed recipients counting.',
+            },
+            follow=True,
+        )
+        assert response.status_code == 200
+        assert 'alert-success' in response.rendered_content
+
+        queue = EmailQueue.objects.filter(event=event, is_draft=False).first()
+        assert queue is not None
+        assert queue.get_recipient_emails() == ['valid1@example.com', 'valid2@example.com']
+        assert not queue.recipients.filter(email='').exists()
+        assert not queue.recipients.filter(email='   ').exists()
+
+        assert checked_quantities == [2]
+        assert len(usage_events) == 1
+        assert usage_events[0][1]['quantity'] == 2
+    finally:
+        entitlement_check.disconnect(on_check)
+        entitlement_usage_recorded.disconnect(on_usage)
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_attendee_serializes_with_organizer_select_for_update(logged_in_client, sendmail_url, event, order, pos, monkeypatch):
+    from eventyay.base.models.organizer import Organizer
+
+    locked_organizers = []
+    real_select_for_update = Organizer.objects.select_for_update
+
+    def spy_select_for_update(*args, **kwargs):
+        qs = real_select_for_update(*args, **kwargs)
+        real_filter = qs.filter
+
+        def spy_filter(*f_args, **f_kwargs):
+            if 'pk' in f_kwargs:
+                locked_organizers.append(f_kwargs['pk'])
+            return real_filter(*f_args, **f_kwargs)
+
+        qs.filter = spy_filter
+        return qs
+
+    monkeypatch.setattr(Organizer.objects, 'select_for_update', spy_select_for_update)
+
+    response = logged_in_client.post(
+        sendmail_url,
+        {
+            'order_status': 'na',
+            'recipients': 'orders',
+            'products': [pos.product_id],
+            'subject_0': 'Locking test subject',
+            'text_0': 'Testing organizer lock serialization.',
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert 'alert-success' in response.rendered_content
+    assert locked_organizers == [event.organizer_id]
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_team_serializes_with_organizer_select_for_update(logged_in_client, event, monkeypatch):
+    from eventyay.base.models.organizer import Organizer
+
+    u = User.objects.create(email='crew_lock@example.com')
+    team = Team.objects.create(organizer=event.organizer, name='LockCrew', can_view_orders=True)
+    team.members.add(u)
+
+    compose_teams_url = reverse(
+        'control:event.mail.compose_teams',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+
+    locked_organizers = []
+    real_select_for_update = Organizer.objects.select_for_update
+
+    def spy_select_for_update(*args, **kwargs):
+        qs = real_select_for_update(*args, **kwargs)
+        real_filter = qs.filter
+
+        def spy_filter(*f_args, **f_kwargs):
+            if 'pk' in f_kwargs:
+                locked_organizers.append(f_kwargs['pk'])
+            return real_filter(*f_args, **f_kwargs)
+
+        qs.filter = spy_filter
+        return qs
+
+    monkeypatch.setattr(Organizer.objects, 'select_for_update', spy_select_for_update)
+
+    response = logged_in_client.post(
+        compose_teams_url,
+        {
+            'teams': [team.pk],
+            'subject_0': 'Team Lock Subject',
+            'message_0': 'Testing team organizer lock.',
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert 'alert-success' in response.rendered_content
+    assert locked_organizers == [event.organizer_id]
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_attendee_draft_to_outbox_logs_enqueue_event(logged_in_client, sendmail_url, event, order, pos, monkeypatch):
+    from eventyay.base.operational_logging import OUTCOME_SUCCESS
+    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter
+
+    draft = EmailQueue.objects.create(
+        event=event,
+        composing_for=ComposingFor.ATTENDEES,
+        subject='Draft Subject to Enqueue',
+        message='Draft Message to Enqueue',
+        is_draft=True,
+    )
+    EmailQueueFilter.objects.create(
+        mail=draft,
+        recipients='orders',
+        order_status=['na'],
+        orders=[order.pk],
+        products=[pos.product_id],
+    )
+
+    logged_events = []
+
+    def spy_log_event(component, action, outcome, **kwargs):
+        logged_events.append({
+            'component': component,
+            'action': action,
+            'outcome': outcome,
+            'kwargs': kwargs,
+        })
+
+    monkeypatch.setattr('eventyay.plugins.sendmail.views.log_event', spy_log_event)
+
+    response = logged_in_client.post(
+        sendmail_url,
+        {
+            'draft_id': draft.pk,
+            'order_status': 'na',
+            'recipients': 'orders',
+            'products': [pos.product_id],
+            'subject_0': 'Sending Draft Subject',
+            'text_0': 'Sending Draft Message',
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert 'alert-success' in response.rendered_content
+
+    draft.refresh_from_db()
+    assert draft.is_draft is False
+
+    enqueue_events = [e for e in logged_events if e['action'] == 'mail.enqueue']
+    assert len(enqueue_events) == 1
+    assert enqueue_events[0]['component'] == 'mail'
+    assert enqueue_events[0]['outcome'] == OUTCOME_SUCCESS
+    assert enqueue_events[0]['kwargs']['event_id'] == event.pk
+    assert enqueue_events[0]['kwargs']['object_id'] == draft.pk
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_sendmail_team_draft_to_outbox_logs_enqueue_event(logged_in_client, event, monkeypatch):
+    from eventyay.base.operational_logging import OUTCOME_SUCCESS
+    from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter
+
+    u = User.objects.create(email='teammate_log@example.com')
+    team = Team.objects.create(organizer=event.organizer, name='LogCrew', can_view_orders=True)
+    team.members.add(u)
+
+    draft = EmailQueue.objects.create(
+        event=event,
+        composing_for=ComposingFor.TEAMS,
+        subject='Team Draft Subject to Enqueue',
+        message='Team Draft Message to Enqueue',
+        is_draft=True,
+    )
+    EmailQueueFilter.objects.create(
+        mail=draft,
+        teams=[team.pk],
+    )
+
+    compose_teams_url = reverse(
+        'control:event.mail.compose_teams',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+
+    logged_events = []
+
+    def spy_log_event(component, action, outcome, **kwargs):
+        logged_events.append({
+            'component': component,
+            'action': action,
+            'outcome': outcome,
+            'kwargs': kwargs,
+        })
+
+    monkeypatch.setattr('eventyay.plugins.sendmail.views.log_event', spy_log_event)
+
+    response = logged_in_client.post(
+        compose_teams_url,
+        {
+            'draft_id': draft.pk,
+            'teams': [team.pk],
+            'subject_0': 'Sending Team Draft Subject',
+            'message_0': 'Sending Team Draft Message',
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert 'alert-success' in response.rendered_content
+
+    draft.refresh_from_db()
+    assert draft.is_draft is False
+
+    enqueue_events = [e for e in logged_events if e['action'] == 'mail.enqueue']
+    assert len(enqueue_events) == 1
+    assert enqueue_events[0]['component'] == 'mail'
+    assert enqueue_events[0]['outcome'] == OUTCOME_SUCCESS
+    assert enqueue_events[0]['kwargs']['event_id'] == event.pk
+    assert enqueue_events[0]['kwargs']['object_id'] == draft.pk
+
+
+@pytest.fixture
+def settings_client(client, event):
+    """A logged-in client whose team may change event settings."""
+    user = User.objects.create_user('settings@dummy.dummy', 'dummy')
+    team = Team.objects.create(
+        organizer=event.organizer,
+        name='Settings team',
+        can_view_orders=True,
+        can_change_orders=True,
+        can_change_event_settings=True,
+    )
+    team.members.add(user)
+    team.limit_events.add(event)
+    client.force_login(user)
+    return client
+
+
+@pytest.mark.django_db
+def test_system_mail_template_form_uses_email_editor(event):
+    """Issue #6585: system ticket templates use the shared Tiptap email editor."""
+    form = MailContentSettingsForm(obj=event, template_key='order_placed')
+
+    # All body fields (contact + separate attendee text) use the rich editor.
+    for field_name in ('mail_text_order_placed', 'mail_text_order_placed_attendee'):
+        widget = form.fields[field_name].widget
+        assert isinstance(widget, I18nEmailEditorWidget)
+        assert widget.attrs.get('data-tiptap-profile') == 'email'
+
+    # Non-body controls keep their original widgets.
+    assert not isinstance(
+        form.fields['mail_send_order_placed_attendee'].widget, I18nEmailEditorWidget
+    )
+
+    # The placeholder menu is scoped to the placeholders available for this field.
+    placed = json.loads(form.fields['mail_text_order_placed'].widget.attrs['data-tiptap-placeholders'])
+    attendee = json.loads(
+        form.fields['mail_text_order_placed_attendee'].widget.attrs['data-tiptap-placeholders']
+    )
+    assert 'event' in placed
+    # The attendee template exposes attendee placeholders; the contact one does not.
+    assert 'attendee_name' in attendee
+    assert 'attendee_name' not in placed
+
+
+@pytest.mark.django_db
+def test_system_mail_template_initial_converted_to_html(event):
+    """Legacy plain-text/Markdown bodies open in the editor as HTML, intact."""
+    with scopes_disabled():
+        event.settings.set(
+            'mail_text_order_placed',
+            LazyI18nString('Hello,\n\nyour order {code}\nis placed.'),
+        )
+
+    form = MailContentSettingsForm(obj=event, template_key='order_placed')
+    initial = str(form.initial['mail_text_order_placed'])
+    # Converted to HTML the editor can load: blank lines split paragraphs, single
+    # newlines become <br> (the editor would otherwise join the lines), and the
+    # placeholder token is intact.
+    assert '<p>Hello,</p>' in initial
+    assert '<p>your order {code}<br>\nis placed.</p>' in initial
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_system_mail_template_edit_renders_editor(settings_client, event):
+    url = reverse(
+        'control:event.mail.templates.system',
+        kwargs={
+            'organizer': event.organizer.slug,
+            'event': event.slug,
+            'template_key': 'order_placed',
+        },
+    )
+    response = settings_client.get(url)
+    assert response.status_code == 200
+    content = response.rendered_content
+    assert 'data-tiptap-profile="email"' in content
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_system_mail_template_save_persists_html(settings_client, event):
+    url = reverse(
+        'control:event.mail.templates.system',
+        kwargs={
+            'organizer': event.organizer.slug,
+            'event': event.slug,
+            'template_key': 'order_changed',
+        },
+    )
+    html_body = '<p>Your order <strong>{code}</strong> changed.</p>'
+    response = settings_client.post(url, {'mail_text_order_changed_0': html_body}, follow=True)
+    assert response.status_code == 200
+    with scopes_disabled():
+        event.settings.flush()
+        saved = str(event.settings.get('mail_text_order_changed'))
+    assert saved == html_body
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_expands_tiptap_html(settings_client, event):
+    """Preview renders editor HTML with formatting kept and placeholders filled."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    body = (
+        '<p>Hi, your order '
+        '<span data-variable="code" class="tiptap-placeholder-chip">{code}</span> '
+        'is <strong>placed</strong>.</p>'
+    )
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': body},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    rendered = data['msgs']['en']
+    # Rich formatting is preserved in the preview.
+    assert '<strong>placed</strong>' in rendered
+    # The placeholder is resolved to its sample value: no raw token or chip remains.
+    assert 'F8VVL' in rendered
+    assert '{code}' not in rendered
+    assert 'data-variable' not in rendered
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_tiptap_uses_template_placeholders(settings_client, event):
+    """Template-specific placeholders (here {comment}) get sample values in the preview."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    body = '<p>Denied: <span data-variable="comment" class="tiptap-placeholder-chip">{comment}</span></p>'
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_order_denied', 'mail_text_order_denied_0': body},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    assert 'An individual text with a reason can be inserted here.' in rendered
+    assert '{comment}' not in rendered
+    assert 'data-variable' not in rendered
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_legacy_orders_list(settings_client, event):
+    """The Markdown {orders} sample still renders as a list in legacy previews."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_resend_all_links', 'mail_text_resend_all_links_0': 'Your orders:\n\n{orders}'},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    assert '<li>' in rendered
+    assert '* ' not in rendered
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_editor_orders_list(settings_client, event):
+    """{orders} still renders as a list once the body was converted to editor HTML."""
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    body = email_body_to_editor_html('Your orders:\n\n{orders}')
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_resend_all_links', 'mail_text_resend_all_links_0': body},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    assert '<li>' in rendered
+    assert '* ' not in rendered
+
+
+def test_render_mail_compiles_orders_list_in_editor_html():
+    """Sent editor-HTML bodies render the Markdown {orders} value as a list."""
+    orders = '\n* DEMO-ABC12 - https://example.com/a\n\n* DEMO-XYZ34 - https://example.com/b'
+    template = LazyI18nString(email_body_to_editor_html('Your orders:\n\n{orders}'))
+    html = compile_email_body(render_mail(template, {'orders': orders}))
+    assert html.count('<li>') == 2
+    assert '* ' not in html
+    # Legacy Markdown bodies keep compiling the list as part of the body.
+    legacy = compile_email_body(render_mail(LazyI18nString('Your orders:\n\n{orders}'), {'orders': orders}))
+    assert legacy.count('<li>') == 2
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+@pytest.mark.parametrize('body', [
+    '<p>{0}</p>',          # positional field
+    '<p>{</p>',            # stray brace
+    '<p>{code[999]}</p>',  # out-of-range index
+    '<p>{code.nope}</p>',  # bad attribute
+    '<p>{code[name]}</p>',  # bad item key on a string
+])
+def test_mail_settings_preview_tiptap_stray_braces_render_literally(settings_client, event, body):
+    """Stray/malformed braces in editor HTML are escaped and rendered literally (no 500, no error).
+
+    ``escape_stray_braces`` doubles any brace that is not a valid ``{placeholder}`` before
+    ``format_map`` runs, so the preview renders gracefully instead of raising.
+    """
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': body},
+    )
+    assert response.status_code == 200
+    assert 'msgs' in response.json()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_mail_settings_preview_escapes_html_in_samples(settings_client, event):
+    """An event name containing HTML is escaped in the preview (no XSS), while the
+    QR sample (explicitly marked safe) still renders as an image."""
+    with scopes_disabled():
+        event.name = LazyI18nString('<img src=x onerror=alert(1)>')
+        event.save()
+
+    url = reverse(
+        'control:event.settings.mail.preview',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+    )
+    response = settings_client.post(
+        url,
+        {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': '<p>{event_name} {ticket_qr}</p>'},
+    )
+    assert response.status_code == 200
+    rendered = response.json()['msgs']['en']
+    # The user-set event name is escaped, not injected as a live tag.
+    assert '<img src=x onerror' not in rendered
+    assert '&lt;img src=x onerror' in rendered
+    # The explicitly trusted QR sample still passes through as an image.
+    assert '<img src="data:image/png' in rendered

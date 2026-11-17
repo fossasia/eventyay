@@ -1,11 +1,11 @@
 import logging
 import warnings
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.http import Http404, HttpRequest
-from django.urls import resolve
-from django.utils import translation
+from django.urls import Resolver404, resolve
 from django.utils.translation import gettext_lazy as _
 from django_scopes import get_scope
 
@@ -14,7 +14,7 @@ from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
-from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
+from eventyay.helpers.i18n import get_html_locale, get_javascript_format, get_moment_locale, is_rtl
 
 from .language import get_ui_language_options
 from .text.phrases import phrases
@@ -58,13 +58,22 @@ def locale_context(request):
         'language_options': language_options,
     }
 
-    lang = translation.get_language()
-    try:
-        lang_info = translation.get_language_info(lang)
-        context['html_locale'] = lang_info.get('public_code', lang)
-    except KeyError:
-        context['html_locale'] = lang
+    context['html_locale'] = get_html_locale()
     return context
+
+
+def main_site_route_exists(url: str) -> bool:
+    """Return whether a main-site path has a route of its own, not the organizer catch-all."""
+    if not url.startswith('/') or url.startswith('//'):
+        return True
+    path = urlsplit(url).path
+    for candidate in (path, path if path.endswith('/') else f'{path}/'):
+        try:
+            match = resolve(candidate, urlconf=settings.ROOT_URLCONF)
+        except Resolver404:
+            continue
+        return 'organizer' not in match.kwargs
+    return False
 
 
 def messages(request):
@@ -130,6 +139,9 @@ def system_information(request):
     for key, label, default_url in core_footer_items:
         enabled = gs.get(f'footer_link_{key}_enabled', as_type=bool, default=True)
         url = gs.get(f'footer_link_{key}_url', as_type=str, default=default_url).strip()
+        if key == 'pricing' and not main_site_route_exists(url):
+            # Core has no pricing page; a plugin such as eventyay-business provides it.
+            continue
         if enabled and url:
             core_footer_links.append({
                 'key': key,

@@ -13,6 +13,8 @@ const detectBrowserTimezone = () => {
     }
 };
 
+const formatTimezoneLabel = (timezone) => timezone.replace(/_/g, ' ');
+
 const setBrowserTimezoneFields = () => {
     const timezone = detectBrowserTimezone();
     document.querySelectorAll('.browser-timezone-field').forEach((field) => {
@@ -25,13 +27,13 @@ const updateIndicator = () => {
     if (!indicator) {
         return;
     }
-    indicator.textContent = `(${detectBrowserTimezone()})`;
+    indicator.textContent = `(${formatTimezoneLabel(detectBrowserTimezone())})`;
 };
 
 const updateInlineIndicators = () => {
     const timezone = detectBrowserTimezone();
     document.querySelectorAll('.tz-indicator-inline').forEach((element) => {
-        element.textContent = `(${timezone})`;
+        element.textContent = `(${formatTimezoneLabel(timezone)})`;
     });
 };
 
@@ -51,7 +53,16 @@ const convertDateTimes = () => {
                 minute: '2-digit',
                 hour12: false,
             });
-            cell.textContent = formatted;
+            // Replace only the server-rendered date text: the cell may also hold the
+            // time zone indicator or a sales channel icon, which must stay.
+            const dateText = [...cell.childNodes].find(
+                (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+            );
+            if (dateText) {
+                dateText.textContent = dateText.textContent.replace(dateText.textContent.trim(), formatted);
+            } else {
+                cell.prepend(formatted);
+            }
         } catch (e) {
             console.error("timezone.js failed to convert datetime:", e);
             // Swallow parsing exceptions so server-rendered content remains intact.
@@ -76,4 +87,4 @@ if (document.readyState === 'loading') {
     initTimezoneUtilities();
 }
 
-export { detectBrowserTimezone, setBrowserTimezoneFields, updateIndicator, updateInlineIndicators, convertDateTimes };
+export { detectBrowserTimezone, formatTimezoneLabel, setBrowserTimezoneFields, updateIndicator, updateInlineIndicators, convertDateTimes };

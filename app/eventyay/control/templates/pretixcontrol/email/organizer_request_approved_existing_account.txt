@@ -1,0 +1,9 @@
+{% load i18n %}
+{% autoescape off %}
+{% blocktranslate with organizer_name=organizer_name email=email %}Your request for the organiser "{{ organizer_name }}" has been approved. The organiser has been added to your existing Eventyay account ({{ email }}).{% endblocktranslate %}
+
+{% translate 'Open your organiser:' %}
+[{% translate 'Open your organiser dashboard' %}]({{ organizer_url }})
+
+{% blocktranslate %}If prompted, sign in with your existing Eventyay account. You do not need to create a new account or set a new password.{% endblocktranslate %}
+{% endautoescape %}

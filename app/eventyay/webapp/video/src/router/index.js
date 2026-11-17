@@ -192,6 +192,11 @@ const routes = [
 				}]
 			},
 			{
+				path: 'event/interpretation',
+				name: 'admin:interpretation',
+				component: () => import('views/admin/interpretation')
+			},
+			{
 				path: 'event/kiosks',
 				name: 'admin:kiosks:index',
 				component: () => import('views/admin/kiosks/index')
@@ -273,6 +278,11 @@ export function checkRoutePermission(to) {
 				room.modules?.some(module => ['channel.janus', 'channel.zoom', 'channel.jitsi'].includes(module.type))
 			if (isChatRoom) return false
 		}
+	}
+	if (name === 'admin:interpretation') {
+		if (!store.getters.isInterpretationEnabled) return false
+		const isOrganizer = Boolean(window.eventyay?.isOrganizerArea && window.eventyay?.hasOrganiserPermissions)
+		return isOrganizer || isAdmin || hasPerm('world:update')
 	}
 	if (isAdmin) return true
 	if (name === 'admin:config') {

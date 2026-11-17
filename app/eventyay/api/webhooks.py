@@ -15,6 +15,7 @@ from requests import RequestException
 
 from eventyay.api.models import WebHook, WebHookCall, WebHookEventListener
 from eventyay.api.signals import register_webhook_events
+from eventyay.base.entitlements import check_entitlement
 from eventyay.base.models import LogEntry
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
@@ -262,6 +263,7 @@ def register_default_webhook_events(sender, **kwargs):
 
 @app.task(base=TransactionAwareTask, max_retries=9, default_retry_delay=900, acks_late=True)
 def notify_webhooks(logentry_ids: list):
+    """Queue webhook deliveries for eligible log entries subject to plan entitlements."""
     if not isinstance(logentry_ids, list):
         logentry_ids = [logentry_ids]
     qs = LogEntry.all.select_related('event', 'event__organizer').filter(id__in=logentry_ids)
@@ -276,6 +278,9 @@ def notify_webhooks(logentry_ids: list):
         if not notification_type:
             logger.debug('Skipping webhook notification for log entry %d: no matching webhook event type for %s', logentry.id, logentry.action_type)
             continue  # Ignore, no webhooks for this event type
+
+        if not check_entitlement(logentry.organizer, 'api.webhooks', event=logentry.event).allowed:
+            continue
 
         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
             _org = logentry.organizer
@@ -297,11 +302,15 @@ def notify_webhooks(logentry_ids: list):
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
+    """Deliver or retry a webhook call after verifying current plan entitlements."""
     # 9 retries with 2**(2*x) timing is roughly 72 hours
     with scopes_disabled():
         webhook = WebHook.objects.get(id=webhook_id)
     with scope(organizer=webhook.organizer):
-        logentry = LogEntry.all.get(id=logentry_id)
+        logentry = LogEntry.all.select_related('event').get(id=logentry_id)
+        # Recheck queued deliveries and retries after a plan change.
+        if not check_entitlement(webhook.organizer, 'api.webhooks', event=logentry.event).allowed:
+            return
         types = get_all_webhook_events()
         event_type = types.get(action_type)
         if not event_type or not webhook.enabled:

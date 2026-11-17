@@ -1,9 +1,11 @@
+import csv
 import html
 import io
 import json
 import logging
 import operator
 import re
+import tempfile
 from collections import OrderedDict
 from decimal import Decimal, InvalidOperation
 from itertools import groupby
@@ -14,7 +16,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from django.forms import inlineformset_factory
 from django.http import (
     Http404,
@@ -27,7 +29,8 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.timezone import now
+from django.utils.html import strip_tags
+from django.utils.timezone import localtime, now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, FormView, ListView
@@ -58,6 +61,7 @@ from eventyay.base.signals import register_ticket_outputs
 from eventyay.base.templatetags.rich_text import (
     expand_email_preview_placeholders,
     is_placeholder_html_sample,
+    is_tiptap_email_html,
     markdown_compile_email,
 )
 from eventyay.control.forms.event import (
@@ -814,6 +818,12 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             return self.get(request)
 
 
+# Exceptions a malformed mail template can raise while interpolating
+# placeholders (str.format_map / attribute / index lookups on sample values).
+# They are turned into a 400 validation response instead of an HTTP 500.
+TEMPLATE_FORMAT_ERRORS = (ValueError, KeyError, IndexError, AttributeError, TypeError)
+
+
 class MailSettingsPreview(EventPermissionRequiredMixin, View):
     permission = 'can_change_event_settings'
 
@@ -837,9 +847,12 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
         url_pattern = re.compile(r'^(https?://|www\.)[^\s]+$')
 
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
-            s = str(p.render_sample(self.request.event)).strip()
+            sample = p.render_sample(self.request.event)
+            s = str(sample).strip()
 
-            if s.startswith('*') or is_placeholder_html_sample(s):
+            # Markdown list samples (e.g. {orders}) stay raw so markdown_compile_email
+            # renders the list; its output is bleach-cleaned either way.
+            if s.startswith('*') or is_placeholder_html_sample(sample):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
                 ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
@@ -849,6 +862,19 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
                     html.escape(s),
                 )
         return self.SafeDict(ctx)
+
+    @staticmethod
+    def _invalid_template_response():
+        return JsonResponse(
+            {
+                'error': _(
+                    'Invalid email template! '
+                    'Please check that you don’t have stray { or } somewhere, '
+                    'and that there are no spaces inside the {} blocks.'
+                )
+            },
+            status=400,
+        )
 
     def post(self, request, *args, **kwargs):
         preview_product = request.POST.get('product', '')
@@ -871,21 +897,27 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
             if matched is not None:
                 idx = matched.group('idx')
                 if idx in self.supported_locale:
-                    with language(self.supported_locale[idx], self.request.event.settings.region):
+                    locale = self.supported_locale[idx]
+                    with language(locale, self.request.event.settings.region):
+                        if is_tiptap_email_html(v):
+                            # Bodies edited with the Tiptap email editor are already
+                            # HTML; sanitize, then expand {placeholder} tokens and chips.
+                            safe_html = sanitize_email_html(v)
+                            try:
+                                msgs[locale] = expand_email_preview_placeholders(
+                                    safe_html,
+                                    self.request.event,
+                                    locale=locale,
+                                    base_parameters=MailSettingsForm.base_context[preview_product],
+                                )
+                            except TEMPLATE_FORMAT_ERRORS:
+                                return self._invalid_template_response()
+                            continue
                         try:
                             formatted = v.format_map(self.placeholders(preview_product))
-                        except ValueError:
-                            return JsonResponse(
-                                {
-                                    'error': _(
-                                        'Invalid email template! '
-                                        'Please check that you don’t have stray { or } somewhere, '
-                                        'and that there are no spaces inside the {} blocks.'
-                                    )
-                                },
-                                status=400,
-                            )
-                        msgs[self.supported_locale[idx]] = markdown_compile_email(formatted)
+                        except TEMPLATE_FORMAT_ERRORS:
+                            return self._invalid_template_response()
+                        msgs[locale] = markdown_compile_email(formatted)
 
         return JsonResponse({'product': preview_product, 'msgs': msgs})
 
@@ -947,7 +979,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
        Returns ``{ "previews": { "en": "...", "de": "..." } }``.
     """
 
-    permission = ('can_change_orders', 'can_change_event_settings')
+    permission = ('can_change_orders', 'can_change_event_settings', 'can_change_vouchers')
 
     def post(self, request, *args, **kwargs):
         content_type = request.content_type or ''
@@ -971,7 +1003,12 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             return HttpResponseBadRequest('locale must be a string')
 
         safe_html = sanitize_email_html(raw_html)
-        preview_html = expand_email_preview_placeholders(safe_html, request.event, locale=locale or None)
+        preview_html = expand_email_preview_placeholders(
+            safe_html,
+            request.event,
+            locale=locale or None,
+            preview_context=request.GET.get('context'),
+        )
         return JsonResponse({'html': preview_html})
 
     def _handle_form(self, request):
@@ -986,7 +1023,12 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             if not body:
                 continue
             safe_html = sanitize_email_html(body)
-            previews[locale] = expand_email_preview_placeholders(safe_html, event, locale=locale)
+            previews[locale] = expand_email_preview_placeholders(
+                safe_html,
+                event,
+                locale=locale,
+                preview_context=request.GET.get('context'),
+            )
 
         if not previews:
             body = request.POST.get('body', '')
@@ -994,7 +1036,9 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
                 safe_html = sanitize_email_html(body)
                 event_locales = list(event.settings.locales)
                 previews[event_locales[0] if event_locales else 'en'] = expand_email_preview_placeholders(
-                    safe_html, event
+                    safe_html,
+                    event,
+                    preview_context=request.GET.get('context'),
                 )
 
         return JsonResponse({'previews': previews})
@@ -1228,6 +1272,19 @@ class EventDelete(RecentAuthenticationRequiredMixin, EventPermissionRequiredMixi
         return reverse('eventyay_common:dashboard')
 
 
+def _csv_text(value):
+    """Keep spreadsheet apps from running exported text as a formula."""
+    value = str(value)
+    if value.startswith(('\t', '\r', '\n')) or value.lstrip().startswith(('=', '+', '-', '@')):
+        return f"'{value}"
+    return value
+
+
+def _csv_plain_text(value):
+    """Export the text of a value the page shows as HTML, such as a link to an object."""
+    return _csv_text(html.unescape(strip_tags(str(value))))
+
+
 class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
     template_name = 'pretixcontrol/event/logs.html'
     model = LogEntry
@@ -1293,11 +1350,85 @@ class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
             if self.request.GET.get('object'):
                 qs = qs.filter(object_id=self.request.GET.get('object'))
 
+        query = self.request.GET.get('q', '').strip()
+        if query:
+            search_filter = (
+                Q(action_type__icontains=query)
+                | Q(user__fullname__icontains=query)
+                | Q(user__email__icontains=query)
+                | Q(device__name__icontains=query)
+                | Q(api_token__name__icontains=query)
+                | Q(oauth_application__name__icontains=query)
+            )
+            if self.request.user.has_active_staff_session(
+                self.request.session.session_key
+            ):
+                search_filter |= Q(data__icontains=query)
+
+            qs = qs.filter(search_filter)
+
         return qs
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('download', '') == 'yes':
+            return self._download_csv()
+        return super().get(request, *args, **kwargs)
+
+    def _download_csv(self):
+        """Export every log entry that matches the current filters, not only the current page.
+
+        The rows are written to a temporary file, which moves to disk once it gets
+        large, and the log entries are loaded in chunks, so a long log does not
+        have to fit into memory.
+        """
+        output = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
+        text = io.TextIOWrapper(output, encoding='utf-8', newline='')
+        writer = csv.writer(text, quoting=csv.QUOTE_NONNUMERIC, delimiter=',')
+        writer.writerow([_('Date'), _('User'), _('Object'), _('Action')])
+
+        logs = self.get_queryset().prefetch_related('content_object')
+        for log in logs.iterator(chunk_size=500):
+            if log.user:
+                user = log.user.get_full_name()
+                if log.oauth_application:
+                    user = f'{user} ({log.oauth_application.name})'
+            elif log.device:
+                user = log.device.name
+            elif log.api_token:
+                user = log.api_token.name
+            else:
+                user = ''
+            writer.writerow(
+                [
+                    localtime(log.datetime).replace(microsecond=0).isoformat(),
+                    _csv_text(user),
+                    _csv_plain_text(log.display_object),
+                    _csv_plain_text(log.display()),
+                ]
+            )
+
+        text.flush()
+        text.detach()
+        output.seek(0)
+        return FileResponse(
+            output,
+            as_attachment=True,
+            filename=f'{self.request.event.slug}-logs.csv',
+            content_type='text/csv',
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
-        ctx['userlist'] = self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
+        params = self.request.GET.copy()
+        params.pop('q', None)
+        params.pop('page', None)
+        ctx['clear_search_query'] = params.urlencode()
+        # String ids, so the template can compare them with request.GET['user'].
+        ctx['userlist'] = [
+            {'user__id': str(row['user__id']), 'user__email': row['user__email']}
+            for row in self.request.event.logentry_set.order_by().distinct().values('user__id', 'user__email')
+            if row['user__id']
+        ]
         ctx['devicelist'] = (
             self.request.event.logentry_set.order_by('device__name').distinct().values('device__id', 'device__name')
         )

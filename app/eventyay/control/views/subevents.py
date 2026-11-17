@@ -236,8 +236,10 @@ class SubEventEditorMixin(MetaDataEditorMixin):
                     'all_products': cl.all_products,
                     'limit_products': cl.limit_products.all(),
                     'include_pending': cl.include_pending,
+                    'allow_entry_after_exit': cl.allow_entry_after_exit,
+                    'gates': cl.gates.all(),
                 }
-                for cl in self.copy_from.checkinlist_set.prefetch_related('limit_products')
+                for cl in self.copy_from.checkinlist_set.prefetch_related('limit_products', 'gates')
             ]
             extra = len(kwargs['initial'])
         elif not self.object and self.request.method != 'POST':
@@ -990,6 +992,7 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
         Quota.variations.through.objects.bulk_create(to_save_variations)
 
         to_save_products = []
+        to_save_gates = []
         for f in self.cl_formset.forms:
             if self.cl_formset._should_delete_form(f) or not f.has_changed():
                 continue
@@ -1001,6 +1004,8 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
                 i.save()
                 for _i in f.cleaned_data.get('limit_products', []):
                     to_save_products.append(CheckinList.limit_products.through(checkinlist_id=i.pk, product_id=_i.pk))
+                for _i in f.cleaned_data.get('gates', []):
+                    to_save_gates.append(CheckinList.gates.through(checkinlist_id=i.pk, gate_id=_i.pk))
 
                 change_data['id'] = i.pk
                 log_entries.append(
@@ -1012,6 +1017,7 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
                     )
                 )
         CheckinList.limit_products.through.objects.bulk_create(to_save_products)
+        CheckinList.gates.through.objects.bulk_create(to_save_gates)
 
         for f in self.plugin_forms:
             f.is_valid()
@@ -1278,7 +1284,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                         if 'limit_products' in f.changed_data:
                             q.limit_products.set(f.cleaned_data.get('limit_products', []))
                         if 'gates' in f.changed_data:
-                            q.gates.set(f.cleaned_data.get('limit_products', []))
+                            q.gates.set(f.cleaned_data.get('gates', []))
                         log_entries.append(
                             q.log_action(
                                 action='eventyay.event.checkinlist.changed',

@@ -3,16 +3,18 @@ import decimal
 import json
 
 from django.core import mail as djmail
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
+from eventyay.multidomain.urlreverse import build_absolute_uri
 
 from eventyay.base.models import (
     Event,
     Product as Item,
     ProductVariation as ItemVariation,
+    LogEntry,
     Order,
     OrderPosition,
     Organizer,
@@ -107,15 +109,17 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         doc = self.client.get('/control/event/%s/%s/vouchers/' % (self.orga.slug, self.event.slug))
         assert 'ABCDEFG' in doc.content.decode()
 
+    @override_settings(SITE_URL='https://testserver')
     def test_csv(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
+            self.event.vouchers.create(product=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
         doc = self.client.get('/control/event/%s/%s/vouchers/?download=yes' % (self.orga.slug, self.event.slug))
+        link = build_absolute_uri(self.event, 'presale:event.redeem') + '?voucher=ABCDEFG'
         assert (
-            doc.content.decode().strip() == '"Voucher code","Valid until","Product","Reserve quota",'
+            doc.content.decode().strip() == '"Voucher code","Voucher link","Valid until","Product","Reserve quota",'
             '"Bypass quota","Bypass approval","Price effect","Value","Tag","Redeemed",'
             '"Maximum usages","Seat","Comment"'
-            '\r\n"ABCDEFG","","Early-bird ticket","No","No","Yes","No effect","","","0",'
+            f'\r\n"ABCDEFG","{link}","","Early-bird ticket","No","No","Yes","No effect","","","0",'
             '"1","",""'
         )
 
@@ -561,6 +565,22 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             expected_failure=True,
         )
 
+    def test_create_bulk_send_includes_redemption_urls(self):
+        self._create_bulk_vouchers(
+            {
+                'codes': 'ABCDE\nDEFGH',
+                'itemvar': '%d' % self.shirt.pk,
+                'send': 'on',
+                'send_subject': 'Your voucher',
+                'send_message': 'Redeem here: {voucher_url}',
+                'send_recipients': 'foo@example.com\nfoo@example.net',
+            }
+        )
+        assert len(djmail.outbox) == 2
+        bodies = [m.body for m in djmail.outbox]
+        assert any('/redeem/?voucher=ABCDE' in body for body in bodies)
+        assert any('/redeem/?voucher=DEFGH' in body for body in bodies)
+
     def test_create_bulk_send(self):
         self._create_bulk_vouchers(
             {
@@ -577,6 +597,24 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         assert len([m for m in djmail.outbox if m.to == ['foo@example.net']]) == 1
         assert len([m for m in djmail.outbox if 'ABCDE' in m.body]) == 1
         assert len([m for m in djmail.outbox if 'DEFGH' in m.body]) == 1
+
+    def test_create_bulk_send_preserves_comment(self):
+        self._create_bulk_vouchers(
+            {
+                'codes': 'COMM1\nCOMM2',
+                'itemvar': '%d' % self.shirt.pk,
+                'comment': 'Reserved for VIP',
+                'send': 'on',
+                'send_subject': 'Your voucher',
+                'send_message': 'Voucher list: {voucher_list}',
+                'send_recipients': 'vip1@example.com\nvip2@example.com',
+            }
+        )
+        with scope(organizer=self.orga, event=self.event):
+            v1 = self.event.vouchers.get(code='COMM1')
+            v2 = self.event.vouchers.get(code='COMM2')
+        assert v1.comment == 'Reserved for VIP\n\nThe voucher has been sent to vip2@example.com.'
+        assert v2.comment == 'Reserved for VIP\n\nThe voucher has been sent to vip1@example.com.'
 
     def test_create_bulk_send_csv(self):
         self._create_bulk_vouchers(
@@ -736,6 +774,133 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             follow=True,
         )
         assert doc.select('.alert-danger')
+
+    def test_group_edit_applies_representative_price_to_all_vouchers(self):
+        with scope(event=self.event):
+            first = self.event.vouchers.create(
+                code='GROUPONE',
+                tag='group',
+                product=self.ticket,
+                value=decimal.Decimal('5.00'),
+                price_mode='subtract',
+                allow_ignore_quota=True,
+            )
+            second = self.event.vouchers.create(
+                code='GROUPTWO',
+                tag='group',
+                product=self.ticket,
+                value=decimal.Decimal('20.00'),
+                price_mode='subtract',
+                allow_ignore_quota=True,
+            )
+        url = '/control/event/%s/%s/vouchers/%s/group_edit' % (self.orga.slug, self.event.slug, first.pk)
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['value'] = '5.00'
+        preview = self.post_doc(url, form_data)
+        assert '2 vouchers will be updated' in preview.text
+        form_data['confirm'] = '1'
+        self.post_doc(url, form_data)
+        with scope(event=self.event):
+            assert self.event.vouchers.get(pk=second.pk).value == decimal.Decimal('5.00')
+            assert LogEntry.objects.filter(
+                action_type='eventyay.voucher.changed',
+                object_id__in=[first.pk, second.pk],
+            ).count() == 2
+
+    def test_group_edit_changes_product_and_logs_each_voucher(self):
+        with scope(event=self.event):
+            first = self.event.vouchers.create(
+                code='GROUPTHREE',
+                tag='product-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+            second = self.event.vouchers.create(
+                code='GROUPFOUR',
+                tag='product-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+        url = '/control/event/%s/%s/vouchers/%s/group_edit' % (self.orga.slug, self.event.slug, first.pk)
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['productvar'] = str(self.shirt.pk)
+        preview = self.post_doc(url, form_data)
+        assert '2 vouchers will be updated' in preview.text
+        form_data['confirm'] = '1'
+        self.post_doc(url, form_data)
+        with scope(event=self.event):
+            assert self.event.vouchers.filter(pk__in=[first.pk, second.pk], product=self.shirt).count() == 2
+            assert LogEntry.objects.filter(
+                action_type='eventyay.voucher.changed',
+                object_id__in=[first.pk, second.pk],
+            ).count() == 2
+
+    def test_group_edit_keeps_mixed_tags_when_expiry_changes(self):
+        expiry = (now() + datetime.timedelta(days=10)).replace(microsecond=0)
+        with scope(event=self.event):
+            first = self.event.vouchers.create(
+                code='TAGONE',
+                tag='first-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+            second = self.event.vouchers.create(
+                code='TAGTWO',
+                tag='second-group',
+                product=self.ticket,
+                allow_ignore_quota=True,
+            )
+        url = '/control/event/%s/%s/vouchers/%s/group_edit' % (self.orga.slug, self.event.slug, first.pk)
+        doc = self.get_doc(url)
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data.update(
+            {
+                'voucher_group': [first.pk, second.pk],
+                'valid_until_0': f'{expiry:%Y-%m-%d}',
+                'valid_until_1': f'{expiry:%H:%M:%S}',
+            }
+        )
+        preview = self.post_doc(url, form_data)
+        assert '2 vouchers will be updated' in preview.text
+        form_data['confirm'] = '1'
+        self.post_doc(url, form_data)
+        with scope(event=self.event):
+            assert self.event.vouchers.get(pk=first.pk).tag == 'first-group'
+            assert self.event.vouchers.get(pk=second.pk).tag == 'second-group'
+            assert self.event.vouchers.filter(pk__in=[first.pk, second.pk], valid_until=expiry).count() == 2
+
+    def test_voucher_bulk_delete_confirmation_and_execution(self):
+        with scope(event=self.event):
+            unused_1 = self.event.vouchers.create(code='UNUSED1', product=self.ticket)
+            unused_2 = self.event.vouchers.create(code='UNUSED2', product=self.ticket)
+            used = self.event.vouchers.create(code='USED1', product=self.ticket, redeemed=1)
+        url = '/control/event/%s/%s/vouchers/bulk_action' % (self.orga.slug, self.event.slug)
+
+        doc = self.post_doc(url, {'action': 'delete', 'voucher': [unused_1.pk, unused_2.pk, used.pk]})
+        assert '2 unused vouchers will be deleted.' in doc.text
+        assert '1 used voucher will be kept.' in doc.text
+        confirm_btn = doc.select_one('button[value="delete_confirm"]')
+        assert confirm_btn is not None
+        assert 'disabled' not in confirm_btn.attrs
+        assert 'Delete 2 vouchers' in confirm_btn.text
+
+        doc_singular = self.post_doc(url, {'action': 'delete', 'voucher': [unused_1.pk, used.pk]})
+        assert '1 unused voucher will be deleted.' in doc_singular.text
+        confirm_btn_singular = doc_singular.select_one('button[value="delete_confirm"]')
+        assert 'Delete 1 voucher' in confirm_btn_singular.text
+
+        doc_zero = self.post_doc(url, {'action': 'delete', 'voucher': [used.pk]})
+        assert '0 unused vouchers will be deleted.' in doc_zero.text
+        confirm_btn_zero = doc_zero.select_one('button[value="delete_confirm"]')
+        assert 'disabled' in confirm_btn_zero.attrs
+
+        self.post_doc(url, {'action': 'delete_confirm', 'voucher': [unused_1.pk, used.pk]}, follow=True)
+        with scope(event=self.event):
+            assert not self.event.vouchers.filter(pk=unused_1.pk).exists()
+            assert self.event.vouchers.filter(pk=used.pk).exists()
+            assert self.event.vouchers.filter(pk=unused_2.pk).exists()
 
     def test_subevent_optional(self):
         self.event.has_subevents = True
@@ -917,3 +1082,60 @@ class InvoiceVoucherFormTest(TestCase):
         )
         assert f.is_valid(), f.errors
 
+
+@override_settings(SITE_URL='https://testserver')
+class VoucherFilterEmptyStateTest(SoupTestMixin, TestCase):
+    @scopes_disabled()
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
+        self.orga = Organizer.objects.create(name='CCC', slug='ccc')
+        self.event = Event.objects.create(
+            organizer=self.orga,
+            name='30C3',
+            slug='30c3',
+            date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
+        )
+        t = Team.objects.create(organizer=self.orga, can_view_vouchers=True, can_change_vouchers=True)
+        t.members.add(self.user)
+        t.limit_events.add(self.event)
+        self.client.login(email='dummy@dummy.dummy', password='dummy')
+
+        self.ticket = Item.objects.create(event=self.event, name='Early-bird ticket', default_price=23)
+        self.shirt = Item.objects.create(event=self.event, name='T-Shirt', default_price=12)
+
+    def test_filter_empty_state_quota_handling(self):
+        with scopes_disabled():
+            self.event.vouchers.create(product=self.ticket, code='TESTVOUCHERQM', block_quota=False)
+        response = self.client.get(
+            '/control/event/%s/%s/vouchers/?qm=b' % (self.orga.slug, self.event.slug),
+            follow=True,
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Your search did not match any vouchers.' in content
+        assert "You haven't created any vouchers yet." not in content
+        assert 'TESTVOUCHERQM' not in content
+
+    def test_filter_empty_state_product(self):
+        with scopes_disabled():
+            self.event.vouchers.create(product=self.ticket, code='TESTVOUCHERPROD')
+        response = self.client.get(
+            '/control/event/%s/%s/vouchers/?productvar=%s' % (self.orga.slug, self.event.slug, self.shirt.pk),
+            follow=True,
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Your search did not match any vouchers.' in content
+        assert "You haven't created any vouchers yet." not in content
+        assert 'TESTVOUCHERPROD' not in content
+
+    def test_empty_state_no_filter(self):
+        response = self.client.get(
+            '/control/event/%s/%s/vouchers/' % (self.orga.slug, self.event.slug),
+            follow=True,
+        )
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "You haven't created any vouchers yet." in content
+        assert 'Your search did not match any vouchers.' not in content

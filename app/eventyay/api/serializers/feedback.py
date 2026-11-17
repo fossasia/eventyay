@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
@@ -61,7 +62,17 @@ class FeedbackSerializer(I18nAwareModelSerializer):
         return AuthorSerializer(obj.author).data
 
     def get_replies(self, obj):
+        """Return published replies visible to organisers or their target speakers."""
         if obj.parent_id is None:
-            replies = obj.replies.filter(status='published').order_by('created')
-            return FeedbackReplySerializer(replies, many=True).data
+            replies = obj.replies.filter(status='published').select_related('author').order_by('created')
+            request = self.context.get('request')
+            if not request or not request.user.has_perm('base.orga_list_submission', request.event):
+                if request and request.user.is_authenticated:
+                    replies = replies.filter(
+                        Q(is_public=True)
+                        | (Q(talk__speakers=request.user) & (Q(speaker=request.user) | Q(speaker__isnull=True)))
+                    ).distinct()
+                else:
+                    replies = replies.filter(is_public=True)
+            return FeedbackReplySerializer(replies, many=True, context=self.context).data
         return []

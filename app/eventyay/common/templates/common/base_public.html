@@ -10,6 +10,7 @@
 {% load eventurl %}
 {% load nav_tags %}
 {% load thumb %}
+{% load timezone %}
 {% load rich_text %}
 
 {% with current_event=request.event|default:None %}
@@ -62,7 +63,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_reset.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/base.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
-            <link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />
+            {% block public_fonts_stylesheet %}<link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />{% endblock public_fonts_stylesheet %}
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_tooltip.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_pretalx.css" %}" />
@@ -100,6 +101,7 @@
         <meta id="eventyay-file-input-i18n" data-choose-file="{% translate 'Choose file' %}">
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
+        {% include 'common/includes/external_links.html' %}
     </head>
     <body {% block body_attrs %}data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"{% endblock %}>
         {% block body_top %}{% endblock body_top %}
@@ -148,7 +150,7 @@
                             {% endblocktranslate %}
                         {% elif tickets_private_testmode and talks_private_testmode %}
                             {% blocktranslate trimmed %}
-                                Tickets and talk pages are in private test mode. Only event team members and system administrators can see them.
+                                Tickets and talk pages are in private test mode. Only event team members, system administrators and invited speakers can view this page.
                             {% endblocktranslate %}
                         {% elif tickets_private_testmode %}
                             {% blocktranslate trimmed %}
@@ -156,7 +158,7 @@
                             {% endblocktranslate %}
                         {% else %}
                             {% blocktranslate trimmed %}
-                                Talk pages are in private test mode. Only event team members and system administrators can see them.
+                                The talks feature is in test mode, only team member administrators and invited speaker can view this page.
                             {% endblocktranslate %}
                         {% endif %}
                     </div>
@@ -212,7 +214,7 @@
                                                 {% timezone tz_name %}
                                                     <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                         {% if current_event.settings.show_times %}
-                                                            {{ current_event.date_from|date:"l, j F, Y" }} {{ current_event.date_from|date:"TIME_FORMAT" }} ({{ tz_name }})
+                                                            {{ current_event.date_from|date:"l, j F, Y" }} {{ current_event.date_from|date:"TIME_FORMAT" }} ({{ tz_name|timezone_display }})
                                                         {% else %}
                                                             {{ current_event.date_from|date:"l, j F, Y" }}
                                                         {% endif %}
@@ -220,7 +222,7 @@
                                                     {% if current_event.settings.show_date_to and current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
                                                         <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                             {% if current_event.settings.show_times %}
-                                                                {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }} {{ current_event.date_to|date:"TIME_FORMAT" }} ({{ tz_name }})
+                                                                {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }} {{ current_event.date_to|date:"TIME_FORMAT" }} ({{ tz_name|timezone_display }})
                                                             {% else %}
                                                                 {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y" }}
                                                             {% endif %}

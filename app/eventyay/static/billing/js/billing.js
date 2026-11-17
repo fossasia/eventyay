@@ -146,7 +146,12 @@ $(document).ready(function () {
                 return response.json();
             }).then(data => {
                 notification.style.display = 'block';
-                notification.innerText = 'Payment information saved successfully.';
+                if (data.billing_integration_notified === false) {
+                    notification.innerText = 'Payment information saved, but automatic billing setup could not be completed. Please contact support.';
+                    notification.style.color = 'darkorange';
+                    return;
+                }
+                notification.innerText = 'Payment information saved.';
                 notification.style.color = 'green';
                 window.location.reload()
             })

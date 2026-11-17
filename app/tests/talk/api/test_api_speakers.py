@@ -3,9 +3,10 @@ import json
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import SpeakerProfile
+from eventyay.base.models import Answer, SpeakerProfile, Submission, User
+from eventyay.base.models import TalkQuestion as Question
+from eventyay.base.models import TalkQuestionTarget as QuestionTarget
 from eventyay.base.models.auth_token import UserApiToken
-from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionTarget as QuestionTarget, Submission
 
 
 @pytest.fixture
@@ -494,6 +495,64 @@ def test_speaker_update_by_orga(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("empty_biography", (None, "", "   ", "<p></p>", "<p><br></p>", "<p>&nbsp;</p>"))
+def test_speaker_update_rejects_empty_required_biography(
+    client, orga_user_write_token, event, speaker, submission, empty_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "required"
+        event.cfp.save()
+        original_biography = speaker.event_profile(event).biography
+
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"biography": empty_biography}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400, response.text
+    content = json.loads(response.text)
+    assert "biography" in content
+    with scope(event=event):
+        assert speaker.event_profile(event).biography == original_biography
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("optional_biography", "expected_biography"),
+    (
+        (None, ""),
+        ("", ""),
+        ("   ", ""),
+        ("<p></p>", ""),
+        ("<p><br></p>", ""),
+        ("<p>&nbsp;</p>", ""),
+        ("Optional bio", "Optional bio"),
+    ),
+)
+def test_speaker_update_optional_empty_biography_normalizes_to_empty_string(
+    client, orga_user_write_token, event, speaker, submission, optional_biography, expected_biography
+):
+    with scope(event=event):
+        event.cfp.fields["biography"]["visibility"] = "optional"
+        event.cfp.save()
+
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"biography": optional_biography}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 200, response.text
+    content = json.loads(response.text)
+    assert content["biography"] == expected_biography
+    with scope(event=event):
+        assert speaker.event_profile(event).biography == expected_biography
+
+
+@pytest.mark.django_db
 def test_speaker_update_by_orga_readonly(
     client, orga_user_token, event, speaker, submission
 ):
@@ -582,6 +641,24 @@ def test_speaker_update_by_orga_duplicate_email(
 
 
 @pytest.mark.django_db
+def test_speaker_update_rejects_null_email(
+    client, orga_user_write_token, event, speaker, submission
+):
+    original_email = speaker.email
+    response = client.patch(
+        event.api_urls.speakers + f"{speaker.code}/",
+        data=json.dumps({"email": None}),
+        follow=True,
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400
+    with scope(event=event):
+        speaker.refresh_from_db()
+        assert speaker.email == original_email
+
+
+@pytest.mark.django_db
 def test_speaker_retrieve_answers_scoped_to_event(
     client,
     orga_user_token,
@@ -635,3 +712,22 @@ def test_speaker_retrieve_answers_scoped_to_event(
     assert len(content2["answers"]) == 1
     assert content2["answers"][0]["id"] == answer2.pk
     assert content2["answers"][0]["answer"] == "Answer 2"
+
+
+@pytest.mark.django_db
+def test_speaker_retrieve_orga_with_null_email(client, orga_user_token, event):
+    """Verify retrieving a speaker with no email via the orga API returns null email without error."""
+    with scope(event=event):
+        user = User.objects.create(fullname="No Email Speaker", email=None)
+        SpeakerProfile.objects.create(user=user, event=event)
+
+    response = client.get(
+        event.api_urls.speakers + f"{user.code}/",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 200
+    content = json.loads(response.text)
+    assert content["code"] == user.code
+    assert content["name"] == "No Email Speaker"
+    assert content["email"] is None

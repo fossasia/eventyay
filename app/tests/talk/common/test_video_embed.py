@@ -8,7 +8,7 @@ from django_scopes import scope
 
 from eventyay.base.middleware import SecurityMiddleware, _parse_csp
 from eventyay.base.models import Answer, TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-from eventyay.common.video_embed import get_video_embed_info
+from eventyay.common.video_embed import describe_video_link, get_video_embed_info
 
 
 def _assert_youtube_embed(embed_url, video_id, *, start=None):
@@ -221,6 +221,32 @@ def test_private_video_answer_not_in_schedule(event, slot):
         data = slot.schedule.build_data(enrich=True)
         talk = next(t for t in data['talks'] if t.get('code') == slot.submission.code)
         assert talk['answers'] == []
+
+
+@pytest.mark.parametrize(
+    ('url', 'label', 'icon_class'),
+    (
+        ('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'YouTube', 'fa-youtube-play'),
+        ('https://vimeo.com/123456789', 'Vimeo', 'fa-vimeo'),
+        (
+            'https://commons.wikimedia.org/wiki/File:Big_Buck_Bunny_medium.ogv',
+            'Wikimedia Commons',
+            'fa-wikipedia-w',
+        ),
+    ),
+)
+def test_describe_video_link_names_provider(url, label, icon_class):
+    described = describe_video_link(url)
+    assert described['url'] == url
+    assert described['label'] == label
+    assert described['icon_class'] == icon_class
+
+
+def test_describe_video_link_unknown_url_has_no_provider():
+    described = describe_video_link('https://example.com/not-a-video')
+    assert described['label'] == ''
+    assert described['icon_class'] == 'fa-link'
+    assert described['provider'] == ''
 
 
 @override_settings(SITE_URL='https://example.com')

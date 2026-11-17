@@ -46,8 +46,12 @@ def render_label(content, label_for=None, label_class=None, label_title='', opti
 
 class ControlFieldRenderer(FieldRenderer):
     def __init__(self, *args, **kwargs):
+        """Initialize horizontal control field renderer and suppress help text when field has errors."""
         kwargs['layout'] = 'horizontal'
         super().__init__(*args, **kwargs)
+        if self.field_errors:
+            self.field_help = ''
+            self.show_help = False
 
     def add_label(self, html):
         label = self.get_label()
@@ -81,8 +85,12 @@ class ControlFieldRenderer(FieldRenderer):
 
 class BulkEditMixin:
     def __init__(self, *args, **kwargs):
+        """Initialize bulk edit renderer and suppress help text when field has errors."""
         kwargs['layout'] = self.layout
         super().__init__(*args, **kwargs)
+        if self.field_errors:
+            self.field_help = ''
+            self.show_help = False
 
     def wrap_field(self, html):
         field_class = self.get_field_class()
