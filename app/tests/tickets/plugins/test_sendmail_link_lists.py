@@ -121,9 +121,15 @@ def test_sending_gives_each_recipient_their_row(event, order, link_list):
     with scopes_disabled():
         _queue(event, order, link_list, ('ali@example.com', 'sara@example.com')).send(async_send=False)
 
-    sent_links = ('https://p.test/a', 'https://p.test/b')
-    links = sorted(link for message in djmail.outbox for link in sent_links if link in message.body)
-    assert links == ['https://p.test/a', 'https://p.test/b']
+    rows = {('https://p.test/a', 'A1'), ('https://p.test/b', 'B2')}
+    by_recipient = {message.to[0]: message.body for message in djmail.outbox}
+    assert len(djmail.outbox) == 2
+    given = {
+        email: [(link, code) for link, code in rows if link in body and code in body]
+        for email, body in by_recipient.items()
+    }
+    assert all(len(matches) == 1 for matches in given.values())
+    assert {matches[0] for matches in given.values()} == rows
 
 
 @pytest.mark.django_db
