@@ -101,6 +101,7 @@
         <meta id="eventyay-file-input-i18n" data-choose-file="{% translate 'Choose file' %}">
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
+        {% include 'common/includes/external_links.html' %}
     </head>
     <body {% block body_attrs %}data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"{% endblock %}>
         {% block body_top %}{% endblock body_top %}
