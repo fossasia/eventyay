@@ -952,9 +952,10 @@ class CheckinLogList(ListExporter):
             except InvoiceAddress.DoesNotExist:
                 ia = InvoiceAddress()
 
+            event_datetime = ci.datetime.astimezone(self.event.tz)
             yield [
-                date_format(ci.datetime, 'SHORT_DATE_FORMAT'),
-                date_format(ci.datetime, 'TIME_FORMAT'),
+                date_format(event_datetime, 'SHORT_DATE_FORMAT'),
+                date_format(event_datetime, 'TIME_FORMAT'),
                 str(ci.list),
                 ci.get_type_display(),
                 ci.position.order.code,

@@ -1,9 +1,12 @@
+import csv
 import datetime
+import io
 from decimal import Decimal
 
 import pytest
 from zoneinfo import ZoneInfo
-from django.utils.timezone import now
+from django.utils.formats import date_format
+from django.utils.timezone import now, override
 from django_scopes import scope
 
 from eventyay.base.models import (
@@ -49,7 +52,7 @@ def event():
         item_ticket = Item.objects.create(event=event, name='Ticket', default_price=23, admission=True)
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={
@@ -62,7 +65,7 @@ def event():
         )
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('13'),
             attendee_name_parts={
@@ -290,11 +293,13 @@ def test_csv_includes_all_checkins(event):
             'questions': [],
         }
     )
-    rows = [line for line in clean(content.decode()).split('\n') if line.startswith('"FOO"')]
+    csv_rows = list(csv.reader(io.StringIO(content.decode())))
+    checked_in_index = csv_rows[0].index('Checked in')
+    rows = [row for row in csv_rows[1:] if row[checked_in_index]]
     assert len(rows) == 2
-    assert '2019-02-22' in rows[0]
-    assert '2019-02-22' in rows[1]
-    assert rows[0] != rows[1]
+    assert '2019-02-22' in rows[0][checked_in_index]
+    assert '2019-02-22' in rows[1][checked_in_index]
+    assert rows[0][checked_in_index] != rows[1][checked_in_index]
 
 
 @pytest.mark.django_db
@@ -319,9 +324,45 @@ def test_checkinlog_includes_all_checkins(event):
     _, _, content = exporter.render(
         {
             'list': cl.pk,
-            'products': [event.items.first().pk],
+            'products': [op.product_id],
             '_format': 'default',
         }
     )
-    rows = [line for line in clean(content.decode()).split('\n') if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
+    rows = [row for row in csv.reader(io.StringIO(content.decode())) if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in row]
     assert len(rows) == 2
+
+
+@pytest.mark.django_db
+def test_checkinlog_uses_event_timezone(event):
+    with scope(organizer=event.organizer):
+        event.timezone = 'Asia/Kolkata'
+        event.save(update_fields=['timezone'])
+        event = Event.objects.get(pk=event.pk)
+        checked_at = datetime.datetime(2019, 2, 22, 23, 30, tzinfo=datetime.UTC)
+
+        with scope(event=event):
+            assert event.tz == ZoneInfo('Asia/Kolkata')
+            cl = event.checkin_lists.first()
+            op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
+            Checkin.objects.create(
+                position=op,
+                list=cl,
+                type=Checkin.TYPE_ENTRY,
+                datetime=checked_at,
+            )
+
+            with override(ZoneInfo('UTC')):
+                _, _, content = CheckinLogList(event).render(
+                    {'list': cl.pk, 'products': [op.product_id], '_format': 'default'}
+                )
+
+    rows = list(csv.reader(io.StringIO(content.decode())))
+    row = next(row for row in rows if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in row)
+    event_datetime = checked_at.astimezone(ZoneInfo('Asia/Kolkata'))
+    assert event_datetime == datetime.datetime(2019, 2, 23, 5, 0, tzinfo=ZoneInfo('Asia/Kolkata'))
+    expected_date_and_time = [
+        date_format(event_datetime, 'SHORT_DATE_FORMAT'),
+        date_format(event_datetime, 'TIME_FORMAT'),
+    ]
+    assert expected_date_and_time == ['2019-02-23', '05:00']
+    assert row[:2] == expected_date_and_time
