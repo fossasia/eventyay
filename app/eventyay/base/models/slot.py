@@ -220,8 +220,8 @@ class TalkSlot(PretalxModel):
             INSTANCE_IDENTIFIER = GlobalSettings().get_instance_identifier()
         return uuid.uuid5(INSTANCE_IDENTIFIER, self.submission.code + self.id_suffix)
 
-    def build_ical(self, calendar, creation_time=None, netloc=None):
-        if not self.start or not self.local_end or not self.room or not self.submission:
+    def build_ical(self, calendar, creation_time=None, netloc=None, show_abstract=None):
+        if not self.start or not self.local_end or not self.submission or not calendar:
             return
         creation_time = creation_time or dt.datetime.now(ZoneInfo('UTC'))
         netloc = netloc or urlparse(get_base_url(self.event)).netloc
@@ -229,12 +229,18 @@ class TalkSlot(PretalxModel):
         vevent = calendar.add('vevent')
         vevent.add('summary').value = f'{self.submission.title} - {self.submission.display_speaker_names}'
         vevent.add('dtstamp').value = creation_time
-        vevent.add('location').value = str(self.room.name)
-        vevent.add('uid').value = f'pretalx-{self.submission.event.slug}-{self.submission.code}{self.id_suffix}@{netloc}'
+        if self.room:
+            vevent.add('location').value = str(self.room.name)
+        event_slug = self.submission.event.slug
+        sub_code = self.submission.code
+        vevent.add('uid').value = f'pretalx-{event_slug}-{sub_code}{self.id_suffix}@{netloc}'
 
         vevent.add('dtstart').value = self.local_start
         vevent.add('dtend').value = self.local_end
-        vevent.add('description').value = rich_text_to_plain_text(self.submission.abstract)
+        if show_abstract is None:
+            show_abstract = getattr(self.event.cfp, 'public_abstract', True) if hasattr(self.event, 'cfp') else True
+        if show_abstract and self.submission.abstract:
+            vevent.add('description').value = rich_text_to_plain_text(self.submission.abstract)
         vevent.add('url').value = self.submission.urls.public.full()
 
     def full_ical(self):
