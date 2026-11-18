@@ -33,6 +33,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView, View
+from django_scopes import scope
 
 from eventyay.base.models import (
     CachedTicket,
@@ -48,6 +49,7 @@ from eventyay.base.models.checkin import Checkin, CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
     InvoiceAddress,
+    MAX_CANCELLATION_MONETARY_VALUE,
     OrderFee,
     OrderPayment,
     OrderRefund,
@@ -1079,10 +1081,28 @@ class OrderPositionCancel(OrderProtectedActionMixin, OrderPositionCancelMixin, E
         positions = sorted(positions, key=lambda p: p.positionid)
 
         position_rows = []
+        cancellation_summary = self.order.customer_cancellation_summary()
+        with scope(event=self.request.event):
+            cancellation_history_invalid = (
+                (
+                    self.order.all_positions.filter(canceled=True).exists()
+                    or self.order.user_existing_cancellation_fee != Decimal('0.00')
+                )
+                and cancellation_summary is None
+            )
+            monetary_values = (self.order.total,)
+            if (
+                not all(value.is_finite() for value in monetary_values)
+                or not all(abs(value) <= MAX_CANCELLATION_MONETARY_VALUE for value in monetary_values)
+            ):
+                cancellation_history_invalid = True
         for position in positions:
             addons = [a for a in position.addons.all() if not a.canceled]
             position_total = position.price + sum(addon.price for addon in addons)
-            cancellation_fee = self.order.user_partial_cancel_fee(position_total)
+            cancellation_fee = self.order.user_partial_cancel_fee(
+                position_total,
+                cancellation_summary=cancellation_summary,
+            )
             position_rows.append(
                 {
                     'position': position,
@@ -1096,6 +1116,7 @@ class OrderPositionCancel(OrderProtectedActionMixin, OrderPositionCancelMixin, E
         ctx['order'] = self.order
         ctx['position_rows'] = position_rows
         ctx['is_paid_order'] = self.order.status == Order.STATUS_PAID and self.order.total != Decimal('0.00')
+        ctx['cancellation_history_invalid'] = cancellation_history_invalid
         return ctx
 
 
@@ -1162,7 +1183,16 @@ class OrderCancel(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, T
         ctx = super().get_context_data(**kwargs)
         ctx['order'] = self.order
         prs = self.order.payment_refund_sum
-        fee = self.order.user_cancel_fee
+        with scope(event=self.request.event):
+            cancellation_summary = self.order.customer_cancellation_summary()
+            cancellation_history_invalid = (
+                (
+                    self.order.all_positions.filter(canceled=True).exists()
+                    or self.order.user_existing_cancellation_fee != Decimal('0.00')
+                )
+                and cancellation_summary is None
+            )
+        fee = Decimal('0.00') if cancellation_history_invalid else self.order.user_cancel_fee
         refund_amount = prs - fee
         proposals = self.order.propose_auto_refunds(refund_amount)
         ctx['cancel_fee'] = fee
@@ -1170,6 +1200,7 @@ class OrderCancel(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, T
         ctx['payment_refund_sum'] = prs
         ctx['can_auto_refund'] = sum(proposals.values()) == refund_amount
         ctx['proposals'] = [p.payment_provider.payment_presale_render(payment=p) for p in proposals]
+        ctx['cancellation_history_invalid'] = cancellation_history_invalid
         if self.request.event.settings.cancel_allow_user_paid_adjust_fees_step:
             steps = [fee]
             s = fee

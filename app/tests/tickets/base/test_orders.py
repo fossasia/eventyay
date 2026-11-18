@@ -93,7 +93,7 @@ def create_paid_cancellation_order(event, code, ticket_prices, fees=(), provider
 
 @pytest.mark.django_db
 def test_partial_cancellation_sufficient_payment_credit(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10')
         event.settings.cancel_allow_user_paid_keep = Decimal('2.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -115,33 +115,47 @@ def test_partial_cancellation_sufficient_payment_credit(event):
 
 @pytest.mark.django_db
 def test_partial_cancellation_insufficient_payment_credit(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('0')
-        event.settings.cancel_allow_user_paid_keep = Decimal('15.00')
+        event.settings.cancel_allow_user_paid_keep = Decimal('25.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
         event.settings.allow_modifications = 'order'
         event.settings.cancel_allow_user_paid = True
         order, positions = create_paid_cancellation_order(
             event,
             'OVER-CREDIT',
-            [Decimal('5.00'), Decimal('5.00')],
+            [Decimal('5.00'), Decimal('5.00'), Decimal('5.00')],
         )
+        order.refunds.create(
+            source=OrderRefund.REFUND_SOURCE_BUYER,
+            state=OrderRefund.REFUND_STATE_DONE,
+            amount=Decimal('10.00'),
+            provider='manual',
+            execution_date=now(),
+        )
+        order.refresh_from_db()
+        assert order.payment_refund_sum == Decimal('5.00')
 
         _cancel_order_positions(order.pk, [positions[0].pk])
         order.refresh_from_db()
         assert order.user_existing_cancellation_fee == Decimal('5.00')
 
-        with pytest.raises(OrderError):
+        with pytest.raises(
+            OrderError,
+            match='The cancellation fee cannot be higher than the payment credit of this order.',
+        ):
             _cancel_order_positions(order.pk, [positions[1].pk])
 
         order.refresh_from_db()
         assert order.user_existing_cancellation_fee == Decimal('5.00')
+        positions[1].refresh_from_db()
+        assert not positions[1].canceled
         assert order.status == Order.STATUS_PAID
 
 
 @pytest.mark.django_db
 def test_partial_cancellation_after_existing_refund(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('0')
         event.settings.cancel_allow_user_paid_keep = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -175,7 +189,7 @@ def test_partial_cancellation_after_existing_refund(event):
 
 @pytest.mark.django_db
 def test_partial_then_full_cancellation_uses_cumulative_fee(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         product = Item.objects.create(
             event=event,
             name='Ticket',
@@ -229,7 +243,7 @@ def test_partial_then_full_cancellation_uses_cumulative_fee(event):
 
 @pytest.mark.django_db
 def test_zero_fee_partial_records_cumulative_ticket_value(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         product = Item.objects.create(event=event, name='Ticket', default_price=10, admission=True)
         order = Order.objects.create(
             code='ZERO-FEE',
@@ -238,12 +252,12 @@ def test_zero_fee_partial_records_cumulative_ticket_value(event):
             locale='en',
             datetime=now(),
             expires=now() + timedelta(days=10),
-            total=Decimal('10.01'),
+            total=Decimal('10.00'),
         )
         first = OrderPosition.objects.create(
             order=order,
             product=product,
-            price=Decimal('0.01'),
+            price=Decimal('0.00'),
             positionid=1,
         )
         OrderPosition.objects.create(
@@ -253,7 +267,7 @@ def test_zero_fee_partial_records_cumulative_ticket_value(event):
             positionid=2,
         )
         order.payments.create(
-            amount=Decimal('10.01'),
+            amount=Decimal('10.00'),
             state=OrderPayment.PAYMENT_STATE_CONFIRMED,
             provider='manual',
         )
@@ -269,14 +283,14 @@ def test_zero_fee_partial_records_cumulative_ticket_value(event):
         assert order.user_existing_cancellation_fee == Decimal('0.00')
         summary = order.customer_cancellation_summary()
         assert summary is not None
-        assert summary[0] == Decimal('0.01')
+        assert summary[0] == Decimal('0.00')
 
         assert order.user_cancel_fee == Decimal('1.00')
 
 
 @pytest.mark.django_db
 def test_zero_fee_generic_cancellation_clears_customer_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         product = Item.objects.create(event=event, name='Ticket', default_price=10, admission=True)
         order = Order.objects.create(
             code='GENERIC-ZERO',
@@ -285,12 +299,12 @@ def test_zero_fee_generic_cancellation_clears_customer_metadata(event):
             locale='en',
             datetime=now(),
             expires=now() + timedelta(days=10),
-            total=Decimal('10.01'),
+            total=Decimal('10.00'),
         )
         first = OrderPosition.objects.create(
             order=order,
             product=product,
-            price=Decimal('0.01'),
+            price=Decimal('0.00'),
             positionid=1,
         )
         OrderPosition.objects.create(
@@ -300,7 +314,7 @@ def test_zero_fee_generic_cancellation_clears_customer_metadata(event):
             positionid=2,
         )
         order.payments.create(
-            amount=Decimal('10.01'),
+            amount=Decimal('10.00'),
             state=OrderPayment.PAYMENT_STATE_CONFIRMED,
             provider='manual',
         )
@@ -322,40 +336,129 @@ def test_zero_fee_generic_cancellation_clears_customer_metadata(event):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('bad_value', ['NaN', 'Infinity', '-Infinity', 'invalid', '-1.00'])
+@pytest.mark.parametrize(
+    'bad_value',
+    ['NaN', 'Infinity', '-Infinity', 'invalid', '-1.00', '999999999999999999999999999999'],
+)
 def test_malformed_cancellation_metadata_uses_fallback(event, bad_value):
+    with scope(organizer=event.organizer, event=event):
+        event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10')
+        event.settings.cancel_allow_user_paid_keep = Decimal('2')
+        event.settings.cancel_allow_user_paid_keep_fees = False
+        event.settings.allow_modifications = 'order'
+        event.settings.cancel_allow_user_paid = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'BAD-META',
+            [Decimal('10.00'), Decimal('10.00'), Decimal('10.00')],
+        )
+        _cancel_order_positions(order.pk, [positions[0].pk])
+        order = Order.objects.get(pk=order.pk)
+        position = order.all_positions.get(pk=positions[0].pk)
+        assert order.customer_cancellation_summary() is not None
+
+        metadata = position.meta_info_data
+        metadata[Order.CUSTOMER_CANCELLATION_META_KEY]['ticket_value'] = bad_value
+        position.meta_info = json.dumps(metadata)
+        position.save(update_fields=['meta_info'])
+
+        assert order.customer_cancellation_summary() is None
+
+        with pytest.raises(
+            OrderError,
+            match='The cancellation history for this order is missing or invalid.',
+        ):
+            _cancel_order_positions(order.pk, [positions[1].pk])
+
+
+@pytest.mark.django_db
+def test_missing_cancellation_metadata_rejects_next_partial(event):
+    with scope(organizer=event.organizer, event=event):
+        event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10')
+        event.settings.cancel_allow_user_paid_keep = Decimal('2')
+        event.settings.cancel_allow_user_paid_keep_fees = False
+        event.settings.allow_modifications = 'order'
+        event.settings.cancel_allow_user_paid = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'MISSING-HISTORY',
+            [Decimal('10.00'), Decimal('10.00'), Decimal('10.00')],
+        )
+        _cancel_order_positions(order.pk, [positions[0].pk])
+
+        order = Order.objects.get(pk=order.pk)
+        position = order.all_positions.get(pk=positions[0].pk)
+        metadata = position.meta_info_data
+        metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY)
+        position.meta_info = json.dumps(metadata)
+        position.save(update_fields=['meta_info'])
+
+        with pytest.raises(
+            OrderError,
+            match='The cancellation history for this order is missing or invalid.',
+        ):
+            _cancel_order_positions(order.pk, [positions[1].pk])
+
+
+@pytest.mark.django_db
+def test_cancellation_history_is_isolated_by_event(event):
     with scope(organizer=event.organizer):
-        product = Item.objects.create(event=event, name='Ticket', default_price=10, admission=True)
-        order = Order.objects.create(
-            code='BAD-META',
-            event=event,
+        event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10')
+        event.settings.cancel_allow_user_paid_keep = Decimal('2')
+        event.settings.cancel_allow_user_paid_keep_fees = False
+        event.settings.allow_modifications = 'order'
+        event.settings.cancel_allow_user_paid = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'EVENT-CURRENT',
+            [Decimal('10.00'), Decimal('10.00')],
+        )
+        _cancel_order_positions(order.pk, [positions[0].pk])
+
+        other_event = Event.objects.create(
+            organizer=event.organizer,
+            name='Other event',
+            slug='other-event',
+            date_from=now(),
+        )
+        other_product = Item.objects.create(
+            event=other_event,
+            name='Other ticket',
+            default_price=Decimal('50.00'),
+            admission=True,
+        )
+        other_order = Order.objects.create(
+            code=order.code,
+            event=other_event,
             status=Order.STATUS_PAID,
             locale='en',
             datetime=now(),
             expires=now() + timedelta(days=10),
-            total=Decimal('10.00'),
+            total=Decimal('50.00'),
         )
-        position = OrderPosition.objects.create(
-            order=order,
-            product=product,
-            price=Decimal('10.00'),
+        other_position = OrderPosition.objects.create(
+            order=other_order,
+            product=other_product,
+            price=Decimal('50.00'),
             positionid=1,
+            canceled=True,
         )
-        position.canceled = True
-        position.meta_info = json.dumps({
+        other_position.meta_info = json.dumps({
             Order.CUSTOMER_CANCELLATION_META_KEY: {
                 'order_code': order.code,
-                'ticket_value': bad_value,
-                'fee_value': '0.00',
-                'original_ticket_value': '10.00',
-                'original_order_total': '10.00',
+                'ticket_value': '50.00',
+                'fee_value': '12.50',
+                'original_ticket_value': '50.00',
+                'original_order_total': '50.00',
                 'retained_extra_fees': '0.00',
                 'settings': order.customer_cancellation_settings(),
             }
         })
-        position.save(update_fields=['canceled', 'meta_info'])
+        other_position.save(update_fields=['meta_info'])
 
-        assert order.customer_cancellation_summary() is None
+        order = Order.objects.get(pk=order.pk)
+        assert order.customer_cancellation_summary() is not None
+        assert order.customer_cancellation_summary()[0] == Decimal('10.00')
 
 
 @pytest.mark.django_db
@@ -376,7 +479,7 @@ def test_malformed_cancellation_metadata_uses_fallback(event, bad_value):
     ],
 )
 def test_keep_existing_fees_agrees_full_and_staged(event, fee_types, expected_full_fee):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         product = Item.objects.create(event=event, name='Ticket', default_price=10, admission=True)
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10')
         event.settings.cancel_allow_user_paid_keep = Decimal('2.00')
@@ -455,7 +558,7 @@ def test_keep_existing_fees_agrees_full_and_staged(event, fee_types, expected_fu
 
 @pytest.mark.django_db
 def test_fixed_fee_above_single_ticket_value_matches_direct_cancellation(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('0.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('15.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -517,7 +620,7 @@ def test_fixed_fee_above_single_ticket_value_matches_direct_cancellation(event):
 
 @pytest.mark.django_db
 def test_nonretained_fee_in_order_total_matches_direct_cancellation(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('2.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -564,7 +667,7 @@ def test_nonretained_fee_in_order_total_matches_direct_cancellation(event):
 
 @pytest.mark.django_db
 def test_changed_cancellation_settings_invalidate_cumulative_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('0.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -579,13 +682,23 @@ def test_changed_cancellation_settings_invalidate_cumulative_metadata(event):
 
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('20.00')
         order = Order.objects.get(pk=order.pk)
-        assert order.customer_cancellation_summary() is None
-        assert isinstance(order.user_cancel_fee, Decimal)
+        summary = order.customer_cancellation_summary()
+        assert summary is not None
+        assert summary[5]['percentage'] == '10.00'
+        assert order.user_cancel_fee == Decimal('3.00')
+
+        _cancel_order_positions(order.pk, [positions[1].pk])
+        order = Order.objects.get(pk=order.pk)
+        assert order.user_existing_cancellation_fee == Decimal('2.00')
+        assert order.user_cancel_fee == Decimal('3.00')
+        cancel_order(order.pk, cancellation_fee=order.user_cancel_fee, cancel_invoice=False)
+        order = Order.objects.get(pk=order.pk)
+        assert order.user_existing_cancellation_fee == Decimal('3.00')
 
 
 @pytest.mark.django_db
 def test_changed_ticket_price_invalidates_cumulative_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.allow_modifications = 'order'
         event.settings.cancel_allow_user_paid = True
@@ -607,7 +720,7 @@ def test_changed_ticket_price_invalidates_cumulative_metadata(event):
 
 @pytest.mark.django_db
 def test_changed_retained_fee_invalidates_cumulative_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep_fees = True
         event.settings.allow_modifications = 'order'
@@ -630,7 +743,7 @@ def test_changed_retained_fee_invalidates_cumulative_metadata(event):
 
 @pytest.mark.django_db
 def test_reinstatement_after_customer_cancellation_invalidates_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.allow_modifications = 'order'
         event.settings.cancel_allow_user_paid = True
         order, positions = create_paid_cancellation_order(
@@ -654,7 +767,7 @@ def test_reinstatement_after_customer_cancellation_invalidates_metadata(event):
 
 @pytest.mark.django_db
 def test_replacement_after_customer_cancellation_clears_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.allow_modifications = 'order'
         event.settings.cancel_allow_user_paid = True
         order, positions = create_paid_cancellation_order(
@@ -666,10 +779,6 @@ def test_replacement_after_customer_cancellation_clears_metadata(event):
 
         order = Order.objects.get(pk=order.pk)
         position = order.all_positions.get(pk=positions[0].pk)
-        manager = OrderChangeManager(order=order, notify=False, reissue_invoice=False)
-        manager.reinstate(position)
-        manager.commit()
-
         replacement = Item.objects.create(
             event=event,
             name='Replacement',
@@ -693,7 +802,7 @@ def test_replacement_after_customer_cancellation_clears_metadata(event):
 
 @pytest.mark.django_db
 def test_split_after_customer_cancellation_invalidates_metadata(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.allow_modifications = 'order'
         event.settings.cancel_allow_user_paid = True
         order, positions = create_paid_cancellation_order(
@@ -705,17 +814,21 @@ def test_split_after_customer_cancellation_invalidates_metadata(event):
 
         order = Order.objects.get(pk=order.pk)
         manager = OrderChangeManager(order=order, notify=False, reissue_invoice=False)
-        manager.split(order.positions.get(pk=positions[1].pk))
+        moved_position = order.all_positions.get(pk=positions[0].pk)
+        assert Order.CUSTOMER_CANCELLATION_META_KEY in moved_position.meta_info_data
+        manager.split(moved_position)
         manager.commit()
         order.refresh_from_db()
+        moved_position.refresh_from_db()
 
         assert manager.split_order is not None
+        assert Order.CUSTOMER_CANCELLATION_META_KEY not in moved_position.meta_info_data
         assert order.customer_cancellation_summary() is None
 
 
 @pytest.mark.django_db
 def test_existing_refund_then_another_cancellation_keeps_refund_due_correct(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.allow_modifications = 'order'
         event.settings.cancel_allow_user_paid = True
@@ -755,7 +868,7 @@ def test_existing_refund_then_another_cancellation_keeps_refund_due_correct(even
 
 @pytest.mark.django_db
 def test_multiple_successive_partial_cancellations_use_cumulative_fee(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         product = Item.objects.create(event=event, name='Ticket', default_price=10, admission=True)
         order = Order.objects.create(
             code='SUCCESSIVE',
@@ -801,7 +914,7 @@ def test_multiple_successive_partial_cancellations_use_cumulative_fee(event):
 
 @pytest.mark.django_db
 def test_cancellation_order_permutations_match_direct_full_cancellation(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('2.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -845,7 +958,7 @@ def test_cancellation_order_permutations_match_direct_full_cancellation(event):
 
 @pytest.mark.django_db
 def test_unequal_ticket_cancellation_orders_match_direct_fee(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('5.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -902,7 +1015,7 @@ _MISSING_METADATA = object()
     ],
 )
 def test_invalid_original_order_total_uses_legacy_fallback(event, original_total):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('2.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -935,7 +1048,7 @@ def test_invalid_original_order_total_uses_legacy_fallback(event, original_total
 
 @pytest.mark.django_db
 def test_automatic_refunds_only_refund_new_cancellation_balance(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('0.00')
         event.settings.cancel_allow_user_paid_keep_fees = False
@@ -978,7 +1091,7 @@ def test_automatic_refunds_only_refund_new_cancellation_balance(event):
 
 @pytest.mark.django_db
 def test_intermediate_retained_fee_allocation_uses_ticket_value(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10.00')
         event.settings.cancel_allow_user_paid_keep = Decimal('3.00')
         event.settings.cancel_allow_user_paid_keep_fees = True
@@ -1011,7 +1124,7 @@ def test_intermediate_retained_fee_allocation_uses_ticket_value(event):
 
         _cancel_order_positions(staged_order.pk, [positions[0].pk])
         staged_order = Order.objects.get(pk=staged_order.pk)
-        assert staged_order.user_existing_cancellation_fee == Decimal('1.06')
+        assert staged_order.user_existing_cancellation_fee == Decimal('1.10')
 
         _cancel_order_positions(staged_order.pk, [positions[1].pk])
         staged_order = Order.objects.get(pk=staged_order.pk)
@@ -1175,7 +1288,7 @@ def test_expiry_last_relative_subevents(event):
     se2 = event.subevents.create(name='SE2', date_from=now() + timedelta(days=8))
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         subevent=se1,
@@ -1183,7 +1296,7 @@ def test_expiry_last_relative_subevents(event):
         cart_id='123',
     )
     cp2 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         subevent=se2,
@@ -1525,7 +1638,7 @@ class PaymentReminderTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -1610,7 +1723,7 @@ class DownloadReminderTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -1681,7 +1794,7 @@ class DownloadReminderTests(TestCase):
         self.op1.save()
         self.op2 = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             subevent=se2,
             attendee_email='attendee2@dummy.test',
@@ -2100,12 +2213,12 @@ class OrderChangeManagerTests(TestCase):
         self.quota.products.remove(self.shirt)
         q2 = self.event.quotas.create(name='Q2', size=None, subevent=se2)
         q2.products.add(self.shirt)
-        self.ocm.change_item_and_subevent(self.op1, self.shirt, None, se2)
+        self.ocm.change_product_and_subevent(self.op1, self.shirt, None, se2)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
         assert self.op1.subevent == se2
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_change_subevent_success(self):
@@ -2114,7 +2227,7 @@ class OrderChangeManagerTests(TestCase):
         s = self.op1.secret
         se1 = self.event.subevents.create(name='Foo', date_from=now())
         se2 = self.event.subevents.create(name='Bar', date_from=now())
-        SubEventItem.objects.create(subevent=se2, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se2, product=self.ticket, price=12)
         self.op1.subevent = se1
         self.op1.save()
         self.quota.subevent = se2
@@ -2136,7 +2249,7 @@ class OrderChangeManagerTests(TestCase):
         self.event.save()
         se1 = self.event.subevents.create(name='Foo', date_from=now())
         se2 = self.event.subevents.create(name='Bar', date_from=now())
-        SubEventItem.objects.create(subevent=se2, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se2, product=self.ticket, price=12)
         s = self.op1.secret
         self.op1.subevent = se1
         self.op1.save()
@@ -2158,7 +2271,7 @@ class OrderChangeManagerTests(TestCase):
         self.event.save()
         se1 = self.event.subevents.create(name='Foo', date_from=now())
         se2 = self.event.subevents.create(name='Bar', date_from=now())
-        SubEventItem.objects.create(subevent=se2, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se2, product=self.ticket, price=12)
         self.op1.subevent = se1
         self.op1.save()
         self.quota.subevent = se2
@@ -2192,90 +2305,90 @@ class OrderChangeManagerTests(TestCase):
         assert self.op1.subevent == se1
 
     @classscope(attr='o')
-    def test_change_item_quota_required(self):
+    def test_change_product_quota_required(self):
         self.quota.delete()
         with self.assertRaises(OrderError):
-            self.ocm.change_item(self.op1, self.shirt, None)
+            self.ocm.change_product(self.op1, self.shirt, None)
 
     @classscope(attr='o')
     def test_change_new_secret_by_scheme(self):
         self.event.settings.ticket_secret_generator = 'pretix_sig1'
         s = self.op1.secret
         p = self.op1.price
-        self.ocm.change_item(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.tax_value == Decimal('3.67')
         assert self.op1.tax_rule == self.shirt.tax_rule
         assert self.op1.secret != s
 
     @classscope(attr='o')
-    def test_change_item_keep_price(self):
+    def test_change_product_keep_price(self):
         p = self.op1.price
         s = self.op1.secret
-        self.ocm.change_item(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.tax_value == Decimal('3.67')
         assert self.op1.tax_rule == self.shirt.tax_rule
         assert self.op1.secret == s
 
     @classscope(attr='o')
-    def test_change_item_change_price_before_voucher(self):
-        self.op1.voucher = self.event.vouchers.create(item=self.shirt, redeemed=1, price_mode='set', value='5.00')
+    def test_change_product_change_price_before_voucher(self):
+        self.op1.voucher = self.event.vouchers.create(product=self.shirt, redeemed=1, price_mode='set', value='5.00')
         self.op1.price = Decimal('5.00')
         self.op1.price_before_voucher = Decimal('23.00')
         self.op1.save()
         p = self.op1.price
-        self.ocm.change_item(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.price_before_voucher == Decimal('12.00')
 
     @classscope(attr='o')
-    def test_change_item_change_price_before_voucher_minimum_value(self):
-        self.op1.voucher = self.event.vouchers.create(item=self.shirt, redeemed=1, price_mode='set', value='20.00')
+    def test_change_product_change_price_before_voucher_minimum_value(self):
+        self.op1.voucher = self.event.vouchers.create(product=self.shirt, redeemed=1, price_mode='set', value='20.00')
         self.op1.price = Decimal('20.00')
         self.op1.price_before_voucher = Decimal('23.00')
         self.op1.save()
         p = self.op1.price
-        self.ocm.change_item(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.price_before_voucher == Decimal('20.00')
 
     @classscope(attr='o')
-    def test_change_item_success(self):
-        self.ocm.change_item(self.op1, self.shirt, None)
+    def test_change_product_success(self):
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == Decimal('23.00')
         assert self.op1.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
         assert self.order.total == self.op1.price + self.op2.price
 
     @classscope(attr='o')
-    def test_change_item_with_price_success(self):
-        self.ocm.change_item(self.op1, self.shirt, None)
+    def test_change_product_with_price_success(self):
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.change_price(self.op1, Decimal('12.00'))
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == Decimal('12.00')
         assert self.op1.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
@@ -2287,7 +2400,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
         assert self.op1.price == Decimal('24.00')
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
         assert self.order.total == self.op1.price + self.op2.price
@@ -2300,7 +2413,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
         assert self.op1.price == Decimal('10.70')
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
         assert self.order.total == self.op1.price + self.op2.price
@@ -2403,90 +2516,90 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_quota_unlimited(self):
         q = self.event.quotas.create(name='Test', size=None)
-        q.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
+        q.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_quota_full(self):
         q = self.event.quotas.create(name='Test', size=0)
-        q.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
+        q.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
 
     @classscope(attr='o')
     def test_quota_ignore(self):
         q = self.event.quotas.create(name='Test', size=0)
-        q.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
+        q.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit(check_quotas=False)
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_quota_full_but_in_same(self):
         q = self.event.quotas.create(name='Test', size=0)
-        q.items.add(self.shirt)
-        q.items.add(self.ticket)
-        self.ocm.change_item(self.op1, self.shirt, None)
+        q.products.add(self.shirt)
+        q.products.add(self.ticket)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_multiple_quotas_shared_full(self):
         q1 = self.event.quotas.create(name='Test', size=0)
         q2 = self.event.quotas.create(name='Test', size=2)
-        q1.items.add(self.shirt)
-        q1.items.add(self.ticket)
-        q2.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
+        q1.products.add(self.shirt)
+        q1.products.add(self.ticket)
+        q2.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_multiple_quotas_unshared_full(self):
         q1 = self.event.quotas.create(name='Test', size=2)
         q2 = self.event.quotas.create(name='Test', size=0)
-        q1.items.add(self.shirt)
-        q1.items.add(self.ticket)
-        q2.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
+        q1.products.add(self.shirt)
+        q1.products.add(self.ticket)
+        q2.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
 
     @classscope(attr='o')
     def test_multiple_items_success(self):
         q1 = self.event.quotas.create(name='Test', size=2)
-        q1.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
-        self.ocm.change_item(self.op2, self.shirt, None)
+        q1.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op2, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.op2.refresh_from_db()
-        assert self.op1.item == self.shirt
-        assert self.op2.item == self.shirt
+        assert self.op1.product == self.shirt
+        assert self.op2.product == self.shirt
 
     @classscope(attr='o')
     def test_multiple_items_quotas_partially_full(self):
         q1 = self.event.quotas.create(name='Test', size=1)
-        q1.items.add(self.shirt)
-        self.ocm.change_item(self.op1, self.shirt, None)
-        self.ocm.change_item(self.op2, self.shirt, None)
+        q1.products.add(self.shirt)
+        self.ocm.change_product(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op2, self.shirt, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
         self.op1.refresh_from_db()
         self.op2.refresh_from_db()
-        assert self.op1.item == self.ticket
-        assert self.op2.item == self.ticket
+        assert self.op1.product == self.ticket
+        assert self.op2.product == self.ticket
 
     @classscope(attr='o')
     def test_payment_fee_calculation(self):
@@ -2522,10 +2635,10 @@ class OrderChangeManagerTests(TestCase):
     def test_require_pending(self):
         self.order.status = Order.STATUS_PAID
         self.order.save()
-        self.ocm.change_item(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_change_price_to_free_marked_as_paid(self):
@@ -2553,7 +2666,7 @@ class OrderChangeManagerTests(TestCase):
     def test_change_paid_same_price(self):
         self.order.status = Order.STATUS_PAID
         self.order.save()
-        self.ocm.change_item(self.op1, self.ticket2, None)
+        self.ocm.change_product(self.op1, self.ticket2, None)
         self.ocm.commit()
         self.order.refresh_from_db()
         assert self.order.total == 46
@@ -2620,7 +2733,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == self.shirt.default_price
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -2636,7 +2749,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('14.28')
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -2651,7 +2764,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('10.08')
         assert nop.tax_rate == Decimal('0.00')
         assert nop.tax_value == Decimal('0.00')
@@ -2665,7 +2778,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('13.00')
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -2680,7 +2793,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('11.90')
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -2689,7 +2802,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_add_item_quota_full(self):
         q1 = self.event.quotas.create(name='Test', size=0)
-        q1.items.add(self.shirt)
+        q1.products.add(self.shirt)
         self.ocm.add_position(self.shirt, None, None, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
@@ -2704,7 +2817,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.addon_to == self.op1
 
     @classscope(attr='o')
@@ -2727,7 +2840,7 @@ class OrderChangeManagerTests(TestCase):
         self.event.has_subevents = True
         self.event.save()
         se1 = self.event.subevents.create(name='Foo', date_from=now())
-        SubEventItem.objects.create(subevent=se1, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se1, product=self.ticket, price=12)
         self.quota.subevent = se1
         self.quota.save()
 
@@ -2736,7 +2849,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.ticket
+        assert nop.product == self.ticket
         assert nop.price == Decimal('12.00')
         assert nop.subevent == se1
 
@@ -2902,8 +3015,8 @@ class OrderChangeManagerTests(TestCase):
 
     @classscope(attr='o')
     def test_split_require_approval(self):
-        self.op2.item.require_approval = True
-        self.op2.item.save()
+        self.op2.product.require_approval = True
+        self.op2.product.save()
         self.order.require_approval = True
         self.order.save()
         old_secret = self.op2.secret
@@ -3415,7 +3528,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.add_position(self.stalls, None, price=Decimal('13.00'), seat=self.seat_a3)
         self.ocm.commit()
         op3 = self.order.positions.last()
-        assert op3.item == self.stalls
+        assert op3.product == self.stalls
         assert op3.seat == self.seat_a3
 
     @classscope(attr='o')
@@ -3727,12 +3840,12 @@ class OrderChangeManagerTests(TestCase):
 
     @classscope(attr='o')
     def test_change_taxrate_and_product(self):
-        self.ocm.change_item(self.op1, self.shirt, None)
+        self.ocm.change_product(self.op1, self.shirt, None)
         self.ocm.change_tax_rule(self.op1, self.tr7)
         self.ocm.commit()
         self.order.refresh_from_db()
         nop = self.order.positions.first()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('23.00')
         assert nop.tax_rule != self.shirt.tax_rule
         assert nop.tax_rate == self.tr7.rate
@@ -3821,7 +3934,7 @@ def test_autocheckin(clist_autocheckin, event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3842,7 +3955,7 @@ def test_autocheckin(clist_autocheckin, event):
     clist_autocheckin.save()
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3872,7 +3985,7 @@ def test_saleschannel_testmode_restriction(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3891,7 +4004,7 @@ def test_saleschannel_testmode_restriction(event):
     assert not order.testmode
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3910,7 +4023,7 @@ def test_saleschannel_testmode_restriction(event):
 
     event.testmode = True
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3928,7 +4041,7 @@ def test_saleschannel_testmode_restriction(event):
     assert order.testmode
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3955,7 +4068,7 @@ def test_giftcard_multiple(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3990,7 +4103,7 @@ def test_giftcard_partial(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4024,7 +4137,7 @@ def test_giftcard_payment_fee(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4057,7 +4170,7 @@ def test_giftcard_invalid_currency(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4086,7 +4199,7 @@ def test_giftcard_invalid_organizer(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4116,7 +4229,7 @@ def test_giftcard_test_mode_invalid(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4145,7 +4258,7 @@ def test_giftcard_test_mode_event(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4177,7 +4290,7 @@ def test_giftcard_swap(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -4207,14 +4320,14 @@ def test_issue_when_paid_and_changed(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
         cart_id='123',
     )
     q = event.quotas.create(size=None, name='foo')
-    q.items.add(ticket)
+    q.products.add(ticket)
     order = _create_order(
         event,
         email='dummy@example.org',
@@ -4274,7 +4387,7 @@ class OrderReactivateTest(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -4282,7 +4395,7 @@ class OrderReactivateTest(TestCase):
             )
             self.op2 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Dieter'},
@@ -4339,7 +4452,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_seat_taken(self):
-        self.op1.item = self.stalls
+        self.op1.product = self.stalls
         self.op1.seat = self.seat_a1
         self.op1.save()
         self.seat_a1.blocked = True
@@ -4349,7 +4462,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_voucher_ok(self):
-        self.op1.voucher = self.event.vouchers.create(code='FOO', item=self.ticket, redeemed=0, max_usages=1)
+        self.op1.voucher = self.event.vouchers.create(code='FOO', product=self.ticket, redeemed=0, max_usages=1)
         self.op1.save()
         reactivate_order(self.order)
         v = self.op1.voucher
@@ -4358,7 +4471,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_voucher_budget(self):
-        self.op1.voucher = self.event.vouchers.create(code='FOO', item=self.ticket, budget=Decimal('0.00'))
+        self.op1.voucher = self.event.vouchers.create(code='FOO', product=self.ticket, budget=Decimal('0.00'))
         self.op1.price_before_voucher = self.op1.price * 2
         self.op1.save()
         with pytest.raises(OrderError):
@@ -4366,7 +4479,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_voucher_used(self):
-        self.op1.voucher = self.event.vouchers.create(code='FOO', item=self.ticket, redeemed=1, max_usages=1)
+        self.op1.voucher = self.event.vouchers.create(code='FOO', product=self.ticket, redeemed=1, max_usages=1)
         self.op1.save()
         with pytest.raises(OrderError):
             reactivate_order(self.order)

@@ -19,6 +19,11 @@
                 Remaining tickets in this order stay valid.
             {% endblocktrans %}
         </p>
+        {% if cancellation_history_invalid %}
+            <div class="alert alert-danger">
+                {% trans 'The cancellation history for this order is missing or invalid. Please contact the organizer.' %}
+            </div>
+        {% endif %}
 
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -58,7 +63,7 @@
                             {% blocktrans trimmed with total=row.position_total|money:request.event.currency %}
                                 Ticket value: {{ total }}
                             {% endblocktrans %}
-                            {% if is_paid_order %}
+                            {% if is_paid_order and not cancellation_history_invalid %}
                                 {% blocktrans trimmed with fee=row.cancellation_fee|money:request.event.currency refund=row.refund_amount|money:request.event.currency %}
                                     • Estimated cancellation fee: {{ fee }} • Estimated refund: {{ refund }}
                                 {% endblocktrans %}
@@ -101,7 +106,9 @@
                 </a>
             </div>
             <div class="col-md-4 col-md-offset-4">
-                <button class="btn btn-block btn-delete btn-danger btn-lg" type="submit">
+                <button class="btn btn-block btn-delete btn-danger btn-lg"
+                        type="submit"
+                        {% if cancellation_history_invalid %}disabled{% endif %}>
                     {% trans 'Yes, cancel selected tickets' %}
                 </button>
             </div>

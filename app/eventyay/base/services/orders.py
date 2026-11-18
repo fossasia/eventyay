@@ -27,7 +27,7 @@ from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay import consts
 from eventyay.api.models import OAuthApplication
@@ -60,6 +60,7 @@ from eventyay.base.models import (
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import (
     InvoiceAddress,
+    MAX_CANCELLATION_MONETARY_VALUE,
     OrderFee,
     OrderRefund,
     generate_secret,
@@ -462,6 +463,16 @@ def _cancel_order(
 
         if not order.cancel_allowed():
             raise OrderError(_('You cannot cancel this order.'))
+        with scope(event=order.event):
+            cancellation_summary = order.customer_cancellation_summary()
+            canceled_positions_exist = order.all_positions.filter(canceled=True).exists()
+            existing_cancellation_fee = order.user_existing_cancellation_fee
+            if (
+                canceled_positions_exist or existing_cancellation_fee != Decimal('0.00')
+            ) and cancellation_summary is None:
+                raise OrderError(
+                    _('The cancellation history for this order is missing or invalid.')
+                )
         invoices = []
         if cancel_invoice:
             i = order.invoices.filter(is_cancellation=False).last()
@@ -2035,6 +2046,13 @@ class OrderChangeManager:
                 op.position.product = op.product
                 op.position.variation = op.variation
                 op.position._calculate_tax()
+                try:
+                    position_metadata = json.loads(op.position.meta_info) if op.position.meta_info else {}
+                except (json.JSONDecodeError, TypeError):
+                    position_metadata = {}
+                if isinstance(position_metadata, dict):
+                    position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                    op.position.meta_info = json.dumps(position_metadata)
                 if op.position.price_before_voucher is not None and op.position.voucher and not op.position.addon_to_id:
                     op.position.price_before_voucher = max(
                         op.position.price,
@@ -2152,6 +2170,13 @@ class OrderChangeManager:
                 op.position.price = op.price.gross
                 op.position.tax_rate = op.price.rate
                 op.position.tax_value = op.price.tax
+                try:
+                    position_metadata = json.loads(op.position.meta_info) if op.position.meta_info else {}
+                except (json.JSONDecodeError, TypeError):
+                    position_metadata = {}
+                if isinstance(position_metadata, dict):
+                    position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                    op.position.meta_info = json.dumps(position_metadata)
                 op.position.save()
             elif isinstance(op, self.TaxRuleOperation):
                 if isinstance(op.position, OrderPosition):
@@ -2895,15 +2920,20 @@ def _cancel_order_positions(
         if not normalized_position_ids:
             raise OrderError(_('Please select at least one ticket to cancel.'))
 
-        cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
-        # Prefetch addons to avoid N+1 queries during cancellation validation
-        prefetch_related_objects(list(cancelable_positions.values()), 'addons')
-        selected_positions = {}
-        for position_id in normalized_position_ids:
-            if position_id not in cancelable_positions:
-                raise OrderError(_('One of the selected tickets cannot be canceled.'))
-
-            selected_positions[position_id] = cancelable_positions[position_id]
+        with scope(event=order.event):
+            with order.event.lock():
+                order.refresh_from_db()
+                cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
+                selected_positions = {}
+                locked_addons = {}
+                for position_id in normalized_position_ids:
+                    if position_id not in cancelable_positions:
+                        raise OrderError(_('One of the selected tickets cannot be canceled.'))
+                    position = order.all_positions.select_for_update().get(pk=position_id)
+                    selected_positions[position_id] = position
+                    locked_addons[position_id] = list(
+                        position.addons.filter(canceled=False).select_for_update()
+                    )
 
         positions_to_cancel = []
         canceled_total = Decimal('0.00')
@@ -2914,7 +2944,7 @@ def _cancel_order_positions(
             if position.addon_to_id and position.addon_to_id in selected_positions:
                 continue
 
-            addons = [a for a in position.addons.all() if not a.canceled]
+            addons = locked_addons.get(position.pk, [])
             if any(addon.pk not in cancelable_positions for addon in addons):
                 raise OrderError(_('One of the selected tickets cannot be canceled.'))
 
@@ -2937,40 +2967,63 @@ def _cancel_order_positions(
             raise OrderError(
                 _('To cancel all remaining tickets, please use the full order cancellation.')
             )
+        monetary_values = (canceled_total, order.total)
+        if not all(value.is_finite() for value in monetary_values):
+            raise OrderError(
+                _('The cancellation history or cancellation amount is invalid.')
+            )
+        if not all(abs(value) <= MAX_CANCELLATION_MONETARY_VALUE for value in monetary_values):
+            raise OrderError(
+                _('The cancellation history or cancellation amount is invalid.')
+            )
 
         ocm = OrderChangeManager(
             order=order,
             user=user,
             auth=api_token or oauth_application or device,
         )
-        cancellation_summary = order.customer_cancellation_summary()
-        if cancellation_summary is not None:
-            original_ticket_value = cancellation_summary[2]
-            original_order_total = cancellation_summary[3]
-            retained_extra_fees = cancellation_summary[4]
-        else:
-            original_ticket_value = sum(
-                (position.price for position in order.positions.all()),
-                Decimal('0.00'),
-            )
-            original_order_total = order.total
-            retained_extra_fees = Decimal('0.00')
-            if order.event.settings.cancel_allow_user_paid_keep_fees:
-                retained_extra_fees = (
-                    order.fees.filter(
-                        fee_type__in=(
-                            OrderFee.FEE_TYPE_PAYMENT,
-                            OrderFee.FEE_TYPE_SHIPPING,
-                            OrderFee.FEE_TYPE_SERVICE,
-                        ),
-                        canceled=False,
-                    ).aggregate(s=Sum('value'))['s']
-                    or Decimal('0.00')
+        with scope(event=order.event):
+            cancellation_summary = order.customer_cancellation_summary()
+            canceled_positions_exist = order.all_positions.filter(canceled=True).exists()
+            existing_cancellation_fee = order.user_existing_cancellation_fee
+            if (
+                canceled_positions_exist or existing_cancellation_fee != Decimal('0.00')
+            ) and cancellation_summary is None:
+                raise OrderError(
+                    _('The cancellation history for this order is missing or invalid.')
                 )
+            if cancellation_summary is not None:
+                original_ticket_value = cancellation_summary[2]
+                original_order_total = cancellation_summary[3]
+                retained_extra_fees = cancellation_summary[4]
+                cancellation_settings_snapshot = cancellation_summary[5]
+            else:
+                original_ticket_value = sum(
+                    (position.price for position in order.positions.all()),
+                    Decimal('0.00'),
+                )
+                original_order_total = order.total
+                retained_extra_fees = Decimal('0.00')
+                cancellation_settings_snapshot = order.customer_cancellation_settings()
+                if order.event.settings.cancel_allow_user_paid_keep_fees:
+                    retained_extra_fees = (
+                        order.fees.filter(
+                            fee_type__in=(
+                                OrderFee.FEE_TYPE_PAYMENT,
+                                OrderFee.FEE_TYPE_SHIPPING,
+                                OrderFee.FEE_TYPE_SERVICE,
+                            ),
+                            canceled=False,
+                        ).aggregate(s=Sum('value'))['s']
+                        or Decimal('0.00')
+                    )
         for position in positions_to_cancel:
             ocm.cancel(position)
 
-        cancellation_fee = order.user_partial_cancel_fee(canceled_total)
+        cancellation_fee = order.user_partial_cancel_fee(
+            canceled_total,
+            cancellation_summary=cancellation_summary,
+        )
         existing_cancellation_fee = order.user_existing_cancellation_fee
         cumulative_cancellation_fee = existing_cancellation_fee + cancellation_fee
         if cumulative_cancellation_fee > order.payment_refund_sum:
@@ -2988,35 +3041,41 @@ def _cancel_order_positions(
 
         ocm.commit()
         remaining_fee = cancellation_fee or Decimal('0.00')
-        units_with_total = [(pk, value) for pk, value in cancellation_units if value > Decimal('0.00')]
-        unit_total = sum((value for _pk, value in units_with_total), Decimal('0.00'))
-        for index, (position_id, position_value) in enumerate(units_with_total):
-            position = order.all_positions.get(pk=position_id)
-            if index == len(units_with_total) - 1:
-                position_fee = remaining_fee
-            else:
-                position_fee = round_decimal(
-                    remaining_fee * position_value / unit_total,
-                    order.event.currency,
-                )
-                remaining_fee -= position_fee
-            try:
-                position_metadata = json.loads(position.meta_info) if position.meta_info else {}
-            except (json.JSONDecodeError, TypeError):
-                position_metadata = {}
-            if not isinstance(position_metadata, dict):
-                position_metadata = {}
-            position_metadata[Order.CUSTOMER_CANCELLATION_META_KEY] = {
-                'order_code': order.code,
-                'ticket_value': str(position_value),
-                'fee_value': str(position_fee),
-                'original_ticket_value': str(original_ticket_value),
-                'original_order_total': str(original_order_total),
-                'retained_extra_fees': str(retained_extra_fees),
-                'settings': order.customer_cancellation_settings(),
-            }
-            position.meta_info = json.dumps(position_metadata)
-            position.save(update_fields=['meta_info'])
+        positive_units = [(pk, value) for pk, value in cancellation_units if value > Decimal('0.00')]
+        positive_unit_total = sum((value for _pk, value in positive_units), Decimal('0.00'))
+        positive_index = 0
+        with scope(event=order.event):
+            for position_id, position_value in cancellation_units:
+                position = order.all_positions.get(pk=position_id)
+                if position_value <= Decimal('0.00'):
+                    position_fee = Decimal('0.00')
+                else:
+                    if positive_index == len(positive_units) - 1:
+                        position_fee = remaining_fee
+                    else:
+                        position_fee = round_decimal(
+                            remaining_fee * position_value / positive_unit_total,
+                            order.event.currency,
+                        )
+                        remaining_fee -= position_fee
+                    positive_index += 1
+                try:
+                    position_metadata = json.loads(position.meta_info) if position.meta_info else {}
+                except (json.JSONDecodeError, TypeError):
+                    position_metadata = {}
+                if not isinstance(position_metadata, dict):
+                    position_metadata = {}
+                position_metadata[Order.CUSTOMER_CANCELLATION_META_KEY] = {
+                    'order_code': order.code,
+                    'ticket_value': str(position_value),
+                    'fee_value': str(position_fee),
+                    'original_ticket_value': str(original_ticket_value),
+                    'original_order_total': str(original_order_total),
+                    'retained_extra_fees': str(retained_extra_fees),
+                    'settings': cancellation_settings_snapshot,
+                }
+                position.meta_info = json.dumps(position_metadata)
+                position.save(update_fields=['meta_info'])
         return order
 
 
