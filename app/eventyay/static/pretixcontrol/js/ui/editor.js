@@ -1439,24 +1439,6 @@ var editor = {
                 editor._select_all();
                 handled = true;
                 break;
-            case 89:  /* Y */
-                if (!cmd) {
-                    return;
-                }
-                editor._redo();
-                handled = true;
-                break;
-            case 90:  /* Z */
-                if (!cmd) {
-                    return;
-                }
-                if (e.shiftKey) {
-                    editor._redo();
-                } else {
-                    editor._undo();
-                }
-                handled = true;
-                break;
             case 88:  /* X */
                 if (!cmd || !thing) {
                     return;
@@ -1485,6 +1467,28 @@ var editor = {
             e.preventDefault();
             editor.fabric.renderAll();
             editor._update_toolbox_values();
+        }
+    },
+
+    _on_history_keydown: function (e) {
+        if (!editor.fabric || !editor._is_hotkey_target() || document.body.classList.contains('modal-open')) {
+            return;
+        }
+        if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) {
+            return;
+        }
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) {
+            return;
+        }
+        var key = (e.key || '').toLowerCase();
+        if (key !== 'z' && key !== 'y') {
+            return;
+        }
+        e.preventDefault();
+        if (key === 'y' || e.shiftKey) {
+            editor._redo();
+        } else {
+            editor._undo();
         }
     },
 
@@ -1521,12 +1525,14 @@ var editor = {
     _restore_history: function (pos) {
         editor._history_modification_in_progress = true;
         try {
-            editor.fabric.discardActiveObject();
             editor.load(editor.history[editor.history.length - 1 - pos]);
             editor._history_pos = pos;
         } finally {
             editor._history_modification_in_progress = false;
         }
+        // load() re-adds text objects through _add_text(), which selects each one.
+        editor.fabric.discardActiveObject();
+        editor.fabric.renderAll();
         editor._last_active_object = null;
         editor._update_toolbox();
         editor._update_history_buttons();
@@ -1657,6 +1663,7 @@ var editor = {
         $("#editor-add-poweredby").click(function() {editor._add_poweredby("dark")});
         editor.$cva.get(0).tabIndex = 1000;
         editor.$cva.on("keydown", editor._on_keydown);
+        document.addEventListener('keydown', editor._on_history_keydown);
         $("#editor-save").on("click", editor._save);
         $("#editor-preview").on("click", editor._preview);
         $("#preview-modal").on("hidden.bs.modal", editor._revoke_preview_blob);
