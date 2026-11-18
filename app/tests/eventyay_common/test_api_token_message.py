@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import pytest
+from bs4 import BeautifulSoup
 from django.contrib.messages.storage.base import Message
 from django.contrib.messages.storage.cookie import MessageDecoder, MessageEncoder
 from django.test import override_settings
@@ -50,7 +51,14 @@ def test_created_token_alert_shows_copy_button_after_redirect(organizer_client, 
     with scopes_disabled():
         token = team.tokens.get(name='CI token')
 
-    html = response.content.decode()
-    assert f'<code>{token.token}</code>' in html
-    assert f'data-clipboard-text="{token.token}"' in html
-    assert 'btn-copy-confirm' in html
+    page = BeautifulSoup(response.content, 'html.parser')
+    alerts = [alert for alert in page.select('div.alert') if alert.find('code')]
+    assert len(alerts) == 1
+
+    alert = alerts[0]
+    code = alert.find('code')
+    button = alert.select_one('button.btn-clipboard.btn-copy-confirm')
+
+    assert button is not None
+    assert code.get_text() == token.token
+    assert button['data-clipboard-text'] == code.get_text()
