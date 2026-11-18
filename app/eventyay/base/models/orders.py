@@ -577,24 +577,25 @@ class Order(LockModel, LoggedModel):
             _canceled_value, _charged_fee, _original_value, original_total, retained_extra_fees, settings_snapshot = summary
             return self._user_cancel_fee_for_total(original_total, retained_extra_fees, settings_snapshot)
 
-        fee = Decimal('0.00')
-        if self.event.settings.cancel_allow_user_paid_keep_fees:
-            fee += (
-                self.fees.filter(
-                    fee_type__in=(
-                        OrderFee.FEE_TYPE_PAYMENT,
-                        OrderFee.FEE_TYPE_SHIPPING,
-                        OrderFee.FEE_TYPE_SERVICE,
-                        OrderFee.FEE_TYPE_CANCELLATION,
-                    )
-                ).aggregate(s=Sum('value'))['s']
-                or 0
-            )
-        if self.event.settings.cancel_allow_user_paid_keep_percentage:
-            fee += self.event.settings.cancel_allow_user_paid_keep_percentage / Decimal('100.0') * (self.total - fee)
-        if self.event.settings.cancel_allow_user_paid_keep:
-            fee += self.event.settings.cancel_allow_user_paid_keep
-        return round_decimal(fee, self.event.currency)
+        with scope(organizer=self.event.organizer, event=self.event):
+            fee = Decimal('0.00')
+            if self.event.settings.cancel_allow_user_paid_keep_fees:
+                fee += (
+                    self.fees.filter(
+                        fee_type__in=(
+                            OrderFee.FEE_TYPE_PAYMENT,
+                            OrderFee.FEE_TYPE_SHIPPING,
+                            OrderFee.FEE_TYPE_SERVICE,
+                            OrderFee.FEE_TYPE_CANCELLATION,
+                        )
+                    ).aggregate(s=Sum('value'))['s']
+                    or 0
+                )
+            if self.event.settings.cancel_allow_user_paid_keep_percentage:
+                fee += self.event.settings.cancel_allow_user_paid_keep_percentage / Decimal('100.0') * (self.total - fee)
+            if self.event.settings.cancel_allow_user_paid_keep:
+                fee += self.event.settings.cancel_allow_user_paid_keep
+            return round_decimal(fee, self.event.currency)
 
     def _user_cancel_fee_for_total(
         self,
@@ -641,7 +642,7 @@ class Order(LockModel, LoggedModel):
 
     @cached_property
     def user_existing_cancellation_fee(self):
-        with scope(event=self.event):
+        with scope(organizer=self.event.organizer, event=self.event):
             fee = (
                 self.fees.filter(fee_type=OrderFee.FEE_TYPE_CANCELLATION).aggregate(s=Sum('value'))['s']
                 or Decimal('0.00')
@@ -668,7 +669,7 @@ class Order(LockModel, LoggedModel):
         retained_extra_fees = None
         settings_snapshot = None
 
-        with scope(event=self.event):
+        with scope(organizer=self.event.organizer, event=self.event):
             for position in self.all_positions.filter(canceled=True):
                 try:
                     metadata = (
@@ -763,7 +764,7 @@ class Order(LockModel, LoggedModel):
         if not original_value:
             return None
 
-        with scope(event=self.event):
+        with scope(organizer=self.event.organizer, event=self.event):
             if settings_snapshot is not None and settings_snapshot['keep_fees']:
                 current_retained_extra_fees = (
                     self.fees.filter(
@@ -806,6 +807,14 @@ class Order(LockModel, LoggedModel):
             settings_snapshot,
         )
 
+    def customer_cancellation_history_invalid(self) -> bool:
+        with scope(organizer=self.event.organizer, event=self.event):
+            canceled_positions_exist = self.all_positions.filter(canceled=True).exists()
+            existing_fee = self.user_existing_cancellation_fee
+        return (
+            canceled_positions_exist or existing_fee != Decimal('0.00')
+        ) and self.customer_cancellation_summary() is None
+
     def cumulative_customer_cancel_fee(
         self,
         canceled_total: Decimal,
@@ -816,7 +825,7 @@ class Order(LockModel, LoggedModel):
             summary = self.customer_cancellation_summary()
 
         if summary is None:
-            with scope(event=self.event):
+            with scope(organizer=self.event.organizer, event=self.event):
                 canceled_positions_exist = self.all_positions.filter(canceled=True).exists()
                 existing_fee = self.user_existing_cancellation_fee
                 if canceled_positions_exist or existing_fee != Decimal('0.00'):

@@ -1082,13 +1082,9 @@ class OrderPositionCancel(OrderProtectedActionMixin, OrderPositionCancelMixin, E
 
         position_rows = []
         cancellation_summary = self.order.customer_cancellation_summary()
-        with scope(event=self.request.event):
+        with scope(organizer=self.request.event.organizer, event=self.request.event):
             cancellation_history_invalid = (
-                (
-                    self.order.all_positions.filter(canceled=True).exists()
-                    or self.order.user_existing_cancellation_fee != Decimal('0.00')
-                )
-                and cancellation_summary is None
+                self.order.customer_cancellation_history_invalid()
             )
             monetary_values = (self.order.total,)
             if (
@@ -1099,9 +1095,13 @@ class OrderPositionCancel(OrderProtectedActionMixin, OrderPositionCancelMixin, E
         for position in positions:
             addons = [a for a in position.addons.all() if not a.canceled]
             position_total = position.price + sum(addon.price for addon in addons)
-            cancellation_fee = self.order.user_partial_cancel_fee(
-                position_total,
-                cancellation_summary=cancellation_summary,
+            cancellation_fee = (
+                Decimal('0.00')
+                if cancellation_history_invalid
+                else self.order.user_partial_cancel_fee(
+                    position_total,
+                    cancellation_summary=cancellation_summary,
+                )
             )
             position_rows.append(
                 {
@@ -1182,19 +1182,12 @@ class OrderCancel(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, T
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['order'] = self.order
-        prs = self.order.payment_refund_sum
-        with scope(event=self.request.event):
-            cancellation_summary = self.order.customer_cancellation_summary()
-            cancellation_history_invalid = (
-                (
-                    self.order.all_positions.filter(canceled=True).exists()
-                    or self.order.user_existing_cancellation_fee != Decimal('0.00')
-                )
-                and cancellation_summary is None
-            )
+        with scope(organizer=self.request.event.organizer, event=self.request.event):
+            cancellation_history_invalid = self.order.customer_cancellation_history_invalid()
+        prs = Decimal('0.00') if cancellation_history_invalid else self.order.payment_refund_sum
         fee = Decimal('0.00') if cancellation_history_invalid else self.order.user_cancel_fee
-        refund_amount = prs - fee
-        proposals = self.order.propose_auto_refunds(refund_amount)
+        refund_amount = None if cancellation_history_invalid else prs - fee
+        proposals = [] if cancellation_history_invalid else self.order.propose_auto_refunds(refund_amount)
         ctx['cancel_fee'] = fee
         ctx['refund_amount'] = refund_amount
         ctx['payment_refund_sum'] = prs
@@ -1230,6 +1223,13 @@ class OrderCancelDo(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin,
         if not self.order.user_cancel_allowed:
             messages.error(request, _('You cannot cancel this order.'))
             return redirect(self.get_order_url())
+        with scope(organizer=self.request.event.organizer, event=self.request.event):
+            if self.order.customer_cancellation_history_invalid():
+                messages.error(
+                    request,
+                    _('The cancellation history for this order is missing or invalid.'),
+                )
+                return redirect(self.get_order_url())
         fee = None
         if self.order.status == Order.STATUS_PAID and self.order.total != Decimal('0.00'):
             fee = self.order.user_cancel_fee
@@ -1275,6 +1275,7 @@ class OrderCancelDo(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin,
                 try_auto_refund=True,
                 refund_as_giftcard=giftcard,
                 comment=comment,
+                validate_customer_cancellation_history=True,
             )
 
     def get_context_data(self, **kwargs):

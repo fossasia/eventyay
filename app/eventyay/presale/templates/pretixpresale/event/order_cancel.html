@@ -42,9 +42,7 @@
             <div class="alert alert-danger">
                 {% trans "The cancellation history for this order is missing or invalid. Please contact the organizer." %}
             </div>
-        {% endif %}
-
-        {% if request.event.settings.cancel_allow_user_paid_adjust_fees %}
+        {% elif request.event.settings.cancel_allow_user_paid_adjust_fees %}
             <p>
                 {% if cancel_fee %}
                     {% blocktrans trimmed with fee=order.user_cancel_fee|money:request.event.currency %}
@@ -90,7 +88,7 @@
             </p>
         {% endif %}
 
-        {% if refund_amount %}
+        {% if not cancellation_history_invalid and refund_amount %}
             {% if request.event.settings.cancel_allow_user_paid_refund_as_giftcard == "force" %}
                 <strong>
                     {% trans "The refund will be issued in form of a gift card that you can use for further purchases." %}

@@ -440,6 +440,7 @@ def _cancel_order(
     cancellation_fee=None,
     keep_fees=None,
     cancel_invoice=True,
+    validate_customer_cancellation_history=False,
 ):
     """
     Mark this order as canceled
@@ -463,13 +464,11 @@ def _cancel_order(
 
         if not order.cancel_allowed():
             raise OrderError(_('You cannot cancel this order.'))
-        with scope(event=order.event):
-            cancellation_summary = order.customer_cancellation_summary()
-            canceled_positions_exist = order.all_positions.filter(canceled=True).exists()
-            existing_cancellation_fee = order.user_existing_cancellation_fee
+        with scope(organizer=order.event.organizer, event=order.event):
             if (
-                canceled_positions_exist or existing_cancellation_fee != Decimal('0.00')
-            ) and cancellation_summary is None:
+                validate_customer_cancellation_history
+                and order.customer_cancellation_history_invalid()
+            ):
                 raise OrderError(
                     _('The cancellation history for this order is missing or invalid.')
                 )
@@ -492,16 +491,17 @@ def _cancel_order(
                 else:
                     gc.transactions.create(value=-position.price, order=order)
 
-        with order.event.lock():
-            for position in order.all_positions.all():
-                try:
-                    position_metadata = json.loads(position.meta_info) if position.meta_info else {}
-                except (json.JSONDecodeError, TypeError):
-                    position_metadata = {}
-                if isinstance(position_metadata, dict):
-                    position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
-                    position.meta_info = json.dumps(position_metadata)
-                    position.save(update_fields=['meta_info'])
+        with scope(organizer=order.event.organizer, event=order.event):
+            with order.event.lock():
+                for position in order.all_positions.all():
+                    try:
+                        position_metadata = json.loads(position.meta_info) if position.meta_info else {}
+                    except (json.JSONDecodeError, TypeError):
+                        position_metadata = {}
+                    if isinstance(position_metadata, dict):
+                        position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                        position.meta_info = json.dumps(position_metadata)
+                        position.save(update_fields=['meta_info'])
 
         if cancellation_fee:
             with order.event.lock():
@@ -2894,6 +2894,8 @@ def _cancel_order_positions(
     api_token=None,
     oauth_application=None,
     device=None,
+    customer_cancellation=True,
+    cancellation_fee=None,
 ):
     with transaction.atomic():
         if isinstance(order, int):
@@ -2907,8 +2909,11 @@ def _cancel_order_positions(
         if isinstance(oauth_application, int):
             oauth_application = OAuthApplication.objects.get(pk=oauth_application)
 
-        if not order.user_partial_cancel_allowed:
-            raise OrderError(_('You cannot cancel individual tickets in this order.'))
+        with scope(organizer=order.event.organizer, event=order.event):
+            order.__dict__.pop('user_cancelable_positions', None)
+            order.__dict__.pop('user_cancel_deadline', None)
+            if not order.user_partial_cancel_allowed:
+                raise OrderError(_('You cannot cancel individual tickets in this order.'))
         if not position_ids:
             raise OrderError(_('Please select at least one ticket to cancel.'))
 
@@ -2920,20 +2925,44 @@ def _cancel_order_positions(
         if not normalized_position_ids:
             raise OrderError(_('Please select at least one ticket to cancel.'))
 
-        with scope(event=order.event):
+        with scope(organizer=order.event.organizer, event=order.event):
             with order.event.lock():
                 order.refresh_from_db()
+                order.__dict__.pop('user_cancelable_positions', None)
+                order.__dict__.pop('user_partial_cancel_allowed', None)
+                order.__dict__.pop('user_cancel_deadline', None)
+                if not order.user_partial_cancel_allowed:
+                    raise OrderError(_('You cannot cancel individual tickets in this order.'))
                 cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
                 selected_positions = {}
                 locked_addons = {}
-                for position_id in normalized_position_ids:
-                    if position_id not in cancelable_positions:
-                        raise OrderError(_('One of the selected tickets cannot be canceled.'))
-                    position = order.all_positions.select_for_update().get(pk=position_id)
-                    selected_positions[position_id] = position
-                    locked_addons[position_id] = list(
-                        position.addons.filter(canceled=False).select_for_update()
+                if not normalized_position_ids.issubset(cancelable_positions.keys()):
+                    raise OrderError(_('One of the selected tickets cannot be canceled.'))
+
+                locked_positions = list(
+                    order.all_positions.select_for_update().filter(pk__in=normalized_position_ids)
+                )
+                locked_positions_by_id = {position.pk: position for position in locked_positions}
+                if set(locked_positions_by_id) != normalized_position_ids:
+                    raise OrderError(_('One of the selected tickets cannot be canceled.'))
+                selected_positions = {
+                    position_id: locked_positions_by_id[position_id]
+                    for position_id in normalized_position_ids
+                }
+
+                parent_ids = {
+                    position.pk
+                    for position in selected_positions.values()
+                    if not position.addon_to_id
+                }
+                addons = list(
+                    order.all_positions.select_for_update().filter(
+                        addon_to_id__in=parent_ids,
+                        canceled=False,
                     )
+                )
+                for addon in addons:
+                    locked_addons.setdefault(addon.addon_to_id, []).append(addon)
 
         positions_to_cancel = []
         canceled_total = Decimal('0.00')
@@ -2982,13 +3011,18 @@ def _cancel_order_positions(
             user=user,
             auth=api_token or oauth_application or device,
         )
-        with scope(event=order.event):
+        with scope(organizer=order.event.organizer, event=order.event):
             cancellation_summary = order.customer_cancellation_summary()
             canceled_positions_exist = order.all_positions.filter(canceled=True).exists()
             existing_cancellation_fee = order.user_existing_cancellation_fee
             if (
-                canceled_positions_exist or existing_cancellation_fee != Decimal('0.00')
-            ) and cancellation_summary is None:
+                customer_cancellation
+                and (
+                    canceled_positions_exist
+                    or existing_cancellation_fee != Decimal('0.00')
+                )
+                and cancellation_summary is None
+            ):
                 raise OrderError(
                     _('The cancellation history for this order is missing or invalid.')
                 )
@@ -3020,10 +3054,19 @@ def _cancel_order_positions(
         for position in positions_to_cancel:
             ocm.cancel(position)
 
-        cancellation_fee = order.user_partial_cancel_fee(
-            canceled_total,
-            cancellation_summary=cancellation_summary,
-        )
+        if customer_cancellation:
+            cancellation_fee = order.user_partial_cancel_fee(
+                canceled_total,
+                cancellation_summary=cancellation_summary,
+            )
+        else:
+            cancellation_fee = cancellation_fee or Decimal('0.00')
+            if (
+                not cancellation_fee.is_finite()
+                or cancellation_fee < Decimal('0.00')
+                or abs(cancellation_fee) > MAX_CANCELLATION_MONETARY_VALUE
+            ):
+                raise OrderError(_('Invalid cancellation fee.'))
         existing_cancellation_fee = order.user_existing_cancellation_fee
         cumulative_cancellation_fee = existing_cancellation_fee + cancellation_fee
         if cumulative_cancellation_fee > order.payment_refund_sum:
@@ -3041,10 +3084,12 @@ def _cancel_order_positions(
 
         ocm.commit()
         remaining_fee = cancellation_fee or Decimal('0.00')
+        if not customer_cancellation:
+            return order
         positive_units = [(pk, value) for pk, value in cancellation_units if value > Decimal('0.00')]
         positive_unit_total = sum((value for _pk, value in positive_units), Decimal('0.00'))
         positive_index = 0
-        with scope(event=order.event):
+        with scope(organizer=order.event.organizer, event=order.event):
             for position_id, position_value in cancellation_units:
                 position = order.all_positions.get(pk=position_id)
                 if position_value <= Decimal('0.00'):
@@ -3098,6 +3143,8 @@ def cancel_order_positions(
     try_auto_refund=False,
     refund_as_giftcard=False,
     comment=None,
+    customer_cancellation=True,
+    cancellation_fee=None,
 ):
     try:
         try:
@@ -3108,6 +3155,8 @@ def cancel_order_positions(
                 api_token,
                 oauth_application,
                 device,
+                customer_cancellation,
+                cancellation_fee,
             )
             if try_auto_refund:
                 order.refresh_from_db()
@@ -3145,6 +3194,7 @@ def cancel_order(
     refund_as_giftcard=False,
     comment=None,
     cancel_invoice=True,
+    validate_customer_cancellation_history=False,
 ):
     try:
         try:
@@ -3157,6 +3207,7 @@ def cancel_order(
                 oauth_application,
                 cancellation_fee,
                 cancel_invoice=cancel_invoice,
+                validate_customer_cancellation_history=validate_customer_cancellation_history,
             )
             if try_auto_refund:
                 _try_auto_refund(order, refund_as_giftcard=refund_as_giftcard, comment=comment)

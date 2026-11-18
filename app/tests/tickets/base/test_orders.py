@@ -29,6 +29,7 @@ from eventyay.base.services.invoices import generate_invoice
 from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
+    _cancel_order,
     _cancel_order_positions,
     _check_date,
     _create_order,
@@ -109,6 +110,34 @@ def test_partial_cancellation_sufficient_payment_credit(event):
         order.refresh_from_db()
 
         assert order.status == Order.STATUS_PAID
+        assert order.user_existing_cancellation_fee == Decimal('2.00')
+        assert order.payment_refund_sum == Decimal('20.00')
+
+
+@pytest.mark.django_db
+def test_partial_cancellation_task_without_ambient_organizer_scope(event):
+    with scope(organizer=event.organizer, event=event):
+        event.settings.cancel_allow_user_paid_keep_percentage = Decimal('10')
+        event.settings.cancel_allow_user_paid_keep = Decimal('2.00')
+        event.settings.cancel_allow_user_paid_keep_fees = False
+        event.settings.allow_modifications = 'order'
+        event.settings.cancel_allow_user_paid = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'NO-AMBIENT-SCOPE',
+            [Decimal('10.00'), Decimal('10.00')],
+        )
+
+    result = cancel_order_positions.apply(
+        args=(order.pk, [positions[0].pk]),
+        throw=True,
+    )
+    assert result.successful()
+
+    with scope(organizer=event.organizer, event=event):
+        order.refresh_from_db()
+        positions[0].refresh_from_db()
+        assert positions[0].canceled
         assert order.user_existing_cancellation_fee == Decimal('2.00')
         assert order.payment_refund_sum == Decimal('20.00')
 
@@ -369,6 +398,92 @@ def test_malformed_cancellation_metadata_uses_fallback(event, bad_value):
             match='The cancellation history for this order is missing or invalid.',
         ):
             _cancel_order_positions(order.pk, [positions[1].pk])
+
+
+@pytest.mark.django_db
+def test_organizer_partial_cancellation_preserves_no_customer_metadata(event):
+    with scope(organizer=event.organizer, event=event):
+        event.settings.allow_modifications = 'order'
+        event.settings.cancel_allow_user_paid = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'ORG-PARTIAL',
+            [Decimal('10.00'), Decimal('10.00'), Decimal('10.00')],
+        )
+
+        _cancel_order_positions(
+            order.pk,
+            [positions[0].pk],
+            customer_cancellation=False,
+            cancellation_fee=Decimal('0.00'),
+        )
+        _cancel_order_positions(
+            order.pk,
+            [positions[1].pk],
+            customer_cancellation=False,
+            cancellation_fee=Decimal('0.00'),
+        )
+        order.refresh_from_db()
+        positions[0].refresh_from_db()
+        positions[1].refresh_from_db()
+
+        assert positions[0].canceled
+        assert positions[1].canceled
+        assert not positions[2].canceled
+        assert order.user_existing_cancellation_fee == Decimal('0.00')
+        for position in order.all_positions.all():
+            assert Order.CUSTOMER_CANCELLATION_META_KEY not in position.meta_info_data
+
+
+@pytest.mark.django_db
+def test_explicit_zero_fee_organizer_full_cancellation_without_history(event):
+    with scope(organizer=event.organizer, event=event):
+        order, positions = create_paid_cancellation_order(
+            event,
+            'ORG-ZERO-FULL',
+            [Decimal('10.00'), Decimal('10.00')],
+        )
+        position = positions[0]
+        position.canceled = True
+        position.meta_info = json.dumps({})
+        position.save(update_fields=['canceled', 'meta_info'])
+
+        cancel_order(
+            order.pk,
+            cancellation_fee=Decimal('0.00'),
+            cancel_invoice=False,
+            validate_customer_cancellation_history=False,
+        )
+        order.refresh_from_db()
+        assert order.status == Order.STATUS_CANCELED
+        assert order.user_existing_cancellation_fee == Decimal('0.00')
+
+
+@pytest.mark.django_db
+def test_stale_approval_request_rejects_invalid_customer_history(event):
+    with scope(organizer=event.organizer, event=event):
+        event.settings.cancel_allow_user_paid_require_approval = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'STALE-APPROVAL',
+            [Decimal('10.00'), Decimal('10.00'), Decimal('10.00')],
+        )
+        position = order.all_positions.get(pk=positions[0].pk)
+        position.canceled = True
+        position.meta_info = json.dumps({})
+        position.save(update_fields=['canceled', 'meta_info'])
+
+        with pytest.raises(
+            OrderError,
+            match='The cancellation history for this order is missing or invalid.',
+        ):
+            _cancel_order(
+                order.pk,
+                cancellation_fee=order.user_cancel_fee,
+                validate_customer_cancellation_history=True,
+            )
+
+        assert order.cancellation_requests.count() == 0
 
 
 @pytest.mark.django_db
@@ -4429,7 +4544,7 @@ class OrderReactivateTest(TestCase):
         reactivate_order(self.order)
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_PENDING
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.reactivated'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.reactivated'
         assert self.order.invoices.count() == 3
         assert self.order.expires > e > now()
 
@@ -4439,7 +4554,7 @@ class OrderReactivateTest(TestCase):
         reactivate_order(self.order)
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_PAID
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.reactivated'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.reactivated'
         assert self.order.invoices.count() == 3
         assert not self.order.cancellation_date
 
