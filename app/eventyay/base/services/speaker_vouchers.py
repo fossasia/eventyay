@@ -4,6 +4,9 @@ from datetime import timedelta
 from typing import TypedDict
 from urllib.parse import urlencode
 
+from eventyay.celery_app import app
+from eventyay.core.tasks import EventTask
+
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils.timezone import now
@@ -467,3 +470,58 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
     if confirmed_count:
         return 'not_sent'
     return 'dash'
+
+
+@app.task(base=EventTask, bind=True, max_retries=0, ignore_result=True)
+def send_speaker_vouchers_task(self, event, settings_pk, profile_pks):
+    """Background Celery task: allocate voucher codes and email speakers.
+
+    Called after the HTTP request has already returned.  Runs the same
+    ``allocate_and_send_vouchers`` logic but inside a worker so the
+    organiser does not wait for SMTP delivery.
+
+    Args:
+        event: ``Event`` instance resolved by :class:`EventTask`.
+        settings_pk: Primary key of the ``SpeakerVoucherSettings`` row.
+        profile_pks: List of ``SpeakerProfile`` primary keys to process.
+    """
+    from django_scopes import scope  # local import to avoid circular deps at module level
+
+    with scope(event=event):
+        try:
+            settings_obj = SpeakerVoucherSettings.objects.get(pk=settings_pk)
+        except SpeakerVoucherSettings.DoesNotExist:
+            logger.warning(
+                'send_speaker_vouchers_task: SpeakerVoucherSettings %s not found, skipping.',
+                settings_pk,
+            )
+            return
+
+        profiles = list(
+            SpeakerProfile.objects.filter(pk__in=profile_pks).select_related('user')
+        )
+        if not profiles:
+            logger.info('send_speaker_vouchers_task: no profiles to process, skipping.')
+            return
+
+        result = allocate_and_send_vouchers(event, settings_obj, profiles)
+
+    if result['aborted_insufficient']:
+        logger.warning(
+            'send_speaker_vouchers_task: insufficient vouchers for event %s — '
+            'needed %s, available %s.',
+            event.slug,
+            result['needed'],
+            result['available'],
+        )
+    else:
+        logger.info(
+            'send_speaker_vouchers_task: event %s — sent=%s resent=%s skipped_claimed=%s '
+            'skipped_no_email=%s skipped_ineligible=%s.',
+            event.slug,
+            result['sent'],
+            result['resent'],
+            result['skipped_claimed'],
+            result['skipped_no_email'],
+            result['skipped_ineligible'],
+        )

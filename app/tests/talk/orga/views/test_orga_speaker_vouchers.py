@@ -235,8 +235,31 @@ def test_orga_can_save_speaker_voucher_settings(orga_client, event, speaker_vouc
 def test_orga_bulk_send_vouchers(
     orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
 ):
-    response = orga_client.post(event.orga_urls.speaker_vouchers_send, follow=True)
+    """The bulk-send endpoint dispatches a background task and returns immediately.
+
+    We patch ``apply_async`` to run the allocation service synchronously so the
+    test can still assert on the resulting DB state.
+    """
+    from eventyay.base.models import Event as _Event, SpeakerProfile as _SP
+    from eventyay.base.models.speaker_voucher import SpeakerVoucherSettings as _SVS
+    from eventyay.base.services.speaker_vouchers import allocate_and_send_vouchers as _asv
+
+    def _run_sync(args, **kw):
+        ev = _Event.objects.get(pk=args[0])
+        sv_settings = _SVS.objects.get(pk=args[1])
+        profiles = list(_SP.objects.filter(pk__in=args[2]).select_related('user'))
+        with scope(event=ev):
+            _asv(ev, sv_settings, profiles)
+
+    with patch(
+        'eventyay.base.services.speaker_vouchers.send_speaker_vouchers_task.apply_async',
+        side_effect=_run_sync,
+    ):
+        response = orga_client.post(event.orga_urls.speaker_vouchers_send, follow=True)
+
     assert response.status_code == 200
+    # Page should come back immediately with the async "Sending…" message.
+    assert 'Sending' in response.text and 'voucher' in response.text
     with scope(event=event):
         profile = speaker.event_profile(event)
         assert SpeakerVoucher.objects.filter(speaker_profile=profile, status=SpeakerVoucherStatus.SENT).exists()
@@ -256,7 +279,6 @@ def test_orga_bulk_send_aborts_when_batch_empty(
     assert 'Not enough unused vouchers' in response.text
     with scope(event=event):
         assert SpeakerVoucher.objects.filter(event=event).count() == 0
-
 
 @pytest.mark.django_db
 def test_voucher_redeem_url_encodes_special_characters(event):

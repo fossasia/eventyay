@@ -30,6 +30,7 @@ from eventyay.base.services.speaker_vouchers import (
     allocate_and_send_vouchers,
     assignment_needs_replacement,
     profiles_needing_voucher,
+    send_speaker_vouchers_task,
     speaker_summary_counts,
     voucher_redeem_url,
 )
@@ -933,53 +934,34 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                 messages.info(request, _('Every eligible speaker already has a voucher.'))
                 return redirect(event.orga_urls.speaker_vouchers)
 
-            result = allocate_and_send_vouchers(
-                event, settings_obj, profiles, requestor=request.user
-            )
-
-        if result['aborted_insufficient']:
-            if result['sent']:
-                messages.error(
-                    request,
-                    _(
-                        'Not enough unused vouchers in this batch. '
-                        'Needed {needed}, but only {available} remain. '
-                        'Sent vouchers to {sent} speaker(s) before stopping.'
-                    ).format(
-                        needed=result['needed'],
-                        available=result['available'],
-                        sent=result['sent'],
-                    ),
-                )
-            else:
+            # Preflight: check that there are enough vouchers before dispatching the
+            # background task, so we can surface an actionable error immediately.
+            available = settings_obj.batch_remaining_count()
+            needed = len(profiles)
+            if needed > available:
                 messages.error(
                     request,
                     _(
                         'Not enough unused vouchers in this batch. '
                         'Needed {needed}, but only {available} remain. Nothing was sent.'
-                    ).format(needed=result['needed'], available=result['available']),
+                    ).format(needed=needed, available=available),
                 )
-            return redirect(event.orga_urls.speaker_vouchers)
+                return redirect(event.orga_urls.speaker_vouchers)
 
-        parts = []
-        if result['sent']:
-            parts.append(
-                ngettext(
-                    'Sent a voucher to {count} speaker.',
-                    'Sent vouchers to {count} speakers.',
-                    result['sent'],
-                ).format(count=result['sent'])
-            )
-        if result['resent']:
-            parts.append(
-                ngettext(
-                    'Resent a voucher to {count} speaker.',
-                    'Resent vouchers to {count} speakers.',
-                    result['resent'],
-                ).format(count=result['resent'])
-            )
-        if not parts:
-            messages.warning(request, _('No vouchers were sent.'))
-        else:
-            messages.success(request, ' '.join(str(part) for part in parts))
+        profile_pks = [p.pk for p in profiles]
+        send_speaker_vouchers_task.apply_async(
+            args=[event.pk, settings_obj.pk, profile_pks],
+        )
+        messages.success(
+            request,
+            ngettext(
+                'Sending a voucher to {count} speaker — '
+                'the email will appear in Mails → Sent shortly.',
+                'Sending vouchers to {count} speakers — '
+                'emails will appear in Mails → Sent as they go out.',
+                len(profile_pks),
+            ).format(count=len(profile_pks)),
+        )
         return redirect(event.orga_urls.speaker_vouchers)
+
+
