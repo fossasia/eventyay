@@ -1001,7 +1001,8 @@ class LoungeMeshServerTestView(AdministratorPermissionRequiredMixin, View):
         api_secret = str(body.get("api_secret") or "").strip()
 
         server_id = body.get("server_id")
-        if (not api_secret or api_secret == "*****") and server_id:
+        is_masked_secret = not api_secret or api_secret == "*****" or api_secret.endswith("*****")
+        if is_masked_secret and server_id:
             try:
                 server = LoungeMeshServer.objects.get(pk=server_id)
                 if url:

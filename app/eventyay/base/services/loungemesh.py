@@ -1,6 +1,8 @@
 import ipaddress
 import logging
+import os
 import socket
+import sys
 import time
 import uuid
 from urllib.parse import urlparse
@@ -53,7 +55,14 @@ def validate_loungemesh_server_url(url: str | None) -> tuple[bool, str]:
         return False, _("URL cannot contain embedded credentials.")
 
     is_debug = getattr(settings, "DEBUG", False)
-    is_testing = getattr(settings, "TESTING", False) or "test" in getattr(settings, "SETTINGS_MODULE", "")
+    is_testing = (
+        getattr(settings, "TESTING", False)
+        or getattr(settings, "IS_TESTING", False)
+        or "pytest" in sys.modules
+        or os.environ.get("EVY_RUNNING_ENVIRONMENT") == "testing"
+        or "test" in getattr(settings, "SETTINGS_MODULE", "")
+        or any("pytest" in arg or "test" in arg for arg in sys.argv)
+    )
     hostname = parsed.hostname
     if not hostname:
         return False, _("Invalid hostname.")

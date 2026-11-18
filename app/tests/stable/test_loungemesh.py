@@ -583,3 +583,18 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
             content_type="application/json",
         )
         assert resp.status_code == 404
+
+        # Reusing stored secret with SecretKeyWidget mask (e.g. abc*****)
+        with patch("eventyay.control.views.admin_views.test_loungemesh_server_connection", return_value=(True, "ok")):
+            req_data = {
+                "server_id": str(server.pk),
+                "api_secret": "abc*****",
+                "url": server.url,
+            }
+            resp = client.post(
+                "/admin/video/loungemesh/test/",
+                data=json.dumps(req_data),
+                content_type="application/json",
+            )
+            assert resp.status_code == 200
+            assert resp.json()["ok"] is True

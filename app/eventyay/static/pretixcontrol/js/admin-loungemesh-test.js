@@ -42,8 +42,20 @@ function initLoungeMeshTest() {
       return;
     }
 
+    if (!serverId && (!secret || secret.endsWith('*****'))) {
+      resultContainer.className = 'alert alert-warning';
+      resultContainer.textContent = 'Please enter an EVENTYAY_SERVICE_SECRET first.';
+      resultContainer.classList.remove('hidden');
+      if (secretInput) {
+        secretInput.focus();
+      }
+      return;
+    }
+
     resultContainer.className = 'alert alert-info';
-    resultContainer.innerHTML = '<span class="fa fa-spinner fa-spin"></span> Testing connection to LoungeMesh server...';
+    const spinner = document.createElement('span');
+    spinner.className = 'fa fa-spinner fa-spin';
+    resultContainer.replaceChildren(spinner, document.createTextNode(' Testing connection to LoungeMesh server...'));
     resultContainer.classList.remove('hidden');
     testBtn.disabled = true;
 
@@ -57,33 +69,31 @@ function initLoungeMeshTest() {
         credentials: 'same-origin',
         body: JSON.stringify({
           url: url,
-          api_secret: secret,
+          api_secret: (serverId && secret.endsWith('*****')) ? '*****' : secret,
           server_id: serverId
         })
       });
 
       const data = await response.json();
       testBtn.disabled = false;
-      resultContainer.textContent = '';
       if (data && data.ok) {
         resultContainer.className = 'alert alert-success';
         const icon = document.createElement('span');
         icon.className = 'fa fa-check-circle';
-        resultContainer.append(icon, ' Connection successful! LoungeMesh server is reachable and service secret matches.');
+        resultContainer.replaceChildren(icon, document.createTextNode(' Connection successful! LoungeMesh server is reachable and service secret matches.'));
       } else {
         resultContainer.className = 'alert alert-danger';
         const errorMsg = (data && data.message) ? data.message : 'Connection failed. Please verify the URL and EVENTYAY_SERVICE_SECRET.';
         const icon = document.createElement('span');
         icon.className = 'fa fa-exclamation-triangle';
-        resultContainer.append(icon, ` ${errorMsg}`);
+        resultContainer.replaceChildren(icon, document.createTextNode(' ' + errorMsg));
       }
     } catch (err) {
       testBtn.disabled = false;
       resultContainer.className = 'alert alert-danger';
-      resultContainer.textContent = '';
       const icon = document.createElement('span');
       icon.className = 'fa fa-exclamation-triangle';
-      resultContainer.append(icon, ' Network error testing server: ' + (err.message || 'unknown error'));
+      resultContainer.replaceChildren(icon, document.createTextNode(' Network error testing server: ' + (err.message || 'unknown error')));
     }
   });
 }
