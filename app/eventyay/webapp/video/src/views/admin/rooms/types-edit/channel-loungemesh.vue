@@ -72,7 +72,9 @@ export default {
 			newServerUrl: '',
 			newServerSecret: '',
 			testMessage: '',
-			testSuccess: false
+			testSuccess: false,
+			addOperationId: 0,
+			cancelTimeout: null
 		}
 	},
 	computed: {
@@ -155,6 +157,7 @@ export default {
 				this.testMessage = this.$t('Server URL and service secret are required.')
 				return
 			}
+			const opId = ++this.addOperationId
 			this.testingServer = true
 			this.testMessage = ''
 			try {
@@ -162,18 +165,28 @@ export default {
 					url: this.newServerUrl.trim(),
 					api_secret: this.newServerSecret.trim()
 				})
+				if (this.addOperationId !== opId || !this.showAddCustom) return
 				this.testSuccess = true
 				this.testMessage = this.$t('Server added successfully!')
 				await this.fetchServers()
-				this.module.config.prefer_server = created.url
-				setTimeout(() => {
-					this.cancelAddCustom()
+				if (this.addOperationId !== opId || !this.showAddCustom) return
+				if (this.module?.config) {
+					this.module.config.prefer_server = created.url
+				}
+				if (this.cancelTimeout) clearTimeout(this.cancelTimeout)
+				this.cancelTimeout = setTimeout(() => {
+					if (this.addOperationId === opId) {
+						this.cancelAddCustom()
+					}
 				}, 1000)
 			} catch (e) {
+				if (this.addOperationId !== opId) return
 				this.testSuccess = false
 				this.testMessage = e.message || this.$t('Connection test failed. Check URL and secret.')
 			} finally {
-				this.testingServer = false
+				if (this.addOperationId === opId) {
+					this.testingServer = false
+				}
 			}
 		},
 		async deleteCustomServer(server) {
@@ -189,11 +202,17 @@ export default {
 			}
 		},
 		cancelAddCustom() {
+			this.addOperationId++
+			if (this.cancelTimeout) {
+				clearTimeout(this.cancelTimeout)
+				this.cancelTimeout = null
+			}
 			this.showAddCustom = false
 			this.newServerUrl = ''
 			this.newServerSecret = ''
 			this.testMessage = ''
 			this.testSuccess = false
+			this.testingServer = false
 		},
 		beforeSave() {
 			if (this.module?.config) {
@@ -205,6 +224,13 @@ export default {
 					spatial_chat: Boolean(cfg.enable_spatial_chat),
 				}
 			}
+		}
+	},
+	beforeUnmount() {
+		this.addOperationId++
+		if (this.cancelTimeout) {
+			clearTimeout(this.cancelTimeout)
+			this.cancelTimeout = null
 		}
 	}
 }

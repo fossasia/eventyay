@@ -1,6 +1,7 @@
 import logging
 
 from channels.db import database_sync_to_async
+from django.core.exceptions import ValidationError
 from django_scopes import scope
 
 from eventyay.base.models import LoungeMeshServer
@@ -125,20 +126,34 @@ class LoungeMeshModule(BaseModule):
         server_id = (body or {}).get("server_id")
 
         if (not api_secret or api_secret == "*****") and server_id:
-            api_secret = await database_sync_to_async(self._get_server_secret)(server_id)
+            stored_server = await database_sync_to_async(self._get_stored_server)(server_id)
+            if not stored_server:
+                raise ConsumerException("loungemesh.not_found", "Server not found.")
+            if url:
+                try:
+                    if normalize_server_url(url) != normalize_server_url(stored_server.url):
+                        raise ConsumerException(
+                            "loungemesh.invalid_url",
+                            "Target URL does not match stored server URL.",
+                        )
+                except ValueError:
+                    raise ConsumerException("loungemesh.invalid_url", "Invalid server URL.")
+            else:
+                url = stored_server.url
+            api_secret = stored_server.api_secret
 
         ok, msg = await database_sync_to_async(test_loungemesh_server_connection)(url, api_secret)
         await self.consumer.send_success({"ok": ok, "message": str(msg)})
 
-    def _get_server_secret(self, server_id):
+    def _get_stored_server(self, server_id):
         with scope(event=self.consumer.event):
             try:
                 server = LoungeMeshServer.objects.get(pk=server_id)
                 if is_server_available_for_event(server, self.consumer.event):
-                    return server.api_secret
-            except (LoungeMeshServer.DoesNotExist, ValueError):
+                    return server
+            except (LoungeMeshServer.DoesNotExist, ValueError, ValidationError):
                 pass
-            return ""
+            return None
 
     @command("add_server")
     async def add_server(self, body):
@@ -197,6 +212,6 @@ class LoungeMeshModule(BaseModule):
                 if server.event_exclusive_id == self.consumer.event.id:
                     server.delete()
                     return True
-            except (LoungeMeshServer.DoesNotExist, ValueError):
+            except (LoungeMeshServer.DoesNotExist, ValueError, ValidationError):
                 pass
             return False

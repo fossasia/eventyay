@@ -27,7 +27,10 @@ DEFAULT_FEATURES = {
 def normalize_server_url(url: str | None) -> str:
     if not url:
         return ""
-    parsed = urlparse(url.strip())
+    try:
+        parsed = urlparse(url.strip())
+    except ValueError:
+        return ""
     if not parsed.scheme or not parsed.netloc:
         return ""
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
@@ -39,7 +42,10 @@ def validate_loungemesh_server_url(url: str | None) -> tuple[bool, str]:
         return False, _("Server URL is required.")
 
     cleaned = url.strip()
-    parsed = urlparse(cleaned)
+    try:
+        parsed = urlparse(cleaned)
+    except ValueError:
+        return False, _("Invalid URL: must include a protocol (e.g. https://) and hostname.")
     if not parsed.scheme or not parsed.netloc:
         return False, _("Invalid URL: must include a protocol (e.g. https://) and hostname.")
 
@@ -166,7 +172,7 @@ def get_loungemesh_server(event=None, prefer_server=None) -> LoungeMeshServer | 
 
 def get_available_loungemesh_servers(event=None) -> list[LoungeMeshServer]:
     """Return all active servers authorized for the event in priority order."""
-    servers = LoungeMeshServer.objects.filter(active=True)
+    servers = LoungeMeshServer.objects.filter(active=True).prefetch_related("events", "organizers")
     if not servers.exists():
         return []
 
@@ -185,17 +191,44 @@ def serialize_loungemesh_server(server: LoungeMeshServer, event=None) -> dict:
     """Serialize a server for client-side display without leaking secrets."""
     scope = "global"
     is_custom = False
+
+    events_cache = (
+        server.events.all()
+        if hasattr(server, "_prefetched_objects_cache") and "events" in server._prefetched_objects_cache
+        else None
+    )
+    orgs_cache = (
+        server.organizers.all()
+        if hasattr(server, "_prefetched_objects_cache") and "organizers" in server._prefetched_objects_cache
+        else None
+    )
+
+    has_event = (
+        any(e.pk == event.pk for e in events_cache)
+        if events_cache is not None
+        else (event and server.events.filter(pk=event.pk).exists())
+    )
+    has_any_event = bool(events_cache) if events_cache is not None else server.events.exists()
+
+    org_pk = getattr(getattr(event, "organizer", None), "pk", None)
+    has_org = (
+        any(o.pk == org_pk for o in orgs_cache)
+        if (orgs_cache is not None and org_pk)
+        else (org_pk and server.organizers.filter(pk=org_pk).exists())
+    )
+    has_any_org = bool(orgs_cache) if orgs_cache is not None else server.organizers.exists()
+
     if event:
         if server.event_exclusive_id == event.id:
             scope = "event"
             is_custom = True
-        elif server.events.filter(pk=event.pk).exists():
+        elif has_event:
             scope = "event"
-        elif getattr(event, "organizer", None) and server.organizers.filter(pk=event.organizer.pk).exists():
+        elif has_org:
             scope = "organizer"
-    elif server.event_exclusive_id or server.events.exists():
+    elif server.event_exclusive_id or has_any_event:
         scope = "event"
-    elif server.organizers.exists():
+    elif has_any_org:
         scope = "organizer"
 
     return {
@@ -210,6 +243,38 @@ def loungemesh_is_available(event=None) -> bool:
     if event is not None:
         return get_loungemesh_server(event=event) is not None
     return LoungeMeshServer.objects.filter(active=True).exists()
+
+
+def _resolve_platform_principal(user):
+    """
+    Resolve the platform User account for team permission evaluation.
+    Event-scoped Video users have event_id set and do not hold direct team memberships;
+    their permissions are attached to the platform user account (event__isnull=True).
+    """
+    if not user:
+        return None
+    if getattr(user, "event_id", None) is None and hasattr(user, "has_event_permission"):
+        return user
+
+    email = getattr(user, "email", None)
+    if not email and hasattr(user, "profile") and isinstance(user.profile, dict):
+        email = user.profile.get("contact_email")
+
+    if email:
+        from django_scopes import scopes_disabled
+
+        from eventyay.base.models import User
+
+        with scopes_disabled():
+            platform_user = (
+                User.objects.filter(event__isnull=True, email__iexact=str(email).strip())
+                .order_by("id")
+                .first()
+            )
+            if platform_user:
+                return platform_user
+
+    return user
 
 
 def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str:
@@ -232,19 +297,21 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
     if "admin" in traits:
         return "host"
 
+    principal = _resolve_platform_principal(user)
+
     slug = getattr(event, "slug", "")
     if slug:
         moderator_trait = f"eventyay-video-event-{slug}-video-moderator"
         if moderator_trait in traits:
-            if hasattr(user, "has_event_permission") and getattr(event, "organizer", None):
-                if user.has_event_permission(event.organizer, event, "can_change_event_settings"):
+            if hasattr(principal, "has_event_permission") and getattr(event, "organizer", None):
+                if principal.has_event_permission(event.organizer, event, "can_change_event_settings"):
                     return "host"
             return "moderator"
 
-    if hasattr(user, "has_event_permission") and event and getattr(event, "organizer", None):
-        if user.has_event_permission(event.organizer, event, "can_change_event_settings"):
+    if hasattr(principal, "has_event_permission") and event and getattr(event, "organizer", None):
+        if principal.has_event_permission(event.organizer, event, "can_change_event_settings"):
             return "host"
-        if user.has_event_permission(event.organizer, event, "can_video_moderate"):
+        if principal.has_event_permission(event.organizer, event, "can_video_moderate"):
             return "moderator"
 
     return "attendee"
@@ -256,6 +323,7 @@ def issue_signed_grant(
     user,
     role: str = "attendee",
     server: LoungeMeshServer | None = None,
+    features: dict | None = None,
     expires_in_seconds: int = 7200,
 ) -> str:
     """Issue a signed HS256 grant JWT for LoungeMesh grant exchange."""
@@ -275,8 +343,21 @@ def issue_signed_grant(
         if not display_name:
             display_name = str(getattr(auth_user, "email", "Attendee")).split("@")[0]
 
-    jitsi_room = f"lms-{event.slug}-{room.pk}"
+    room_id = getattr(room, "pk", room)
+    jitsi_room = f"lms-{event.slug}-{room_id}"
     sub = str(auth_user.pk) if auth_user else f"guest:{uuid.uuid4()}"
+
+    if features is None:
+        room_cfg = {}
+        for m in (getattr(room, "module_config", None) or []):
+            if isinstance(m, dict) and m.get("type") in ("call.loungemesh", "channel.loungemesh"):
+                room_cfg = m.get("config", {}) or {}
+                break
+        features = {
+            "notes": room_cfg.get("enable_notes", True),
+            "whiteboard": room_cfg.get("enable_whiteboard", True),
+            "spatial_chat": room_cfg.get("enable_spatial_chat", True),
+        }
 
     payload = {
         "iss": "eventyay",
@@ -286,9 +367,10 @@ def issue_signed_grant(
         "name": display_name,
         "avatar": avatar or "",
         "event": event.slug,
-        "room": str(room.pk),
+        "room": str(room_id),
         "jitsi_room": jitsi_room,
         "role": role,
+        "features": features,
         "allowed": True,
         "iat": now_ts,
         "nbf": now_ts - 10,
@@ -303,6 +385,7 @@ def issue_join_url(
     user,
     role: str | None = None,
     server: LoungeMeshServer | None = None,
+    features: dict | None = None,
     is_organizer_area: bool = False,
 ) -> str | None:
     """Generate LoungeMesh join URL carrying a signed grant."""
@@ -319,7 +402,14 @@ def issue_join_url(
         return None
 
     assigned_role = role or resolve_loungemesh_role(event, user, is_organizer_area=is_organizer_area)
-    grant = issue_signed_grant(event, room, user, role=assigned_role, server=server_obj)
+    grant = issue_signed_grant(
+        event,
+        room,
+        user,
+        role=assigned_role,
+        server=server_obj,
+        features=features,
+    )
     base_url = server_obj.url.rstrip("/")
     jitsi_room = f"lms-{event.slug}-{room.pk}"
     return f"{base_url}/join/{jitsi_room}?grant={grant}"

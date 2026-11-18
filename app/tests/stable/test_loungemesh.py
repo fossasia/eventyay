@@ -140,6 +140,11 @@ def test_validate_loungemesh_server_url():
     valid, _ = validate_loungemesh_server_url("http://127.0.0.1:8780")
     assert valid
 
+    # Malformed URL authority (does not crash with unhandled ValueError)
+    valid, msg = validate_loungemesh_server_url("https://[")
+    assert not valid
+    assert "Invalid URL" in str(msg)
+
 
 @pytest.mark.django_db
 def test_connection_testing():
@@ -515,3 +520,66 @@ def test_embed_headers_and_permissions_policy(test_setup):
     response = MockResponse()
     apply_loungemesh_embed_headers(response, ["http://localhost:8780"])
     assert "Permissions-Policy" in response
+
+
+@pytest.mark.django_db
+def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
+    import json
+    from unittest.mock import patch
+
+    import jwt
+
+    from eventyay.base.services.loungemesh import _resolve_platform_principal, issue_signed_grant
+
+    event = test_setup["event"]
+    server = test_setup["server"]
+    user = test_setup["user"]
+    admin_user = test_setup["admin_user"]
+
+    # 1. Grant includes features
+    features_dict = {"notes": True, "whiteboard": False, "spatial_chat": True}
+    token = issue_signed_grant(event, "hallway", user, "host", server=server, features=features_dict)
+    claims = jwt.decode(token, server.api_secret, algorithms=["HS256"], audience="loungemesh")
+    assert "features" in claims
+    assert claims["features"] == features_dict
+
+    # 2. _resolve_platform_principal resolves platform user by email
+    class MockEventUser:
+        event_id = event.pk
+        email = user.email
+        profile = {"contact_email": user.email}
+
+    resolved = _resolve_platform_principal(MockEventUser())
+    assert resolved == user
+
+    # 3. Destination binding in LoungeMeshServerTestView
+    client.force_login(admin_user)
+    with patch.object(admin_user.__class__, "has_active_staff_session", return_value=True):
+        # Mismatched URL when reusing stored secret
+        req_data = {
+            "server_id": str(server.pk),
+            "api_secret": "*****",
+            "url": "https://attacker.example.com",
+        }
+        resp = client.post(
+            "/admin/video/loungemesh/test/",
+            data=json.dumps(req_data),
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        resp_data = resp.json()
+        assert resp_data["ok"] is False
+        assert "Target URL does not match" in resp_data["message"]
+
+        # Malformed server_id
+        req_data = {
+            "server_id": "not-a-valid-uuid",
+            "api_secret": "*****",
+            "url": server.url,
+        }
+        resp = client.post(
+            "/admin/video/loungemesh/test/",
+            data=json.dumps(req_data),
+            content_type="application/json",
+        )
+        assert resp.status_code == 404
