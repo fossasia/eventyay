@@ -582,13 +582,16 @@ var editor = {
     load: function(data) {
         var historyChangeInProgress = editor._history_modification_in_progress;
         editor._history_modification_in_progress = true;
-        editor.fabric.clear();
-        for (var i in data) {
-            var d = data[i], o;
-            editor._add_from_data(d);
+        try {
+            editor.fabric.clear();
+            for (var i in data) {
+                var d = data[i], o;
+                editor._add_from_data(d);
+            }
+            editor.fabric.renderAll();
+        } finally {
+            editor._history_modification_in_progress = historyChangeInProgress;
         }
-        editor.fabric.renderAll();
-        editor._history_modification_in_progress = historyChangeInProgress;
         editor._update_toolbox_values();
     },
 
@@ -1019,9 +1022,12 @@ var editor = {
                 var data = editor.dump([o]);
                 data[0].content = $("#toolbox-poweredby-style").val();
                 editor._history_modification_in_progress = true;
-                var newo = editor._add_from_data(data[0]);
-                editor.fabric.remove(o);
-                editor._history_modification_in_progress = false;
+                try {
+                    var newo = editor._add_from_data(data[0]);
+                    editor.fabric.remove(o);
+                } finally {
+                    editor._history_modification_in_progress = false;
+                }
                 editor.fabric.discardActiveObject();
                 editor.fabric.setActiveObject(newo);
             }
@@ -1514,10 +1520,13 @@ var editor = {
 
     _restore_history: function (pos) {
         editor._history_modification_in_progress = true;
-        editor._history_pos = pos;
-        editor.fabric.discardActiveObject();
-        editor.load(editor.history[editor.history.length - 1 - pos]);
-        editor._history_modification_in_progress = false;
+        try {
+            editor.fabric.discardActiveObject();
+            editor.load(editor.history[editor.history.length - 1 - pos]);
+            editor._history_pos = pos;
+        } finally {
+            editor._history_modification_in_progress = false;
+        }
         editor._last_active_object = null;
         editor._update_toolbox();
         editor._update_history_buttons();
