@@ -174,12 +174,12 @@
 					@startDragging="caps.canDrag ? startDragging($event) : null",
 					@rescheduleSession="caps.canDrag ? rescheduleSession($event) : null",
 					@createSession="caps.canEdit ? createSession($event) : null",
-					@editSession="caps.canEdit ? editorStart($event) : null",
+					@editSession="caps.canEdit && !editorSession && !editorSessionWaiting ? editorStart($event) : null",
 					@deleteSession="caps.canDelete ? deleteSessionDirect($event) : null",
 					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null",
 					@unscheduleSession="caps.canDrag ? unscheduleSession($event) : null")
-			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel")
-				form#session-editor(@click.stop="", @submit.prevent="editorSave", @keydown.enter="editorSubmit")
+			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel", @pointerdown.stop="", @pointerup.stop="")
+				form#session-editor(@click.stop="", @pointerdown.stop="", @pointerup.stop="", @submit.prevent="editorSave", @keydown.enter="editorSubmit")
 					h3.session-editor-title(v-if="editorSession.code")
 						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
@@ -208,9 +208,29 @@
 						.data-row(v-if="editorSession.code && (editorSession.session_type || editorSession.submission_type)").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Session type') }}
 							.col-md-9.data-value {{ getLocalizedString(editorSession.session_type || editorSession.submission_type) }}
-						.data-row(v-if="editorSession.room").form-group.row
+						.data-row(v-if="editorSession.code && editorSession.room").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Room') }}
 							.col-md-9.data-value {{ getLocalizedString(editorSession.room.name) }}
+						.data-row(v-else-if="!editorSession.code && schedule?.rooms").form-group.row
+							label.data-label.col-form-label.col-md-3 {{ $t('Rooms') }}
+							.col-md-9
+								.break-rooms-selection
+									.form-check.mb-2(v-if="schedule.rooms.length > 1")
+										input#break-all-rooms.form-check-input(
+											type="checkbox",
+											:checked="isAllRoomsSelected",
+											@change="toggleAllRooms"
+										)
+										label.form-check-label.font-weight-bold(for="break-all-rooms") {{ $t('All rooms') }}
+									.break-rooms-list
+										.form-check.form-check-inline(v-for="room in schedule.rooms", :key="room.id")
+											input.form-check-input(
+												type="checkbox",
+												:id="'break-room-' + room.id",
+												:value="room.id",
+												v-model="selectedRoomIds"
+											)
+											label.form-check-label(:for="'break-room-' + room.id") {{ getLocalizedString(room.name) }}
 						.data-row.form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Duration') }}
 							.col-md-9.number.input-group
@@ -428,6 +448,28 @@ const draggedSession = ref<SessionData | null>(null)
 const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
 const editorSessionError = ref<string>('')
+const selectedRoomIds = ref<(number | string)[]>([])
+const initialMatchingBreakIds = ref<Map<string, number | string>>(new Map())
+
+const isAllRoomsSelected = computed<boolean>(() => {
+  if (!schedule.value?.rooms?.length) return false
+  return schedule.value.rooms.every((r) =>
+    selectedRoomIds.value.some((id) => String(id) === String(r.id))
+  )
+})
+
+function toggleAllRooms(e: Event): void {
+  const target = e.target as HTMLInputElement
+  if (!schedule.value?.rooms) return
+  if (target.checked) {
+    selectedRoomIds.value = schedule.value.rooms.map((r) => r.id)
+  } else {
+    const origRoomId = typeof editorSession.value?.room === 'object' && editorSession.value?.room !== null
+      ? (editorSession.value.room as any).id
+      : editorSession.value?.room
+    selectedRoomIds.value = origRoomId != null ? [origRoomId] : []
+  }
+}
 const assigningSession = ref<SessionData | null>(null)
 const assigningWaiting = ref<boolean>(false)
 const assignModalError = ref<string>('')
@@ -1263,6 +1305,7 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
 }
 
 function editorStart(session: SessionData | Talk): void {
+  editorSessionWaiting.value = false
   editorSessionError.value = ''
   const newEditorSession = { ...session } as SessionData
   if (newEditorSession.title && typeof newEditorSession.title === 'object') {
@@ -1275,6 +1318,43 @@ function editorStart(session: SessionData | Talk): void {
       newEditorSession.roles = newEditorSession.roles.map((r) => ({ ...r }))
     }
   }
+
+  if (!newEditorSession.code) {
+    const origRoomId = typeof newEditorSession.room === 'object' && newEditorSession.room !== null
+      ? (newEditorSession.room as any).id
+      : newEditorSession.room
+
+    const matchingMap = new Map<string, number | string>()
+    const roomsWithBreak = new Set<string | number>()
+    if (origRoomId != null) {
+      roomsWithBreak.add(origRoomId)
+      if (newEditorSession.id != null) {
+        matchingMap.set(String(origRoomId), newEditorSession.id)
+      }
+    }
+
+    if (newEditorSession.start && schedule.value?.talks) {
+      const sessionStart = moment(newEditorSession.start)
+      const sessionTitleStr = getLocalizedString(newEditorSession.title)
+      for (const talk of schedule.value.talks) {
+        if (talk.code || !talk.start) continue
+        const talkRoomId = typeof talk.room === 'object' && talk.room !== null
+          ? (talk.room as any).id
+          : talk.room
+        if (talkRoomId == null) continue
+        const isSameTime = moment(talk.start).isSame(sessionStart)
+        const isSameTitle = getLocalizedString(talk.title) === sessionTitleStr
+        if (isSameTime && isSameTitle) {
+          roomsWithBreak.add(talkRoomId)
+          matchingMap.set(String(talkRoomId), talk.id)
+        }
+      }
+    }
+
+    initialMatchingBreakIds.value = matchingMap
+    selectedRoomIds.value = Array.from(roomsWithBreak)
+  }
+
   editorSession.value = newEditorSession
   void nextTick(() => {
     const form = document.getElementById('session-editor') as HTMLFormElement | null
@@ -1315,64 +1395,132 @@ function editorSubmit(event: KeyboardEvent): void {
 async function editorSave(): Promise<void> {
   if (!editorSession.value || editorSessionWaiting.value) return
 
+  const currentSession = editorSession.value
   editorSessionWaiting.value = true
-  if (editorSession.value.start) {
-    const startMoment = moment(editorSession.value.start)
-    editorSession.value.end = startMoment.clone().add(editorSession.value.duration ?? 0, 'minutes')
-  }
-  
-  const talk: Talk = {
-    id: editorSession.value.id,
-    code: editorSession.value.code,
-    title: typeof editorSession.value.title === 'string' 
-      ? { en: editorSession.value.title } 
-      : editorSession.value.title,
-    duration: editorSession.value.duration ?? 0,
-    start: typeof editorSession.value.start === 'string' ? editorSession.value.start : editorSession.value.start?.toISOString(),
-    end: typeof editorSession.value.end === 'string' ? editorSession.value.end : editorSession.value.end?.toISOString(),
-    room: typeof editorSession.value.room === 'object' && editorSession.value.room !== null ? (editorSession.value.room as any).id : editorSession.value.room,
-    speakers: editorSession.value.speakers?.map(s => 
-      typeof s === 'string' ? s : s.name
-    ) || [],
-    track: editorSession.value.track?.id,
-    abstract: editorSession.value.abstract,
-    state: editorSession.value.state
+  editorSessionError.value = ''
+
+  if (currentSession.start) {
+    const startMoment = moment(currentSession.start)
+    currentSession.end = startMoment.clone().add(currentSession.duration ?? 0, 'minutes')
   }
 
-  if (caps.canEditRoles) {
-    talk.roles = editorSession.value.roles?.filter((r) => r.id !== undefined)
-  }
+  const startIso = typeof currentSession.start === 'string'
+    ? currentSession.start
+    : currentSession.start?.toISOString()
+  const endIso = typeof currentSession.end === 'string'
+    ? currentSession.end
+    : currentSession.end?.toISOString()
+  const duration = currentSession.duration ?? 0
+  const title = typeof currentSession.title === 'string'
+    ? locales.value.reduce((acc: Record<string, string>, loc) => {
+        acc[loc] = currentSession.title as string
+        return acc
+      }, {})
+    : currentSession.title
 
   try {
-    await saveTalk(talk)
+    if (currentSession.code) {
+      const talk: Talk = {
+        id: currentSession.id,
+        code: currentSession.code,
+        title,
+        duration,
+        start: startIso,
+        end: endIso,
+        room: typeof currentSession.room === 'object' && currentSession.room !== null
+          ? (currentSession.room as any).id
+          : currentSession.room,
+        speakers: currentSession.speakers?.map((s) => (typeof s === 'string' ? s : s.name)) || [],
+        track: currentSession.track?.id,
+        abstract: currentSession.abstract,
+        state: currentSession.state,
+      }
 
-    const sessionInSchedule = schedule.value?.talks.find((s) => s.id === editorSession.value?.id)
-    if (sessionInSchedule && editorSession.value) {
-      sessionInSchedule.end = typeof editorSession.value.end === 'string' ? editorSession.value.end : editorSession.value.end?.toISOString()
-      if (!('submission' in sessionInSchedule)) {
-        sessionInSchedule.title = editorSession.value.title as Record<string, string>
+      if (caps.canEditRoles) {
+        talk.roles = currentSession.roles?.filter((r) => r.id !== undefined)
+      }
+
+      await saveTalk(talk)
+
+      const sessionInSchedule = schedule.value?.talks.find((s) => String(s.id) === String(currentSession.id))
+      if (sessionInSchedule) {
+        sessionInSchedule.end = endIso
+      }
+    } else {
+      if (!selectedRoomIds.value.length) {
+        editorSessionError.value = $t('Please select at least one room.')
+        editorSessionWaiting.value = false
+        return
+      }
+
+      const matchingMap = initialMatchingBreakIds.value
+      const currentRoomId = typeof currentSession.room === 'object' && currentSession.room !== null
+        ? (currentSession.room as any).id
+        : currentSession.room
+
+      for (const roomId of selectedRoomIds.value) {
+        const existingBreakId = matchingMap.get(String(roomId)) ?? (String(roomId) === String(currentRoomId) ? currentSession.id : undefined)
+        if (existingBreakId != null) {
+          const talk: Talk = {
+            id: existingBreakId,
+            title,
+            duration,
+            start: startIso,
+            end: endIso,
+            room: roomId,
+          }
+          await saveTalk(talk)
+          const sessionInSchedule = schedule.value?.talks.find((s) => String(s.id) === String(existingBreakId))
+          if (sessionInSchedule) {
+            sessionInSchedule.end = endIso
+            sessionInSchedule.title = title as Record<string, string>
+            sessionInSchedule.duration = duration
+          }
+        } else {
+          const created = await api.createTalk({
+            title,
+            duration,
+            start: startIso,
+            end: endIso,
+            room: roomId,
+          })
+          if (created && schedule.value) {
+            if (!created.room) {
+              created.room = roomId
+            }
+            schedule.value.talks = [...schedule.value.talks, created]
+          }
+        }
+      }
+      if (schedule.value) {
+        schedule.value.talks = [...schedule.value.talks]
       }
     }
+
+    editorSessionWaiting.value = false
     editorSession.value = null
 
     try {
       if (caps.showRoles) {
         schedule.value = await fetchSchedule()
       }
-      await fetchAdditionalScheduleData()
+      if (currentSession.code) {
+        await fetchAdditionalScheduleData()
+      }
     } catch {
       // fetchSchedule already records schedule.fetch via api.http
     }
-  } catch {
-    editorSessionError.value = $t('Failed to save. Please try again.')
-  } finally {
+  } catch (error) {
     editorSessionWaiting.value = false
+    editorSessionError.value = $t('Failed to save. Please try again.')
+    console.error('Failed to save session', error)
   }
 }
 
 function editorCancel(): void {
   editorSession.value = null
   editorSessionError.value = ''
+  editorSessionWaiting.value = false
 }
 
 async function editorDelete(): Promise<void> {
@@ -1384,6 +1532,7 @@ async function editorDelete(): Promise<void> {
     if (editorSession.value.code) return
     deleted = await deleteTalkBreakById(editorSession.value.id)
   }
+  editorSessionWaiting.value = false
   if (deleted) {
     editorSession.value = null
   }
@@ -2815,6 +2964,23 @@ html.rtl
 					ul
 						list-style: none
 						padding: 0
+				.break-rooms-selection
+					padding-top: 8px
+					.break-rooms-list
+						display: flex
+						flex-wrap: wrap
+						gap: 6px 14px
+					.form-check
+						display: inline-flex
+						align-items: center
+						margin-bottom: 4px
+						.form-check-input
+							margin-top: 0
+							margin-right: 6px
+							cursor: pointer
+						.form-check-label
+							cursor: pointer
+							user-select: none
 			.input-group
 				position: relative
 				display: flex
