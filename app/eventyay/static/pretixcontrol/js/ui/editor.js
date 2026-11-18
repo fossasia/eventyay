@@ -855,6 +855,8 @@ var editor = {
         editor._apply_text_content_to_object(o);
         editor._apply_autofit_fontsize(o);
         o.setCoords();
+        editor.change_version += 1;
+        editor.dirty = true;
         editor.fabric.renderAll();
         return true;
     },
@@ -1022,22 +1024,30 @@ var editor = {
                     var hex = "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1);
                     return hex.toLowerCase() === firstHex.toLowerCase();
                 });
+                var colEl = document.getElementById("toolbox-col");
                 if (sameCol) {
-                    setVal("#toolbox-col", firstHex);
-                    var colEl = document.getElementById("toolbox-col");
                     if (colEl) {
-                        var $colorInput = $(colEl);
-                        if ($colorInput.data('colorpicker')) {
-                            $colorInput.colorpicker('setValue', firstHex);
+                        if (document.activeElement !== colEl) {
+                            colEl.value = firstHex;
                         }
                         var previewGroup = colEl.closest('.colorpicker-preview-group');
                         if (previewGroup) {
                             var preview = previewGroup.querySelector('.colorpicker-preview');
                             if (preview) { preview.style.backgroundColor = firstHex; }
                         }
+                        colEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 } else {
-                    setVal("#toolbox-col", "");
+                    if (colEl) {
+                        if (document.activeElement !== colEl) {
+                            colEl.value = "";
+                        }
+                        var previewGroup = colEl.closest('.colorpicker-preview-group');
+                        if (previewGroup) {
+                            var preview = previewGroup.querySelector('.colorpicker-preview');
+                            if (preview) { preview.style.backgroundColor = ""; }
+                        }
+                    }
                 }
 
                 var sameFont = selected.every(function (item) {
@@ -1160,6 +1170,8 @@ var editor = {
                         top: o.top + (newTop - bound.top)
                     });
                     o.setCoords();
+                    editor.change_version += 1;
+                    editor.dirty = true;
                 }
             }
 
@@ -1242,6 +1254,8 @@ var editor = {
                 });
 
                 if (hasChanges) {
+                    editor.change_version += 1;
+                    editor.dirty = true;
                     editor.fabric.discardActiveObject();
                     editor._set_selection(selected);
                     return;
@@ -1331,6 +1345,8 @@ var editor = {
         }
 
         o.setCoords();
+        editor.change_version += 1;
+        editor.dirty = true;
         editor.fabric.renderAll();
         editor._update_toolbox_values();
     },

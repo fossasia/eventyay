@@ -1,6 +1,9 @@
 import datetime
 import json
+import shutil
+import subprocess
 
+from django.contrib.staticfiles import finders
 from django.test import override_settings
 from django_scopes import scopes_disabled
 
@@ -214,7 +217,6 @@ class BadgeLayoutFormTest(SoupTest):
         assert doc.select_one('.text-format #toolbox-col') is not None
         assert doc.select_one('.text-individual #toolbox-content') is not None
 
-        from django.contrib.staticfiles import finders
         css_path = finders.find('pretixcontrol/scss/pdfeditor.css')
         assert css_path is not None
         with open(css_path, 'r', encoding='utf-8') as f:
@@ -224,7 +226,6 @@ class BadgeLayoutFormTest(SoupTest):
         assert '#toolbox-pin.active' in css_content
 
     def test_editor_save_persists_pinned_state(self):
-        from django.contrib.staticfiles import finders
         js_path = finders.find('pretixcontrol/js/ui/editor.js')
         assert js_path is not None
         with open(js_path, 'r', encoding='utf-8') as f:
@@ -267,3 +268,44 @@ class BadgeLayoutFormTest(SoupTest):
             saved_layout = json.loads(layout.layout)
             assert len(saved_layout) == 1
             assert saved_layout[0].get('pinned') is True
+
+    def test_editor_save_dirty_tracking_contract(self):
+        js_path = finders.find('pretixcontrol/js/ui/editor.js')
+        assert js_path is not None
+        with open(js_path, 'r', encoding='utf-8') as f:
+            js_content = f.read()
+        assert 'change_version: 0' in js_content
+        assert 'editor.change_version += 1' in js_content
+        assert 'editor.change_version === savedVersion' in js_content
+        assert 'editor.dirty = true;' in js_content
+
+        node_bin = shutil.which('node')
+        if node_bin:
+            js_snippet = """
+            var editor = {
+                change_version: 1,
+                dirty: true,
+                uploaded_file_id: null,
+                _finish_save_button: function ($btn, defaultLabel, ok, savedVersion) {
+                    if (typeof savedVersion === "undefined" || editor.change_version === savedVersion) {
+                        editor.dirty = false;
+                    }
+                }
+            };
+            var mockBtn = { find: () => mockBtn, remove: () => {}, prop: () => {}, html: () => {} };
+            var inFlightVersion = 1;
+            editor.change_version = 2;
+            editor.dirty = true;
+            editor._finish_save_button(mockBtn, "Save", true, inFlightVersion);
+            if (editor.dirty !== true) {
+                process.exit(1);
+            }
+            editor._finish_save_button(mockBtn, "Save", true, 2);
+            if (editor.dirty !== false) {
+                process.exit(1);
+            }
+            console.log("OK");
+            """
+            res = subprocess.run([node_bin, '-e', js_snippet], capture_output=True, text=True)
+            assert res.returncode == 0
+            assert 'OK' in res.stdout
