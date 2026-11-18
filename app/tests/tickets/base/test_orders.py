@@ -20,6 +20,7 @@ from eventyay.base.models import (
     OrderPosition,
     Organizer,
     SeatingPlan,
+    User,
 )
 from eventyay.base.models.orders import OrderFee, OrderPayment, OrderRefund
 from eventyay.base.models.product import SubEventProduct as SubEventItem
@@ -484,6 +485,36 @@ def test_stale_approval_request_rejects_invalid_customer_history(event):
             )
 
         assert order.cancellation_requests.count() == 0
+
+
+@pytest.mark.django_db
+def test_cancel_page_invalid_history_renders_without_refund(client, event):
+    with scope(organizer=event.organizer, event=event):
+        event.live = True
+        event.tickets_published = True
+        event.save(update_fields=['live', 'tickets_published'])
+        event.settings.cancel_allow_user_paid = True
+        order, positions = create_paid_cancellation_order(
+            event,
+            'INVALID-PAGE',
+            [Decimal('10.00'), Decimal('10.00')],
+        )
+        position = positions[0]
+        position.canceled = True
+        position.meta_info = '{}'
+        position.save(update_fields=['canceled', 'meta_info'])
+
+    user = User.objects.create_user(email='cancel-view@example.org', password='test')
+    client.force_login(user)
+    response = client.get(
+        f'/{event.organizer.slug}/{event.slug}/order/{order.code}/{order.secret}/cancel'
+    )
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'The cancellation history for this order is missing or invalid.' in content
+    assert 'Refund amount:' not in content
+    assert 'disabled' in content
 
 
 @pytest.mark.django_db

@@ -1187,7 +1187,7 @@ class OrderCancel(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, T
         prs = Decimal('0.00') if cancellation_history_invalid else self.order.payment_refund_sum
         fee = Decimal('0.00') if cancellation_history_invalid else self.order.user_cancel_fee
         refund_amount = None if cancellation_history_invalid else prs - fee
-        proposals = [] if cancellation_history_invalid else self.order.propose_auto_refunds(refund_amount)
+        proposals = {} if cancellation_history_invalid else self.order.propose_auto_refunds(refund_amount)
         ctx['cancel_fee'] = fee
         ctx['refund_amount'] = refund_amount
         ctx['payment_refund_sum'] = prs
