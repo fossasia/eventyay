@@ -852,11 +852,27 @@ var editor = {
             return false;
         }
 
+        var prevContent = o.content;
+        var prevPlaceholder = o.placeholder_text;
+        var prevText = o.text;
+        var prevFontSize = o.fontSize;
+        var prevMaxFontPt = o.maxFontPt;
+
         editor._apply_text_content_to_object(o);
         editor._apply_autofit_fontsize(o);
         o.setCoords();
-        editor.change_version += 1;
-        editor.dirty = true;
+
+        var changed = (
+            o.content !== prevContent ||
+            o.placeholder_text !== prevPlaceholder ||
+            o.text !== prevText ||
+            o.fontSize !== prevFontSize ||
+            o.maxFontPt !== prevMaxFontPt
+        );
+        if (changed) {
+            editor.change_version += 1;
+            editor.dirty = true;
+        }
         editor.fabric.renderAll();
         return true;
     },
@@ -1035,7 +1051,6 @@ var editor = {
                             var preview = previewGroup.querySelector('.colorpicker-preview');
                             if (preview) { preview.style.backgroundColor = firstHex; }
                         }
-                        colEl.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 } else {
                     if (colEl) {
