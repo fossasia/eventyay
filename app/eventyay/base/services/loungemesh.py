@@ -58,10 +58,12 @@ def validate_loungemesh_server_url(url: str | None) -> tuple[bool, str]:
     is_testing = (
         getattr(settings, "TESTING", False)
         or getattr(settings, "IS_TESTING", False)
-        or "pytest" in sys.modules
+        or (sys.modules.get("pytest") is not None)
         or os.environ.get("EVY_RUNNING_ENVIRONMENT") == "testing"
-        or "test" in getattr(settings, "SETTINGS_MODULE", "")
-        or any("pytest" in arg or "test" in arg for arg in sys.argv)
+        or any(
+            os.path.basename(arg) in ("pytest", "py.test") or arg == "test"
+            for arg in sys.argv
+        )
     )
     hostname = parsed.hostname
     if not hostname:

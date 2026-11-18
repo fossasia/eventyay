@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 import jwt
 import pytest
 import requests
-from django.test import Client
+from django.test import Client, override_settings
 from django.utils import timezone
 from django_scopes import scope, scopes_disabled
 
@@ -144,6 +144,17 @@ def test_validate_loungemesh_server_url():
     valid, msg = validate_loungemesh_server_url("https://[")
     assert not valid
     assert "Invalid URL" in str(msg)
+
+    # SSRF protection does NOT get disabled by executable path containing 'latest'
+    with (
+        override_settings(DEBUG=False, IS_TESTING=False),
+        patch.dict("os.environ", {"EVY_RUNNING_ENVIRONMENT": "production"}),
+        patch.dict("sys.modules", {"pytest": None}),
+        patch("sys.argv", ["/opt/eventyay/latest/bin/gunicorn"]),
+    ):
+        valid, msg = validate_loungemesh_server_url("http://127.0.0.1:8780")
+        assert not valid
+        assert "production" in str(msg).lower()
 
 
 @pytest.mark.django_db
@@ -584,11 +595,17 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
         )
         assert resp.status_code == 404
 
-        # Reusing stored secret with SecretKeyWidget mask (e.g. abc*****)
-        with patch("eventyay.control.views.admin_views.test_loungemesh_server_connection", return_value=(True, "ok")):
+        # Reusing stored secret with use_stored_secret=True (unchanged mask)
+        with (
+            patch(
+                "eventyay.control.views.admin_views.test_loungemesh_server_connection",
+                return_value=(True, "ok"),
+            ) as mock_conn
+        ):
             req_data = {
                 "server_id": str(server.pk),
-                "api_secret": "abc*****",
+                "api_secret": "",
+                "use_stored_secret": True,
                 "url": server.url,
             }
             resp = client.post(
@@ -598,3 +615,26 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
             )
             assert resp.status_code == 200
             assert resp.json()["ok"] is True
+            assert mock_conn.call_args[0][1] == server.api_secret
+
+        # Explicit replacement secret ending in five asterisks is treated literally
+        with (
+            patch(
+                "eventyay.control.views.admin_views.test_loungemesh_server_connection",
+                return_value=(True, "ok"),
+            ) as mock_conn
+        ):
+            req_data = {
+                "server_id": str(server.pk),
+                "api_secret": "replacement*****",
+                "use_stored_secret": False,
+                "url": server.url,
+            }
+            resp = client.post(
+                "/admin/video/loungemesh/test/",
+                data=json.dumps(req_data),
+                content_type="application/json",
+            )
+            assert resp.status_code == 200
+            assert resp.json()["ok"] is True
+            assert mock_conn.call_args[0][1] == "replacement*****"

@@ -31,6 +31,7 @@ function initLoungeMeshTest() {
 
     const url = urlInput ? urlInput.value.trim() : '';
     const secret = secretInput ? secretInput.value.trim() : '';
+    const isUnchangedSecret = Boolean(serverId && secretInput && secret === (secretInput.defaultValue || '').trim());
 
     if (!url) {
       resultContainer.className = 'alert alert-warning';
@@ -42,7 +43,7 @@ function initLoungeMeshTest() {
       return;
     }
 
-    if (!serverId && (!secret || secret.endsWith('*****'))) {
+    if (!serverId && !secret) {
       resultContainer.className = 'alert alert-warning';
       resultContainer.textContent = 'Please enter an EVENTYAY_SERVICE_SECRET first.';
       resultContainer.classList.remove('hidden');
@@ -69,7 +70,8 @@ function initLoungeMeshTest() {
         credentials: 'same-origin',
         body: JSON.stringify({
           url: url,
-          api_secret: (serverId && secret.endsWith('*****')) ? '*****' : secret,
+          api_secret: isUnchangedSecret ? '' : secret,
+          use_stored_secret: isUnchangedSecret,
           server_id: serverId
         })
       });
