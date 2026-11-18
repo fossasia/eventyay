@@ -8,7 +8,7 @@ from allauth.socialaccount.providers.mediawiki.provider import MediaWikiProvider
 class EventyayMediaWikiProvider(MediaWikiProvider):
     # Explicit package keeps allauth loading the upstream mediawiki urlconf
     # instead of deriving it from __module__, which would cause NoReverseMatch.
-    package = "allauth.socialaccount.providers.mediawiki"
+    package = 'allauth.socialaccount.providers.mediawiki'
 
     def extract_extra_data(self, data: Mapping[str, Any]) -> dict[str, Any]:
         extra = super().extract_extra_data(data)

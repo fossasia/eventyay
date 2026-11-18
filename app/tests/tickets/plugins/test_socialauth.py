@@ -1,9 +1,13 @@
 import re
 import time as import_time
 from types import SimpleNamespace
+from unittest import mock
 
 import pytest
+import requests
 from allauth.core.exceptions import ImmediateHttpResponse
+from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
@@ -13,7 +17,12 @@ from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
-from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
+from eventyay.eventyay_common.services.auth_providers import get_preferred_provider, order_login_providers
+from eventyay.eventyay_common.templatetags.auth_login_tags import get_login_context
+from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter, require_provider_enabled
+from eventyay.plugins.socialauth.openid_connect import patch_openid_connect
+from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
+from eventyay.plugins.socialauth.views import OAuthLoginView, SocialLoginView
 
 
 @pytest.fixture
@@ -366,8 +375,6 @@ def test_social_and_account_adapter_rejects_spam_user(provider):
 
 
 def test_login_providers_schema_supports_openid_connect():
-    from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
-
     # 1. Existing providers without openid_connect should validate and backfill default openid_connect
     data = {
         'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
@@ -398,8 +405,6 @@ def test_login_providers_schema_supports_openid_connect():
 
 
 def test_order_login_providers_validates_openid_connect_server_url():
-    from eventyay.eventyay_common.services.auth_providers import get_preferred_provider, order_login_providers
-
     providers = {
         'openid_connect': {
             'state': True,
@@ -428,10 +433,6 @@ def test_order_login_providers_validates_openid_connect_server_url():
 
 
 def test_get_login_context_merges_env_oidc(settings):
-    from unittest import mock
-
-    from eventyay.eventyay_common.templatetags.auth_login_tags import get_login_context
-
     settings.OIDC_ENABLED = True
     settings.OIDC_SERVER_URL = 'https://keycloak.example.com/realms/myrealm'
     settings.OIDC_CLIENT_ID = 'eventyay-web'
@@ -453,10 +454,6 @@ def test_get_login_context_merges_env_oidc(settings):
 
 
 def test_oauth_login_view_rejects_missing_openid_connect_server_url():
-    from unittest import mock
-
-    from eventyay.plugins.socialauth.views import OAuthLoginView
-
     rf = RequestFactory()
     request = rf.get('/control/admin/global/socialauth/login/openid_connect')
     request.session = {}
@@ -481,10 +478,6 @@ def test_oauth_login_view_rejects_missing_openid_connect_server_url():
 
 
 def test_social_adapter_allows_env_configured_oidc(settings):
-    from unittest import mock
-
-    from eventyay.plugins.socialauth.adapter import require_provider_enabled
-
     settings.OIDC_ENABLED = True
     settings.OIDC_SERVER_URL = 'https://auth.example.com/realms/master'
     settings.OIDC_CLIENT_ID = 'client_123'
@@ -501,10 +494,6 @@ def test_social_adapter_allows_env_configured_oidc(settings):
 
 
 def test_social_login_view_update_credentials_openid_connect():
-    from unittest import mock
-
-    from eventyay.plugins.socialauth.views import SocialLoginView
-
     rf = RequestFactory()
     post_data = {
         'openid_connect_client_id': 'oidc-client-1',
@@ -533,3 +522,56 @@ def test_social_login_view_update_credentials_openid_connect():
     )
     assert login_providers['openid_connect']['server_url'] == 'https://auth.example.com/realms/eventyay'
     assert login_providers['openid_connect']['name'] == 'My Company SSO'
+
+
+def test_openid_connect_safe_openid_config_catches_network_error():
+    patch_openid_connect()
+
+    rf = RequestFactory()
+    request = rf.get('/accounts/oidc/openid_connect/login/')
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    adapter = OpenIDConnectOAuth2Adapter(request, 'openid_connect')
+
+    mock_app = SocialApp(provider='openid_connect', client_id='client', secret='sec', name='Keycloak')
+    mock_app.settings = {'server_url': 'https://unreachable.example.com/realms/eventyay'}
+
+    with (
+        mock.patch.object(adapter, 'get_provider') as mock_get_provider,
+        mock.patch('allauth.socialaccount.adapter.DefaultSocialAccountAdapter.get_requests_session') as mock_sess,
+    ):
+        mock_provider = mock.MagicMock()
+        mock_provider.name = 'Keycloak'
+        mock_provider.server_url = 'https://unreachable.example.com/realms/eventyay/.well-known/openid-configuration'
+        mock_provider.app = mock_app
+        mock_get_provider.return_value = mock_provider
+
+        mock_session_inst = mock.MagicMock()
+        mock_session_inst.__enter__.return_value = mock_session_inst
+        mock_session_inst.get.side_effect = requests.ConnectionError('Failed to resolve host')
+        mock_sess.return_value = mock_session_inst
+
+        with pytest.raises(ImmediateHttpResponse) as exc_info:
+            _ = adapter.openid_config
+
+        assert exc_info.value.response.status_code == 302
+        assert exc_info.value.response['Location'] == reverse('auth.login')
+        messages = [str(m.message) for m in getattr(request, '_messages')]
+        assert 'Unable to connect to the identity provider.' in messages[0]
+
+
+def test_custom_social_adapter_on_auth_error_redirects_to_login():
+    rf = RequestFactory()
+    request = rf.get('/accounts/oidc/openid_connect/login/callback/')
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    adapter = CustomSocialAccountAdapter(request)
+    with pytest.raises(ImmediateHttpResponse) as exc_info:
+        adapter.on_authentication_error(request, 'openid_connect', error='access_denied')
+
+    assert exc_info.value.response.status_code == 302
+    assert exc_info.value.response['Location'] == reverse('auth.login')
+    messages = [str(m.message) for m in getattr(request, '_messages')]
+    assert 'Authentication with openid_connect failed.' in messages[0]

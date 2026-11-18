@@ -16,5 +16,11 @@ class SocialAuthApp(AppConfig):
         description = _('This plugin allows you to login via social networks')
         visible = False
 
+    def ready(self):
+        super().ready()
+        from .openid_connect import patch_openid_connect
+
+        patch_openid_connect()
+
 
 default_app_config = 'eventyay.plugins.socialauth.SocialAuthApp'

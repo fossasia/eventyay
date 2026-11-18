@@ -24,7 +24,8 @@ def get_login_context(context):
     raw_providers = gs.settings.get('login_providers', as_type=dict) or {}
 
     # Merge environment-configured OIDC if not defined in DB settings
-    if 'openid_connect' not in raw_providers or not raw_providers['openid_connect'].get('state'):
+    oidc_cfg = raw_providers.get('openid_connect')
+    if not isinstance(oidc_cfg, dict) or not oidc_cfg.get('state'):
         if (
             getattr(settings, 'OIDC_ENABLED', False)
             and getattr(settings, 'OIDC_SERVER_URL', '')

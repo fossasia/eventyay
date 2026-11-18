@@ -88,8 +88,11 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     # https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
     def get_requests_session(self):
-        dj_request = cast(HttpRequest, self.request)
-        site_url = dj_request.build_absolute_uri('/')
+        dj_request = cast(HttpRequest | None, self.request)
+        if dj_request and hasattr(dj_request, 'build_absolute_uri'):
+            site_url = dj_request.build_absolute_uri('/')
+        else:
+            site_url = getattr(settings, 'SITE_URL', 'https://eventyay.com/')
         try:
             contact = settings.ADMINS[0][1]
         except (AttributeError, IndexError):
@@ -110,7 +113,12 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             backend=provider if is_safe_identifier(provider) else 'social',
         )
         logger.error('Error while authorizing with %s: %s - %s', provider, error, exception)
-        raise ImmediateHttpResponse(HttpResponseRedirect(reverse('control:index')))
+        messages.error(
+            request,
+            _('Authentication with %(provider)s failed. Please try again or use another login method.')
+            % {'provider': provider or 'identity provider'},
+        )
+        raise ImmediateHttpResponse(HttpResponseRedirect(reverse('auth.login')))
 
     def save_user(self, request, sociallogin, form=None):
         user = super().save_user(request, sociallogin, form)

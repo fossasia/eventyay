@@ -31,9 +31,8 @@ class OAuthLoginView(View):
         login_providers = gs.settings.get('login_providers', as_type=dict) or {}
 
         # Fallback to environment-based OIDC configuration if not configured in DB
-        if provider == 'openid_connect' and (
-            'openid_connect' not in login_providers or not login_providers['openid_connect'].get('state')
-        ):
+        raw_oidc = login_providers.get('openid_connect')
+        if provider == 'openid_connect' and (not isinstance(raw_oidc, dict) or not raw_oidc.get('state')):
             if (
                 getattr(settings, 'OIDC_ENABLED', False)
                 and getattr(settings, 'OIDC_SERVER_URL', '')
@@ -50,13 +49,14 @@ class OAuthLoginView(View):
                 }
 
         known_providers = frozenset(LoginProviders.model_fields.keys())
+        provider_config = login_providers.get(provider)
         if (
             provider not in known_providers
-            or provider not in login_providers
-            or not login_providers[provider].get('state')
-            or not login_providers[provider].get('client_id')
-            or not login_providers[provider].get('secret')
-            or (provider == 'openid_connect' and not login_providers[provider].get('server_url'))
+            or not isinstance(provider_config, dict)
+            or not provider_config.get('state')
+            or not provider_config.get('client_id')
+            or not provider_config.get('secret')
+            or (provider == 'openid_connect' and not provider_config.get('server_url'))
         ):
             messages.error(request, _('This login method is not available.'))
             log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='social_provider_unavailable')
@@ -68,15 +68,22 @@ class OAuthLoginView(View):
             request.session.pop(KEY_SOCIAL_KEEP_LOGGED_IN, None)
         client_id = provider_config.get('client_id')
         adapter = get_adapter()
-        provider_instance = adapter.get_provider(request, provider, client_id=client_id)
-
-        target = request.GET.get('next') or request.GET.get('redirect_url')
-        next_url = safe_redirect_url(request, target) if target else None
-        login_url = (
-            provider_instance.get_login_url(request, next=next_url)
-            if next_url
-            else provider_instance.get_login_url(request)
-        )
+        try:
+            provider_instance = adapter.get_provider(request, provider, client_id=client_id)
+            target = request.GET.get('next') or request.GET.get('redirect_url')
+            next_url = safe_redirect_url(request, target) if target else None
+            login_url = (
+                provider_instance.get_login_url(request, next=next_url)
+                if next_url
+                else provider_instance.get_login_url(request)
+            )
+        except Exception as e:
+            logger.error('Failed to resolve login URL for provider %s: %s', provider, e)
+            messages.error(
+                request,
+                _('Unable to connect to the identity provider. Please verify the configuration or try again later.'),
+            )
+            return redirect('auth.login')
         return redirect(login_url)
 
 
@@ -184,6 +191,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             if provider == 'openid_connect':
                 server_url_value = request.POST.get(f'{provider}_server_url', '').strip()
                 name_value = request.POST.get(f'{provider}_name', '').strip() or 'Keycloak'
+                if server_url_value and not server_url_value.startswith(('http://', 'https://')):
+                    server_url_value = f'https://{server_url_value}'
+                server_url_value = server_url_value.rstrip('/')
                 login_providers[provider]['server_url'] = server_url_value
                 login_providers[provider]['name'] = name_value
                 defaults['provider_id'] = 'openid_connect'
@@ -220,6 +230,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                     }
                     if provider == 'openid_connect':
                         server_url = provider_config.get('server_url', '').strip()
+                        if server_url and not server_url.startswith(('http://', 'https://')):
+                            server_url = f'https://{server_url}'
+                        server_url = server_url.rstrip('/')
                         name_val = provider_config.get('name', '').strip() or 'Keycloak'
                         defaults['provider_id'] = 'openid_connect'
                         defaults['name'] = name_val
