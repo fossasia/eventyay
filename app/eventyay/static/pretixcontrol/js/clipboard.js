@@ -22,6 +22,14 @@ $(function() {
       if (e.text.length > 0) {
         setTooltip(e.trigger, gettext('Copied!'));
         hideTooltip(e.trigger);
+
+        if ($(e.trigger).hasClass('btn-copy-confirm')) {
+          var $btn = $(e.trigger).addClass('copied');
+          $btn.find('.fa').removeClass('fa-copy').addClass('fa-check');
+          setTimeout(function() {
+            $btn.removeClass('copied').find('.fa').removeClass('fa-check').addClass('fa-copy');
+          }, 2000);
+        }
       }
     });
 
