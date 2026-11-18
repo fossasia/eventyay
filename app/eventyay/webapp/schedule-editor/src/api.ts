@@ -54,6 +54,21 @@ interface AssignmentResponse {
   status: string
 }
 
+/** A failed request, keeping the HTTP status so callers can tell a permission denial from other errors. */
+export class HttpError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'HttpError'
+    this.status = status
+  }
+}
+
+export function isPermissionDenied(error: unknown): boolean {
+  return error instanceof HttpError && error.status === 403
+}
+
 const api = {
   getOrgaEventBase(): string {
     return getApiConfig().baseUrl
@@ -71,6 +86,9 @@ const api = {
     return match ? match[2] : null
   },
 
+  /**
+   * @throws {HttpError} when the request fails or the response is not a successful JSON reply
+   */
   async http<T>(verb: string, url: string, body: HttpRequestBody): Promise<T> {
     const headers: Record<string, string> = {}
     if (body) headers['Content-Type'] = 'application/json'
@@ -92,7 +110,7 @@ const api = {
       response = await fetch(url, options)
     } catch {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'network_error'})
-      throw new Error(`HTTP error 0: network failure`)
+      throw new HttpError(0, `HTTP error 0: network failure`)
     }
 
     if (response.status === 204) {
@@ -102,14 +120,14 @@ const api = {
     const contentType = response.headers.get('Content-Type') ?? ''
     if (!contentType.includes('application/json')) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'non_json', status: response.status})
-      throw new Error(`HTTP error ${response.status}: server returned non-JSON response`)
+      throw new HttpError(response.status, `HTTP error ${response.status}: server returned non-JSON response`)
     }
 
     const json = await response.json()
 
     if (!response.ok) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
-      throw new Error(`HTTP error ${response.status}: ${JSON.stringify(json)}`)
+      throw new HttpError(response.status, `HTTP error ${response.status}: ${JSON.stringify(json)}`)
     }
 
     return json as T
