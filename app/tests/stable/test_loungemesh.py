@@ -2,87 +2,100 @@ import asyncio
 import json
 from datetime import timedelta
 from unittest.mock import AsyncMock, patch
+
+import jwt
 import pytest
+import requests
 from django.test import Client
 from django.utils import timezone
 from django_scopes import scope, scopes_disabled
-import jwt
 
-from eventyay.base.models import Event, LoungeMeshAccessToken, LoungeMeshServer, Organizer, Room, User
+from eventyay.base.models import Event, LoungeMeshServer, Organizer, Room, User
 from eventyay.base.services.loungemesh import (
     apply_loungemesh_embed_headers,
-    clean_expired_loungemesh_tokens,
+    get_available_loungemesh_servers,
     get_loungemesh_server,
-    issue_jitsi_jwt,
     issue_join_url,
-    issue_opaque_token,
+    issue_signed_grant,
     loungemesh_is_available,
     loungemesh_permissions_policy,
-    verify_loungemesh_token,
+    resolve_loungemesh_role,
+    serialize_loungemesh_server,
+    validate_loungemesh_server_url,
+)
+from eventyay.base.services.loungemesh import (
+    test_loungemesh_server_connection as svc_test_loungemesh_server_connection,
 )
 from eventyay.control.forms.server_management import LoungeMeshServerForm
 from eventyay.core.permissions import Permission
+from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.loungemesh import LoungeMeshModule
 
 
 @pytest.fixture
 def test_setup(allow_all_entitlements):
-    with scopes_disabled():
-        organizer = Organizer.objects.create(name="LoungeMesh Org", slug="lm-org")
-        event = Event.objects.create(
-            organizer=organizer,
-            name="LoungeMesh Event",
-            slug="lm-event",
-            date_from=timezone.now(),
-            date_to=timezone.now() + timedelta(days=2),
-            live=True,
-        )
-        user = User.objects.create(
-            email="attendee@example.com",
-            fullname="Alice Attendee",
-        )
-        moderator_user = User.objects.create(
-            email="mod@example.com",
-            fullname="Bob Moderator",
-        )
-        server = LoungeMeshServer.objects.create(
-            url="http://localhost:8780",
-            api_secret="test_lm_secret",
-            jitsi_app_id="eventyay",
-            jitsi_app_secret="test_jitsi_jwt_secret",
-            active=True,
-            cost=0,
-        )
-        with scope(event=event):
-            room = Room.objects.create(
-                event=event,
-                name="Spatial Lounge",
-                module_config=[
-                    {
-                        "type": "call.loungemesh",
-                        "config": {
-                            "prefer_server": "http://localhost:8780",
-                            "enable_notes": True,
-                            "enable_whiteboard": True,
-                            "enable_spatial_chat": True,
-                            "features": {
-                                "notes": True,
-                                "whiteboard": True,
-                                "spatial_chat": True,
-                            },
-                        },
-                    }
-                ],
+    with patch("eventyay.base.models.cache.VersionedModel._set_cache_version_sync"):
+        with scopes_disabled():
+            organizer = Organizer.objects.create(name="LoungeMesh Org", slug="lm-org")
+            event = Event.objects.create(
+                organizer=organizer,
+                name="LoungeMesh Event",
+                slug="lm-event",
+                date_from=timezone.now(),
+                date_to=timezone.now() + timedelta(days=2),
+                live=True,
             )
+            user = User.objects.create(
+                email="attendee@example.com",
+                fullname="Alice Attendee",
+            )
+            admin_user = User.objects.create(
+                email="admin@example.com",
+                fullname="Admin User",
+                is_administrator=True,
+                is_staff=True,
+            )
+            moderator_user = User.objects.create(
+                email="mod@example.com",
+                fullname="Bob Moderator",
+            )
+            server = LoungeMeshServer.objects.create(
+                url="http://localhost:8780",
+                api_secret="test_lm_secret_long_enough_for_jwt_signing_32b",
+                active=True,
+                cost=0,
+            )
+            with scope(event=event):
+                room = Room.objects.create(
+                    event=event,
+                    name="Spatial Lounge",
+                    module_config=[
+                        {
+                            "type": "call.loungemesh",
+                            "config": {
+                                "prefer_server": "http://localhost:8780",
+                                "enable_notes": True,
+                                "enable_whiteboard": True,
+                                "enable_spatial_chat": True,
+                                "features": {
+                                    "notes": True,
+                                    "whiteboard": True,
+                                    "spatial_chat": True,
+                                },
+                            },
+                        }
+                    ],
+                )
 
-    return {
-        "organizer": organizer,
-        "event": event,
-        "user": user,
-        "moderator_user": moderator_user,
-        "server": server,
-        "room": room,
-    }
+        yield {
+            "organizer": organizer,
+            "event": event,
+            "user": user,
+            "admin_user": admin_user,
+            "moderator_user": moderator_user,
+            "server": server,
+            "room": room,
+        }
 
 
 @pytest.mark.django_db
@@ -95,16 +108,76 @@ def test_loungemesh_server_model_and_form(test_setup):
     # Test Form validation and normalization
     form_data = {
         "url": "http://localhost:8780/",
-        "api_secret": "my_secret",
-        "jitsi_app_id": "eventyay",
-        "jitsi_app_secret": "my_jitsi_secret",
-        "cost": 5,
+        "api_secret": "my_secret_32_chars_long_for_tests",
         "active": True,
     }
     form = LoungeMeshServerForm(data=form_data)
     assert form.is_valid(), form.errors
     instance = form.save()
     assert instance.url == "http://localhost:8780"  # trailing slash stripped
+
+
+@pytest.mark.django_db
+def test_validate_loungemesh_server_url():
+    # Empty
+    valid, _ = validate_loungemesh_server_url("")
+    assert not valid
+
+    # Embedded credentials
+    valid, msg = validate_loungemesh_server_url("https://user:pass@example.com")
+    assert not valid
+    assert "credentials" in str(msg)
+
+    # Invalid scheme
+    valid, msg = validate_loungemesh_server_url("ftp://example.com")
+    assert not valid
+    assert "scheme" in str(msg)
+
+    # Localhost
+    valid, _ = validate_loungemesh_server_url("http://localhost:8780")
+    assert valid
+
+    valid, _ = validate_loungemesh_server_url("http://127.0.0.1:8780")
+    assert valid
+
+
+@pytest.mark.django_db
+def test_connection_testing():
+    # 1. Successful connection
+    class MockSuccessResponse:
+        status_code = 200
+
+        def json(self):
+            return {"ok": True, "service": "loungemesh"}
+
+    with patch("requests.get", return_value=MockSuccessResponse()):
+        ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
+        assert ok is True
+        assert msg == "ok"
+
+    # 2. 401 Unauthorized
+    class Mock401Response:
+        status_code = 401
+
+    with patch("requests.get", return_value=Mock401Response()):
+        ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "wrongsecret")
+        assert ok is False
+        assert "secret" in str(msg).lower()
+
+    # 3. 404 Endpoint Not Found
+    class Mock404Response:
+        status_code = 404
+
+    with patch("requests.get", return_value=Mock404Response()):
+        ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
+        assert ok is False
+        assert "404" in str(msg)
+
+    # 4. Connection timeout
+    with patch("requests.get", side_effect=requests.exceptions.Timeout()):
+        ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
+        assert ok is False
+        assert "timed out" in str(msg).lower()
 
 
 @pytest.mark.django_db
@@ -117,9 +190,13 @@ def test_get_loungemesh_server_selection(test_setup):
     assert selected == server
     assert loungemesh_is_available(event=event) is True
 
-    # Preferred server selection
+    # Preferred server selection by URL
     preferred = get_loungemesh_server(event=event, prefer_server="http://localhost:8780")
     assert preferred == server
+
+    # Preferred server selection by UUID
+    preferred_uuid = get_loungemesh_server(event=event, prefer_server=str(server.pk))
+    assert preferred_uuid == server
 
     # If all servers are inactive
     server.active = False
@@ -127,213 +204,183 @@ def test_get_loungemesh_server_selection(test_setup):
     assert get_loungemesh_server(event=event) is None
     assert loungemesh_is_available(event=event) is False
 
+    # Reset server active state for subsequent tests
+    server.active = True
+    server.save()
+
 
 @pytest.mark.django_db
-def test_token_issue_and_verify(test_setup):
+def test_get_available_and_serialize_servers(test_setup):
+    event = test_setup["event"]
+    organizer = test_setup["organizer"]
+    server = test_setup["server"]
+
+    with scopes_disabled():
+        # Create organizer-scoped server
+        org_server = LoungeMeshServer.objects.create(
+            url="https://org.loungemesh.example.com",
+            api_secret="org_secret_32_chars_long_for_test",
+            active=True,
+        )
+        org_server.organizers.add(organizer)
+
+        # Create custom event-exclusive server
+        event_server = LoungeMeshServer.objects.create(
+            url="https://custom.loungemesh.example.com",
+            api_secret="custom_secret_32_chars_long_test",
+            active=True,
+            event_exclusive=event,
+        )
+        event_server.events.add(event)
+
+    available = get_available_loungemesh_servers(event)
+    # Event-exclusive comes first, then organizer, then global
+    assert available[0] == event_server
+    assert available[1] == org_server
+    assert available[2] == server
+
+    ser = serialize_loungemesh_server(event_server, event)
+    assert ser["url"] == "https://custom.loungemesh.example.com"
+    assert ser["scope"] == "event"
+    assert ser["is_custom"] is True
+    assert "api_secret" not in ser
+
+
+@pytest.mark.django_db
+def test_resolve_loungemesh_role(test_setup):
     event = test_setup["event"]
     user = test_setup["user"]
-    room = test_setup["room"]
 
-    # Issue token for attendee (moderator=False)
-    token_obj = issue_opaque_token(event=event, room=room, user=user, moderator=False, expires_in_seconds=900)
-    assert len(token_obj.token) > 20
+    # 1. Public view (is_organizer_area=False): anyone watching is ALWAYS an attendee
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    assert resolve_loungemesh_role(event, user) == "attendee"
 
-    record = verify_loungemesh_token(token_obj.token)
-    assert record is not None
-    assert record.user == user
-    assert record.room == room
-    assert record.event == event
-    assert record.moderator is False
-    assert record.is_valid is True
+    # Even admin traits or settings permissions yield attendee on public view
+    user.traits = ["admin"]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    user.traits = []
 
-    # Issue token for moderator (moderator=True)
-    mod_user = test_setup["moderator_user"]
-    mod_token_obj = issue_opaque_token(event=event, room=room, user=mod_user, moderator=True, expires_in_seconds=900)
-    mod_record = verify_loungemesh_token(mod_token_obj.token)
-    assert mod_record is not None
-    assert mod_record.moderator is True
+    with patch.object(user, "has_event_permission", return_value=True):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
 
-    # Verify invalid token
-    assert verify_loungemesh_token("invalid_token_string") is None
+    # 2. Organizer area (is_organizer_area=True): host, moderator, or attendee
+    # Unprivileged user in organizer area -> attendee
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
-    # Test expired token
-    with scope(event=event):
-        record.expires = timezone.now() - timedelta(minutes=5)
-        record.save()
-    assert verify_loungemesh_token(token_obj.token) is None
+    # Admin trait active in organizer area -> host
+    user.traits = ["admin"]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+    user.traits = []
+
+    # can_change_event_settings in organizer area -> host
+    def perm_check(org, ev, perm):
+        return perm == "can_change_event_settings"
+
+    with patch.object(user, "has_event_permission", side_effect=perm_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+
+    # can_video_moderate in organizer area -> moderator
+    def mod_check(org, ev, perm):
+        return perm == "can_video_moderate"
+
+    with patch.object(user, "has_event_permission", side_effect=mod_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
+
+    # Video moderator trait in organizer area -> moderator
+    moderator_trait = f"eventyay-video-event-{event.slug}-video-moderator"
+    user.traits = [moderator_trait]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
+    user.traits = []
+
+    # Non-video, non-settings permissions in organizer area -> attendee
+    def other_check(org, ev, perm):
+        return perm in ("can_change_items", "can_change_submissions")
+
+    with patch.object(user, "has_event_permission", side_effect=other_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
 
 @pytest.mark.django_db
-def test_clean_expired_tokens(test_setup):
-    event = test_setup["event"]
-    user = test_setup["user"]
-    room = test_setup["room"]
-
-    token_obj = issue_opaque_token(event=event, room=room, user=user, expires_in_seconds=900)
-    with scope(event=event):
-        LoungeMeshAccessToken.objects.filter(token=token_obj.token).update(expires=timezone.now() - timedelta(minutes=10))
-        cleaned = clean_expired_loungemesh_tokens()
-        assert cleaned >= 1
-        assert LoungeMeshAccessToken.objects.filter(token=token_obj.token).count() == 0
-
-
-@pytest.mark.django_db
-def test_issue_jitsi_jwt(test_setup):
+def test_issue_signed_grant_and_join_url(test_setup):
     server = test_setup["server"]
     event = test_setup["event"]
     user = test_setup["user"]
     room = test_setup["room"]
 
-    token_str = issue_jitsi_jwt(
-        display_name=user.fullname,
-        jitsi_room=f"lms-{event.slug}-{room.id}",
-        moderator=False,
-        app_id=server.jitsi_app_id,
-        app_secret=server.jitsi_app_secret,
-    )
-    assert token_str is not None
+    # 1. issue_signed_grant
+    grant = issue_signed_grant(event, room, user, role="host", server=server)
+    assert isinstance(grant, str)
 
-    payload = jwt.decode(token_str, server.jitsi_app_secret, algorithms=["HS256"], audience="eventyay")
+    payload = jwt.decode(grant, server.api_secret, algorithms=["HS256"], audience="loungemesh")
     assert payload["iss"] == "eventyay"
-    assert payload["aud"] == "eventyay"
-    assert payload["room"] == f"lms-{event.slug}-{room.id}"
-    assert payload["context"]["user"]["name"] == user.fullname
-    assert payload["context"]["user"]["moderator"] is False
+    assert payload["aud"] == "loungemesh"
+    assert payload["sub"] == str(user.pk)
+    assert payload["event"] == event.slug
+    assert payload["room"] == str(room.pk)
+    assert payload["jitsi_room"] == f"lms-{event.slug}-{room.pk}"
+    assert payload["role"] == "host"
+    assert payload["allowed"] is True
 
-    # For moderator
-    mod_token = issue_jitsi_jwt(
-        display_name=test_setup["moderator_user"].fullname,
-        jitsi_room=f"lms-{event.slug}-{room.id}",
-        moderator=True,
-        app_id=server.jitsi_app_id,
-        app_secret=server.jitsi_app_secret,
-    )
-    mod_payload = jwt.decode(mod_token, server.jitsi_app_secret, algorithms=["HS256"], audience="eventyay")
-    assert mod_payload["context"]["user"]["moderator"] is True
-
-
-@pytest.mark.django_db
-def test_issue_join_url(test_setup):
-    server = test_setup["server"]
-    event = test_setup["event"]
-    user = test_setup["user"]
-    room = test_setup["room"]
-
-    join_url = issue_join_url(
-        event=event,
-        room=room,
-        user=user,
-        moderator=False,
-        server=server,
-    )
+    # 2. issue_join_url
+    join_url = issue_join_url(event=event, room=room, user=user, server=server)
     assert join_url is not None
     assert join_url.startswith("http://localhost:8780/join/")
-    assert "?token=" in join_url
-    assert f"/join/lms-{event.slug}-{room.id}" in join_url
+    assert "?grant=" in join_url
+    assert f"/join/lms-{event.slug}-{room.pk}" in join_url
 
 
 @pytest.mark.django_db
-def test_loungemesh_token_exchange_view(test_setup):
+def test_admin_server_test_view(test_setup):
     client = Client()
-    event = test_setup["event"]
-    user = test_setup["user"]
-    room = test_setup["room"]
+    admin_user = test_setup["admin_user"]
+    client.force_login(admin_user)
 
-    # 1. Missing token
-    resp = client.post("/api/v1/loungemesh/token/", data=json.dumps({}), content_type="application/json")
-    assert resp.status_code == 400
+    class MockSuccessResponse:
+        status_code = 200
 
-    # 2. Invalid token
-    resp = client.post("/api/v1/loungemesh/token/", data=json.dumps({"token": "fake"}), content_type="application/json")
-    assert resp.status_code == 403
+        def json(self):
+            return {"ok": True, "service": "loungemesh"}
 
-    # 3. Valid token but missing or invalid API secret -> 401 Unauthorized
-    token_obj = issue_opaque_token(event=event, room=room, user=user, moderator=False, expires_in_seconds=1800)
-    resp = client.post("/api/v1/loungemesh/token/", data=json.dumps({"token": token_obj.token}), content_type="application/json")
-    assert resp.status_code == 401
-    assert resp.json()["error"] == "unauthorized"
-
-    resp = client.post(
-        "/api/v1/loungemesh/token/",
-        data=json.dumps({"token": token_obj.token}),
-        content_type="application/json",
-        HTTP_AUTHORIZATION="Bearer wrong_secret",
-    )
-    assert resp.status_code == 401
-
-    # 4. Valid attendee token with Authorization Bearer header -> 200 OK
-    resp = client.post(
-        "/api/v1/loungemesh/token/",
-        data=json.dumps({"token": token_obj.token}),
-        content_type="application/json",
-        HTTP_AUTHORIZATION="Bearer test_lm_secret",
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["status"] == "granted"
-    assert data["display_name"] == user.fullname
-    assert data["moderator"] is False
-    assert data["jwt"] is not None
-    assert data["features"]["notes"] is True
-    assert data["features"]["whiteboard"] is True
-    assert data["features"]["spatial_chat"] is True
-
-    # 5. Valid moderator token with X-LoungeMesh-Secret header -> 200 OK
-    mod_user = test_setup["moderator_user"]
-    mod_token_obj = issue_opaque_token(event=event, room=room, user=mod_user, moderator=True, expires_in_seconds=1800)
-    resp = client.post(
-        "/api/v1/loungemesh/token/",
-        data=json.dumps({"token": mod_token_obj.token}),
-        content_type="application/json",
-        HTTP_X_LOUNGEMESH_SECRET="test_lm_secret",
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["moderator"] is True
-
-
-@pytest.mark.django_db
-def test_loungemesh_token_refresh_view(test_setup):
-    client = Client()
-    event = test_setup["event"]
-    user = test_setup["user"]
-    room = test_setup["room"]
-
-    token_obj = issue_opaque_token(event=event, room=room, user=user, moderator=False, expires_in_seconds=1800)
-    # Without secret -> 401
-    resp = client.post("/api/v1/loungemesh/token/refresh/", data=json.dumps({"token": token_obj.token}), content_type="application/json")
-    assert resp.status_code == 401
-
-    # With Bearer secret -> 200
-    resp = client.post(
-        "/api/v1/loungemesh/token/refresh/",
-        data=json.dumps({"token": token_obj.token}),
-        content_type="application/json",
-        HTTP_AUTHORIZATION="Bearer test_lm_secret",
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["status"] == "refreshed"
-    assert data["jwt"] is not None
-    assert data["expires_at"] is not None
+    with (
+        patch.object(admin_user.__class__, "has_active_staff_session", return_value=True),
+        patch("requests.get", return_value=MockSuccessResponse()),
+    ):
+        test_payload = {
+            "url": "http://localhost:8780",
+            "api_secret": "test_lm_secret_long_enough_for_jwt_signing_32b",
+        }
+        resp = client.post(
+            "/admin/video/loungemesh/test/",
+            data=json.dumps(test_payload),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
 
 
 class DummyConsumer:
-    def __init__(self, user, world, permissions=None, room_cache=None):
+    def __init__(self, user, world, permissions=None, room_cache=None, is_organizer=False):
         self.user = user
         self.world = world
         self.event = world
         self.permissions = set(permissions or [])
         self.room_cache = room_cache or {}
         self.sent_data = None
+        self.is_organizer = is_organizer
 
     async def has_permission_async(self, perm):
-        pval = perm.value if hasattr(perm, "value") else str(perm)
-        return pval in self.permissions or perm in self.permissions
+        perms_list = perm if isinstance(perm, (list, set, tuple)) else [perm]
+        return any(
+            (p.value if hasattr(p, "value") else str(p)) in self.permissions or p in self.permissions
+            for p in perms_list
+        )
 
     def has_permission(self, perm):
-        pval = perm.value if hasattr(perm, "value") else str(perm)
-        return pval in self.permissions or perm in self.permissions
+        perms_list = perm if isinstance(perm, (list, set, tuple)) else [perm]
+        return any(
+            (p.value if hasattr(p, "value") else str(p)) in self.permissions or p in self.permissions
+            for p in perms_list
+        )
 
     async def send_success(self, data):
         self.sent_data = data
@@ -341,67 +388,117 @@ class DummyConsumer:
 
 
 @pytest.mark.django_db
-def test_loungemesh_websocket_module(test_setup):
+def test_loungemesh_websocket_module(test_setup, monkeypatch):
+    monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
     event = test_setup["event"]
     user = test_setup["user"]
-    mod_user = test_setup["moderator_user"]
     room = test_setup["room"]
+    server = test_setup["server"]
+
+    # Ensure server is active
+    server.active = True
+    server.save()
 
     room_cache = {str(room.id): room}
 
-    async def fake_get_join_url(is_moderator):
-        return f"http://localhost:8780/room?token=dummy_token&mod={is_moderator}"
-
-    # Regular attendee consumer (no moderate permission)
-    attendee_consumer = DummyConsumer(
+    consumer = DummyConsumer(
         user=user,
         world=event,
-        permissions=[Permission.ROOM_LOUNGEMESH_JOIN.value],
+        permissions=[
+            Permission.ROOM_LOUNGEMESH_JOIN.value,
+            Permission.ROOM_UPDATE.value,
+            Permission.EVENT_UPDATE.value,
+        ],
         room_cache=room_cache,
     )
+    consumer.event.has_permission_async = AsyncMock(return_value=True)
 
-    # Moderator consumer (with ROOM_LOUNGEMESH_MODERATE)
-    mod_consumer = DummyConsumer(
-        user=mod_user,
-        world=event,
-        permissions=[Permission.ROOM_LOUNGEMESH_JOIN.value, Permission.ROOM_LOUNGEMESH_MODERATE.value],
-        room_cache=room_cache,
-    )
+    module = LoungeMeshModule(consumer)
 
-    async def mock_event_has_permission(*, user, permission, room=None):
-        perms = attendee_consumer.permissions if user == attendee_consumer.user else mod_consumer.permissions
-        perms_list = permission if isinstance(permission, (list, set, tuple)) else [permission]
-        return any(
-            (p.value if hasattr(p, "value") else str(p)) in perms or p in perms
-            for p in perms_list
-        )
+    def sync_to_async_mock(fn):
+        async def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapper
 
-    module = LoungeMeshModule(attendee_consumer)
+    fake_join_url = f"http://localhost:8780/join/lms-{event.slug}-{room.id}?grant=testgranttoken123"
+
+    from django.db import connections
+    main_conn = connections["default"]
 
     with (
+        patch.object(connections.__class__, "__getitem__", return_value=main_conn),
+        patch("channels.db.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.decorators.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.modules.loungemesh.database_sync_to_async", sync_to_async_mock),
         patch.object(room, "refresh_from_db_if_outdated", new_callable=AsyncMock),
-        patch.object(event, "has_permission_async", side_effect=mock_event_has_permission),
-        patch.object(module, "_get_join_url", side_effect=fake_get_join_url),
+        patch.object(module, "_get_join_url", new_callable=AsyncMock, return_value=fake_join_url),
     ):
-        asyncio.run(module.room_url({"room": str(room.id)}))
-    res = attendee_consumer.sent_data
-    assert res is not None
-    assert "url" in res
-    assert res["moderator"] is False
-    assert "token=" in res["url"]
+        async def run_flow():
+            # 1. servers command
+            await module.servers({})
+            servers_res = consumer.sent_data
+            assert "servers" in servers_res
+            assert len(servers_res["servers"]) >= 1
+            assert servers_res["servers"][0]["url"] == server.url
 
-    # Moderator consumer (with ROOM_LOUNGEMESH_MODERATE)
-    mod_module = LoungeMeshModule(mod_consumer)
-    with (
-        patch.object(room, "refresh_from_db_if_outdated", new_callable=AsyncMock),
-        patch.object(event, "has_permission_async", side_effect=mock_event_has_permission),
-        patch.object(mod_module, "_get_join_url", side_effect=fake_get_join_url),
-    ):
-        asyncio.run(mod_module.room_url({"room": str(room.id)}))
-    mod_res = mod_consumer.sent_data
-    assert mod_res is not None
-    assert "url" in mod_res
-    assert mod_res["moderator"] is True
+            # 2. room_url command (public view: always attendee)
+            await module.room_url({"room": str(room.id)})
+
+            res = consumer.sent_data
+            assert res is not None
+            assert "url" in res
+            assert "grant=" in res["url"]
+            assert res["role"] == "attendee"
+            assert res["moderator"] is False
+
+            # On public view (is_organizer=False), even admin traits yield attendee
+            user.traits = ["admin"]
+            await module.room_url({"room": str(room.id)})
+            assert consumer.sent_data["role"] == "attendee"
+            assert consumer.sent_data["moderator"] is False
+            user.traits = []
+
+            # In organizer area (is_organizer=True), host role is resolved
+            consumer.is_organizer = True
+            user.traits = ["admin"]
+            await module.room_url({"room": str(room.id)})
+            assert consumer.sent_data["role"] == "host"
+            assert consumer.sent_data["moderator"] is True
+            user.traits = []
+
+            # Reset back to public view for remaining tests
+            consumer.is_organizer = False
+
+            # 3. test_server command
+            class MockSuccessResponse:
+                status_code = 200
+
+                def json(self):
+                    return {"ok": True, "service": "loungemesh"}
+
+            with patch("requests.get", return_value=MockSuccessResponse()):
+                await module.test_server({"url": "http://localhost:8780", "api_secret": "secret123"})
+                test_res = consumer.sent_data
+                assert test_res["ok"] is True
+
+            # 4. add_server command (tested before saving)
+            with patch("requests.get", return_value=MockSuccessResponse()):
+                await module.add_server({"url": "http://localhost:8781", "api_secret": "newsecret"})
+                added = consumer.sent_data
+                assert added["url"] == "http://localhost:8781"
+                assert added["scope"] == "event"
+                assert added["is_custom"] is True
+
+            # 5. delete_server command
+            custom_server_id = consumer.sent_data["id"]
+            await module.delete_server({"server_id": custom_server_id})
+            assert consumer.sent_data["ok"] is True
+
+            # Attempting to delete a global server should raise ConsumerException
+            with pytest.raises(ConsumerException):
+                await module.delete_server({"server_id": str(server.pk)})
+
+        asyncio.run(run_flow())
 
 
 @pytest.mark.django_db

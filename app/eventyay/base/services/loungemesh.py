@@ -1,16 +1,19 @@
+import ipaddress
 import logging
-import secrets
-from datetime import timedelta
+import socket
 import time
+import uuid
 from urllib.parse import urlparse
 
-from django.conf import settings
-from django.db.models import Q
-from django.utils.timezone import now
 import jwt
+import requests
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import LoungeMeshAccessToken, LoungeMeshServer, Room
+from eventyay.base.models import LoungeMeshServer
+
 from .video_server_routing import filter_servers_for_event, is_server_available_for_event
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,115 @@ def normalize_server_url(url: str | None) -> str:
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
 
+def validate_loungemesh_server_url(url: str | None) -> tuple[bool, str]:
+    """Validate a LoungeMesh server URL against SSRF and syntax rules."""
+    if not url or not url.strip():
+        return False, _("Server URL is required.")
+
+    cleaned = url.strip()
+    parsed = urlparse(cleaned)
+    if not parsed.scheme or not parsed.netloc:
+        return False, _("Invalid URL: must include a protocol (e.g. https://) and hostname.")
+
+    if parsed.username or parsed.password:
+        return False, _("URL cannot contain embedded credentials.")
+
+    is_debug = getattr(settings, "DEBUG", False)
+    is_testing = getattr(settings, "TESTING", False) or "test" in getattr(settings, "SETTINGS_MODULE", "")
+    hostname = parsed.hostname
+    if not hostname:
+        return False, _("Invalid hostname.")
+
+    lowered_host = hostname.lower()
+    is_local_host = lowered_host in ("localhost", "127.0.0.1", "host.docker.internal", "::1")
+
+    # Scheme check
+    if parsed.scheme.lower() not in ("http", "https"):
+        return False, _("URL scheme must be http:// or https://.")
+
+    if parsed.scheme.lower() == "http" and not (is_debug or is_testing or is_local_host):
+        return False, _("Production server URLs must use secure https://.")
+
+    # Check for localhost / loopback aliases
+    if (is_debug or is_testing) and is_local_host:
+        return True, "ok"
+
+    try:
+        addr_info = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False, _("Could not resolve hostname '%(host)s'.") % {"host": hostname}
+
+    for item in addr_info:
+        sockaddr = item[4]
+        ip_str = sockaddr[0]
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+
+        if ip_obj.is_link_local or ip_obj.is_unspecified:
+            return False, _("Connections to link-local or unspecified IP addresses are not permitted.")
+
+        # In production (DEBUG=False and not testing and not local host), reject loopback and private IPs
+        if not (is_debug or is_testing):
+            if ip_obj.is_loopback or ip_obj.is_private or ip_obj.is_reserved:
+                return False, _("Connections to private or local network addresses are not permitted in production.")
+
+    return True, "ok"
+
+
+def test_loungemesh_server_connection(url: str, api_secret: str, timeout: float = 5.0) -> tuple[bool, str]:
+    """
+    Test connectivity and shared secret authentication against a LoungeMesh server.
+    Calls GET /api/integration/verify with x-service-secret header.
+    """
+    valid, err = validate_loungemesh_server_url(url)
+    if not valid:
+        return False, err
+
+    if not api_secret or not api_secret.strip():
+        return False, _("Service secret is required.")
+
+    base_url = normalize_server_url(url)
+    verify_url = f"{base_url}/api/integration/verify"
+    headers = {
+        "x-service-secret": api_secret.strip(),
+        "User-Agent": "Eventyay-LoungeMesh-Verifier/1.0",
+    }
+
+    try:
+        resp = requests.get(
+            verify_url,
+            headers=headers,
+            timeout=timeout,
+            allow_redirects=False,
+        )
+    except requests.exceptions.Timeout:
+        return False, _("Connection timed out while contacting LoungeMesh server.")
+    except requests.exceptions.SSLError as e:
+        return False, _("SSL certificate verification failed: %(err)s") % {"err": str(e)}
+    except requests.exceptions.RequestException as e:
+        return False, _("Failed to connect to LoungeMesh server: %(err)s") % {"err": str(e)}
+
+    if resp.status_code == 200:
+        try:
+            data = resp.json()
+            if isinstance(data, dict) and data.get("ok") is True:
+                return True, "ok"
+        except (ValueError, TypeError):
+            pass
+        return False, _("Server responded with 200 OK, but returned invalid verification response.")
+    elif resp.status_code == 401:
+        return False, _("Authentication failed: invalid service secret (EVENTYAY_SERVICE_SECRET mismatch).")
+    elif resp.status_code == 404:
+        return (
+            False,
+            _("LoungeMesh verification endpoint not found (404). Ensure the server is running LoungeMesh 0.7.0+."),
+        )
+    else:
+        return False, _("LoungeMesh server returned HTTP status %(code)d.") % {"code": resp.status_code}
+
+
 def get_loungemesh_server(event=None, prefer_server=None) -> LoungeMeshServer | None:
     servers = LoungeMeshServer.objects.filter(active=True)
     if not servers.exists():
@@ -38,7 +150,9 @@ def get_loungemesh_server(event=None, prefer_server=None) -> LoungeMeshServer | 
     if prefer_server:
         preferred = normalize_server_url(prefer_server)
         for s in servers:
-            if normalize_server_url(s.url) == preferred and is_server_available_for_event(s, event):
+            if (
+                normalize_server_url(s.url) == preferred or str(s.pk) == str(prefer_server).strip()
+            ) and is_server_available_for_event(s, event):
                 return s
 
     search_order = filter_servers_for_event(servers, event)
@@ -50,82 +164,150 @@ def get_loungemesh_server(event=None, prefer_server=None) -> LoungeMeshServer | 
     return None
 
 
+def get_available_loungemesh_servers(event=None) -> list[LoungeMeshServer]:
+    """Return all active servers authorized for the event in priority order."""
+    servers = LoungeMeshServer.objects.filter(active=True)
+    if not servers.exists():
+        return []
+
+    search_order = filter_servers_for_event(servers, event)
+    available: list[LoungeMeshServer] = []
+    seen: set[uuid.UUID] = set()
+    for qs in search_order:
+        for s in qs:
+            if s.pk not in seen:
+                seen.add(s.pk)
+                available.append(s)
+    return available
+
+
+def serialize_loungemesh_server(server: LoungeMeshServer, event=None) -> dict:
+    """Serialize a server for client-side display without leaking secrets."""
+    scope = "global"
+    is_custom = False
+    if event:
+        if server.event_exclusive_id == event.id:
+            scope = "event"
+            is_custom = True
+        elif server.events.filter(pk=event.pk).exists():
+            scope = "event"
+        elif getattr(event, "organizer", None) and server.organizers.filter(pk=event.organizer.pk).exists():
+            scope = "organizer"
+    elif server.event_exclusive_id or server.events.exists():
+        scope = "event"
+    elif server.organizers.exists():
+        scope = "organizer"
+
+    return {
+        "id": str(server.pk),
+        "url": server.url,
+        "scope": scope,
+        "is_custom": is_custom,
+    }
+
+
 def loungemesh_is_available(event=None) -> bool:
     if event is not None:
         return get_loungemesh_server(event=event) is not None
     return LoungeMeshServer.objects.filter(active=True).exists()
 
 
-def issue_opaque_token(
-    event, room, user, moderator: bool = False, expires_in_seconds: int = 7200
-) -> LoungeMeshAccessToken:
-    auth_user = user if user and getattr(user, "is_authenticated", False) else None
-    return LoungeMeshAccessToken.objects.create(
-        event=event,
-        room=room,
-        user=auth_user,
-        moderator=moderator,
-        expires=now() + timedelta(seconds=expires_in_seconds),
-    )
+def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str:
+    """
+    Resolve LoungeMesh permission level:
+    - Anyone watching on public view (is_organizer_area=False) is ALWAYS an attendee.
+    - Only in organizer area (is_organizer_area=True):
+      - Admin mode active (admin trait in user traits) -> host
+      - can_change_event_settings -> host
+      - can_video_moderate -> moderator
+      - otherwise -> attendee
+    """
+    if not is_organizer_area:
+        return "attendee"
+
+    if not user or not getattr(user, "is_authenticated", False):
+        return "attendee"
+
+    traits = getattr(user, "traits", None) or []
+    if "admin" in traits:
+        return "host"
+
+    slug = getattr(event, "slug", "")
+    if slug:
+        moderator_trait = f"eventyay-video-event-{slug}-video-moderator"
+        if moderator_trait in traits:
+            if hasattr(user, "has_event_permission") and getattr(event, "organizer", None):
+                if user.has_event_permission(event.organizer, event, "can_change_event_settings"):
+                    return "host"
+            return "moderator"
+
+    if hasattr(user, "has_event_permission") and event and getattr(event, "organizer", None):
+        if user.has_event_permission(event.organizer, event, "can_change_event_settings"):
+            return "host"
+        if user.has_event_permission(event.organizer, event, "can_video_moderate"):
+            return "moderator"
+
+    return "attendee"
 
 
-def verify_loungemesh_token(token_str: str) -> LoungeMeshAccessToken | None:
-    if not token_str:
-        return None
-    token = LoungeMeshAccessToken.objects.filter(
-        token=token_str,
-        expires__gt=now(),
-    ).select_related("event", "room", "user").first()
-    return token
-
-
-def verify_server_api_secret(server: LoungeMeshServer | None, secret_candidate: str | None) -> bool:
-    """Verify an API secret provided by the LoungeMesh server using constant-time comparison."""
+def issue_signed_grant(
+    event,
+    room,
+    user,
+    role: str = "attendee",
+    server: LoungeMeshServer | None = None,
+    expires_in_seconds: int = 7200,
+) -> str:
+    """Issue a signed HS256 grant JWT for LoungeMesh grant exchange."""
     if not server or not server.api_secret:
-        return True
-    if not secret_candidate:
-        return False
-    return secrets.compare_digest(server.api_secret.strip(), secret_candidate.strip())
-
-
-def issue_jitsi_jwt(
-    display_name: str,
-    jitsi_room: str,
-    moderator: bool = False,
-    features: dict | None = None,
-    app_id: str | None = None,
-    app_secret: str | None = None,
-    avatar: str | None = None,
-) -> str | None:
-    if not app_secret:
-        return None
+        raise ValueError("LoungeMesh server missing api_secret for grant signing")
 
     now_ts = int(time.time())
+    auth_user = user if user and getattr(user, "is_authenticated", False) else None
+    display_name = "Attendee"
+    avatar = ""
+    if auth_user:
+        display_name = getattr(auth_user, "name", "") or getattr(auth_user, "fullname", "")
+        if not display_name and hasattr(auth_user, "profile") and isinstance(auth_user.profile, dict):
+            display_name = auth_user.profile.get("display_name", "")
+        if hasattr(auth_user, "profile") and isinstance(auth_user.profile, dict):
+            avatar = auth_user.profile.get("avatar_url", "")
+        if not display_name:
+            display_name = str(getattr(auth_user, "email", "Attendee")).split("@")[0]
+
+    jitsi_room = f"lms-{event.slug}-{room.pk}"
+    sub = str(auth_user.pk) if auth_user else f"guest:{uuid.uuid4()}"
+
     payload = {
-        "context": {
-            "user": {
-                "name": display_name,
-                "avatar": avatar or "",
-                "moderator": moderator,
-            },
-            "features": features or DEFAULT_FEATURES,
-        },
-        "aud": app_id or "loungemesh",
-        "iss": app_id or "loungemesh",
-        "sub": app_id or "*",
-        "room": jitsi_room,
+        "iss": "eventyay",
+        "aud": "loungemesh",
+        "jti": str(uuid.uuid4()),
+        "sub": sub,
+        "name": display_name,
+        "avatar": avatar or "",
+        "event": event.slug,
+        "room": str(room.pk),
+        "jitsi_room": jitsi_room,
+        "role": role,
+        "allowed": True,
         "iat": now_ts,
         "nbf": now_ts - 10,
-        "exp": now_ts + 7200,
+        "exp": now_ts + expires_in_seconds,
     }
-    return jwt.encode(payload, app_secret, algorithm="HS256")
+    return jwt.encode(payload, server.api_secret, algorithm="HS256")
 
 
 def issue_join_url(
-    event, room, user, moderator: bool = False, server: LoungeMeshServer | None = None
+    event,
+    room,
+    user,
+    role: str | None = None,
+    server: LoungeMeshServer | None = None,
+    is_organizer_area: bool = False,
 ) -> str | None:
+    """Generate LoungeMesh join URL carrying a signed grant."""
     server_obj = server or get_loungemesh_server(event)
-    if not server_obj:
+    if not server_obj or not server_obj.api_secret:
         return None
 
     # Room must have loungemesh in module_config
@@ -136,15 +318,11 @@ def issue_join_url(
     if not has_loungemesh:
         return None
 
-    token = issue_opaque_token(event, room, user, moderator=moderator)
+    assigned_role = role or resolve_loungemesh_role(event, user, is_organizer_area=is_organizer_area)
+    grant = issue_signed_grant(event, room, user, role=assigned_role, server=server_obj)
     base_url = server_obj.url.rstrip("/")
     jitsi_room = f"lms-{event.slug}-{room.pk}"
-    return f"{base_url}/join/{jitsi_room}?token={token.token}&event={event.slug}&room={room.pk}"
-
-
-def clean_expired_loungemesh_tokens(sender=None):
-    deleted_count, _ = LoungeMeshAccessToken.objects.filter(expires__lt=now()).delete()
-    return deleted_count
+    return f"{base_url}/join/{jitsi_room}?grant={grant}"
 
 
 def loungemesh_embed_origins() -> list[str]:

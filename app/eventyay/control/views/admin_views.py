@@ -1,15 +1,12 @@
 import copy
-import datetime
 import json
 
 import icalendar
-import jwt
 import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import PermissionDenied
-from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -31,19 +28,29 @@ from django.views.generic import (
 from eventyay.base.models import (
     BBBCall,
     BBBServer,
-    SystemLog,
+    Event,
     JanusServer,
     JitsiServer,
     LoungeMeshServer,
+    SystemLog,
     TurnServer,
-    Event,
 )
-
+from eventyay.base.models.auth import User
 from eventyay.base.models.event import EventPlannedUsage as PlannedUsage
+from eventyay.base.models.log import LogEntry
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, emit_logged_action, log_event
 from eventyay.base.services.bbb import get_url
+from eventyay.base.services.loungemesh import test_loungemesh_server_connection
+from eventyay.base.settings import (
+    SUPPORTED_VIDEO_PROVIDERS,
+    GlobalSettingsObject,
+    get_video_provider_visibility,
+)
+from eventyay.base.services.loungemesh import test_loungemesh_server_connection
 from eventyay.control.forms.server_management import (
     BBBMoveRoomForm,
     BBBServerForm,
+    EventForm,
     JanusServerForm,
     JitsiServerForm,
     LoungeMeshServerForm,
@@ -52,19 +59,11 @@ from eventyay.control.forms.server_management import (
     SignupForm,
     TurnServerForm,
     UserForm,
-    EventForm,
 )
-from eventyay.base.models.log import LogEntry
-from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, emit_logged_action, log_event
-from eventyay.base.settings import (
-    GlobalSettingsObject,
-    SUPPORTED_VIDEO_PROVIDERS,
-    get_video_provider_visibility,
-)
-from eventyay.helpers.compat import CompatDeleteView
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 from eventyay.control.video.admin_dashboard import get_video_server_config
+from eventyay.helpers.compat import CompatDeleteView
 
 
 def _admin_log_entry(**kwargs):
@@ -478,8 +477,8 @@ class EventAdminToken(AdministratorPermissionRequiredMixin, DetailView):
 
         # Ensure JWT configuration exists
         if not event.config or not event.config.get("JWT_secrets"):
-            from django.utils.crypto import get_random_string
             from django.conf import settings
+            from django.utils.crypto import get_random_string
 
             secret = get_random_string(length=64)
             event.config = {
@@ -945,9 +944,31 @@ class TurnServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
 def _redact_loungemesh_server_log_data(data):
     return {
-        key: "*****" if key in ("api_secret", "jitsi_app_secret") and value else str(value)
+        key: "*****" if key == "api_secret" and value else str(value)
         for key, value in data.items()
     }
+
+
+class LoungeMeshServerTestView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            body = json.loads(request.body.decode("utf-8") or "{}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({"ok": False, "message": str(_("Invalid JSON payload."))}, status=400)
+
+        url = str(body.get("url") or "").strip()
+        api_secret = str(body.get("api_secret") or "").strip()
+
+        server_id = body.get("server_id")
+        if (not api_secret or api_secret == "*****") and server_id:
+            try:
+                server = LoungeMeshServer.objects.get(pk=server_id)
+                api_secret = server.api_secret
+            except LoungeMeshServer.DoesNotExist:
+                pass
+
+        ok, msg = test_loungemesh_server_connection(url, api_secret)
+        return JsonResponse({"ok": ok, "message": str(msg)})
 
 
 class LoungeMeshServerCreate(AdministratorPermissionRequiredMixin, CreateView):
