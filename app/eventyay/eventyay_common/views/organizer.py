@@ -8,7 +8,6 @@ from django.db.models import Count, ManyToManyField, Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -28,6 +27,7 @@ from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
+from ..utils import api_token_created_message
 from ..video.traits_sync import sync_video_traits_for_team
 
 
@@ -649,22 +649,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             user=self.request.user,
             data={'name': token_form.cleaned_data['name'], 'id': token.pk},
         )
-        messages.success(
-            self.request,
-            format_html(
-                '{intro} <code>{token}</code> '
-                '<button type="button" class="btn btn-default btn-xs btn-clipboard btn-copy-confirm" '
-                'data-clipboard-text="{token}" title="{copy}">'
-                '<span class="fa fa-copy" aria-hidden="true"></span></button>\n{outro}',
-                intro=_('A new API token has been created with the following secret:'),
-                token=token.token,
-                copy=_('Copy'),
-                outro=_(
-                    'Please copy this secret to a safe place. You will not be able to '
-                    'view it again here.'
-                ),
-            ),
-        )
+        messages.success(self.request, api_token_created_message(token))
         return self._redirect_to_team_permissions(team.pk)
 
     def _can_delete_team(self, team: Team) -> bool:
