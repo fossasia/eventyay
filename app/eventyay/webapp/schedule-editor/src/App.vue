@@ -208,10 +208,10 @@
 						.data-row(v-if="editorSession.code && (editorSession.session_type || editorSession.submission_type)").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Session type') }}
 							.col-md-9.data-value {{ getLocalizedString(editorSession.session_type || editorSession.submission_type) }}
-						.data-row(v-if="editorSession.code && editorSession.room").form-group.row
+						.data-row(v-if="(editorSession.code || mode === 'shifts' || mode === 'public-shifts') && editorSession.room").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Room') }}
 							.col-md-9.data-value {{ getLocalizedString(editorSession.room.name) }}
-						.data-row(v-else-if="!editorSession.code && schedule?.rooms").form-group.row
+						.data-row(v-else-if="!editorSession.code && mode !== 'shifts' && mode !== 'public-shifts' && schedule?.rooms").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Rooms') }}
 							.col-md-9
 								.break-rooms-selection
@@ -448,6 +448,7 @@ const draggedSession = ref<SessionData | null>(null)
 const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
 const editorSessionError = ref<string>('')
+let activeSaveOperationId = 0
 const selectedRoomIds = ref<(number | string)[]>([])
 const initialMatchingBreakIds = ref<Map<string, number | string>>(new Map())
 
@@ -1319,7 +1320,7 @@ function editorStart(session: SessionData | Talk): void {
     }
   }
 
-  if (!newEditorSession.code) {
+  if (!newEditorSession.code && mode !== 'shifts' && mode !== 'public-shifts') {
     const origRoomId = typeof newEditorSession.room === 'object' && newEditorSession.room !== null
       ? (newEditorSession.room as any).id
       : newEditorSession.room
@@ -1335,7 +1336,16 @@ function editorStart(session: SessionData | Talk): void {
 
     if (newEditorSession.start && schedule.value?.talks) {
       const sessionStart = moment(newEditorSession.start)
-      const sessionTitleStr = getLocalizedString(newEditorSession.title)
+      const isSameTitle = (t1: any, t2: any): boolean => {
+        if (t1 && t2 && typeof t1 === 'object' && typeof t2 === 'object') {
+          const k1 = Object.keys(t1)
+          const k2 = Object.keys(t2)
+          if (k1.length > 0 && k2.length > 0) {
+            return k1.every((k) => t1[k] === t2[k]) && k2.every((k) => t2[k] === t1[k])
+          }
+        }
+        return getLocalizedString(t1) === getLocalizedString(t2)
+      }
       for (const talk of schedule.value.talks) {
         if (talk.code || !talk.start) continue
         const talkRoomId = typeof talk.room === 'object' && talk.room !== null
@@ -1343,8 +1353,7 @@ function editorStart(session: SessionData | Talk): void {
           : talk.room
         if (talkRoomId == null) continue
         const isSameTime = moment(talk.start).isSame(sessionStart)
-        const isSameTitle = getLocalizedString(talk.title) === sessionTitleStr
-        if (isSameTime && isSameTitle) {
+        if (isSameTime && isSameTitle(talk.title, newEditorSession.title)) {
           roomsWithBreak.add(talkRoomId)
           matchingMap.set(String(talkRoomId), talk.id)
         }
@@ -1396,6 +1405,7 @@ async function editorSave(): Promise<void> {
   if (!editorSession.value || editorSessionWaiting.value) return
 
   const currentSession = editorSession.value
+  const operationId = ++activeSaveOperationId
   editorSessionWaiting.value = true
   editorSessionError.value = ''
 
@@ -1419,7 +1429,9 @@ async function editorSave(): Promise<void> {
     : currentSession.title
 
   try {
-    if (currentSession.code) {
+    const isBreak = !currentSession.code && mode !== 'shifts' && mode !== 'public-shifts'
+
+    if (!isBreak) {
       const talk: Talk = {
         id: currentSession.id,
         code: currentSession.code,
@@ -1445,6 +1457,8 @@ async function editorSave(): Promise<void> {
       const sessionInSchedule = schedule.value?.talks.find((s) => String(s.id) === String(currentSession.id))
       if (sessionInSchedule) {
         sessionInSchedule.end = endIso
+        sessionInSchedule.title = title as Record<string, string>
+        sessionInSchedule.duration = duration
       }
     } else {
       if (!selectedRoomIds.value.length) {
@@ -1489,6 +1503,7 @@ async function editorSave(): Promise<void> {
               created.room = roomId
             }
             schedule.value.talks = [...schedule.value.talks, created]
+            matchingMap.set(String(roomId), created.id)
           }
         }
       }
@@ -1497,6 +1512,7 @@ async function editorSave(): Promise<void> {
       }
     }
 
+    if (activeSaveOperationId !== operationId) return
     editorSessionWaiting.value = false
     editorSession.value = null
 
@@ -1511,6 +1527,7 @@ async function editorSave(): Promise<void> {
       // fetchSchedule already records schedule.fetch via api.http
     }
   } catch (error) {
+    if (activeSaveOperationId !== operationId) return
     editorSessionWaiting.value = false
     editorSessionError.value = $t('Failed to save. Please try again.')
     console.error('Failed to save session', error)
@@ -1518,9 +1535,9 @@ async function editorSave(): Promise<void> {
 }
 
 function editorCancel(): void {
+  if (editorSessionWaiting.value) return
   editorSession.value = null
   editorSessionError.value = ''
-  editorSessionWaiting.value = false
 }
 
 async function editorDelete(): Promise<void> {
