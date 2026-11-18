@@ -4,15 +4,12 @@ from datetime import timedelta
 from typing import TypedDict
 from urllib.parse import urlencode
 
-from eventyay.celery_app import app
-from eventyay.core.tasks import EventTask
-
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import Event, QueuedMail, SpeakerProfile, SubmissionStates, Voucher
+from eventyay.base.models import Event, QueuedMail, SpeakerProfile, SubmissionStates, User, Voucher
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.speaker_voucher import (
     SpeakerVoucher,
@@ -20,8 +17,11 @@ from eventyay.base.models.speaker_voucher import (
     SpeakerVoucherStatus,
     usable_batch_vouchers,
 )
+from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
+from eventyay.core.tasks import EventTask
 from eventyay.multidomain.urlreverse import build_absolute_uri
+
 
 logger = logging.getLogger(__name__)
 
@@ -472,8 +472,8 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
     return 'dash'
 
 
-@app.task(base=EventTask, bind=True, max_retries=0, ignore_result=True)
-def send_speaker_vouchers_task(self, event, settings_pk, profile_pks):
+@app.task(base=EventTask, max_retries=0, ignore_result=True)
+def send_speaker_vouchers_task(event, settings_pk, profile_pks, user_pk=None):
     """Background Celery task: allocate voucher codes and email speakers.
 
     Called after the HTTP request has already returned.  Runs the same
@@ -484,6 +484,7 @@ def send_speaker_vouchers_task(self, event, settings_pk, profile_pks):
         event: ``Event`` instance resolved by :class:`EventTask`.
         settings_pk: Primary key of the ``SpeakerVoucherSettings`` row.
         profile_pks: List of ``SpeakerProfile`` primary keys to process.
+        user_pk: Optional primary key of the ``User`` who initiated the send.
     """
     from django_scopes import scope  # local import to avoid circular deps at module level
 
@@ -504,7 +505,16 @@ def send_speaker_vouchers_task(self, event, settings_pk, profile_pks):
             logger.info('send_speaker_vouchers_task: no profiles to process, skipping.')
             return
 
-        result = allocate_and_send_vouchers(event, settings_obj, profiles)
+        requestor = None
+        if user_pk:
+            try:
+                requestor = User.objects.get(pk=user_pk)
+            except User.DoesNotExist:
+                requestor = None
+
+        result = allocate_and_send_vouchers(
+            event, settings_obj, profiles, requestor=requestor
+        )
 
     if result['aborted_insufficient']:
         logger.warning(
@@ -525,3 +535,4 @@ def send_speaker_vouchers_task(self, event, settings_pk, profile_pks):
             result['skipped_no_email'],
             result['skipped_ineligible'],
         )
+

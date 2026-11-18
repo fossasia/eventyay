@@ -20,6 +20,7 @@ from eventyay.base.services.speaker_vouchers import (
     allocate_and_send_vouchers,
     eligible_speaker_profiles,
     profiles_needing_voucher,
+    send_speaker_vouchers_task,
     speaker_voucher_row_state,
     voucher_redeem_url,
 )
@@ -233,14 +234,16 @@ def test_orga_can_save_speaker_voucher_settings(orga_client, event, speaker_vouc
 
 @pytest.mark.django_db
 def test_orga_bulk_send_vouchers(
-    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch, orga_user
 ):
     """The bulk-send endpoint dispatches a background task and returns immediately.
 
     We patch ``apply_async`` to run the allocation service synchronously so the
-    test can still assert on the resulting DB state.
+    test can still assert on the resulting DB state and activity log requestor.
     """
-    from eventyay.base.models import Event as _Event, SpeakerProfile as _SP
+    from eventyay.base.models import Event as _Event
+    from eventyay.base.models import SpeakerProfile as _SP
+    from eventyay.base.models import User as _User
     from eventyay.base.models.speaker_voucher import SpeakerVoucherSettings as _SVS
     from eventyay.base.services.speaker_vouchers import allocate_and_send_vouchers as _asv
 
@@ -248,8 +251,10 @@ def test_orga_bulk_send_vouchers(
         ev = _Event.objects.get(pk=args[0])
         sv_settings = _SVS.objects.get(pk=args[1])
         profiles = list(_SP.objects.filter(pk__in=args[2]).select_related('user'))
+        user_pk = args[3] if len(args) > 3 else None
+        req = _User.objects.get(pk=user_pk) if user_pk else None
         with scope(event=ev):
-            _asv(ev, sv_settings, profiles)
+            _asv(ev, sv_settings, profiles, requestor=req)
 
     with patch(
         'eventyay.base.services.speaker_vouchers.send_speaker_vouchers_task.apply_async',
@@ -262,9 +267,84 @@ def test_orga_bulk_send_vouchers(
     assert 'Sending' in response.text and 'voucher' in response.text
     with scope(event=event):
         profile = speaker.event_profile(event)
-        assert SpeakerVoucher.objects.filter(speaker_profile=profile, status=SpeakerVoucherStatus.SENT).exists()
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assert assignment.status == SpeakerVoucherStatus.SENT
         assert QueuedMail.objects.filter(event=event, sent__isnull=False).exists()
         assert not profiles_needing_voucher(event).exists()
+        log = assignment.logged_actions().first()
+        assert log is not None
+        assert log.user == orga_user
+
+
+@pytest.mark.django_db
+def test_orga_bulk_send_retries_not_sent_when_batch_empty(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch, orga_user
+):
+    """Speakers with status=not_sent already hold a voucher code.
+
+    A bulk send retry should succeed and dispatch even when the batch has 0 spare codes.
+    """
+    from eventyay.base.models import Event as _Event
+    from eventyay.base.models import SpeakerProfile as _SP
+    from eventyay.base.models import User as _User
+    from eventyay.base.models.speaker_voucher import SpeakerVoucherSettings as _SVS
+    from eventyay.base.services.speaker_vouchers import allocate_and_send_vouchers as _asv
+
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        voucher = speaker_voucher_batch[0]
+        # Invalidate remaining batch vouchers so remaining unused count is 0
+        for v in speaker_voucher_batch[1:]:
+            v.redeemed = 1
+            v.save(update_fields=['redeemed'])
+        SpeakerVoucher.objects.create(
+            event=event,
+            speaker_profile=profile,
+            voucher=voucher,
+            status=SpeakerVoucherStatus.NOT_SENT,
+        )
+        assert speaker_voucher_settings.batch_remaining_count() == 0
+        assert profiles_needing_voucher(event).count() == 1
+
+    def _run_sync(args, **kw):
+        ev = _Event.objects.get(pk=args[0])
+        sv_settings = _SVS.objects.get(pk=args[1])
+        profiles = list(_SP.objects.filter(pk__in=args[2]).select_related('user'))
+        user_pk = args[3] if len(args) > 3 else None
+        req = _User.objects.get(pk=user_pk) if user_pk else None
+        with scope(event=ev):
+            _asv(ev, sv_settings, profiles, requestor=req)
+
+    with patch(
+        'eventyay.base.services.speaker_vouchers.send_speaker_vouchers_task.apply_async',
+        side_effect=_run_sync,
+    ):
+        response = orga_client.post(event.orga_urls.speaker_vouchers_send, follow=True)
+
+    assert response.status_code == 200
+    assert 'Sending' in response.text and 'voucher' in response.text
+    with scope(event=event):
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assert assignment.status == SpeakerVoucherStatus.SENT
+        assert assignment.voucher_id == voucher.pk
+        log = assignment.logged_actions().first()
+        assert log is not None
+        assert log.user == orga_user
+
+
+@pytest.mark.django_db
+def test_send_speaker_vouchers_task_records_requestor(
+    event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch, orga_user
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+    send_speaker_vouchers_task(event.pk, speaker_voucher_settings.pk, [profile.pk], user_pk=orga_user.pk)
+    with scope(event=event):
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assert assignment.status == SpeakerVoucherStatus.SENT
+        log = assignment.logged_actions().first()
+        assert log is not None
+        assert log.user == orga_user
 
 
 @pytest.mark.django_db
@@ -279,6 +359,7 @@ def test_orga_bulk_send_aborts_when_batch_empty(
     assert 'Not enough unused vouchers' in response.text
     with scope(event=event):
         assert SpeakerVoucher.objects.filter(event=event).count() == 0
+
 
 @pytest.mark.django_db
 def test_voucher_redeem_url_encodes_special_characters(event):

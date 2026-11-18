@@ -1,6 +1,7 @@
 from django.utils.translation import gettext_noop as _
 from i18nfield.strings import LazyI18nString
 
+
 GENERIC_SUBJECT = LazyI18nString.from_gettext(_('Your proposal: {submission_title}'))
 
 ACK_TEXT = LazyI18nString.from_gettext(
@@ -137,6 +138,7 @@ SPEAKER_VOUCHER_TEXT = LazyI18nString.from_gettext(
 Thank you for speaking at {event_name}. As a speaker, you receive a ticket voucher.
 
 Voucher code: {voucher_code}
+
 Redeem your ticket here: {voucher_url}
 
 This voucher is for your personal use and can only be redeemed once. Please use it to get your ticket before the event.

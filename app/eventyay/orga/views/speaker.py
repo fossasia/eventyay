@@ -24,10 +24,9 @@ from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.speaker_voucher import SpeakerVoucher, SpeakerVoucherSettings
-from eventyay.base.models.submission import Submission, SubmissionStates
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.speaker_vouchers import (
-    allocate_and_send_vouchers,
     assignment_needs_replacement,
     profiles_needing_voucher,
     send_speaker_vouchers_task,
@@ -46,8 +45,8 @@ from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
     EventPermissionRequired,
-    ImportProcessRedirectMixin,
     Filterable,
+    ImportProcessRedirectMixin,
     PaginationMixin,
     PermissionRequired,
     Sortable,
@@ -61,9 +60,6 @@ from eventyay.person.forms import (
     SpeakerFilterForm,
     SpeakerInformationForm,
     SpeakerProfileForm,
-    build_speaker_social_links_formset,
-    formset_has_social_links,
-    save_speaker_social_links,
 )
 from eventyay.person.forms.profile import get_email_address_error
 from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
@@ -936,8 +932,19 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
 
             # Preflight: check that there are enough vouchers before dispatching the
             # background task, so we can surface an actionable error immediately.
+            # Only count speakers who actually need a new voucher code from the batch
+            # (i.e. no assignment, or assignment has an expired/cancelled voucher).
+            needed = 0
+            for profile in profiles:
+                try:
+                    assignment = profile.voucher_assignment
+                except SpeakerVoucher.DoesNotExist:
+                    needed += 1
+                    continue
+                if assignment_needs_replacement(assignment):
+                    needed += 1
+
             available = settings_obj.batch_remaining_count()
-            needed = len(profiles)
             if needed > available:
                 messages.error(
                     request,
@@ -949,8 +956,9 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                 return redirect(event.orga_urls.speaker_vouchers)
 
         profile_pks = [p.pk for p in profiles]
+        user_pk = request.user.pk if request.user and request.user.is_authenticated else None
         send_speaker_vouchers_task.apply_async(
-            args=[event.pk, settings_obj.pk, profile_pks],
+            args=[event.pk, settings_obj.pk, profile_pks, user_pk],
         )
         messages.success(
             request,
