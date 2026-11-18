@@ -401,14 +401,14 @@ class TalkSlotViewSet(
         # In the list view, fall back to filtering by current schedule unless an
         # explicit schedule-selection filter is active.
         # If there is no current schedule, that means an empty response.
-        filter_params = set(self.filterset_class.get_fields().keys())
-        is_any_filter_active = any(
+        schedule_filter_params = ('schedule', 'schedule_version')
+        has_schedule_filter = any(
             bool(str(self.request.query_params.get(param, '')).strip())
-            for param in filter_params
+            for param in schedule_filter_params
             if param in self.request.query_params
         )
 
-        if not is_any_filter_active:
+        if not has_schedule_filter:
             queryset = queryset.filter(schedule=self.event.current_schedule)
 
         if self.event and user_has_track_limits(self.event, self.request.user):

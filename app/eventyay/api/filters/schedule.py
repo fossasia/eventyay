@@ -32,7 +32,7 @@ with scopes_disabled():
                 return queryset
             val = str(value).strip()
             request = getattr(self, "request", None)
-            event = getattr(request, "event", None) or getattr(self, "event", None)
+            event = getattr(self, "event", None) or getattr(request, "event", None)
             if val.lower() == "wip":
                 is_orga = False
                 if request and getattr(request, "user", None) and event:
@@ -41,9 +41,11 @@ with scopes_disabled():
                 if not is_orga and request and getattr(request, "auth", None) and event:
                     auth = request.auth
                     if hasattr(auth, "get_event_permission_set"):
-                        permset = auth.get_event_permission_set(event.organizer, event)
-                        if "can_change_submissions" in permset:
-                            is_orga = True
+                        organizer = getattr(event, "organizer", None)
+                        if organizer:
+                            permset = auth.get_event_permission_set(organizer, event)
+                            if "can_change_submissions" in permset:
+                                is_orga = True
                 if is_orga:
                     return queryset.filter(schedule__version__isnull=True)
                 return queryset.none()
@@ -52,12 +54,12 @@ with scopes_disabled():
         def __init__(self, *args, event=None, **kwargs):
             super().__init__(*args, **kwargs)
             request = kwargs.get("request")
-            event = event or getattr(request, "event", None)
-            if event:
-                with scope(event=event):
-                    self.filters["schedule"].queryset = event.schedules.all()
-                    self.filters["submission"].queryset = event.submissions.all()
-                    self.filters["room"].queryset = event.rooms.all()
+            self.event = event or getattr(request, "event", None)
+            if self.event:
+                with scope(event=self.event):
+                    self.filters["schedule"].queryset = self.event.schedules.all()
+                    self.filters["submission"].queryset = self.event.submissions.all()
+                    self.filters["room"].queryset = self.event.rooms.all()
 
         class Meta:
             model = TalkSlot

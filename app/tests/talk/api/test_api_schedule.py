@@ -604,7 +604,7 @@ def test_list_slots_orga_can_filter_by_room(
     )
     content = json.loads(response.text)
     assert response.status_code == 200, content
-    assert content["count"] == 3
+    assert content["count"] == 1
     assert slot.pk in [s["id"] for s in content["results"]]
     assert other_slot.pk not in [s["id"] for s in content["results"]]
 
@@ -977,3 +977,94 @@ def test_schedule_expand_slots(client, event, slot, track):
 
 
 @pytest.mark.django_db
+def test_talk_slot_filter_fallback_and_direct_instantiation(
+    client, orga_user_token, event, slot, room
+):
+    with scope(event=event):
+        event.wip_schedule.freeze("v1.0")
+        event.wip_schedule.freeze("v2.0")
+        code = slot.submission.code
+        current_slot = event.current_schedule.talks.filter(room=room).first()
+        wip_slot = event.wip_schedule.talks.filter(room=room).first()
+        old_schedule = event.schedules.get(version="v1.0")
+        old_slot = old_schedule.talks.filter(room=room).first()
+        assert current_slot is not None
+        assert wip_slot is not None
+        assert old_slot is not None
+
+    # 1. Non-schedule filters remain restricted to current schedule
+    # Room filter excludes historical and WIP slots
+    response = client.get(
+        event.api_urls.slots + f"?room={room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == current_slot.pk
+
+    # Submission filter excludes historical and WIP slots
+    response = client.get(
+        event.api_urls.slots + f"?submission={code}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == current_slot.pk
+
+    # is_visible filter excludes historical and WIP slots
+    response = client.get(
+        event.api_urls.slots + "?is_visible=true",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    returned_ids = [s["id"] for s in content["results"]]
+    assert current_slot.pk in returned_ids
+    assert wip_slot.pk not in returned_ids
+    assert old_slot.pk not in returned_ids
+
+    # 2. Explicit schedule filters bypass current schedule fallback
+    response = client.get(
+        event.api_urls.slots + f"?schedule={old_schedule.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert old_slot.pk in [s["id"] for s in content["results"]]
+
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=v1.0",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert old_slot.pk in [s["id"] for s in content["results"]]
+
+    # 3. Anonymous ?schedule=<wip_pk> returns NO WIP slots
+    response = client.get(
+        event.api_urls.slots + f"?schedule={event.wip_schedule.pk}",
+        follow=True,
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 0
+
+    # 4. Direct TalkSlotFilter instantiation preserves event
+    with scope(event=event):
+        f = TalkSlotFilter(
+            data={"schedule_version": "v1.0"},
+            queryset=TalkSlot.objects.filter(schedule__event=event),
+            event=event,
+        )
+        assert f.event == event
+        assert f.filters["schedule"].queryset.count() == event.schedules.count()
+        assert f.filters["submission"].queryset.count() == event.submissions.count()
+        assert f.filters["room"].queryset.count() == event.rooms.count()
+        assert old_slot in f.qs
