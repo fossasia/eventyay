@@ -64,18 +64,26 @@ function initLoungeMeshTest() {
 
       const data = await response.json();
       testBtn.disabled = false;
+      resultContainer.textContent = '';
       if (data && data.ok) {
         resultContainer.className = 'alert alert-success';
-        resultContainer.innerHTML = '<span class="fa fa-check-circle"></span> Connection successful! LoungeMesh server is reachable and service secret matches.';
+        const icon = document.createElement('span');
+        icon.className = 'fa fa-check-circle';
+        resultContainer.append(icon, ' Connection successful! LoungeMesh server is reachable and service secret matches.');
       } else {
         resultContainer.className = 'alert alert-danger';
         const errorMsg = (data && data.message) ? data.message : 'Connection failed. Please verify the URL and EVENTYAY_SERVICE_SECRET.';
-        resultContainer.innerHTML = '<span class="fa fa-exclamation-triangle"></span> ' + errorMsg;
+        const icon = document.createElement('span');
+        icon.className = 'fa fa-exclamation-triangle';
+        resultContainer.append(icon, ` ${errorMsg}`);
       }
     } catch (err) {
       testBtn.disabled = false;
       resultContainer.className = 'alert alert-danger';
-      resultContainer.innerHTML = '<span class="fa fa-exclamation-triangle"></span> Network error testing server: ' + (err.message || 'unknown error');
+      resultContainer.textContent = '';
+      const icon = document.createElement('span');
+      icon.className = 'fa fa-exclamation-triangle';
+      resultContainer.append(icon, ' Network error testing server: ' + (err.message || 'unknown error'));
     }
   });
 }

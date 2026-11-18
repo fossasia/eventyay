@@ -205,7 +205,7 @@ def serialize_loungemesh_server(server: LoungeMeshServer, event=None) -> dict:
 
     has_event = (
         any(e.pk == event.pk for e in events_cache)
-        if events_cache is not None
+        if (event and events_cache is not None)
         else (event and server.events.filter(pk=event.pk).exists())
     )
     has_any_event = bool(events_cache) if events_cache is not None else server.events.exists()
@@ -351,12 +351,14 @@ def issue_signed_grant(
         room_cfg = {}
         for m in (getattr(room, "module_config", None) or []):
             if isinstance(m, dict) and m.get("type") in ("call.loungemesh", "channel.loungemesh"):
-                room_cfg = m.get("config", {}) or {}
+                raw_cfg = m.get("config")
+                room_cfg = raw_cfg if isinstance(raw_cfg, dict) else {}
                 break
+        nested_features = room_cfg.get("features") if isinstance(room_cfg.get("features"), dict) else {}
         features = {
-            "notes": room_cfg.get("enable_notes", True),
-            "whiteboard": room_cfg.get("enable_whiteboard", True),
-            "spatial_chat": room_cfg.get("enable_spatial_chat", True),
+            "notes": room_cfg.get("enable_notes", nested_features.get("notes", True)),
+            "whiteboard": room_cfg.get("enable_whiteboard", nested_features.get("whiteboard", True)),
+            "spatial_chat": room_cfg.get("enable_spatial_chat", nested_features.get("spatial_chat", True)),
         }
 
     payload = {
