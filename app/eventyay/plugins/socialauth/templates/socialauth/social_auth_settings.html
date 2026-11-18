@@ -28,17 +28,22 @@
                         {% for provider, settings in login_providers.items %}
                             <tr class="{% if settings.state %}success{% else %}default{% endif %}">
                                 <td>
-                                    {% with provider|capfirst as provider_capitalized %}
-                                        <strong>{% trans provider_capitalized %}</strong>
-                                        <p>{% blocktrans %}Login with {{ provider_capitalized }}{% endblocktrans %}</p>
-                                    {% endwith %}
+                                    {% if provider == "openid_connect" %}
+                                        <strong>{% if settings.name %}{{ settings.name }}{% else %}{% trans "OpenID Connect (Keycloak, etc.)" %}{% endif %}</strong>
+                                        <p>{% blocktrans with name=settings.name|default:"OpenID Connect" %}Login with {{ name }}{% endblocktrans %}</p>
+                                    {% else %}
+                                        {% with provider|capfirst as provider_capitalized %}
+                                            <strong>{% trans provider_capitalized %}</strong>
+                                            <p>{% blocktrans %}Login with {{ provider_capitalized }}{% endblocktrans %}</p>
+                                        {% endwith %}
+                                    {% endif %}
                                 </td>
                                 <td class="text-right flip" width="20%">
                                     {% if settings.state %}
                                         <button class="btn btn-default btn-block" name="{{ provider }}_login" value="disabled">
                                             {% trans "Disable" %}
                                         </button>
-                                        {% if not settings.client_id or not settings.secret %}
+                                        {% if not settings.client_id or not settings.secret or provider == "openid_connect" and not settings.server_url %}
                                             <p class="text-warning text-center help-block">
                                                 <small><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {% trans "Requires keys to be configured" %}</small>
                                             </p>
@@ -62,6 +67,26 @@
                             {% if settings.state %}
                             <tr>
                                 <td colspan="3">
+                                    {% if provider == "openid_connect" %}
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">
+                                            {% trans "Display Name" %}
+                                        </label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" name="{{ provider }}_name" value="{{ settings.name }}" placeholder="Keycloak">
+                                            <span class="help-block">{% trans "Name shown on the login button (e.g. Keycloak, Authentik, Company SSO)" %}</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">
+                                            {% trans "Server / Issuer URL" %}
+                                        </label>
+                                        <div class="col-sm-9">
+                                            <input type="url" class="form-control" name="{{ provider }}_server_url" value="{{ settings.server_url }}" placeholder="https://keycloak.example.com/realms/myrealm">
+                                            <span class="help-block">{% trans "Base URL of the OIDC provider (must support /.well-known/openid-configuration)" %}</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label class="col-sm-3 control-label">
                                             {% if provider == "mediawiki" %}

@@ -193,9 +193,12 @@ def test_social_adapter_syncs_wikimedia_username():
 
     # Enable the mediawiki provider in admin settings
     gs = GlobalSettingsObject()
-    gs.settings.set('login_providers', {
-        'mediawiki': {'state': True, 'client_id': 'x', 'secret': 'y'},
-    })
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {'state': True, 'client_id': 'x', 'secret': 'y'},
+        },
+    )
 
     # Create a mock sociallogin with mediawiki extra_data
     class MockAccount:
@@ -229,9 +232,12 @@ def test_social_adapter_rejects_disabled_provider():
 
     # Disable the mediawiki provider (state=False)
     gs = GlobalSettingsObject()
-    gs.settings.set('login_providers', {
-        'mediawiki': {'state': False, 'client_id': 'x', 'secret': 'y'},
-    })
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {'state': False, 'client_id': 'x', 'secret': 'y'},
+        },
+    )
 
     class MockAccount:
         provider = 'mediawiki'
@@ -294,9 +300,12 @@ def test_social_adapter_rejects_enabled_but_unconfigured_provider():
     user = User.objects.create_user('nocreds@example.com', 'password')
 
     gs = GlobalSettingsObject()
-    gs.settings.set('login_providers', {
-        'mediawiki': {'state': True, 'client_id': '', 'secret': ''},
-    })
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {'state': True, 'client_id': '', 'secret': ''},
+        },
+    )
 
     class MockAccount:
         provider = 'mediawiki'
@@ -325,9 +334,12 @@ def test_social_adapter_rejects_enabled_but_unconfigured_provider():
 def test_social_and_account_adapter_rejects_spam_user(provider):
     """SSO pre_social_login and account pre_login reject spam users across all providers."""
     user = User.objects.create_user(f'spam_{provider}@example.com', 'password', is_spam=True)
-    GlobalSettingsObject().settings.set('login_providers', {
-        provider: {'state': True, 'client_id': 'id', 'secret': 'sec'},
-    })
+    GlobalSettingsObject().settings.set(
+        'login_providers',
+        {
+            provider: {'state': True, 'client_id': 'id', 'secret': 'sec'},
+        },
+    )
 
     request = RequestFactory().get('/')
     request.session = {}
@@ -351,3 +363,173 @@ def test_social_and_account_adapter_rejects_spam_user(provider):
     assert exc_info.value.response['Location'] == reverse('auth.login')
     messages = [str(m.message) for m in getattr(request, '_messages')]
     assert str(SPAM_ACCOUNT_ERROR) in messages
+
+
+def test_login_providers_schema_supports_openid_connect():
+    from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
+
+    # 1. Existing providers without openid_connect should validate and backfill default openid_connect
+    data = {
+        'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        'github': {'state': True, 'client_id': 'gh_id', 'secret': 'gh_sec', 'is_preferred': False},
+        'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+    }
+    validated = LoginProviders.model_validate(data)
+    dumped = validated.model_dump()
+    assert 'openid_connect' in dumped
+    assert dumped['openid_connect']['state'] is False
+    assert dumped['openid_connect']['server_url'] == ''
+
+    # 2. Configured openid_connect should validate all fields
+    data['openid_connect'] = {
+        'state': True,
+        'client_id': 'keycloak_client',
+        'secret': 'keycloak_secret',
+        'server_url': 'https://auth.example.com/realms/master',
+        'name': 'Corporate SSO',
+        'is_preferred': True,
+    }
+    validated_oidc = LoginProviders.model_validate(data)
+    dumped_oidc = validated_oidc.model_dump()
+    assert dumped_oidc['openid_connect']['state'] is True
+    assert dumped_oidc['openid_connect']['server_url'] == 'https://auth.example.com/realms/master'
+    assert dumped_oidc['openid_connect']['name'] == 'Corporate SSO'
+    assert dumped_oidc['openid_connect']['is_preferred'] is True
+
+
+def test_order_login_providers_validates_openid_connect_server_url():
+    from eventyay.eventyay_common.services.auth_providers import get_preferred_provider, order_login_providers
+
+    providers = {
+        'openid_connect': {
+            'state': True,
+            'client_id': 'client_id',
+            'secret': 'secret',
+            'server_url': '',  # missing server_url!
+            'is_preferred': True,
+        },
+        'github': {
+            'state': True,
+            'client_id': 'gh_client',
+            'secret': 'gh_secret',
+            'is_preferred': False,
+        },
+    }
+    # openid_connect without server_url must not be considered valid
+    ordered = order_login_providers(providers)
+    assert 'openid_connect' not in ordered
+    assert 'github' in ordered
+
+    # openid_connect with server_url is valid and ordered first when preferred
+    providers['openid_connect']['server_url'] = 'https://auth.example.com/realms/master'
+    ordered2 = order_login_providers(providers)
+    assert list(ordered2.keys())[0] == 'openid_connect'
+    assert get_preferred_provider(providers) == 'openid_connect'
+
+
+def test_get_login_context_merges_env_oidc(settings):
+    from unittest import mock
+
+    from eventyay.eventyay_common.templatetags.auth_login_tags import get_login_context
+
+    settings.OIDC_ENABLED = True
+    settings.OIDC_SERVER_URL = 'https://keycloak.example.com/realms/myrealm'
+    settings.OIDC_CLIENT_ID = 'eventyay-web'
+    settings.OIDC_CLIENT_SECRET = 'supersecret'
+    settings.OIDC_PROVIDER_NAME = 'Keycloak SSO'
+    settings.OIDC_PREFERRED = True
+
+    context = {'request': None}
+    with mock.patch('eventyay.eventyay_common.templatetags.auth_login_tags.GlobalSettingsObject') as mock_gs:
+        mock_gs.return_value.settings.get.return_value = {}
+        login_ctx = get_login_context(context)
+
+    assert login_ctx['has_oauth_providers'] is True
+    assert login_ctx['preferred_provider'] == 'openid_connect'
+    assert login_ctx['preferred_provider_name'] == 'Keycloak SSO'
+    providers_dict = dict(login_ctx['enabled_providers'])
+    assert 'openid_connect' in providers_dict
+    assert providers_dict['openid_connect']['server_url'] == 'https://keycloak.example.com/realms/myrealm'
+
+
+def test_oauth_login_view_rejects_missing_openid_connect_server_url():
+    from unittest import mock
+
+    from eventyay.plugins.socialauth.views import OAuthLoginView
+
+    rf = RequestFactory()
+    request = rf.get('/control/admin/global/socialauth/login/openid_connect')
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    with mock.patch('eventyay.plugins.socialauth.views.GlobalSettingsObject') as mock_gs:
+        mock_gs.return_value.settings.get.return_value = {
+            'openid_connect': {
+                'state': True,
+                'client_id': 'id',
+                'secret': 'sec',
+                'server_url': '',  # empty server_url
+            }
+        }
+        view = OAuthLoginView.as_view()
+        response = view(request, provider='openid_connect')
+
+    assert response.status_code == 302
+    assert response['Location'] == reverse('auth.login')
+    messages = [str(m.message) for m in getattr(request, '_messages')]
+    assert 'This login method is not available.' in messages
+
+
+def test_social_adapter_allows_env_configured_oidc(settings):
+    from unittest import mock
+
+    from eventyay.plugins.socialauth.adapter import require_provider_enabled
+
+    settings.OIDC_ENABLED = True
+    settings.OIDC_SERVER_URL = 'https://auth.example.com/realms/master'
+    settings.OIDC_CLIENT_ID = 'client_123'
+    settings.OIDC_CLIENT_SECRET = 'secret_123'
+
+    request = RequestFactory().get('/')
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    with mock.patch('eventyay.plugins.socialauth.adapter.GlobalSettingsObject') as mock_gs:
+        mock_gs.return_value.settings.get.return_value = {}
+        # Should not raise ImmediateHttpResponse
+        require_provider_enabled(request, 'openid_connect')
+
+
+def test_social_login_view_update_credentials_openid_connect():
+    from unittest import mock
+
+    from eventyay.plugins.socialauth.views import SocialLoginView
+
+    rf = RequestFactory()
+    post_data = {
+        'openid_connect_client_id': 'oidc-client-1',
+        'openid_connect_secret': 'oidc-secret-1',
+        'openid_connect_server_url': 'https://auth.example.com/realms/eventyay',
+        'openid_connect_name': 'My Company SSO',
+    }
+    request = rf.post('/control/admin/global/socialauth/', data=post_data)
+
+    login_providers = {'openid_connect': {}}
+
+    with mock.patch('allauth.socialaccount.models.SocialApp.objects.update_or_create') as mock_update_or_create:
+        view = SocialLoginView.__new__(SocialLoginView)
+        view.gs = mock.MagicMock()
+        view.update_credentials(request, 'openid_connect', login_providers)
+
+    mock_update_or_create.assert_called_once_with(
+        provider='openid_connect',
+        defaults={
+            'client_id': 'oidc-client-1',
+            'secret': 'oidc-secret-1',
+            'provider_id': 'openid_connect',
+            'name': 'My Company SSO',
+            'settings': {'server_url': 'https://auth.example.com/realms/eventyay'},
+        },
+    )
+    assert login_providers['openid_connect']['server_url'] == 'https://auth.example.com/realms/eventyay'
+    assert login_providers['openid_connect']['name'] == 'My Company SSO'

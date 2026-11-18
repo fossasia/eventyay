@@ -13,9 +13,13 @@
             <div class='form-group buttons login-options-primary-first'>
                 <a href="{% url 'plugins:socialauth:social.oauth.login' login_ctx.preferred_provider %}{% append_next next_url %}"
                    data-method='post' class='btn btn-primary btn-block login-option-primary'>
-                    {% with login_ctx.preferred_provider|capfirst as provider_capitalized %}
-                        {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
-                    {% endwith %}
+                    {% if login_ctx.preferred_provider_name %}
+                        {% blocktranslate with name=login_ctx.preferred_provider_name %}Login with {{ name }}{% endblocktranslate %}
+                    {% else %}
+                        {% with login_ctx.preferred_provider|capfirst as provider_capitalized %}
+                            {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                        {% endwith %}
+                    {% endif %}
                 </a>
             </div>
             {% if login_ctx.show_login_form %}
@@ -41,9 +45,15 @@
                         {% if provider != login_ctx.preferred_provider %}
                             <a href="{% url 'plugins:socialauth:social.oauth.login' provider %}{% append_next next_url %}"
                                data-method='post' class='btn btn-primary btn-block login-option-secondary'>
-                                {% with provider|capfirst as provider_capitalized %}
-                                    {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
-                                {% endwith %}
+                                {% if cfg.name %}
+                                    {% blocktranslate with name=cfg.name %}Login with {{ name }}{% endblocktranslate %}
+                                {% elif provider == 'openid_connect' %}
+                                    {% translate 'Login with OpenID Connect' %}
+                                {% else %}
+                                    {% with provider|capfirst as provider_capitalized %}
+                                        {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                                    {% endwith %}
+                                {% endif %}
                             </a>
                         {% endif %}
                     {% endfor %}

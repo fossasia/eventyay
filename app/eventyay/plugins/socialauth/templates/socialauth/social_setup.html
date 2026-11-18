@@ -100,4 +100,25 @@
             {% trans "Once approved, other users can log in to your Eventyay instance using their MediaWiki account." %}
         </p>
     </section>
+
+    <section>
+        <h4><strong>{% trans "IV. Generic OpenID Connect / Keycloak" %}</strong></h4>
+        <p>
+            {% trans "You can integrate Eventyay with Keycloak, Authentik, Okta, or any OpenID Connect compliant identity provider." %}
+        </p>
+        <strong>{% trans "Registration Steps" %}</strong>
+        <ol>
+            <li>{% trans "In your identity provider (e.g. Keycloak), create a new OpenID Connect client." %}</li>
+            <li>{% trans "Set Client authentication to Confidential / Client Secret." %}</li>
+            <li>{% trans "Ensure Standard Flow (Authorization Code) is enabled." %}</li>
+            <li>
+                {% trans 'Set the Valid Redirect URI / Callback URL to:' %}
+                {% with callback_url=tickets_domain|add:"/accounts/oidc/openid_connect/login/callback/" %}
+                    <code>{{ callback_url }}</code>
+                {% endwith %}
+            </li>
+            <li>{% trans "Ensure scopes include 'openid', 'profile', and 'email'." %}</li>
+            <li>{% trans "In Eventyay settings, enter the Server/Issuer URL (e.g. https://keycloak.example.com/realms/myrealm), Client ID, and Client Secret." %}</li>
+        </ol>
+    </section>
 </div>

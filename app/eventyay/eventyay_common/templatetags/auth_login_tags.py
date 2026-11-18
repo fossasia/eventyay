@@ -8,28 +8,50 @@ from eventyay.eventyay_common.services.auth_providers import (
     order_login_providers,
 )
 
+
 register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
 def get_login_context(context):
     """
-    Return context for authentication login (main page or checkout modal) using the 
+    Return context for authentication login (main page or checkout modal) using the
     same OAuth provider config and ordering as eventyay_common.views.auth.login.
     """
     request = context.get('request')
 
     gs = global_settings_object(request) if request else GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict) or {}
+
+    # Merge environment-configured OIDC if not defined in DB settings
+    if 'openid_connect' not in raw_providers or not raw_providers['openid_connect'].get('state'):
+        if (
+            getattr(settings, 'OIDC_ENABLED', False)
+            and getattr(settings, 'OIDC_SERVER_URL', '')
+            and getattr(settings, 'OIDC_CLIENT_ID', '')
+            and getattr(settings, 'OIDC_CLIENT_SECRET', '')
+        ):
+            raw_providers = dict(raw_providers)
+            raw_providers['openid_connect'] = {
+                'state': True,
+                'client_id': settings.OIDC_CLIENT_ID,
+                'secret': settings.OIDC_CLIENT_SECRET,
+                'server_url': settings.OIDC_SERVER_URL,
+                'name': settings.OIDC_PROVIDER_NAME or 'Keycloak',
+                'is_preferred': getattr(settings, 'OIDC_PREFERRED', False),
+            }
+
     ordered = order_login_providers(raw_providers)
-    enabled_providers = [
-        (key, cfg)
-        for key, cfg in ordered.items()
-        if isinstance(cfg, dict) and cfg.get('state')
-    ]
+    enabled_providers = [(key, cfg) for key, cfg in ordered.items() if isinstance(cfg, dict) and cfg.get('state')]
     preferred_provider = get_preferred_provider(raw_providers)
     if preferred_provider and not any(k == preferred_provider for k, _ in enabled_providers):
         preferred_provider = None
+    preferred_provider_name = None
+    if preferred_provider:
+        preferred_cfg = raw_providers.get(preferred_provider) or {}
+        preferred_provider_name = preferred_cfg.get('name') or (
+            'OpenID Connect' if preferred_provider == 'openid_connect' else preferred_provider.capitalize()
+        )
     has_secondary_oauth_providers = bool(
         preferred_provider and any(k != preferred_provider for k, _ in enabled_providers)
     )
@@ -49,6 +71,7 @@ def get_login_context(context):
         'request': request,
         'enabled_providers': enabled_providers,
         'preferred_provider': preferred_provider,
+        'preferred_provider_name': preferred_provider_name,
         'can_reset': can_reset,
         'can_register': can_register,
         'show_login_form': show_login_form,

@@ -29,6 +29,26 @@ class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         gs = GlobalSettingsObject()
         login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+
+        # Fallback to environment-based OIDC configuration if not configured in DB
+        if provider == 'openid_connect' and (
+            'openid_connect' not in login_providers or not login_providers['openid_connect'].get('state')
+        ):
+            if (
+                getattr(settings, 'OIDC_ENABLED', False)
+                and getattr(settings, 'OIDC_SERVER_URL', '')
+                and getattr(settings, 'OIDC_CLIENT_ID', '')
+                and getattr(settings, 'OIDC_CLIENT_SECRET', '')
+            ):
+                login_providers['openid_connect'] = {
+                    'state': True,
+                    'client_id': settings.OIDC_CLIENT_ID,
+                    'secret': settings.OIDC_CLIENT_SECRET,
+                    'server_url': settings.OIDC_SERVER_URL,
+                    'name': settings.OIDC_PROVIDER_NAME or 'Keycloak',
+                    'is_preferred': getattr(settings, 'OIDC_PREFERRED', False),
+                }
+
         known_providers = frozenset(LoginProviders.model_fields.keys())
         if (
             provider not in known_providers
@@ -36,6 +56,7 @@ class OAuthLoginView(View):
             or not login_providers[provider].get('state')
             or not login_providers[provider].get('client_id')
             or not login_providers[provider].get('secret')
+            or (provider == 'openid_connect' and not login_providers[provider].get('server_url'))
         ):
             messages.error(request, _('This login method is not available.'))
             log_event('core', 'auth.login', OUTCOME_FAILURE, error_code='social_provider_unavailable')
@@ -53,7 +74,8 @@ class OAuthLoginView(View):
         next_url = safe_redirect_url(request, target) if target else None
         login_url = (
             provider_instance.get_login_url(request, next=next_url)
-            if next_url else provider_instance.get_login_url(request)
+            if next_url
+            else provider_instance.get_login_url(request)
         )
         return redirect(login_url)
 
@@ -88,9 +110,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         try:
             validated = LoginProviders.model_validate(raw or {})
         except ValidationError as e:
-            logger.error(
-                'login_providers settings failed validation (not overwriting): %s', e
-            )
+            logger.error('login_providers settings failed validation (not overwriting): %s', e)
             return
         normalized = validated.model_dump()
         if raw != normalized:
@@ -149,19 +169,30 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             login_providers.setdefault(provider, {})['is_preferred'] = provider == preferred
 
     def update_credentials(self, request, provider, login_providers):
-        client_id_value = request.POST.get(f'{provider}_client_id', '')
-        secret_value = request.POST.get(f'{provider}_secret', '')
+        client_id_value = request.POST.get(f'{provider}_client_id', '').strip()
+        secret_value = request.POST.get(f'{provider}_secret', '').strip()
 
         if client_id_value and secret_value:
             login_providers[provider]['client_id'] = client_id_value
             login_providers[provider]['secret'] = secret_value
 
+            defaults = {
+                'client_id': client_id_value,
+                'secret': secret_value,
+            }
+
+            if provider == 'openid_connect':
+                server_url_value = request.POST.get(f'{provider}_server_url', '').strip()
+                name_value = request.POST.get(f'{provider}_name', '').strip() or 'Keycloak'
+                login_providers[provider]['server_url'] = server_url_value
+                login_providers[provider]['name'] = name_value
+                defaults['provider_id'] = 'openid_connect'
+                defaults['name'] = name_value
+                defaults['settings'] = {'server_url': server_url_value}
+
             SocialApp.objects.update_or_create(
                 provider=provider,
-                defaults={
-                    'client_id': client_id_value,
-                    'secret': secret_value,
-                },
+                defaults=defaults,
             )
 
     def update_provider_state(self, request, provider, login_providers):
@@ -183,12 +214,20 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 client_id = provider_config.get('client_id')
                 secret = provider_config.get('secret')
                 if client_id and secret:
+                    defaults = {
+                        'client_id': client_id,
+                        'secret': secret,
+                    }
+                    if provider == 'openid_connect':
+                        server_url = provider_config.get('server_url', '').strip()
+                        name_val = provider_config.get('name', '').strip() or 'Keycloak'
+                        defaults['provider_id'] = 'openid_connect'
+                        defaults['name'] = name_val
+                        defaults['settings'] = {'server_url': server_url}
+
                     SocialApp.objects.update_or_create(
                         provider=provider,
-                        defaults={
-                            'client_id': client_id,
-                            'secret': secret,
-                        },
+                        defaults=defaults,
                     )
 
     def get_success_url(self) -> str:

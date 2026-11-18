@@ -166,6 +166,14 @@ class BaseSettings(_BaseSettings):
         Field(min_length=1),
     ] = [15, 29]
 
+    # Generic OpenID Connect / Keycloak SSO settings
+    oidc_enabled: bool = False
+    oidc_server_url: str = ''
+    oidc_client_id: str = ''
+    oidc_client_secret: str = ''
+    oidc_provider_name: str = 'Keycloak'
+    oidc_preferred: bool = False
+
     @classmethod
     def settings_customise_sources(
         cls,
@@ -330,6 +338,7 @@ _LIBRARY_APPS = (
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.mediawiki',
+    'allauth.socialaccount.providers.openid_connect',
 )
 
 if DEBUG and importlib.util.find_spec('django_extensions'):
@@ -413,16 +422,16 @@ CORE_MODULES = (
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_URLS_REGEX = (
-    r"^(?:"
-    r".*/widget[s]?/.*|"
-    r".*/schedule/widget/.*|"
-    r".*/static/event\.css|"
-    r".*/static/schedule/.*\.js|"
-    r"/api/v1/.*"
-    r")$"
+    r'^(?:'
+    r'.*/widget[s]?/.*|'
+    r'.*/schedule/widget/.*|'
+    r'.*/static/event\.css|'
+    r'.*/static/schedule/.*\.js|'
+    r'/api/v1/.*'
+    r')$'
 )
 
-CORS_ALLOW_HEADERS = [*default_headers, "exhibitor"]
+CORS_ALLOW_HEADERS = [*default_headers, 'exhibitor']
 
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
@@ -488,9 +497,13 @@ _OURS_MIDDLEWARES = (
 # Correlation IDs must wrap the whole stack so 401/403/5xx from later
 # middleware (including load-shedding 503) still emit operational logs.
 MIDDLEWARE = (
-    'eventyay.base.middleware.CorrelationIdMiddleware',
-    'eventyay.common.gzip.CompressibleGZipMiddleware',
-) + _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
+    (
+        'eventyay.base.middleware.CorrelationIdMiddleware',
+        'eventyay.common.gzip.CompressibleGZipMiddleware',
+    )
+    + _LIBRARY_MIDDLEWARES
+    + _OURS_MIDDLEWARES
+)
 
 
 _CORE_TEMPLATE_LOADERS = (
@@ -1032,6 +1045,7 @@ _LANGUAGES_CONFIG = {
     },
 }
 
+
 # Derive legacy variables from _LANGUAGES_CONFIG for backward compatibility
 def _build_all_languages():
     result = []
@@ -1371,7 +1385,30 @@ SOCIALACCOUNT_PROVIDERS = {
         'VERIFIED_EMAIL': True,
         'provider_class': 'eventyay.plugins.socialauth.mediawiki_provider.EventyayMediaWikiProvider',
     },
+    'openid_connect': {
+        'SCOPE': ['openid', 'profile', 'email'],
+    },
 }
+
+OIDC_ENABLED = conf.oidc_enabled
+OIDC_SERVER_URL = conf.oidc_server_url
+OIDC_CLIENT_ID = conf.oidc_client_id
+OIDC_CLIENT_SECRET = conf.oidc_client_secret
+OIDC_PROVIDER_NAME = conf.oidc_provider_name
+OIDC_PREFERRED = conf.oidc_preferred
+
+if conf.oidc_enabled and conf.oidc_server_url and conf.oidc_client_id:
+    SOCIALACCOUNT_PROVIDERS['openid_connect']['APPS'] = [
+        {
+            'provider_id': 'openid_connect',
+            'name': conf.oidc_provider_name or 'Keycloak',
+            'client_id': conf.oidc_client_id,
+            'secret': conf.oidc_client_secret,
+            'settings': {
+                'server_url': conf.oidc_server_url,
+            },
+        }
+    ]
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'api.OAuthApplication'
 OAUTH2_PROVIDER_GRANT_MODEL = 'api.OAuthGrant'
@@ -1553,11 +1590,10 @@ SENTRY_DSN = conf.sentry_dsn
 SENTRY_ENABLED = bool(SENTRY_DSN)
 if SENTRY_DSN:
     import sentry_sdk
-    from sentry_sdk.integrations.celery import CeleryIntegration
-    from sentry_sdk.integrations.django import DjangoIntegration
-
     from django.core.exceptions import PermissionDenied
     from django.http import Http404
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
@@ -1654,4 +1690,9 @@ if IS_DEVELOPMENT:
     if '*' not in ALLOWED_HOSTS:
         ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
     # Trust standard local and emulator origins for CSRF
-    CSRF_TRUSTED_ORIGINS += ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://10.0.2.2:8000', 'http://10.0.3.2:8000']
+    CSRF_TRUSTED_ORIGINS += [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://10.0.2.2:8000',
+        'http://10.0.3.2:8000',
+    ]

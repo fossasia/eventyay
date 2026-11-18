@@ -17,6 +17,7 @@ from eventyay.base.models import User
 from eventyay.base.operational_logging import OUTCOME_FAILURE, is_safe_identifier, log_event
 from eventyay.base.settings import GlobalSettingsObject
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,17 +25,25 @@ def require_provider_enabled(request, provider):
     gs = GlobalSettingsObject()
     login_providers = gs.settings.get('login_providers', as_type=dict) or {}
     cfg = login_providers.get(provider)
-    if (
-        not isinstance(cfg, dict)
-        or not cfg.get('state')
-        or not cfg.get('client_id')
-        or not cfg.get('secret')
-    ):
+    enabled = False
+    if isinstance(cfg, dict) and cfg.get('state') and cfg.get('client_id') and cfg.get('secret'):
+        if provider == 'openid_connect':
+            enabled = bool(cfg.get('server_url'))
+        else:
+            enabled = True
+
+    if not enabled and provider == 'openid_connect':
+        enabled = bool(
+            getattr(settings, 'OIDC_ENABLED', False)
+            and getattr(settings, 'OIDC_SERVER_URL', '')
+            and getattr(settings, 'OIDC_CLIENT_ID', '')
+            and getattr(settings, 'OIDC_CLIENT_SECRET', '')
+        )
+
+    if not enabled:
         logger.warning('Social login attempt for unavailable provider: %s', provider)
         messages.error(request, _('This login method is not available.'))
-        raise ImmediateHttpResponse(
-            HttpResponseRedirect(reverse('auth.login'))
-        )
+        raise ImmediateHttpResponse(HttpResponseRedirect(reverse('auth.login')))
 
 
 def require_not_spam(request, user):
