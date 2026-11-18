@@ -344,6 +344,7 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                     | Q(action_type__contains='schedule'),
                     event=self.request.event,
                 )
+                .exclude_unresolvable_content_types()
                 .select_related('user', 'event', 'content_type')
                 .prefetch_related('content_object')[:10]
             )
