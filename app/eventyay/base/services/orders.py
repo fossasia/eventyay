@@ -33,13 +33,13 @@ from eventyay import consts
 from eventyay.api.models import OAuthApplication
 from eventyay.base.admission_validity import assign_issued_admission_bounds
 from eventyay.base.channels import get_all_sales_channels
+from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
 from eventyay.base.i18n import (
     LazyLocaleException,
     get_language_without_region,
     language,
 )
-from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     CartPosition,
@@ -67,6 +67,7 @@ from eventyay.base.models.orders import (
 from eventyay.base.models.organizer import TeamAPIToken
 from eventyay.base.models.product import ProductBundle, ProductMetaValue
 from eventyay.base.models.tax import TaxRule
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.payment import BasePaymentProvider, PaymentException
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.secrets import assign_ticket_secret
@@ -479,6 +480,17 @@ def _cancel_order(
                     )
                 else:
                     gc.transactions.create(value=-position.price, order=order)
+
+        with order.event.lock():
+            for position in order.all_positions.all():
+                try:
+                    position_metadata = json.loads(position.meta_info) if position.meta_info else {}
+                except (json.JSONDecodeError, TypeError):
+                    position_metadata = {}
+                if isinstance(position_metadata, dict):
+                    position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                    position.meta_info = json.dumps(position_metadata)
+                    position.save(update_fields=['meta_info'])
 
         if cancellation_fee:
             with order.event.lock():
@@ -2210,6 +2222,13 @@ class OrderChangeManager:
                         },
                     )
                     opa.canceled = True
+                    try:
+                        opa_metadata = json.loads(opa.meta_info) if opa.meta_info else {}
+                    except (json.JSONDecodeError, TypeError):
+                        opa_metadata = {}
+                    if isinstance(opa_metadata, dict):
+                        opa_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                        opa.meta_info = json.dumps(opa_metadata)
                     if opa.voucher:
                         Voucher.objects.filter(pk=opa.voucher.pk).update(redeemed=Greatest(0, F('redeemed') - 1))
                     assign_ticket_secret(
@@ -2219,7 +2238,7 @@ class OrderChangeManager:
                         force_invalidate=False,
                         save=False,
                     )
-                    opa.save(update_fields=['canceled', 'secret'])
+                    opa.save(update_fields=['canceled', 'secret', 'meta_info'])
                 self.order.log_action(
                     'eventyay.event.order.changed.cancel',
                     user=self.user,
@@ -2234,6 +2253,13 @@ class OrderChangeManager:
                     },
                 )
                 op.position.canceled = True
+                try:
+                    position_metadata = json.loads(op.position.meta_info) if op.position.meta_info else {}
+                except (json.JSONDecodeError, TypeError):
+                    position_metadata = {}
+                if isinstance(position_metadata, dict):
+                    position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                    op.position.meta_info = json.dumps(position_metadata)
                 if op.position.voucher:
                     Voucher.objects.filter(pk=op.position.voucher.pk).update(redeemed=Greatest(0, F('redeemed') - 1))
                 assign_ticket_secret(
@@ -2243,7 +2269,7 @@ class OrderChangeManager:
                     force_invalidate=False,
                     save=False,
                 )
-                op.position.save(update_fields=['canceled', 'secret'])
+                op.position.save(update_fields=['canceled', 'secret', 'meta_info'])
             elif isinstance(op, self.ReinstateOperation):
                 for pos_to_check in [op.position] + list(op.position.addons.filter(canceled=True)):
                     if pos_to_check.voucher_id:
@@ -2269,6 +2295,13 @@ class OrderChangeManager:
                         },
                     )
                     opa.canceled = False
+                    try:
+                        opa_metadata = json.loads(opa.meta_info) if opa.meta_info else {}
+                    except (json.JSONDecodeError, TypeError):
+                        opa_metadata = {}
+                    if isinstance(opa_metadata, dict):
+                        opa_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                        opa.meta_info = json.dumps(opa_metadata)
                     if opa.voucher:
                         Voucher.objects.filter(pk=opa.voucher.pk).update(redeemed=F('redeemed') + 1)
                     assign_ticket_secret(
@@ -2277,7 +2310,7 @@ class OrderChangeManager:
                         force_invalidate=True,
                         save=False,
                     )
-                    opa.save(update_fields=['canceled', 'secret'])
+                    opa.save(update_fields=['canceled', 'secret', 'meta_info'])
                 self.order.log_action(
                     'eventyay.event.order.changed.reinstate',
                     user=self.user,
@@ -2292,6 +2325,13 @@ class OrderChangeManager:
                     },
                 )
                 op.position.canceled = False
+                try:
+                    position_metadata = json.loads(op.position.meta_info) if op.position.meta_info else {}
+                except (json.JSONDecodeError, TypeError):
+                    position_metadata = {}
+                if isinstance(position_metadata, dict):
+                    position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                    op.position.meta_info = json.dumps(position_metadata)
                 if op.position.voucher:
                     Voucher.objects.filter(pk=op.position.voucher.pk).update(redeemed=F('redeemed') + 1)
                 assign_ticket_secret(
@@ -2300,7 +2340,7 @@ class OrderChangeManager:
                     force_invalidate=True,
                     save=False,
                 )
-                op.position.save(update_fields=['canceled', 'secret'])
+                op.position.save(update_fields=['canceled', 'secret', 'meta_info'])
             elif isinstance(op, self.AddOperation):
                 pos = OrderPosition.objects.create(
                     product=op.product,
@@ -2370,6 +2410,13 @@ class OrderChangeManager:
         )
 
         for op in split_positions:
+            try:
+                position_metadata = json.loads(op.meta_info) if op.meta_info else {}
+            except (json.JSONDecodeError, TypeError):
+                position_metadata = {}
+            if isinstance(position_metadata, dict):
+                position_metadata.pop(Order.CUSTOMER_CANCELLATION_META_KEY, None)
+                op.meta_info = json.dumps(position_metadata)
             self.order.log_action(
                 'eventyay.event.order.changed.split',
                 user=self.user,
@@ -2861,6 +2908,7 @@ def _cancel_order_positions(
         positions_to_cancel = []
         canceled_total = Decimal('0.00')
         canceled_ids = set()
+        cancellation_units = []
         # Sorting by position ID keeps parent positions before their add-ons.
         for position in sorted(selected_positions.values(), key=lambda p: p.positionid):
             if position.addon_to_id and position.addon_to_id in selected_positions:
@@ -2875,12 +2923,14 @@ def _cancel_order_positions(
             if position.pk not in canceled_ids:
                 canceled_total += position.price
                 canceled_ids.add(position.pk)
+                cancellation_units.append((position.pk, position.price))
 
             for addon in addons:
                 if addon.pk in canceled_ids:
                     continue
                 canceled_total += addon.price
                 canceled_ids.add(addon.pk)
+                cancellation_units.append((addon.pk, addon.price))
 
         active_position_count = order.positions.filter(canceled=False).count()
         if len(canceled_ids) >= active_position_count:
@@ -2893,10 +2943,40 @@ def _cancel_order_positions(
             user=user,
             auth=api_token or oauth_application or device,
         )
+        cancellation_summary = order.customer_cancellation_summary()
+        if cancellation_summary is not None:
+            original_ticket_value = cancellation_summary[2]
+            original_order_total = cancellation_summary[3]
+            retained_extra_fees = cancellation_summary[4]
+        else:
+            original_ticket_value = sum(
+                (position.price for position in order.positions.all()),
+                Decimal('0.00'),
+            )
+            original_order_total = order.total
+            retained_extra_fees = Decimal('0.00')
+            if order.event.settings.cancel_allow_user_paid_keep_fees:
+                retained_extra_fees = (
+                    order.fees.filter(
+                        fee_type__in=(
+                            OrderFee.FEE_TYPE_PAYMENT,
+                            OrderFee.FEE_TYPE_SHIPPING,
+                            OrderFee.FEE_TYPE_SERVICE,
+                        ),
+                        canceled=False,
+                    ).aggregate(s=Sum('value'))['s']
+                    or Decimal('0.00')
+                )
         for position in positions_to_cancel:
             ocm.cancel(position)
 
         cancellation_fee = order.user_partial_cancel_fee(canceled_total)
+        existing_cancellation_fee = order.user_existing_cancellation_fee
+        cumulative_cancellation_fee = existing_cancellation_fee + cancellation_fee
+        if cumulative_cancellation_fee > order.payment_refund_sum:
+            raise OrderError(
+                _('The cancellation fee cannot be higher than the payment credit of this order.')
+            )
         if cancellation_fee:
             fee = OrderFee(
                 fee_type=OrderFee.FEE_TYPE_CANCELLATION,
@@ -2907,6 +2987,36 @@ def _cancel_order_positions(
             ocm.add_fee(fee)
 
         ocm.commit()
+        remaining_fee = cancellation_fee or Decimal('0.00')
+        units_with_total = [(pk, value) for pk, value in cancellation_units if value > Decimal('0.00')]
+        unit_total = sum((value for _pk, value in units_with_total), Decimal('0.00'))
+        for index, (position_id, position_value) in enumerate(units_with_total):
+            position = order.all_positions.get(pk=position_id)
+            if index == len(units_with_total) - 1:
+                position_fee = remaining_fee
+            else:
+                position_fee = round_decimal(
+                    remaining_fee * position_value / unit_total,
+                    order.event.currency,
+                )
+                remaining_fee -= position_fee
+            try:
+                position_metadata = json.loads(position.meta_info) if position.meta_info else {}
+            except (json.JSONDecodeError, TypeError):
+                position_metadata = {}
+            if not isinstance(position_metadata, dict):
+                position_metadata = {}
+            position_metadata[Order.CUSTOMER_CANCELLATION_META_KEY] = {
+                'order_code': order.code,
+                'ticket_value': str(position_value),
+                'fee_value': str(position_fee),
+                'original_ticket_value': str(original_ticket_value),
+                'original_order_total': str(original_order_total),
+                'retained_extra_fees': str(retained_extra_fees),
+                'settings': order.customer_cancellation_settings(),
+            }
+            position.meta_info = json.dumps(position_metadata)
+            position.save(update_fields=['meta_info'])
         return order
 
 

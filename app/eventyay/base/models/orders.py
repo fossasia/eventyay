@@ -7,7 +7,7 @@ import secrets
 import string
 from collections import Counter
 from datetime import datetime, time, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Union
 
 import dateutil
@@ -65,6 +65,7 @@ from ...helpers.countries import CachedCountries, FastCountryField
 from .base import LockModel, LoggedModel
 from .event import Event, SubEvent
 from .product import Product, ProductVariation, Question, QuestionOption, Quota
+
 
 logger = logging.getLogger(__name__)
 
@@ -562,6 +563,11 @@ class Order(LockModel, LoggedModel):
 
     @cached_property
     def user_cancel_fee(self):
+        summary = self.customer_cancellation_summary()
+        if summary is not None:
+            _canceled_value, _charged_fee, _original_value, original_total, retained_extra_fees = summary
+            return self._user_cancel_fee_for_total(original_total, retained_extra_fees)
+
         fee = Decimal('0.00')
         if self.event.settings.cancel_allow_user_paid_keep_fees:
             fee += (
@@ -581,12 +587,144 @@ class Order(LockModel, LoggedModel):
             fee += self.event.settings.cancel_allow_user_paid_keep
         return round_decimal(fee, self.event.currency)
 
+    def _user_cancel_fee_for_total(self, order_total: Decimal, retained_fees: Decimal) -> Decimal:
+        fee = retained_fees
+        if self.event.settings.cancel_allow_user_paid_keep_percentage:
+            fee += (
+                self.event.settings.cancel_allow_user_paid_keep_percentage
+                / Decimal('100.0')
+                * (order_total - retained_fees)
+            )
+        if self.event.settings.cancel_allow_user_paid_keep:
+            fee += self.event.settings.cancel_allow_user_paid_keep
+        return round_decimal(fee, self.event.currency)
+
     @cached_property
     @scopes_disabled()
     def user_existing_cancellation_fee(self):
         return self.fees.filter(fee_type=OrderFee.FEE_TYPE_CANCELLATION).aggregate(s=Sum('value'))['s'] or Decimal(
             '0.00'
         )
+
+    CUSTOMER_CANCELLATION_META_KEY = 'customer_cancellation'
+
+    def customer_cancellation_settings(self) -> dict:
+        return {
+            'percentage': str(self.event.settings.cancel_allow_user_paid_keep_percentage),
+            'fixed': str(self.event.settings.cancel_allow_user_paid_keep),
+            'keep_fees': bool(self.event.settings.cancel_allow_user_paid_keep_fees),
+            'currency': self.event.currency,
+        }
+
+    @scopes_disabled()
+    def customer_cancellation_summary(self):
+        settings_snapshot = self.customer_cancellation_settings()
+        canceled_value = Decimal('0.00')
+        charged_fee = Decimal('0.00')
+        original_value = None
+        original_total = None
+        retained_extra_fees = None
+
+        for position in self.all_positions.filter(canceled=True):
+            try:
+                metadata = (
+                    json.loads(position.meta_info).get(self.CUSTOMER_CANCELLATION_META_KEY)
+                    if position.meta_info
+                    else None
+                )
+            except (json.JSONDecodeError, TypeError, AttributeError):
+                return None
+            if not isinstance(metadata, dict) or metadata.get('order_code') != self.code:
+                return None
+            if metadata.get('settings') != settings_snapshot:
+                return None
+            try:
+                position_value = Decimal(metadata['ticket_value'])
+                position_fee = Decimal(metadata['fee_value'])
+                metadata_original = Decimal(metadata['original_ticket_value'])
+                metadata_original_total = Decimal(metadata['original_order_total'])
+                metadata_extra_fees = Decimal(metadata['retained_extra_fees'])
+            except (KeyError, InvalidOperation, TypeError, ValueError):
+                return None
+
+            monetary_values = (
+                position_value,
+                position_fee,
+                metadata_original,
+                metadata_original_total,
+                metadata_extra_fees,
+            )
+            if not all(value.is_finite() for value in monetary_values):
+                return None
+            if (
+                position_value < Decimal('0.00')
+                or position_fee < Decimal('0.00')
+                or metadata_original <= Decimal('0.00')
+                or metadata_original_total < Decimal('0.00')
+                or metadata_extra_fees < Decimal('0.00')
+                or position_value != position.price
+            ):
+                return None
+
+            if original_value is None:
+                original_value = metadata_original
+                original_total = metadata_original_total
+                retained_extra_fees = metadata_extra_fees
+            elif (
+                original_value != metadata_original
+                or original_total != metadata_original_total
+                or retained_extra_fees != metadata_extra_fees
+            ):
+                return None
+            canceled_value += position_value
+            charged_fee += position_fee
+
+        if not original_value:
+            return None
+
+        if self.event.settings.cancel_allow_user_paid_keep_fees:
+            current_retained_extra_fees = (
+                self.fees.filter(
+                    fee_type__in=(
+                        OrderFee.FEE_TYPE_PAYMENT,
+                        OrderFee.FEE_TYPE_SHIPPING,
+                        OrderFee.FEE_TYPE_SERVICE,
+                    )
+                ).aggregate(s=Sum('value'))['s']
+                or Decimal('0.00')
+            )
+            if current_retained_extra_fees != retained_extra_fees:
+                return None
+        elif retained_extra_fees != Decimal('0.00'):
+            return None
+
+        active_value = sum(
+            (position.price for position in self.positions.all()),
+            Decimal('0.00'),
+        )
+        if canceled_value + active_value != original_value:
+            return None
+        if charged_fee != self.user_existing_cancellation_fee:
+            return None
+        if self.total != original_total - canceled_value + charged_fee:
+            return None
+        return canceled_value, charged_fee, original_value, original_total, retained_extra_fees
+
+    def cumulative_customer_cancel_fee(self, canceled_total: Decimal) -> Decimal | None:
+        summary = self.customer_cancellation_summary()
+        if summary is None:
+            return None
+
+        canceled_value, charged_fee, original_value, original_total, retained_extra_fees = summary
+        cumulative_value = canceled_value + canceled_total
+        if cumulative_value <= Decimal('0.00') or original_value <= Decimal('0.00'):
+            return None
+
+        cumulative_ratio = cumulative_value / original_value
+        full_fee = self._user_cancel_fee_for_total(original_total, retained_extra_fees)
+        target = round_decimal(full_fee * cumulative_ratio, self.event.currency)
+        additional = target - charged_fee
+        return max(Decimal('0.00'), additional)
 
     @cached_property
     @scopes_disabled()
@@ -680,6 +818,10 @@ class Order(LockModel, LoggedModel):
 
         if self.status != Order.STATUS_PAID or self.total <= Decimal('0.00'):
             return Decimal('0.00')
+
+        cumulative_fee = self.cumulative_customer_cancel_fee(canceled_total)
+        if cumulative_fee is not None:
+            return cumulative_fee
 
         fee = Decimal('0.00')
 
