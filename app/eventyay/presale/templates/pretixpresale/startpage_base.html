@@ -95,6 +95,7 @@
         {% else %}
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
+        {% include 'common/includes/external_links.html' %}
     </head>
     <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}{% if request.user.is_authenticated %} startpage-auth{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}

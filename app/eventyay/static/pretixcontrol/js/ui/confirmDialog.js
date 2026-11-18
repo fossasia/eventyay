@@ -40,7 +40,11 @@ window.showConfirmDialog = function showConfirmDialog(options) {
     }
 
     titleEl.textContent = options.title || gettextSafe('Please confirm');
-    messageEl.textContent = message;
+    if (options.isHtml) {
+        messageEl.innerHTML = message;
+    } else {
+        messageEl.textContent = message;
+    }
     confirmBtn.textContent = options.confirmLabel || gettextSafe('Confirm');
     cancelBtn.textContent = options.cancelLabel || gettextSafe('Cancel');
     confirmBtn.className = 'btn ' + (options.confirmClass || 'btn-primary');
