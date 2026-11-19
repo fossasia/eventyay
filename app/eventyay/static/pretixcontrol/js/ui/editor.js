@@ -481,6 +481,7 @@ var editor = {
                     autofit_width: editor._parse_autofit_width(o.autofit_width),
                     content: o.content,
                     text: o.content === "other" ? (o.placeholder_text || o.text) : o.text,
+                    text_i18n: o.text_i18n,
                     rotation: o.angle,
                     align: o.textAlign,
                 });
@@ -1471,10 +1472,15 @@ var editor = {
     },
 
     _on_history_keydown: function (e) {
-        if (!editor.fabric || !editor._is_hotkey_target() || document.body.classList.contains('modal-open')) {
+        if (!editor.fabric || !editor._is_hotkey_target() || editor._color_picker_open || document.body.classList.contains('modal-open')) {
             return;
         }
-        if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) {
+        var target = e.target;
+        var canvasPanel = editor.$cva.get(0).closest('.panel');
+        if (target !== document.body && !(canvasPanel && canvasPanel.contains(target)) && !target.closest('#editor-toolbox-area')) {
+            return;
+        }
+        if (target.closest('input, textarea, select, [contenteditable]')) {
             return;
         }
         if (!(e.ctrlKey || e.metaKey) || e.altKey) {
@@ -1715,8 +1721,8 @@ var editor = {
         $("#toolbox-object-align").on('click', 'button[data-align]', function () {
             editor._align_selection($(this).attr('data-align'));
         });
-        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
         $("#toolbox-autofit-width").bind('change', editor._update_values_from_toolbox);
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._create_savepoint);
