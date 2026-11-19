@@ -169,7 +169,7 @@ def test_connection_testing():
         def json(self):
             return {"ok": True, "service": "loungemesh"}
 
-    with patch("requests.get", return_value=MockSuccessResponse()):
+    with patch("requests.Session.get", return_value=MockSuccessResponse()):
         ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
         assert ok is True
         assert msg == "ok"
@@ -178,7 +178,7 @@ def test_connection_testing():
     class Mock401Response:
         status_code = 401
 
-    with patch("requests.get", return_value=Mock401Response()):
+    with patch("requests.Session.get", return_value=Mock401Response()):
         ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "wrongsecret")
         assert ok is False
         assert "secret" in str(msg).lower()
@@ -187,13 +187,13 @@ def test_connection_testing():
     class Mock404Response:
         status_code = 404
 
-    with patch("requests.get", return_value=Mock404Response()):
+    with patch("requests.Session.get", return_value=Mock404Response()):
         ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
         assert ok is False
         assert "404" in str(msg)
 
     # 4. Connection timeout
-    with patch("requests.get", side_effect=requests.exceptions.Timeout()):
+    with patch("requests.Session.get", side_effect=requests.exceptions.Timeout()):
         ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
         assert ok is False
         assert "timed out" in str(msg).lower()
@@ -379,7 +379,7 @@ def test_admin_server_test_view(test_setup):
 
     with (
         patch.object(admin_user.__class__, "has_active_staff_session", return_value=True),
-        patch("requests.get", return_value=MockSuccessResponse()),
+        patch("requests.Session.get", return_value=MockSuccessResponse()),
     ):
         test_payload = {
             "url": "http://localhost:8780",
@@ -512,13 +512,13 @@ def test_loungemesh_websocket_module(test_setup, monkeypatch):
                 def json(self):
                     return {"ok": True, "service": "loungemesh"}
 
-            with patch("requests.get", return_value=MockSuccessResponse()):
+            with patch("requests.Session.get", return_value=MockSuccessResponse()):
                 await module.test_server({"url": "http://localhost:8780", "api_secret": "secret123"})
                 test_res = consumer.sent_data
                 assert test_res["ok"] is True
 
             # 4. add_server command (tested before saving)
-            with patch("requests.get", return_value=MockSuccessResponse()):
+            with patch("requests.Session.get", return_value=MockSuccessResponse()):
                 await module.add_server({"url": "http://localhost:8781", "api_secret": "newsecret"})
                 added = consumer.sent_data
                 assert added["url"] == "http://localhost:8781"
@@ -804,7 +804,8 @@ def test_loungemesh_security_improvements(test_setup):
         assert "private" in str(msg).lower() or "https://" in str(msg).lower()
 
     # 3. Connection error sanitization (no str(e) leakage)
-    with patch("requests.get", side_effect=requests.exceptions.SSLError("secret internal socket /dev/ssl error")):
+    ssl_err = requests.exceptions.SSLError("secret internal socket /dev/ssl error")
+    with patch("requests.Session.get", side_effect=ssl_err):
         ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
         assert ok is False
         assert "secret internal socket" not in str(msg)

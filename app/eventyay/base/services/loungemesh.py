@@ -167,20 +167,12 @@ def test_loungemesh_server_connection(url: str, api_secret: str, timeout: float 
         session.mount("http://", adapter)
 
     try:
-        if hasattr(requests.get, "_mock_return_value") or hasattr(requests.get, "mock_calls"):
-            resp = requests.get(
-                verify_url,
-                headers=headers,
-                timeout=timeout,
-                allow_redirects=False,
-            )
-        else:
-            resp = session.get(
-                verify_url,
-                headers=headers,
-                timeout=timeout,
-                allow_redirects=False,
-            )
+        resp = session.get(
+            verify_url,
+            headers=headers,
+            timeout=timeout,
+            allow_redirects=False,
+        )
     except requests.exceptions.Timeout:
         logger.warning("LoungeMesh connection timed out for %s", base_url)
         return False, _("Connection timed out while contacting LoungeMesh server.")
@@ -192,24 +184,6 @@ def test_loungemesh_server_connection(url: str, api_secret: str, timeout: float 
         return False, _("Failed to connect to LoungeMesh server. Please verify the URL and network connectivity.")
     finally:
         session.close()
-
-    if resp.status_code == 200:
-        try:
-            data = resp.json()
-            if isinstance(data, dict) and data.get("ok") is True:
-                return True, "ok"
-        except (ValueError, TypeError):
-            pass
-        return False, _("Server responded with 200 OK, but returned invalid verification response.")
-    elif resp.status_code == 401:
-        return False, _("Authentication failed: invalid service secret (EVENTYAY_SERVICE_SECRET mismatch).")
-    elif resp.status_code == 404:
-        return (
-            False,
-            _("LoungeMesh verification endpoint not found (404). Ensure the server is running LoungeMesh 0.7.0+."),
-        )
-    else:
-        return False, _("LoungeMesh server returned HTTP status %(code)d.") % {"code": resp.status_code}
 
     if resp.status_code == 200:
         try:
