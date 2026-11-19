@@ -47,6 +47,7 @@ def test_command_center_renders_sections(organizer_client, event, organizer, com
     # 2. Lifecycle Timeline
     assert 'dashboard-timeline' in content
     assert 'timeline-step' in content
+    assert 'timeline-step-status' in content
 
     # 3. Action Required
     assert 'cc-action-title' in content
@@ -209,6 +210,8 @@ def test_command_center_ticket_shop_testmode_workflow_status(organizer_client, e
     workflow = response.context['workflow_timeline']
     ticketing_step = next(s for s in workflow if s['name'] == 'Ticketing')
     assert str(ticketing_step['status_text']) == 'In test mode'
+    assert 'timeline-step-status' in response.content.decode()
+    assert 'In test mode' in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -439,6 +442,27 @@ def test_command_center_required_action_merged_and_discardable(organizer_client,
     assert discard_resp.status_code in (302, 200)
     req_action.refresh_from_db()
     assert req_action.done is True
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_required_action_sanitization_and_fallback(organizer_client, event, command_center_url):
+    """RequiredAction handles action_type with special characters safely via escape and strip_tags."""
+    with scopes_disabled():
+        req_action = RequiredAction.objects.create(
+            event=event,
+            action_type='<script>alert("xss")</script>',
+        )
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert '<script>alert("xss")</script>' not in content
+    assert '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;' in content
+    actions = response.context['action_required']
+    alert_card = next((a for a in actions if a['id'] == f'required-action-{req_action.id}'), None)
+    assert alert_card is not None
+    assert '<script>' not in alert_card['desc']
 
 
 @pytest.mark.django_db

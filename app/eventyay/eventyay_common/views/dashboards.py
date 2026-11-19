@@ -24,7 +24,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import NoReverseMatch, reverse
 from django.utils.formats import date_format
-from django.utils.html import escape, format_html
+from django.utils.html import escape, format_html, strip_tags
 from django.utils.timezone import now
 from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
@@ -549,12 +549,15 @@ class EventIndexView(TemplateView):
             for req_action in event.requiredaction_set.filter(done=False):
                 request_obj = getattr(self, 'request', None)
                 try:
-                    display_html = req_action.display(request_obj) if request_obj else req_action.action_type
+                    raw_display = req_action.display(request_obj) if request_obj else None
+                    if raw_display is None or raw_display == req_action.action_type:
+                        display_html = escape(req_action.action_type)
+                    else:
+                        display_html = raw_display
                 except Exception:
-                    display_html = req_action.action_type
+                    display_html = escape(req_action.action_type)
 
-                soup = BeautifulSoup(str(display_html), 'html.parser')
-                desc_text = soup.get_text(separator=' ', strip=True) or str(display_html)
+                desc_text = strip_tags(str(display_html)).strip() or str(display_html)
 
                 discard_url = None
                 if permissions.get('can_change_orders'):

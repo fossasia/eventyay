@@ -90,6 +90,31 @@
   color: var(--color-primary-text);
   margin-bottom: 4px
 }
+.timeline-step-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-bottom: 2px;
+  white-space: nowrap
+}
+.timeline-step.done .timeline-step-status,
+.timeline-step-status-done {
+  background-color: #dcfce7;
+  color: #15803d
+}
+.timeline-step.current .timeline-step-status,
+.timeline-step-status-current {
+  background-color: #dbeafe;
+  color: #1d4ed8
+}
+.timeline-step.todo .timeline-step-status,
+.timeline-step-status-todo {
+  background-color: #f3f4f6;
+  color: #4b5563
+}
 .timeline-step-summary {
   font-size: 12px;
   color: var(--color-grey)
@@ -774,6 +799,7 @@ body:has(.td-dashboard) #page-content {
     padding: 16px
   }
   .timeline-step-label,
+  .timeline-step-status,
   .timeline-step-summary {
     position: absolute;
     width: 1px;
@@ -3853,6 +3879,14 @@ h4.od-subchart {
 .cc-dashboard .timeline-step-label {
   font-size: 12.5px;
   font-weight: 600;
+}
+.cc-dashboard .timeline-step-status {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 .cc-dashboard .timeline-step-summary {
   font-size: 11px;

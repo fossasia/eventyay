@@ -9,7 +9,7 @@
               <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'circle-o' }}{% endif %}" aria-hidden="true"></span>
             </div>
             <div class="timeline-step-label">{{ step.name }}</div>
-            <span class="sr-only">{{ step.status_text }}</span>
+            <span class="timeline-step-status timeline-step-status-{{ step.phase }}">{{ step.status_text }}</span>
             {% if step.summary %}
               <div class="timeline-step-summary">{{ step.summary }}</div>
             {% endif %}
@@ -20,7 +20,7 @@
               <span class="fa fa-{% if step.phase == 'done' %}check{% else %}{{ step.icon|default:'circle-o' }}{% endif %}" aria-hidden="true"></span>
             </div>
             <div class="timeline-step-label">{{ step.name }}</div>
-            <span class="sr-only">{{ step.status_text }}</span>
+            <span class="timeline-step-status timeline-step-status-{{ step.phase }}">{{ step.status_text }}</span>
             {% if step.summary %}
               <div class="timeline-step-summary">{{ step.summary }}</div>
             {% endif %}
