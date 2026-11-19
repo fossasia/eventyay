@@ -21,15 +21,11 @@ export function computeStickyOffset ({ stickyBottom, cardTop, cardHeight, natura
 
 const LABEL_SELECTORS = ['.time-box .start', '.info .title-row']
 
-const entries = new Set()
+// Each registered card, with the grid it belongs to (found once, when it registers).
+const entries = new Map()
 const applied = new WeakMap()
 let frame = 0
 let listening = false
-
-function stickyBottomFor (card) {
-	const header = card.closest('.c-grid-schedule')?.querySelector('.sticky-header')
-	return header ? header.getBoundingClientRect().bottom : 0
-}
 
 function setOffset (el, offset) {
 	const rounded = Math.round(offset)
@@ -41,27 +37,42 @@ function setOffset (el, offset) {
 function update () {
 	frame = 0
 	const viewportHeight = window.innerHeight || document.documentElement.clientHeight
-	for (const card of entries) {
+	const viewportWidth = window.innerWidth || document.documentElement.clientWidth
+
+	// Read phase: measure everything before changing anything, so no write below can force a new layout
+	// in the middle of the reads.
+	const stickyBottoms = new Map()
+	const changes = []
+	for (const [card, grid] of entries) {
+		let stickyBottom = stickyBottoms.get(grid)
+		if (stickyBottom === undefined) {
+			const header = grid ? grid.querySelector('.sticky-header') : null
+			stickyBottom = header ? header.getBoundingClientRect().bottom : 0
+			stickyBottoms.set(grid, stickyBottom)
+		}
 		const cardRect = card.getBoundingClientRect()
-		const stickyBottom = stickyBottomFor(card)
-		const onScreen = cardRect.bottom > stickyBottom && cardRect.top < viewportHeight
+		const onScreen = cardRect.bottom > stickyBottom && cardRect.top < viewportHeight &&
+			cardRect.right > 0 && cardRect.left < viewportWidth
 		for (const selector of LABEL_SELECTORS) {
 			const el = card.querySelector(selector)
 			if (!el) continue
 			if (!onScreen) {
-				setOffset(el, 0)
+				changes.push([el, 0])
 				continue
 			}
 			const rect = el.getBoundingClientRect()
-			setOffset(el, computeStickyOffset({
+			changes.push([el, computeStickyOffset({
 				stickyBottom,
 				cardTop: cardRect.top,
 				cardHeight: cardRect.height,
 				naturalTop: rect.top - (applied.get(el) || 0),
 				height: rect.height,
-			}))
+			})])
 		}
 	}
+
+	// Write phase.
+	for (const [el, offset] of changes) setOffset(el, offset)
 }
 
 function schedule () {
@@ -81,7 +92,7 @@ export function refreshStickyLabels () {
  * One shared, throttled scroll listener serves every card.
  */
 export function registerStickyLabels (card) {
-	entries.add(card)
+	entries.set(card, card.closest('.c-grid-schedule'))
 	if (!listening) {
 		// Capture, because scroll events do not bubble and the page may scroll inside any ancestor.
 		window.addEventListener('scroll', schedule, { passive: true, capture: true })
