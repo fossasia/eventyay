@@ -21,6 +21,8 @@ export function initApi({ store, token, clientId, inviteToken }) {
 		try { api.close() } catch (e) { /* ignore */ }
 	}
 	api = new WebSocketClient(`${config.api.socket}`, { token, clientId, inviteToken })
+	window.api = api
+	window.__eventyay_api = api
 	console.info('[API] websocket URL', config.api.socket)
 	api.connect()
 

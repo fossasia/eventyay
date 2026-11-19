@@ -160,8 +160,6 @@ async function init({ token, inviteToken }) {
   } else if (anonymousRoomId && localStorage[`clientId:room:${anonymousRoomId}`]) {
     const clientId = localStorage[`clientId:room:${anonymousRoomId}`]
     store.dispatch('login', { clientId })
-  } else if (window.eventyay?.commonAccountUrl) {
-    store.dispatch('login', {})
   } else {
     console.warn('no token found, login in anonymously')
     let clientId = localStorage.clientId
