@@ -38,7 +38,18 @@ class LoungeMeshModule(BaseModule):
             room = getattr(self, "room", None)
             if not room:
                 return None
-            prefer_server = (self.module_config or {}).get("prefer_server")
+            try:
+                room.refresh_from_db()
+            except Exception:
+                pass
+            prefer_server = None
+            for m in (room.module_config or []):
+                if isinstance(m, dict) and m.get("type") in ("call.loungemesh", "channel.loungemesh"):
+                    cfg = m.get("config") or {}
+                    prefer_server = cfg.get("prefer_server")
+                    break
+            if not prefer_server:
+                prefer_server = (self.module_config or {}).get("prefer_server")
             server = get_loungemesh_server(self.consumer.event, prefer_server=prefer_server)
             if not server:
                 return None
@@ -152,7 +163,7 @@ class LoungeMeshModule(BaseModule):
 
         user_id = getattr(self.consumer.user, "pk", "anon")
         rate_key = f"lm_test_rate:{self.consumer.event.pk}:{user_id}"
-        if cache.get(rate_key, 0) >= 10:
+        if cache.get(rate_key, 0) >= 120:
             raise ConsumerException(
                 "loungemesh.rate_limited",
                 "Too many requests. Please wait a moment before trying again.",
@@ -210,7 +221,7 @@ class LoungeMeshModule(BaseModule):
 
         user_id = getattr(self.consumer.user, "pk", "anon")
         rate_key = f"lm_add_rate:{self.consumer.event.pk}:{user_id}"
-        if cache.get(rate_key, 0) >= 5:
+        if cache.get(rate_key, 0) >= 60:
             raise ConsumerException(
                 "loungemesh.rate_limited",
                 "Too many requests. Please wait a moment before trying again.",

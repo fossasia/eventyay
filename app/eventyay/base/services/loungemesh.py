@@ -448,6 +448,9 @@ def issue_signed_grant(
         if getattr(event, "date_from", None) and now_ts < int(event.date_from.timestamp()):
             nbf_ts = int(event.date_from.timestamp())
 
+    is_privileged = role in ("host", "moderator")
+    single_user = not is_privileged
+
     payload = {
         "iss": "eventyay",
         "aud": "loungemesh",
@@ -460,8 +463,8 @@ def issue_signed_grant(
         "jitsi_room": jitsi_room,
         "role": role,
         "features": features,
-        "single_user": True,
-        "singleUser": True,
+        "single_user": single_user,
+        "singleUser": single_user,
         "allowed": True,
         "iat": now_ts,
         "nbf": nbf_ts,
