@@ -249,20 +249,37 @@ def test_get_available_and_serialize_servers(test_setup):
             api_secret="custom_secret_32_chars_long_test",
             active=True,
             event_exclusive=event,
+            is_user_managed=True,
         )
         event_server.events.add(event)
 
+        # Create admin-assigned event-exclusive server (not user-managed)
+        admin_event_server = LoungeMeshServer.objects.create(
+            url="https://admin-assigned.loungemesh.example.com",
+            api_secret="admin_secret_32_chars_long_test",
+            active=True,
+            event_exclusive=event,
+            is_user_managed=False,
+        )
+        admin_event_server.events.add(event)
+
     available = get_available_loungemesh_servers(event)
     # Event-exclusive comes first, then organizer, then global
-    assert available[0] == event_server
-    assert available[1] == org_server
-    assert available[2] == server
+    assert available[0] in (event_server, admin_event_server)
+    assert available[1] in (event_server, admin_event_server)
+    assert available[2] == org_server
+    assert available[3] == server
 
     ser = serialize_loungemesh_server(event_server, event)
     assert ser["url"] == "https://custom.loungemesh.example.com"
     assert ser["scope"] == "event"
     assert ser["is_custom"] is True
     assert "api_secret" not in ser
+
+    admin_ser = serialize_loungemesh_server(admin_event_server, event)
+    assert admin_ser["url"] == "https://admin-assigned.loungemesh.example.com"
+    assert admin_ser["scope"] == "event"
+    assert admin_ser["is_custom"] is False
 
 
 @pytest.mark.django_db
@@ -701,7 +718,6 @@ def test_websocket_room_url_duration_checks(test_setup, monkeypatch):
     event = test_setup["event"]
     user = test_setup["user"]
     room = test_setup["room"]
-    server = test_setup["server"]
 
     room_cache = {str(room.id): room}
     consumer = DummyConsumer(

@@ -1,18 +1,16 @@
 import ipaddress
 import logging
-import os
 import socket
-import sys
 import time
 import uuid
 from urllib.parse import urlparse
 
 import jwt
 import requests
-from requests.adapters import HTTPAdapter
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from requests.adapters import HTTPAdapter
 
 from eventyay.base.models import LoungeMeshServer
 
@@ -134,7 +132,10 @@ def validate_loungemesh_server_url(
         # In production (allow_private=False and not local host), reject loopback and private IPs
         if not allow_private:
             if ip_obj.is_loopback or ip_obj.is_private or ip_obj.is_reserved:
-                return _res(False, _("Connections to private or local network addresses are not permitted in production."))
+                return _res(
+                    False,
+                    _("Connections to private or local network addresses are not permitted in production."),
+                )
 
     return _res(True, "ok", first_ip or (addr_info[0][4][0] if addr_info else None))
 
@@ -302,7 +303,7 @@ def serialize_loungemesh_server(server: LoungeMeshServer, event=None) -> dict:
     if event:
         if server.event_exclusive_id == event.id:
             scope = "event"
-            is_custom = True
+            is_custom = bool(getattr(server, "is_user_managed", False))
         elif has_event:
             scope = "event"
         elif has_org:

@@ -153,7 +153,10 @@ class LoungeMeshModule(BaseModule):
         user_id = getattr(self.consumer.user, "pk", "anon")
         rate_key = f"lm_test_rate:{self.consumer.event.pk}:{user_id}"
         if cache.get(rate_key, 0) >= 10:
-            raise ConsumerException("loungemesh.rate_limited", "Too many requests. Please wait a moment before trying again.")
+            raise ConsumerException(
+                "loungemesh.rate_limited",
+                "Too many requests. Please wait a moment before trying again.",
+            )
         cache.set(rate_key, cache.get(rate_key, 0) + 1, timeout=60)
 
         url = str((body or {}).get("url") or "").strip()
@@ -208,7 +211,10 @@ class LoungeMeshModule(BaseModule):
         user_id = getattr(self.consumer.user, "pk", "anon")
         rate_key = f"lm_add_rate:{self.consumer.event.pk}:{user_id}"
         if cache.get(rate_key, 0) >= 5:
-            raise ConsumerException("loungemesh.rate_limited", "Too many requests. Please wait a moment before trying again.")
+            raise ConsumerException(
+                "loungemesh.rate_limited",
+                "Too many requests. Please wait a moment before trying again.",
+            )
         cache.set(rate_key, cache.get(rate_key, 0) + 1, timeout=60)
 
         check_err = await database_sync_to_async(self._check_server_limit_and_duplicate)(clean_url)
