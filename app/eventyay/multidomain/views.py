@@ -159,16 +159,20 @@ class VideoSPAView(View):
                 )
             )
 
+            plugins = event.get_plugins() if hasattr(event, 'get_plugins') else []
+            has_interpretation = any('interpretation' in p for p in plugins)
+            interpretation_url = safe_reverse('plugins:interpretation:dashboard', organizer=event.organizer.slug, event=event.slug) if has_interpretation else None
+
             injected = {
                 'isOrganizerArea': self.is_organizer,
                 'hasOrganiserPermissions': can_manage,
                 'publicVideoUrl': f'/{event.organizer.slug}/{event.slug}/video',
                 'homeUrl': safe_reverse('eventyay_common:event.index', organizer=event.organizer.slug, event=event.slug),
-                'plugins': event.get_plugins() if hasattr(event, 'get_plugins') else [],
-                'interpretationUrl': safe_reverse('plugins:interpretation:dashboard', organizer=event.organizer.slug, event=event.slug),
+                'plugins': plugins,
+                'interpretationUrl': interpretation_url,
                 'interpretation': {
-                    'isEnabled': bool(event.settings.get('interpretation_is_enabled', default=True, as_type=bool)),
-                    'usePluginStreams': bool(event.settings.get('interpretation_use_plugin_streams', default=False, as_type=bool)),
+                    'isEnabled': bool(event.settings.get('interpretation_is_enabled', default=True, as_type=bool)) if has_interpretation else False,
+                    'usePluginStreams': bool(event.settings.get('interpretation_use_plugin_streams', default=False, as_type=bool)) if has_interpretation else False,
                 },
                 'csrfToken': get_token(request),
                 'ticketUrl': safe_reverse('control:event.index', organizer=event.organizer.slug, event=event.slug) if has_ticket_access else None,

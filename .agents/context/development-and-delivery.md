@@ -65,8 +65,7 @@ core lock update after plugin changes merge.
 From `app/`, activate `.venv` and run `pytest tests/<affected-area>` with test
 configuration and a disposable PostgreSQL database. `.github/workflows/video-backend-ci.yml`
 is the authority for app backend CI service settings and flags on `dev`; its
-`pytest-integration` job provides PostgreSQL and Redis. The older `tests.yml`
-workflow targets legacy branches and the absent `src/` layout. Do not reuse a production
+`pytest-integration` job provides PostgreSQL and Redis. Do not reuse a production
 database for tests or migrations.
 
 Plugin CI clones core `dev`, installs the plugin into core's environment, and

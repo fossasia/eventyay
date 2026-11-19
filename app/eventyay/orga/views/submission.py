@@ -2,7 +2,8 @@ import copy
 import json
 from collections import Counter
 from dataclasses import replace
-from urllib.parse import urlencode
+from itertools import islice
+from urllib.parse import urlencode, urlparse
 
 from dateutil import rrule
 from django.conf import settings
@@ -13,7 +14,7 @@ from django.db import transaction
 from django.db.models import Count as DbCount, F, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Lower, TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils import feedgenerator
@@ -32,6 +33,7 @@ from eventyay.base.models import (
     SpeakerInvitation,
     SpeakerInvitationMailStates,
     SpeakerInvitationStates,
+    SpeakerProfile,
     Submission,
     SubmissionComment,
     SubmissionStates,
@@ -40,6 +42,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.auth import display_name_sort_key
 from eventyay.base.models.base import CachedFile
+from eventyay.base.models.cfp import BUILTIN_SESSION_FIELDS, BUILTIN_SPEAKER_FIELDS, normalize_field_order
 from eventyay.base.models.submission import SpeakerRole
 from eventyay.common.views.helpers import is_ajax_request
 from eventyay.base.models.mail import MailTemplateRoles
@@ -74,7 +77,7 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import SessionImportProcessForm
+from eventyay.orga.forms.importers import CSV_SAMPLE_ROW_LIMIT, SessionImportProcessForm, csv_sample_values
 from eventyay.orga.forms.submission import (
     AddSpeakerForm,
     AddSpeakerInlineForm,
@@ -106,7 +109,16 @@ from eventyay.talk_rules.tracks import apply_track_limit, user_has_track_limits
 
 
 class SubmissionViewMixin(PermissionRequired):
+    # Deleted sessions are hidden from organiser views by default. Read-only views
+    # and state changes (which can restore a deleted session) opt in explicitly.
+    include_deleted = False
+
     def get_queryset(self):
+        return self.get_submission_queryset()
+
+    def get_submission_queryset(self):
+        if self.include_deleted:
+            return Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
         return Submission.objects.filter(event=self.request.event)
 
     def get_object(self):
@@ -148,9 +160,16 @@ class ReviewerSubmissionFilter:
         if self.is_only_reviewer:
             return get_reviewer_tracks(self.request.event, self.request.user)
 
-    def get_queryset(self, for_review=False):
+    def get_queryset(self, for_review=False, include_deleted=None):
+        if include_deleted is None:
+            include_deleted = getattr(self, 'include_deleted', False)
+        submissions = (
+            self.request.event.submissions(manager='all_objects').exclude(state=SubmissionStates.DRAFT)
+            if include_deleted
+            else self.request.event.submissions.all()
+        )
         queryset = (
-            self.request.event.submissions.all()
+            submissions
             .select_related('submission_type', 'event', 'track')
             .prefetch_related(Prefetch('speakers', queryset=User.objects.order_by(display_name_sort_key(), 'pk')))
         )
@@ -167,6 +186,7 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
     form_class = SubmissionStateChangeForm
     permission_required = 'base.state_change_submission'
     template_name = 'orga/submission/state_change.html'
+    include_deleted = True
     TARGETS = {
         'submit': SubmissionStates.SUBMITTED,
         'accept': SubmissionStates.ACCEPTED,
@@ -248,8 +268,35 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
         if self.object.state == SubmissionStates.DELETED and (not url or self.object.code in url):
             return self.request.event.orga_urls.submissions
         elif url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            if self._is_emptied_state_list(url):
+                return self.request.event.orga_urls.submissions
             return url
         return self.request.event.orga_urls.submissions
+
+    def _is_emptied_state_list(self, url):
+        """Whether ``url`` is the session list filtered by state, with nothing left to show.
+
+        When a state change moves the last session out of the filtered list (for
+        example the last deleted or submitted one), organisers go back to the full
+        list instead of an empty view.
+        """
+        parsed = urlparse(url)
+        list_path = urlparse(str(self.request.event.orga_urls.submissions)).path
+        if parsed.path.rstrip('/') != list_path.rstrip('/'):
+            return False
+        query = QueryDict(parsed.query)
+        if not query.getlist('state'):
+            return False
+        form = SubmissionFilterForm(data=query, event=self.request.event)
+        if not form.is_valid():
+            return False
+        with scope(event=self.request.event):
+            submissions = Submission.all_objects.filter(event=self.request.event).exclude(state=SubmissionStates.DRAFT)
+            # Match the track access limits the list itself applies, so sessions on
+            # inaccessible tracks don't keep the organiser on an empty filtered list.
+            if user_has_track_limits(self.request.event, self.request.user):
+                submissions = apply_track_limit(submissions, self.request.event, self.request.user)
+            return not form.filter_queryset(submissions).exists()
 
     @context
     def next(self):
@@ -310,6 +357,14 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     template_name = 'orga/submission/speakers.html'
     permission_required = 'base.orga_list_speakerprofile'
     form_class = AddSpeakerInlineForm
+    include_deleted = True
+
+    def dispatch(self, request, *args, **kwargs):
+        # Speakers of a deleted session can be viewed, but not changed or invited.
+        # Permissions are checked first so the deleted state is not exposed.
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and self.has_permission() and self.object.is_deleted:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     @context
     @cached_property
@@ -483,6 +538,145 @@ class SubmissionSpeakerRevokeInvitation(SubmissionSpeakers):
         return redirect(self.object.orga_urls.speakers)
 
 
+SESSION_FIELD_TEMPLATE_ORDER = (
+    'title',
+    'submission_type',
+    'track',
+    'tags',
+    'abstract',
+    'description',
+    'notes',
+    'internal_notes',
+    'content_locale',
+    'do_not_record',
+    'is_featured',
+    'duration',
+    'slot_count',
+    'image',
+    'slides',
+    'session_videos',
+    'etherpad_url',
+)
+
+
+def ordered_session_fields(submission_form, questions_form, event, *, include_session_videos):
+    """Session fields in CfP order, with custom questions placed among them."""
+    cfp = getattr(event, 'cfp', None) if hasattr(event, 'cfp') else None
+    saved_order = []
+    if cfp is not None:
+        saved_order = cfp.settings.get('fields_config', {}).get('session', []) or []
+    order = normalize_field_order(list(saved_order) or list(BUILTIN_SESSION_FIELDS), 'session')
+    builtin_names = set(BUILTIN_SESSION_FIELDS)
+
+    entries = []
+    placed = set()
+
+    def append_session_videos():
+        if not include_session_videos or 'session_videos' in placed:
+            return
+        entries.append('session_videos')
+        placed.add('session_videos')
+
+    def append_form_field(form, name):
+        if name in placed or name not in form.fields:
+            return
+        field = form.fields[name]
+        if field.widget.is_hidden:
+            return
+        entries.append(form[name])
+        placed.add(name)
+
+    for item in order:
+        name = item if isinstance(item, str) else None
+        if not name:
+            continue
+        if name == 'session_videos':
+            append_session_videos()
+            continue
+        if name in builtin_names:
+            append_form_field(submission_form, name)
+            continue
+        question_name = name if name.startswith('question_') else f'question_{name}'
+        append_form_field(questions_form, question_name)
+
+    # Organizer-only fields (and any leftover template fields) are not part of
+    # the public CfP order, so they follow the configured session fields.
+    for name in SESSION_FIELD_TEMPLATE_ORDER:
+        if name == 'session_videos':
+            append_session_videos()
+            continue
+        append_form_field(submission_form, name)
+
+    for name in questions_form.fields:
+        append_form_field(questions_form, name)
+    return entries
+
+
+# Organizer create-speaker fields that are not part of the public CfP order.
+SPEAKER_CFP_FIELD_ALIASES = {
+    'fullname': 'name',
+}
+
+
+def ordered_speaker_fields(speaker_form, event):
+    """Speaker fields in CfP order, with custom questions placed among them."""
+    if speaker_form is None:
+        return []
+    cfp = getattr(event, 'cfp', None) if hasattr(event, 'cfp') else None
+    saved_order = []
+    if cfp is not None:
+        saved_order = cfp.settings.get('fields_config', {}).get('speaker', []) or []
+    order = normalize_field_order(list(saved_order) or list(BUILTIN_SPEAKER_FIELDS), 'speaker')
+
+    entries = []
+    placed = set()
+
+    def append_field(name):
+        if name in placed or name not in speaker_form.fields:
+            return
+        field = speaker_form.fields[name]
+        if field.widget.is_hidden:
+            return
+        entries.append(speaker_form[name])
+        placed.add(name)
+
+    for name in ('email', 'no_email'):
+        append_field(name)
+
+    for item in order:
+        name = item if isinstance(item, str) else None
+        if not name:
+            continue
+        form_name = SPEAKER_CFP_FIELD_ALIASES.get(name, name)
+        if form_name in speaker_form.fields:
+            append_field(form_name)
+            continue
+        question_name = name if name.startswith('question_') else f'question_{name}'
+        append_field(question_name)
+
+    for name in speaker_form.fields:
+        append_field(name)
+    return entries
+
+
+def create_speaker_without_email(submission, *, name, biography, locale, actor):
+    """Create a speaker who has no account email and no invitation."""
+    speaker = User(
+        email=None,
+        fullname=(name or '').strip(),
+        locale=locale or submission.event.locale,
+        timezone=submission.event.timezone,
+    )
+    speaker.save()
+    profile = SpeakerProfile(user=speaker, event=submission.event)
+    if biography:
+        profile.biography = biography
+    profile.save()
+    submission.speakers.add(speaker)
+    submission.log_action('eventyay.submission.speakers.add', person=actor, orga=True)
+    return speaker
+
+
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm
@@ -505,6 +699,20 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     def size_warning(self):
         return SizeFileInput.get_size_warning()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ordered_session_fields'] = ordered_session_fields(
+            context['form'],
+            self._questions_form,
+            self.request.event,
+            include_session_videos=self.action != 'create' and self.session_videos_enabled,
+        )
+        context['ordered_speaker_fields'] = ordered_speaker_fields(
+            self.new_speaker_form,
+            self.request.event,
+        )
+        return context
 
     @cached_property
     def _formset(self):
@@ -536,11 +744,55 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         if not self.get_object():
             return AddSpeakerForm(
                 data=self.request.POST if self.request.method == 'POST' else None,
+                files=self.request.FILES if self.request.method == 'POST' else None,
                 event=self.request.event,
                 prefix='speaker',
                 include_biography=True,
+                allow_no_email=True,
+                include_speaker_questions=True,
+                email_autocomplete=False,
                 draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
+
+    @context
+    @cached_property
+    def existing_speakers(self):
+        """Speakers already registered for this event, used for linking on creation.
+
+        Only returned when the requesting user has permission to list speaker
+        profiles; team members subject to "always hide speaker details" receive
+        an empty list so speaker names/emails are not disclosed on this page.
+        """
+        if self.get_object():
+            return []
+        if not self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event):
+            return []
+        with scope(event=self.request.event):
+            return (
+                SpeakerProfile.objects
+                .filter(event=self.request.event, user__isnull=False)
+                .select_related('user')
+                .order_by('user__fullname')
+            )
+
+    @context
+    @cached_property
+    def show_existing_speaker_emails(self):
+        """Whether the current user may see speaker email addresses in the link-speaker dropdown."""
+        return self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event)
+
+    @context
+    @cached_property
+    def selected_existing_speaker_ids(self):
+        """Re-populate the existing-speaker selects on a failed POST."""
+        if not self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event):
+            return []
+        selected = []
+        for raw_pk in self.request.POST.getlist('existing_speaker_id'):
+            raw_pk = str(raw_pk).strip()
+            if raw_pk and raw_pk not in selected:
+                selected.append(raw_pk)
+        return selected
 
     @cached_property
     def _questions_form(self):
@@ -701,9 +953,15 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
-        if created and not self.new_speaker_form.is_valid():
-            messages.error(self.request, phrases.base.error_saving_changes)
-            return self.form_invalid(form)
+
+        if created:
+            add_new_speaker = self.request.POST.get('add_new_speaker') == 'on'
+            existing_speaker_ids = self.selected_existing_speaker_ids
+
+            # Only validate the speaker sub-form when the "add new speaker" toggle is on.
+            if add_new_speaker and not self.new_speaker_form.is_valid():
+                messages.error(self.request, phrases.base.error_saving_changes)
+                return self.form_invalid(form)
 
         self.object = form.instance
         form.instance.event = self.request.event
@@ -719,14 +977,45 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     raise RollbackTransaction()
 
                 if created:
-                    if email := self.new_speaker_form.cleaned_data['email']:
-                        form.instance.add_speaker(
-                            email=email,
-                            name=self.new_speaker_form.cleaned_data['name'],
-                            locale=self.new_speaker_form.cleaned_data.get('locale'),
-                            user=self.request.user,
-                            biography=self.new_speaker_form.cleaned_data.get('biography'),
-                        )
+                    if add_new_speaker:
+                        # New speaker — only add if an email (or no_email) was supplied.
+                        email = self.new_speaker_form.cleaned_data.get('email', '')
+                        no_email = self.new_speaker_form.cleaned_data.get('no_email', False)
+                        if no_email:
+                            speaker = create_speaker_without_email(
+                                form.instance,
+                                name=self.new_speaker_form.cleaned_data.get('name', ''),
+                                biography=self.new_speaker_form.cleaned_data.get('biography'),
+                                locale=self.new_speaker_form.cleaned_data.get('locale'),
+                                actor=self.request.user,
+                            )
+                            self.new_speaker_form.save_speaker_questions(speaker)
+                        elif email:
+                            speaker, _invitation = form.instance.add_speaker(
+                                email=email,
+                                name=self.new_speaker_form.cleaned_data.get('name', ''),
+                                locale=self.new_speaker_form.cleaned_data.get('locale'),
+                                user=self.request.user,
+                                biography=self.new_speaker_form.cleaned_data.get('biography'),
+                                send_immediately=self.new_speaker_form.cleaned_data.get('send_immediately', True),
+                            )
+                            self.new_speaker_form.save_speaker_questions(speaker)
+                    elif existing_speaker_ids and self.request.user.has_perm(
+                        'base.orga_list_speakerprofile', self.request.event
+                    ):
+                        try:
+                            requested_ids = [int(pk) for pk in existing_speaker_ids]
+                        except (TypeError, ValueError):
+                            requested_ids = []
+                        if requested_ids:
+                            with scope(event=self.request.event):
+                                profiles = SpeakerProfile.objects.filter(
+                                    pk__in=requested_ids,
+                                    event=self.request.event,
+                                    user__isnull=False,
+                                ).select_related('user')
+                            for profile in profiles:
+                                form.instance.speakers.add(profile.user)
                 else:
                     formset_result = self.save_formset(form.instance)
                     if not formset_result:
@@ -765,6 +1054,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 class SubmissionContentView(SubmissionContent):
     template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
+    include_deleted = True
 
     @context
     @cached_property
@@ -854,9 +1144,9 @@ class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, Li
     def _get_base_queryset(self, for_review=False):
         # If somebody has *only* reviewer permissions for this event, they can only
         # see the proposals they can review.
-        qs = super().get_queryset(for_review=for_review).order_by('-id')
+        qs = super().get_queryset(for_review=for_review, include_deleted=True).order_by('-id')
         if not self.filter_form.is_valid():
-            return qs
+            return qs.exclude(state=SubmissionStates.DELETED)
         return self.filter_form.filter_queryset(qs)
 
     def get_queryset(self):
@@ -992,13 +1282,14 @@ class FeedbackList(SubmissionViewMixin, PaginationMixin, ListView):
     context_object_name = 'feedback'
     paginate_by = 25
     permission_required = 'base.view_feedback_submission'
+    include_deleted = True
 
     def get_queryset(self):
         return self.submission.feedback.all().order_by('pk')
 
     def get_object(self):
         return get_object_or_404(
-            Submission.objects.filter(event=self.request.event),
+            self.get_submission_queryset(),
             code__iexact=self.kwargs.get('code'),
         )
 
@@ -1074,6 +1365,7 @@ class SubmissionVideoLink(SubmissionViewMixin, View):
 
 class ApplyPending(SubmissionViewMixin, View):
     permission_required = 'base.state_change_submission'
+    include_deleted = True
 
     def post(self, request, *args, **kwargs):
         submission = self.object
@@ -1114,12 +1406,13 @@ class SubmissionHistory(SubmissionViewMixin, ListView):
     permission_required = 'base.orga_update_submission'
     paginate_by = 200
     context_object_name = 'log_entries'
+    include_deleted = True
 
     @context
     @cached_property
     def submission(self):
         return get_object_or_404(
-            Submission.objects.filter(event=self.request.event),
+            self.get_submission_queryset(),
             code__iexact=self.kwargs.get('code'),
         )
 
@@ -1631,6 +1924,14 @@ class CommentList(SubmissionViewMixin, FormView):
     permission_required = 'base.view_submissioncomment'
     write_permission_required = 'base.add_submissioncomment'
     form_class = SubmissionCommentForm
+    include_deleted = True
+
+    def dispatch(self, request, *args, **kwargs):
+        # Comments of a deleted session can be read, but not added.
+        # Permissions are checked first so the deleted state is not exposed.
+        if request.method not in ('GET', 'HEAD', 'OPTIONS') and self.has_permission() and self.object.is_deleted:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1730,7 +2031,7 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return super().dispatch(request, *args, **kwargs)
         try:
-            _ = self.file
+            self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
             return redirect(self.import_settings_url)
@@ -1749,24 +2050,26 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
     def parsed(self):
         return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
 
+    def _parsed_rows(self):
+        if not hasattr(self, '_cached_parsed_rows'):
+            self._cached_parsed_rows = list(islice(self.parsed, CSV_SAMPLE_ROW_LIMIT)) if self.parsed else []
+        return self._cached_parsed_rows
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['headers'] = self.parsed.fieldnames if self.parsed else []
+        headers = list(self.parsed.fieldnames or []) if self.parsed else []
+        kwargs['headers'] = headers
         kwargs['event'] = self.request.event
         kwargs['initial'] = self.request.event.settings.submission_import_settings
+        kwargs['sample_values'] = csv_sample_values(self._parsed_rows(), headers)
         return kwargs
 
     @context
     def preview_rows(self):
         if not self.parsed:
             return []
-        rows = []
         headers = self.parsed.fieldnames or []
-        for i, row in enumerate(self.parsed):
-            if i >= 5:
-                break
-            rows.append([row.get(h, '') for h in headers])
-        return rows
+        return [[row.get(header, '') for header in headers] for row in self._parsed_rows()[:5]]
 
     @context
     def headers(self):

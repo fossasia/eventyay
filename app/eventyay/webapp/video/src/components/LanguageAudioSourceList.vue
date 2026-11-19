@@ -5,12 +5,12 @@
 			i.mdi.mdi-translate.header-icon(aria-hidden="true")
 			.header-text
 				h4 {{ title }}
-				p.header-subtitle {{ $t('Add multi-language audio or video interpretation channels for attendees.') }}
+				p.header-subtitle {{ subtitle || $t('Add multi-language audio or video interpretation channels for attendees.') }}
 				p.header-warning(v-if="!translationModelSetup")
 					i.mdi.mdi-alert-circle-outline(aria-hidden="true")
 					span {{ $t('No translation model configured. Please set up a model first.') }}
 		.header-actions
-			bunt-button.btn-add-entry(@click="addEntry", :disabled="!translationModelSetup")
+			bunt-button.btn-add-entry(@click="addEntry", :disabled="disabled")
 				i.mdi.mdi-plus(aria-hidden="true")
 				span {{ $t('Add another language') }}
 			router-link.btn-settings-link(
@@ -23,6 +23,9 @@
 	.empty-state(v-if="entries.length === 0")
 		i.mdi.mdi-translate-off(aria-hidden="true")
 		p {{ $t('No interpretation channels added yet. Click "Add another language" above to add one.') }}
+		bunt-button.btn-add-entry(v-if="!title", :disabled="disabled", @click="addEntry")
+			i.mdi.mdi-plus(aria-hidden="true")
+			span {{ $t('Add another language') }}
 
 	.entries-container(v-else)
 		.language-url-entry(v-for="(entry, index) in entries" :key="index")
@@ -33,6 +36,7 @@
 				button.btn-delete-entry(
 					type="button"
 					:title="$t('Remove Channel')"
+					:disabled="disabled"
 					@click="removeEntry(index)"
 				)
 					i.mdi.mdi-trash-can-outline(aria-hidden="true")
@@ -44,45 +48,66 @@
 						span.required-star *
 					.custom-select-wrapper
 						i.mdi.mdi-earth.select-icon(aria-hidden="true")
-						select.custom-select(v-model="entry.language")
+						select.custom-select(v-model="entry.language", :disabled="disabled", @change="onLanguageChange(entry)")
 							option(value="" disabled) {{ $t('Select language') }}
 							option(v-for="opt in languageOptions" :key="opt.id" :value="opt.id") {{ opt.label }}
 						i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
 
 				.field-group.source-field
 					label.field-label
-						| {{ $t('Audio / Video Source (YouTube or WHEP)') }}
+						| {{ $t('Audio / Video Source (YouTube, WHEP, or WHIP)') }}
 						span.required-star *
 					.input-wrapper
 						input.text-input(
 							type="text"
 							v-model="entry.url"
-							:placeholder="$t('YouTube URL/ID or WHEP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
+							:placeholder="$t('YouTube URL/ID, WHEP, or WHIP endpoint (e.g. https://youtu.be/... or https://.../whep)')"
+							:disabled="disabled"
 							@blur="normalizeEntry(entry)"
 							@input="syncLegacyField(entry)"
 						)
+					.source-field-hint(v-if="isVoxbento && entry.language && !entry.url")
+						i.mdi.mdi-information-outline(aria-hidden="true")
+						span {{ $t('No active VoxBento booth found for this language yet. Save to create the booth in VoxBento and populate its stream URL, or provide a manual stream URL.') }}
 
 			.entry-switch-row
 				bunt-switch(
 					name="use_video",
 					v-model="entry.use_video",
+					:disabled="disabled",
 					:label="$t('Use audio and captions from this interpretation channel')",
 					:hint="$t('If enabled, attendees see both video and audio from this channel. If disabled, attendees hear the audio while watching the main video.')"
 				)
+
+		.list-actions-bar(v-if="!title")
+			bunt-button.btn-add-entry(:disabled="disabled", @click="addEntry")
+				i.mdi.mdi-plus(aria-hidden="true")
+				span {{ $t('Add another language') }}
 </template>
 
 <script>
 import ISO6391 from 'iso-639-1'
-import { defaultLanguageStreamEntry, normalizeLanguageStreamEntry } from 'lib/interpretation-language-streams'
+import {
+	defaultLanguageStreamEntry,
+	getWhepUrlForLanguage,
+	normalizeLanguageStreamEntry,
+} from 'lib/interpretation-language-streams'
 
 export default {
 	name: 'LanguageAudioSourceList',
+	inject: {
+		interpretationAdmin: { default: null },
+	},
 	props: {
 		entries: {
 			type: Array,
 			required: true,
 		},
 		title: {
+			type: String,
+			default: '',
+		},
+		subtitle: {
 			type: String,
 			default: '',
 		},
@@ -98,11 +123,41 @@ export default {
 			type: Boolean,
 			default: true,
 		},
+		fallbackEntries: {
+			type: Array,
+			default: () => [],
+		},
+		interpreter: {
+			type: String,
+			default: '',
+		},
+		autoPopulateWhep: {
+			type: Boolean,
+			default: false,
+		},
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
 			languageOptions: [],
 		}
+	},
+	computed: {
+		currentInterpreter() {
+			return this.interpreter || this.interpretationAdmin?.interpreter || ''
+		},
+		isVoxbento() {
+			return this.autoPopulateWhep || this.currentInterpreter === 'voxbento'
+		},
+		effectiveFallbackEntries() {
+			if (Array.isArray(this.fallbackEntries) && this.fallbackEntries.length > 0) {
+				return this.fallbackEntries
+			}
+			return this.interpretationAdmin?.languageStreams || []
+		},
 	},
 	watch: {
 		entries: {
@@ -112,6 +167,20 @@ export default {
 				for (const entry of entries) {
 					normalizeLanguageStreamEntry(entry)
 				}
+				this.autoPopulateEntries()
+			}
+		},
+		effectiveFallbackEntries: {
+			deep: true,
+			handler() {
+				this.autoPopulateEntries()
+			}
+		},
+		isVoxbento: {
+			handler(val) {
+				if (val) {
+					this.autoPopulateEntries()
+				}
 			}
 		}
 	},
@@ -120,6 +189,9 @@ export default {
 			id: ISO6391.getName(code),
 			label: ISO6391.getName(code),
 		}))
+	},
+	mounted() {
+		this.autoPopulateEntries()
 	},
 	methods: {
 		addEntry() {
@@ -133,6 +205,35 @@ export default {
 		},
 		syncLegacyField(entry) {
 			entry.youtube_id = entry.url
+		},
+		onLanguageChange(entry) {
+			if (!entry) return
+			if (this.isVoxbento && entry.language) {
+				const otherFallback = (this.effectiveFallbackEntries || []).filter(e => e !== entry)
+				const whepUrl = getWhepUrlForLanguage(entry.language, otherFallback)
+				const isAutoPopulated = !entry.url || entry.url.includes('/whep') || entry.is_auto_populated
+				if (isAutoPopulated) {
+					entry.url = whepUrl || ''
+					entry.youtube_id = whepUrl || ''
+					entry.is_auto_populated = Boolean(whepUrl)
+				}
+			}
+		},
+		autoPopulateEntries() {
+			if (!this.isVoxbento || !Array.isArray(this.entries)) return
+			const fallback = this.effectiveFallbackEntries
+			if (!fallback || fallback.length === 0) return
+			for (const entry of this.entries) {
+				if (entry.language && !entry.url && !entry.youtube_id) {
+					const otherFallback = fallback.filter(e => e !== entry)
+					const whepUrl = getWhepUrlForLanguage(entry.language, otherFallback)
+					if (whepUrl) {
+						entry.url = whepUrl
+						entry.youtube_id = whepUrl
+						entry.is_auto_populated = true
+					}
+				}
+			}
 		}
 	},
 }
@@ -274,6 +375,12 @@ export default {
 				&:hover
 					color: $clr-danger
 					background-color: rgba($clr-danger, 0.08)
+				&:disabled
+					opacity: 0.5
+					cursor: not-allowed
+					&:hover
+						color: $clr-grey-500
+						background-color: transparent
 
 		.entry-fields-grid
 			display: grid
@@ -348,6 +455,19 @@ export default {
 				&:focus
 					border-color: var(--clr-primary)
 					box-shadow: 0 0 0 2px rgba(187, 0, 17, 0.15)
+
+		.source-field-hint
+			display: flex
+			align-items: center
+			gap: 6px
+			margin-top: 6px
+			font-size: 12px
+			line-height: 1.4
+			color: $clr-secondary-text-light
+			i
+				font-size: 16px
+				color: var(--clr-primary, #1e88e5)
+				flex-shrink: 0
 
 		.entry-switch-row
 			margin-top: 4px

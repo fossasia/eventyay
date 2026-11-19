@@ -1,15 +1,21 @@
 import logging
+import pickle
 
 from django.core.cache import caches
+from django.core.cache.backends.base import InvalidCacheBackendError
 from django.http import HttpResponse
+from django_redis import get_redis_connection
+from redis.exceptions import RedisError
 
 from eventyay.helpers.http import get_client_ip
+
 
 logger = logging.getLogger(__name__)
 
 # Only guard API paths — HTML pages, static files, and admin URLs are excluded
 # to avoid blocking legitimate browsers under shared NAT or misconfigured proxies.
 _API_PATH_PREFIX = '/api/'
+_CACHE_ERRORS = (RedisError, OSError)
 
 
 class Block404Middleware:
@@ -21,7 +27,9 @@ class Block404Middleware:
     Scoped to ``/api/`` paths only so that normal browser navigation, static-file
     misses, and CMS 404s never trigger the block.
     """
+
     MAX_404_PER_MINUTE = 30
+    WINDOW_SECONDS = 60
     CACHE_ALIAS = 'default'
     RETRY_AFTER_SECONDS = '60'
 
@@ -38,10 +46,14 @@ class Block404Middleware:
 
         try:
             count = int(cache.get(key) or 0)
-        except (ValueError, TypeError):
+        except _CACHE_ERRORS as exc:
+            logger.warning('Failed to read 404 counter: %s', type(exc).__name__)
+            return self.get_response(request)
+        except (ValueError, TypeError, pickle.UnpicklingError, EOFError):
             count = 0
 
         if count >= self.MAX_404_PER_MINUTE:
+            self._ensure_ttl(cache, key)
             return self._too_many_requests_response()
 
         response = self.get_response(request)
@@ -51,8 +63,8 @@ class Block404Middleware:
 
         try:
             count = self._increment(cache, key)
-        except Exception:
-            logger.exception('Failed to increment 404 counter for key %s', key)
+        except _CACHE_ERRORS as exc:
+            logger.warning('Failed to increment 404 counter: %s', type(exc).__name__)
             return response
 
         if count > self.MAX_404_PER_MINUTE:
@@ -75,12 +87,28 @@ class Block404Middleware:
         return f'404_counter:ip:{ip}'
 
     @classmethod
-    def _increment(cls, cache, key):
+    def _ensure_ttl(cls, cache, key):
+        """Ensure key has an expiration set without extending active TTLs."""
         try:
-            return cache.incr(key)
+            rc = get_redis_connection('redis')
+            rc.expire(cache.make_and_validate_key(key), cls.WINDOW_SECONDS, nx=True)
+        except (InvalidCacheBackendError, NotImplementedError):
+            return
+        except _CACHE_ERRORS as exc:
+            logger.warning('Failed to ensure TTL on 404 counter: %s', type(exc).__name__)
+
+    @classmethod
+    def _increment(cls, cache, key):
+        """Atomically initialize or increment 404 counter with a 60s window."""
+        if cache.add(key, 1, timeout=cls.WINDOW_SECONDS):
+            return 1
+        try:
+            count = int(cache.incr(key))
+            cls._ensure_ttl(cache, key)
+            return count
         except ValueError:
-            # Key does not exist yet — initialise to 1 with a 60 s TTL.
-            cache.set(key, 1, timeout=60)
+            # Key expired between add and incr; avoid overwriting a concurrent increment.
+            cache.add(key, 1, timeout=cls.WINDOW_SECONDS)
             return 1
 
     @classmethod

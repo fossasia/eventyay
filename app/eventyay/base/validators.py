@@ -40,6 +40,7 @@ class EventSlugBanlistValidator(BanlistValidator):
 @deconstructible
 class OrganizerSlugBanlistValidator(BanlistValidator):
     banlist = [
+        'invite',
         'download',
         'healthcheck',
         'locale',

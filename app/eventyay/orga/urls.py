@@ -61,6 +61,11 @@ urlpatterns = [
                     organizer.OrganizerSpeakerList.as_view(),
                     name='organizer.speakers',
                 ),
+                path(
+                    'teams/',
+                    RedirectView.as_view(pattern_name='eventyay_common:organizer.teams', permanent=False, query_string=True),
+                    name='organizer.teams',
+                ),
             ]
         ),
     ),
@@ -151,6 +156,11 @@ urlpatterns = [
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
+                path(
+                    'cfp/questions/field/<str:field>/settings/',
+                    cfp.CfPBuiltinFieldSettings.as_view(),
+                    name='cfp.field.settings',
+                ),
                 path(
                     'cfp/questions/remind/',
                     cfp.CfPQuestionRemind.as_view(),

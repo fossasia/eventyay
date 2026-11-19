@@ -1,10 +1,13 @@
 import datetime as dt
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.utils.timezone import now
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
+from eventyay.base.models import Team, User
+from eventyay.base.models.log import LogEntry
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.submission import Submission, SubmissionStates
 
@@ -160,8 +163,6 @@ def test_event_dashboard_internal_note_uses_settings_not_comment(event, orga_cli
     )
     assert response.status_code == 200
     with scope(event=event):
-        from eventyay.base.models.log import LogEntry
-
         event.refresh_from_db()
         assert event.comment == 'tickets comment'
         assert event.settings.get('orga_internal_note') == 'talks organizer note'
@@ -174,8 +175,6 @@ def test_event_dashboard_internal_note_uses_settings_not_comment(event, orga_cli
 
 @pytest.mark.django_db
 def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_user):
-    from eventyay.base.models.log import LogEntry
-
     with scope(event=event):
         LogEntry.objects.create(
             event=event,
@@ -189,6 +188,34 @@ def test_event_dashboard_includes_schedule_releases(event, orga_client, orga_use
     assert response.status_code == 200
     assert 'Schedule' in response.text
     assert '<div></div>' not in response.text
+
+
+@pytest.mark.django_db
+def test_event_dashboard_skips_stale_log_content_types(event, orga_client, orga_user, slot):
+    with scope(event=event):
+        valid_log = LogEntry.objects.create(
+            event=event,
+            user=orga_user,
+            content_object=slot.submission,
+            action_type='eventyay.submission.create',
+            data='{}',
+        )
+        stale_ct = ContentType.objects.create(app_label='gone_app', model='ghostmodel')
+        stale_log = LogEntry.all.create(
+            event=event,
+            user=orga_user,
+            content_type=stale_ct,
+            object_id=1,
+            action_type='eventyay.submission.update',
+            data='{}',
+            visible=True,
+        )
+
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    activity_ids = {entry.pk for entry in response.context_data['recent_talk_activity']}
+    assert valid_log.pk in activity_ids
+    assert stale_log.pk not in activity_ids
 
 
 @pytest.mark.django_db
@@ -211,4 +238,41 @@ def test_dashboard_without_session_event_boundary(event, other_event, orga_clien
     assert response.status_code == 200
     speaker_readiness = response.context_data['speaker_readiness']
     assert speaker_readiness['without_session'] == 1
+
+
+@pytest.mark.django_db
+def test_teams_link_requires_organizer_settings(orga_client, orga_user, event):
+    teams_url = event.organizer.orga_urls.teams
+    with scopes_disabled():
+        event_settings_user = User.objects.create_user(
+            password='eventsettings',
+            email='event-settings@orga.org',
+            fullname='Event Settings',
+        )
+        team = Team.objects.create(
+            organizer=event.organizer,
+            name='Event settings only',
+            can_change_event_settings=True,
+            can_change_submissions=True,
+            can_change_organizer_settings=False,
+        )
+        team.limit_events.add(event)
+        team.members.add(event_settings_user)
+
+    orga_client.force_login(event_settings_user)
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    assert response.context_data['can_view_teams'] is False
+    timeline_urls = [
+        link.get('url')
+        for step in response.context_data['timeline']
+        for link in step.get('links', [])
+    ]
+    assert teams_url not in timeline_urls
+
+    orga_client.force_login(orga_user)
+    response = orga_client.get(event.orga_urls.base)
+    assert response.status_code == 200
+    assert response.context_data['can_view_teams'] is True
+    assert teams_url in response.content.decode()
 
