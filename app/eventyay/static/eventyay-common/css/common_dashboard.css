@@ -4172,6 +4172,17 @@ h4.od-subchart {
   line-height: 1.1;
   margin-top: 2px;
 }
+a.cc-kpi-val.cc-kpi-link,
+.cc-kpi-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+a.cc-kpi-val.cc-kpi-link:hover,
+.cc-kpi-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
 .cc-kpi-sub {
   font-size: 11.5px;
   color: #70757a;
@@ -4353,8 +4364,44 @@ h4.od-subchart {
   font-weight: 600;
   color: #3c4043;
 }
+.cc-team-badge-more {
+  background: #e8f0fe;
+  border-color: #d2e3fc;
+  color: #1a73e8;
+  font-style: italic;
+}
 
 /* Analytics overview */
+.cc-section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cc-analytics-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cc-filter-pill {
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #f1f3f4;
+  color: #3c4043;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.cc-filter-pill:hover {
+  background: #e8eaed;
+  color: #202124;
+  text-decoration: none;
+}
+.cc-filter-pill.active {
+  background: #1a73e8;
+  color: #fff;
+}
 .cc-analytics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

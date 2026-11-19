@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -750,6 +751,39 @@ class EventIndexView(TemplateView):
                 'url': video_url,
             })
 
+        # Check failed social media posts
+        plugins = event.get_plugins()
+        if 'socialmedia' in plugins and apps.is_installed('socialmedia'):
+            try:
+                SocialMediaPost = apps.get_model('socialmedia', 'SocialMediaPost')
+                if SocialMediaPost:
+                    failed_posts = SocialMediaPost.objects.filter(event=event, status='failed').count()
+                    if failed_posts > 0:
+                        social_url = None
+                        try:
+                            social_url = reverse(
+                                'plugins:socialmedia:index',
+                                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                            )
+                        except NoReverseMatch:
+                            social_url = None
+                        actions.append({
+                            'id': 'failed-social-posts',
+                            'icon': 'share-alt',
+                            'title': _('Failed social posts'),
+                            'count': failed_posts,
+                            'desc': ngettext(
+                                '%(count)d social post failed to publish. Review failed scheduled posts.',
+                                '%(count)d social posts failed to publish. Review failed scheduled posts.',
+                                failed_posts,
+                            ) % {'count': failed_posts},
+                            'severity': 'danger',
+                            'btn_text': _('Open publishing log'),
+                            'url': social_url,
+                        })
+            except Exception as e:
+                logger.warning('Failed to query social media failures: %s', e)
+
         return actions
 
     def _get_shared_order_metrics(
@@ -906,14 +940,48 @@ class EventIndexView(TemplateView):
             event_status_text = _('Live')
             event_status_class = 'live'
 
+        orders_url = None
+        paid_orders_url = None
+        if can_view_orders:
+            try:
+                base_orders = reverse('control:event.orders', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+                if subevent:
+                    base_orders += f'?subevent={subevent.id}'
+                orders_url = base_orders
+                paid_orders_url = base_orders + ('&status=p' if '?' in base_orders else '?status=p')
+            except NoReverseMatch:
+                pass
+
+        confirmed_sessions_url = None
+        confirmed_speakers_url = None
+        if has_talk:
+            try:
+                confirmed_sessions_url = reverse('orga:submissions.list', kwargs={'event': event.slug, 'organizer': event.organizer.slug}) + '?state=confirmed'
+                confirmed_speakers_url = reverse('orga:speakers.list', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                pass
+
+        event_status_url = None
+        if permissions.get('can_change_event_settings'):
+            try:
+                event_status_url = reverse('eventyay_common:event.update', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
+            except NoReverseMatch:
+                pass
+
         return {
             'event_status_text': event_status_text,
             'event_status_class': event_status_class,
+            'event_status_url': event_status_url,
             'attendees_ordered': attendees_ordered,
+            'attendees_ordered_url': orders_url,
             'attendees_paid': attendees_paid,
+            'attendees_paid_url': paid_orders_url,
             'sessions_confirmed': sessions_confirmed,
+            'sessions_confirmed_url': confirmed_sessions_url,
             'speakers_confirmed': speakers_confirmed,
+            'speakers_confirmed_url': confirmed_speakers_url,
             'revenue_sum': revenue_sum,
+            'revenue_url': paid_orders_url,
             'currency': event.currency,
         }
 
@@ -973,18 +1041,25 @@ class EventIndexView(TemplateView):
             except NoReverseMatch:
                 tickets_url = None
 
+            ticket_metrics = [
+                {'label': _('Ordered attendees'), 'value': ordered_c},
+                {'label': _('Paid attendees'), 'value': paid_c},
+                {'label': _('Awaiting approval'), 'value': pending_appr},
+                {'label': _('Revenue'), 'value': f'{event.currency} {rev_sum:,.2f}' if permissions.get('can_view_orders') else '-'},
+            ]
+            checkin_lists_count = event.checkin_lists.count() if hasattr(event, 'checkin_lists') else 0
+            ticket_metrics.append({'label': _('Check-in readiness'), 'value': _('Ready') if checkin_lists_count > 0 else _('Pending')})
+            if 'badges' in plugins and hasattr(event, 'badge_layouts'):
+                badge_count = event.badge_layouts.count()
+                ticket_metrics.append({'label': _('Badges readiness'), 'value': _('Ready') if badge_count > 0 else _('Pending')})
+
             cards.append({
                 'id': 'tickets',
                 'name': _('Tickets'),
                 'icon': 'ticket',
                 'status': shop_status.get('text', _('Active')),
                 'status_class': shop_status.get('class', 'live'),
-                'metrics': [
-                    {'label': _('Ordered attendees'), 'value': ordered_c},
-                    {'label': _('Paid attendees'), 'value': paid_c},
-                    {'label': _('Awaiting approval'), 'value': pending_appr},
-                    {'label': _('Revenue'), 'value': f'{event.currency} {rev_sum:,.2f}' if permissions.get('can_view_orders') else '-'},
-                ],
+                'metrics': ticket_metrics,
                 'btn_text': _('Open tickets dashboard'),
                 'url': tickets_url,
                 'enabled': True,
@@ -1029,6 +1104,7 @@ class EventIndexView(TemplateView):
                 video_url = reverse('eventyay_common:event.create_access_to_video', kwargs={'event': event.slug, 'organizer': event.organizer.slug})
             except NoReverseMatch:
                 video_url = None
+            rooms_count = event.rooms.count() if hasattr(event, 'rooms') else 0
             cards.append({
                 'id': 'video',
                 'name': _('Video'),
@@ -1036,6 +1112,7 @@ class EventIndexView(TemplateView):
                 'status': _('Configured') if video_active else _('Not configured'),
                 'status_class': 'live' if video_active else 'off',
                 'metrics': [
+                    {'label': _('Rooms / Streams'), 'value': rooms_count},
                     {'label': _('Status'), 'value': _('Configured') if video_active else _('Inactive')},
                 ] if video_active else [],
                 'empty_state': _('No video rooms configured yet.') if not video_active else None,
@@ -1057,14 +1134,31 @@ class EventIndexView(TemplateView):
             except NoReverseMatch:
                 social_url = None
 
+        social_metrics = []
+        if has_social and apps.is_installed('socialmedia'):
+            try:
+                SocialMediaPost = apps.get_model('socialmedia', 'SocialMediaPost')
+                if SocialMediaPost:
+                    pqs = SocialMediaPost.objects.filter(event=event)
+                    scheduled_c = pqs.filter(status='scheduled').count()
+                    published_c = pqs.filter(status='published').count()
+                    failed_c = pqs.filter(status='failed').count()
+                    social_metrics = [
+                        {'label': _('Scheduled posts'), 'value': scheduled_c},
+                        {'label': _('Published posts'), 'value': published_c},
+                        {'label': _('Failed posts'), 'value': failed_c},
+                    ]
+            except Exception:
+                pass
+
         cards.append({
             'id': 'socialmedia',
             'name': _('Social Media'),
             'icon': 'share-alt',
             'status': _('Active') if has_social else _('Not configured'),
             'status_class': 'live' if has_social else 'off',
-            'metrics': [],
-            'empty_state': _('No social posts scheduled yet.') if has_social else _('Plugin not enabled'),
+            'metrics': social_metrics,
+            'empty_state': _('No social posts scheduled yet.') if (has_social and not social_metrics) else (_('Plugin not enabled') if not has_social else None),
             'btn_text': _('Open social dashboard') if social_url else None,
             'url': social_url,
             'enabled': has_social and can_access_social,
@@ -1088,14 +1182,28 @@ class EventIndexView(TemplateView):
             except NoReverseMatch:
                 teamshifts_url = None
 
+        teamshifts_metrics = []
+        if has_teamshifts and apps.is_installed('teamshifts'):
+            try:
+                TeamMemberApplication = apps.get_model('teamshifts', 'TeamMemberApplication')
+                Shift = apps.get_model('teamshifts', 'Shift')
+                members_c = TeamMemberApplication.objects.filter(call__event=event, state='accepted').count() if TeamMemberApplication else 0
+                shifts_c = Shift.objects.filter(event=event).count() if Shift else 0
+                teamshifts_metrics = [
+                    {'label': _('Team members'), 'value': members_c},
+                    {'label': _('Active shifts'), 'value': shifts_c},
+                ]
+            except Exception:
+                pass
+
         cards.append({
             'id': 'teamshifts',
             'name': _('TeamShifts'),
             'icon': 'users',
             'status': _('Active') if has_teamshifts else _('Not configured'),
             'status_class': 'live' if has_teamshifts else 'off',
-            'metrics': [],
-            'empty_state': _('No TeamShifts configured yet.') if has_teamshifts else _('Plugin not enabled'),
+            'metrics': teamshifts_metrics,
+            'empty_state': _('No TeamShifts configured yet.') if (has_teamshifts and not teamshifts_metrics) else (_('Plugin not enabled') if not has_teamshifts else None),
             'btn_text': _('Open TeamShifts dashboard') if teamshifts_url else None,
             'url': teamshifts_url,
             'enabled': has_teamshifts and can_access_teamshifts,
@@ -1117,14 +1225,28 @@ class EventIndexView(TemplateView):
             except NoReverseMatch:
                 exhibition_url = None
 
+        exhibition_metrics = []
+        if has_exhibition and apps.is_installed('exhibition'):
+            try:
+                ExhibitorInfo = apps.get_model('exhibition', 'ExhibitorInfo')
+                SponsorGroup = apps.get_model('exhibition', 'SponsorGroup')
+                exhibitors_c = ExhibitorInfo.objects.filter(event=event).count() if ExhibitorInfo else 0
+                sponsors_c = SponsorGroup.objects.filter(event=event).count() if SponsorGroup else 0
+                exhibition_metrics = [
+                    {'label': _('Exhibitors'), 'value': exhibitors_c},
+                    {'label': _('Sponsors'), 'value': sponsors_c},
+                ]
+            except Exception:
+                pass
+
         cards.append({
             'id': 'exhibition',
             'name': _('Exhibitors & Sponsors'),
             'icon': 'handshake-o',
             'status': _('Active') if has_exhibition else _('Not configured'),
             'status_class': 'live' if has_exhibition else 'off',
-            'metrics': [],
-            'empty_state': _('No exhibitors configured yet.') if has_exhibition else _('Plugin not enabled'),
+            'metrics': exhibition_metrics,
+            'empty_state': _('No exhibitors configured yet.') if (has_exhibition and not exhibition_metrics) else (_('Plugin not enabled') if not has_exhibition else None),
             'btn_text': _('Open exhibitors dashboard') if exhibition_url else None,
             'url': exhibition_url,
             'enabled': has_exhibition and can_access_exhibition,
@@ -1135,11 +1257,29 @@ class EventIndexView(TemplateView):
     def _get_upcoming_milestones(self, event: Event) -> List[Dict[str, Any]]:
         """Collect upcoming and completed milestones."""
         milestones = []
-        if hasattr(event, 'cfp') and event.cfp and event.cfp.max_deadline:
+        if hasattr(event, 'cfp') and event.cfp:
+            if getattr(event.cfp, 'created', None):
+                milestones.append({
+                    'title': _('Call for Proposals opens'),
+                    'date': event.cfp.created,
+                })
+            if event.cfp.max_deadline:
+                milestones.append({
+                    'title': _('Call for Proposals closes'),
+                    'date': event.cfp.max_deadline,
+                })
+                milestones.append({
+                    'title': _('Session approvals & notifications'),
+                    'date': event.cfp.max_deadline + timedelta(days=14),
+                })
+
+        early_bird = event.products.filter(available_until__isnull=False).order_by('available_until').first()
+        if early_bird and early_bird.available_until:
             milestones.append({
-                'title': _('Call for Proposals closes'),
-                'date': event.cfp.max_deadline,
+                'title': _('Early bird ticket deadline'),
+                'date': early_bird.available_until,
             })
+
         if event.date_from:
             milestones.append({
                 'title': _('Event starts'),
@@ -1221,16 +1361,55 @@ class EventIndexView(TemplateView):
         can_view_orders = permissions.get('can_view_orders', False)
         has_talk = permissions.get('has_talk_access', False)
 
-        if can_view_orders and shared_order_metrics is not None:
+        time_range = (
+            getattr(self, 'request', None).GET.get('time_range', 'all')
+            if getattr(self, 'request', None)
+            else 'all'
+        )
+
+        if can_view_orders and shared_order_metrics is not None and time_range == 'all':
             order_count = shared_order_metrics['paid_orders_count']
             revenue_total = shared_order_metrics['revenue_sum']
         elif can_view_orders:
-            order_metrics = self._get_shared_order_metrics(event, subevent, can_view_orders)
-            order_count = order_metrics['paid_orders_count']
-            revenue_total = order_metrics['revenue_sum']
+            orders_qs = event.orders.filter(status=Order.STATUS_PAID)
+            pos_qs = OrderPosition.objects.filter(
+                order__event=event, order__status=Order.STATUS_PAID, canceled=False
+            )
+            if subevent:
+                orders_qs = orders_qs.filter(all_positions__subevent=subevent).distinct()
+                pos_qs = pos_qs.filter(subevent=subevent)
+
+            if time_range == '7d':
+                cutoff = now() - timedelta(days=7)
+                orders_qs = orders_qs.filter(datetime__gte=cutoff)
+                pos_qs = pos_qs.filter(order__datetime__gte=cutoff)
+            elif time_range == '30d':
+                cutoff = now() - timedelta(days=30)
+                orders_qs = orders_qs.filter(datetime__gte=cutoff)
+                pos_qs = pos_qs.filter(order__datetime__gte=cutoff)
+
+            order_count = orders_qs.count()
+            revenue_total = pos_qs.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
         else:
             order_count = 0
             revenue_total = Decimal('0.00')
+
+        recent_7d_orders = 0
+        recent_7d_revenue = Decimal('0.00')
+        if can_view_orders:
+            cutoff_7d = now() - timedelta(days=7)
+            t_orders = event.orders.filter(status=Order.STATUS_PAID, datetime__gte=cutoff_7d)
+            t_pos = OrderPosition.objects.filter(
+                order__event=event,
+                order__status=Order.STATUS_PAID,
+                canceled=False,
+                order__datetime__gte=cutoff_7d,
+            )
+            if subevent:
+                t_orders = t_orders.filter(all_positions__subevent=subevent).distinct()
+                t_pos = t_pos.filter(subevent=subevent)
+            recent_7d_orders = t_orders.count()
+            recent_7d_revenue = t_pos.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
 
         proposal_stats = {}
         if has_talk:
@@ -1258,9 +1437,12 @@ class EventIndexView(TemplateView):
         return {
             'order_count': order_count,
             'revenue_total': revenue_total,
+            'recent_7d_orders': recent_7d_orders,
+            'recent_7d_revenue': recent_7d_revenue,
             'currency': event.currency,
             'proposal_stats': proposal_stats,
             'stats_url': stats_url,
+            'time_range': time_range,
         }
 
     def _get_recent_activity(self, event: Event, permissions: Dict[str, Any]) -> List[Dict[str, Any]]:

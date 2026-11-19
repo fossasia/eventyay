@@ -50,11 +50,14 @@
       <div class="cc-org-teams-block">
         <strong class="cc-org-teams-heading">{% trans 'Assigned teams:' %}</strong>
         <div class="cc-team-badges">
-          {% for team in organiser_info.teams %}
+          {% for team in organiser_info.teams|slice:":5" %}
             <span class="cc-team-badge">{{ team.name }}</span>
           {% empty %}
             <span class="text-muted">{% trans 'No specific teams assigned.' %}</span>
           {% endfor %}
+          {% if organiser_info.teams|length > 5 %}
+            <span class="cc-team-badge cc-team-badge-more" title="{% trans 'Additional teams assigned' %}">+{{ organiser_info.teams|length|add:"-5" }} {% trans 'more' %}</span>
+          {% endif %}
         </div>
       </div>
     </div>

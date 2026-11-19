@@ -1,10 +1,17 @@
 {% load i18n %}
 <section class="cc-section" aria-labelledby="cc-analytics-title">
   <div class="cc-section-header">
-    <h2 id="cc-analytics-title" class="cc-section-title">
-      <span class="fa fa-line-chart text-primary" aria-hidden="true"></span>
-      {% trans 'Analytics overview' %}
-    </h2>
+    <div class="cc-section-header-left">
+      <h2 id="cc-analytics-title" class="cc-section-title">
+        <span class="fa fa-line-chart text-primary" aria-hidden="true"></span>
+        {% trans 'Analytics overview' %}
+      </h2>
+      <div class="cc-analytics-filters" role="group" aria-label="{% trans 'Time range filters' %}">
+        <a href="?time_range=7d{% if request.GET.subevent %}&subevent={{ request.GET.subevent }}{% endif %}" class="cc-filter-pill {% if analytics_overview.time_range == '7d' %}active{% endif %}">{% trans 'Last 7 days' %}</a>
+        <a href="?time_range=30d{% if request.GET.subevent %}&subevent={{ request.GET.subevent }}{% endif %}" class="cc-filter-pill {% if analytics_overview.time_range == '30d' %}active{% endif %}">{% trans 'Last 30 days' %}</a>
+        <a href="?time_range=all{% if request.GET.subevent %}&subevent={{ request.GET.subevent }}{% endif %}" class="cc-filter-pill {% if not analytics_overview.time_range or analytics_overview.time_range == 'all' %}active{% endif %}">{% trans 'All time' %}</a>
+      </div>
+    </div>
     {% if analytics_overview.stats_url %}
       <a href="{{ analytics_overview.stats_url }}" class="cc-component-btn">
         <span>{% trans 'View full analytics' %}</span>
@@ -18,13 +25,29 @@
       <div class="cc-analytics-card">
         <div class="cc-analytics-title">{% trans 'Orders (Paid)' %}</div>
         <div class="cc-analytics-val">{{ analytics_overview.order_count }}</div>
-        <div class="text-muted cc-analytics-subtext">{% trans 'Completed purchases' %}</div>
+        <div class="text-muted cc-analytics-subtext">
+          {% if analytics_overview.time_range == '7d' %}
+            {% trans 'Last 7 days orders' %}
+          {% elif analytics_overview.time_range == '30d' %}
+            {% trans 'Last 30 days orders' %}
+          {% else %}
+            {% blocktrans with recent=analytics_overview.recent_7d_orders %}{{ recent }} in last 7 days{% endblocktrans %}
+          {% endif %}
+        </div>
       </div>
 
       <div class="cc-analytics-card">
         <div class="cc-analytics-title">{% trans 'Total Gross Revenue' %}</div>
         <div class="cc-analytics-val">{{ analytics_overview.currency }} {{ analytics_overview.revenue_total|floatformat:2 }}</div>
-        <div class="text-muted cc-analytics-subtext">{% trans 'Cumulative sales' %}</div>
+        <div class="text-muted cc-analytics-subtext">
+          {% if analytics_overview.time_range == '7d' %}
+            {% trans 'Last 7 days sales' %}
+          {% elif analytics_overview.time_range == '30d' %}
+            {% trans 'Last 30 days sales' %}
+          {% else %}
+            {% blocktrans with curr=analytics_overview.currency recent=analytics_overview.recent_7d_revenue|floatformat:2 %}{{ curr }} {{ recent }} in last 7 days{% endblocktrans %}
+          {% endif %}
+        </div>
       </div>
     {% endif %}
 

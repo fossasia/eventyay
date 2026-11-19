@@ -554,4 +554,100 @@ def test_command_center_excludes_canceled_order_positions(organizer_client, even
     assert tickets_metrics['Paid attendees'] == 1
     assert tickets_metrics['Awaiting approval'] == 1
     assert '50.00' in tickets_metrics['Revenue']
+    assert 'Check-in readiness' in tickets_metrics
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_failed_social_posts_alert(organizer_client, event, command_center_url):
+    """When a social post has failed status, an actionable card is shown in action_required."""
+    from django.apps import apps
+    if apps.is_installed('socialmedia'):
+        SocialMediaPost = apps.get_model('socialmedia', 'SocialMediaPost')
+        with scopes_disabled():
+            event.plugins = 'socialmedia'
+            event.save()
+            SocialMediaPost.objects.create(
+                event=event,
+                post_type='test',
+                post_text='Hello world',
+                scheduled_at=now(),
+                status='failed',
+                error_message='Token expired',
+            )
+
+        response = organizer_client.get(command_center_url)
+        assert response.status_code == 200
+        actions = response.context['action_required']
+        social_card = next((a for a in actions if a['id'] == 'failed-social-posts'), None)
+        assert social_card is not None
+        assert social_card['count'] == 1
+        assert 'Failed social posts' in response.content.decode()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_linked_kpis(organizer_client, event, command_center_url):
+    """KPI values are linked to relevant filtered views and dashboards."""
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    content = response.content.decode()
+
+    at_a_glance = response.context['at_a_glance']
+    assert at_a_glance['attendees_ordered_url'] is not None
+    assert at_a_glance['attendees_paid_url'] is not None
+    assert 'cc-kpi-link' in content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_teams_list_compact_more(organizer_client, event, organizer, command_center_url):
+    """When more than 5 teams are assigned, only 5 are rendered with a +X more badge."""
+    with scopes_disabled():
+        for i in range(7):
+            Team.objects.create(
+                organizer=organizer,
+                name=f'Team {i+1}',
+                all_events=True,
+            )
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    content = response.content.decode()
+    expected_more = Team.objects.filter(organizer=organizer).count() - 5
+    assert 'cc-team-badge-more' in content
+    assert f'+{expected_more} more' in content
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_milestones_extended_coverage(organizer_client, event, command_center_url):
+    """Milestones include CFP opening, approvals deadline, and early bird ticket deadline."""
+    with scopes_disabled():
+        Product.objects.create(
+            event=event,
+            name='Early Bird',
+            default_price=Decimal('20.00'),
+            available_until=now() + timedelta(days=10),
+            admission=True,
+        )
+
+    response = organizer_client.get(command_center_url)
+    assert response.status_code == 200
+    milestones = response.context['upcoming_milestones']
+    titles = [m['title'] for m in milestones]
+    assert any('Early bird' in str(t) for t in titles)
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_command_center_analytics_filters_and_trends(organizer_client, event, command_center_url):
+    """Analytics overview supports suggested time range filters."""
+    response = organizer_client.get(command_center_url + '?time_range=7d')
+    assert response.status_code == 200
+    assert response.context['analytics_overview']['time_range'] == '7d'
+    content = response.content.decode()
+    assert 'cc-analytics-filters' in content
+    assert 'Last 7 days' in content
+    assert 'active' in content
 
