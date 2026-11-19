@@ -981,13 +981,18 @@ def test_talk_slot_filter_fallback_and_direct_instantiation(
     client, orga_user_token, event, slot, room
 ):
     with scope(event=event):
-        event.wip_schedule.freeze("v1.0")
-        event.wip_schedule.freeze("v2.0")
         code = slot.submission.code
         current_slot = event.current_schedule.talks.filter(room=room).first()
         wip_slot = event.wip_schedule.talks.filter(room=room).first()
-        old_schedule = event.schedules.get(version="v1.0")
-        old_slot = old_schedule.talks.filter(room=room).first()
+        old_schedule = event.schedules.create(version="v1.0")
+        old_slot = TalkSlot.objects.create(
+            schedule=old_schedule,
+            submission=slot.submission,
+            room=room,
+            is_visible=True,
+            start=event.datetime_from,
+            end=event.datetime_from + timedelta(minutes=30),
+        )
         assert current_slot is not None
         assert wip_slot is not None
         assert old_slot is not None
@@ -1055,6 +1060,17 @@ def test_talk_slot_filter_fallback_and_direct_instantiation(
     content = json.loads(response.text)
     assert response.status_code == 200, content
     assert content["count"] == 0
+
+    # Organizer positive control: organizer CAN access WIP slots by schedule pk
+    response = client.get(
+        event.api_urls.slots + f"?schedule={event.wip_schedule.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] > 0
+    assert wip_slot.pk in [s["id"] for s in content["results"]]
 
     # 4. Direct TalkSlotFilter instantiation preserves event
     with scope(event=event):
