@@ -1,8 +1,9 @@
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
-from eventyay.control.views import gmail_oauth, organizer_views
+from eventyay.control.views import gmail_oauth
 from eventyay.control.views import organizer as organizer_control
+from eventyay.control.views import organizer_views
 from eventyay.eventyay_common.views import (
     account,
     auth,
@@ -10,7 +11,6 @@ from eventyay.eventyay_common.views import (
     event,
     event_api,
     organizer,
-    redirect,
     team,
 )
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
@@ -26,7 +26,6 @@ class DashboardView(TemplateView):
 
 
 urlpatterns = [
-    path('external-link/', redirect.external_link, name='external-link'),
     path('logout/', auth.logout, name='auth.logout'),
     path(
         'login/',
