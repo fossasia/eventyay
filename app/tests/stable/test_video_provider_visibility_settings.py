@@ -15,6 +15,7 @@ from eventyay.base.services.event import (
     create_room,
     get_event_config_for_user,
     get_room_config,
+    get_room_config_for_user,
     get_rooms,
     without_zoom_passcode,
 )
@@ -418,8 +419,6 @@ def test_get_event_config_for_user_keeps_zoom_credentials_for_staff_without_room
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_can_edit", [True, False])
 async def test_get_room_config_for_user_passes_the_edit_decision_on(mocker, user_can_edit):
-    from eventyay.base.services.event import get_room_config_for_user
-
     mock_event = MagicMock()
     mock_room = MagicMock()
     mock_room.event = mock_event
@@ -460,9 +459,6 @@ def test_get_event_config_for_user_hides_zoom_credentials_only_from_users_who_ca
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_get_room_config_for_user_prevents_direct_access_for_attendees(mocker):
-    from unittest.mock import MagicMock
-    from eventyay.base.services.event import get_room_config_for_user
-
     mock_event = MagicMock()
     mock_room = MagicMock()
     mock_room.event = mock_event
