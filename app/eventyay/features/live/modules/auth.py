@@ -2,18 +2,23 @@ import datetime
 import logging
 import time
 import uuid
+from urllib.parse import urljoin
 
 import jwt
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from django.conf import settings
+from django.core.signing import dumps
 from django.db import DatabaseError
+from django.urls import reverse
 from sentry_sdk import configure_scope
 
 from eventyay.base.models import User
 from eventyay.base.models.auth import ShortToken
-from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
+from eventyay.base.settings import GlobalSettingsObject
+from eventyay.core.permissions import Permission
 from eventyay.base.services.announcement import get_announcements
+from eventyay.features.live.modules.announcement import is_announcements_enabled
 from eventyay.base.services.chat import ChatService
 from eventyay.base.services.connections import (
     get_user_connection_count,
@@ -38,16 +43,13 @@ from eventyay.base.services.user import (
     update_user,
     user_broadcast,
 )
-from eventyay.base.settings import GlobalSettingsObject
-from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
 from eventyay.core.utils.statsd import statsd
 from eventyay.features.importers.tasks import conftool_update_schedule
-from eventyay.features.live.channels import GROUP_EVENT, GROUP_USER
+from eventyay.features.live.channels import GROUP_USER, GROUP_EVENT
 from eventyay.features.live.decorators import command, require_event_permission
-from eventyay.features.live.modules.announcement import is_announcements_enabled
 from eventyay.features.live.modules.base import BaseModule
-
+from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 logger = logging.getLogger(__name__)
 
@@ -143,13 +145,7 @@ class AuthModule(BaseModule):
                     s.increment(
                         f"authentication.failed,reason=expired_token,event={self.consumer.event.pk}"
                     )
-                log_event(
-                    'video',
-                    'live.auth',
-                    OUTCOME_FAILURE,
-                    error_code='expired_token',
-                    event_id=getattr(self.consumer.event, 'pk', None),
-                )
+                log_event('video', 'live.auth', OUTCOME_FAILURE, error_code='expired_token', event_id=getattr(self.consumer.event, 'pk', None))
                 await self.consumer.send_error(code="auth.expired_token")
                 return
             except jwt.exceptions.InvalidTokenError:
@@ -157,13 +153,7 @@ class AuthModule(BaseModule):
                     s.increment(
                         f"authentication.failed,reason=invalid_token,event={self.consumer.event.pk}"
                     )
-                log_event(
-                    'video',
-                    'live.auth',
-                    OUTCOME_FAILURE,
-                    error_code='invalid_token',
-                    event_id=getattr(self.consumer.event, 'pk', None),
-                )
+                log_event('video', 'live.auth', OUTCOME_FAILURE, error_code='invalid_token', event_id=getattr(self.consumer.event, 'pk', None))
                 await self.consumer.send_error(code="auth.invalid_token")
                 return
 
@@ -192,13 +182,7 @@ class AuthModule(BaseModule):
 
         live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
         if self.consumer.user.type == User.UserType.KIOSK and not live_features.get("kiosks", False):
-            log_event(
-                'video',
-                'live.auth',
-                OUTCOME_FAILURE,
-                error_code='kiosks_disabled',
-                event_id=getattr(self.consumer.event, 'pk', None),
-            )
+            log_event('video', 'live.auth', OUTCOME_FAILURE, error_code='kiosks_disabled', event_id=getattr(self.consumer.event, 'pk', None))
             await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
             return
         if settings.SENTRY_DSN:
@@ -745,7 +729,7 @@ class AuthModule(BaseModule):
                 user["token"] = None
                 return user
             jwt_config = jwt_secrets[0]
-            iat = datetime.datetime.now(datetime.UTC)
+            iat = datetime.datetime.now(datetime.timezone.utc)
             exp = iat + datetime.timedelta(days=365)
             payload = {
                 "iss": jwt_config.get("issuer", ""),

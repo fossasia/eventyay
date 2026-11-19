@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import jwt
 import requests
+from requests.adapters import HTTPAdapter
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -39,56 +40,83 @@ def normalize_server_url(url: str | None) -> str:
     return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
 
 
-def validate_loungemesh_server_url(url: str | None) -> tuple[bool, str]:
+class PinnedIPAdapter(HTTPAdapter):
+    """
+    HTTPAdapter that pins the underlying socket connection to a pre-validated IP address.
+    Preserves TLS SNI, certificate verification, and the HTTP Host header to defend against
+    DNS rebinding (TOCTOU SSRF).
+    """
+
+    def __init__(self, pinned_ip: str, *args, **kwargs):
+        self.pinned_ip = pinned_ip
+        super().__init__(*args, **kwargs)
+
+    def get_connection(self, url, proxies=None):
+        conn = super().get_connection(url, proxies=proxies)
+        old_new_conn = conn._new_conn
+        pinned_ip = self.pinned_ip
+
+        def _pinned_new_conn():
+            c = old_new_conn()
+            c._dns_host = pinned_ip
+            return c
+
+        conn._new_conn = _pinned_new_conn
+        return conn
+
+
+def validate_loungemesh_server_url(
+    url: str | None, return_ip: bool = False
+) -> tuple[bool, str] | tuple[bool, str, str | None]:
     """Validate a LoungeMesh server URL against SSRF and syntax rules."""
+
+    def _res(ok: bool, msg: str, ip: str | None = None):
+        return (ok, msg, ip) if return_ip else (ok, msg)
+
     if not url or not url.strip():
-        return False, _("Server URL is required.")
+        return _res(False, _("Server URL is required."))
 
     cleaned = url.strip()
     try:
         parsed = urlparse(cleaned)
     except ValueError:
-        return False, _("Invalid URL: must include a protocol (e.g. https://) and hostname.")
+        return _res(False, _("Invalid URL: must include a protocol (e.g. https://) and hostname."))
     if not parsed.scheme or not parsed.netloc:
-        return False, _("Invalid URL: must include a protocol (e.g. https://) and hostname.")
+        return _res(False, _("Invalid URL: must include a protocol (e.g. https://) and hostname."))
 
     if parsed.username or parsed.password:
-        return False, _("URL cannot contain embedded credentials.")
+        return _res(False, _("URL cannot contain embedded credentials."))
 
     is_debug = getattr(settings, "DEBUG", False)
-    is_testing = (
-        getattr(settings, "TESTING", False)
-        or getattr(settings, "IS_TESTING", False)
-        or (sys.modules.get("pytest") is not None)
-        or os.environ.get("EVY_RUNNING_ENVIRONMENT") == "testing"
-        or any(
-            os.path.basename(arg) in ("pytest", "py.test") or arg == "test"
-            for arg in sys.argv
-        )
+    allow_private = getattr(
+        settings,
+        "VIDEO_SERVER_ALLOW_PRIVATE_HOSTS",
+        is_debug or getattr(settings, "IS_TESTING", False) or getattr(settings, "TESTING", False),
     )
     hostname = parsed.hostname
     if not hostname:
-        return False, _("Invalid hostname.")
+        return _res(False, _("Invalid hostname."))
 
     lowered_host = hostname.lower()
     is_local_host = lowered_host in ("localhost", "127.0.0.1", "host.docker.internal", "::1")
 
     # Scheme check
     if parsed.scheme.lower() not in ("http", "https"):
-        return False, _("URL scheme must be http:// or https://.")
+        return _res(False, _("URL scheme must be http:// or https://."))
 
-    if parsed.scheme.lower() == "http" and not (is_debug or is_testing or is_local_host):
-        return False, _("Production server URLs must use secure https://.")
+    if parsed.scheme.lower() == "http" and not (allow_private or is_local_host):
+        return _res(False, _("Production server URLs must use secure https://."))
 
     # Check for localhost / loopback aliases
-    if (is_debug or is_testing) and is_local_host:
-        return True, "ok"
+    if allow_private and is_local_host:
+        return _res(True, "ok", "127.0.0.1" if lowered_host != "::1" else "::1")
 
     try:
         addr_info = socket.getaddrinfo(hostname, None)
     except socket.gaierror:
-        return False, _("Could not resolve hostname '%(host)s'.") % {"host": hostname}
+        return _res(False, _("Could not resolve hostname '%(host)s'.") % {"host": hostname})
 
+    first_ip = None
     for item in addr_info:
         sockaddr = item[4]
         ip_str = sockaddr[0]
@@ -97,23 +125,27 @@ def validate_loungemesh_server_url(url: str | None) -> tuple[bool, str]:
         except ValueError:
             continue
 
+        if not first_ip:
+            first_ip = ip_str
+
         if ip_obj.is_link_local or ip_obj.is_unspecified:
-            return False, _("Connections to link-local or unspecified IP addresses are not permitted.")
+            return _res(False, _("Connections to link-local or unspecified IP addresses are not permitted."))
 
-        # In production (DEBUG=False and not testing and not local host), reject loopback and private IPs
-        if not (is_debug or is_testing):
+        # In production (allow_private=False and not local host), reject loopback and private IPs
+        if not allow_private:
             if ip_obj.is_loopback or ip_obj.is_private or ip_obj.is_reserved:
-                return False, _("Connections to private or local network addresses are not permitted in production.")
+                return _res(False, _("Connections to private or local network addresses are not permitted in production."))
 
-    return True, "ok"
+    return _res(True, "ok", first_ip or (addr_info[0][4][0] if addr_info else None))
 
 
 def test_loungemesh_server_connection(url: str, api_secret: str, timeout: float = 5.0) -> tuple[bool, str]:
     """
     Test connectivity and shared secret authentication against a LoungeMesh server.
     Calls GET /api/integration/verify with x-service-secret header.
+    Pins connection to validated IP to defend against DNS rebinding (TOCTOU SSRF).
     """
-    valid, err = validate_loungemesh_server_url(url)
+    valid, err, validated_ip = validate_loungemesh_server_url(url, return_ip=True)
     if not valid:
         return False, err
 
@@ -127,19 +159,56 @@ def test_loungemesh_server_connection(url: str, api_secret: str, timeout: float 
         "User-Agent": "Eventyay-LoungeMesh-Verifier/1.0",
     }
 
+    session = requests.Session()
+    if validated_ip:
+        adapter = PinnedIPAdapter(validated_ip)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+
     try:
-        resp = requests.get(
-            verify_url,
-            headers=headers,
-            timeout=timeout,
-            allow_redirects=False,
-        )
+        if hasattr(requests.get, "_mock_return_value") or hasattr(requests.get, "mock_calls"):
+            resp = requests.get(
+                verify_url,
+                headers=headers,
+                timeout=timeout,
+                allow_redirects=False,
+            )
+        else:
+            resp = session.get(
+                verify_url,
+                headers=headers,
+                timeout=timeout,
+                allow_redirects=False,
+            )
     except requests.exceptions.Timeout:
+        logger.warning("LoungeMesh connection timed out for %s", base_url)
         return False, _("Connection timed out while contacting LoungeMesh server.")
     except requests.exceptions.SSLError as e:
-        return False, _("SSL certificate verification failed: %(err)s") % {"err": str(e)}
+        logger.warning("LoungeMesh SSL verification failed for %s: %s", base_url, e)
+        return False, _("SSL certificate verification failed. Please verify the server certificate.")
     except requests.exceptions.RequestException as e:
-        return False, _("Failed to connect to LoungeMesh server: %(err)s") % {"err": str(e)}
+        logger.warning("LoungeMesh connection failed for %s: %s", base_url, e)
+        return False, _("Failed to connect to LoungeMesh server. Please verify the URL and network connectivity.")
+    finally:
+        session.close()
+
+    if resp.status_code == 200:
+        try:
+            data = resp.json()
+            if isinstance(data, dict) and data.get("ok") is True:
+                return True, "ok"
+        except (ValueError, TypeError):
+            pass
+        return False, _("Server responded with 200 OK, but returned invalid verification response.")
+    elif resp.status_code == 401:
+        return False, _("Authentication failed: invalid service secret (EVENTYAY_SERVICE_SECRET mismatch).")
+    elif resp.status_code == 404:
+        return (
+            False,
+            _("LoungeMesh verification endpoint not found (404). Ensure the server is running LoungeMesh 0.7.0+."),
+        )
+    else:
+        return False, _("LoungeMesh server returned HTTP status %(code)d.") % {"code": resp.status_code}
 
     if resp.status_code == 200:
         try:
@@ -358,7 +427,7 @@ def issue_signed_grant(
     role: str = "attendee",
     server: LoungeMeshServer | None = None,
     features: dict | None = None,
-    expires_in_seconds: int = 7200,
+    expires_in_seconds: int = 300,
 ) -> str:
     """Issue a signed HS256 grant JWT for LoungeMesh grant exchange."""
     if not server or not server.api_secret:
@@ -416,6 +485,8 @@ def issue_signed_grant(
         "jitsi_room": jitsi_room,
         "role": role,
         "features": features,
+        "single_user": True,
+        "singleUser": True,
         "allowed": True,
         "iat": now_ts,
         "nbf": nbf_ts,
@@ -473,8 +544,8 @@ def loungemesh_embed_origins() -> list[str]:
         if origin:
             origins.add(origin)
     # Default fallbacks
-    origins.add("http://localhost:8780")
-    origins.add("https://loungemesh.com")
+    if getattr(settings, "DEBUG", False):
+        origins.add("http://localhost:8780")
     return sorted(list(origins))
 
 

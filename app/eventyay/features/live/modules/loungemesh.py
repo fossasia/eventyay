@@ -1,6 +1,7 @@
 import logging
 
 from channels.db import database_sync_to_async
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django_scopes import scope
 
@@ -149,6 +150,12 @@ class LoungeMeshModule(BaseModule):
         if not has_perm:
             raise ConsumerException("protocol.denied", "Permission denied.")
 
+        user_id = getattr(self.consumer.user, "pk", "anon")
+        rate_key = f"lm_test_rate:{self.consumer.event.pk}:{user_id}"
+        if cache.get(rate_key, 0) >= 10:
+            raise ConsumerException("loungemesh.rate_limited", "Too many requests. Please wait a moment before trying again.")
+        cache.set(rate_key, cache.get(rate_key, 0) + 1, timeout=60)
+
         url = str((body or {}).get("url") or "").strip()
         api_secret = str((body or {}).get("api_secret") or "").strip()
         server_id = (body or {}).get("server_id")
@@ -194,21 +201,43 @@ class LoungeMeshModule(BaseModule):
 
         url = str((body or {}).get("url") or "").strip()
         api_secret = str((body or {}).get("api_secret") or "").strip()
+        clean_url = normalize_server_url(url)
+        if not clean_url:
+            raise ConsumerException("loungemesh.invalid_url", "Invalid server URL.")
+
+        user_id = getattr(self.consumer.user, "pk", "anon")
+        rate_key = f"lm_add_rate:{self.consumer.event.pk}:{user_id}"
+        if cache.get(rate_key, 0) >= 5:
+            raise ConsumerException("loungemesh.rate_limited", "Too many requests. Please wait a moment before trying again.")
+        cache.set(rate_key, cache.get(rate_key, 0) + 1, timeout=60)
+
+        check_err = await database_sync_to_async(self._check_server_limit_and_duplicate)(clean_url)
+        if check_err:
+            raise ConsumerException(check_err[0], check_err[1])
 
         ok, msg = await database_sync_to_async(test_loungemesh_server_connection)(url, api_secret)
         if not ok:
             raise ConsumerException("loungemesh.connection_failed", str(msg))
 
-        server_data = await database_sync_to_async(self._create_custom_server)(url, api_secret)
+        server_data = await database_sync_to_async(self._create_custom_server)(clean_url, api_secret)
         await self.consumer.send_success(server_data)
 
-    def _create_custom_server(self, url, api_secret):
+    def _check_server_limit_and_duplicate(self, clean_url):
         with scope(event=self.consumer.event):
-            clean_url = normalize_server_url(url)
+            qs = LoungeMeshServer.objects.filter(event_exclusive=self.consumer.event)
+            if qs.count() >= 5:
+                return ("loungemesh.limit_reached", "Maximum of 5 custom servers allowed per event.")
+            if qs.filter(url=clean_url).exists():
+                return ("loungemesh.duplicate_server", "A server with this URL is already configured for this event.")
+            return None
+
+    def _create_custom_server(self, clean_url, api_secret):
+        with scope(event=self.consumer.event):
             server = LoungeMeshServer.objects.create(
                 url=clean_url,
                 api_secret=api_secret.strip(),
                 active=True,
+                is_user_managed=True,
                 event_exclusive=self.consumer.event,
             )
             server.events.add(self.consumer.event)
@@ -237,7 +266,7 @@ class LoungeMeshModule(BaseModule):
         with scope(event=self.consumer.event):
             try:
                 server = LoungeMeshServer.objects.get(pk=server_id)
-                if server.event_exclusive_id == self.consumer.event.id:
+                if server.event_exclusive_id == self.consumer.event.id and server.is_user_managed:
                     server.delete()
                     return True
             except (LoungeMeshServer.DoesNotExist, ValueError, ValidationError):

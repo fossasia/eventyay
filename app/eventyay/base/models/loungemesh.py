@@ -11,6 +11,7 @@ def default_token():
 class LoungeMeshServer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     active = models.BooleanField(default=True)
+    is_user_managed = models.BooleanField(default=False)
     url = models.URLField(max_length=300)
     api_secret = models.CharField(max_length=300, blank=True)
     cost = models.IntegerField(default=0)

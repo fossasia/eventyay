@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
+
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import (
@@ -15,12 +17,10 @@ from eventyay.base.models import (
     TurnServer,
 )
 from eventyay.base.models.event import (
-    FEATURE_FLAGS,
     Event,
-    default_feature_flags,
-)
-from eventyay.base.models.event import (
+    FEATURE_FLAGS,
     EventPlannedUsage as PlannedUsage,
+    default_feature_flags,
 )
 from eventyay.base.services.jitsi import normalize_server_url
 from eventyay.base.services.loungemesh import validate_loungemesh_server_url

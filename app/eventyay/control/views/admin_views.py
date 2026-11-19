@@ -1,12 +1,15 @@
 import copy
+import datetime
 import json
 
 import icalendar
+import jwt
 import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import PermissionDenied, ValidationError
+from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -28,28 +31,20 @@ from django.views.generic import (
 from eventyay.base.models import (
     BBBCall,
     BBBServer,
-    Event,
+    SystemLog,
     JanusServer,
     JitsiServer,
     LoungeMeshServer,
-    SystemLog,
     TurnServer,
+    Event,
 )
-from eventyay.base.models.auth import User
+
 from eventyay.base.models.event import EventPlannedUsage as PlannedUsage
-from eventyay.base.models.log import LogEntry
-from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, emit_logged_action, log_event
 from eventyay.base.services.bbb import get_url
 from eventyay.base.services.loungemesh import normalize_server_url, test_loungemesh_server_connection
-from eventyay.base.settings import (
-    SUPPORTED_VIDEO_PROVIDERS,
-    GlobalSettingsObject,
-    get_video_provider_visibility,
-)
 from eventyay.control.forms.server_management import (
     BBBMoveRoomForm,
     BBBServerForm,
-    EventForm,
     JanusServerForm,
     JitsiServerForm,
     LoungeMeshServerForm,
@@ -58,11 +53,19 @@ from eventyay.control.forms.server_management import (
     SignupForm,
     TurnServerForm,
     UserForm,
+    EventForm,
 )
+from eventyay.base.models.log import LogEntry
+from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, emit_logged_action, log_event
+from eventyay.base.settings import (
+    GlobalSettingsObject,
+    SUPPORTED_VIDEO_PROVIDERS,
+    get_video_provider_visibility,
+)
+from eventyay.helpers.compat import CompatDeleteView
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 from eventyay.control.video.admin_dashboard import get_video_server_config
-from eventyay.helpers.compat import CompatDeleteView
 
 
 def _admin_log_entry(**kwargs):
@@ -157,31 +160,11 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        bbb_qs = (
-            BBBServer.objects.select_related("event_exclusive")
-            .prefetch_related("organizers", "events")
-            .order_by("url")
-        )
-        janus_qs = (
-            JanusServer.objects.select_related("event_exclusive")
-            .prefetch_related("organizers", "events")
-            .order_by("url")
-        )
-        jitsi_qs = (
-            JitsiServer.objects.select_related("event_exclusive")
-            .prefetch_related("organizers", "events")
-            .order_by("url")
-        )
-        turn_qs = (
-            TurnServer.objects.select_related("event_exclusive")
-            .prefetch_related("organizers", "events")
-            .order_by("hostname")
-        )
-        loungemesh_qs = (
-            LoungeMeshServer.objects.select_related("event_exclusive")
-            .prefetch_related("organizers", "events")
-            .order_by("url")
-        )
+        bbb_qs = BBBServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("url")
+        janus_qs = JanusServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("url")
+        jitsi_qs = JitsiServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("url")
+        turn_qs = TurnServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("hostname")
+        loungemesh_qs = LoungeMeshServer.objects.select_related("event_exclusive").prefetch_related("organizers", "events").order_by("url")
 
         ctx["bbb_servers"] = bbb_qs
         ctx["janus_servers"] = janus_qs
@@ -198,14 +181,8 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
                 "name": _("BigBlueButton"),
                 "icon": "fa-graduation-cap",
                 "badge": f"{bbb_qs.filter(active=True).count()} / {bbb_qs.count()} " + str(_("servers")),
-                "description": _(
-                    "Classroom and lecture conferencing system. Best for workshops, "
-                    "breakout sessions, and structured presentations."
-                ),
-                "enabled": (
-                    visibility.get("bbb", {}).get("organizer", True)
-                    and visibility.get("bbb", {}).get("attendee", True)
-                ),
+                "description": _("Classroom and lecture conferencing system. Best for workshops, breakout sessions, and structured presentations."),
+                "enabled": visibility.get("bbb", {}).get("organizer", True) and visibility.get("bbb", {}).get("attendee", True),
                 "organizer": visibility.get("bbb", {}).get("organizer", True),
                 "attendee": visibility.get("bbb", {}).get("attendee", True),
                 "server_tab": "bbb",
@@ -216,10 +193,7 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
                 "icon": "fa-video-camera",
                 "badge": f"{jitsi_qs.filter(active=True).count()} / {jitsi_qs.count()} " + str(_("servers")),
                 "description": _("Lightweight interactive video meeting rooms powered by Jitsi Meet."),
-                "enabled": (
-                    visibility.get("jitsi", {}).get("organizer", True)
-                    and visibility.get("jitsi", {}).get("attendee", True)
-                ),
+                "enabled": visibility.get("jitsi", {}).get("organizer", True) and visibility.get("jitsi", {}).get("attendee", True),
                 "organizer": visibility.get("jitsi", {}).get("organizer", True),
                 "attendee": visibility.get("jitsi", {}).get("attendee", True),
                 "server_tab": "jitsi",
@@ -230,10 +204,7 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
                 "icon": "fa-users",
                 "badge": f"{janus_qs.filter(active=True).count()} / {janus_qs.count()} " + str(_("servers")),
                 "description": _("Low-latency WebRTC video conferencing and room calls powered by Janus."),
-                "enabled": (
-                    visibility.get("janus", {}).get("organizer", True)
-                    and visibility.get("janus", {}).get("attendee", True)
-                ),
+                "enabled": visibility.get("janus", {}).get("organizer", True) and visibility.get("janus", {}).get("attendee", True),
                 "organizer": visibility.get("janus", {}).get("organizer", True),
                 "attendee": visibility.get("janus", {}).get("attendee", True),
                 "server_tab": "janus",
@@ -243,13 +214,8 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
                 "name": _("LoungeMesh"),
                 "icon": "fa-cubes",
                 "badge": f"{loungemesh_qs.filter(active=True).count()} / {loungemesh_qs.count()} " + str(_("servers")),
-                "description": _(
-                    "Spatial 2D/3D networking proximity lounge with embedded whiteboards and collaborative notes."
-                ),
-                "enabled": (
-                    visibility.get("loungemesh", {}).get("organizer", True)
-                    and visibility.get("loungemesh", {}).get("attendee", True)
-                ),
+                "description": _("Spatial 2D/3D networking proximity lounge with embedded whiteboards and collaborative notes."),
+                "enabled": visibility.get("loungemesh", {}).get("organizer", True) and visibility.get("loungemesh", {}).get("attendee", True),
                 "organizer": visibility.get("loungemesh", {}).get("organizer", True),
                 "attendee": visibility.get("loungemesh", {}).get("attendee", True),
                 "server_tab": "loungemesh",
@@ -260,10 +226,7 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
                 "icon": "fa-video-camera",
                 "badge": str(_("External integration")),
                 "description": _("Direct integration for Zoom meetings and webinars embedded into the event space."),
-                "enabled": (
-                    visibility.get("zoom", {}).get("organizer", True)
-                    and visibility.get("zoom", {}).get("attendee", True)
-                ),
+                "enabled": visibility.get("zoom", {}).get("organizer", True) and visibility.get("zoom", {}).get("attendee", True),
                 "organizer": visibility.get("zoom", {}).get("organizer", True),
                 "attendee": visibility.get("zoom", {}).get("attendee", True),
                 "server_tab": None,
@@ -271,9 +234,7 @@ class VideoSettings(AdministratorPermissionRequiredMixin, TemplateView):
         ]
         # Active tab defaults to general
         gs = GlobalSettingsObject()
-        ctx["video_max_connections_per_user"] = gs.settings.get(
-            "video_max_connections_per_user", as_type=int, default=0
-        )
+        ctx["video_max_connections_per_user"] = gs.settings.get("video_max_connections_per_user", as_type=int, default=0)
         ctx["active_tab"] = kwargs.get("active_tab") or self.request.GET.get("tab", "general")
         return ctx
 
@@ -518,8 +479,8 @@ class EventAdminToken(AdministratorPermissionRequiredMixin, DetailView):
 
         # Ensure JWT configuration exists
         if not event.config or not event.config.get("JWT_secrets"):
-            from django.conf import settings
             from django.utils.crypto import get_random_string
+            from django.conf import settings
 
             secret = get_random_string(length=64)
             event.config = {

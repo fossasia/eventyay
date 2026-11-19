@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 from datetime import timedelta
 from unittest.mock import AsyncMock, patch
 
@@ -18,6 +19,7 @@ from eventyay.base.services.loungemesh import (
     is_event_accessible_for_role,
     issue_join_url,
     issue_signed_grant,
+    loungemesh_embed_origins,
     loungemesh_is_available,
     loungemesh_permissions_policy,
     resolve_loungemesh_role,
@@ -762,3 +764,90 @@ def test_websocket_room_url_duration_checks(test_setup, monkeypatch):
                 assert consumer.sent_data["url"] == fake_url
 
         asyncio.run(run_checks())
+
+
+@pytest.mark.django_db
+def test_loungemesh_security_improvements(test_setup):
+    event = test_setup["event"]
+    user = test_setup["user"]
+    room = test_setup["room"]
+    server = test_setup["server"]
+
+    # 1. Grant lifetime default (300s) and single_user claims
+    grant = issue_signed_grant(event, room, user, role="attendee", server=server)
+    payload = jwt.decode(grant, server.api_secret, algorithms=["HS256"], audience="loungemesh")
+    now_ts = int(time.time())
+    assert payload["exp"] <= now_ts + 301
+    assert payload["single_user"] is True
+    assert payload["singleUser"] is True
+
+    # 2. VIDEO_SERVER_ALLOW_PRIVATE_HOSTS setting check
+    with override_settings(VIDEO_SERVER_ALLOW_PRIVATE_HOSTS=False):
+        valid, msg = validate_loungemesh_server_url("http://192.168.1.5:8000")
+        assert valid is False
+        assert "private" in str(msg).lower() or "https://" in str(msg).lower()
+
+    # 3. Connection error sanitization (no str(e) leakage)
+    with patch("requests.get", side_effect=requests.exceptions.SSLError("secret internal socket /dev/ssl error")):
+        ok, msg = svc_test_loungemesh_server_connection("http://localhost:8780", "secret123")
+        assert ok is False
+        assert "secret internal socket" not in str(msg)
+        assert "SSL certificate verification failed" in str(msg)
+
+    # 4. Pinned connection adapter verification
+    from eventyay.base.services.loungemesh import PinnedIPAdapter
+    adapter = PinnedIPAdapter("93.184.216.34")
+    assert adapter.pinned_ip == "93.184.216.34"
+
+    # 5. Embed origins respects settings.DEBUG
+    with override_settings(DEBUG=False):
+        # In DEBUG=False, neither localhost:8780 nor loungemesh.com should appear unless in DB
+        LoungeMeshServer.objects.all().delete()
+        origins = loungemesh_embed_origins()
+        assert "http://localhost:8780" not in origins
+        assert "https://loungemesh.com" not in origins
+
+    # 6. Admin vs Custom server deletion & duplicate/cap enforcement
+    with scope(event=event):
+        # Admin-created server (is_user_managed=False)
+        admin_srv = LoungeMeshServer.objects.create(
+            url="https://admin-lms.example.com",
+            api_secret="secret",
+            event_exclusive=event,
+            is_user_managed=False,
+        )
+        # Room-editor created server (is_user_managed=True)
+        user_srv = LoungeMeshServer.objects.create(
+            url="https://user-lms.example.com",
+            api_secret="secret",
+            event_exclusive=event,
+            is_user_managed=True,
+        )
+
+        consumer = DummyConsumer(user=user, world=event)
+        module = LoungeMeshModule(consumer)
+
+        # Organizer cannot delete admin-created server
+        assert module._delete_custom_server(admin_srv.id) is False
+        assert LoungeMeshServer.objects.filter(pk=admin_srv.id).exists()
+
+        # Organizer can delete room-editor user-managed server
+        assert module._delete_custom_server(user_srv.id) is True
+        assert not LoungeMeshServer.objects.filter(pk=user_srv.id).exists()
+
+        # Duplicate check
+        dup_res = module._check_server_limit_and_duplicate("https://admin-lms.example.com")
+        assert dup_res is not None
+        assert dup_res[0] == "loungemesh.duplicate_server"
+
+        # Cap limit check
+        for i in range(4):
+            LoungeMeshServer.objects.create(
+                url=f"https://extra-{i}.example.com",
+                api_secret="sec",
+                event_exclusive=event,
+                is_user_managed=True,
+            )
+        cap_res = module._check_server_limit_and_duplicate("https://brand-new.example.com")
+        assert cap_res is not None
+        assert cap_res[0] == "loungemesh.limit_reached"
