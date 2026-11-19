@@ -71,9 +71,12 @@ class LoungeMeshModule(BaseModule):
             self.consumer.user,
             is_organizer_area=is_organizer_area,
         )
+        is_host_user = await database_sync_to_async(
+            lambda: resolve_loungemesh_role(self.consumer.event, self.consumer.user, is_organizer_area=True) == "host"
+        )()
         accessible, reason = await database_sync_to_async(is_event_accessible_for_role)(
             self.consumer.event,
-            role,
+            "host" if is_host_user else role,
         )
         if not accessible:
             log_event(

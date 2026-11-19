@@ -447,7 +447,9 @@ def issue_join_url(
         return None
 
     assigned_role = role or resolve_loungemesh_role(event, user, is_organizer_area=is_organizer_area)
-    accessible, _ = is_event_accessible_for_role(event, assigned_role)
+    is_host_user = resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+    check_role = "host" if is_host_user else assigned_role
+    accessible, _ = is_event_accessible_for_role(event, check_role)
     if not accessible:
         return None
 
