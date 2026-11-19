@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import jwt
 import requests
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import LoungeMeshServer
@@ -328,6 +329,28 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
     return "attendee"
 
 
+def is_event_accessible_for_role(event, role: str, now=None) -> tuple[bool, str | None]:
+    """
+    Check whether the event is accessible for the specified role at the given time.
+    Only the host can access outside scheduled event duration (before start or after end).
+    Attendees and moderators can only access during the scheduled event window.
+    Returns (True, None) if access is permitted.
+    Returns (False, 'not_started') if current time is before event.date_from.
+    Returns (False, 'ended') if current time is after event.date_to.
+    """
+    if role == "host":
+        return True, None
+    if not event:
+        return True, None
+
+    current_time = now or timezone.now()
+    if getattr(event, "date_from", None) and current_time < event.date_from:
+        return False, "not_started"
+    if getattr(event, "date_to", None) and current_time > event.date_to:
+        return False, "ended"
+    return True, None
+
+
 def issue_signed_grant(
     event,
     room,
@@ -372,6 +395,15 @@ def issue_signed_grant(
             "spatial_chat": room_cfg.get("enable_spatial_chat", nested_features.get("spatial_chat", True)),
         }
 
+    exp_ts = now_ts + expires_in_seconds
+    nbf_ts = now_ts - 10
+    if role != "host" and event:
+        if getattr(event, "date_to", None):
+            event_end_ts = int(event.date_to.timestamp())
+            exp_ts = min(exp_ts, max(now_ts + 60, event_end_ts))
+        if getattr(event, "date_from", None) and now_ts < int(event.date_from.timestamp()):
+            nbf_ts = int(event.date_from.timestamp())
+
     payload = {
         "iss": "eventyay",
         "aud": "loungemesh",
@@ -386,8 +418,8 @@ def issue_signed_grant(
         "features": features,
         "allowed": True,
         "iat": now_ts,
-        "nbf": now_ts - 10,
-        "exp": now_ts + expires_in_seconds,
+        "nbf": nbf_ts,
+        "exp": exp_ts,
     }
     return jwt.encode(payload, server.api_secret, algorithm="HS256")
 
@@ -415,6 +447,10 @@ def issue_join_url(
         return None
 
     assigned_role = role or resolve_loungemesh_role(event, user, is_organizer_area=is_organizer_area)
+    accessible, _ = is_event_accessible_for_role(event, assigned_role)
+    if not accessible:
+        return None
+
     grant = issue_signed_grant(
         event,
         room,

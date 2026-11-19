@@ -9,6 +9,7 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.base.services.loungemesh import (
     get_available_loungemesh_servers,
     get_loungemesh_server,
+    is_event_accessible_for_role,
     issue_join_url,
     normalize_server_url,
     resolve_loungemesh_role,
@@ -70,6 +71,30 @@ class LoungeMeshModule(BaseModule):
             self.consumer.user,
             is_organizer_area=is_organizer_area,
         )
+        accessible, reason = await database_sync_to_async(is_event_accessible_for_role)(
+            self.consumer.event,
+            role,
+        )
+        if not accessible:
+            log_event(
+                'video',
+                'connection.room_url',
+                OUTCOME_FAILURE,
+                error_code=f'event_{reason}',
+                event_id=getattr(self.consumer.event, 'pk', None),
+                backend='loungemesh',
+            )
+            if reason == "not_started":
+                raise ConsumerException(
+                    "loungemesh.event_not_started",
+                    "This event has not started yet. Attendees may only join during scheduled event hours.",
+                )
+            else:
+                raise ConsumerException(
+                    "loungemesh.event_ended",
+                    "This event has ended.",
+                )
+
         url = await self._get_join_url(role)
         if not url:
             log_event(

@@ -15,6 +15,7 @@ from eventyay.base.services.loungemesh import (
     apply_loungemesh_embed_headers,
     get_available_loungemesh_servers,
     get_loungemesh_server,
+    is_event_accessible_for_role,
     issue_join_url,
     issue_signed_grant,
     loungemesh_is_available,
@@ -41,7 +42,7 @@ def test_setup(allow_all_entitlements):
                 organizer=organizer,
                 name="LoungeMesh Event",
                 slug="lm-event",
-                date_from=timezone.now(),
+                date_from=timezone.now() - timedelta(hours=1),
                 date_to=timezone.now() + timedelta(days=2),
                 live=True,
             )
@@ -638,3 +639,126 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
             assert resp.status_code == 200
             assert resp.json()["ok"] is True
             assert mock_conn.call_args[0][1] == "replacement*****"
+
+
+@pytest.mark.django_db
+def test_event_duration_access_control(test_setup):
+    event = test_setup["event"]
+    user = test_setup["user"]
+    room = test_setup["room"]
+    server = test_setup["server"]
+
+    now = timezone.now()
+
+    # 1. Past event: Host allowed, attendee blocked with 'ended'
+    event.date_from = now - timedelta(days=5)
+    event.date_to = now - timedelta(days=1)
+    event.save()
+
+    assert is_event_accessible_for_role(event, "host")[0] is True
+    acc, reason = is_event_accessible_for_role(event, "attendee")
+    assert acc is False
+    assert reason == "ended"
+
+    assert issue_join_url(event, room, user, role="attendee", server=server) is None
+    assert issue_join_url(event, room, user, role="host", server=server) is not None
+
+    # 2. Future event: Host allowed, attendee blocked with 'not_started'
+    event.date_from = now + timedelta(days=1)
+    event.date_to = now + timedelta(days=2)
+    event.save()
+
+    assert is_event_accessible_for_role(event, "host")[0] is True
+    acc, reason = is_event_accessible_for_role(event, "attendee")
+    assert acc is False
+    assert reason == "not_started"
+
+    assert issue_join_url(event, room, user, role="attendee", server=server) is None
+    assert issue_join_url(event, room, user, role="host", server=server) is not None
+
+    # 3. Ongoing event: Host and attendee both allowed
+    event.date_from = now - timedelta(hours=1)
+    event.date_to = now + timedelta(hours=2)
+    event.save()
+
+    assert is_event_accessible_for_role(event, "host")[0] is True
+    assert is_event_accessible_for_role(event, "attendee")[0] is True
+
+    assert issue_join_url(event, room, user, role="attendee", server=server) is not None
+    assert issue_join_url(event, room, user, role="host", server=server) is not None
+
+    # 4. Grant exp bounding for attendee
+    grant = issue_signed_grant(event, room, user, role="attendee", server=server, expires_in_seconds=86400)
+    payload = jwt.decode(grant, server.api_secret, algorithms=["HS256"], audience="loungemesh")
+    assert payload["exp"] == int(event.date_to.timestamp())
+
+
+@pytest.mark.django_db
+def test_websocket_room_url_duration_checks(test_setup, monkeypatch):
+    monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
+    event = test_setup["event"]
+    user = test_setup["user"]
+    room = test_setup["room"]
+    server = test_setup["server"]
+
+    room_cache = {str(room.id): room}
+    consumer = DummyConsumer(
+        user=user,
+        world=event,
+        permissions=[
+            Permission.ROOM_LOUNGEMESH_JOIN.value,
+            Permission.ROOM_UPDATE.value,
+            Permission.EVENT_UPDATE.value,
+        ],
+        room_cache=room_cache,
+    )
+    consumer.event.has_permission_async = AsyncMock(return_value=True)
+    module = LoungeMeshModule(consumer)
+
+    def sync_to_async_mock(fn):
+        async def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapper
+
+    from django.db import connections
+    main_conn = connections["default"]
+
+    now = timezone.now()
+
+    with (
+        patch.object(connections.__class__, "__getitem__", return_value=main_conn),
+        patch("channels.db.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.decorators.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.modules.loungemesh.database_sync_to_async", sync_to_async_mock),
+        patch.object(room, "refresh_from_db_if_outdated", new_callable=AsyncMock),
+    ):
+        async def run_checks():
+            # Future event: attendee gets ConsumerException loungemesh.event_not_started
+            event.date_from = now + timedelta(days=1)
+            event.date_to = now + timedelta(days=2)
+            event.save()
+
+            consumer.is_organizer = False
+            with pytest.raises(ConsumerException) as exc_info:
+                await module.room_url({"room": str(room.id)})
+            assert exc_info.value.code == "loungemesh.event_not_started"
+
+            # Past event: attendee gets ConsumerException loungemesh.event_ended
+            event.date_from = now - timedelta(days=2)
+            event.date_to = now - timedelta(days=1)
+            event.save()
+
+            with pytest.raises(ConsumerException) as exc_info:
+                await module.room_url({"room": str(room.id)})
+            assert exc_info.value.code == "loungemesh.event_ended"
+
+            # Host in organizer area can access past event
+            consumer.is_organizer = True
+            user.traits = ["admin"]
+            fake_url = f"http://localhost:8780/join/lms-{event.slug}-{room.id}?grant=hostgrant"
+            with patch.object(module, "_get_join_url", new_callable=AsyncMock, return_value=fake_url):
+                await module.room_url({"room": str(room.id)})
+                assert consumer.sent_data["role"] == "host"
+                assert consumer.sent_data["url"] == fake_url
+
+        asyncio.run(run_checks())
