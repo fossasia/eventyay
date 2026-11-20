@@ -86,7 +86,6 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         'is_featured',
         'accepted_submission_count',
         'submission_count',
-        'voucher_sort',
         'has_arrived',
     )
     default_sort_field = 'position'
@@ -118,6 +117,9 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         return (direction, 'user__fullname', 'pk')
 
     def sort_queryset(self, qs):
+        # Only allow voucher sorting when the feature is enabled and annotated.
+        if self.speaker_vouchers_enabled:
+            self.sortable_fields = (*type(self).sortable_fields, 'voucher_sort')
         sort_key = self.request.GET.get('sort') or ''
         if not sort_key or sort_key == 'default':
             sort_key = getattr(self, 'default_sort_field', None) or ''
