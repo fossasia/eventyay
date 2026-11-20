@@ -1,6 +1,9 @@
-const renderChart = (data) => {
+/** Draws the donut chart of responses on a custom field's page. */
+const renderChart = () => {
     const serverData = document.getElementById("question-data")
     const canvas = document.getElementById("question-answers")
+    // Fields without answers, file fields and fields with 50+ different answers have no chart.
+    if (!serverData || !canvas) return
     const data = JSON.parse(serverData.dataset.states)
     let url = serverData.dataset.url
     const options = {
@@ -11,6 +14,8 @@ const renderChart = (data) => {
         type: 'donut',
         events: {
           dataPointSelection: (event, chartContext, config) => {
+            // Reviewer fields have no list to filter, so like their table rows the slices aren't links.
+            if (!url) return
             const clickedData = data[config.dataPointIndex]
             if (clickedData.answer) {
               url = url + "answer=" + encodeURIComponent(clickedData.answer)
@@ -20,7 +25,7 @@ const renderChart = (data) => {
             window.location.href = url
           },
           dataPointMouseEnter: () => {
-            canvas.style.cursor = "pointer"
+            if (url) canvas.style.cursor = "pointer"
           },
           dataPointMouseLeave: () => {
             canvas.style.cursor = "inherit"
