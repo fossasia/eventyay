@@ -1,5 +1,6 @@
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
-from django.template.loader import render_to_string
+from django.template import Context, Template
 from django.test import RequestFactory, override_settings
 
 from eventyay.base.models import Organizer
@@ -25,8 +26,22 @@ def test_common_organizer_base_header_shows_public_profile_link():
     request.user = AnonymousUser()
     request.LANGUAGE_CODE = 'en'
 
-    rendered = render_to_string('eventyay_common/base.html', {'request': request})
+    template = Template(
+        '{% extends "eventyay_common/base.html" %}'
+        '{% block content %}<div id="test-main-body">Organiser Content</div>{% endblock %}'
+    )
+    rendered = template.render(Context({'request': request}))
 
     assert 'Public profile' in rendered
     assert f'href="{eventreverse(organizer, "presale:organizer.index")}"' in rendered
     assert 'target="_blank" rel="noopener noreferrer"' in rendered
+
+    soup = BeautifulSoup(rendered, 'html.parser')
+    main_el = soup.find('main', id='main-content')
+    assert main_el is not None
+    assert 'container' in main_el.get('class', [])
+    assert main_el.find(id='test-main-body') is not None
+
+    page_wrapper = soup.find(id='page-wrapper')
+    assert page_wrapper is not None
+    assert main_el in page_wrapper.descendants
