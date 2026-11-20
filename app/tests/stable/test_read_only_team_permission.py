@@ -5,9 +5,22 @@ import json
 
 import pytest
 from django.test import override_settings
-from django_scopes import scope, scopes_disabled
+from django_scopes import scope
 
-from eventyay.base.models import Room, SpeakerProfile, Submission, SubmissionType, TalkSlot, Team, Track, User
+from eventyay.base.models import (
+    Review,
+    ReviewPhase,
+    Room,
+    SpeakerProfile,
+    Submission,
+    SubmissionType,
+    Tag,
+    TalkSlot,
+    Team,
+    Track,
+    User,
+)
+from eventyay.base.models.auth_token import ENDPOINTS, WRITE_PERMISSIONS, UserApiToken
 from eventyay.control.forms.organizer_forms.team_form import TeamForm
 
 
@@ -255,7 +268,7 @@ def test_read_only_token_cannot_change_program(read_only_client, event, program)
         response = getattr(read_only_client, method)(event_url(event, path), **kwargs)
         assert response.status_code == 403, (method, path, response.status_code)
 
-    with scopes_disabled():
+    with scope(event=event):
         public.refresh_from_db()
         program['track'].refresh_from_db()
         room.refresh_from_db()
@@ -288,9 +301,149 @@ def test_submissions_team_can_still_change_sessions(submissions_team_client, eve
         content_type='application/json',
     )
     assert response.status_code == 200, response.content
-    with scopes_disabled():
+    with scope(event=event):
         public.refresh_from_db()
     assert public.title == 'Renamed'
 
     response = submissions_team_client.get(event_url(event, 'mail-templates/'))
     assert response.status_code == 200
+
+
+@pytest.fixture
+def review_phase(event):
+    with scope(event=event):
+        event.review_phases.all().delete()
+        return ReviewPhase.objects.create(
+            event=event,
+            name='Review',
+            is_active=True,
+            can_review=True,
+            can_see_other_reviews='always',
+            can_change_submission_state=False,
+            can_tag_submissions='none',
+        )
+
+
+@pytest.fixture
+def reviewers(organizer, event):
+    team = Team.objects.create(organizer=organizer, name='Reviewers', is_reviewer=True)
+    team.limit_events.add(event)
+    users = []
+    for name in ('alice', 'bob'):
+        user = User.objects.create_user(email=f'{name}@example.com', password=f'{name}pass12345', fullname=name)
+        team.members.add(user)
+        users.append(user)
+    return users
+
+
+@pytest.fixture
+def proposal(event):
+    with scope(event=event):
+        submission_type = SubmissionType.objects.create(event=event, name='Talk')
+        speaker = User.objects.create_user(email='author@example.com', password='authorpass123', fullname='Author')
+        SpeakerProfile.objects.create(user=speaker, event=event)
+        submission = Submission.objects.create(
+            title='Proposal', event=event, submission_type=submission_type, content_locale='en'
+        )
+        submission.speakers.add(speaker)
+        return submission
+
+
+def user_client(client, user, event):
+    token = UserApiToken.objects.create(name='Reviewer', user=user)
+    token.events.set([event])
+    token.endpoints = {endpoint: list(WRITE_PERMISSIONS) for endpoint in ENDPOINTS}
+    token.save()
+    client.defaults['HTTP_AUTHORIZATION'] = f'Token {token.token}'
+    return client
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_reviewer_cannot_change_another_reviewers_review(client, event, reviewers, proposal, review_phase):
+    alice, bob = reviewers
+    with scope(event=event):
+        bobs_review = Review.objects.create(submission=proposal, user=bob, text='Good')
+        alices_review = Review.objects.create(submission=proposal, user=alice, text='Fine')
+    client = user_client(client, alice, event)
+
+    response = client.patch(
+        event_url(event, f'reviews/{bobs_review.pk}/'),
+        data=json.dumps({'text': 'Bad'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 403
+    response = client.delete(event_url(event, f'reviews/{bobs_review.pk}/'))
+    assert response.status_code == 403
+
+    response = client.patch(
+        event_url(event, f'reviews/{alices_review.pk}/'),
+        data=json.dumps({'text': 'Better'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 200, response.content
+
+    with scope(event=event):
+        bobs_review.refresh_from_db()
+        alices_review.refresh_from_db()
+    assert bobs_review.text == 'Good'
+    assert alices_review.text == 'Better'
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_reviewer_cannot_change_own_review_when_reviews_are_closed(client, event, reviewers, proposal, review_phase):
+    alice = reviewers[0]
+    with scope(event=event):
+        review = Review.objects.create(submission=proposal, user=alice, text='Fine')
+    review_phase.can_review = False
+    review_phase.save()
+    client = user_client(client, alice, event)
+
+    response = client.delete(event_url(event, f'reviews/{review.pk}/'))
+    assert response.status_code == 403
+    with scope(event=event):
+        assert Review.objects.filter(pk=review.pk).exists()
+
+
+@override_settings(SITE_URL='http://testserver')
+@pytest.mark.parametrize('allowed', [True, False])
+def test_reviewer_state_changes_follow_review_phase(client, event, reviewers, proposal, review_phase, allowed):
+    review_phase.can_change_submission_state = allowed
+    review_phase.save()
+    client = user_client(client, reviewers[0], event)
+
+    response = client.post(event_url(event, f'submissions/{proposal.code}/accept/'))
+    assert response.status_code == (200 if allowed else 403), response.content
+    response = client.patch(
+        event_url(event, f'submissions/{proposal.code}/'),
+        data=json.dumps({'title': 'Changed'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 403
+
+    with scope(event=event):
+        proposal.refresh_from_db()
+    assert proposal.state == ('accepted' if allowed else 'submitted')
+    assert proposal.title == 'Proposal'
+
+
+@override_settings(SITE_URL='http://testserver')
+@pytest.mark.parametrize(('tag_phase', 'can_create', 'can_change'), [
+    ('none', False, False),
+    ('use_tags', False, True),
+    ('create_tags', True, False),
+])
+def test_reviewer_tag_changes_follow_review_phase(
+    client, event, reviewers, review_phase, tag_phase, can_create, can_change
+):
+    review_phase.can_tag_submissions = tag_phase
+    review_phase.save()
+    with scope(event=event):
+        tag = Tag.objects.create(event=event, tag='Existing', color='#000000')
+    client = user_client(client, reviewers[0], event)
+
+    response = client.post(
+        event_url(event, 'tags/'), data=json.dumps({'tag': 'New', 'color': '#000000'}), content_type='application/json'
+    )
+    assert response.status_code == (201 if can_create else 403), response.content
+    response = client.delete(event_url(event, f'tags/{tag.pk}/'))
+    assert response.status_code == (204 if can_change else 403), response.content
