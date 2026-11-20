@@ -129,14 +129,14 @@ export default {
 
 			&.loungemesh
 				background-color: transparent
-				color: #7c3aed
+				color: var(--clr-primary, #2185d0)
 				padding: 0
 				svg.loungemesh-brand-icon
 					width: 48px
 					height: 48px
 					display: block
 					border-radius: 12px
-					box-shadow: 0 2px 8px rgba(79, 110, 247, 0.28)
+					box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12)
 
 		.provider-info
 			.provider-title

@@ -326,7 +326,7 @@ export default {
 			.field-label
 				font-size: 13px
 				font-weight: 600
-				color: #475569
+				color: $clr-grey-800
 				margin-bottom: 6px
 
 			.custom-server-dropdown
@@ -341,22 +341,22 @@ export default {
 					justify-content: space-between
 					padding: 0 14px
 					background: #ffffff
-					border: 1px solid #cbd5e1
-					border-radius: 8px
+					border: 1px solid $clr-grey-300
+					border-radius: 6px
 					box-sizing: border-box
 					cursor: pointer
 					outline: none
-					transition: all 0.15s ease
+					transition: border-color 0.15s ease, box-shadow 0.15s ease
 					text-align: left
 
 					&:hover
-						background-color: #f8fafc
-						border-color: #94a3b8
+						background-color: $clr-grey-50
+						border-color: $clr-grey-400
 
 					&:focus,
 					&.is-open
-						border-color: #4f6ef7
-						box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15)
+						border-color: var(--clr-primary, #2185d0)
+						box-shadow: 0 0 0 2px var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.15))
 
 					.trigger-content
 						display: flex
@@ -366,27 +366,27 @@ export default {
 
 						.server-type-icon
 							font-size: 20px
-							color: #4f6ef7
+							color: var(--clr-primary, #2185d0)
 							flex-shrink: 0
 
 						.server-name
 							font-size: 14px
 							font-weight: 500
-							color: #1e293b
+							color: $clr-grey-900
 							white-space: nowrap
 							overflow: hidden
 							text-overflow: ellipsis
 
 					.dropdown-chevron
 						font-size: 20px
-						color: #64748b
+						color: $clr-grey-600
 						transition: transform 0.2s ease
 						flex-shrink: 0
 						margin-left: 8px
 
 						&.is-open
 							transform: rotate(180deg)
-							color: #4f6ef7
+							color: var(--clr-primary, #2185d0)
 
 				.dropdown-popover
 					position: absolute
@@ -394,9 +394,9 @@ export default {
 					left: 0
 					right: 0
 					background: #ffffff
-					border: 1px solid #e2e8f0
-					border-radius: 10px
-					box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)
+					border: 1px solid $clr-grey-200
+					border-radius: 8px
+					box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1)
 					padding: 6px
 					max-height: 250px
 					overflow-y: auto
@@ -413,15 +413,15 @@ export default {
 						user-select: none
 
 						&:hover
-							background-color: #f1f5f9
+							background-color: $clr-grey-100
 
 						&.is-active
-							background-color: #eef2ff
+							background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
 							.option-title
-								color: #4f6ef7
+								color: var(--clr-primary, #2185d0)
 								font-weight: 600
 							.option-icon
-								color: #4f6ef7
+								color: var(--clr-primary, #2185d0)
 
 						.option-content
 							display: flex
@@ -431,19 +431,19 @@ export default {
 
 							.option-icon
 								font-size: 18px
-								color: #64748b
+								color: $clr-grey-600
 								flex-shrink: 0
 
 							.option-title
 								font-size: 13.5px
-								color: #334155
+								color: $clr-grey-800
 								white-space: nowrap
 								overflow: hidden
 								text-overflow: ellipsis
 
 						.option-check
 							font-size: 18px
-							color: #4f6ef7
+							color: var(--clr-primary, #2185d0)
 							flex-shrink: 0
 							margin-left: 8px
 
@@ -457,24 +457,24 @@ export default {
 			flex-shrink: 0
 
 			&.scope-global
-				background-color: #f5f3ff
-				color: #7c3aed
-				border: 1px solid #ddd6fe
+				background-color: var(--clr-primary-alpha-18, rgba(33, 133, 208, 0.12))
+				color: var(--clr-primary, #2185d0)
+				border: 1px solid var(--clr-primary-alpha-30, rgba(33, 133, 208, 0.25))
 
 			&.scope-event
-				background-color: #eff6ff
-				color: #2563eb
-				border: 1px solid #bfdbfe
+				background-color: rgba(#4caf50, 0.12)
+				color: #2e7d32
+				border: 1px solid rgba(#4caf50, 0.3)
 
 			&.scope-organizer
-				background-color: #f0fdf4
-				color: #16a34a
-				border: 1px solid #bbf7d0
+				background-color: $clr-grey-100
+				color: $clr-grey-800
+				border: 1px solid $clr-grey-300
 
 			&.scope-configured
-				background-color: #fffbeb
-				color: #d97706
-				border: 1px solid #fde68a
+				background-color: rgba(#ff9800, 0.12)
+				color: #e65100
+				border: 1px solid rgba(#ff9800, 0.3)
 
 		.btn-delete-server
 			margin-bottom: 2px
@@ -486,39 +486,47 @@ export default {
 		margin-top: 8px
 		margin-bottom: 16px
 		.btn-toggle-custom
+			themed-button-secondary()
 			font-size: 13px
-			color: #4f6ef7
 			font-weight: 600
+			color: var(--clr-primary, #2185d0)
+			&:hover
+				color: var(--clr-primary-darken-15, #1a6fad)
+
 	.custom-server-box
 		margin-top: 8px
 		padding: 16px
-		border: 1px solid #e2e8f0
+		border: 1px solid $clr-grey-200
 		border-radius: 8px
-		background-color: #f8fafc
+		background-color: $clr-grey-50
 		.box-title
 			margin: 0 0 6px 0
 			font-size: 15px
 			font-weight: 600
-			color: #1e293b
+			color: $clr-grey-900
 		.box-hint
 			margin: 0 0 12px 0
 			font-size: 12px
-			color: #64748b
+			color: $clr-secondary-text-light
 		.box-actions
 			display: flex
 			gap: 8px
 			margin-top: 12px
+			.btn-test-save
+				themed-button-primary()
+			.btn-cancel
+				themed-button-secondary()
 		.box-status
 			margin-top: 10px
 			font-size: 13px
 			padding: 8px 12px
 			border-radius: 6px
 			&.status-ok
-				background-color: #f0fdf4
-				color: #16a34a
-				border: 1px solid #bbf7d0
+				background-color: rgba(#4caf50, 0.12)
+				color: #2e7d32
+				border: 1px solid rgba(#4caf50, 0.3)
 			&.status-err
-				background-color: #fef2f2
-				color: #dc2626
-				border: 1px solid #fecaca
+				background-color: rgba(#f44336, 0.12)
+				color: #c62828
+				border: 1px solid rgba(#f44336, 0.3)
 </style>
