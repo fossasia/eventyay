@@ -42,6 +42,11 @@ def test_mask_room_config_secrets_keeps_empty_and_non_string_values():
     assert mask_room_config_secrets(config) == config
 
 
+@pytest.mark.parametrize('module_config', [1, 'hook-s3cret', {'chat.native': {'webhook_hmac_secret': 'hook-s3cret'}}])
+def test_mask_room_config_secrets_masks_non_list_module_config(module_config):
+    assert mask_room_config_secrets({'module_config': module_config}) == {'module_config': '********'}
+
+
 def test_mask_room_config_secrets_handles_missing_or_malformed_modules():
     assert mask_room_config_secrets({'name': 'Room'}) == {'name': 'Room'}
     assert mask_room_config_secrets({'module_config': None}) == {'module_config': None}

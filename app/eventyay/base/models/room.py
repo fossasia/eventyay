@@ -585,7 +585,14 @@ def mask_room_config_secrets(room_config):
     Jitsi/Zoom credentials must not be stored there.
     """
     room_config = copy.deepcopy(room_config)
-    for module in room_config.get("module_config") or []:
+    modules = room_config.get("module_config")
+    if modules is None:
+        return room_config
+    if not isinstance(modules, list):
+        # Not a valid module list, so its secrets cannot be found; keep none of it.
+        room_config["module_config"] = "********"
+        return room_config
+    for module in modules:
         config = module.get("config") if isinstance(module, dict) else None
         if not isinstance(config, dict):
             continue
