@@ -86,10 +86,63 @@
     font-size: 10px;
 }
 
-/* Team permission nesting */
+/* Team permission sections */
+.team-permissions-section > legend {
+    display: flex;
+    align-items: center;
+}
+
+/* Same-size box for every section icon, centred on the heading text */
+.team-permissions-legend-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    color: #3b73b9;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.team-permissions-section > .form-group:has(> .col-md-9 > .checkbox) {
+    margin-bottom: 6px;
+}
+
+/* Team permission nesting: children sit under their parent with a guide line */
 .team-permission-children {
-    margin-left: 24px;
-    padding-left: 10px;
+    margin-bottom: 10px;
+}
+
+.team-permission-children > .form-group {
+    margin-bottom: 0;
+}
+
+.team-permission-children .col-md-9 > * {
+    margin-left: 6px;
+    padding-left: 18px;
+    border-left: 2px solid #dbe3ee;
+}
+
+.team-permission-children .col-md-9 > .checkbox {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.team-permission-children .col-md-9 > .help-block {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-bottom: 6px;
+}
+
+/* On stacked layouts the empty label column only adds gaps between rows */
+@media (max-width: 991px) {
+    .team-permissions-section .control-label.label-empty {
+        display: none;
+    }
 }
 
 .team-permission-children--disabled {
@@ -207,6 +260,61 @@
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+/* Team permissions: "Restrict access to tracks" */
+.team-track-limits .team-track-list.scrolling-multiple-choice {
+    height: auto;
+    max-height: 350px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.team-track-summary {
+    margin: 0 0 6px;
+}
+
+.team-track-search-row {
+    margin-bottom: 8px;
+}
+
+.team-track-bulk-actions {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.team-track-group + .team-track-group {
+    margin-top: 8px;
+}
+
+.team-track-group-header {
+    position: sticky;
+    top: -6px;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 0 2px -15px;
+    padding: 6px 10px 6px 15px;
+    background: #f5f6f8;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.team-track-group .checkbox {
+    margin: 4px 0;
+}
+
+.team-track-color {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 4px 0 2px;
+    border-radius: 50%;
+    vertical-align: middle;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
 /* Thumbnailed file input widget styles */
