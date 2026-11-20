@@ -1349,11 +1349,10 @@ class Schedule(PretalxModel):
                 speaker_data['biography'] = getattr(profile, 'biography', '') if show_biography else ''
             avatar_urls = list_avatar_urls(user, self.event, include=include_avatar)
             if compact:
-                tiny = avatar_urls.get('avatar_thumbnail_tiny')
-                if tiny:
-                    speaker_data['avatar_thumbnail_tiny'] = tiny
-                elif avatar_urls.get('avatar_thumbnail_default'):
-                    speaker_data['avatar_thumbnail_default'] = avatar_urls['avatar_thumbnail_default']
+                for key in ('avatar_thumbnail_tiny', 'avatar_thumbnail_default'):
+                    val = avatar_urls.get(key)
+                    if val:
+                        speaker_data[key] = val
             else:
                 speaker_data.update(avatar_urls)
             if include_avatar and needs_avatar_thumbnails(user, avatar_urls):

@@ -243,3 +243,22 @@ def test_build_data_compact_index_has_no_talks(event, slot):
         assert data["days"]
         assert data["rooms"]
         assert data["compact"] is True
+
+
+@pytest.mark.django_db
+def test_build_data_compact_includes_thumbnails_and_omits_raw_avatar(event, slot, monkeypatch):
+    """Compact schedule includes both pre-generated thumbnails but omits the raw original avatar."""
+    speaker = slot.submission.speakers.first()
+    mock_urls = {
+        'avatar': 'https://example.com/avatar.jpg',
+        'avatar_thumbnail_default': 'https://example.com/avatar_default.webp',
+        'avatar_thumbnail_tiny': 'https://example.com/avatar_tiny.webp',
+    }
+    monkeypatch.setattr('eventyay.base.models.schedule.list_avatar_urls', lambda user, evt, **kwargs: mock_urls)
+    with scope(event=event):
+        data = slot.schedule.build_data(compact=True)
+        spk_data = next(item for item in data['speakers'] if item['code'] == speaker.code)
+        assert spk_data['avatar_thumbnail_tiny'] == 'https://example.com/avatar_tiny.webp'
+        assert spk_data['avatar_thumbnail_default'] == 'https://example.com/avatar_default.webp'
+        assert 'avatar' not in spk_data
+
