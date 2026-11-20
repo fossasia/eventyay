@@ -287,46 +287,39 @@ def test_resolve_loungemesh_role(test_setup):
     event = test_setup["event"]
     user = test_setup["user"]
 
-    # 1. Public view (is_organizer_area=False): anyone watching is ALWAYS an attendee
-    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    # Unprivileged user -> attendee
     assert resolve_loungemesh_role(event, user) == "attendee"
-
-    # Even admin traits or settings permissions yield attendee on public view
-    user.traits = ["admin"]
     assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
-    user.traits = []
-
-    with patch.object(user, "has_event_permission", return_value=True):
-        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
-
-    # 2. Organizer area (is_organizer_area=True): host, moderator, or attendee
-    # Unprivileged user in organizer area -> attendee
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
-    # Admin trait active in organizer area -> host
+    # Admin trait active -> host
     user.traits = ["admin"]
+    assert resolve_loungemesh_role(event, user) == "host"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
     user.traits = []
 
-    # can_video_manage_content in organizer area -> host
+    # can_video_manage_content -> host
     def host_content_check(org, ev, perm):
         return perm == "can_video_manage_content"
 
     with patch.object(user, "has_event_permission", side_effect=host_content_check):
+        assert resolve_loungemesh_role(event, user) == "host"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
 
-    # can_change_config in organizer area -> attendee (config is for themes/defaults, not host)
+    # can_change_config -> attendee (config is for themes/defaults, not host)
     def host_config_check(org, ev, perm):
         return perm == "can_change_config"
 
     with patch.object(user, "has_event_permission", side_effect=host_config_check):
+        assert resolve_loungemesh_role(event, user) == "attendee"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
-    # can_video_moderate in organizer area -> moderator
+    # can_video_moderate -> moderator
     def mod_check(org, ev, perm):
         return perm == "can_video_moderate"
 
     with patch.object(user, "has_event_permission", side_effect=mod_check):
+        assert resolve_loungemesh_role(event, user) == "moderator"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
 
     # Video content manager trait in organizer area -> host
@@ -335,23 +328,26 @@ def test_resolve_loungemesh_role(test_setup):
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
     user.traits = []
 
-    # Video config manager trait in organizer area -> attendee (themes/defaults only)
+    # Video config manager trait -> attendee (themes/defaults only)
     config_trait = f"eventyay-video-event-{event.slug}-video-config-manager"
     user.traits = [config_trait]
+    assert resolve_loungemesh_role(event, user) == "attendee"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
     user.traits = []
 
-    # Video moderator trait in organizer area -> moderator
+    # Video moderator trait -> moderator
     moderator_trait = f"eventyay-video-event-{event.slug}-video-moderator"
     user.traits = [moderator_trait]
+    assert resolve_loungemesh_role(event, user) == "moderator"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
     user.traits = []
 
-    # Non-video permissions (including can_change_event_settings) in organizer area -> attendee
+    # Non-video permissions (including can_change_event_settings) -> attendee
     def other_check(org, ev, perm):
         return perm in ("can_change_items", "can_change_submissions", "can_change_event_settings")
 
     with patch.object(user, "has_event_permission", side_effect=other_check):
+        assert resolve_loungemesh_role(event, user) == "attendee"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
 
@@ -503,17 +499,18 @@ def test_loungemesh_websocket_module(test_setup, monkeypatch):
             assert res is not None
             assert "url" in res
             assert "grant=" in res["url"]
+            # Unprivileged user -> attendee
             assert res["role"] == "attendee"
             assert res["moderator"] is False
 
-            # On public view (is_organizer=False), even admin traits yield attendee
+            # With admin traits, host role is resolved
             user.traits = ["admin"]
             await module.room_url({"room": str(room.id)})
-            assert consumer.sent_data["role"] == "attendee"
-            assert consumer.sent_data["moderator"] is False
+            assert consumer.sent_data["role"] == "host"
+            assert consumer.sent_data["moderator"] is True
             user.traits = []
 
-            # In organizer area (is_organizer=True), host role is resolved
+            # In organizer area with admin traits, host role is also resolved
             consumer.is_organizer = True
             user.traits = ["admin"]
             await module.room_url({"room": str(room.id)})

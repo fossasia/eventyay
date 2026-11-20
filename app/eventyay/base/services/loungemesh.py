@@ -344,16 +344,10 @@ def _resolve_platform_principal(user):
 def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str:
     """
     Resolve LoungeMesh permission level:
-    - Anyone watching on public view (is_organizer_area=False) is ALWAYS an attendee.
-    - Only in organizer area (is_organizer_area=True):
-      - Admin mode active (admin trait in user traits) -> host
-      - Video: Can manage rooms and content (can_video_manage_content) -> host
-      - Video: Can moderate users and engagement (can_video_moderate) -> moderator
-      - otherwise (none of these is there, e.g. can_change_config only) -> attendee
+    - Host: Active platform staff session (admin mode) or 'can_video_manage_content' permission.
+    - Moderator: 'can_video_moderate' permission.
+    - Attendee: If none of these permissions are present (regular attendee, reviewer, config-only, anonymous).
     """
-    if not is_organizer_area:
-        return "attendee"
-
     if not user or not getattr(user, "is_authenticated", False):
         return "attendee"
 
