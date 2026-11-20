@@ -63,6 +63,16 @@ const placeInfoBox = (trigger, box) => {
     }
 }
 
+const isFocusedWithin = (element) => Boolean(element.contains(document.activeElement))
+
+const isHovered = (element) => {
+    try {
+        return element.matches(":hover")
+    } catch {
+        return false
+    }
+}
+
 document.querySelectorAll(".speaker-voucher-info-wrapper").forEach((wrapper) => {
     const trigger = wrapper.querySelector(".speaker-voucher-info")
     const box = wrapper.querySelector(".speaker-voucher-info-box")
@@ -70,22 +80,30 @@ document.querySelectorAll(".speaker-voucher-info-wrapper").forEach((wrapper) => 
 
     let hideTimer = null
 
+    const clearHideTimer = () => {
+        if (!hideTimer) return
+        clearTimeout(hideTimer)
+        hideTimer = null
+    }
+
     const show = () => {
-        if (hideTimer) {
-            clearTimeout(hideTimer)
-            hideTimer = null
-        }
+        clearHideTimer()
         placeInfoBox(trigger, box)
     }
 
     const hide = () => {
+        clearHideTimer()
         hideTimer = setTimeout(() => {
+            hideTimer = null
+            // Keep open while keyboard focus or pointer remains on the control/box.
+            if (isFocusedWithin(wrapper) || isHovered(wrapper) || isHovered(box)) {
+                return
+            }
             box.classList.remove("is-visible", "is-above")
             box.style.top = ""
             box.style.bottom = ""
             box.style.left = ""
             box.style.right = ""
-            hideTimer = null
         }, HIDE_DELAY_MS)
     }
 
