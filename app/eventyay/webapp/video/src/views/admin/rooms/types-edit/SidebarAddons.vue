@@ -5,7 +5,7 @@
 		p.subtitle {{ $t('Enhance the attendee experience on the player.') }}
 
 	.addons-card
-		.addon-row
+		.addon-row(v-if="allowChat")
 			.addon-info
 				.addon-icon
 					i.mdi.mdi-message-text-outline(aria-hidden="true")
@@ -15,7 +15,7 @@
 			.addon-toggle
 				bunt-switch(name="enable-chat", v-model="hasChat")
 
-		.addon-nested-config(v-if="hasChat")
+		.addon-nested-config(v-if="allowChat && hasChat")
 			.webhook-container
 				button.webhook-header-btn(
 					type="button"
@@ -94,7 +94,7 @@
 				bunt-checkbox(v-model="modules['question'].config.active", :label="$t('Active')", name="active")
 				bunt-checkbox(v-model="modules['question'].config.requires_moderation", :label="$t('Questions require moderation')", name="requires_moderation")
 
-		.addon-row(v-if="$features.enabled('polls')")
+		.addon-row(v-if="allowPolls && $features.enabled('polls')")
 			.addon-info
 				.addon-icon
 					i.mdi.mdi-chart-box-outline(aria-hidden="true")
@@ -110,6 +110,16 @@ import mixin from './mixin'
 
 export default {
 	mixins: [mixin],
+	props: {
+		allowChat: {
+			type: Boolean,
+			default: true
+		},
+		allowPolls: {
+			type: Boolean,
+			default: true
+		}
+	},
 	data() {
 		return {
 			showWebhookConfig: false,

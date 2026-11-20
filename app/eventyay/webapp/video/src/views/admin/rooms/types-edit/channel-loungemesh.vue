@@ -4,32 +4,61 @@
 		providerId="loungemesh",
 		:title="$t('LoungeMesh Spatial Lounge')",
 		:subtitle="$t('Spatial proximity networking and workshop lounge powered by LoungeMesh.')",
-		providerIcon="mdi-account-group",
 		v-bind="$props"
 	)
+		template(#icon)
+			svg.loungemesh-brand-icon(viewBox="0 0 48 48", fill="none", aria-hidden="true")
+				defs
+					linearGradient#lm-brand-grad(x1="8", y1="8", x2="40", y2="40", gradientUnits="userSpaceOnUse")
+						stop(stop-color="#4f6ef7")
+						stop(offset="1", stop-color="#7b93ff")
+				rect(x="4", y="4", width="40", height="40", rx="12", fill="url(#lm-brand-grad)")
+				circle(cx="18", cy="22", r="7", fill="#fff", opacity="0.95")
+				circle(cx="30", cy="22", r="7", fill="#fff", opacity="0.75")
+				path(d="M12 34c4 3 8 4 12 4s8-1 12-4", stroke="#fff", stroke-width="2.5", stroke-linecap="round", opacity="0.9")
+
 		bunt-checkbox(name="enable_notes", v-model="module.config.enable_notes", :label="$t('Enable shared collaborative notes')")
 		bunt-checkbox(name="enable_whiteboard", v-model="module.config.enable_whiteboard", :label="$t('Enable shared interactive whiteboard')")
 		bunt-checkbox(name="enable_spatial_chat", v-model="module.config.enable_spatial_chat", :label="$t('Enable spatial chat')")
-		.server-selection-group
+
+		.server-selection-group(ref="serverDropdownRef")
 			.field-group
 				label.field-label {{ $t('LoungeMesh Server') }}
-				.custom-server-select
-					select.server-select(
-						name="prefer_server",
-						v-model="module.config.prefer_server"
+				.custom-server-dropdown(:class="{ 'is-open': serverDropdownOpen }")
+					button.dropdown-trigger(
+						type="button",
+						@click.stop="toggleServerDropdown",
+						:aria-expanded="String(serverDropdownOpen)",
+						aria-haspopup="listbox"
 					)
-						option(
-							v-for="opt in serverOptions",
-							:key="opt.id",
-							:value="opt.id"
-						) {{ opt.label }}
-					i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
+						.trigger-content
+							i.mdi.server-type-icon(:class="currentServerOption.isAuto ? 'mdi-auto-fix' : 'mdi-server-network'")
+							span.server-name {{ currentServerOption.title }}
+							span.scope-pill(:class="`scope-${currentServerOption.scope}`", v-if="!currentServerOption.isAuto") {{ currentServerOption.scopeLabel }}
+						i.mdi.mdi-chevron-down.dropdown-chevron(:class="{ 'is-open': serverDropdownOpen }")
+
+					transition(name="fade-dropdown")
+						.dropdown-popover(v-if="serverDropdownOpen", role="listbox")
+							.dropdown-option(
+								v-for="opt in serverOptions",
+								:key="opt.id",
+								:class="{ 'is-active': opt.id === (module.config.prefer_server || '') }",
+								role="option",
+								:aria-selected="String(opt.id === (module.config.prefer_server || ''))",
+								@click.stop="selectServer(opt)"
+							)
+								.option-content
+									i.mdi.option-icon(:class="opt.isAuto ? 'mdi-auto-fix' : 'mdi-server-network'")
+									span.option-title {{ opt.title }}
+									span.scope-pill(:class="`scope-${opt.scope}`", v-if="!opt.isAuto") {{ opt.scopeLabel }}
+								i.mdi.mdi-check.option-check(v-if="opt.id === (module.config.prefer_server || '')")
 			bunt-button.btn-delete-server(
 				v-if="selectedServer && selectedServer.is_custom",
 				icon="delete",
 				:tooltip="$t('Delete this custom server')",
 				@click="deleteCustomServer(selectedServer)"
 			)
+
 		.custom-server-wrapper
 			bunt-button.btn-toggle-custom(
 				v-if="!showAddCustom",
@@ -72,6 +101,7 @@ export default {
 		return {
 			servers: [],
 			loadingServers: false,
+			serverDropdownOpen: false,
 			showAddCustom: false,
 			testingServer: false,
 			newServerUrl: '',
@@ -96,23 +126,41 @@ export default {
 		},
 		serverOptions() {
 			const options = [
-				{ id: '', label: this.$t('Auto (event default)') }
+				{
+					id: '',
+					title: this.$t('Auto (event default)'),
+					scope: 'auto',
+					scopeLabel: this.$t('Default'),
+					isAuto: true
+				}
 			]
 			for (const s of this.servers) {
-				const scopeLabel = s.scope === 'event' ? this.$t('Event') : s.scope === 'organizer' ? this.$t('Organizer') : this.$t('Global')
+				const scopeLabel = s.scope === 'event'
+					? this.$t('Event')
+					: s.scope === 'organizer'
+						? this.$t('Organizer')
+						: this.$t('Global')
 				options.push({
 					id: s.url,
-					label: `${s.url} (${scopeLabel})`,
+					title: s.url,
+					scope: s.scope || 'global',
+					scopeLabel,
 					raw: s
 				})
 			}
 			if (this.module?.config?.prefer_server && !options.some(o => o.id === this.module.config.prefer_server || o.raw?.id === this.module.config.prefer_server)) {
 				options.push({
 					id: this.module.config.prefer_server,
-					label: `${this.module.config.prefer_server} (${this.$t('Configured')})`
+					title: this.module.config.prefer_server,
+					scope: 'configured',
+					scopeLabel: this.$t('Configured')
 				})
 			}
 			return options
+		},
+		currentServerOption() {
+			const val = this.module?.config?.prefer_server || ''
+			return this.serverOptions.find(o => o.id === val || o.raw?.id === val) || this.serverOptions[0]
 		},
 		selectedServer() {
 			const val = this.module?.config?.prefer_server
@@ -144,7 +192,24 @@ export default {
 		}
 		await this.fetchServers()
 	},
+	mounted() {
+		document.addEventListener('click', this.handleDocumentClick)
+	},
 	methods: {
+		toggleServerDropdown() {
+			this.serverDropdownOpen = !this.serverDropdownOpen
+		},
+		selectServer(opt) {
+			if (this.module?.config) {
+				this.module.config.prefer_server = opt.id
+			}
+			this.serverDropdownOpen = false
+		},
+		handleDocumentClick(e) {
+			if (this.serverDropdownOpen && this.$refs.serverDropdownRef && !this.$refs.serverDropdownRef.contains(e.target)) {
+				this.serverDropdownOpen = false
+			}
+		},
 		async fetchServers() {
 			this.loadingServers = true
 			try {
@@ -178,6 +243,7 @@ export default {
 				if (this.module?.config) {
 					this.module.config.prefer_server = created.url
 				}
+				this.serverDropdownOpen = false
 				if (this.cancelTimeout) clearTimeout(this.cancelTimeout)
 				this.cancelTimeout = setTimeout(() => {
 					if (this.addOperationId === opId) {
@@ -232,6 +298,7 @@ export default {
 		}
 	},
 	beforeUnmount() {
+		document.removeEventListener('click', this.handleDocumentClick)
 		this.addOperationId++
 		if (this.cancelTimeout) {
 			clearTimeout(this.cancelTimeout)
@@ -245,72 +312,198 @@ export default {
 	.server-selection-group
 		display: flex
 		align-items: flex-end
-		gap: 8px
-		margin-top: 12px
-		margin-bottom: 8px
+		gap: 10px
+		margin-top: 14px
+		margin-bottom: 10px
+		position: relative
+
 		.field-group
 			flex: 1
 			display: flex
 			flex-direction: column
+			position: relative
+
 			.field-label
 				font-size: 13px
 				font-weight: 600
-				color: var(--clr-text-secondary, #555)
+				color: #475569
 				margin-bottom: 6px
-			.custom-server-select
+
+			.custom-server-dropdown
 				position: relative
-				display: flex
-				align-items: center
-				background: #ffffff
-				border: 1px solid var(--clr-border, #d6d9dc)
-				border-radius: 6px
-				height: 40px
-				box-sizing: border-box
-				transition: border-color 0.15s ease, box-shadow 0.15s ease
-				&:focus-within
-					border-color: var(--clr-primary, #007bff)
-					box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15)
-				.server-select
+				width: 100%
+
+				.dropdown-trigger
 					width: 100%
-					height: 100%
-					padding: 0 36px 0 12px
-					border: none
-					background: transparent
-					font-size: 14px
-					font-family: inherit
-					color: var(--clr-text, #212529)
+					height: 44px
+					display: flex
+					align-items: center
+					justify-content: space-between
+					padding: 0 14px
+					background: #ffffff
+					border: 1px solid #cbd5e1
+					border-radius: 8px
+					box-sizing: border-box
 					cursor: pointer
 					outline: none
-					appearance: none
-					-webkit-appearance: none
-				.dropdown-arrow
+					transition: all 0.15s ease
+					text-align: left
+
+					&:hover
+						background-color: #f8fafc
+						border-color: #94a3b8
+
+					&:focus,
+					&.is-open
+						border-color: #4f6ef7
+						box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15)
+
+					.trigger-content
+						display: flex
+						align-items: center
+						gap: 10px
+						overflow: hidden
+
+						.server-type-icon
+							font-size: 20px
+							color: #4f6ef7
+							flex-shrink: 0
+
+						.server-name
+							font-size: 14px
+							font-weight: 500
+							color: #1e293b
+							white-space: nowrap
+							overflow: hidden
+							text-overflow: ellipsis
+
+					.dropdown-chevron
+						font-size: 20px
+						color: #64748b
+						transition: transform 0.2s ease
+						flex-shrink: 0
+						margin-left: 8px
+
+						&.is-open
+							transform: rotate(180deg)
+							color: #4f6ef7
+
+				.dropdown-popover
 					position: absolute
-					right: 12px
-					color: var(--clr-text-secondary, #666)
-					font-size: 18px
-					pointer-events: none
+					top: calc(100% + 6px)
+					left: 0
+					right: 0
+					background: #ffffff
+					border: 1px solid #e2e8f0
+					border-radius: 10px
+					box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)
+					padding: 6px
+					max-height: 250px
+					overflow-y: auto
+					z-index: 100
+
+					.dropdown-option
+						display: flex
+						align-items: center
+						justify-content: space-between
+						padding: 9px 12px
+						border-radius: 6px
+						cursor: pointer
+						transition: background-color 0.12s ease
+						user-select: none
+
+						&:hover
+							background-color: #f1f5f9
+
+						&.is-active
+							background-color: #eef2ff
+							.option-title
+								color: #4f6ef7
+								font-weight: 600
+							.option-icon
+								color: #4f6ef7
+
+						.option-content
+							display: flex
+							align-items: center
+							gap: 10px
+							overflow: hidden
+
+							.option-icon
+								font-size: 18px
+								color: #64748b
+								flex-shrink: 0
+
+							.option-title
+								font-size: 13.5px
+								color: #334155
+								white-space: nowrap
+								overflow: hidden
+								text-overflow: ellipsis
+
+						.option-check
+							font-size: 18px
+							color: #4f6ef7
+							flex-shrink: 0
+							margin-left: 8px
+
+		.scope-pill
+			font-size: 11px
+			font-weight: 600
+			padding: 2px 8px
+			border-radius: 12px
+			text-transform: uppercase
+			letter-spacing: 0.03em
+			flex-shrink: 0
+
+			&.scope-global
+				background-color: #f5f3ff
+				color: #7c3aed
+				border: 1px solid #ddd6fe
+
+			&.scope-event
+				background-color: #eff6ff
+				color: #2563eb
+				border: 1px solid #bfdbfe
+
+			&.scope-organizer
+				background-color: #f0fdf4
+				color: #16a34a
+				border: 1px solid #bbf7d0
+
+			&.scope-configured
+				background-color: #fffbeb
+				color: #d97706
+				border: 1px solid #fde68a
+
 		.btn-delete-server
 			margin-bottom: 2px
+			height: 44px
+			width: 44px
+			flex-shrink: 0
+
 	.custom-server-wrapper
 		margin-top: 8px
 		margin-bottom: 16px
 		.btn-toggle-custom
 			font-size: 13px
-			color: var(--clr-primary, #007bff)
+			color: #4f6ef7
+			font-weight: 600
 	.custom-server-box
 		margin-top: 8px
 		padding: 16px
-		border: 1px solid var(--clr-border, #e0e0e0)
-		border-radius: 6px
-		background-color: var(--clr-bg-secondary, #fafafa)
+		border: 1px solid #e2e8f0
+		border-radius: 8px
+		background-color: #f8fafc
 		.box-title
 			margin: 0 0 6px 0
 			font-size: 15px
 			font-weight: 600
+			color: #1e293b
 		.box-hint
 			margin: 0 0 12px 0
 			font-size: 12px
-			color: var(--clr-text-secondary, #666)
+			color: #64748b
 		.box-actions
 			display: flex
 			gap: 8px
@@ -319,11 +512,13 @@ export default {
 			margin-top: 10px
 			font-size: 13px
 			padding: 8px 12px
-			border-radius: 4px
+			border-radius: 6px
 			&.status-ok
-				background-color: #e8f5e9
-				color: #2e7d32
+				background-color: #f0fdf4
+				color: #16a34a
+				border: 1px solid #bbf7d0
 			&.status-err
-				background-color: #ffebee
-				color: #c62828
+				background-color: #fef2f2
+				color: #dc2626
+				border: 1px solid #fecaca
 </style>

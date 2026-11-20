@@ -52,7 +52,14 @@
 								bunt-switch(name="force_join", v-model="config.force_join")
 
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id] && !isProviderDisabled", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
-			sidebar-addons(v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom')", :config="config", :modules="modules", :creating="creating")
+			sidebar-addons(
+				v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')",
+				:config="config",
+				:modules="modules",
+				:creating="creating",
+				:allow-chat="inferredType.id !== 'channel-loungemesh'",
+				:allow-polls="inferredType.id !== 'channel-loungemesh'"
+			)
 			.danger-zone(v-if="!creating && canEdit && hasPermission('room:delete')")
 				h3 {{ $t('Danger Zone') }}
 				template(v-if="config.has_linked_sessions")
@@ -353,9 +360,13 @@ export default {
 					this.config.id = saveRoomId
 				}
 				let moduleConfig = this.config.module_config || []
-				if (['channel-bbb', 'channel-jitsi', 'channel-loungemesh'].includes(this.inferredType?.id)) {
+				if (['channel-bbb', 'channel-jitsi'].includes(this.inferredType?.id)) {
 					moduleConfig = moduleConfig.filter(
 						m => !['chat.native', 'question', 'poll'].includes(m.type)
+					)
+				} else if (this.inferredType?.id === 'channel-loungemesh') {
+					moduleConfig = moduleConfig.filter(
+						m => !['chat.native', 'poll'].includes(m.type)
 					)
 				}
 				const updated = await api.call('room.config.patch', {

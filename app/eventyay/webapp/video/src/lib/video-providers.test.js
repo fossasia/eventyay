@@ -178,14 +178,16 @@ test('hasEmbeddedSuite identifies BBB, Jitsi, and LoungeMesh but not Janus or Zo
 	assert.equal(hasEmbeddedSuite([{ type: 'call.loungemesh' }]), true)
 })
 
-test('supportsPlatformSidebar allows chat/polls for Janus, stage, and Zoom, but suppresses for embedded suites (BBB, Jitsi, LoungeMesh)', () => {
+test('supportsPlatformSidebar allows chat/polls for Janus, stage, and Zoom, and allows questions for LoungeMesh while suppressing chat/polls', () => {
 	// Janus with chat.native
 	assert.equal(supportsPlatformSidebar({ 'call.janus': {}, 'chat.native': {} }), true)
 	// Zoom with chat.native (supported via platform sidebar)
 	assert.equal(supportsPlatformSidebar({ 'call.zoom': {}, 'chat.native': {} }), true)
-	// LoungeMesh with chat.native or addons (suppressed because LoungeMesh has embedded chat/features)
+	// LoungeMesh suppresses native chat and poll, but supports questions
 	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {}, 'chat.native': {} }), false)
-	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {}, question: {} }), false)
+	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {}, poll: {} }), false)
+	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {}, question: {} }), true)
+	assert.equal(supportsPlatformSidebar([{ type: 'call.loungemesh' }, { type: 'question' }]), true)
 	assert.equal(supportsPlatformSidebar({ 'call.loungemesh': {} }), false)
 	// BBB with chat.native (suppressed because BBB has native chat)
 	assert.equal(supportsPlatformSidebar({ 'call.bigbluebutton': {}, 'chat.native': {} }), false)
