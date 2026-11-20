@@ -53,7 +53,7 @@ if [ "$EVY_RUNNING_ENVIRONMENT" = "development" ]; then
   if [ ! -d "$CACHE_DIR/css" ] || [ -z "$(ls -A "$CACHE_DIR/css" 2>/dev/null)" ]; then
     echo "Compressed assets missing in $CACHE_DIR — running collectstatic and compress..."
     python manage.py collectstatic --noinput
-    COMPRESS_OFFLINE=True python manage.py compress --force
+    python manage.py compress --force
   fi
 fi
 
