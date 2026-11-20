@@ -175,16 +175,20 @@ def normalize_url(url: str) -> str | None:
         return None
 
 
-def fetch_pinned(session: requests.Session, url: str, addresses: Sequence[str]) -> requests.Response:
+def send_pinned(
+    session: requests.Session,
+    request: requests.PreparedRequest,
+    addresses: Sequence[str],
+    timeout: float,
+) -> requests.Response:
     """
-    Request ``url`` at the validated addresses, trying the next one if a connection fails.
+    Send ``request`` to the validated addresses, trying the next one if a connection fails.
 
     The request is sent through the adapter directly, not ``Session.send``: even with
     ``allow_redirects=False`` and ``stream=True``, ``Session.send`` reads the whole body
     of a redirect response, which would bypass the size limit in ``read_limited``.
-    Session cookies are still sent and updated.
+    Redirects are not followed. Session cookies are still sent and updated.
     """
-    request = session.prepare_request(requests.Request('GET', url))  # TODO: user agent
     last_error = None
     for address in addresses:
         adapter = PinnedAddressAdapter(address)
@@ -192,13 +196,19 @@ def fetch_pinned(session: requests.Session, url: str, addresses: Sequence[str]) 
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         try:
-            response = adapter.send(request, stream=True, timeout=PREVIEW_HTTP_TIMEOUT)
+            response = adapter.send(request, stream=True, timeout=timeout)
         except requests.ConnectionError as error:
             last_error = error
             continue
         extract_cookies_to_jar(session.cookies, request, response.raw)
         return response
     raise last_error
+
+
+def fetch_pinned(session: requests.Session, url: str, addresses: Sequence[str]) -> requests.Response:
+    """Request ``url`` with GET at the validated addresses (see ``send_pinned``)."""
+    request = session.prepare_request(requests.Request('GET', url))  # TODO: user agent
+    return send_pinned(session, request, addresses, PREVIEW_HTTP_TIMEOUT)
 
 
 class PreviewResponse(NamedTuple):
