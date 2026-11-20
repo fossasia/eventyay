@@ -344,15 +344,51 @@ def _resolve_platform_principal(user):
 def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str:
     """
     Resolve LoungeMesh permission level:
-    - Host: Active platform staff session (admin mode) or 'can_video_manage_content' permission.
-    - Moderator: 'can_video_moderate' permission.
-    - Attendee: If none of these permissions are present (regular attendee, reviewer, config-only, anonymous).
+    - Host: In organizer area with active platform staff session (admin mode) or 'can_video_manage_content' permission.
+    - Moderator: In organizer area with 'can_video_moderate' permission.
+    - Attendee: Public view, or if neither host nor moderator permissions are present (regular attendee, reviewer, config-only, anonymous).
     """
     if not user or not getattr(user, "is_authenticated", False):
         return "attendee"
 
+    # Public video view must always join LoungeMesh as attendee
+    if not is_organizer_area:
+        return "attendee"
+
+    token_id = getattr(user, "token_id", None)
+    if token_id:
+        if not str(token_id).endswith(":orga"):
+            return "attendee"
+        traits = getattr(user, "traits", None) or []
+        traits_set = set(traits)
+        if "admin" in traits_set:
+            return "host"
+
+        slug = getattr(event, "slug", "")
+        if slug:
+            host_traits = {
+                f"eventyay-video-event-{slug}-video-content-manager",
+                f"eventyay-video-event-{slug}-video-room-manager",
+                f"eventyay-video-event-{slug}-video-stage-manager",
+                f"eventyay-video-event-{slug}-video-channel-manager",
+            }
+            if traits_set.intersection(host_traits):
+                return "host"
+
+            moderator_traits = {
+                f"eventyay-video-event-{slug}-video-moderator",
+                f"eventyay-video-event-{slug}-video-user-moderator",
+                f"eventyay-video-event-{slug}-video-poll-question-manager",
+            }
+            if traits_set.intersection(moderator_traits):
+                return "moderator"
+
+        return "attendee"
+
+    # Direct traits on user object (e.g. without token_id)
     traits = getattr(user, "traits", None) or []
-    if "admin" in traits:
+    traits_set = set(traits)
+    if "admin" in traits_set:
         return "host"
 
     slug = getattr(event, "slug", "")
@@ -363,7 +399,7 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
             f"eventyay-video-event-{slug}-video-stage-manager",
             f"eventyay-video-event-{slug}-video-channel-manager",
         }
-        if any(t in traits for t in host_traits):
+        if traits_set.intersection(host_traits):
             return "host"
 
         moderator_traits = {
@@ -371,10 +407,18 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
             f"eventyay-video-event-{slug}-video-user-moderator",
             f"eventyay-video-event-{slug}-video-poll-question-manager",
         }
-        if any(t in traits for t in moderator_traits):
+        if traits_set.intersection(moderator_traits):
             return "moderator"
 
     principal = _resolve_platform_principal(user)
+    if not principal:
+        return "attendee"
+
+    from eventyay.eventyay_common.video.traits_sync import is_platform_event_admin
+
+    if is_platform_event_admin(principal):
+        return "host"
+
     if hasattr(principal, "has_event_permission") and event and getattr(event, "organizer", None):
         if principal.has_event_permission(event.organizer, event, "can_video_manage_content"):
             return "host"

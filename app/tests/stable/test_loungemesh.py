@@ -292,18 +292,27 @@ def test_resolve_loungemesh_role(test_setup):
     assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
-    # Admin trait active -> host
+    # Public view must always be attendee, even for admin or content managers
     user.traits = ["admin"]
-    assert resolve_loungemesh_role(event, user) == "host"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
     user.traits = []
 
-    # can_video_manage_content -> host
+    # Attendee tokens (not ending in :orga) must always resolve to attendee
+    user.token_id = "B4CE158"
+    user.traits = ["admin"]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+    user.token_id = "B4CE158:orga"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+    user.token_id = None
+    user.traits = []
+
+    # can_video_manage_content in organizer area -> host, public view -> attendee
     def host_content_check(org, ev, perm):
         return perm == "can_video_manage_content"
 
     with patch.object(user, "has_event_permission", side_effect=host_content_check):
-        assert resolve_loungemesh_role(event, user) == "host"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
 
     # can_change_config -> attendee (config is for themes/defaults, not host)
@@ -314,17 +323,18 @@ def test_resolve_loungemesh_role(test_setup):
         assert resolve_loungemesh_role(event, user) == "attendee"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
-    # can_video_moderate -> moderator
+    # can_video_moderate in organizer area -> moderator, public view -> attendee
     def mod_check(org, ev, perm):
         return perm == "can_video_moderate"
 
     with patch.object(user, "has_event_permission", side_effect=mod_check):
-        assert resolve_loungemesh_role(event, user) == "moderator"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
 
     # Video content manager trait in organizer area -> host
     content_trait = f"eventyay-video-event-{event.slug}-video-content-manager"
     user.traits = [content_trait]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
     user.traits = []
 
@@ -338,7 +348,7 @@ def test_resolve_loungemesh_role(test_setup):
     # Video moderator trait -> moderator
     moderator_trait = f"eventyay-video-event-{event.slug}-video-moderator"
     user.traits = [moderator_trait]
-    assert resolve_loungemesh_role(event, user) == "moderator"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
     user.traits = []
 
@@ -503,14 +513,14 @@ def test_loungemesh_websocket_module(test_setup, monkeypatch):
             assert res["role"] == "attendee"
             assert res["moderator"] is False
 
-            # With admin traits, host role is resolved
+            # With admin traits on public view, attendee role is still enforced
             user.traits = ["admin"]
             await module.room_url({"room": str(room.id)})
-            assert consumer.sent_data["role"] == "host"
-            assert consumer.sent_data["moderator"] is True
+            assert consumer.sent_data["role"] == "attendee"
+            assert consumer.sent_data["moderator"] is False
             user.traits = []
 
-            # In organizer area with admin traits, host role is also resolved
+            # In organizer area with admin traits, host role is resolved
             consumer.is_organizer = True
             user.traits = ["admin"]
             await module.room_url({"room": str(room.id)})
