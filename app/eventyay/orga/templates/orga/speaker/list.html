@@ -272,11 +272,13 @@
                 <dt>{% translate "Vouchers used" %}</dt>
                 <dd id="speaker-voucher-row-used">1</dd>
             </dl>
-            <div class="mail-preview mt-3">
-                <strong>{{ voucher_email_preview.subject }}</strong>
-                <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
-                <p class="text-muted mt-2 mb-0">{{ voucher_email_preview.sample_note }}</p>
-                <p class="mt-2 mb-0">
+            <div class="speaker-voucher-mail-preview mt-3">
+                <div class="mail-preview">
+                    <strong>{{ voucher_email_preview.subject }}</strong>
+                    <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
+                </div>
+                <p class="text-muted speaker-voucher-preview-note">{{ voucher_email_preview.sample_note }}</p>
+                <p class="mb-0">
                     <a href="{{ voucher_email_preview.template.urls.base }}">{% translate "Edit template →" %}</a>
                 </p>
             </div>

@@ -229,8 +229,44 @@ dialog.speaker-voucher-confirm-dialog:not([open]) {
   display: none;
 }
 
-.speaker-voucher-confirm-dialog {
-  width: min(560px, 95vw);
+.speaker-voucher-confirm-dialog,
+.speaker-voucher-preview-dialog {
+  width: min(720px, 94vw);
+  max-height: min(90vh, 900px);
+  overflow: auto;
+}
+
+.speaker-voucher-mail-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.speaker-voucher-mail-preview .mail-preview {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 12rem;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--color-border, #ced4da);
+  border-radius: 6px;
+  background: #fff;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.speaker-voucher-mail-preview .mail-preview > strong {
+  display: block;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e9ecef);
+  font-size: 1.05rem;
+}
+
+.speaker-voucher-preview-note {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .speaker-voucher-confirm-summary {
