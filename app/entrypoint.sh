@@ -51,11 +51,14 @@ find /usr/src/app/eventyay/locale -name "*.mo" -exec sh -c 'chown --reference="$
 # Web-only development initialization
 if [ "$EVY_RUNNING_ENVIRONMENT" = "development" ]; then
   # 1. Compressed static assets
-  STATIC_CACHE_CSS="${STATIC_ROOT:-/usr/src/app/eventyay/static.dist}/CACHE/css"
+  STATIC_CACHE_CSS="/usr/src/app/eventyay/static.dist/CACHE/css"
   if [ ! -d "$STATIC_CACHE_CSS" ] || [ -z "$(ls -A "$STATIC_CACHE_CSS" 2>/dev/null)" ]; then
     echo "Compressed static assets missing or empty in $STATIC_CACHE_CSS — collecting and compressing static assets..."
-    python manage.py collectstatic --noinput
-    python manage.py compress --force
+    if ! (python manage.py collectstatic --noinput && python manage.py compress --force); then
+      echo "ERROR: Failed to collect or compress static assets. Cleaning up partial cache..."
+      rm -rf "$STATIC_CACHE_CSS"
+      exit 1
+    fi
   fi
 
   # 2. Video test servers
