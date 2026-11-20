@@ -3800,26 +3800,37 @@ table thead .sort-link.sort-active {
 }
 
 .speaker-voucher-cell {
-  min-width: 11rem;
+  min-width: 8.5rem;
+  max-width: 14rem;
   vertical-align: middle;
 }
 
 .speaker-voucher-status {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.35rem 0.5rem;
+  gap: 0.25rem;
 }
 
 .speaker-voucher-status .badge {
-  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   white-space: normal;
   text-align: left;
   line-height: 1.25;
 }
 
-.speaker-voucher-date {
-  white-space: nowrap;
+.speaker-voucher-info {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.25rem;
+  color: var(--color-info);
+  line-height: 1;
+}
+
+.speaker-voucher-info:hover,
+.speaker-voucher-info:focus {
+  color: var(--color-info-dark, var(--color-info));
+  text-decoration: none;
 }
 
 .speaker-voucher-action-form {
@@ -3827,9 +3838,10 @@ table thead .sort-link.sort-active {
   margin: 0;
 }
 
-.speaker-voucher-status .btn {
+.speaker-voucher-status .speaker-voucher-action,
+.speaker-voucher-status .speaker-voucher-action-form .btn {
   flex: 0 0 auto;
-  padding: 0.15rem 0.45rem;
+  padding: 0.15rem 0.4rem;
   line-height: 1.2;
 }
 
