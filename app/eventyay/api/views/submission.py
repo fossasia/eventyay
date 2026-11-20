@@ -263,6 +263,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     search_fields = ('title', 'speakers__fullname')
     filterset_class = SubmissionFilter
     allow_public_read = True
+    write_permission = 'can_change_submissions'
     permission_map = {
         'make_submitted': 'submission.state_change_submission',
         'add_speaker': 'submission.update_submission',
@@ -571,6 +572,7 @@ class TagViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelView
     endpoint = 'tags'
     search_fields = ('tag',)
     allow_public_read = True
+    write_permission = ('can_change_submissions', 'is_reviewer')
     catalog_name = 'tags'
     catalog_max_age = 3600
 
@@ -717,6 +719,7 @@ class SubmissionTypeViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewset
     endpoint = 'submission-types'
     search_fields = ('name',)
     allow_public_read = True
+    write_permission = 'can_change_event_settings'
     catalog_name = 'submission-types'
     catalog_max_age = 3600
 

@@ -57,6 +57,7 @@ class ReviewViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     search_fields = ("submission__title", "user__fullname")
     filterset_class = ReviewFilter
     endpoint = "reviews"
+    write_permission = "is_reviewer"
     # We only permit access to this endpoint if the user can see all reviews,
     # as otherwise we would potentially have to filter for reviews to submissions
     # that the user has reviewed already.
