@@ -5,29 +5,31 @@
 {% block title %}{% translate "Organizers" %}{% endblock %}
 {% block content %}
 	<h1>{% translate "Organizers" %}</h1>
-    <form class="row filter-form" action="" method="get">
-        <div class="col-md-12 col-sm-12 col-xs-12 form-group">
-            <div class="input-group">
-                <input type="text" name="query" class="form-control" placeholder="{% translate 'Search organizers' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
-                <span class="input-group-btn">
-                    <button class="btn btn-primary" type="submit">
-                        <span class="fa fa-search"></span>
-                        <span class="hidden-md">
-                            {% translate "Search" %}
-                        </span>
-                    </button>
-                </span>
+    <div class="advanced-filter-search">
+        <form class="filter-form advanced-filter-search-form" action="" method="get">
+            <div class="advanced-filter-search-bar">
+                <div class="input-group advanced-filter-search-query-group">
+                    <input type="text" name="query" class="form-control" placeholder="{% translate 'Search organizers' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit">
+                            <span class="fa fa-search"></span>
+                            <span class="hidden-md">
+                                {% translate "Search" %}
+                            </span>
+                        </button>
+                    </span>
+                </div>
             </div>
-        </div>
-    </form>
-    {% if can_create_organizer %}
-        <p>
-            <a href='{% url "eventyay_common:organizers.add" %}' class="btn btn-default">
-                <span class="fa fa-plus"></span>
-                {% translate "Create a new organizer" %}
-            </a>
-        </p>
-    {% endif %}
+        </form>
+        {% if can_create_organizer %}
+            <div class="advanced-filter-search-actions">
+                <a href='{% url "eventyay_common:organizers.add" %}' class="btn btn-default">
+                    <span class="fa fa-plus"></span>
+                    {% translate "Create a new organizer" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
 	<table class="table table-condensed table-hover events-table">
 		<thead>
 			<tr>

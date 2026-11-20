@@ -55,3 +55,29 @@ def test_organizers_empty_state_when_no_organizers_exist(client):
     assert response.status_code == 200
     content = response.content.decode()
     assert 'No organizers found.' in content
+
+
+@pytest.mark.django_db
+def test_organizers_toolbar_layout(client):
+    with scopes_disabled():
+        user = User.objects.create_user('staffuser@eventyay.com', 'testpassword', is_staff=True)
+        orga = Organizer.objects.create(name='FOSSASIA', slug='fossasia')
+        team = Team.objects.create(
+            organizer=orga,
+            name='Admin Team',
+            can_create_events=True,
+            can_change_organizer_settings=True,
+        )
+        team.members.add(user)
+
+    client.login(email='staffuser@eventyay.com', password='testpassword')
+    url = reverse('eventyay_common:organizers')
+
+    response = client.get(url)
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'advanced-filter-search' in content
+    assert 'advanced-filter-search-bar' in content
+    assert 'advanced-filter-search-actions' in content
+    assert 'Create a new organizer' in content
+
