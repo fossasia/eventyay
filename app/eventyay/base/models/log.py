@@ -13,10 +13,28 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes import ScopedManager
 
-from eventyay.base.signals import logentry_object_link
+from eventyay.base.signals import activitylog_display, activitylog_object_link, logentry_object_link
 
 
-class VisibleOnlyManager(models.Manager):
+class LogEntryQuerySet(models.QuerySet):
+    def exclude_unresolvable_content_types(self):
+        """Skip rows whose ContentType no longer maps to an installed model.
+
+        Prefetching ``content_object`` calls ``model_class()._base_manager`` and
+        crashes when ``model_class()`` is ``None`` after a model rename or removal.
+        """
+        content_type_ids = self.values_list('content_type_id', flat=True).distinct()
+        stale_ids = [
+            content_type.pk
+            for content_type in ContentType.objects.filter(pk__in=content_type_ids)
+            if content_type.model_class() is None
+        ]
+        if not stale_ids:
+            return self
+        return self.exclude(content_type_id__in=stale_ids)
+
+
+class VisibleOnlyManager(models.Manager.from_queryset(LogEntryQuerySet)):
     def get_queryset(self):
         return super().get_queryset().filter(visible=True)
 
@@ -60,15 +78,21 @@ class LogEntry(models.Model):
     is_orga_action = models.BooleanField(default=False)
 
     objects = VisibleOnlyManager()
-    all = models.Manager()
+    all = models.Manager.from_queryset(LogEntryQuerySet)()
 
     class Meta:
         ordering = ('-datetime', '-id')
 
     def display(self):
+        """Return the readable message for this entry, falling back to the action key."""
         from ..signals import logentry_display
 
         for receiver, response in logentry_display.send(self.event, logentry=self):
+            if response:
+                return response
+        # Talk actions are logged as LogEntry too, but their readable names are
+        # registered on activitylog_display (eventyay.common.log_display).
+        for receiver, response in activitylog_display.send(self.event, activitylog=self):
             if response:
                 return response
         return self.action_type
@@ -85,6 +109,11 @@ class LogEntry(models.Model):
     @property
     def person(self):
         return self.user
+
+    @property
+    def person_id(self):
+        """Match ActivityLog.person_id for receivers of the activitylog_* signals."""
+        return self.user_id
 
     @property
     def timestamp(self):
@@ -137,6 +166,7 @@ class LogEntry(models.Model):
 
     @cached_property
     def display_object(self):
+        """Return an HTML reference to the logged object, or an empty string."""
         from . import (
             Event,
             Product,
@@ -273,6 +303,9 @@ class LogEntry(models.Model):
             for receiver, response in logentry_object_link.send(self.event, logentry=self):
                 if response:
                     return response
+            for receiver, response in activitylog_object_link.send(self.event, activitylog=self):
+                if response:
+                    return response
             return ''
 
     @cached_property
@@ -356,8 +389,6 @@ class ActivityLog(models.Model):
 
     @cached_property
     def display(self):
-        from eventyay.common.signals import activitylog_display
-
         for _receiver, response in activitylog_display.send(self.event, activitylog=self):
             if response:
                 return response
@@ -369,8 +400,6 @@ class ActivityLog(models.Model):
     @cached_property
     def display_object(self) -> str:
         """Returns a link (formatted HTML) to the object in question."""
-        from eventyay.common.signals import activitylog_object_link
-
         if not self.content_object:
             return ''
 
