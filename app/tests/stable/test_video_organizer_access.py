@@ -287,13 +287,18 @@ def test_check_has_active_staff_session_and_is_platform_event_admin():
     assert check_has_active_staff_session(attendee) is False
     assert is_platform_event_admin(attendee) is False
 
-    # Superuser
+    # Superuser without active staff session is not an event admin
     superuser = MagicMock()
     superuser.is_authenticated = True
     superuser.is_staff = True
     superuser.is_superuser = True
     superuser.has_active_staff_session.return_value = False
     assert check_has_active_staff_session(superuser) is False
+    assert is_platform_event_admin(superuser) is False
+
+    # Superuser with active staff session is an event admin
+    superuser.has_active_staff_session.return_value = True
+    assert check_has_active_staff_session(superuser) is True
     assert is_platform_event_admin(superuser) is True
 
     # Staff with active session

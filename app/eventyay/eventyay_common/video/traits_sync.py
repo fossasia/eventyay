@@ -61,13 +61,10 @@ def check_has_active_staff_session(user, session_key: str | None = None) -> bool
 
 
 def is_platform_event_admin(user, session_key: str | None = None) -> bool:
-    """Return True if the user is a superuser or has an active staff session."""
+    """Return True if the user has an active staff session (sudo mode)."""
     if not user:
         return False
-    return bool(
-        getattr(user, 'is_superuser', False)
-        or check_has_active_staff_session(user, session_key=session_key)
-    )
+    return check_has_active_staff_session(user, session_key=session_key)
 
 
 def apply_live_team_video_traits(
