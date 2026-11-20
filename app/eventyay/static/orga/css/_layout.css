@@ -3810,7 +3810,7 @@ table thead .sort-link.sort-active {
   display: inline-flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.15rem;
   overflow: visible;
 }
 
@@ -3915,12 +3915,18 @@ table thead .sort-link.sort-active {
 
 .speaker-voucher-status .speaker-voucher-icon-btn {
   flex: 0 0 auto;
-  padding: 0.1rem 0.2rem;
+  padding: 0.05rem;
   border: 0;
   line-height: 1;
   color: var(--color-info);
   text-decoration: none;
   box-shadow: none;
+}
+
+/* Keep info + resend/send icons visually paired. */
+.speaker-voucher-info-wrapper + .speaker-voucher-icon-btn,
+.speaker-voucher-info-wrapper + .speaker-voucher-action-form {
+  margin-left: -0.05rem;
 }
 
 .speaker-voucher-status .speaker-voucher-icon-btn:hover,
