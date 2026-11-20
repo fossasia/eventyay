@@ -898,9 +898,10 @@ def test_loungemesh_security_improvements(test_setup):
 
 @pytest.mark.django_db
 def test_loungemesh_room_settings_host_only(test_setup):
-    from eventyay.base.services.room import MODERATED_CALL_MODULE_PERMISSIONS
-    from eventyay.base.services.loungemesh import issue_signed_grant
     import jwt
+
+    from eventyay.base.services.loungemesh import issue_signed_grant
+    from eventyay.base.services.room import MODERATED_CALL_MODULE_PERMISSIONS
 
     event = test_setup["event"]
     server = test_setup["server"]
