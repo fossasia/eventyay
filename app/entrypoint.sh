@@ -50,7 +50,15 @@ find /usr/src/app/eventyay/locale -name "*.mo" -exec sh -c 'chown --reference="$
 
 # Web-only development initialization
 if [ "$EVY_RUNNING_ENVIRONMENT" = "development" ]; then
-  # 1. Video test servers
+  # 1. Compressed static assets
+  STATIC_CACHE_CSS="${STATIC_ROOT:-/usr/src/app/eventyay/static.dist}/CACHE/css"
+  if [ ! -d "$STATIC_CACHE_CSS" ] || [ -z "$(ls -A "$STATIC_CACHE_CSS" 2>/dev/null)" ]; then
+    echo "Compressed static assets missing or empty in $STATIC_CACHE_CSS — collecting and compressing static assets..."
+    python manage.py collectstatic --noinput
+    python manage.py compress --force
+  fi
+
+  # 2. Video test servers
   if [ "$VIDEO_SERVER_TEST_MODE" = "1" ]; then
     echo "VIDEO_SERVER_TEST_MODE=1 — enabling local video test servers..."
     python manage.py sync_video_test_servers --enable
@@ -59,7 +67,7 @@ if [ "$EVY_RUNNING_ENVIRONMENT" = "development" ]; then
     python manage.py sync_video_test_servers --disable
   fi
 
-  # 2. Vite dev servers
+  # 3. Vite dev servers
   if [ "$EVY_NPM_DEV" = "1" ]; then
     case "$*" in
       *runserver*)
