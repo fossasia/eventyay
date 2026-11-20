@@ -12,22 +12,12 @@
 {% block content %}
   <div class="speaker-vouchers-page">
     <header class="speaker-vouchers-hero">
-      <div class="speaker-vouchers-hero-copy">
-        <h2>{% translate "Speaker Vouchers" %}</h2>
-        <p>
-          {% blocktranslate trimmed %}
-            Configure free or discounted tickets for speakers. Select a voucher batch and send individual codes to speakers.
-          {% endblocktranslate %}
-        </p>
-      </div>
-      <div class="speaker-vouchers-hero-art" aria-hidden="true">
-        <span class="speaker-vouchers-ticket speaker-vouchers-ticket-back">
-          <i class="fa fa-ticket"></i>
-        </span>
-        <span class="speaker-vouchers-ticket speaker-vouchers-ticket-front">
-          <i class="fa fa-microphone"></i>
-        </span>
-      </div>
+      <h2>{% translate "Speaker Vouchers" %}</h2>
+      <p>
+        {% blocktranslate trimmed %}
+          Configure free or discounted tickets for speakers. Select a voucher batch and send individual codes to speakers.
+        {% endblocktranslate %}
+      </p>
     </header>
 
     {% if not has_voucher_batches %}
