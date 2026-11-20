@@ -154,9 +154,9 @@ export default {
 			const speaker = this.resolvedSpeaker
 			if (!speaker) return null
 			return speaker.avatar_thumbnail_default
-				|| speaker.avatar_thumbnail_tiny
 				|| speaker.avatar
 				|| speaker.avatar_url
+				|| speaker.avatar_thumbnail_tiny
 				|| null
 		},
 		resolvedSessions() {
