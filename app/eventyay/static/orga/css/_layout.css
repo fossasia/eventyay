@@ -3828,18 +3828,6 @@ table thead .sort-link.sort-active {
   flex: 0 0 auto;
 }
 
-.speaker-voucher-info {
-  padding: 0.1rem 0.25rem;
-  color: var(--color-info);
-  line-height: 1;
-}
-
-.speaker-voucher-info:hover,
-.speaker-voucher-info:focus {
-  color: var(--color-info-dark, var(--color-info));
-  text-decoration: none;
-}
-
 /* Match cfp-inline-help-box: light helptext instead of black CSS tooltips */
 .speaker-voucher-info-box {
   position: absolute;
@@ -3847,7 +3835,7 @@ table thead .sort-link.sort-active {
   right: 0;
   z-index: 20;
   display: none;
-  width: 260px;
+  width: min(280px, 70vw);
   padding: 8px 10px;
   color: #495057;
   font-size: 0.8125rem;
@@ -3875,9 +3863,47 @@ table thead .sort-link.sort-active {
   transform: rotate(45deg);
 }
 
+/* Keep hover while moving from the icon into the box (and onto the copy button). */
+.speaker-voucher-info-box::after {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  left: 0;
+  height: 8px;
+  content: "";
+}
+
 .speaker-voucher-info-wrapper:hover .speaker-voucher-info-box,
 .speaker-voucher-info-wrapper:focus-within .speaker-voucher-info-box {
   display: block;
+}
+
+.speaker-voucher-info-sent {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.speaker-voucher-info-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.speaker-voucher-info-code {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  word-break: break-all;
+  background: transparent;
+}
+
+.speaker-voucher-code-copy {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.35rem;
+  line-height: 1.2;
 }
 
 .speaker-voucher-action-form {
@@ -3885,6 +3911,7 @@ table thead .sort-link.sort-active {
   margin: 0;
 }
 
+.speaker-voucher-status .speaker-voucher-info,
 .speaker-voucher-status .speaker-voucher-action,
 .speaker-voucher-status .speaker-voucher-action-form .btn {
   flex: 0 0 auto;
