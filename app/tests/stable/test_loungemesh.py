@@ -315,12 +315,12 @@ def test_resolve_loungemesh_role(test_setup):
     with patch.object(user, "has_event_permission", side_effect=host_content_check):
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
 
-    # can_change_config in organizer area -> host
+    # can_change_config in organizer area -> attendee (config is for themes/defaults, not host)
     def host_config_check(org, ev, perm):
         return perm == "can_change_config"
 
     with patch.object(user, "has_event_permission", side_effect=host_config_check):
-        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
     # can_video_moderate in organizer area -> moderator
     def mod_check(org, ev, perm):
@@ -335,10 +335,10 @@ def test_resolve_loungemesh_role(test_setup):
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
     user.traits = []
 
-    # Video config manager trait in organizer area -> host
+    # Video config manager trait in organizer area -> attendee (themes/defaults only)
     config_trait = f"eventyay-video-event-{event.slug}-video-config-manager"
     user.traits = [config_trait]
-    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
     user.traits = []
 
     # Video moderator trait in organizer area -> moderator
