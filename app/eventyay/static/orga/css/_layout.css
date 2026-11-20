@@ -3799,6 +3799,40 @@ table thead .sort-link.sort-active {
   flex: 0 0 auto;
 }
 
+.speaker-voucher-cell {
+  min-width: 11rem;
+  vertical-align: middle;
+}
+
+.speaker-voucher-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.speaker-voucher-status .badge {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.25;
+}
+
+.speaker-voucher-date {
+  white-space: nowrap;
+}
+
+.speaker-voucher-action-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.speaker-voucher-status .btn {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.45rem;
+  line-height: 1.2;
+}
+
 .speaker-actions-cell {
   white-space: nowrap;
 }

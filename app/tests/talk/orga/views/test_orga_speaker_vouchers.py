@@ -564,6 +564,8 @@ def test_speakers_list_shows_voucher_column_when_enabled(
     assert 'Not sent' in response.text
     assert 'data-action="send"' in response.text
     assert 'speaker-voucher-action' in response.text
+    assert 'fa-paper-plane' in response.text
+    assert 'Send voucher email' in response.text
 
 
 @pytest.mark.django_db
