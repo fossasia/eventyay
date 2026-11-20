@@ -1,6 +1,7 @@
 import re
 import time as import_time
 from types import SimpleNamespace
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from allauth.core.exceptions import ImmediateHttpResponse
@@ -162,27 +163,74 @@ def test_adapter_post_login_reads_keep_logged_in_from_session():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'stale_state',
-    [
-        {'socialauth_next_url': '/orga/my-event/'},
-        {
-            'oauth2_params': {
-                'client_id': 'test-client',
-                'redirect_uri': 'https://example.com/callback',
-                'state': 'test-state',
-            }
-        },
-        {'oauth2_params': {'client_id': 'test-client'}, 'socialauth_next_url': '/orga/my-event/'},
-    ],
-)
-def test_adapter_ignores_destinations_from_abandoned_social_flows(settings, stale_state):
+def test_adapter_get_login_redirect_url_oauth2_handoff(monkeypatch):
+    """When oauth2_params are in the session, redirect to the OAuth2 authorize endpoint."""
+    user = User.objects.create_user('oauth2@example.com', 'password')
     request = RequestFactory().get('/')
-    request.session = stale_state
-    request.user = User.objects.create_user('abandoned@example.org', 'password')
-    settings.LOGIN_REDIRECT_URL = '/common/account/general'
+    request.user = user
+    request.session = {
+        'oauth2_params': {
+            'response_type': 'code',
+            'client_id': 'test-client',
+            'redirect_uri': 'https://example.com/callback',
+            'scope': 'profile',
+            'state': 'test-state',
+        },
+    }
 
-    assert CustomAccountAdapter().get_login_redirect_url(request) == settings.LOGIN_REDIRECT_URL
+    monkeypatch.setattr(
+        'eventyay.eventyay_common.adapter.reverse',
+        lambda name: '/oauth/authorize/',
+    )
+
+    adapter = CustomAccountAdapter()
+    url = adapter.get_login_redirect_url(request)
+
+    parsed = urlparse(url)
+    assert '/oauth/authorize' in parsed.path
+    params = parse_qs(parsed.query)
+    assert params['client_id'] == ['test-client']
+    assert params['state'] == ['test-state']
+    # Consumed from session
+    assert 'oauth2_params' not in request.session
+
+
+@pytest.mark.django_db
+def test_adapter_get_login_redirect_url_ignores_invalid_oauth2_params():
+    """Invalid oauth2_params payload is discarded and fallback redirect is used."""
+    user = User.objects.create_user('oauth2-invalid@example.com', 'password')
+    request = RequestFactory().get('/')
+    request.user = user
+    request.session = {
+        'oauth2_params': {
+            'client_id': 'test-client',
+            # Missing required redirect_uri and state keys.
+            'scope': 'profile',
+        },
+        'socialauth_next_url': '/orga/my-event/',
+    }
+
+    adapter = CustomAccountAdapter()
+    url = adapter.get_login_redirect_url(request)
+
+    assert url == '/orga/my-event/'
+    assert 'oauth2_params' not in request.session
+    assert 'socialauth_next_url' not in request.session
+
+
+@pytest.mark.django_db
+def test_adapter_get_login_redirect_url_socialauth_next():
+    """socialauth_next_url in session takes priority over default redirect."""
+    user = User.objects.create_user('next@example.com', 'password')
+    request = RequestFactory().get('/')
+    request.user = user
+    request.session = {'socialauth_next_url': '/orga/my-event/'}
+
+    adapter = CustomAccountAdapter()
+    url = adapter.get_login_redirect_url(request)
+
+    assert url == '/orga/my-event/'
+    assert 'socialauth_next_url' not in request.session
 
 
 @pytest.mark.django_db
