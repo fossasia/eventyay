@@ -10,7 +10,7 @@
 {% block extra_title %}
     {% block submission_title %}{% endblock submission_title %}
     {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
-    {% if can_view_speakers %}{{ submission.title }}{% else %}{{ submission.anonymised.title|default:submission.title }}{% endif %} ::
+    {% if can_view_speakers %}{{ submission.title }}{% elif submission %}{{ submission.anonymised.title|default:submission.title }}{% endif %} ::
 {% endblock extra_title %}
 
 {% block alternate_link %}
