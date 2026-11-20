@@ -1,3 +1,4 @@
+import ipaddress
 import random
 import socket
 
@@ -21,11 +22,22 @@ class ChunkBasedFileResponse(StreamingHttpResponse):
 
 
 def get_client_ip(request):
+    """Return the client IP address.
+
+    Each proxy appends the address it received the request from to X-Forwarded-For,
+    so only the last TRUSTED_PROXY_COUNT entries were written by our own proxies. Earlier
+    entries are sent by the client and can be anything.
+    """
     ip = request.META.get('REMOTE_ADDR')
     if settings.TRUST_X_FORWARDED_FOR:
         x_forwarded_for = request.headers.get('x-forwarded-for')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
+            entries = [entry.strip() for entry in x_forwarded_for.split(',')]
+            candidate = entries[max(len(entries) - settings.TRUSTED_PROXY_COUNT, 0)]
+            try:
+                ip = str(ipaddress.ip_address(candidate))
+            except ValueError:
+                pass
     return ip
 
 
