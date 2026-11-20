@@ -208,7 +208,8 @@ export function canManageVideoRooms(hasPermission) {
 
 export const EMBEDDED_SUITE_MODULE_TYPES = [
 	'call.bigbluebutton',
-	'call.jitsi'
+	'call.jitsi',
+	'call.loungemesh'
 ]
 
 export function hasEmbeddedSuite(modules) {

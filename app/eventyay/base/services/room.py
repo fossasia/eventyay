@@ -46,8 +46,6 @@ MODERATED_CALL_MODULE_PERMISSIONS = {
     "call.bigbluebutton": Permission.ROOM_BBB_MODERATE,
     "call.janus": Permission.ROOM_JANUSCALL_MODERATE,
     "call.jitsi": Permission.ROOM_JITSI_MODERATE,
-    "call.loungemesh": Permission.ROOM_LOUNGEMESH_MODERATE,
-    "channel.loungemesh": Permission.ROOM_LOUNGEMESH_MODERATE,
 }
 
 

@@ -884,3 +884,41 @@ def test_loungemesh_security_improvements(test_setup):
         cap_res = module._check_server_limit_and_duplicate("https://brand-new.example.com")
         assert cap_res is not None
         assert cap_res[0] == "loungemesh.limit_reached"
+
+
+@pytest.mark.django_db
+def test_loungemesh_room_settings_host_only(test_setup):
+    from eventyay.base.services.room import MODERATED_CALL_MODULE_PERMISSIONS
+    from eventyay.base.services.loungemesh import issue_signed_grant
+    import jwt
+
+    event = test_setup["event"]
+    server = test_setup["server"]
+    user = test_setup["user"]
+
+    # LoungeMesh call modules are not in MODERATED_CALL_MODULE_PERMISSIONS:
+    # only hosts with ROOM_UPDATE or EVENT_UPDATE can modify room settings
+    assert "call.loungemesh" not in MODERATED_CALL_MODULE_PERMISSIONS
+    assert "channel.loungemesh" not in MODERATED_CALL_MODULE_PERMISSIONS
+
+    # When feature flags are toggled off in room_cfg, grant accurately reflects them
+    class MockRoom:
+        pk = 99
+        module_config = [
+            {
+                "type": "call.loungemesh",
+                "config": {
+                    "enable_notes": False,
+                    "enable_whiteboard": False,
+                    "enable_spatial_chat": False,
+                },
+            }
+        ]
+
+    token = issue_signed_grant(event, MockRoom(), user, "host", server=server)
+    claims = jwt.decode(token, server.api_secret, algorithms=["HS256"], audience="loungemesh")
+    assert claims["features"] == {
+        "notes": False,
+        "whiteboard": False,
+        "spatial_chat": False,
+    }

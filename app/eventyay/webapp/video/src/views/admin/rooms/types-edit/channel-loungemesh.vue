@@ -11,14 +11,19 @@
 		bunt-checkbox(name="enable_whiteboard", v-model="module.config.enable_whiteboard", :label="$t('Enable shared interactive whiteboard')")
 		bunt-checkbox(name="enable_spatial_chat", v-model="module.config.enable_spatial_chat", :label="$t('Enable spatial chat')")
 		.server-selection-group
-			bunt-select(
-				name="prefer_server",
-				v-model="module.config.prefer_server",
-				:label="$t('LoungeMesh Server')",
-				:options="serverOptions",
-				option-value="id",
-				option-label="label"
-			)
+			.field-group
+				label.field-label {{ $t('LoungeMesh Server') }}
+				.custom-server-select
+					select.server-select(
+						name="prefer_server",
+						v-model="module.config.prefer_server"
+					)
+						option(
+							v-for="opt in serverOptions",
+							:key="opt.id",
+							:value="opt.id"
+						) {{ opt.label }}
+					i.mdi.mdi-chevron-down.dropdown-arrow(aria-hidden="true")
 			bunt-button.btn-delete-server(
 				v-if="selectedServer && selectedServer.is_custom",
 				icon="delete",
@@ -239,12 +244,53 @@ export default {
 .c-channel-loungemesh-settings
 	.server-selection-group
 		display: flex
-		align-items: center
+		align-items: flex-end
 		gap: 8px
-		.bunt-select
+		margin-top: 12px
+		margin-bottom: 8px
+		.field-group
 			flex: 1
+			display: flex
+			flex-direction: column
+			.field-label
+				font-size: 13px
+				font-weight: 600
+				color: var(--clr-text-secondary, #555)
+				margin-bottom: 6px
+			.custom-server-select
+				position: relative
+				display: flex
+				align-items: center
+				background: #ffffff
+				border: 1px solid var(--clr-border, #d6d9dc)
+				border-radius: 6px
+				height: 40px
+				box-sizing: border-box
+				transition: border-color 0.15s ease, box-shadow 0.15s ease
+				&:focus-within
+					border-color: var(--clr-primary, #007bff)
+					box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15)
+				.server-select
+					width: 100%
+					height: 100%
+					padding: 0 36px 0 12px
+					border: none
+					background: transparent
+					font-size: 14px
+					font-family: inherit
+					color: var(--clr-text, #212529)
+					cursor: pointer
+					outline: none
+					appearance: none
+					-webkit-appearance: none
+				.dropdown-arrow
+					position: absolute
+					right: 12px
+					color: var(--clr-text-secondary, #666)
+					font-size: 18px
+					pointer-events: none
 		.btn-delete-server
-			margin-top: 16px
+			margin-bottom: 2px
 	.custom-server-wrapper
 		margin-top: 8px
 		margin-bottom: 16px

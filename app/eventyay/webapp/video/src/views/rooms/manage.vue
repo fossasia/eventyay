@@ -4,7 +4,7 @@
 		panel.media(:class="{'is-call-media': isServerStreamRoom}")
 			.manage-room-header
 				.manage-room-title(v-if="room") {{ room.name }}
-				router-link.btn-edit-settings(v-if="hasPermission('room:update')", :to="{name: 'admin:rooms:item', params: {roomId: room.id}}")
+				router-link.btn-edit-settings(v-if="hasPermission('room:update') || isAdminMode", :to="{name: 'admin:rooms:item', params: {roomId: room.id}}")
 					i.mdi.mdi-cog-outline
 					span {{ $t('Edit Settings') }}
 			.server-stream-disabled-banner(v-if="isServerStreamRoom && isRoomDisabled")
@@ -349,7 +349,7 @@ export default {
 	},
 	computed: {
 		...mapState(['world', 'token']),
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		...mapGetters('schedule', ['sessions', 'sessionsScheduledNow']),
 		isEmbeddedSuiteRoom() {
 			return hasEmbeddedSuite(this.modules)

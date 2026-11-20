@@ -444,10 +444,20 @@ def issue_signed_grant(
                 room_cfg = raw_cfg if isinstance(raw_cfg, dict) else {}
                 break
         nested_features = room_cfg.get("features") if isinstance(room_cfg.get("features"), dict) else {}
+        enable_notes = room_cfg.get("enable_notes")
+        if enable_notes is None:
+            enable_notes = nested_features.get("notes", True)
+        enable_whiteboard = room_cfg.get("enable_whiteboard")
+        if enable_whiteboard is None:
+            enable_whiteboard = nested_features.get("whiteboard", True)
+        enable_spatial_chat = room_cfg.get("enable_spatial_chat")
+        if enable_spatial_chat is None:
+            enable_spatial_chat = nested_features.get("spatial_chat", True)
+
         features = {
-            "notes": room_cfg.get("enable_notes", nested_features.get("notes", True)),
-            "whiteboard": room_cfg.get("enable_whiteboard", nested_features.get("whiteboard", True)),
-            "spatial_chat": room_cfg.get("enable_spatial_chat", nested_features.get("spatial_chat", True)),
+            "notes": bool(enable_notes),
+            "whiteboard": bool(enable_whiteboard),
+            "spatial_chat": bool(enable_spatial_chat),
         }
 
     exp_ts = now_ts + expires_in_seconds
