@@ -315,6 +315,14 @@ def _resolve_platform_principal(user):
     email = getattr(user, "email", None)
     if not email and hasattr(user, "profile") and isinstance(user.profile, dict):
         email = user.profile.get("contact_email")
+    if not email:
+        token_id = getattr(user, "token_id", None)
+        if token_id:
+            from eventyay.base.services.user import resolve_account_fields_by_token_ids
+
+            clean_token = token_id.split(":")[0]
+            accounts = resolve_account_fields_by_token_ids([clean_token])
+            email = accounts.get(clean_token, {}).get("email")
 
     if email:
         from django_scopes import scopes_disabled
@@ -339,9 +347,9 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
     - Anyone watching on public view (is_organizer_area=False) is ALWAYS an attendee.
     - Only in organizer area (is_organizer_area=True):
       - Admin mode active (admin trait in user traits) -> host
-      - can_change_event_settings -> host
-      - can_video_moderate -> moderator
-      - otherwise -> attendee
+      - Video: Can manage rooms and content (can_video_manage_content) or Can change config (can_change_config) -> host
+      - Video: Can moderate users and engagement (can_video_moderate) -> moderator
+      - otherwise (none of these is there) -> attendee
     """
     if not is_organizer_area:
         return "attendee"
@@ -353,19 +361,32 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
     if "admin" in traits:
         return "host"
 
-    principal = _resolve_platform_principal(user)
-
     slug = getattr(event, "slug", "")
     if slug:
-        moderator_trait = f"eventyay-video-event-{slug}-video-moderator"
-        if moderator_trait in traits:
-            if hasattr(principal, "has_event_permission") and getattr(event, "organizer", None):
-                if principal.has_event_permission(event.organizer, event, "can_change_event_settings"):
-                    return "host"
+        host_traits = {
+            f"eventyay-video-event-{slug}-video-content-manager",
+            f"eventyay-video-event-{slug}-video-config-manager",
+            f"eventyay-video-event-{slug}-video-room-manager",
+            f"eventyay-video-event-{slug}-video-stage-manager",
+            f"eventyay-video-event-{slug}-video-channel-manager",
+        }
+        if any(t in traits for t in host_traits):
+            return "host"
+
+        moderator_traits = {
+            f"eventyay-video-event-{slug}-video-moderator",
+            f"eventyay-video-event-{slug}-video-user-moderator",
+            f"eventyay-video-event-{slug}-video-poll-question-manager",
+        }
+        if any(t in traits for t in moderator_traits):
             return "moderator"
 
+    principal = _resolve_platform_principal(user)
     if hasattr(principal, "has_event_permission") and event and getattr(event, "organizer", None):
-        if principal.has_event_permission(event.organizer, event, "can_change_event_settings"):
+        if (
+            principal.has_event_permission(event.organizer, event, "can_video_manage_content")
+            or principal.has_event_permission(event.organizer, event, "can_change_config")
+        ):
             return "host"
         if principal.has_event_permission(event.organizer, event, "can_video_moderate"):
             return "moderator"

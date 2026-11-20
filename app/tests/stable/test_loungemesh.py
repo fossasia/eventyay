@@ -308,11 +308,18 @@ def test_resolve_loungemesh_role(test_setup):
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
     user.traits = []
 
-    # can_change_event_settings in organizer area -> host
-    def perm_check(org, ev, perm):
-        return perm == "can_change_event_settings"
+    # can_video_manage_content in organizer area -> host
+    def host_content_check(org, ev, perm):
+        return perm == "can_video_manage_content"
 
-    with patch.object(user, "has_event_permission", side_effect=perm_check):
+    with patch.object(user, "has_event_permission", side_effect=host_content_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+
+    # can_change_config in organizer area -> host
+    def host_config_check(org, ev, perm):
+        return perm == "can_change_config"
+
+    with patch.object(user, "has_event_permission", side_effect=host_config_check):
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
 
     # can_video_moderate in organizer area -> moderator
@@ -322,15 +329,27 @@ def test_resolve_loungemesh_role(test_setup):
     with patch.object(user, "has_event_permission", side_effect=mod_check):
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
 
+    # Video content manager trait in organizer area -> host
+    content_trait = f"eventyay-video-event-{event.slug}-video-content-manager"
+    user.traits = [content_trait]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+    user.traits = []
+
+    # Video config manager trait in organizer area -> host
+    config_trait = f"eventyay-video-event-{event.slug}-video-config-manager"
+    user.traits = [config_trait]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+    user.traits = []
+
     # Video moderator trait in organizer area -> moderator
     moderator_trait = f"eventyay-video-event-{event.slug}-video-moderator"
     user.traits = [moderator_trait]
     assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
     user.traits = []
 
-    # Non-video, non-settings permissions in organizer area -> attendee
+    # Non-video permissions (including can_change_event_settings) in organizer area -> attendee
     def other_check(org, ev, perm):
-        return perm in ("can_change_items", "can_change_submissions")
+        return perm in ("can_change_items", "can_change_submissions", "can_change_event_settings")
 
     with patch.object(user, "has_event_permission", side_effect=other_check):
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
