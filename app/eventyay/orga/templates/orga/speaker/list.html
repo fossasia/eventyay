@@ -278,13 +278,15 @@
                     <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
                 </div>
                 <p class="text-muted speaker-voucher-preview-note">{{ voucher_email_preview.sample_note }}</p>
-                <p class="mb-0">
-                    <a href="{{ voucher_email_preview.template.urls.base }}">{% translate "Edit template →" %}</a>
-                </p>
             </div>
             <div class="orga-confirm-dialog-actions mt-3">
-                <button type="button" class="btn btn-default" id="speaker-voucher-row-cancel">{% translate "Cancel" %}</button>
-                <button type="button" class="btn btn-primary" id="speaker-voucher-row-confirm-btn">{% translate "Send" %}</button>
+                <span class="composer-actions">
+                    <button type="button" class="btn btn-outline-info" id="speaker-voucher-row-cancel">{% translate "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" id="speaker-voucher-row-confirm-btn">
+                        <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                        {% translate "Send" %}
+                    </button>
+                </span>
             </div>
         </dialog>
         <script type="module" src="{% static 'orga/js/speaker_list_vouchers.js' %}"></script>

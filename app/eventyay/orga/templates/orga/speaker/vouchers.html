@@ -238,13 +238,15 @@
         <div class="mt-2">{{ email_preview.html|safe }}</div>
       </div>
       <p class="text-muted speaker-voucher-preview-note">{{ email_preview.sample_note }}</p>
-      <p class="mb-0">
-        <a href="{{ email_preview.template.urls.base }}">{% translate "Edit template →" %}</a>
-      </p>
     </div>
     <div class="orga-confirm-dialog-actions mt-3">
-      <button type="button" class="btn btn-default" id="speaker-voucher-confirm-cancel">{% translate "Cancel" %}</button>
-      <button type="button" class="btn btn-primary" id="speaker-voucher-confirm-send">{% translate "Send vouchers" %}</button>
+      <span class="composer-actions">
+        <button type="button" class="btn btn-outline-info" id="speaker-voucher-confirm-cancel">{% translate "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="speaker-voucher-confirm-send">
+          <i class="fa fa-paper-plane" aria-hidden="true"></i>
+          {% translate "Send vouchers" %}
+        </button>
+      </span>
     </div>
   </dialog>
 
@@ -258,7 +260,9 @@
       <p class="text-muted speaker-voucher-preview-note">{{ email_preview.sample_note }}</p>
     </div>
     <div class="orga-confirm-dialog-actions mt-3">
-      <button type="button" class="btn btn-outline-info" id="speaker-voucher-preview-close">{% translate "Close" %}</button>
+      <span class="composer-actions">
+        <button type="button" class="btn btn-outline-info" id="speaker-voucher-preview-close">{% translate "Close" %}</button>
+      </span>
     </div>
   </dialog>
 
