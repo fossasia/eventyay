@@ -360,6 +360,13 @@ def test_resolve_loungemesh_role(test_setup):
         assert resolve_loungemesh_role(event, user) == "attendee"
         assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
 
+    # User with only moderator permission must resolve to moderator, even if stale content trait is present
+    user.traits = [content_trait]
+    with patch.object(user, "has_event_permission", side_effect=mod_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
+    user.traits = []
+
 
 @pytest.mark.django_db
 def test_issue_signed_grant_and_join_url(test_setup):

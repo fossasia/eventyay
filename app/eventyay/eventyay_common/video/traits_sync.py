@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -20,6 +21,10 @@ from eventyay.eventyay_common.video.permissions import (
     replace_managed_video_traits,
 )
 from eventyay.features.live.channels import GROUP_USER
+
+
+if TYPE_CHECKING:
+    from eventyay.base.models import Event
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +159,6 @@ def sync_video_traits_for_platform_users(
     Recomputes team-managed traits from current Team membership and optionally
     force-reloads connected clients so revoked access applies immediately.
     """
-    from eventyay.base.models.auth import StaffSession
     from eventyay.base.services.user import update_user
 
     users_by_token: dict[str, User] = {}
@@ -166,8 +170,13 @@ def sync_video_traits_for_platform_users(
     if not users_by_token:
         return
 
+    target_tokens = set()
+    for tok in users_by_token.keys():
+        target_tokens.add(tok)
+        target_tokens.add(f'{tok}:ORGA')
+
     filter_kwargs = {
-        '_token_id_upper__in': list(users_by_token.keys()),
+        '_token_id_upper__in': list(target_tokens),
         'deleted': False,
     }
     if organizer:
@@ -183,19 +192,18 @@ def sync_video_traits_for_platform_users(
         )
 
     for video_user in video_users:
-        platform_user = users_by_token.get((video_user.token_id or '').upper())
+        raw_token = (video_user.token_id or '').upper()
+        clean_token = raw_token.split(':')[0]
+        platform_user = users_by_token.get(clean_token)
         if not platform_user or not video_user.event_id:
             continue
 
         if not is_organizer_token_traits(video_user.event.slug, video_user.traits):
             continue
 
-        is_event_admin = is_platform_event_admin(platform_user)
         current_traits = list(video_user.traits or [])
-        if not is_event_admin and 'admin' in current_traits:
+        if not getattr(platform_user, 'is_staff', False) and 'admin' in current_traits:
             current_traits = [t for t in current_traits if t != 'admin']
-        elif is_event_admin and 'admin' not in current_traits:
-            current_traits.append('admin')
 
         platform_user._teamcache = {}
         permission_set = platform_user.get_event_permission_set(
@@ -219,7 +227,13 @@ def sync_video_traits_for_platform_users(
             try:
                 force_reload_video_user(video_user.id)
             except (OSError, RuntimeError, ConnectionError):
-                log_event('video', 'user.reload', OUTCOME_FAILURE, error_code='connection_error', object_id=video_user.id)
+                log_event(
+                    'video',
+                    'user.reload',
+                    OUTCOME_FAILURE,
+                    error_code='connection_error',
+                    object_id=video_user.id,
+                )
                 logger.exception('Failed to force-reload video user %s', video_user.id)
 
 

@@ -365,6 +365,13 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
     if "admin" in traits_set:
         return "host"
 
+    principal = _resolve_platform_principal(user)
+    if principal and hasattr(principal, "has_event_permission") and event and getattr(event, "organizer", None):
+        if principal.has_event_permission(event.organizer, event, "can_video_manage_content"):
+            return "host"
+        if principal.has_event_permission(event.organizer, event, "can_video_moderate"):
+            return "moderator"
+
     slug = getattr(event, "slug", "")
     if slug:
         host_traits = {
@@ -382,21 +389,6 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
             f"eventyay-video-event-{slug}-video-poll-question-manager",
         }
         if traits_set.intersection(moderator_traits):
-            return "moderator"
-
-    principal = _resolve_platform_principal(user)
-    if not principal:
-        return "attendee"
-
-    from eventyay.eventyay_common.video.traits_sync import is_platform_event_admin
-
-    if is_platform_event_admin(principal):
-        return "host"
-
-    if hasattr(principal, "has_event_permission") and event and getattr(event, "organizer", None):
-        if principal.has_event_permission(event.organizer, event, "can_video_manage_content"):
-            return "host"
-        if principal.has_event_permission(event.organizer, event, "can_video_moderate"):
             return "moderator"
 
     return "attendee"
