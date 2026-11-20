@@ -424,10 +424,13 @@ class TeamForm(forms.ModelForm):
                     is_member = self.instance.members.filter(pk=self.user.pk).exists()
                 if is_member:
                     for privacy_field in ('force_hide_speaker_names', 'force_hide_speaker_emails'):
-                        if getattr(self.instance, privacy_field, False) and not data.get(privacy_field):
-                            target_field = privacy_field if privacy_field in self.fields else None
+                        if (
+                            privacy_field in self.fields
+                            and getattr(self.instance, privacy_field, False)
+                            and not data.get(privacy_field)
+                        ):
                             self.add_error(
-                                target_field,
+                                privacy_field,
                                 forms.ValidationError(
                                     _('You cannot remove speaker privacy restrictions from a team you belong to.')
                                 ),

@@ -547,4 +547,18 @@ def test_team_form_cannot_clear_speaker_privacy_if_member(organizer):
     )
     assert form_super.is_valid()
 
-
+    # If privacy fields are omitted from form fields, member editing team should not trigger error
+    form_omitted = TeamForm(
+        instance=team,
+        data={
+            'name': 'Reviewer Team Updated',
+            'all_events': True,
+            'can_change_teams': True,
+            'is_reviewer': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    form_omitted.fields.pop('force_hide_speaker_names', None)
+    form_omitted.fields.pop('force_hide_speaker_emails', None)
+    assert form_omitted.is_valid()
