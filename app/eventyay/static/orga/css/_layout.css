@@ -3814,11 +3814,13 @@ table thead .sort-link.sort-active {
   overflow: visible;
 }
 
-.speaker-voucher-status .badge {
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: normal;
-  text-align: left;
+.speaker-voucher-status .speaker-voucher-badge {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-width: 5.25rem;
+  padding: 0.35em 0.55em;
+  text-align: center;
+  white-space: nowrap;
   line-height: 1.25;
 }
 
@@ -3911,12 +3913,25 @@ table thead .sort-link.sort-active {
   margin: 0;
 }
 
-.speaker-voucher-status .speaker-voucher-info,
-.speaker-voucher-status .speaker-voucher-action,
-.speaker-voucher-status .speaker-voucher-action-form .btn {
+.speaker-voucher-status .speaker-voucher-icon-btn {
   flex: 0 0 auto;
-  padding: 0.15rem 0.4rem;
-  line-height: 1.2;
+  padding: 0.1rem 0.2rem;
+  border: 0;
+  line-height: 1;
+  color: var(--color-info);
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.speaker-voucher-status .speaker-voucher-icon-btn:hover,
+.speaker-voucher-status .speaker-voucher-icon-btn:focus {
+  color: var(--color-info-dark, var(--color-info));
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.speaker-voucher-status .speaker-voucher-icon-btn .fa-ban {
+  color: var(--color-warning, #f0ad4e);
 }
 
 .speaker-actions-cell {

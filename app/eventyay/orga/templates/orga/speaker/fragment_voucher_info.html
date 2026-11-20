@@ -3,7 +3,7 @@
     {% with code=assignment.voucher.code sent_at=assignment.sent_at %}
         <span class="speaker-voucher-info-wrapper">
             <button type="button"
-                    class="btn btn-sm btn-outline-info speaker-voucher-info"
+                    class="btn btn-link btn-sm speaker-voucher-icon-btn speaker-voucher-info"
                     aria-label="{% if sent_at %}{% blocktranslate trimmed with date=sent_at|date:'j M Y' code=code %}Voucher details: sent {{ date }}, code {{ code }}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with code=code %}Voucher code {{ code }}{% endblocktranslate %}{% endif %}"
                     aria-describedby="speaker-voucher-help-{{ assignment.pk }}">
                 <i class="fa fa-info-circle" aria-hidden="true"></i>
