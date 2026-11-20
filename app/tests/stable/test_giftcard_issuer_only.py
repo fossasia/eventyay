@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from eventyay.base.models import Organizer, Team
 from eventyay.base.payment import GiftCardPayment
+from eventyay.base.services.cart import get_fees
 from eventyay.control.forms.organizer_forms import GiftCardCreateForm
 
 
@@ -72,6 +73,16 @@ def test_checkout_rejects_foreign_card(event, own_card, foreign_card):
     assert 'gift_cards' not in cs
     messages.error.assert_called_once()
     assert 'not known' in str(messages.error.call_args.args[1])
+
+
+@pytest.mark.django_db
+def test_get_fees_drops_foreign_card_from_session(event, own_card, foreign_card):
+    cs = {'gift_cards': [foreign_card.pk, own_card.pk]}
+    with patch('eventyay.presale.views.cart.cart_session', return_value=cs), scopes_disabled():
+        fees = get_fees(event, MagicMock(), Decimal('50.00'), None, None, [])
+
+    assert cs['gift_cards'] == [own_card.pk]
+    assert [f.value for f in fees] == [Decimal('-20.00')]
 
 
 @pytest.mark.django_db
