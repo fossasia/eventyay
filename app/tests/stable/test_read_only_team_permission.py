@@ -1,0 +1,296 @@
+"""A team with only "Read-only access to event information" gives integrations read access and nothing else."""
+
+import datetime as dt
+import json
+
+import pytest
+from django.test import override_settings
+from django_scopes import scope, scopes_disabled
+
+from eventyay.base.models import Room, SpeakerProfile, Submission, SubmissionType, TalkSlot, Team, Track, User
+from eventyay.control.forms.organizer_forms.team_form import TeamForm
+
+
+pytestmark = [pytest.mark.django_db, pytest.mark.usefixtures('allow_all_entitlements')]
+
+
+@pytest.fixture
+def read_only_team(organizer, event):
+    team = Team.objects.create(organizer=organizer, name='Website', can_view_event_info=True)
+    team.limit_events.add(event)
+    return team
+
+
+@pytest.fixture
+def read_only_client(client, read_only_team):
+    token = read_only_team.tokens.create(name='Website')
+    client.defaults['HTTP_AUTHORIZATION'] = f'Token {token.token}'
+    return client
+
+
+@pytest.fixture
+def settings_team_client(client, organizer, event):
+    team = Team.objects.create(organizer=organizer, name='Settings', can_change_event_settings=True)
+    team.limit_events.add(event)
+    token = team.tokens.create(name='Settings')
+    client.defaults['HTTP_AUTHORIZATION'] = f'Token {token.token}'
+    return client
+
+
+@pytest.fixture
+def program(event):
+    """A published schedule with one confirmed session and one session that is not public yet."""
+    with scope(event=event):
+        submission_type = SubmissionType.objects.create(event=event, name='Talk')
+        track = Track.objects.create(event=event, name='Main', color='#000000')
+        room = Room.objects.create(event=event, name='Room A')
+        speaker = User.objects.create_user(email='speaker@example.com', password='speakerpass123', fullname='Ada')
+        hidden_speaker = User.objects.create_user(email='hidden@example.com', password='hiddenpass123', fullname='Bo')
+        SpeakerProfile.objects.create(user=speaker, event=event, biography='Public bio')
+        SpeakerProfile.objects.create(user=hidden_speaker, event=event, biography='Hidden bio')
+
+        public = Submission.objects.create(
+            title='Public session', event=event, submission_type=submission_type, track=track, content_locale='en'
+        )
+        public.speakers.add(speaker)
+        public.accept()
+        public.confirm()
+
+        private = Submission.objects.create(
+            title='Private proposal', event=event, submission_type=submission_type, content_locale='en'
+        )
+        private.speakers.add(hidden_speaker)
+
+        start = event.date_from + dt.timedelta(hours=10)
+        TalkSlot.objects.update_or_create(
+            submission=public,
+            schedule=event.wip_schedule,
+            defaults={'is_visible': True, 'start': start, 'end': start + dt.timedelta(hours=1), 'room': room},
+        )
+        event.release_schedule('v1')
+    event.talks_published = True
+    event.save(update_fields=['talks_published'])
+    return {'public': public, 'private': private, 'track': track}
+
+
+def event_url(event, path=''):
+    return f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/{path}'
+
+
+def test_team_with_only_read_only_permission_can_be_saved(organizer, event):
+    form = TeamForm(
+        organizer=organizer,
+        data={'name': 'Website', 'limit_events': [event.pk], 'can_view_event_info': 'on', 'all_tracks': 'on'},
+    )
+    assert form.is_valid(), form.errors
+    form.instance.organizer = organizer
+    team = form.save()
+    assert team.permission_set() == {'can_view_event_info'}
+
+
+def test_team_without_permissions_is_still_rejected(organizer, event):
+    form = TeamForm(organizer=organizer, data={'name': 'Empty', 'limit_events': [event.pk], 'all_tracks': 'on'})
+    assert not form.is_valid()
+
+
+def test_existing_teams_do_not_gain_the_permission(organizer):
+    team = Team.objects.create(organizer=organizer, name='Old', can_change_event_settings=True)
+    assert 'can_view_event_info' not in team.permission_set()
+
+
+def test_read_only_token_reads_event(read_only_client, event):
+    response = read_only_client.get(f'/api/v1/organizers/{event.organizer.slug}/events/')
+    assert response.status_code == 200
+    assert [result['slug'] for result in response.json()['results']] == [event.slug]
+
+    response = read_only_client.get(event_url(event))
+    assert response.status_code == 200
+    assert response.json()['slug'] == event.slug
+
+
+def test_read_only_token_reads_only_public_settings(read_only_client, event):
+    event.settings.frontpage_text = 'Welcome'
+    event.settings.primary_color = '#123456'
+    event.settings.mail_from = 'orga@example.com'
+
+    response = read_only_client.get(event_url(event, 'settings/'))
+    assert response.status_code == 200
+    data = response.json()
+    assert data['frontpage_text'] == {'en': 'Welcome'}
+    assert data['primary_color'] == '#123456'
+    for private_setting in ('mail_from', 'invoice_numbers_prefix', 'payment_term_days', 'cancel_allow_user'):
+        assert private_setting not in data
+
+    response = read_only_client.get(event_url(event, 'settings/') + '?explain=true')
+    assert response.status_code == 200
+    assert 'mail_from' not in response.json()
+
+
+def test_settings_team_still_reads_all_settings(settings_team_client, event):
+    response = settings_team_client.get(event_url(event, 'settings/'))
+    assert response.status_code == 200
+    assert 'mail_from' in response.json()
+
+
+def test_read_only_token_cannot_change_event(read_only_client, event):
+    event.settings.frontpage_text = 'Welcome'
+
+    response = read_only_client.patch(
+        event_url(event, 'settings/'), data=json.dumps({'frontpage_text': 'Hacked'}), content_type='application/json'
+    )
+    assert response.status_code == 403
+    assert 'permission' in response.json()['detail'].lower()
+    event.settings.flush()
+    assert str(event.settings.frontpage_text) == 'Welcome'
+
+    response = read_only_client.patch(
+        event_url(event), data=json.dumps({'name': {'en': 'Hacked'}}), content_type='application/json'
+    )
+    assert response.status_code == 403
+
+    response = read_only_client.delete(event_url(event))
+    assert response.status_code == 403
+
+    response = read_only_client.post(
+        event_url(event, 'products/'),
+        data=json.dumps({'name': {'en': 'Free beer'}, 'default_price': '0.00'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 403
+
+    response = read_only_client.post(event_url(event, 'publish_talks/'))
+    assert response.status_code in (403, 404, 405)
+
+    event.refresh_from_db()
+    assert str(event.name) == 'Test Event'
+
+
+def test_read_only_token_reads_ticket_types(read_only_client, event):
+    for path in ('products/', 'categories/', 'quotas/', 'questions/', 'taxrules/', 'subevents/'):
+        response = read_only_client.get(event_url(event, path))
+        assert response.status_code == 200, path
+
+
+@pytest.mark.parametrize(
+    'path',
+    [
+        'orders/',
+        'orderpositions/',
+        'invoices/',
+        'vouchers/',
+        'waitinglistentries/',
+        'checkinlists/',
+        'revokedsecrets/',
+        'cartpositions/',
+    ],
+)
+def test_read_only_token_has_no_private_ticket_data(read_only_client, event, path):
+    response = read_only_client.get(event_url(event, path))
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize('path', ['giftcards/', 'teams/', 'webhooks/', 'devices/'])
+def test_read_only_token_has_no_organizer_data(read_only_client, organizer, path):
+    response = read_only_client.get(f'/api/v1/organizers/{organizer.slug}/{path}')
+    assert response.status_code == 403
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_read_only_token_reads_published_program(read_only_client, event, program):
+    response = read_only_client.get(
+        event_url(event, 'submissions/') + '?expand=speakers,track,submission_type,slots.room&state=confirmed'
+    )
+    assert response.status_code == 200
+    results = response.json()['results']
+    assert [result['code'] for result in results] == [program['public'].code]
+
+    response = read_only_client.get(event_url(event, 'submissions/'))
+    codes = {result['code'] for result in response.json()['results']}
+    assert program['private'].code not in codes
+
+    response = read_only_client.get(event_url(event, 'speakers/'))
+    assert response.status_code == 200
+    speakers = response.json()['results']
+    assert [speaker['fullname'] for speaker in speakers] == ['Ada']
+    assert 'email' not in speakers[0]
+
+    for path in ('slots/', 'rooms/', 'tracks/', 'schedules/'):
+        response = read_only_client.get(event_url(event, path))
+        assert response.status_code == 200, path
+
+
+@pytest.fixture
+def submissions_team_client(client, organizer, event):
+    team = Team.objects.create(organizer=organizer, name='Program', can_change_submissions=True)
+    team.limit_events.add(event)
+    token = team.tokens.create(name='Program')
+    client.defaults['HTTP_AUTHORIZATION'] = f'Token {token.token}'
+    return client
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_read_only_token_cannot_change_program(read_only_client, event, program):
+    public = program['public']
+    with scope(event=event):
+        slot = event.current_schedule.talks.get(submission=public)
+        room = slot.room
+        speaker_code = public.speakers.first().code
+
+    writes = [
+        ('patch', f'submissions/{public.code}/', {'title': 'Hacked'}),
+        ('delete', f'submissions/{public.code}/', None),
+        ('post', 'submissions/', {'title': 'Injected'}),
+        ('patch', f'speakers/{speaker_code}/', {'biography': 'Hacked'}),
+        ('patch', f'slots/{slot.pk}/', {'description': 'Hacked'}),
+        ('post', 'schedules/release/', {'version': 'hacked'}),
+        ('patch', f'rooms/{room.pk}/', {'name': 'Hacked'}),
+        ('patch', f'tracks/{program["track"].pk}/', {'name': 'Hacked'}),
+        ('post', 'tracks/', {'name': 'New', 'color': '#000000'}),
+        ('post', 'tags/', {'tag': 'New', 'color': '#000000'}),
+        ('post', 'submission-types/', {'name': 'New', 'default_duration': 30}),
+        ('post', 'reviews/', {'submission': public.code, 'text': 'Hacked'}),
+    ]
+    for method, path, data in writes:
+        kwargs = {'data': json.dumps(data), 'content_type': 'application/json'} if data is not None else {}
+        response = getattr(read_only_client, method)(event_url(event, path), **kwargs)
+        assert response.status_code == 403, (method, path, response.status_code)
+
+    with scopes_disabled():
+        public.refresh_from_db()
+        program['track'].refresh_from_db()
+        room.refresh_from_db()
+        assert event.schedules.filter(version='hacked').count() == 0
+        assert not Submission.objects.filter(event=event, title='Injected').exists()
+    assert public.title == 'Public session'
+    assert str(program['track'].name) == 'Main'
+    assert str(room.name) == 'Room A'
+
+
+@pytest.mark.parametrize('path', ['mail-templates/', 'access-codes/'])
+def test_read_only_token_has_no_private_talk_data(read_only_client, event, path):
+    response = read_only_client.get(event_url(event, path))
+    assert response.status_code == 403
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_read_only_token_has_no_reviews_or_unpublished_answers(read_only_client, event, program):
+    for path in ('reviews/', 'answers/'):
+        response = read_only_client.get(event_url(event, path))
+        assert response.status_code == 403 or response.json()['count'] == 0, path
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_submissions_team_can_still_change_sessions(submissions_team_client, event, program):
+    public = program['public']
+    response = submissions_team_client.patch(
+        event_url(event, f'submissions/{public.code}/'),
+        data=json.dumps({'title': 'Renamed'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 200, response.content
+    with scopes_disabled():
+        public.refresh_from_db()
+    assert public.title == 'Renamed'
+
+    response = submissions_team_client.get(event_url(event, 'mail-templates/'))
+    assert response.status_code == 200
