@@ -19,7 +19,7 @@ from rest_framework.response import Response
 
 from eventyay.agenda.views.utils import get_schedule_exporter_content
 from eventyay.api.documentation import build_expand_docs, build_search_docs
-from eventyay.api.filters.schedule import TalkSlotFilter
+from eventyay.api.filters.schedule import TalkSlotFilter, has_orga_schedule_permission
 from eventyay.api.mixins import (
     PretalxViewSetMixin,
     cached_json_response,
@@ -356,7 +356,7 @@ class TalkSlotViewSet(
 
     @cached_property
     def is_orga(self):
-        return self.event and self.request.user.has_perm('base.orga_view_schedule', self.event)
+        return has_orga_schedule_permission(self.request, self.event)
 
     def get_unversioned_serializer_class(self):
         if self.is_orga:
