@@ -203,24 +203,25 @@
   margin-top: 0.5rem;
 }
 
-.speaker-voucher-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-  max-width: 100%;
+.speaker-vouchers-page .submit-group.panel {
+  align-items: center;
+  gap: 1rem;
 }
 
-.speaker-voucher-actions-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem 0.75rem;
+.speaker-voucher-actions-summary {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .speaker-voucher-actions-hint {
   margin: 0;
-  text-align: right;
+  text-align: left;
+}
+
+.speaker-vouchers-page .composer-actions .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 dialog.orga-confirm-dialog:not([open]),

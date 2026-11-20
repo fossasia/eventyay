@@ -78,7 +78,7 @@
                 <div class="col-md-9">
                   <div class="speaker-voucher-batch-row">
                     {{ form.voucher_tag }}
-                    <a class="btn btn-outline-primary btn-sm speaker-voucher-batch-create" href="{{ create_batch_url }}">
+                    <a class="btn btn-outline-info btn-sm speaker-voucher-batch-create" href="{{ create_batch_url }}">
                       <i class="fa fa-plus" aria-hidden="true"></i>
                       {% translate "Create a new batch" %}
                     </a>
@@ -126,11 +126,7 @@
                     — {{ email_preview.template.subject }}
                   </p>
                   <div class="speaker-voucher-email-actions">
-                    <button type="button" class="btn btn-outline-primary btn-sm" id="speaker-voucher-preview-btn">
-                      <i class="fa fa-eye" aria-hidden="true"></i>
-                      {% translate "Preview" %}
-                    </button>
-                    <a class="btn btn-outline-primary btn-sm" href="{{ email_preview.template.urls.base }}">
+                    <a class="btn btn-outline-info btn-sm" href="{{ email_preview.template.urls.base }}">
                       <i class="fa fa-pencil" aria-hidden="true"></i>
                       {% translate "Edit template" %}
                     </a>
@@ -140,13 +136,24 @@
             </div>
           </section>
 
-          <div class="submit-group">
-            <span></span>
-            <div class="speaker-voucher-actions">
-              <div class="speaker-voucher-actions-buttons">
-                <button type="submit" class="btn btn-outline-primary">
-                  <i class="fa fa-save" aria-hidden="true"></i>
+          <div class="submit-group panel">
+            <span class="speaker-voucher-actions-summary">
+              <p id="speaker-voucher-send-hint" class="text-muted speaker-voucher-actions-hint mb-0{% if not send_blocker %} d-none{% endif %}">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+                <span class="speaker-voucher-hint-text">{{ send_blocker|default:'' }}</span>
+              </p>
+              <p id="speaker-voucher-dirty-hint" class="text-muted speaker-voucher-actions-hint mb-0 d-none">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+                <span class="speaker-voucher-hint-text">{% translate "Save your changes first." %}</span>
+              </p>
+            </span>
+            <span class="d-flex align-items-center">
+              <span class="composer-actions">
+                <button type="submit" class="btn btn-outline-info">
                   {% translate "Save" %}
+                </button>
+                <button type="button" class="btn btn-outline-info" id="speaker-voucher-preview-btn">
+                  {% translate "Preview email" %}
                 </button>
                 <button type="button"
                         class="btn btn-primary"
@@ -156,21 +163,13 @@
                   <i class="fa fa-paper-plane" aria-hidden="true"></i>
                   {% translate "Send vouchers" %}
                 </button>
-              </div>
-              <p id="speaker-voucher-send-hint" class="text-muted speaker-voucher-actions-hint{% if not send_blocker %} d-none{% endif %}">
-                <i class="fa fa-info-circle" aria-hidden="true"></i>
-                <span class="speaker-voucher-hint-text">{{ send_blocker|default:'' }}</span>
-              </p>
-              <p id="speaker-voucher-dirty-hint" class="text-muted speaker-voucher-actions-hint d-none">
-                <i class="fa fa-info-circle" aria-hidden="true"></i>
-                <span class="speaker-voucher-hint-text">{% translate "Save your changes first." %}</span>
-              </p>
+              </span>
               <div id="speaker-voucher-send-status"
                    class="sr-only"
                    role="status"
                    aria-live="polite"
                    aria-atomic="true">{% if send_blocker %}{{ send_blocker }}{% endif %}</div>
-            </div>
+            </span>
           </div>
         </form>
       </div>
