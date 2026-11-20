@@ -59,7 +59,18 @@ def test_giftcard_list(token_client, organizer, event, giftcard, other_giftcard)
 
     resp = token_client.get('/api/v1/organizers/{}/giftcards/?include_accepted=true'.format(organizer.slug))
     assert resp.status_code == 200
-    assert 2 == len(resp.data['results'])
+    assert [res] == resp.data['results']
+
+
+@pytest.mark.django_db
+def test_giftcard_of_other_organizer_cannot_be_transacted(token_client, organizer, event, other_giftcard):
+    resp = token_client.post(
+        '/api/v1/organizers/{}/giftcards/{}/transact/?include_accepted=true'.format(organizer.slug, other_giftcard.pk),
+        {'value': '50.00'},
+        format='json',
+    )
+    assert resp.status_code == 404
+    assert other_giftcard.value == Decimal('0.00')
 
 
 @pytest.mark.django_db

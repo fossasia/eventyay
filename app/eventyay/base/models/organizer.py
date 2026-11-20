@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models import Exists, OuterRef, Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
@@ -254,16 +253,14 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         return self.cache.get_or_set(
             key='has_gift_cards',
             timeout=15,
-            default=lambda: self.issued_gift_cards.exists() or self.gift_card_issuer_acceptance.exists(),
+            default=self.issued_gift_cards.exists,
         )
 
     @property
     def accepted_gift_cards(self):
-        from .giftcards import GiftCard, GiftCardAcceptance
-
-        return GiftCard.objects.annotate(
-            accepted=Exists(GiftCardAcceptance.objects.filter(issuer=OuterRef('issuer'), collector=self))
-        ).filter(Q(issuer=self) | Q(accepted=True))
+        # Gift cards are only valid within the organizer that issued them. Money paid for a card
+        # is held by the issuer's payment account, so redeeming it elsewhere would shift liability.
+        return self.issued_gift_cards.all()
 
     @property
     def default_gift_card_expiry(self):
