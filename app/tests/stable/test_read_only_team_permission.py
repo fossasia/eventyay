@@ -279,7 +279,7 @@ def test_read_only_token_cannot_change_program(read_only_client, event, program)
     assert str(room.name) == 'Room A'
 
 
-@pytest.mark.parametrize('path', ['mail-templates/', 'access-codes/'])
+@pytest.mark.parametrize('path', ['mail-templates/', 'access-codes/', 'speaker-information/'])
 def test_read_only_token_has_no_private_talk_data(read_only_client, event, path):
     response = read_only_client.get(event_url(event, path))
     assert response.status_code == 403
@@ -447,3 +447,48 @@ def test_reviewer_tag_changes_follow_review_phase(
     assert response.status_code == (201 if can_create else 403), response.content
     response = client.delete(event_url(event, f'tags/{tag.pk}/'))
     assert response.status_code == (204 if can_change else 403), response.content
+
+
+@override_settings(SITE_URL='http://testserver')
+def test_reviewer_can_only_review_reviewable_proposals(client, event, reviewers, proposal, review_phase):
+    with scope(event=event):
+        accepted = Submission.objects.create(
+            title='Accepted', event=event, submission_type=proposal.submission_type, content_locale='en'
+        )
+        accepted.speakers.add(proposal.speakers.first())
+        accepted.accept()
+    client = user_client(client, reviewers[0], event)
+
+    response = client.post(
+        event_url(event, 'reviews/'),
+        data=json.dumps({'submission': accepted.code, 'text': 'Late'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 400
+
+    response = client.post(
+        event_url(event, 'reviews/'),
+        data=json.dumps({'submission': proposal.code, 'text': 'Good'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 201, response.content
+    review_id = response.json()['id']
+
+    response = client.patch(
+        event_url(event, f'reviews/{review_id}/'),
+        data=json.dumps({'submission': accepted.code}),
+        content_type='application/json',
+    )
+    assert response.status_code == 400
+    response = client.patch(
+        event_url(event, f'reviews/{review_id}/'),
+        data=json.dumps({'submission': proposal.code, 'text': 'Very good'}),
+        content_type='application/json',
+    )
+    assert response.status_code == 200, response.content
+
+    with scope(event=event):
+        review = Review.objects.get(pk=review_id)
+        assert review.submission == proposal
+        assert review.text == 'Very good'
+        assert not accepted.reviews.exists()
