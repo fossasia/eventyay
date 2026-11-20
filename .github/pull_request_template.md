@@ -14,6 +14,12 @@
 
 <!-- Describe the checks you ran and their results. -->
 
+# Screenshots and Recordings
+
+<!-- For visual changes, attach before-and-after screenshots where useful.
+For interaction changes, attach a short recording of the affected flow.
+Label each attachment with what it shows. Remove this section if it does not apply. -->
+
 # Risk and Rollback
 
 <!-- Describe potential risks and how to roll back the change. -->
