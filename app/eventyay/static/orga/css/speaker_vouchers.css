@@ -79,27 +79,32 @@
   padding-bottom: 12px;
 }
 
-/* Keep field labels on the same vertical line as their first control */
-.speaker-vouchers-page .form-group.row > label.col-form-label,
-.speaker-vouchers-page .speaker-voucher-label {
-  display: flex;
-  align-items: center;
-  min-height: 38px;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.speaker-vouchers-page .speaker-voucher-row {
+/* Keep each label on the same baseline as its first control/value. */
+.speaker-vouchers-page .form-group.row.speaker-voucher-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
 }
 
+.speaker-vouchers-page .speaker-voucher-label {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 0;
+  margin-bottom: 0;
+  padding-top: 0.45rem;
+  padding-bottom: 0;
+  line-height: 1.4;
+  text-align: right;
+}
+
 .speaker-vouchers-page .speaker-voucher-control {
   display: flex;
   align-items: center;
-  min-height: 38px;
+  min-height: 2rem;
+  padding-top: 0.2rem;
 }
 
 .speaker-vouchers-page .speaker-voucher-help {
@@ -107,11 +112,31 @@
   margin-bottom: 0;
 }
 
+.speaker-voucher-batch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.speaker-voucher-batch-row select,
+.speaker-voucher-batch-row .form-control {
+  width: auto;
+  max-width: 16rem;
+  flex: 0 1 16rem;
+  min-width: 10rem;
+}
+
+.speaker-voucher-batch-create {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .speaker-voucher-toggle {
   position: relative;
   display: inline-block;
-  width: 48px;
-  height: 28px;
+  width: 36px;
+  height: 20px;
   margin: 0;
   cursor: pointer;
   flex-shrink: 0;
@@ -135,10 +160,10 @@
 .speaker-voucher-toggle-slider::before {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
@@ -150,7 +175,7 @@
 }
 
 .speaker-voucher-toggle input:checked + .speaker-voucher-toggle-slider::before {
-  transform: translateX(20px);
+  transform: translateX(16px);
 }
 
 .speaker-voucher-toggle input:focus-visible + .speaker-voucher-toggle-slider {
@@ -160,9 +185,7 @@
 
 .speaker-voucher-email-subject {
   margin: 0;
-  display: flex;
-  align-items: center;
-  min-height: 38px;
+  padding-top: 0.45rem;
   line-height: 1.4;
 }
 
@@ -175,9 +198,8 @@
 
 .speaker-voucher-remaining-value {
   margin: 0;
-  display: flex;
-  align-items: center;
-  min-height: 38px;
+  padding-top: 0.45rem;
+  line-height: 1.4;
 }
 
 .speaker-vouchers-steps {
@@ -260,6 +282,12 @@ dialog.speaker-voucher-confirm-dialog:not([open]) {
 
   .speaker-vouchers-hero-art {
     display: none;
+  }
+
+  .speaker-voucher-batch-row select,
+  .speaker-voucher-batch-row .form-control {
+    max-width: 100%;
+    flex: 1 1 12rem;
   }
 }
 
