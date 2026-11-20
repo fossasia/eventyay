@@ -3830,12 +3830,10 @@ table thead .sort-link.sort-active {
   flex: 0 0 auto;
 }
 
-/* Match cfp-inline-help-box: light helptext instead of black CSS tooltips */
+/* Fixed positioning (via JS) escapes table overflow clipping. */
 .speaker-voucher-info-box {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 20;
+  position: fixed;
+  z-index: 1080;
   display: none;
   width: min(280px, 70vw);
   padding: 8px 10px;
@@ -3850,12 +3848,17 @@ table thead .sort-link.sort-active {
   border: 1px solid #b8daff;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+}
+
+.speaker-voucher-info-box.is-visible {
+  display: block;
 }
 
 .speaker-voucher-info-box::before {
   position: absolute;
   top: -6px;
-  right: 10px;
+  right: 12px;
   width: 10px;
   height: 10px;
   content: "";
@@ -3865,19 +3868,13 @@ table thead .sort-link.sort-active {
   transform: rotate(45deg);
 }
 
-/* Keep hover while moving from the icon into the box (and onto the copy button). */
-.speaker-voucher-info-box::after {
-  position: absolute;
-  top: -8px;
-  right: 0;
-  left: 0;
-  height: 8px;
-  content: "";
-}
-
-.speaker-voucher-info-wrapper:hover .speaker-voucher-info-box,
-.speaker-voucher-info-wrapper:focus-within .speaker-voucher-info-box {
-  display: block;
+.speaker-voucher-info-box.is-above::before {
+  top: auto;
+  bottom: -6px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 1px solid #b8daff;
+  border-bottom: 1px solid #b8daff;
 }
 
 .speaker-voucher-info-sent {
@@ -3904,8 +3901,24 @@ table thead .sort-link.sort-active {
 
 .speaker-voucher-code-copy {
   flex: 0 0 auto;
-  padding: 0.1rem 0.35rem;
-  line-height: 1.2;
+  padding: 0;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--color-info);
+  border: 0;
+  box-shadow: none;
+}
+
+.speaker-voucher-code-copy:hover,
+.speaker-voucher-code-copy:focus {
+  color: var(--color-info-dark, var(--color-info));
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.speaker-voucher-ineligible {
+  white-space: nowrap;
 }
 
 .speaker-voucher-action-form {
