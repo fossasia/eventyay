@@ -6,7 +6,7 @@ from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Annotated, cast
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 import django.conf.locale
 import importlib_metadata
@@ -235,10 +235,12 @@ def discover_toml_files() -> list[Path]:
     return toml_files
 
 
-def increase_redis_db(url: str, increment: int) -> str:
+def increase_redis_db(url: str, increment: int, sanitize_broker: bool = True) -> str:
     """Increase the Redis database number in the given URL by the given increment.
 
     If the provided URL is missing DB number, we assume it is 0.
+    If sanitize_broker is True, strips query parameters that are incompatible with
+    Kombu / Celery broker connections (e.g. client options like 'protocol').
     """
     parsed = urlparse(url)
     try:
@@ -246,7 +248,29 @@ def increase_redis_db(url: str, increment: int) -> str:
     except ValueError:
         db_number = increment
     new_path = f'/{db_number}'
-    new_url = parsed._replace(path=new_path).geturl()
+
+    query = parsed.query
+    if sanitize_broker and query:
+        # Kombu Connection only accepts specific query parameters (such as ssl_ options).
+        # Redis client options like 'protocol' cause TypeError in Connection._init_params.
+        allowed_prefixes = ('ssl_',)
+        allowed_keys = {
+            'ssl',
+            'connect_timeout',
+            'login_method',
+            'heartbeat',
+            'transport_options',
+            'insist',
+            'credential_provider',
+        }
+        filtered = [
+            (k, v)
+            for k, v in parse_qsl(query, keep_blank_values=True)
+            if k in allowed_keys or any(k.startswith(p) for p in allowed_prefixes)
+        ]
+        query = urlencode(filtered)
+
+    new_url = parsed._replace(path=new_path, query=query).geturl()
     return new_url
 
 
