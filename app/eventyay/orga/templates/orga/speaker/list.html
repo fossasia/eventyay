@@ -175,6 +175,8 @@
                                             <button type="submit" class="btn btn-sm btn-warning">{% translate "Cancel voucher" %}</button>
                                         </form>
                                     {% endif %}
+                                {% elif profile.voucher_row_state == 'cancelled' %}
+                                    <span class="badge badge-secondary">{% translate "Cancelled" %}</span>
                                 {% elif profile.voucher_row_state == 'not_sent' %}
                                     <span class="badge badge-secondary">{% translate "Not sent" %}</span>
                                     {% if can_update_speaker %}

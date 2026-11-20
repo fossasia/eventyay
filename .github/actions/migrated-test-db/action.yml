@@ -1,0 +1,79 @@
+name: Migrated test database
+description: >-
+  Restores the fully migrated pytest database from the Actions cache, or builds
+  it with manage.py migrate and caches a dump. pytest then runs with --reuse-db,
+  so it only checks for unapplied migrations instead of running the whole chain.
+  The job must have run uv sync and must set the EVY_* database settings.
+  Do not set DJANGO_SETTINGS_MODULE for the whole job: uv sync builds plugins
+  whose build step reads it and fails because eventyay is not installed yet.
+
+inputs:
+  postgres-container:
+    description: Container ID of the Postgres service (job.services.postgres.id).
+    required: true
+  database:
+    description: Name of the test database pytest-django uses (test_ + EVY_POSTGRES_DB).
+    required: false
+    default: test_eventyay-db
+
+outputs:
+  cache-hit:
+    description: Whether the database came from the cache.
+    value: ${{ steps.restore.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute cache key
+      id: key
+      shell: bash
+      run: echo "hash=$("$GITHUB_ACTION_PATH/cache-key.sh")" >> "$GITHUB_OUTPUT"
+
+    - name: Restore database dump
+      id: restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ runner.temp }}/migrated-test-db.dump
+        # Any added, renamed or edited migration, or any dependency (plugin) change,
+        # builds a new dump; see cache-key.sh. Bump the version prefix when changing
+        # how the dump is made.
+        key: migrated-test-db-v2-pg16-${{ steps.key.outputs.hash }}
+
+    - name: Load cached database
+      if: steps.restore.outputs.cache-hit == 'true'
+      shell: bash
+      env:
+        PG: ${{ inputs.postgres-container }}
+        DB: ${{ inputs.database }}
+        DUMP: ${{ runner.temp }}/migrated-test-db.dump
+      run: |
+        # Run the client tools inside the service container so their version
+        # always matches the server.
+        docker exec "$PG" sh -c 'createdb -U "$POSTGRES_USER" "$1"' sh "$DB"
+        docker exec -i "$PG" sh -c 'pg_restore -U "$POSTGRES_USER" --no-owner --exit-on-error -d "$1"' sh "$DB" < "$DUMP"
+
+    - name: Build and dump migrated database
+      if: steps.restore.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: app
+      env:
+        PG: ${{ inputs.postgres-container }}
+        DB: ${{ inputs.database }}
+        DUMP: ${{ runner.temp }}/migrated-test-db.dump
+      run: |
+        docker exec "$PG" sh -c 'createdb -U "$POSTGRES_USER" "$1"' sh "$DB"
+        # --run-syncdb matches how pytest-django creates the test database.
+        # manage.py defaults DJANGO_SETTINGS_MODULE to eventyay.config.settings.
+        EVY_POSTGRES_DB="$DB" uv run python manage.py migrate --noinput --run-syncdb
+        docker exec "$PG" sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$1"' sh "$DB" > "$DUMP"
+        ls -lh "$DUMP"
+
+    - name: Save database dump
+      if: steps.restore.outputs.cache-hit != 'true'
+      # Parallel jobs may race to save the same key; only the first one wins and
+      # the others just log a warning.
+      continue-on-error: true
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ runner.temp }}/migrated-test-db.dump
+        key: ${{ steps.restore.outputs.cache-primary-key }}

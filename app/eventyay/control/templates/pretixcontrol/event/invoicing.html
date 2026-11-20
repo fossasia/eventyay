@@ -1,6 +1,10 @@
 {% extends "pretixcontrol/event/settings_base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% block custom_header %}
+    {{ block.super }}
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
+{% endblock %}
 {% block inside %}
     {% trans "Invoice settings" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}

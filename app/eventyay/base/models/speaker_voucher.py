@@ -1,4 +1,7 @@
 from django.db import models
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
 
@@ -8,8 +11,51 @@ from eventyay.base.models.vouchers import Voucher
 
 class SpeakerVoucherStatus(models.TextChoices):
     NOT_SENT = 'not_sent', _('Not sent')
+    SENDING = 'sending', _('Sending')
     SENT = 'sent', _('Sent — not claimed')
     CLAIMED = 'claimed', _('Claimed')
+
+
+def usable_batch_vouchers(event, voucher_tag: str):
+    """Single-use, never-redeemed, unexpired vouchers in the batch that are free to assign.
+
+    Speaker voucher emails say the code is personal and redeemable once, so only
+    ``max_usages=1`` and ``redeemed=0`` codes are eligible. Codes reserved in an
+    active cart are excluded, matching RedeemView / CartManager availability.
+    """
+    if not voucher_tag:
+        return Voucher.objects.none()
+
+    from eventyay.base.models.orders import CartPosition
+
+    active_cart_reservations = (
+        CartPosition.objects.filter(
+            voucher_id=OuterRef('pk'),
+            event=event,
+            expires__gte=now(),
+        )
+        .order_by()
+        .values('voucher_id')
+        .annotate(c=Count('id'))
+        .values('c')
+    )
+    return (
+        Voucher.objects.filter(
+            event=event,
+            tag=voucher_tag,
+            max_usages=1,
+            redeemed=0,
+        )
+        .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=now()))
+        .filter(speaker_voucher_link__isnull=True)
+        .annotate(
+            cart_reserved=Coalesce(
+                Subquery(active_cart_reservations, output_field=IntegerField()),
+                0,
+            )
+        )
+        .filter(cart_reserved=0)
+    )
 
 
 class SpeakerVoucherSettings(PretalxModel):
@@ -41,13 +87,8 @@ class SpeakerVoucherSettings(PretalxModel):
     def get_available_vouchers(self):
         if not self.voucher_tag:
             return Voucher.objects.none()
-        assigned_voucher_ids = SpeakerVoucher.objects.filter(event=self.event).values_list('voucher_id', flat=True)
         with scopes_disabled():
-            return Voucher.objects.filter(
-                event=self.event,
-                tag=self.voucher_tag,
-                redeemed=0,
-            ).exclude(pk__in=assigned_voucher_ids)
+            return usable_batch_vouchers(self.event, self.voucher_tag)
 
     def batch_total_count(self) -> int:
         if not self.voucher_tag:

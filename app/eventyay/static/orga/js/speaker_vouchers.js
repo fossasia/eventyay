@@ -4,15 +4,22 @@ const settingsForm = document.getElementById("speaker-voucher-settings-form")
 const sendBtn = document.getElementById("speaker-voucher-send-btn")
 const sendForm = document.getElementById("speaker-voucher-send-form")
 const sendHint = document.getElementById("speaker-voucher-send-hint")
+const dirtyHint = document.getElementById("speaker-voucher-dirty-hint")
+const sendStatus = document.getElementById("speaker-voucher-send-status")
 const confirmDialog = document.getElementById("speaker-voucher-confirm-dialog")
 const previewDialog = document.getElementById("speaker-voucher-email-preview")
+
+const hintText = (element) => {
+    if (!element) return ""
+    const textNode = element.querySelector(".speaker-voucher-hint-text")
+    return (textNode ? textNode.textContent : element.textContent).trim()
+}
 
 if (settingsForm && sendBtn) {
     const savedEnabled = settingsForm.dataset.savedEnabled === "true"
     const savedTag = settingsForm.dataset.savedVoucherTag || ""
     const enabledInput = settingsForm.querySelector("#id_enabled")
     const tagInput = settingsForm.querySelector("#id_voucher_tag")
-    const originalHint = sendHint ? sendHint.textContent.trim() : ""
 
     const currentEnabled = () => Boolean(enabledInput && enabledInput.checked)
     const currentTag = () => (tagInput ? tagInput.value : "")
@@ -20,28 +27,36 @@ if (settingsForm && sendBtn) {
 
     sendBtn.dataset.serverBlocked = sendBtn.disabled ? "true" : "false"
 
+    const announceSendStatus = (message) => {
+        if (!sendStatus) return
+        // Clear first so repeated identical messages are still announced.
+        sendStatus.textContent = ""
+        if (message) {
+            sendStatus.textContent = message
+        }
+    }
+
     const refreshSendButton = () => {
         const dirty = isDirty()
-        const shouldDisable = dirty || sendBtn.dataset.serverBlocked === "true"
+        const serverBlocked = sendBtn.dataset.serverBlocked === "true"
+        const shouldDisable = dirty || serverBlocked
         sendBtn.disabled = shouldDisable
         sendBtn.setAttribute("aria-disabled", shouldDisable ? "true" : "false")
-        if (!sendHint) return
+
+        if (dirtyHint) {
+            dirtyHint.classList.toggle("d-none", !dirty)
+        }
+        if (sendHint) {
+            // Server blocker only when form is clean; dirty hint takes priority.
+            sendHint.classList.toggle("d-none", dirty || !serverBlocked)
+        }
+
         if (dirty) {
-            sendHint.classList.remove("d-none")
-            sendHint.textContent = ""
-            const icon = document.createElement("i")
-            icon.className = "fa fa-info-circle"
-            icon.setAttribute("aria-hidden", "true")
-            sendHint.append(icon, " Save your changes first.")
-        } else if (sendBtn.dataset.serverBlocked === "true" && originalHint) {
-            sendHint.classList.remove("d-none")
-            sendHint.textContent = ""
-            const icon = document.createElement("i")
-            icon.className = "fa fa-info-circle"
-            icon.setAttribute("aria-hidden", "true")
-            sendHint.append(icon, ` ${originalHint}`)
+            announceSendStatus(hintText(dirtyHint))
+        } else if (serverBlocked) {
+            announceSendStatus(hintText(sendHint))
         } else {
-            sendHint.classList.add("d-none")
+            announceSendStatus("")
         }
     }
 

@@ -90,6 +90,8 @@ class SpeakerProfile(PretalxModel):
         public = '{self.event.urls.base}speakers/{self.user.code}/'
         social_image = '{public}og-image'
         talks_ical = '{self.urls.public}talks.ics'
+        export_google_calendar = '{self.urls.public}talks/export/google-calendar'
+        export_webcal = '{self.urls.public}talks/export/webcal'
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this speaker profile."""

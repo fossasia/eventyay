@@ -108,6 +108,20 @@ def apply_organizer_email_placeholder(field):
     field.widget.attrs['placeholder'] = ORGANIZER_EMAIL_PLACEHOLDER
 
 
+def apply_searchable_select_attrs(field):
+    existing_classes = field.widget.attrs.get('class', '').split()
+    if 'form-control' not in existing_classes:
+        existing_classes.append('form-control')
+    field.widget.attrs.update(
+        {
+            'class': ' '.join(existing_classes),
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search'),
+            'data-empty-text': _('No results'),
+        }
+    )
+
+
 def get_default_organizer_email() -> str:
     default_email = GlobalSettingsObject().settings.mail_from or settings.DEFAULT_FROM_EMAIL
     return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
@@ -283,6 +297,15 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
+        existing_tz_classes = self.fields['timezone'].widget.attrs.get('class', '').split()
+        if 'form-control' not in existing_tz_classes:
+            existing_tz_classes.append('form-control')
+        self.fields['timezone'].widget.attrs.update({
+            'class': ' '.join(existing_tz_classes),
+            'data-searchable-select': '',
+            'data-search-placeholder': _('Search'),
+            'data-empty-text': _('No results'),
+        })
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -571,6 +594,8 @@ class EventUpdateForm(I18nModelForm):
             choices=((c.identifier, c.verbose_name) for c in get_all_sales_channels().values()),
             widget=forms.CheckboxSelectMultiple,
         )
+        if 'currency' in self.fields:
+            apply_searchable_select_attrs(self.fields['currency'])
 
     def save(self, commit=True):
         instance = super().save(commit)
@@ -1217,6 +1242,8 @@ class InvoiceSettingsForm(SettingsForm):
         self.fields['invoice_generate_sales_channels'].choices = (
             (c.identifier, c.verbose_name) for c in get_all_sales_channels().values()
         )
+        if 'invoice_address_from_country' in self.fields:
+            apply_searchable_select_attrs(self.fields['invoice_address_from_country'])
 
     def clean(self):
         data = super().clean()
