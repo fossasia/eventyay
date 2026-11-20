@@ -356,36 +356,9 @@ def resolve_loungemesh_role(event, user, is_organizer_area: bool = False) -> str
         return "attendee"
 
     token_id = getattr(user, "token_id", None)
-    if token_id:
-        if not str(token_id).endswith(":orga"):
-            return "attendee"
-        traits = getattr(user, "traits", None) or []
-        traits_set = set(traits)
-        if "admin" in traits_set:
-            return "host"
-
-        slug = getattr(event, "slug", "")
-        if slug:
-            host_traits = {
-                f"eventyay-video-event-{slug}-video-content-manager",
-                f"eventyay-video-event-{slug}-video-room-manager",
-                f"eventyay-video-event-{slug}-video-stage-manager",
-                f"eventyay-video-event-{slug}-video-channel-manager",
-            }
-            if traits_set.intersection(host_traits):
-                return "host"
-
-            moderator_traits = {
-                f"eventyay-video-event-{slug}-video-moderator",
-                f"eventyay-video-event-{slug}-video-user-moderator",
-                f"eventyay-video-event-{slug}-video-poll-question-manager",
-            }
-            if traits_set.intersection(moderator_traits):
-                return "moderator"
-
+    if token_id and not str(token_id).endswith(":orga"):
         return "attendee"
 
-    # Direct traits on user object (e.g. without token_id)
     traits = getattr(user, "traits", None) or []
     traits_set = set(traits)
     if "admin" in traits_set:
