@@ -1,20 +1,27 @@
-## Problem
+# Summary
 
-<!-- Explain the problem in a sentence or two. Include expected behavior and
-reproduction steps or environment where relevant. -->
+<!-- Describe the user-visible and technical change. -->
 
-## Change
+# Motivation
 
-<!-- Explain how this fixes the problem. If it spans components, explain why
-those changes are needed for the same fix. -->
+<!-- Explain why the change is needed and link any related issue or discussion. -->
 
-## Scope and approval
+# Testing
 
-<!-- Link the issue or discussion if any. -->
+- [ ] Unit or integration tests added/updated
+- [ ] Relevant local checks run
+- [ ] Manual verification completed (if applicable)
 
-## Verification
+<!-- Describe the checks you ran and their results. -->
 
-<!-- Describe the tests or manual checks you ran and the observed results. -->
+# Risk and Rollback
 
-<!-- If you used an agent, end with the model and harness that did the work,
-in the form: Created with <Model> in <Harness>, run from <Environment>. -->
+<!-- Describe potential risks and how to roll back the change. -->
+
+# Reviewer Notes
+
+<!-- Highlight areas where focused review is requested. -->
+
+<!-- If AI helped author the PR, add one attribution line here, following agents.md.
+Created with <Model> in <Harness/IDE>, run from <Environment>.
+Include only details you know. -->
