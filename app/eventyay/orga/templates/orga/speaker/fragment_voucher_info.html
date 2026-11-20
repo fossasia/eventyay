@@ -1,13 +1,20 @@
 {% load i18n %}
 {% if assignment and assignment.voucher_id %}
     {% with code=assignment.voucher.code sent_at=assignment.sent_at %}
-        <button type="button"
-                class="btn btn-sm btn-link speaker-voucher-info"
-                data-toggle="tooltip"
-                data-placement="left"
-                title="{% if sent_at %}{% blocktranslate trimmed with date=sent_at|date:'j M Y' code=code %}Sent {{ date }} · Code: {{ code }}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with code=code %}Code: {{ code }}{% endblocktranslate %}{% endif %}"
-                aria-label="{% if sent_at %}{% blocktranslate trimmed with date=sent_at|date:'j M Y' code=code %}Voucher details: sent {{ date }}, code {{ code }}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with code=code %}Voucher code {{ code }}{% endblocktranslate %}{% endif %}">
-            <i class="fa fa-info-circle" aria-hidden="true"></i>
-        </button>
+        <span class="speaker-voucher-info-wrapper">
+            <button type="button"
+                    class="btn btn-sm btn-link speaker-voucher-info"
+                    aria-label="{% if sent_at %}{% blocktranslate trimmed with date=sent_at|date:'j M Y' code=code %}Voucher details: sent {{ date }}, code {{ code }}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with code=code %}Voucher code {{ code }}{% endblocktranslate %}{% endif %}"
+                    aria-describedby="speaker-voucher-help-{{ assignment.pk }}">
+                <i class="fa fa-info-circle" aria-hidden="true"></i>
+            </button>
+            <span id="speaker-voucher-help-{{ assignment.pk }}" class="speaker-voucher-info-box" role="tooltip">
+                {% if sent_at %}
+                    {% blocktranslate trimmed with date=sent_at|date:'j M Y' code=code %}Sent {{ date }} · Code: {{ code }}{% endblocktranslate %}
+                {% else %}
+                    {% blocktranslate trimmed with code=code %}Code: {{ code }}{% endblocktranslate %}
+                {% endif %}
+            </span>
+        </span>
     {% endwith %}
 {% endif %}

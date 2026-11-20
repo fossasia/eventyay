@@ -3803,6 +3803,7 @@ table thead .sort-link.sort-active {
   min-width: 8.5rem;
   max-width: 14rem;
   vertical-align: middle;
+  overflow: visible;
 }
 
 .speaker-voucher-status {
@@ -3810,6 +3811,7 @@ table thead .sort-link.sort-active {
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.25rem;
+  overflow: visible;
 }
 
 .speaker-voucher-status .badge {
@@ -3820,8 +3822,13 @@ table thead .sort-link.sort-active {
   line-height: 1.25;
 }
 
-.speaker-voucher-info {
+.speaker-voucher-info-wrapper {
+  position: relative;
+  display: inline-block;
   flex: 0 0 auto;
+}
+
+.speaker-voucher-info {
   padding: 0.1rem 0.25rem;
   color: var(--color-info);
   line-height: 1;
@@ -3831,6 +3838,46 @@ table thead .sort-link.sort-active {
 .speaker-voucher-info:focus {
   color: var(--color-info-dark, var(--color-info));
   text-decoration: none;
+}
+
+/* Match cfp-inline-help-box: light helptext instead of black CSS tooltips */
+.speaker-voucher-info-box {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: none;
+  width: 260px;
+  padding: 8px 10px;
+  color: #495057;
+  font-size: 0.8125rem;
+  font-weight: normal;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  background: #fff;
+  border: 1px solid #b8daff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.speaker-voucher-info-box::before {
+  position: absolute;
+  top: -6px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  content: "";
+  background: #fff;
+  border-top: 1px solid #b8daff;
+  border-left: 1px solid #b8daff;
+  transform: rotate(45deg);
+}
+
+.speaker-voucher-info-wrapper:hover .speaker-voucher-info-box,
+.speaker-voucher-info-wrapper:focus-within .speaker-voucher-info-box {
+  display: block;
 }
 
 .speaker-voucher-action-form {
