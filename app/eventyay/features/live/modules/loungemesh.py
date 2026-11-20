@@ -74,10 +74,7 @@ class LoungeMeshModule(BaseModule):
         module_required=("call.loungemesh", "channel.loungemesh"),
     )
     async def room_url(self, body):
-        is_organizer_area = bool(
-            getattr(self.consumer, "is_organizer", False)
-            or (getattr(self.consumer.user, "token_id", None) or "").endswith(":orga")
-        )
+        is_organizer_area = bool(getattr(self.consumer, "is_organizer", False))
         role = await database_sync_to_async(resolve_loungemesh_role)(
             self.consumer.event,
             self.consumer.user,
