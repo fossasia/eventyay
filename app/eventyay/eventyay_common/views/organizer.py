@@ -27,7 +27,7 @@ from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
-from ..utils import api_token_created_message
+from eventyay.eventyay_common.utils import api_token_created_message
 from ..video.traits_sync import sync_video_traits_for_team
 
 

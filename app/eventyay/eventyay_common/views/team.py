@@ -19,7 +19,7 @@ from eventyay.control.views.organizer import OrganizerDetailViewMixin
 
 from ...control.forms.organizer_forms import TeamForm
 from ...control.permissions import OrganizerPermissionRequiredMixin
-from ..utils import api_token_created_message
+from eventyay.eventyay_common.utils import api_token_created_message
 from ..video.traits_sync import (
     sync_video_traits_for_platform_users,
     sync_video_traits_for_team,

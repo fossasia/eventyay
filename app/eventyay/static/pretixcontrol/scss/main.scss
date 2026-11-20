@@ -114,25 +114,21 @@ h1 .btn-sm {
     word-break: break-word;
 }
 
-.container-fluid > .alert code {
+.alert code {
     color: inherit;
     background: rgba(0, 0, 0, 0.06);
     padding: 2px 6px;
     border-radius: 3px;
 }
 
-.container-fluid > .alert .btn-clipboard {
+.alert .btn-clipboard {
     margin-left: 6px;
 }
 
-.container-fluid > .alert .btn-copy-confirm.copied {
+.alert .btn-copy-confirm.copied {
     background: #dff0d8;
     border-color: #5cb85c;
     color: #3c763d;
-}
-.container-fluid > .alert {
-    overflow-wrap: anywhere;
-    word-break: break-word;
 }
 
 .flipped-scroll-wrapper {
