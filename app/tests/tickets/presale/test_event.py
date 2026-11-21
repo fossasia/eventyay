@@ -731,6 +731,14 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
         html = self.client.get('/%s/%s/redeem?voucher=%s' % (self.orga.slug, self.event.slug, self.v.code))
         assert 'Early-bird' not in html.rendered_content
 
+    def test_oversized_voucher_is_rejected_before_lookup(self):
+        html = self.client.get(
+            '/%s/%s/redeem' % (self.orga.slug, self.event.slug),
+            {'voucher': ' ' * 256 + 'ABC'},
+            follow=True,
+        )
+        assert 'invalid length' in html.rendered_content.lower()
+
     def test_not_in_quota(self):
         with scopes_disabled():
             q2 = Quota.objects.create(event=self.event, name='Quota', size=2)
