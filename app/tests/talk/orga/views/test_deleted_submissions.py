@@ -83,7 +83,7 @@ def test_counts_exclude_deleted(event, speaker, submission, track):
         assert speaker_form.filter_queryset(User.objects.filter(pk=speaker.pk)).get().submission_count == 1
 
         filter_form = SubmissionFilterForm(event=event)
-        assert filter_form.fields['tags'].queryset.get(pk=tag.pk).submission_count == 1
+        assert filter_form.fields['tags'].queryset.get(pk=tag.pk).count == 1
         assert filter_form.fields['track'].queryset.get(pk=track.pk).count == 1
 
 
