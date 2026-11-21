@@ -2,6 +2,9 @@
 .c-room-edit-form
 	.scroll-wrapper(v-scrollbar.y="")
 		.ui-form-body
+			.host-only-notice(v-if="!canEdit")
+				i.mdi.mdi-lock-outline
+				span {{ $t('Room settings are read-only. Only event hosts may modify room configurations.') }}
 			.generic-settings
 				.room-info-card
 					.form-grid
@@ -49,8 +52,15 @@
 								bunt-switch(name="force_join", v-model="config.force_join")
 
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id] && !isProviderDisabled", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
-			sidebar-addons(v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')", :config="config", :modules="modules", :creating="creating")
-			.danger-zone(v-if="!creating && hasPermission('room:delete')")
+			sidebar-addons(
+				v-if="!isProviderDisabled && inferredType && (inferredType.id === 'stage' || inferredType.id === 'channel-janus' || inferredType.id === 'channel-zoom' || inferredType.id === 'channel-loungemesh')",
+				:config="config",
+				:modules="modules",
+				:creating="creating",
+				:allow-chat="inferredType.id !== 'channel-loungemesh'",
+				:allow-polls="inferredType.id !== 'channel-loungemesh'"
+			)
+			.danger-zone(v-if="!creating && canEdit && hasPermission('room:delete')")
 				h3 {{ $t('Danger Zone') }}
 				template(v-if="config.has_linked_sessions")
 					p {{ $t('This room has linked schedules/sessions. Move or delete those sessions before deleting the room.') }}
@@ -70,7 +80,7 @@
 								:loading="deleting",
 								:error-message="deleteError"
 							) {{ $t('Delete this room') }}
-	.ui-form-actions
+	.ui-form-actions(v-if="canEdit")
 		bunt-button.btn-save(@click="save", :loading="saving", :disabled="isSaveDisabled", :error="!!error") {{ creating ? $t('Create') : $t('Save') }}
 		.errors {{ error || validationErrors.join(', ') }}
 </template>
@@ -212,7 +222,11 @@ export default {
 				this.config.description = value
 			}
 		},
+		canEdit() {
+			return Boolean(this.isAdminMode || this.hasPermission('room:update'))
+		},
 		isSaveDisabled() {
+			if (!this.canEdit) return true
 			const usesPluginStreams = Boolean(
 				this.interpretationAdmin?.usePluginStreams ||
 				this.config?.interpretation_use_plugin_streams
@@ -349,6 +363,10 @@ export default {
 				if (['channel-bbb', 'channel-jitsi'].includes(this.inferredType?.id)) {
 					moduleConfig = moduleConfig.filter(
 						m => !['chat.native', 'question', 'poll'].includes(m.type)
+					)
+				} else if (this.inferredType?.id === 'channel-loungemesh') {
+					moduleConfig = moduleConfig.filter(
+						m => !['chat.native', 'poll'].includes(m.type)
 					)
 				}
 				const updated = await api.call('room.config.patch', {
@@ -539,6 +557,21 @@ export default {
 				.bunt-switch
 					margin: 0
 
+	.host-only-notice
+		display: flex
+		align-items: center
+		gap: 8px
+		padding: 12px 16px
+		margin-bottom: 16px
+		background-color: #fff8e1
+		border: 1px solid #ffe082
+		border-radius: 6px
+		color: #795548
+		font-size: 13px
+		font-weight: 500
+		i
+			font-size: 18px
+			color: #f57f17
 	.danger-zone
 		margin-top: 24px
 		padding: 16px

@@ -208,7 +208,8 @@ export function canManageVideoRooms(hasPermission) {
 
 export const EMBEDDED_SUITE_MODULE_TYPES = [
 	'call.bigbluebutton',
-	'call.jitsi'
+	'call.jitsi',
+	'call.loungemesh'
 ]
 
 export function hasEmbeddedSuite(modules) {
@@ -221,6 +222,16 @@ export function hasEmbeddedSuite(modules) {
 
 export function supportsPlatformSidebar(modules) {
 	if (!modules) return false
+	const hasLoungemesh = Array.isArray(modules)
+		? modules.some(m => (m?.type || m) === 'call.loungemesh')
+		: Boolean(modules?.['call.loungemesh'])
+	const hasQuestion = Array.isArray(modules)
+		? modules.some(m => (m?.type || m) === 'question')
+		: Boolean(modules?.['question'])
+
+	if (hasLoungemesh) {
+		return hasQuestion
+	}
 	if (hasEmbeddedSuite(modules)) return false
 	if (Array.isArray(modules)) {
 		if (modules.length === 1 && modules[0]?.type === 'chat.native') return false

@@ -143,7 +143,7 @@ import { firstCaptionLanguage, pluginLanguageStreams, roomUsesPluginLanguageStre
 import { fetchListenerToken } from 'lib/interpretation-api'
 import { logOperational } from 'lib/operationalLog'
 import { hasOrganizerTraits } from 'lib/traitGrants'
-import { hasEmbeddedSuite, isRoomVisibleToAttendee } from 'lib/video-providers'
+import { hasEmbeddedSuite, isRoomVisibleToAttendee, supportsPlatformSidebar } from 'lib/video-providers'
 
 export default {
 	name: 'Room',
@@ -227,16 +227,7 @@ export default {
 		},
 		canHaveSidebar() {
 			if (this.roomIsDisabled) return false
-			// Video conference suites (BigBlueButton, Jitsi, Zoom) have their own native in-frame
-			// options for chats, polls, questions, etc.; do not show platform native sidebar for them.
-			// Janus WebRTC uses native platform chat and displays the sidebar when chat.native is attached.
-			if (this.hasEmbeddedCallSuite) return false
-			if (this.room?.modules?.length === 1 && this.modules['chat.native']) return false
-			return Boolean(
-				this.modules['chat.native'] ||
-				this.modules['question'] ||
-				this.modules['poll']
-			)
+			return supportsPlatformSidebar(this.modules)
 		},
 		isMobileLayout() {
 			return Boolean(this.$mq?.below?.m)

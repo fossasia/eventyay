@@ -23,6 +23,8 @@ from eventyay.base.models.event import (
     default_feature_flags,
 )
 from eventyay.base.services.jitsi import normalize_server_url
+from eventyay.base.services.loungemesh import validate_loungemesh_server_url
+
 
 User = get_user_model()
 SECRET_REDACTED = "*****"
@@ -335,22 +337,21 @@ class LoungeMeshServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelFo
             "url",
             "active",
             "api_secret",
-            "jitsi_app_id",
-            "jitsi_app_secret",
             "organizers",
             "events",
             "event_exclusive",
         )
         field_classes = {
             "api_secret": SecretKeyField,
-            "jitsi_app_secret": SecretKeyField,
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["api_secret"].required = True
-        self.fields["jitsi_app_id"].required = True
-        self.fields["jitsi_app_secret"].required = True
+        self.fields["api_secret"].label = _("Eventyay Service Secret (EVENTYAY_SERVICE_SECRET)")
+        self.fields["api_secret"].help_text = _(
+            "Shared secret matching EVENTYAY_SERVICE_SECRET in the LoungeMesh server's .env file."
+        )
         if not self.instance.pk and not self.initial.get("api_secret"):
             import secrets
 
@@ -360,6 +361,9 @@ class LoungeMeshServerForm(VideoServerScopeMixin, HasSecretsMixin, forms.ModelFo
         url = self.cleaned_data.get("url")
         if url:
             url = url.strip().rstrip("/")
+            valid, err = validate_loungemesh_server_url(url)
+            if not valid:
+                raise ValidationError(err)
         return url
 
 

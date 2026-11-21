@@ -177,6 +177,7 @@ class AuthModule(BaseModule):
             return
 
         self.consumer.user = login_result.user
+        self.consumer.is_organizer = bool(kwargs.get("is_organizer", False))
         self._current_view = login_result.view
 
         live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})
