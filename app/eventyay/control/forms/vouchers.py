@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from collections import namedtuple
 from html import unescape
 from io import StringIO
@@ -474,6 +475,8 @@ class VoucherBulkForm(VoucherForm):
     )
     send_recipients = forms.CharField(
         label=_('Recipients'),
+        # Leave room in Django's default request limit for URL encoding and the other form fields.
+        max_length=200_000,
         widget=forms.Textarea(
             attrs={
                 'data-display-dependency': '#id_send',
@@ -564,42 +567,82 @@ class VoucherBulkForm(VoucherForm):
         if ',' in raw or ';' in raw:
             if '@' in r[0]:
                 raise ValidationError(_('CSV input needs to contain a header row in the first line.'))
-            dialect = csv.Sniffer().sniff(raw[:1024])
-            reader = csv.DictReader(StringIO(raw), dialect=dialect)
-            if 'email' not in reader.fieldnames:
+            invalid_csv = _('Invalid CSV input. Please check the header and rows.')
+            sample = raw[:1024]
+            try:
+                delimiter = csv.Sniffer().sniff(sample.partition('\n')[0], delimiters=',;').delimiter
+                try:
+                    dialect = csv.Sniffer().sniff(sample, delimiters=delimiter)
+                    skipinitialspace = dialect.skipinitialspace
+                except csv.Error:
+                    dialect = csv.excel
+                    skipinitialspace = True
+                quotechar = dialect.quotechar
+                if quotechar != "'":
+                    # Sniffer also returns double quotes by default when it sees no quoting.
+                    # Only try apostrophes if the sample has no complete double-quoted field.
+                    opening_quote = re.search(rf"""(?:\A|[{delimiter}\r\n]) *+(?P<quote>['"])""", raw)
+                    double_quoted_field = re.search(
+                        rf'(?:\A|[{delimiter}\r\n]) *+"(?:[^"]|"")*+"(?=[{delimiter}\r\n]|\Z)', sample
+                    )
+                    if opening_quote and opening_quote['quote'] == "'" and not double_quoted_field:
+                        apostrophe_field = re.compile(rf"'(?:[^']|'')*+'(?=[{delimiter}\r\n]|\Z)")
+                        field_match = apostrophe_field.match(raw, opening_quote.start('quote'))
+                        if field_match and field_match.end() > len(sample):
+                            quotechar = "'"
+                            skipinitialspace = True
+                reader = csv.DictReader(
+                    StringIO(raw), dialect=dialect, delimiter=delimiter,
+                    quotechar=quotechar, doublequote=True, skipinitialspace=skipinitialspace, strict=True,
+                )
+                headers = reader.fieldnames or []
+            except csv.Error as err:
+                raise ValidationError(invalid_csv) from err
+            if 'email' not in headers:
                 raise ValidationError(
                     _('CSV input needs to contain a field with the header "{header}".').format(header='email')
                 )
-            unknown_fields = [f for f in reader.fieldnames if f not in ('email', 'name', 'tag', 'number')]
+            if len(set(headers)) != len(headers):
+                raise ValidationError(invalid_csv)
+            unknown_fields = [f for f in headers if f not in ('email', 'name', 'tag', 'number')]
             if unknown_fields:
                 raise ValidationError(
                     _('CSV input contains an unknown field with the header "{header}".').format(
                         header=unknown_fields[0]
                     )
                 )
-            for i, row in enumerate(reader):
-                try:
-                    EmailValidator()(row['email'])
-                except ValidationError as err:
-                    raise ValidationError(
-                        _('{value} is not a valid email address.').format(value=row['email'])
-                    ) from err
-                try:
-                    number = int(row.get('number') or 1)
-                except ValueError as err:
-                    raise ValidationError(_('Invalid value in row {number}.').format(number=i + 1)) from err
-                if number < 1:
-                    raise ValidationError(
-                        _('The number of vouchers in row {number} must be at least 1.').format(number=i + 1)
+            tag_field = Voucher._meta.get_field('tag')
+            try:
+                for i, row in enumerate(reader):
+                    if None in row or None in row.values():
+                        raise ValidationError(invalid_csv)
+                    try:
+                        EmailValidator()(row['email'])
+                    except ValidationError as err:
+                        raise ValidationError(
+                            _('{value} is not a valid email address.').format(value=row['email'])
+                        ) from err
+                    try:
+                        number = int(row.get('number') or 1)
+                    except ValueError as err:
+                        raise ValidationError(_('Invalid value in row {number}.').format(number=i + 1)) from err
+                    if number < 1:
+                        raise ValidationError(
+                            _('The number of vouchers in row {number} must be at least 1.').format(number=i + 1)
+                        )
+                    tag = row.get('tag')
+                    if tag:
+                        tag_field.run_validators(tag)
+                    res.append(
+                        self.Recipient(
+                            name=row.get('name', ''),
+                            email=row['email'].strip(),
+                            number=number,
+                            tag=tag,
+                        )
                     )
-                res.append(
-                    self.Recipient(
-                        name=row.get('name', ''),
-                        email=row['email'].strip(),
-                        number=number,
-                        tag=row.get('tag', None),
-                    )
-                )
+            except csv.Error as err:
+                raise ValidationError(invalid_csv) from err
         else:
             for e in r:
                 try:
