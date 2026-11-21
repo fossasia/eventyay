@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import json
 import time
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest import mock
@@ -12,7 +12,7 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import BillingInvoice, Order, OrderPayment, OrderRefund
 from eventyay.eventyay_common.tasks import update_billing_invoice_information
@@ -77,20 +77,20 @@ def _payment_intent_event(*, invoice_id=None, event_id='evt_test'):
 
 
 @pytest.fixture
-@scopes_disabled()
 def billing_invoice(organizer, event):
-    return BillingInvoice.objects.create(
-        organizer=organizer,
-        event=event,
-        status=BillingInvoice.STATUS_PENDING,
-        amount=Decimal('10.00'),
-        currency='EUR',
-        ticket_fee=Decimal('10.00'),
-        final_ticket_fee=Decimal('10.00'),
-        created_by='test',
-        updated_by='test',
-        monthly_bill=timezone.now().date(),
-    )
+    with scope(organizer=organizer):
+        return BillingInvoice.objects.create(
+            organizer=organizer,
+            event=event,
+            status=BillingInvoice.STATUS_PENDING,
+            amount=Decimal('10.00'),
+            currency='EUR',
+            ticket_fee=Decimal('10.00'),
+            final_ticket_fee=Decimal('10.00'),
+            created_by='test',
+            updated_by='test',
+            monthly_bill=timezone.now().date(),
+        )
 
 
 @pytest.mark.django_db
@@ -107,9 +107,7 @@ def test_billing_webhook_skips_task_when_invoice_id_missing():
             'eventyay.api.views.stripe.stripe.Webhook.construct_event',
             return_value=event,
         ),
-        mock.patch(
-            'eventyay.api.views.stripe.update_billing_invoice_information.delay'
-        ) as delay,
+        mock.patch('eventyay.api.views.stripe.update_billing_invoice_information.delay') as delay,
     ):
         response = client.post(
             reverse('api-v1:stripe-webhook'),
@@ -136,9 +134,7 @@ def test_billing_webhook_dispatches_task_when_invoice_id_present(billing_invoice
             'eventyay.api.views.stripe.stripe.Webhook.construct_event',
             return_value=event,
         ),
-        mock.patch(
-            'eventyay.api.views.stripe.update_billing_invoice_information.delay'
-        ) as delay,
+        mock.patch('eventyay.api.views.stripe.update_billing_invoice_information.delay') as delay,
     ):
         response = client.post(
             reverse('api-v1:stripe-webhook'),
@@ -165,15 +161,13 @@ def test_update_billing_invoice_marks_pending_invoice_paid(billing_invoice):
 
 @pytest.mark.django_db
 def test_update_billing_invoice_does_not_overwrite_already_paid(billing_invoice):
-    original_paid_at = datetime(2024, 1, 15, 12, 0, tzinfo=dt_timezone.utc)
+    original_paid_at = datetime(2024, 1, 15, 12, 0, tzinfo=UTC)
     with scopes_disabled():
         billing_invoice.status = BillingInvoice.STATUS_PAID
         billing_invoice.paid_datetime = original_paid_at
         billing_invoice.payment_method = 'stripe'
         billing_invoice.reminder_enabled = False
-        billing_invoice.save(
-            update_fields=['status', 'paid_datetime', 'payment_method', 'reminder_enabled']
-        )
+        billing_invoice.save(update_fields=['status', 'paid_datetime', 'payment_method', 'reminder_enabled'])
 
         update_billing_invoice_information(str(billing_invoice.id))
         billing_invoice.refresh_from_db()
@@ -206,24 +200,24 @@ def test_billing_webhook_reads_payment_intents_without_dict_methods(billing_invo
 
 
 @pytest.fixture
-@scopes_disabled()
 def stripe_payment(event):
-    order = Order.objects.create(
-        code='FOO',
-        event=event,
-        email='dummy@dummy.test',
-        status=Order.STATUS_PAID,
-        datetime=timezone.now(),
-        expires=timezone.now() + timedelta(days=10),
-        total=Decimal('23.00'),
-        locale='en',
-    )
-    return order.payments.create(
-        provider='stripe',
-        amount=Decimal('23.00'),
-        state=OrderPayment.PAYMENT_STATE_CONFIRMED,
-        info=json.dumps({'id': 'ch_test'}),
-    )
+    with scope(organizer=event.organizer):
+        order = Order.objects.create(
+            code='FOO',
+            event=event,
+            email='dummy@dummy.test',
+            status=Order.STATUS_PAID,
+            datetime=timezone.now(),
+            expires=timezone.now() + timedelta(days=10),
+            total=Decimal('23.00'),
+            locale='en',
+        )
+        return order.payments.create(
+            provider='stripe',
+            amount=Decimal('23.00'),
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            info=json.dumps({'id': 'ch_test'}),
+        )
 
 
 def _charge_refunded(payment):
@@ -240,7 +234,7 @@ def _charge_refunded(payment):
 
 
 @pytest.mark.django_db
-def test_charge_refunded_webhook_reads_charges_without_dict_methods(stripe_payment):
+def test_charge_refunded_webhook_reads_charges_without_dict_methods(organizer, stripe_payment):
     event = SimpleNamespace(
         id='evt_test',
         type='charge.refunded',
@@ -250,7 +244,7 @@ def test_charge_refunded_webhook_reads_charges_without_dict_methods(stripe_payme
     response = _post_webhook(Client(), event)
 
     assert response.status_code == 200
-    with scopes_disabled():
+    with scope(organizer=organizer):
         refund = stripe_payment.order.refunds.get()
     assert refund.amount == Decimal('5.00')
     assert refund.state == OrderRefund.REFUND_STATE_DONE
@@ -258,7 +252,7 @@ def test_charge_refunded_webhook_reads_charges_without_dict_methods(stripe_payme
 
 
 @pytest.mark.django_db
-def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(stripe_payment):
+def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(organizer, stripe_payment):
     secret = 'whsec_test'
     payload = json.dumps(
         {
@@ -280,14 +274,14 @@ def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(strip
         )
 
     assert response.status_code == 200
-    with scopes_disabled():
+    with scope(organizer=organizer):
         refund = stripe_payment.order.refunds.get()
     assert refund.amount == Decimal('5.00')
     assert json.loads(refund.info)['full_data']['id'] == 're_test'
 
 
 @pytest.mark.django_db
-def test_charge_refunded_webhook_records_each_refund_once(stripe_payment):
+def test_charge_refunded_webhook_records_each_refund_once(organizer, stripe_payment):
     event = SimpleNamespace(
         id='evt_test',
         type='charge.refunded',
@@ -298,5 +292,5 @@ def test_charge_refunded_webhook_records_each_refund_once(stripe_payment):
     second = _post_webhook(Client(), event)
 
     assert first.status_code == second.status_code == 200
-    with scopes_disabled():
+    with scope(organizer=organizer):
         assert stripe_payment.order.refunds.count() == 1
