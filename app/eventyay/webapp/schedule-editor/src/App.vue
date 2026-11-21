@@ -307,7 +307,7 @@ import GridSchedule from '~/components/GridSchedule.vue'
 import TalkSession from '~/components/Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
 import ConfirmDialog from '~/teamshifts-adapter/ConfirmDialog.vue'
-import api from '~/api'
+import api, { isNotFound, isPermissionDenied } from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
@@ -442,6 +442,7 @@ const confirmDialogBusy = ref(false)
 const confirmDialogError = ref('')
 let confirmDialogResolve: ((value: boolean) => void) | null = null
 let confirmDialogAction: (() => Promise<void>) | null = null
+let confirmDialogDeniedMessage = ''
 
 const breakConfirmDialogEl = ref<HTMLDialogElement | null>(null)
 const breakConfirmTitle = ref('')
@@ -527,7 +528,14 @@ function onBreakDialogBackdrop(event: MouseEvent) {
   if (event.target === breakConfirmDialogEl.value) cancelBreakDelete()
 }
 
-function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: string; confirmClass?: string; onConfirm?: () => Promise<void> }): Promise<boolean> {
+function showConfirmDialog(opts: {
+  title: string
+  lead: string
+  confirmLabel: string
+  confirmClass?: string
+  onConfirm?: () => Promise<void>
+  deniedMessage?: string
+}): Promise<boolean> {
   confirmDialogTitle.value = opts.title
   confirmDialogLead.value = opts.lead
   confirmDialogLabel.value = opts.confirmLabel
@@ -535,6 +543,7 @@ function showConfirmDialog(opts: { title: string; lead: string; confirmLabel: st
   confirmDialogBusy.value = false
   confirmDialogError.value = ''
   confirmDialogAction = opts.onConfirm || null
+  confirmDialogDeniedMessage = opts.deniedMessage || ''
   return new Promise((resolve) => {
     confirmDialogResolve = resolve
     nextTick(() => confirmDialogRef.value?.show())
@@ -549,13 +558,17 @@ async function onConfirmDialogConfirm() {
       await confirmDialogAction()
       confirmDialogRef.value?.close()
       confirmDialogResolve?.(true)
-    } catch (error) {
-      confirmDialogError.value = (error as Error).message || $t('An error occurred. Please try again.')
-      confirmDialogResolve?.(false)
-    } finally {
-      confirmDialogBusy.value = false
       confirmDialogResolve = null
       confirmDialogAction = null
+    } catch (error) {
+      // The dialog stays open, so keep the action and the pending result: Confirm must retry
+      // the request, and Cancel resolves it.
+      console.error('Confirmed action failed', { title: confirmDialogTitle.value, error })
+      confirmDialogError.value = isPermissionDenied(error) && confirmDialogDeniedMessage
+        ? confirmDialogDeniedMessage
+        : (error as Error).message || $t('An error occurred. Please try again.')
+    } finally {
+      confirmDialogBusy.value = false
     }
   } else {
     confirmDialogRef.value?.close()
@@ -1365,11 +1378,24 @@ async function editorSave(): Promise<void> {
     } catch {
       // fetchSchedule already records schedule.fetch via api.http
     }
-  } catch {
-    editorSessionError.value = $t('Failed to save. Please try again.')
+  } catch (error) {
+    console.error('Failed to save session', { id: talk.id, error })
+    editorSessionError.value = isPermissionDenied(error)
+      ? permissionDeniedMessage('save')
+      : $t('Failed to save. Please try again.')
   } finally {
     editorSessionWaiting.value = false
   }
+}
+
+function permissionDeniedMessage(action: 'save' | 'delete'): string {
+  // Only shifts are deleted through the confirm dialog that shows the delete message
+  if (action === 'delete') {
+    return $t('You do not have permission to delete this shift. Your shift role may not allow this change.')
+  }
+  return mode === 'shifts'
+    ? $t('You do not have permission to save this shift. Your shift role may not allow this change.')
+    : $t('You do not have permission to save this session.')
 }
 
 function editorCancel(): void {
@@ -1406,12 +1432,30 @@ async function deleteShiftById(id: number): Promise<boolean> {
     lead: $t('Are you sure you want to delete this shift? This action cannot be undone.'),
     confirmLabel: $t('Delete'),
     confirmClass: 'btn-danger',
+    deniedMessage: permissionDeniedMessage('delete'),
     onConfirm: async () => {
-      await api.deleteTalk({ id })
+      try {
+        await api.deleteTalk({ id })
+      } catch (error) {
+        // A 404 can mean an earlier attempt deleted the shift but its response was lost, or that
+        // the shift API is unavailable. Only treat it as deleted if the schedule no longer has it.
+        if (!isNotFound(error)) throw error
+        const current = await fetchSchedule().catch((fetchError) => {
+          console.error('Failed to check whether the shift still exists', { id, error: fetchError })
+          return null
+        })
+        if (!current || current.talks.some((s) => s.id === id)) throw error
+      }
       if (schedule.value) {
         schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
       }
-      await fetchAdditionalScheduleData()
+      // The shift is already deleted: a failed refresh must not be reported as a failed deletion.
+      // Await it so an older refresh cannot overwrite the warnings of a later one.
+      try {
+        await fetchAdditionalScheduleData()
+      } catch (error) {
+        console.error('Failed to refresh additional schedule data after delete', { id, error })
+      }
     },
   })
 }
