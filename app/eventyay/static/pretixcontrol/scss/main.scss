@@ -109,6 +109,11 @@ h1 .btn-sm {
     margin-top: 20px;
 }
 
+.container-fluid > .alert {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 .flipped-scroll-wrapper {
     overflow-y: auto;
 }

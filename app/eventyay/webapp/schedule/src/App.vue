@@ -25,7 +25,8 @@
 			:fullscreenTarget="$el",
 			:filterGroups="filterGroups",
 			:showRecordingFilter="showRecordingFilter",
-			v-model:recordingFilter="recordingFilter",
+			:recordingFilter="recordingFilter",
+			@update:recordingFilter="onRecordingFilterChange",
 			:sortOptions="sortOptions",
 			v-model:sortBy="sortBy",
 			:favsCount="favs.length",
@@ -38,6 +39,7 @@
 			:userTimezone="userTimezone",
 			:days="allDays",
 			:currentDay="currentDay",
+			:selectedDay="selectedDay",
 			:now="now",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
@@ -49,7 +51,7 @@
 			:popularitySortAvailable="popularitySortAvailable",
 			:exportsDisabled="exportsDisabled",
 			@selectDay="selectDay($event)",
-			@filterToggle="onlyFavs = false",
+			@filterToggle="onFilterToggle($event)",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
 			@update:shareStarredSessions="updateShareStarredSessions",
 			@resetFilters="onlyFavs = false; resetAllFilters()",
@@ -151,7 +153,7 @@ import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
 import ListPagination from '~/components/ListPagination.vue'
-import { findScrollParent, isDocumentScroller, readScrollOffset, writeScrollOffset, runWithoutSmoothScroll, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay } from '~/utils'
+import { findScrollParent, isDocumentScroller, readScrollOffset, writeScrollOffset, runWithoutSmoothScroll, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, visiblePageItems, pageStatusRange, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData, fetchTalkScheduleDetail, mergeCompactScheduleDay, sessionIntersectsDay, serializeScheduleFiltersToUrl, parseScheduleFiltersFromUrl, normalizeLocaleCode, localePrimary, localesMatch } from '~/utils'
 const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersList'))
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
@@ -160,24 +162,6 @@ import { changeScheduleLanguage } from './i18n.js'
 import { getLanguageNativeLabel } from '../../i18n/index.js'
 import { isShiftSchedule, resolveMode } from './teamshifts-adapter'
 import { logOperational } from './operationalLog.js'
-
-function normalizeLocaleCode (code) {
-	if (!code) return ''
-	return code.toString().trim().toLowerCase().replace(/_/g, '-')
-}
-
-function localePrimary (code) {
-	const normalized = normalizeLocaleCode(code)
-	return normalized.split('-')[0] || normalized
-}
-
-function localesMatch (filterValue, sessionValue) {
-	const a = normalizeLocaleCode(filterValue)
-	const b = normalizeLocaleCode(sessionValue)
-	if (!a || !b) return false
-	if (a === b) return true
-	return localePrimary(a) === localePrimary(b)
-}
 
 
 const markdownIt = MarkdownIt({
@@ -341,6 +325,8 @@ export default {
 			allRooms: [],
 			allTypes: [],
 			allLanguages: [],
+			selectedDay: null,
+			_isApplyingUrlFilters: false,
 			onlyFavs: false,
 			publicFavsLoading: !!this.publicFavsUrl,
 			publicFavsLoaded: !this.publicFavsUrl,
@@ -443,8 +429,11 @@ export default {
 		filteredLanguages () {
 			return this.allLanguages.filter(l => l.selected)
 		},
-		hasActiveFilterSelections () {
+		hasActiveAttributeFilters () {
 			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0
+		},
+		hasActiveFilterSelections () {
+			return this.hasActiveAttributeFilters || !!this.selectedDay
 		},
 		showRecordingFilter () {
 			if (!this.schedule?.talks?.length) return false
@@ -529,9 +518,12 @@ export default {
 					const primary = localePrimary(normalized)
 					if (!langExact.has(normalized) && !(primary && langPrimary.has(primary))) continue
 				}
-				if (!isTalkSchedulePending(talk)) {
+				if (isTalkSchedulePending(talk)) {
+					if (this.selectedDay) continue
+				} else {
 					const start = moment.tz(talk.start, this.currentTimezone)
 					if (displayDateSet && !displayDateSet.has(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
+					if (this.selectedDay && start.format('YYYY-MM-DD') !== this.selectedDay) continue
 				}
 				sessions.push(talkToSession(talk, sessionContext))
 			}
@@ -577,7 +569,7 @@ export default {
 		scheduleNeedsEveryDay () {
 			if (!this.schedule?.compact || this.isTalkView || this.isSpeakerView || this.isFeaturedPage) return false
 			return !this.showGrid || this.sessionsMode || !!this.searchQuery || this.onlyFavs
-				|| this.hasActiveFilterSelections || this.recordingFilter !== 'all'
+				|| this.hasActiveAttributeFilters || this.recordingFilter !== 'all'
 		},
 		scheduleNeedsText () {
 			if (!this.schedule?.compact) return false
@@ -586,7 +578,8 @@ export default {
 		scheduleCoverageComplete () {
 			if (!this.schedule?.compact) return true
 			if (this.schedule.view_timezone !== this.currentTimezone) return false
-			const days = this.scheduleNeedsEveryDay ? this.schedule.days : [this.currentDay]
+			const targetDay = this.selectedDay || this.currentDay
+			const days = this.scheduleNeedsEveryDay ? this.schedule.days : [targetDay]
 			return !!days?.length && days.every(day => this.loadedScheduleDays[day]
 				&& (!this.scheduleNeedsText || this.textReadyDays[day]))
 		},
@@ -606,14 +599,24 @@ export default {
 		// Passed to the toolbar so day-picker buttons are never hidden by the
 		// 'Include datetime' sort toggle.
 		allDays () {
-			if (
-				this.schedule?.compact
-				&& this.currentTimezone
-				&& Array.isArray(this.schedule.days)
-				&& this.schedule.days.length
-				&& this.schedule.view_timezone === this.currentTimezone
-			) {
+			if (Array.isArray(this.schedule?.days) && this.schedule.days.length) {
 				return this.schedule.days.map(day => moment.tz(day, this.currentTimezone).startOf('day'))
+			}
+			const sourceTalks = this.schedule?.talks || []
+			if (sourceTalks.length && this.currentTimezone) {
+				const seen = new Set()
+				const days = []
+				for (const talk of sourceTalks) {
+					if (!talk.start || isTalkSchedulePending(talk)) continue
+					const day = moment.tz(talk.start, this.currentTimezone).startOf('day')
+					const key = day.valueOf()
+					if (!seen.has(key)) {
+						seen.add(key)
+						days.push(day)
+					}
+				}
+				days.sort((a, b) => a.diff(b))
+				if (days.length) return days
 			}
 			if (!this.baseSessions) return []
 			const seen = new Set()
@@ -757,7 +760,6 @@ export default {
 			})
 		},
 		recordingFilter () {
-			this.writeRecordingQueryParam()
 			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
 		},
 		sortIncludeDate () {
@@ -810,7 +812,6 @@ export default {
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
 		await changeScheduleLanguage(this.locale)
-		this.readRecordingQueryParam()
 		moment.locale(this.locale)
 		this.userTimezone = moment.tz.guess()
 		// If opened via old /sessions/ URL, activate sessions mode
@@ -936,6 +937,7 @@ export default {
 			this.onWindowResize()
 		}
 		this.mergeFeaturedFilters(this.schedule)
+		this.readFiltersFromUrl({ isInitial: true })
 
 		// set API URL before loading favs
 		this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
@@ -952,7 +954,7 @@ export default {
 		}
 		this.shareStarredSessions = await loadStarredSharingPreference(this.eventUrl)
 
-		if (fragment && fragment.length === 10) {
+		if (fragment && fragment.length === 10 && !this.selectedDay) {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
 			const knownDays = (this.allDays?.length ? this.allDays : this.days) || []
 			const filteredDays = knownDays.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
@@ -1008,11 +1010,17 @@ export default {
 		window.addEventListener('touchmove', this._onScheduleTouchMove, { passive: true })
 		this._pageScrollParent = findScrollParent(this.$el.parentElement || this.$el.getRootNode().host)
 		this.bindScrollParent(this._pageScrollParent)
+		this._onPopState = () => this.readFiltersFromUrl({ isPopState: true })
+		window.addEventListener('popstate', this._onPopState)
 		this._onFullscreenChange = () => this.syncFullscreenScrollParent()
 		document.addEventListener('fullscreenchange', this._onFullscreenChange)
 		document.addEventListener('webkitfullscreenchange', this._onFullscreenChange)
 	},
 	unmounted () {
+		if (this._onPopState) {
+			window.removeEventListener('popstate', this._onPopState)
+			this._onPopState = null
+		}
 		if (this._toolbarJumpTimer) window.clearTimeout(this._toolbarJumpTimer)
 		document.documentElement.style.scrollBehavior = ''
 		document.removeEventListener('fullscreenchange', this._onFullscreenChange)
@@ -1061,6 +1069,7 @@ export default {
 			this.displayedGridDay = null
 			this.gridScrollDays = []
 			this.mergeFeaturedFilters(this.schedule)
+		this.readFiltersFromUrl({ isInitial: true })
 			if (this.currentDay && !payload.days.includes(this.currentDay)) {
 				this.currentDay = payload.days[0] || this.currentDay
 			}
@@ -1106,6 +1115,7 @@ export default {
 				this.textReadyDays = { ...this.textReadyDays, [day]: true }
 			}
 			this.mergeFeaturedFilters(this.schedule)
+		this.readFiltersFromUrl({ isInitial: true })
 		},
 		async ensureAllScheduleDays ({ includeText = false } = {}) {
 			const days = this.schedule?.days || []
@@ -1139,10 +1149,10 @@ export default {
 				}
 				return
 			}
-			if (!this.currentDay) return
+			const requestedDay = this.selectedDay || this.currentDay
+			if (!requestedDay) return
 			// Record the click that started this load. A later click must not
 			// be released or scrolled by this one when the request returns.
-			const requestedDay = this.currentDay
 			const navigatingTo = this._toolbarDay
 			const generation = (this._coverageGeneration || 0) + 1
 			this._coverageGeneration = generation
@@ -1302,8 +1312,10 @@ export default {
 				if (room?.id == null || knownRooms.has(room.id)) return
 				knownRooms.add(room.id)
 				this.allRooms.push({
+					...room,
 					id: room.id,
 					value: room.id,
+					name: room.name,
 					label: getLocalizedString(room.name),
 					selected: false,
 				})
@@ -1321,14 +1333,14 @@ export default {
 				const typeLabel = getSessionTypeLabel(type)
 				if (typeLabel && !knownTypes.has(typeLabel)) {
 					knownTypes.add(typeLabel)
-					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+					this.allTypes.push({ value: typeLabel, label: typeLabel, raw: type, selected: false })
 				}
 			})
 			;(schedule.talks || []).forEach(talk => {
 				const typeLabel = getSessionTypeLabel(talk.session_type)
 				if (typeLabel && !knownTypes.has(typeLabel)) {
 					knownTypes.add(typeLabel)
-					this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
+					this.allTypes.push({ value: typeLabel, label: typeLabel, raw: talk.session_type, selected: false })
 				}
 				addLanguage(talk.content_locale)
 			})
@@ -1357,6 +1369,7 @@ export default {
 				}
 				this.readFeaturedPageMeta(data)
 				this.mergeFeaturedFilters(this.schedule)
+		this.readFiltersFromUrl({ isInitial: true })
 				window.scrollTo({top: 0, behavior: 'smooth'})
 			} catch (error) {
 				if (error?.name !== 'AbortError') {
@@ -1381,28 +1394,68 @@ export default {
 				return []
 			}
 		},
-		readRecordingQueryParam () {
+		readFiltersFromUrl ({ isPopState = false, isInitial = false } = {}) {
+			this._isApplyingUrlFilters = true
+			const hadActiveFilters = this.hasActiveFilterSelections
 			try {
-				const url = new URL(window.location.href)
-				const value = url.searchParams.get('recording')
-				if (value === 'yes' || value === 'no' || value === 'all') {
-					this.recordingFilter = value
+				const availableDays = (this.allDays?.length ? this.allDays : this.days) || (this.schedule?.days || [])
+				const result = parseScheduleFiltersFromUrl(window.location.href, {
+					allTracks: this.allTracks,
+					allRooms: this.allRooms,
+					allTypes: this.allTypes,
+					allLanguages: this.allLanguages,
+					availableDays,
+				})
+				this.recordingFilter = result.recordingFilter
+				if (result.selectedDay) {
+					this.selectedDay = result.selectedDay
+					this.currentDay = result.selectedDay
+				} else {
+					this.selectedDay = null
 				}
-			} catch {
-				// ignore invalid URL contexts
+				if (this._initialized && this.schedule?.compact && (result.hasFilters || this.hasActiveFilterSelections || hadActiveFilters || isPopState)) {
+					this.syncCompactCoverage()
+				}
+			} finally {
+				this._isApplyingUrlFilters = false
 			}
 		},
-		writeRecordingQueryParam () {
+		writeFiltersToUrl ({ pushState = false } = {}) {
+			if (this._isApplyingUrlFilters) return
 			try {
-				const url = new URL(window.location.href)
-				const value = (this.recordingFilter === 'yes' || this.recordingFilter === 'no' || this.recordingFilter === 'all')
-					? this.recordingFilter
-					: 'all'
-				url.searchParams.set('recording', value)
-				window.history.replaceState({}, '', url.pathname + url.search + url.hash)
-			} catch {
-				// ignore invalid URL contexts
+				const newUrl = serializeScheduleFiltersToUrl(window.location.href, {
+					filteredTracks: this.filteredTracks,
+					filteredRooms: this.filteredRooms,
+					filteredTypes: this.filteredTypes,
+					filteredLanguages: this.filteredLanguages,
+					allTracks: this.allTracks,
+					allRooms: this.allRooms,
+					allTypes: this.allTypes,
+					selectedDay: this.selectedDay,
+					recordingFilter: this.recordingFilter,
+				})
+				const currentRelative = window.location.pathname + window.location.search + window.location.hash
+				if (newUrl !== currentRelative) {
+					if (pushState) {
+						window.history.pushState({}, '', newUrl)
+					} else {
+						window.history.replaceState({}, '', newUrl)
+					}
+				}
+			} catch (error) {
+				console.error('Failed to update schedule filters in URL', error)
 			}
+		},
+		onFilterToggle (item) {
+			this.onlyFavs = false
+			this.writeFiltersToUrl({ pushState: true })
+			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
+		},
+		onRecordingFilterChange (value) {
+			this.recordingFilter = value
+			this.onlyFavs = false
+			this.writeFiltersToUrl({ pushState: true })
+			if (this._initialized && this.schedule?.compact) this.syncCompactCoverage()
 		},
 		bindScrollParent (next, { detach = false } = {}) {
 			window.removeEventListener('scroll', this._onScheduleScroll)
@@ -1451,6 +1504,7 @@ export default {
 			return host
 		},
 		setCurrentDay (day) {
+			if (this.selectedDay) return
 			const dayStr = day.format('YYYY-MM-DD')
 			if (this._toolbarDay && dayStr !== this._toolbarDay) return
 			const pool = (this.allDays && this.allDays.length) ? this.allDays : (this.days || [])
@@ -1461,7 +1515,8 @@ export default {
 			this._fromScrollDay = true
 			this.currentDay = nextDay
 			try {
-				window.history.replaceState(null, null, '#' + nextDay)
+				const hashUrl = window.location.pathname + window.location.search + '#' + nextDay
+				window.history.replaceState(null, null, hashUrl)
 			} catch (e) {
 				window.location.hash = nextDay
 			}
@@ -1469,8 +1524,10 @@ export default {
 		changeDay (day) {
 			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
 			this.currentDay = day.clone().startOf('day').format('YYYY-MM-DD')
+			if (this.selectedDay) return
 			try {
-				window.history.replaceState(null, null, '#' + day.format('YYYY-MM-DD'))
+				const hashUrl = window.location.pathname + window.location.search + '#' + day.format('YYYY-MM-DD')
+				window.history.replaceState(null, null, hashUrl)
 			} catch (e) {
 				window.location.hash = day.format('YYYY-MM-DD')
 			}
@@ -1481,25 +1538,26 @@ export default {
 			document.documentElement.style.scrollBehavior = ''
 		},
 		selectDay (dayId) {
-			try {
-				window.history.replaceState(null, null, '#' + dayId)
-			} catch (e) {
-				window.location.hash = dayId
+			const isToggleOff = this.selectedDay === dayId
+			if (isToggleOff) {
+				this.selectedDay = null
+			} else {
+				this.selectedDay = dayId
+				this.currentDay = dayId
+			}
+			this.writeFiltersToUrl({ pushState: true })
+			if (this._initialized && this.schedule?.compact) {
+				this.syncCompactCoverage()
 			}
 			document.documentElement.style.scrollBehavior = 'auto'
 			this._toolbarDay = dayId
 			// Drop a day prepend or append that started before this click.
 			this._gridExtendGeneration = (this._gridExtendGeneration || 0) + 1
 			this._extendingGrid = false
-			const changedDay = dayId !== this.currentDay
-			if (changedDay) this.currentDay = dayId
-			// Always scroll on toolbar click. When the day is already visible,
-			// scroll-sync may have set currentDay with _scrollDayUpdate, which
-			// skips the currentDay watcher — forceScrollDay handles that case.
 			this.forceScrollDay++
 			if (this._toolbarJumpTimer) window.clearTimeout(this._toolbarJumpTimer)
-			// Hold scroll-sync until the jump finishes. A later load shortens this.
-			this._toolbarJumpTimer = window.setTimeout(() => this.releaseToolbarJump(dayId), changedDay ? 2000 : 180)
+			// Hold scroll-sync until the jump finishes.
+			this._toolbarJumpTimer = window.setTimeout(() => this.releaseToolbarJump(dayId), 180)
 		},
 		goToNow() {
 			const todayMoment = this.resolvedNow.clone().tz(this.currentTimezone).startOf('day')
@@ -1872,6 +1930,11 @@ export default {
 			this.allTypes.forEach(t => t.selected = false)
 			this.allLanguages.forEach(l => l.selected = false)
 			this.recordingFilter = 'all'
+			this.selectedDay = null
+			this.writeFiltersToUrl({ pushState: true })
+			if (this._initialized && this.schedule?.compact) {
+				this.syncCompactCoverage()
+			}
 		},
 		setTimeDensityMinutes (minutes) {
 			const parsedMinutes = Number(minutes)
