@@ -111,9 +111,7 @@ def test_giftcard_duplicate_secert(token_client, organizer, event, giftcard):
     res['secret'] = 'ABCDEF'
     resp = token_client.post('/api/v1/organizers/{}/giftcards/'.format(organizer.slug), res, format='json')
     assert resp.status_code == 400
-    assert resp.data == {
-        'secret': ['A gift card with the same secret already exists in your or an affiliated organizer account.']
-    }
+    assert resp.data == {'secret': ['A gift card with the same secret already exists in your organizer account.']}
 
 
 @pytest.mark.django_db

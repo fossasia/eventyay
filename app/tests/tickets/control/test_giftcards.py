@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
@@ -183,6 +184,7 @@ def test_card_detail_view_transact_invalid_value(organizer, admin_user, gift_car
 
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_cross_organizer_acceptance_cannot_be_added(organizer, organizer2, admin_user, gift_card, client, team2):
     client.login(email='dummy@dummy.dummy', password='dummy')
     resp = client.post('/control/organizer/dummy/giftcards', {'add': organizer2.slug})
