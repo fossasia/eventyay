@@ -235,13 +235,13 @@ def _charge_refunded(payment):
 
 @pytest.mark.django_db
 def test_charge_refunded_webhook_reads_charges_without_dict_methods(organizer, event, stripe_payment):
-    event = SimpleNamespace(
+    stripe_event = SimpleNamespace(
         id='evt_test',
         type='charge.refunded',
         data=SimpleNamespace(object=ObjectWithoutDictMethods(_charge_refunded(stripe_payment))),
     )
 
-    response = _post_webhook(Client(), event)
+    response = _post_webhook(Client(), stripe_event)
 
     assert response.status_code == 200
     with scope(organizer=organizer, event=event):
@@ -282,14 +282,14 @@ def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(organ
 
 @pytest.mark.django_db
 def test_charge_refunded_webhook_records_each_refund_once(organizer, event, stripe_payment):
-    event = SimpleNamespace(
+    stripe_event = SimpleNamespace(
         id='evt_test',
         type='charge.refunded',
         data=SimpleNamespace(object=ObjectWithoutDictMethods(_charge_refunded(stripe_payment))),
     )
 
-    first = _post_webhook(Client(), event)
-    second = _post_webhook(Client(), event)
+    first = _post_webhook(Client(), stripe_event)
+    second = _post_webhook(Client(), stripe_event)
 
     assert first.status_code == second.status_code == 200
     with scope(organizer=organizer, event=event):
