@@ -48,6 +48,16 @@ def test_mask_sensitive_data_preserves_non_containers():
     assert mask_sensitive_data(None) is None
 
 
+def test_mask_sensitive_data_handles_tuples():
+    raw_tuple = ({'api_token': 'secret-1'}, ({'nested_key': 'abc', 'secret': 'pass'}, 42))
+    masked_tuple = mask_sensitive_data(raw_tuple)
+    assert isinstance(masked_tuple, tuple)
+    assert masked_tuple[0]['api_token'] == '********'
+    assert masked_tuple[1][0]['secret'] == '********'
+    assert masked_tuple[1][0]['nested_key'] == 'abc'
+    assert masked_tuple[1][1] == 42
+
+
 @pytest.mark.django_db
 def test_user_api_token_serialize_masks_by_default(user):
     with scopes_disabled():
@@ -149,4 +159,16 @@ def test_log_entry_json_data_masks_historical_records(user):
 
         assert entry.json_data['token'] == '********'
         assert entry.json_data['name'] == 'Legacy'
+        assert entry.parsed_data['token'] == '********'
+        assert entry.parsed_data['name'] == 'Legacy'
 
+
+@pytest.mark.django_db
+def test_user_log_action_with_sequence_data(user):
+    with scopes_disabled():
+        user.log_action('eventyay.user.sequence.test', data=[{'token': 'seq-secret', 'action': 'bulk'}])
+        entry = LogEntry.objects.filter(user=user, action_type='eventyay.user.sequence.test').first()
+        assert entry is not None
+        assert 'seq-secret' not in entry.data
+        assert entry.parsed_data[0]['token'] == '********'
+        assert entry.parsed_data[0]['action'] == 'bulk'

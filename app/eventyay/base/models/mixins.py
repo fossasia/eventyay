@@ -7,8 +7,9 @@ from django.utils.functional import cached_property
 from django_scopes import ScopedManager, scopes_disabled
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
-from eventyay.helpers.json import CustomJSONEncoder
 from eventyay.base.operational_logging import emit_logged_action
+from eventyay.helpers.json import CustomJSONEncoder
+
 
 SENSITIVE_KEYS = ['password', 'secret', 'api_key']
 

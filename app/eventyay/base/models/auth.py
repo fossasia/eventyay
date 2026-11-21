@@ -40,6 +40,7 @@ from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
+from eventyay.base.operational_logging import emit_logged_action
 from eventyay.common.image import (
     create_thumbnail,
     get_thumbnail,
@@ -50,7 +51,6 @@ from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
 from eventyay.talk_rules.person import is_administrator
-from eventyay.base.operational_logging import emit_logged_action
 
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
@@ -896,12 +896,13 @@ class User(
         if data is None:
             data = {}
 
-        if isinstance(data, dict):
-            sanitized_data = mask_sensitive_data(data)
+        sanitized_data = mask_sensitive_data(data)
+        if isinstance(sanitized_data, dict):
             stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder, sort_keys=True)
+        elif isinstance(sanitized_data, (list, tuple)):
+            stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder)
         else:
-            sanitized_data = data
-            stored_data = str(data)
+            stored_data = str(sanitized_data)
 
         LogEntry.objects.create(
             user=user or person or self,

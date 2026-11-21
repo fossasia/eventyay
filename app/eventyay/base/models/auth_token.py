@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy as _p
 
 from eventyay.api.versions import CURRENT_VERSIONS
+
 from .mixins import PretalxModel
 
 
