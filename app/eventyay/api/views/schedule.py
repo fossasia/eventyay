@@ -4,33 +4,27 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django_filters import rest_framework as filters
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
     extend_schema,
     extend_schema_view,
 )
+from rest_flex_fields import is_expanded
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
-from rest_flex_fields import is_expanded
-from eventyay.api.throttles import EventyayUserRateThrottle, PublicScheduleThrottle
 
 from eventyay.agenda.views.utils import get_schedule_exporter_content
 from eventyay.api.documentation import build_expand_docs, build_search_docs
-from eventyay.api.filters.schedule import TalkSlotFilter
+from eventyay.api.filters.schedule import TalkSlotFilter, has_orga_schedule_permission
 from eventyay.api.mixins import (
     PretalxViewSetMixin,
     cached_json_response,
     prefetch_talk_slots,
-)
-from eventyay.base.services.stale_cache import (
-    SCHEDULE_HOT_TTL,
-    api_locale_key,
-    get_cached_schedule_detail,
-    get_cached_talk_slots_list,
-    talk_slots_filter_key,
 )
 from eventyay.api.serializers.legacy import LegacyScheduleSerializer
 from eventyay.api.serializers.schedule import (
@@ -40,9 +34,17 @@ from eventyay.api.serializers.schedule import (
     TalkSlotOrgaSerializer,
     TalkSlotSerializer,
 )
+from eventyay.api.throttles import EventyayUserRateThrottle, PublicScheduleThrottle
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.services.stale_cache import (
+    SCHEDULE_HOT_TTL,
+    api_locale_key,
+    get_cached_schedule_detail,
+    get_cached_talk_slots_list,
+    talk_slots_filter_key,
+)
 from eventyay.talk_rules.tracks import (
     apply_track_limit_to_slots,
     schedule_cache_user_scope,
@@ -349,6 +351,7 @@ class TalkSlotViewSet(
     queryset = TalkSlot.objects.none()
     endpoint = 'slots'
     search_fields = ('submission__title', 'submission__speakers__fullname')
+    filter_backends = (filters.DjangoFilterBackend, SearchFilter)
     filterset_class = TalkSlotFilter
     allow_public_read = True
     write_permission = 'can_change_submissions'
@@ -356,7 +359,7 @@ class TalkSlotViewSet(
 
     @cached_property
     def is_orga(self):
-        return self.event and self.request.user.has_perm('base.orga_view_schedule', self.event)
+        return has_orga_schedule_permission(self.request, self.event)
 
     def get_unversioned_serializer_class(self):
         if self.is_orga:
@@ -398,13 +401,17 @@ class TalkSlotViewSet(
         if self.action != 'list':
             return queryset
 
-        # In the list view, fall back to filtering by current schedule if there is no
-        # other filter present.
+        # In the list view, fall back to filtering by current schedule unless an
+        # explicit schedule-selection filter is active.
         # If there is no current schedule, that means an empty response.
-        filter_params = self.filterset_class.get_fields().keys()
-        is_any_filter_active = any(param in self.request.query_params for param in filter_params)
+        schedule_filter_params = ('schedule', 'schedule_version')
+        has_schedule_filter = any(
+            bool(str(self.request.query_params.get(param, '')).strip())
+            for param in schedule_filter_params
+            if param in self.request.query_params
+        )
 
-        if not is_any_filter_active:
+        if not self.is_orga or not has_schedule_filter:
             queryset = queryset.filter(schedule=self.event.current_schedule)
 
         if self.event and user_has_track_limits(self.event, self.request.user):

@@ -1,9 +1,20 @@
 import json
+from datetime import timedelta
 
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import Schedule
+from eventyay.api.filters.schedule import TalkSlotFilter
+from eventyay.base.models import (
+    ReviewPhase,
+    Room,
+    Schedule,
+    Submission,
+    TalkSlot,
+    Team,
+    TeamAPIToken,
+    User,
+)
 
 
 @pytest.fixture
@@ -549,9 +560,9 @@ def test_list_slots_orga_sees_slots_in_current_schedule_by_default(
 
 
 @pytest.mark.django_db
-def test_list_slots_orga_can_filter_by_schedule_pk(
-    client, orga_user_token, event, slot
-):
+
+
+def test_list_slots_orga_can_filter_by_schedule_pk(client, orga_user_token, event, slot):
     with scope(event=event):
         event.wip_schedule.freeze("v2.0")
         current_schedule_id = slot.schedule.pk
@@ -574,10 +585,128 @@ def test_list_slots_orga_can_filter_by_schedule_pk(
     )
     content = json.loads(response.text)
     assert response.status_code == 200
-    assert content["count"] == 3
+    assert content["count"] == 1
+    with scope(event=event):
+        expected_slot_pk = event.current_schedule.talks.get(submission__code=code).pk
+    assert content["results"][0]["id"] == expected_slot_pk
 
 
 @pytest.mark.django_db
+def test_list_slots_orga_can_filter_by_room(client, orga_user_token, event, other_event, slot, room):
+    with scope(event=event):
+        other_room = Room.objects.create(event=event, name="Other Room", position=9)
+        other_slot = TalkSlot.objects.create(
+            schedule=slot.schedule,
+            submission=slot.submission,
+            room=other_room,
+            is_visible=True,
+            start=event.datetime_from,
+            end=event.datetime_from + timedelta(minutes=30),
+        )
+
+    response = client.get(
+        event.api_urls.slots + f"?room={room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 1
+    assert slot.pk in [s["id"] for s in content["results"]]
+    assert other_slot.pk not in [s["id"] for s in content["results"]]
+
+    response = client.get(
+        event.api_urls.slots + f"?room={other_room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == other_slot.pk
+
+    # Room from another event returns 400 (cross-event room isolation)
+    with scope(event=other_event):
+        foreign_room = Room.objects.create(event=other_event, name="Foreign Room", position=1)
+    response_foreign = client.get(
+        event.api_urls.slots + f"?room={foreign_room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_foreign.status_code == 400
+    assert "room" in response_foreign.json()
+
+    # Invalid room returns 400
+    response_invalid = client.get(
+        event.api_urls.slots + "?room=99999",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_invalid.status_code == 400
+    assert "room" in response_invalid.json()
+
+
+@pytest.mark.django_db
+def test_list_slots_orga_can_filter_by_schedule_version(client, orga_user_token, event, slot, room):
+    with scope(event=event):
+        versioned_schedule = event.schedules.create(version="v2-filter")
+        slot.schedule = versioned_schedule
+        slot.save()
+        expected_pks = {slot.pk}
+
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=v2-filter",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == len(expected_pks)
+    assert {s["id"] for s in content["results"]} == expected_pks
+
+
+@pytest.mark.django_db
+def test_list_slots_orga_can_filter_by_schedule_version_wip(client, orga_user_token, event, slot):
+    with scope(event=event):
+        wip_pks = set(event.wip_schedule.talks.values_list("pk", flat=True))
+        assert wip_pks
+
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == len(wip_pks)
+    assert {s["id"] for s in content["results"]} == wip_pks
+
+    # Case-insensitive "WIP"
+    response_upper = client.get(
+        event.api_urls.slots + "?schedule_version=WIP",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content_upper = json.loads(response_upper.text)
+    assert response_upper.status_code == 200, content_upper
+    assert content_upper["count"] == len(wip_pks)
+    assert {s["id"] for s in content_upper["results"]} == wip_pks
+
+
+@pytest.mark.django_db
+def test_list_slots_anonymous_cannot_filter_by_schedule_version_wip(client, event, slot):
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 0
+
+
+@pytest.mark.django_db
+
+
 def test_retrieve_slot_anonymous_not_visible(client, event, invisible_slot):
     response = client.get(event.api_urls.slots + f"{invisible_slot.pk}/", follow=True)
     assert response.status_code == 404
@@ -859,3 +988,377 @@ def test_schedule_expand_slots(client, event, slot, track):
     assert speaker_data["code"] == speaker.code
     assert speaker_data["name"] == speaker.fullname
     assert speaker_data["biography"] == profile.biography
+
+
+def test_talk_slot_filter_fallback_and_direct_instantiation(client, orga_user_token, event, slot, room):
+    with scope(event=event):
+        code = slot.submission.code
+        current_slot = event.current_schedule.talks.filter(room=room).first()
+        wip_slot = event.wip_schedule.talks.filter(room=room).first()
+        old_schedule = event.schedules.create(version="v1.0")
+        old_slot = TalkSlot.objects.create(
+            schedule=old_schedule,
+            submission=slot.submission,
+            room=room,
+            is_visible=True,
+            start=event.datetime_from,
+            end=event.datetime_from + timedelta(minutes=30),
+        )
+        invisible_current_slot = TalkSlot.objects.create(
+            schedule=event.current_schedule,
+            submission=slot.submission,
+            room=None,
+            is_visible=False,
+            start=event.datetime_from + timedelta(minutes=35),
+            end=event.datetime_from + timedelta(minutes=65),
+        )
+        assert current_slot is not None
+        assert wip_slot is not None
+        assert old_slot is not None
+        assert invisible_current_slot is not None
+
+    # 1. Non-schedule filters remain restricted to current schedule
+    # Room filter excludes historical and WIP slots
+    response = client.get(
+        event.api_urls.slots + f"?room={room.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == current_slot.pk
+
+    # Submission filter excludes historical and WIP slots
+    response = client.get(
+        event.api_urls.slots + f"?submission={code}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == 2
+    assert {s["id"] for s in content["results"]} == {current_slot.pk, invisible_current_slot.pk}
+
+    # is_visible filter excludes historical, WIP, and invisible current slots
+    response = client.get(
+        event.api_urls.slots + "?is_visible=true",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    returned_ids = [s["id"] for s in content["results"]]
+    assert current_slot.pk in returned_ids
+    assert invisible_current_slot.pk not in returned_ids
+    assert wip_slot.pk not in returned_ids
+    assert old_slot.pk not in returned_ids
+
+    # Empty schedule_version falls back to current schedule
+    response_empty = client.get(
+        event.api_urls.slots + "?schedule_version=",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content_empty = json.loads(response_empty.text)
+    assert response_empty.status_code == 200, content_empty
+    returned_empty = [s["id"] for s in content_empty["results"]]
+    assert current_slot.pk in returned_empty
+    assert old_slot.pk not in returned_empty
+    assert wip_slot.pk not in returned_empty
+
+    # 2. Explicit schedule filters bypass current schedule fallback
+    response = client.get(
+        event.api_urls.slots + f"?schedule={old_schedule.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert {s["id"] for s in content["results"]} == {old_slot.pk}
+
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=v1.0",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert {s["id"] for s in content["results"]} == {old_slot.pk}
+
+    # 3. Anonymous ?schedule=<wip_pk> returns NO WIP slots (choice validation failure)
+    response = client.get(
+        event.api_urls.slots + f"?schedule={event.wip_schedule.pk}",
+        follow=True,
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 400, content
+    assert "schedule" in content
+
+    # Organizer positive control: organizer CAN access WIP slots by schedule pk
+    response = client.get(
+        event.api_urls.slots + f"?schedule={event.wip_schedule.pk}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] > 0
+    assert wip_slot.pk in [s["id"] for s in content["results"]]
+
+    # 4. Direct TalkSlotFilter instantiation preserves event
+    with scope(event=event):
+        f = TalkSlotFilter(
+            data={"schedule_version": "v1.0"},
+            queryset=TalkSlot.objects.filter(schedule__event=event),
+            event=event,
+        )
+        assert f.event == event
+        assert f.filters["schedule"].queryset.count() == event.schedules.count()
+        assert f.filters["submission"].queryset.count() == event.submissions.count()
+        assert f.filters["speaker"].queryset.count() == User.objects.filter(submissions__event=event).distinct().count()
+        assert f.filters["room"].queryset.count() == event.rooms.count()
+        assert old_slot in f.qs
+
+
+@pytest.mark.django_db
+def test_list_slots_team_api_token_wip_access(client, event, slot):
+    with scope(event=event):
+        organizer = getattr(event, "organizer", None)
+        team_auth = Team.objects.create(
+            organizer=organizer,
+            name="Submission Editors",
+            can_change_submissions=True,
+            all_events=True,
+        )
+        token_auth = TeamAPIToken.objects.create(team=team_auth, name="Editor Token")
+        wip_pks = set(event.wip_schedule.talks.values_list("pk", flat=True))
+        assert wip_pks
+
+        team_unauth = Team.objects.create(
+            organizer=organizer,
+            name="Read Only Team",
+            can_change_submissions=False,
+            all_events=True,
+        )
+        token_unauth = TeamAPIToken.objects.create(team=team_unauth, name="Unauth Token")
+
+    # 1. Authorized token receives WIP slots
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+        headers={"Authorization": f"Token {token_auth.token}"},
+    )
+    content = json.loads(response.text)
+    assert response.status_code == 200, content
+    assert content["count"] == len(wip_pks)
+    assert {s["id"] for s in content["results"]} == wip_pks
+
+    # 2. Unauthorized token receives 0 WIP slots
+    response = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+        headers={"Authorization": f"Token {token_unauth.token}"},
+    )
+    assert response.status_code == 200, response.text
+    content = json.loads(response.text)
+    assert content["count"] == 0
+    assert content["results"] == []
+
+
+@pytest.mark.django_db
+def test_talk_slot_filter_anonymous_cannot_enumerate_private_submissions(client, event, slot, orga_user_token):
+    with scope(event=event):
+        private_sub = Submission.objects.create(
+            event=event,
+            title="Private Draft Talk",
+            submission_type=event.cfp.default_type,
+        )
+        private_slot = TalkSlot.objects.create(
+            schedule=event.wip_schedule,
+            submission=private_sub,
+            room=slot.room,
+            is_visible=True,
+            start=slot.start,
+            end=slot.end,
+        )
+
+    # 1. Anonymous filtering by visible slot submission succeeds
+    response_vis = client.get(
+        event.api_urls.slots + f"?submission={slot.submission.code}",
+        follow=True,
+    )
+    assert response_vis.status_code == 200
+    content_vis = json.loads(response_vis.text)
+    assert slot.pk in [s["id"] for s in content_vis["results"]]
+
+    # 2. Anonymous filtering by private submission without visible slot returns 400
+    response_priv = client.get(
+        event.api_urls.slots + f"?submission={private_sub.code}",
+        follow=True,
+    )
+    assert response_priv.status_code == 400
+    assert "submission" in response_priv.json()
+
+    # 3. Anonymous filtering by non-existent submission returns 400 identically
+    response_nonexist = client.get(
+        event.api_urls.slots + "?submission=NONEXISTENT123",
+        follow=True,
+    )
+    assert response_nonexist.status_code == 400
+    assert "submission" in response_nonexist.json()
+
+    # 4. Organizer can filter by private submission and retrieves exact slot
+    response_orga = client.get(
+        event.api_urls.slots + f"?submission={private_sub.code}&schedule_version=wip",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_orga.status_code == 200
+    content_orga = json.loads(response_orga.text)
+    assert {s["id"] for s in content_orga["results"]} == {private_slot.pk}
+
+
+@pytest.mark.django_db
+def test_reviewer_who_can_see_speaker_names_cannot_access_wip_or_orga_fields(
+    client, event, slot, review_user, orga_user_token
+):
+    with scope(event=event):
+        wip_pks = set(event.wip_schedule.talks.values_list("pk", flat=True))
+        assert wip_pks
+        if not event.active_review_phase:
+            event.active_review_phase = ReviewPhase.objects.create(
+                event=event,
+                name="Review Phase",
+                can_see_speaker_names=True,
+                is_active=True,
+            )
+        else:
+            event.active_review_phase.can_see_speaker_names = True
+            event.active_review_phase.save()
+
+    # 1. Reviewer who can see speaker names cannot access WIP schedule slots
+    client.force_login(review_user)
+    response_rev_wip = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+    )
+    assert response_rev_wip.status_code == 200, response_rev_wip.text
+    content_rev_wip = json.loads(response_rev_wip.text)
+    assert content_rev_wip["count"] == 0
+    assert content_rev_wip["results"] == []
+
+    # 2. Reviewer cannot obtain organizer-only serializer fields (e.g. is_visible)
+    response_rev_slots = client.get(
+        event.api_urls.slots,
+        follow=True,
+    )
+    assert response_rev_slots.status_code == 200, response_rev_slots.text
+    content_rev_slots = json.loads(response_rev_slots.text)
+    assert content_rev_slots["count"] > 0
+    for s in content_rev_slots["results"]:
+        assert "is_visible" not in s
+
+    # 3. Organizer retains legitimate WIP schedule access and organizer-only fields
+    client.logout()
+    response_orga_wip = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_orga_wip.status_code == 200, response_orga_wip.text
+    content_orga_wip = json.loads(response_orga_wip.text)
+    assert content_orga_wip["count"] == len(wip_pks)
+    assert {s["id"] for s in content_orga_wip["results"]} == wip_pks
+
+    response_orga_slots = client.get(
+        event.api_urls.slots,
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_orga_slots.status_code == 200, response_orga_slots.text
+    content_orga_slots = json.loads(response_orga_slots.text)
+    assert "is_visible" in content_orga_slots["results"][0]
+
+    # 4. Anonymous cannot access WIP schedule slots
+    client.logout()
+    response_anon = client.get(
+        event.api_urls.slots + "?schedule_version=wip",
+        follow=True,
+    )
+    assert response_anon.status_code == 200, response_anon.text
+    content_anon = json.loads(response_anon.text)
+    assert content_anon["count"] == 0
+    assert content_anon["results"] == []
+
+
+@pytest.mark.django_db
+def test_talk_slot_search_filter(client, orga_user_token, event, slot):
+    response = client.get(
+        event.api_urls.slots + f"?search={slot.submission.title}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == slot.pk
+
+    response_empty = client.get(
+        event.api_urls.slots + "?search=NONEXISTENT_SLOT_SEARCH",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_empty.status_code == 200
+    assert response_empty.json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_talk_slot_filter_speaker_and_anonymous_leak_prevention(client, orga_user_token, event, slot):
+    speaker = slot.submission.speakers.first()
+    with scope(event=event):
+        private_sub = Submission.objects.create(
+            event=event,
+            title="Private Sub",
+            state="submitted",
+            submission_type=event.cfp.default_type,
+        )
+        private_speaker = User.objects.create(email="private_spk@example.com", fullname="Private Speaker")
+        private_sub.speakers.add(private_speaker)
+
+    # 1. Organizer can filter by visible speaker
+    response_orga = client.get(
+        event.api_urls.slots + f"?speaker={speaker.code}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_orga.status_code == 200
+    content_orga = response_orga.json()
+    assert content_orga["count"] == 1
+    assert content_orga["results"][0]["id"] == slot.pk
+
+    # 2. Anonymous can filter by public speaker
+    response_anon = client.get(
+        event.api_urls.slots + f"?speaker={speaker.code}",
+        follow=True,
+    )
+    assert response_anon.status_code == 200
+    content_anon = response_anon.json()
+    assert content_anon["count"] == 1
+    assert content_anon["results"][0]["id"] == slot.pk
+
+    # 3. Anonymous cannot enumerate private submission speaker (returns 400 invalid choice)
+    response_priv = client.get(
+        event.api_urls.slots + f"?speaker={private_speaker.code}",
+        follow=True,
+    )
+    assert response_priv.status_code == 400
+    assert "speaker" in response_priv.json()
+
+    # 4. Nonexistent speaker also returns 400
+    response_nonexist = client.get(
+        event.api_urls.slots + "?speaker=NONEXISTENT_SPEAKER_CODE",
+        follow=True,
+    )
+    assert response_nonexist.status_code == 400
+    assert "speaker" in response_nonexist.json()

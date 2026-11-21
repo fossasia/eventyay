@@ -259,6 +259,16 @@ def test_orga_can_see_all_talks_even_nonpublic(
     submission.event.feature_flags["show_schedule"] = False
     submission.event.save()
     response = client.get(
+        submission.event.api_urls.submissions,
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    content = json.loads(response.text)
+
+    assert response.status_code == 200
+    assert content["count"] == 4
+
+    response = client.get(
         submission.event.api_urls.submissions + "?state=rejected",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
@@ -267,7 +277,22 @@ def test_orga_can_see_all_talks_even_nonpublic(
 
     assert response.status_code == 200
     assert content["count"] == 1
-    assert content["results"][0]["title"] == slot.submission.title
+    assert len(content["results"]) == 1
+    assert content["results"][0]["code"] == rejected_submission.code
+    assert content["results"][0]["state"] == "rejected"
+    assert all(r["state"] == "rejected" for r in content["results"])
+    assert {r["code"] for r in content["results"]} == {rejected_submission.code}
+
+
+@pytest.mark.django_db
+def test_submissions_filter_invalid_state(client, orga_user_token, event):
+    response = client.get(
+        event.api_urls.submissions + "?state=invalid_state",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 400
+    assert "state" in response.json()
 
 
 @pytest.mark.django_db
@@ -1591,6 +1616,7 @@ def test_remove_favourite_not_favourited(event, speaker_client, slot, speaker):
 @pytest.mark.django_db
 def test_team_token_can_create_submission(client, event, submission_type):
     from django_scopes import scope
+
     from eventyay.base.models import TeamAPIToken
     with scope(event=event):
         team = event.organiser.teams.filter(can_change_submissions=True).first()
@@ -1619,6 +1645,7 @@ def test_team_token_can_create_submission(client, event, submission_type):
 @pytest.mark.django_db
 def test_team_token_read_only_team_forbidden_submission(client, event, submission_type):
     from django_scopes import scope
+
     from eventyay.base.models import TeamAPIToken
     with scope(event=event):
         team = event.organiser.teams.filter(can_change_submissions=False).first()
@@ -1638,3 +1665,36 @@ def test_team_token_read_only_team_forbidden_submission(client, event, submissio
         headers={"Authorization": f"Token {token.token}"},
     )
     assert response.status_code in [403, 401]
+
+
+@pytest.mark.django_db
+def test_submission_search_filters_by_title_and_speaker(client, orga_user_token, event, submission):
+    response = client.get(
+        event.api_urls.submissions + f"?search={submission.title}",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == 1
+    assert content["results"][0]["code"] == submission.code
+
+    # Search with ?anon=1 suppresses searching across speaker names
+    speaker = submission.speakers.first()
+    if speaker:
+        response_anon = client.get(
+            event.api_urls.submissions + f"?search={speaker.fullname}&anon=1",
+            follow=True,
+            headers={"Authorization": f"Token {orga_user_token.token}"},
+        )
+        assert response_anon.status_code == 200
+        assert response_anon.json()["count"] == 0
+
+    response_empty = client.get(
+        event.api_urls.submissions + "?search=NONEXISTENT_QUERY_XYZ",
+        follow=True,
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response_empty.status_code == 200
+    assert response_empty.json()["count"] == 0
+
