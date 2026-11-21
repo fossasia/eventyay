@@ -176,6 +176,11 @@ export function getCanManageShifts (scheduleData) {
 	return data?.schedule?.can_manage_shifts ?? data?.can_manage_shifts ?? false
 }
 
+export function getCanSelfSignup (scheduleData) {
+	const data = scheduleData?.value ?? scheduleData
+	return (data?.schedule?.can_self_signup ?? data?.can_self_signup) !== false
+}
+
 export function getEventRoles (scheduleData) {
 	const data = scheduleData?.value ?? scheduleData
 	return data?.schedule?.roles ?? data?.roles ?? []
