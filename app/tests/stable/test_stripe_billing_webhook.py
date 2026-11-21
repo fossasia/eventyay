@@ -201,7 +201,7 @@ def test_billing_webhook_reads_payment_intents_without_dict_methods(billing_invo
 
 @pytest.fixture
 def stripe_payment(event):
-    with scope(organizer=event.organizer):
+    with scope(organizer=event.organizer, event=event):
         order = Order.objects.create(
             code='FOO',
             event=event,
@@ -234,7 +234,7 @@ def _charge_refunded(payment):
 
 
 @pytest.mark.django_db
-def test_charge_refunded_webhook_reads_charges_without_dict_methods(organizer, stripe_payment):
+def test_charge_refunded_webhook_reads_charges_without_dict_methods(organizer, event, stripe_payment):
     event = SimpleNamespace(
         id='evt_test',
         type='charge.refunded',
@@ -244,7 +244,7 @@ def test_charge_refunded_webhook_reads_charges_without_dict_methods(organizer, s
     response = _post_webhook(Client(), event)
 
     assert response.status_code == 200
-    with scope(organizer=organizer):
+    with scope(organizer=organizer, event=event):
         refund = stripe_payment.order.refunds.get()
     assert refund.amount == Decimal('5.00')
     assert refund.state == OrderRefund.REFUND_STATE_DONE
@@ -252,7 +252,7 @@ def test_charge_refunded_webhook_reads_charges_without_dict_methods(organizer, s
 
 
 @pytest.mark.django_db
-def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(organizer, stripe_payment):
+def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(organizer, event, stripe_payment):
     secret = 'whsec_test'
     payload = json.dumps(
         {
@@ -274,14 +274,14 @@ def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(organ
         )
 
     assert response.status_code == 200
-    with scope(organizer=organizer):
+    with scope(organizer=organizer, event=event):
         refund = stripe_payment.order.refunds.get()
     assert refund.amount == Decimal('5.00')
     assert json.loads(refund.info)['full_data']['id'] == 're_test'
 
 
 @pytest.mark.django_db
-def test_charge_refunded_webhook_records_each_refund_once(organizer, stripe_payment):
+def test_charge_refunded_webhook_records_each_refund_once(organizer, event, stripe_payment):
     event = SimpleNamespace(
         id='evt_test',
         type='charge.refunded',
@@ -292,5 +292,5 @@ def test_charge_refunded_webhook_records_each_refund_once(organizer, stripe_paym
     second = _post_webhook(Client(), event)
 
     assert first.status_code == second.status_code == 200
-    with scope(organizer=organizer):
+    with scope(organizer=organizer, event=event):
         assert stripe_payment.order.refunds.count() == 1
