@@ -24,7 +24,7 @@ def count_running_jitsi_calls(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("base", "0091_auditlog_event_timestamp_idx"),
+        ("base", "0093_team_can_view_event_info"),
     ]
 
     operations = [
