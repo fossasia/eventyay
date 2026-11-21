@@ -2,6 +2,7 @@ from django.utils.functional import cached_property
 from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import SAFE_METHODS
 
 from eventyay.api.documentation import build_expand_docs, build_search_docs
@@ -54,7 +55,7 @@ class ReviewViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelViewSet)
     serializer_class = ReviewSerializer
     queryset = Review.objects.none()
     search_fields = ("submission__title", "user__fullname")
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend, SearchFilter)
     filterset_class = ReviewFilter
     endpoint = "reviews"
     write_permission = "is_reviewer"

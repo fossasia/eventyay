@@ -24,6 +24,7 @@ from rest_framework.decorators import (
     permission_classes,
 )
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -65,6 +66,7 @@ from eventyay.common import exceptions
 from eventyay.common.auth import TokenAuthentication
 from eventyay.common.exceptions import SubmissionError
 from eventyay.common.text.rich_text import is_empty_rich_text
+from eventyay.talk_rules.orga import can_view_speaker_names, enforces_hide_speaker_names
 from eventyay.talk_rules.submission import (
     questions_for_user,
     speaker_profiles_for_user,
@@ -265,9 +267,23 @@ class SubmissionViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelView
     serializer_class = SubmissionSerializer
     queryset = Submission.objects.none()
     lookup_field = 'code__iexact'
-    search_fields = ('title', 'speakers__fullname')
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend, SearchFilter)
     filterset_class = SubmissionFilter
+
+    @property
+    def search_fields(self):
+        if not self.event or not hasattr(self.request, 'user'):
+            return ('title', 'speakers__fullname')
+
+        if self.request.query_params.get('anon') or (
+            self.request.user.has_perm('base.orga_list_submission', self.event)
+            and (
+                enforces_hide_speaker_names(self.request.user, self.event)
+                or not can_view_speaker_names(self.request.user, self.event)
+            )
+        ):
+            return ('title',)
+        return ('title', 'speakers__fullname')
     allow_public_read = True
     write_permission = ('can_change_submissions', 'is_reviewer')
     rules_bypass_permission = 'can_change_submissions'
@@ -691,7 +707,7 @@ class SubmissionFavouriteDeprecatedView(View):
 
     @staticmethod
     def get_user_video_token(user_code, video_settings):
-        iat = dt.datetime.now(dt.timezone.utc)
+        iat = dt.datetime.now(dt.UTC)
         exp = iat + dt.timedelta(days=30)
         payload = {
             'iss': video_settings.issuer,

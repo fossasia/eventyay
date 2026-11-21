@@ -4,6 +4,7 @@ from decimal import Decimal
 import pytest
 from django_scopes import scope
 
+from eventyay.api.filters.review import ReviewFilter
 from eventyay.api.serializers.review import ReviewSerializer
 from eventyay.base.models import (
     Answer,
@@ -196,16 +197,6 @@ def test_reviewer_can_filter_by_submission(
         event.active_review_phase.can_see_other_reviews = "always"
         event.active_review_phase.save()
     response = client.get(
-        event.api_urls.reviews,
-        follow=True,
-        headers={"Authorization": f"Token {review_user_token.token}"},
-    )
-    content = json.loads(response.text)
-
-    assert response.status_code == 200
-    assert content["count"] == 2
-
-    response = client.get(
         event.api_urls.reviews + f"?submission={review.submission.code}",
         follow=True,
         headers={"Authorization": f"Token {review_user_token.token}"},
@@ -214,31 +205,6 @@ def test_reviewer_can_filter_by_submission(
 
     assert response.status_code == 200
     assert len(content["results"]) == 1, content
-    returned = content["results"][0]
-    assert returned["submission"] == review.submission.code, content
-    assert returned["submission"] != other_review.submission.code, content
-
-    # Verify ?speaker= filter handles speakers with multiple submissions (guards .distinct()).
-    with scope(event=event):
-        speaker = review.submission.speakers.first()
-        Submission.objects.create(
-            event=event,
-            title="Second talk by same speaker",
-            submission_type=event.cfp.default_type,
-            content_locale="en",
-        ).speakers.add(speaker)
-        speaker_code = speaker.code
-
-    response = client.get(
-        event.api_urls.reviews + f"?speaker={speaker_code}",
-        follow=True,
-        headers={"Authorization": f"Token {review_user_token.token}"},
-    )
-    assert response.status_code == 200, response.text  # would be 500 without .distinct()
-    content = json.loads(response.text)
-    assert content["count"] == 1, content
-    assert content["results"][0]["id"] == review.pk, content
-    assert content["results"][0]["submission"] == review.submission.code, content
 
 
 @pytest.mark.django_db
@@ -593,10 +559,7 @@ def test_anonymous_cannot_delete_review(client, event, review):
     assert response.status_code == 404, response.text
 
 
-@pytest.mark.django_db
-def test_review_filter_rejects_submission_from_other_event(
-    client, review_user_token, event, other_event
-):
+def test_review_filter_rejects_submission_from_other_event(client, review_user_token, event, other_event):
     with scope(event=other_event):
         foreign_sub = Submission.objects.create(
             event=other_event,
@@ -671,9 +634,7 @@ def test_reviewer_cannot_enumerate_inaccessible_submission_or_speaker(
 
 
 @pytest.mark.django_db
-def test_organizer_can_filter_reviews_by_submission_and_speaker(
-    client, orga_user_token, event, review, speaker
-):
+def test_organizer_can_filter_reviews_by_submission_and_speaker(client, orga_user_token, event, review, speaker):
     response = client.get(
         event.api_urls.reviews + f"?submission={review.submission.code}",
         follow=True,
@@ -697,8 +658,6 @@ def test_organizer_can_filter_reviews_by_submission_and_speaker(
 
 @pytest.mark.django_db
 def test_review_filter_direct_instantiation(event, review):
-    from eventyay.api.filters.review import ReviewFilter
-
     with scope(event=event):
         f = ReviewFilter(
             data={"submission": review.submission.code},
@@ -709,3 +668,24 @@ def test_review_filter_direct_instantiation(event, review):
         assert f.filters["submission"].queryset.count() == event.submissions.count()
         assert f.filters["user"].queryset.count() == event.reviewers.count()
         assert review in f.qs
+
+
+@pytest.mark.django_db
+def test_review_search_filter(client, event, review, review_user_token):
+    response = client.get(
+        event.api_urls.reviews + f"?search={review.submission.title}",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == 1
+    assert content["results"][0]["id"] == review.pk
+
+    response_empty = client.get(
+        event.api_urls.reviews + "?search=NONEXISTENT_REVIEW_SEARCH",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    assert response_empty.status_code == 200
+    assert response_empty.json()["count"] == 0

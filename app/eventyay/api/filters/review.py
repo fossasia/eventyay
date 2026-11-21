@@ -15,8 +15,7 @@ def has_orga_review_permission(request, event):
         return True
     auth = getattr(request, "auth", None)
     if auth and hasattr(auth, "get_event_permission_set"):
-        organizer = getattr(event, "organizer", None)
-        if organizer:
+        if organizer := getattr(event, "organizer", getattr(event, "organiser", None)):
             permset = auth.get_event_permission_set(organizer, event)
             if "can_change_submissions" in permset:
                 return True
@@ -26,8 +25,9 @@ def has_orga_review_permission(request, event):
 def get_review_visible_submissions(event, user):
     if not event or not user or user.is_anonymous:
         return Submission.objects.none()
-    submissions = event.submissions.all().exclude(speakers__in=[user])
-    return get_reviewable_submissions(event, user, submissions)
+    with scope(event=event):
+        submissions = event.submissions.all().exclude(speakers__in=[user])
+        return get_reviewable_submissions(event, user, submissions)
 
 
 with scopes_disabled():

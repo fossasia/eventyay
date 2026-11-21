@@ -15,6 +15,7 @@ from rest_flex_fields import is_expanded
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
 from eventyay.agenda.views.utils import get_schedule_exporter_content
@@ -350,7 +351,7 @@ class TalkSlotViewSet(
     queryset = TalkSlot.objects.none()
     endpoint = 'slots'
     search_fields = ('submission__title', 'submission__speakers__fullname')
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend, SearchFilter)
     filterset_class = TalkSlotFilter
     allow_public_read = True
     write_permission = 'can_change_submissions'
@@ -410,7 +411,7 @@ class TalkSlotViewSet(
             if param in self.request.query_params
         )
 
-        if not has_schedule_filter:
+        if not self.is_orga or not has_schedule_filter:
             queryset = queryset.filter(schedule=self.event.current_schedule)
 
         if self.event and user_has_track_limits(self.event, self.request.user):
