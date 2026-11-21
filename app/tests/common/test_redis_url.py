@@ -17,6 +17,12 @@ def test_increase_redis_db_with_query_db_param():
         increase_redis_db("redis://localhost?db=5&socket_timeout=5", 2, sanitize_broker=False)
         == "redis://localhost/7?socket_timeout=5"
     )
+    # When both path and ?db= are provided, query param takes precedence (matching redis-py)
+    assert increase_redis_db("redis://localhost/0?db=1", 1) == "redis://localhost/2"
+    assert (
+        increase_redis_db("redis://localhost/0?db=1&socket_timeout=5", 2, sanitize_broker=False)
+        == "redis://localhost/3?socket_timeout=5"
+    )
 
 
 def test_increase_redis_db_sanitizes_kombu_incompatible_params():

@@ -259,15 +259,16 @@ def increase_redis_db(url: str, increment: int, sanitize_broker: bool = True) ->
     query_params = parse_qsl(parsed.query, keep_blank_values=True)
     query_dict = dict(query_params)
 
+    query_db = query_dict.get('db')
     path_db = parsed.path.lstrip('/')
-    if path_db:
+    if query_db:
         try:
-            db_number = int(path_db)
+            db_number = int(query_db)
         except ValueError:
             db_number = 0
-    elif 'db' in query_dict:
+    elif path_db:
         try:
-            db_number = int(query_dict['db'])
+            db_number = int(path_db)
         except ValueError:
             db_number = 0
     else:
