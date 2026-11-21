@@ -198,6 +198,7 @@ def test_event_css_exposes_separate_header_and_navigation_colors(rf):
     response = event_css(request)
 
     assert response.status_code == 200
+    assert response['Access-Control-Allow-Origin'] == '*'
     assert '--color-primary: #00ff00;' in response.text
     assert '--color-header-background: #ffee00;' in response.text
     assert '--color-header-text: #111111;' in response.text
