@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 
 from eventyay.features.live import tasks
 from eventyay.storage import external
@@ -129,3 +130,75 @@ def test_debug_allows_private_targets(monkeypatch, settings):
     tasks.post_webhook('http://localhost:9000/chat', b'{}', {})
     post.assert_called_once()
     assert post.call_args.kwargs['allow_redirects'] is False
+
+
+class IPv6HTTPServer(HTTPServer):
+    address_family = socket.AF_INET6
+
+
+def serve_on(server):
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
+def stop(*servers):
+    for server in servers:
+        server.shutdown()
+        server.server_close()
+
+
+class RecordingHandler(BaseHTTPRequestHandler):
+    received = []
+
+    def do_POST(self):
+        self.received.append(self.rfile.read(int(self.headers['Content-Length'])))
+        self.send_response(200)
+        self.end_headers()
+
+    def log_message(self, *args):
+        pass
+
+
+def test_post_is_not_resent_after_connection_breaks(monkeypatch, settings):
+    """If the first address takes the POST and drops the connection, the next one gets nothing."""
+    settings.DEBUG = False
+    first_received = []
+
+    class DropHandler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            first_received.append(self.rfile.read(int(self.headers['Content-Length'])))
+            self.close_connection = True
+            self.connection.shutdown(socket.SHUT_RDWR)
+
+        def log_message(self, *args):
+            pass
+
+    RecordingHandler.received = []
+    second = serve_on(IPv6HTTPServer(('::1', 0), RecordingHandler))
+    port = second.server_address[1]
+    first = serve_on(HTTPServer(('127.0.0.1', port), DropHandler))
+    monkeypatch.setattr(tasks, 'resolve_public_addresses', lambda url: ('127.0.0.1', '::1'))
+    try:
+        with pytest.raises(requests.ConnectionError):
+            tasks.post_webhook(f'http://hooks.example:{port}/chat', b'{"a":1}', {})
+    finally:
+        stop(first, second)
+
+    assert first_received == [b'{"a":1}']
+    assert RecordingHandler.received == []
+
+
+def test_post_moves_on_when_connection_is_refused(monkeypatch, settings):
+    settings.DEBUG = False
+    RecordingHandler.received = []
+    second = serve_on(IPv6HTTPServer(('::1', 0), RecordingHandler))
+    port = second.server_address[1]
+    # Nothing listens on 127.0.0.1 at this port, so the connection is refused.
+    monkeypatch.setattr(tasks, 'resolve_public_addresses', lambda url: ('127.0.0.1', '::1'))
+    try:
+        response = tasks.post_webhook(f'http://hooks.example:{port}/chat', b'{"a":1}', {})
+    finally:
+        stop(second)
+
+    assert response.status_code == 200
+    assert RecordingHandler.received == [b'{"a":1}']

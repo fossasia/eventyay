@@ -12,6 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from requests.cookies import extract_cookies_to_jar
+from urllib3.exceptions import MaxRetryError, NewConnectionError
 
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -175,6 +176,14 @@ def normalize_url(url: str) -> str | None:
         return None
 
 
+def connection_not_established(error: requests.ConnectionError) -> bool:
+    """Whether the request failed before a connection was made, so nothing was sent."""
+    if isinstance(error, requests.ConnectTimeout):
+        return True
+    reason = error.args[0] if error.args else None
+    return isinstance(reason, MaxRetryError) and isinstance(reason.reason, NewConnectionError)
+
+
 def send_pinned(
     session: requests.Session,
     request: requests.PreparedRequest,
@@ -188,6 +197,8 @@ def send_pinned(
     ``allow_redirects=False`` and ``stream=True``, ``Session.send`` reads the whole body
     of a redirect response, which would bypass the size limit in ``read_limited``.
     Redirects are not followed. Session cookies are still sent and updated.
+    Requests other than GET/HEAD only move on to the next address if no connection
+    could be made, so they are never sent twice.
     """
     last_error = None
     for address in addresses:
@@ -198,6 +209,10 @@ def send_pinned(
         try:
             response = adapter.send(request, stream=True, timeout=timeout)
         except requests.ConnectionError as error:
+            # A POST may already have been processed if the connection broke after it was
+            # sent, so it is only sent to the next address if it never left this one.
+            if request.method not in ('GET', 'HEAD') and not connection_not_established(error):
+                raise
             last_error = error
             continue
         extract_cookies_to_jar(session.cookies, request, response.raw)
