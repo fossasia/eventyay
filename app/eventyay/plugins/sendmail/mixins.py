@@ -183,6 +183,7 @@ class CopyDraftMixin:
                     body_field: message,
                     'reply_to': qm.reply_to,
                     'bcc': qm.bcc,
+                    'link_list': qm.link_list_id,
                     'scheduled_at': qm.scheduled_at,
                 })
 

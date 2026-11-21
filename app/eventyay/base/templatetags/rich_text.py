@@ -253,6 +253,7 @@ def expand_email_preview_placeholders(
     locale: str | None = None,
     preview_context: str | None = None,
     base_parameters: list[str] | None = None,
+    extra_context: dict | None = None,
 ) -> str:
     """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview.
 
@@ -271,8 +272,28 @@ def expand_email_preview_placeholders(
         base_parameters = _preview_parameters(html_body, preview_context)
     with language(resolved_locale, event.settings.region):
         context_dict = build_email_preview_context(event, list(base_parameters))
+        context_dict.update({key: html.escape(str(value)) for key, value in (extra_context or {}).items()})
         expanded = escape_stray_braces(html_body).format_map(context_dict)
-        return expand_email_variable_chips(expanded, dict(context_dict))
+        expanded = expand_email_variable_chips(expanded, dict(context_dict))
+        return drop_unsafe_url_attributes(expanded) if extra_context else expanded
+
+
+UNSAFE_URL_SCHEMES = ('javascript:', 'vbscript:', 'data:')
+EMBEDDED_IMAGE_PREFIX = 'data:image/'
+
+
+def drop_unsafe_url_attributes(html_body: str) -> str:
+    """Remove ``href`` and ``src`` values that would run script, e.g. after a filled-in value put one there."""
+    soup = BeautifulSoup(html_body, 'html.parser')
+    changed = False
+    for tag in soup.find_all(True):
+        for attribute in ('href', 'src'):
+            value = re.sub(r'[\s\x00-\x1f]+', '', tag.get(attribute) or '').lower()
+            embedded_image = attribute == 'src' and value.startswith(EMBEDDED_IMAGE_PREFIX)
+            if value.startswith(UNSAFE_URL_SCHEMES) and not embedded_image:
+                del tag[attribute]
+                changed = True
+    return str(soup) if changed else html_body
 
 
 def compile_email_body(source: str) -> str:
