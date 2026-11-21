@@ -62,6 +62,23 @@
                             {% if settings.state %}
                             <tr>
                                 <td colspan="3">
+                                    {% if provider == 'openid_connect' %}
+                                        <div class="form-group">
+                                            <label for="oidc-issuer" class="col-sm-3 control-label">{% trans "Issuer URL" %}</label>
+                                            <div class="col-sm-9">
+                                                <input id="oidc-issuer" type="url" class="form-control" name="openid_connect_issuer" value="{{ settings.issuer }}">
+                                                <input type="hidden" name="previous_provider_id" value="{% if settings.issuer %}{{ settings.provider_id }}{% endif %}">
+                                                <p class="help-block">{% trans "Changing the issuer removes its login links. Users reconnect by verified email on their next login." %}</p>
+                                                <p>{% trans "Callback URL for the saved issuer" %}: <code>{{ oidc_callback }}</code></p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="oidc-label" class="col-sm-3 control-label">{% trans "Login button label" %}</label>
+                                            <div class="col-sm-9">
+                                                <input id="oidc-label" class="form-control" name="openid_connect_display_name" value="{{ settings.display_name }}" placeholder="OpenID Connect">
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label class="col-sm-3 control-label">
                                             {% if provider == "mediawiki" %}

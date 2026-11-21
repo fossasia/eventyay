@@ -4,17 +4,26 @@ from types import SimpleNamespace
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import responses
+from allauth.account.models import EmailAddress
 from allauth.core.exceptions import ImmediateHttpResponse
+from allauth.socialaccount.adapter import get_adapter
+from allauth.socialaccount.models import SocialAccount, SocialApp
+from bs4 import BeautifulSoup
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.urls import reverse
+from django.utils.timezone import now
 
 from eventyay.base.auth import SPAM_ACCOUNT_ERROR
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
+from eventyay.eventyay_common.views.account.basic import get_social_account_provider_label
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
+from eventyay.plugins.socialauth.views import SocialLoginView
 
 
 @pytest.fixture
@@ -399,3 +408,121 @@ def test_social_and_account_adapter_rejects_spam_user(provider):
     assert exc_info.value.response['Location'] == reverse('auth.login')
     messages = [str(m.message) for m in getattr(request, '_messages')]
     assert str(SPAM_ACCOUNT_ERROR) in messages
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('issuer', [
+    '', 'id.example', 'http://id.example', 'https:///realm', 'https://[broken',
+    'https://invalid host.example', 'https://id.example/#', 'https://id.example:70000',
+    'https://user:pass@id.example', 'https://id.example/realm?foo=bar',
+])
+def test_invalid_oidc_issuer_rolls_back_credentials(rf, issuer):
+    view = SocialLoginView()
+    view.post(rf.post('/', {'openid_connect_login': 'enabled'}))
+    request = rf.post('/', {
+        'save_credentials': 'credentials', 'previous_provider_id': '', 'openid_connect_issuer': issuer,
+        'openid_connect_client_id': 'client', 'openid_connect_secret': 'secret',
+        'github_client_id': 'client', 'github_secret': 'secret',
+    })
+    request.session = {}
+    request._messages = FallbackStorage(request)
+    view.post(request)
+    assert any('issuer URL' in str(msg) for msg in request._messages)
+    assert not SocialApp.objects.filter(provider__in=['github', 'openid_connect']).exists()
+    assert not SocialLoginView().gs.settings.get('login_providers', as_type=dict)['github']['client_id']
+
+
+@pytest.mark.django_db
+def test_oidc_credential_rotation_and_stale_forms(rf):
+    view = SocialLoginView()
+    providers = {'openid_connect': {'state': True}}
+
+    def save(issuer, marker, secret='secret'):
+        view.update_credentials(rf.post('/', {
+            'openid_connect_issuer': issuer, 'previous_provider_id': marker,
+            'openid_connect_client_id': 'client', 'openid_connect_secret': secret,
+        }), 'openid_connect', providers)
+
+    first, second = 'https://first.example', 'https://second.example'
+    save(first, '')
+    alice = User.objects.create_user('alice@example.org', 'test')
+    link = SocialAccount.objects.create(user=alice, provider='openid_connect', uid='alice')
+    save(first, 'openid_connect', secret='rotated')
+    assert SocialApp.objects.get(provider_id='openid_connect').secret == 'rotated'
+    assert SocialAccount.objects.filter(pk=link.pk).exists()
+    with pytest.raises(ValidationError, match='Reload'):
+        save(second, '')
+    save(second, 'openid_connect')
+    save(first, providers['openid_connect']['provider_id'])
+    with pytest.raises(ValidationError, match='Reload'):
+        save(second, 'openid_connect')
+    assert SocialApp.objects.get(provider='openid_connect').settings['server_url'] == first
+
+
+@pytest.mark.django_db
+@responses.activate
+def test_admin_switch_and_return_through_oidc_callback(client, settings):
+    settings.COMPRESS_ENABLED = False
+    admin = User.objects.create_user('admin@example.org', 'test', is_staff=True)
+    alice = User.objects.create_user('alice@example.org', 'test')
+    EmailAddress.objects.create(user=alice, email=alice.email, primary=True, verified=True)
+    github = SocialAccount.objects.create(user=alice, provider='github', uid='alice')
+    url = reverse('plugins:socialauth:admin.global.social.auth.settings')
+    for realm in ['first', 'second']:
+        issuer = f'https://id.example/realms/{realm}'
+        client.force_login(admin)
+        admin.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
+        if realm == 'first':
+            client.post(url, {'openid_connect_login': 'enabled'})
+        form = BeautifulSoup(client.get(url).content, 'html.parser')
+        marker = form.select_one('[name=previous_provider_id]')['value']
+        saved = client.post(url, {
+            'save_credentials': 'credentials', 'previous_provider_id': marker,
+            'openid_connect_display_name': 'APC Login' if realm == 'second' else '',
+            'openid_connect_issuer': issuer, 'openid_connect_client_id': 'client', 'openid_connect_secret': 'secret',
+        }, follow=True)
+        callback = BeautifulSoup(saved.content, 'html.parser').select_one('#oidc-issuer').parent.code.text
+        client.logout()
+        responses.get(issuer + '/.well-known/openid-configuration', json={
+            'issuer': issuer, 'authorization_endpoint': issuer + '/authorize',
+            'token_endpoint': issuer + '/token', 'userinfo_endpoint': issuer + '/userinfo',
+        })
+        responses.post(issuer + '/token', json={'access_token': 'test-token', 'token_type': 'Bearer'})
+        responses.get(issuer + '/userinfo', json={'email': alice.email, 'email_verified': True, 'sub': realm})
+        if realm == 'second':
+            assert client.get(reverse('openid_connect_callback', args=['openid_connect'])).status_code == 404
+            assert 'Login with APC Login' in client.get(reverse('auth.login')).text
+            request = RequestFactory().get('/')
+            provider = get_adapter().get_provider(request, SocialApp.objects.get(provider='openid_connect').provider_id)
+            login = provider.sociallogin_from_response(request, {
+                'userinfo': {'sub': 'first', 'email': alice.email, 'email_verified': False},
+            })
+            login.lookup()
+            assert not login.is_existing
+        start = client.get(reverse('plugins:socialauth:social.oauth.login', args=['openid_connect']))
+        authorization = client.get(start.url)
+        params = parse_qs(urlparse(authorization.url).query)
+        assert params['redirect_uri'] == [callback]
+        client.get(urlparse(callback).path, {'code': 'test-code', 'state': params['state'][0]})
+        assert int(client.session['_auth_user_id']) == alice.pk
+        links = SocialAccount.objects.filter(user=alice).exclude(pk=github.pk)
+        assert list(links.values_list('uid', flat=True)) == [realm]
+
+        assert get_social_account_provider_label(alice) == ('APC Login' if realm == 'second' else 'OpenID Connect')
+
+    assert SocialAccount.objects.filter(pk=github.pk).exists()
+    client.force_login(admin)
+    session = client.session
+    session['eventyay_auth_login_time'] = import_time.time()
+    session.save()
+    admin.staffsession_set.create(date_start=now(), session_key=session.session_key)
+    detail = reverse('eventyay_admin:admin.users.edit', kwargs={'id': alice.pk})
+    for status in ('Active', 'Inactive provider'):
+        page = BeautifulSoup(client.get(detail).content, 'html.parser')
+        row = page.find('td', string='APC Login').parent
+        assert row.select_one('.label').get_text(strip=True) == status
+        if status == 'Active':
+            client.post(url, {'openid_connect_login': 'disabled'})
+    assert not SocialApp.objects.filter(provider='openid_connect').exists()
+    client.post(url, {'openid_connect_login': 'enabled'})
+    assert SocialApp.objects.get(provider='openid_connect').settings['server_url'] == issuer

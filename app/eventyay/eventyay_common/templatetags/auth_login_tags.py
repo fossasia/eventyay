@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.utils.text import capfirst
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.settings import GlobalSettingsObject, global_settings_object
@@ -9,6 +10,13 @@ from eventyay.eventyay_common.services.auth_providers import (
 )
 
 register = template.Library()
+
+
+@register.filter
+def provider_label(provider, oidc_label):
+    if provider == 'openid_connect':
+        return oidc_label or 'OpenID Connect'
+    return capfirst(provider)
 
 
 @register.simple_tag(takes_context=True)
@@ -48,6 +56,7 @@ def get_login_context(context):
     return {
         'request': request,
         'enabled_providers': enabled_providers,
+        'oidc_label': (raw_providers.get('openid_connect') or {}).get('display_name', ''),
         'preferred_provider': preferred_provider,
         'can_reset': can_reset,
         'can_register': can_register,

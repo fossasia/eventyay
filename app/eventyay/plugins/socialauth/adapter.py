@@ -6,6 +6,7 @@ import requests
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount import app_settings
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponseRedirect
@@ -24,6 +25,9 @@ def require_provider_enabled(request, provider):
     gs = GlobalSettingsObject()
     login_providers = gs.settings.get('login_providers', as_type=dict) or {}
     cfg = login_providers.get(provider)
+    if provider == 'openid_connect' or provider.startswith('oidc-'):
+        oidc = login_providers.get('openid_connect', {})
+        cfg = oidc if provider == oidc.get('provider_id', 'openid_connect') else None
     if (
         not isinstance(cfg, dict)
         or not cfg.get('state')
@@ -77,6 +81,13 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def get_provider(self, request, provider, client_id=None):
+        instance = super().get_provider(request, provider, client_id)
+        if provider == 'openid_connect' and instance.app.provider_id != provider:
+            # Allauth also matches the generic provider name on a retired callback URL.
+            raise SocialApp.DoesNotExist
+        return instance
+
     # https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
     def get_requests_session(self):
         dj_request = cast(HttpRequest, self.request)

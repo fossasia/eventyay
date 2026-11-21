@@ -23,6 +23,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.forms.user import UserSettingsForm
 from eventyay.base.models import Event, LogEntry, NotificationSetting, User
 from eventyay.base.notifications import get_all_notification_types
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.utils.language import (
     get_event_enforce_ui_language,
     get_event_enforce_ui_language_cookie_name,
@@ -51,6 +52,11 @@ def get_social_account_provider_label(user: User) -> str:
     provider_id = social_account.provider if social_account else None
     if not provider_id:
         return ''
+    if provider_id == 'openid_connect' or provider_id.startswith('oidc-'):
+        login_providers = GlobalSettingsObject().settings.get('login_providers', as_type=dict) or {}
+        oidc = login_providers.get('openid_connect')
+        if isinstance(oidc, dict) and oidc.get('provider_id', 'openid_connect') == provider_id:
+            return oidc.get('display_name') or 'OpenID Connect'
     # Get the first matching provider name from django-allauth's registry.
     return next((name for pid, name in providers.registry.as_choices() if pid == provider_id), provider_id)
 

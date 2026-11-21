@@ -13,7 +13,7 @@
             <div class='form-group buttons login-options-primary-first'>
                 <a href='{% url 'plugins:socialauth:social.oauth.login' login_ctx.preferred_provider %}{% append_next request.GET.next %}'
                    data-method='post' class='btn btn-primary btn-block login-option-primary'>
-                    {% with login_ctx.preferred_provider|capfirst as provider_capitalized %}
+                    {% with login_ctx.preferred_provider|provider_label:login_ctx.oidc_label as provider_capitalized %}
                         {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                     {% endwith %}
                 </a>
@@ -41,7 +41,7 @@
                         {% if provider != login_ctx.preferred_provider %}
                             <a href='{% url 'plugins:socialauth:social.oauth.login' provider %}{% append_next request.GET.next %}'
                                data-method='post' class='btn btn-primary btn-block login-option-secondary'>
-                                {% with provider|capfirst as provider_capitalized %}
+                                {% with provider|provider_label:login_ctx.oidc_label as provider_capitalized %}
                                     {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                                 {% endwith %}
                             </a>
