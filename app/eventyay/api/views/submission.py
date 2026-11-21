@@ -61,6 +61,8 @@ from eventyay.common.auth import TokenAuthentication
 from eventyay.common.exceptions import SubmissionError
 from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.talk_rules.submission import (
+    can_list_submissions,
+    get_request_team,
     questions_for_user,
     speaker_profiles_for_user,
     submissions_for_user,
@@ -272,6 +274,9 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def get_legacy_queryset(self):  # pragma: no cover
         base_qs = self.event.submissions.all().prefetch_related('resources').order_by('code')
+        if get_request_team(self.request) is not None and can_list_submissions(self.request, self.event):
+            # Team tokens are anonymous users, so go through the track-limit aware queryset.
+            return self._visible_submissions().prefetch_related('resources').order_by('code')
         if not self.request.user.has_perm('base.orga_list_submission', self.event):
             if not self.request.user.has_perm('base.list_schedule', self.event) or not self.event.current_schedule:
                 return Submission.objects.none()
@@ -282,6 +287,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def get_legacy_serializer_class(self):  # pragma: no cover
         if self.request.user.has_perm('base.orga_update_submission', self.event):
+            return LegacySubmissionOrgaSerializer
+        if get_request_team(self.request) is not None and can_list_submissions(self.request, self.event):
             return LegacySubmissionOrgaSerializer
         if self.request.user.has_perm('base.orga_list_submission', self.event):
             return LegacySubmissionReviewerSerializer
@@ -299,6 +306,9 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             or not can_view_speaker_names(self.request.user, self.event)
         ):
             can_view_speakers = False
+        elif get_request_team(self.request) is not None and can_list_submissions(self.request, self.event):
+            # The serializer applies the team's force_hide_speaker_* policy.
+            can_view_speakers = True
         if self.request.query_params.get('anon'):
             can_view_speakers = False
         return super().get_serializer(
@@ -349,13 +359,22 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         context["public_slots"] = not self.has_perm("delete")
         return context
 
+    def _visible_submissions(self):
+        """Submissions visible to the caller; team tokens act through their team's permissions."""
+        return submissions_for_user(
+            self.event,
+            self.request.user,
+            getattr(self.request, 'eventpermset', None),
+            get_request_team(self.request),
+        )
+
     def get_queryset(self):
         if self.api_version == LEGACY:  # pragma: no cover
             return self.get_legacy_queryset()
         if not self.event:
             # This is just during api doc creation
             return self.queryset
-        queryset = submissions_for_user(self.event, self.request.user).order_by('code')
+        queryset = self._visible_submissions().order_by('code')
         expanded_fields = list(
             self.check_expanded_fields(
                 'speakers.user',

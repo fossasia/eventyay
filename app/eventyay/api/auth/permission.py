@@ -68,7 +68,14 @@ class EventPermission(BasePermission):
 
         # Allow public read-only access only for endpoints that explicitly opt in.
         if allow_public_read and request.method in SAFE_METHODS and not required_permission:
-            request.eventpermset = set()
+            # Team tokens authenticate as AnonymousUser, so the views can only recognise their
+            # team's rights through eventpermset. Keep it for tokens that have access to this event.
+            if isinstance(perm_holder, TeamAPIToken) and perm_holder.has_event_permission(
+                request.event.organizer, request.event, request=request
+            ):
+                self._set_eventpermset(request, perm_holder)
+            else:
+                request.eventpermset = set()
             return True
 
         if not perm_holder.has_event_permission(

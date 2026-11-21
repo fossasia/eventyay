@@ -1,6 +1,7 @@
 """Track-scoped access helpers for organiser teams."""
 
 from django.db.models import Q
+from django_scopes import scope
 
 
 def applicable_talk_teams(event, user, *, reviewers_only=False):
@@ -40,6 +41,18 @@ def get_allowed_tracks(event, user, *, reviewers_only=False):
 
     team_pks = [team.pk for team in teams]
     return set(Track.objects.filter(event=event, team__pk__in=team_pks).distinct())
+
+
+def apply_team_track_limit(queryset, event, team, *, track_field='track'):
+    """Restrict *queryset* to the tracks a team may access (used for team API tokens)."""
+    if not team.limit_tracks.all():
+        return queryset
+
+    from eventyay.base.models import Track
+
+    with scope(event=event):
+        allowed = Track.objects.filter(event=event, team__pk=team.pk)
+    return queryset.filter(**{f'{track_field}__in': allowed})
 
 
 def user_has_track_limits(event, user, *, reviewers_only=False):
