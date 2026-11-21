@@ -33,6 +33,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
+from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.helpers.timezone import format_scheduled_datetime, format_timezone_name
 from eventyay.mail.signals import request_pre_send
 from eventyay.orga.forms.mails import (
@@ -429,6 +430,7 @@ class ComposeMailPreview(EventPermissionRequired, View):
     permission_required = 'base.send_queuedmail'
 
     def post(self, request, *args, **kwargs):
+        """Render the editor HTML with sample placeholder values, keeping stray braces as text."""
         try:
             data = json.loads(request.body)
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -451,19 +453,7 @@ class ComposeMailPreview(EventPermissionRequired, View):
                 request.event,
                 ['event', 'submission', 'user', 'slot'],
             )
-            try:
-                expanded = safe_html.format_map(context_dict)
-            except ValueError:
-                return JsonResponse(
-                    {
-                        'error': _(
-                            'Invalid email template! '
-                            'Please check that you don’t have stray { or } somewhere, '
-                            'and that there are no spaces inside the {} blocks.'
-                        )
-                    },
-                    status=400,
-                )
+            expanded = escape_stray_braces(safe_html).format_map(context_dict)
             preview_html = expand_email_variable_chips(expanded, dict(context_dict))
             return JsonResponse({'html': preview_html})
 
@@ -539,6 +529,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         return super().form_invalid(form)
 
     def send_test_email(self, form):
+        """Send the composed mail with sample placeholder values to the address given in the form."""
         address = form.cleaned_data.get('test_email')
         if not address:
             form.add_error('test_email', _('Please enter an email address to send the test email to.'))
@@ -557,7 +548,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             subject = nh3.clean(subject_data.localize(locale), tags=set()) if subject_data else ''
             if not subject.strip():
                 subject = str(_('Example Subject for {event_name}'))
-            subject = get_prefixed_subject(event, subject.format_map(context_dict))
+            subject = get_prefixed_subject(event, escape_stray_braces(subject).format_map(context_dict))
 
             text_data = form.cleaned_data.get('text')
             text = text_data.localize(locale) if text_data else ''
@@ -577,7 +568,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                             'Best regards,\nThe {event_name} team'
                         )
                     )
-            text = text.format_map(context_dict)
+            text = escape_stray_braces(text).format_map(context_dict)
 
         mail_send_task.apply_async(
             kwargs={
@@ -596,7 +587,10 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         return self.render_to_response(self.get_context_data(form=form))
 
     def form_valid(self, form):
-        """Persist composed mail and usage together before immediate delivery."""
+        """Send a test email, render a preview, save a draft or send the mails, depending on the button used.
+
+        Composed mail and usage are persisted together before immediate delivery.
+        """
         action = self.request.POST.get('action')
         if action == 'test':
             return self.send_test_email(form)
@@ -649,7 +643,9 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                     subject = nh3.clean(subject_data.localize(locale), tags=set()) if subject_data else ''
                     if not subject.strip():
                         subject = str(_('Example Subject for {event_name}'))
-                    preview_subject = get_prefixed_subject(self.request.event, subject.format_map(context_dict))
+                    preview_subject = get_prefixed_subject(
+                        self.request.event, escape_stray_braces(subject).format_map(context_dict)
+                    )
                     message = text_data.localize(locale) if text_data else ''
                     if not str(message).strip():
                         if 'proposal_title' in context_dict:
@@ -669,7 +665,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                                     'Best regards,\nThe {event_name} team'
                                 )
                             )
-                    preview_text = compile_email_body(message.format_map(context_dict))
+                    preview_text = compile_email_body(escape_stray_braces(message).format_map(context_dict))
                     self.output[locale] = {
                         'subject': _('Subject: {subject}').format(subject=preview_subject),
                         'html': preview_text,
