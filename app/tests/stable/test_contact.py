@@ -55,13 +55,17 @@ class TestContactOrganizer:
         assert email.to == ['contact@example.com']
         assert email.bcc == [user.email]
 
-    def test_contact_organizer_modal_placeholder_translation(self):
+    def test_contact_organizer_modal_placeholder_translation(self, rf, user):
         from django.template.loader import render_to_string
         from django.utils.translation import override
+
+        request = rf.get('/test/contact/')
+        request.user = user
 
         with override('en'):
             rendered = render_to_string(
                 'common/includes/contact_organizer_modal.html',
-                {'contact_url': '/test/contact/'},
+                {'contact_url': '/test/contact/', 'request': request},
+                request=request,
             )
             assert 'placeholder="What\'s your question for the organizer?"' in rendered
