@@ -154,6 +154,39 @@ def test_settings_form_updates_meetup_visibility(organizer):
 
 @pytest.mark.django_db
 @scopes_disabled()
+def test_cloned_meetup_preserves_draft_state_on_settings_save(organizer):
+    now = timezone.now()
+    event = Event.objects.create(
+        organizer=organizer,
+        name='Draft Cloned Meetup',
+        slug='draft-cloned-meetup',
+        date_from=now + timedelta(days=10),
+        date_to=now + timedelta(days=10, hours=2),
+        currency='USD',
+        locale='en',
+    )
+    provision_meetup_event(event, is_private=False, is_clone=True)
+    assert event.live is False
+    assert event.tickets_published is False
+    assert event.is_public is True
+
+    form = EventCommonSettingsForm(obj=event)
+    data = form.initial.copy()
+    data['registration_limit'] = 40
+    data.setdefault('timezone', 'UTC')
+    data.setdefault('locale', 'en')
+    data.setdefault('locales', ['en'])
+    bound_form = EventCommonSettingsForm(data=data, obj=event)
+    assert bound_form.is_valid(), bound_form.errors
+    bound_form.save()
+
+    event.refresh_from_db()
+    assert event.live is False
+    assert event.tickets_published is False
+
+
+@pytest.mark.django_db
+@scopes_disabled()
 def test_event_update_form_drops_is_public_for_meetups(meetup_event):
     """EventUpdateForm should not include is_public for meetups so saving it does not overwrite privacy."""
     meetup_event.is_public = True
