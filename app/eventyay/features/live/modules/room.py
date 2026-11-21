@@ -14,6 +14,7 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from django_scopes import scope
 from requests import RequestException
 from sentry_sdk import add_breadcrumb, configure_scope
 
@@ -345,8 +346,8 @@ class RoomModule(BaseModule):
                 message=f"Entered room {self.room.pk} ({self.room.name})",
                 level="info",
             )
-            with configure_scope() as scope:
-                scope.set_extra("last_room", str(self.room.pk))
+            with configure_scope() as sentry_scope:
+                sentry_scope.set_extra("last_room", str(self.room.pk))
 
     async def _leave_room(self, room):
         januscall = self.consumer.components.get("januscall")
@@ -908,7 +909,8 @@ class RoomModule(BaseModule):
         )
 
     def _chat_channel_id(self):
-        channel = Channel.objects.filter(event_id=self.room.event_id, room=self.room).only("id").first()
+        with scope(event=self.consumer.event):
+            channel = Channel.objects.filter(event_id=self.room.event_id, room=self.room).only("id").first()
         return channel.id if channel else None
 
     @command("config.reorder")
