@@ -3799,122 +3799,167 @@ table thead .sort-link.sort-active {
   flex: 0 0 auto;
 }
 
+.speaker-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.speaker-bulk-send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border-radius: 0.25rem;
+}
+
+.speaker-bulk-send-btn .fa {
+  font-size: 0.95em;
+}
+
+.speaker-selected-count {
+  font-size: 0.875rem;
+}
+
+.speaker-list-table .checkbox-column {
+  width: 1.75rem;
+  min-width: 1.75rem;
+  max-width: 2rem;
+  padding-left: 0.5rem;
+  padding-right: 0.25rem;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.speaker-list-table .checkbox-column input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  vertical-align: middle;
+  cursor: pointer;
+  accent-color: #2185d0;
+}
+
 .speaker-voucher-cell {
-  min-width: 8.5rem;
-  max-width: 14rem;
+  min-width: 11rem;
+  max-width: 18rem;
   vertical-align: middle;
   overflow: visible;
 }
 
 .speaker-voucher-status {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.15rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
   overflow: visible;
 }
 
-.speaker-voucher-status .speaker-voucher-badge {
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  min-width: 5.25rem;
-  padding: 0.35em 0.55em;
-  text-align: center;
-  white-space: nowrap;
-  line-height: 1.25;
+.speaker-voucher-status-main {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: visible;
 }
 
-.speaker-voucher-info-wrapper {
-  position: relative;
+/* Match TeamShifts / Semantic UI label colors used in pretixcontrol. */
+.speaker-voucher-badge {
   display: inline-block;
   flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 0.3em 0.55em;
+  border-radius: 0.25em;
+  color: #fff;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
 }
 
-/* Fixed positioning (via JS) escapes table overflow clipping. */
-.speaker-voucher-info-box {
-  position: fixed;
-  z-index: 1080;
-  display: none;
-  width: min(280px, 70vw);
-  padding: 8px 10px;
-  color: #495057;
-  font-size: 0.8125rem;
-  font-weight: normal;
-  line-height: 1.35;
-  text-align: left;
-  white-space: normal;
-  word-break: break-word;
-  background: #fff;
-  border: 1px solid #b8daff;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  pointer-events: auto;
+.speaker-voucher-badge--claimed {
+  background-color: #21ba45;
 }
 
-.speaker-voucher-info-box.is-visible {
+.speaker-voucher-badge--sent {
+  background-color: #2185d0;
+}
+
+.speaker-voucher-badge--withdrawn {
+  background-color: #f2711c;
+}
+
+.speaker-voucher-badge--default {
+  background-color: #767676;
+}
+
+.speaker-voucher-sent-date {
   display: block;
+  line-height: 1.3;
 }
 
-.speaker-voucher-info-box::before {
-  position: absolute;
-  top: -6px;
-  right: 12px;
-  width: 10px;
-  height: 10px;
-  content: "";
-  background: #fff;
-  border-top: 1px solid #b8daff;
-  border-left: 1px solid #b8daff;
-  transform: rotate(45deg);
+.speaker-voucher-bulk-dialog {
+  width: min(480px, 94vw);
+  max-height: min(85vh, 720px);
+  overflow: auto;
 }
 
-.speaker-voucher-info-box.is-above::before {
-  top: auto;
-  bottom: -6px;
-  border-top: 0;
-  border-left: 0;
-  border-right: 1px solid #b8daff;
-  border-bottom: 1px solid #b8daff;
+.speaker-voucher-bulk-summary {
+  margin: 0 0 0.85rem;
+  color: var(--color-text-muted, #6c757d);
 }
 
-.speaker-voucher-info-sent {
-  display: block;
-  margin-bottom: 0.35rem;
-}
-
-.speaker-voucher-info-code-row {
+.speaker-voucher-bulk-groups {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.speaker-voucher-bulk-group-head {
+  margin-bottom: 0.4rem;
+}
+
+.speaker-voucher-bulk-chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
-  min-width: 0;
 }
 
-.speaker-voucher-info-code {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0;
-  color: inherit;
-  font-size: inherit;
-  word-break: break-all;
-  background: transparent;
+.speaker-voucher-bulk-chip {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.speaker-voucher-code-copy {
-  flex: 0 0 auto;
-  padding: 0;
-  min-width: 0;
-  font-size: 0.75rem;
-  line-height: 1;
-  color: var(--color-info);
-  border: 0;
-  box-shadow: none;
+.speaker-voucher-bulk-skipped {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
 }
 
-.speaker-voucher-code-copy:hover,
-.speaker-voucher-code-copy:focus {
-  color: var(--color-info-dark, var(--color-info));
-  text-decoration: none;
-  box-shadow: none;
+.speaker-voucher-bulk-preview-details > summary {
+  cursor: pointer;
+  color: #2185d0;
+  font-weight: 600;
+  user-select: none;
+}
+
+.speaker-voucher-bulk-preview-details .mail-preview {
+  max-height: 14rem;
+  overflow: auto;
 }
 
 .speaker-voucher-ineligible {
@@ -3924,33 +3969,6 @@ table thead .sort-link.sort-active {
 .speaker-voucher-action-form {
   display: inline-flex;
   margin: 0;
-}
-
-.speaker-voucher-status .speaker-voucher-icon-btn {
-  flex: 0 0 auto;
-  padding: 0.05rem;
-  border: 0;
-  line-height: 1;
-  color: var(--color-info);
-  text-decoration: none;
-  box-shadow: none;
-}
-
-/* Keep info + resend/send icons visually paired. */
-.speaker-voucher-info-wrapper + .speaker-voucher-icon-btn,
-.speaker-voucher-info-wrapper + .speaker-voucher-action-form {
-  margin-left: -0.05rem;
-}
-
-.speaker-voucher-status .speaker-voucher-icon-btn:hover,
-.speaker-voucher-status .speaker-voucher-icon-btn:focus {
-  color: var(--color-info-dark, var(--color-info));
-  text-decoration: none;
-  box-shadow: none;
-}
-
-.speaker-voucher-status .speaker-voucher-icon-btn .fa-ban {
-  color: var(--color-warning, #f0ad4e);
 }
 
 .speaker-actions-cell {
@@ -3993,13 +4011,17 @@ button.btn-speaker-not-arrived {
     min-width: 56rem;
   }
 
-  .speaker-list-table th:first-child,
-  .speaker-list-table td:first-child {
+  .speaker-list-table--selectable {
+    min-width: 58rem;
+  }
+
+  .speaker-list-table th.speaker-list-name-cell,
+  .speaker-list-table td.speaker-list-name-cell {
     max-width: 16rem;
     min-width: 10rem;
   }
 
-  .speaker-list-table td:first-child a {
+  .speaker-list-table td.speaker-list-name-cell a {
     display: block;
     max-width: 100%;
     overflow: hidden;
@@ -4007,7 +4029,7 @@ button.btn-speaker-not-arrived {
     white-space: nowrap;
   }
 
-  .speaker-list-table td:first-child .user-name-display {
+  .speaker-list-table td.speaker-list-name-cell .user-name-display {
     display: inline;
   }
 }

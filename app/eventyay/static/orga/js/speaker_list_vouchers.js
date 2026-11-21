@@ -1,4 +1,4 @@
-/* Speakers list: confirm before sending or resending a speaker voucher. */
+/* Speakers list: voucher send confirm and bulk selection. */
 
 const dialog = document.getElementById("speaker-voucher-row-confirm")
 const form = document.getElementById("speaker-voucher-row-form")
@@ -12,15 +12,10 @@ let pendingUrl = ""
 document.querySelectorAll(".speaker-voucher-action").forEach((button) => {
     button.addEventListener("click", () => {
         pendingUrl = button.dataset.url || ""
-        const action = button.dataset.action || "send"
-        if (speakerLabel) speakerLabel.textContent = button.dataset.speaker || ""
-        if (usedLabel) usedLabel.textContent = action === "resend" ? "0" : "1"
-        if (title) {
-            title.textContent = action === "resend" ? "Resend speaker voucher?" : "Send speaker voucher?"
-        }
-        if (confirmBtn) {
-            confirmBtn.textContent = action === "resend" ? "Resend" : "Send"
-        }
+        if (speakerLabel) speakerLabel.textContent = truncateName(button.dataset.speaker || "")
+        if (usedLabel) usedLabel.textContent = "1"
+        if (title) title.textContent = "Send speaker voucher?"
+        if (confirmBtn) confirmBtn.textContent = "Send"
         dialog?.showModal()
     })
 })
@@ -37,82 +32,249 @@ confirmBtn?.addEventListener("click", () => {
     form.requestSubmit()
 })
 
-const INFO_GAP = 6
-const HIDE_DELAY_MS = 120
+function gettext(msgid) {
+    return typeof window.gettext === "function" ? window.gettext(msgid) : msgid
+}
 
-const placeInfoBox = (trigger, box) => {
-    const rect = trigger.getBoundingClientRect()
-    const boxWidth = Math.min(280, window.innerWidth * 0.7)
-    let left = rect.right - boxWidth
-    left = Math.max(8, Math.min(left, window.innerWidth - boxWidth - 8))
+function ngettext(singular, plural, count) {
+    if (typeof window.ngettext === "function") {
+        return window.ngettext(singular, plural, count)
+    }
+    return count === 1 ? singular : plural
+}
 
-    box.style.left = `${left}px`
-    box.style.right = "auto"
-    box.style.top = `${rect.bottom + INFO_GAP}px`
-    box.style.bottom = "auto"
+function withCount(template, count) {
+    return template.replace("%(count)s", String(count)).replace("{count}", String(count))
+}
 
-    // Flip above the trigger when there is not enough room below.
-    box.classList.add("is-visible")
-    const boxRect = box.getBoundingClientRect()
-    if (boxRect.bottom > window.innerHeight - 8) {
-        box.style.top = "auto"
-        box.style.bottom = `${window.innerHeight - rect.top + INFO_GAP}px`
-        box.classList.add("is-above")
-    } else {
-        box.classList.remove("is-above")
+function truncateName(name, max = 42) {
+    const value = String(name || "").trim()
+    if (value.length <= max) return value
+    return `${value.slice(0, max - 1)}…`
+}
+
+const selectAll = document.getElementById("select-all-speakers")
+const checkboxes = document.querySelectorAll(".speaker-checkbox")
+const selectedCount = document.getElementById("speakers-selected-count")
+const bulkSendBtn = document.getElementById("speaker-bulk-send-btn")
+const bulkForm = document.getElementById("speaker-bulk-voucher-form")
+const bulkDialog = document.getElementById("speaker-voucher-bulk-confirm")
+const bulkSummary = document.getElementById("speaker-voucher-bulk-summary")
+const bulkGroups = document.getElementById("speaker-voucher-bulk-groups")
+const bulkSkipped = document.getElementById("speaker-voucher-bulk-skipped")
+const bulkEmpty = document.getElementById("speaker-voucher-bulk-empty")
+const bulkPreview = document.getElementById("speaker-voucher-bulk-preview")
+const bulkConfirmBtn = document.getElementById("speaker-voucher-bulk-confirm-btn")
+const bulkConfirmLabel = document.getElementById("speaker-voucher-bulk-confirm-label")
+
+const selectedCheckboxes = () => Array.from(checkboxes).filter((cb) => cb.checked)
+
+const refreshSelectionUi = () => {
+    const count = selectedCheckboxes().length
+    if (selectedCount) {
+        selectedCount.textContent = count > 0 ? `${count} ${gettext("selected")}` : ""
+        selectedCount.hidden = count === 0
+    }
+    if (selectAll && checkboxes.length > 0) {
+        selectAll.checked = count > 0 && count === checkboxes.length
+        selectAll.indeterminate = count > 0 && count < checkboxes.length
     }
 }
 
-const isFocusedWithin = (element) => Boolean(element.contains(document.activeElement))
-
-const isHovered = (element) => {
-    try {
-        return element.matches(":hover")
-    } catch {
-        return false
-    }
-}
-
-document.querySelectorAll(".speaker-voucher-info-wrapper").forEach((wrapper) => {
-    const trigger = wrapper.querySelector(".speaker-voucher-info")
-    const box = wrapper.querySelector(".speaker-voucher-info-box")
-    if (!trigger || !box) return
-
-    let hideTimer = null
-
-    const clearHideTimer = () => {
-        if (!hideTimer) return
-        clearTimeout(hideTimer)
-        hideTimer = null
-    }
-
-    const show = () => {
-        clearHideTimer()
-        placeInfoBox(trigger, box)
-    }
-
-    const hide = () => {
-        clearHideTimer()
-        hideTimer = setTimeout(() => {
-            hideTimer = null
-            // Keep open while keyboard focus or pointer remains on the control/box.
-            if (isFocusedWithin(wrapper) || isHovered(wrapper) || isHovered(box)) {
-                return
-            }
-            box.classList.remove("is-visible", "is-above")
-            box.style.top = ""
-            box.style.bottom = ""
-            box.style.left = ""
-            box.style.right = ""
-        }, HIDE_DELAY_MS)
-    }
-
-    wrapper.addEventListener("mouseenter", show)
-    wrapper.addEventListener("mouseleave", hide)
-    wrapper.addEventListener("focusin", show)
-    wrapper.addEventListener("focusout", (event) => {
-        if (!wrapper.contains(event.relatedTarget)) hide()
+if (selectAll && checkboxes.length > 0) {
+    selectAll.addEventListener("change", () => {
+        checkboxes.forEach((cb) => {
+            cb.checked = selectAll.checked
+        })
+        refreshSelectionUi()
     })
-    box.addEventListener("mouseenter", show)
-    box.addEventListener("mouseleave", hide)
+    checkboxes.forEach((cb) => {
+        cb.addEventListener("change", refreshSelectionUi)
+    })
+    refreshSelectionUi()
+}
+
+const classifySelected = (selected) => {
+    const groups = {
+        send: [],
+        resend: [],
+        claimed: 0,
+        skipped: 0,
+    }
+    selected.forEach((cb) => {
+        const name = truncateName(cb.dataset.speakerName || "")
+        const state = cb.dataset.voucherState || "dash"
+        if (state === "not_sent") groups.send.push(name)
+        else if (state === "sent") groups.resend.push(name)
+        else if (state === "claimed") groups.claimed += 1
+        else groups.skipped += 1
+    })
+    return groups
+}
+
+const renderChips = (names) => {
+    const wrap = document.createElement("div")
+    wrap.className = "speaker-voucher-bulk-chips"
+    names.forEach((name) => {
+        const chip = document.createElement("span")
+        chip.className = "speaker-voucher-bulk-chip"
+        chip.textContent = name
+        chip.title = name
+        wrap.appendChild(chip)
+    })
+    return wrap
+}
+
+const renderActionGroup = (label, names, modifier) => {
+    if (!names.length) return null
+    const section = document.createElement("section")
+    section.className = `speaker-voucher-bulk-group speaker-voucher-bulk-group--${modifier}`
+
+    const heading = document.createElement("div")
+    heading.className = "speaker-voucher-bulk-group-head"
+    const badge = document.createElement("span")
+    badge.className = `speaker-voucher-badge speaker-voucher-badge--${modifier === "send" ? "default" : "sent"}`
+    badge.textContent = withCount(label, names.length)
+    heading.appendChild(badge)
+    section.appendChild(heading)
+    section.appendChild(renderChips(names))
+    return section
+}
+
+const fillBulkDialog = (groups) => {
+    if (!bulkGroups) return 0
+    bulkGroups.replaceChildren()
+
+    const sendLabel = ngettext("Send (%(count)s)", "Send (%(count)s)", groups.send.length)
+    const resendLabel = ngettext("Resend (%(count)s)", "Resend (%(count)s)", groups.resend.length)
+
+    ;[
+        renderActionGroup(sendLabel, groups.send, "send"),
+        renderActionGroup(resendLabel, groups.resend, "resend"),
+    ]
+        .filter(Boolean)
+        .forEach((section) => bulkGroups.appendChild(section))
+
+    const actionable = groups.send.length + groups.resend.length
+    if (bulkSummary) {
+        if (actionable > 0) {
+            bulkSummary.textContent = withCount(
+                ngettext(
+                    "Email %(count)s selected speaker.",
+                    "Email %(count)s selected speakers.",
+                    actionable,
+                ),
+                actionable,
+            )
+            bulkSummary.classList.remove("d-none")
+        } else {
+            bulkSummary.textContent = ""
+            bulkSummary.classList.add("d-none")
+        }
+    }
+
+    if (bulkSkipped) {
+        const parts = []
+        if (groups.claimed) {
+            parts.push(
+                withCount(
+                    ngettext("%(count)s already claimed", "%(count)s already claimed", groups.claimed),
+                    groups.claimed,
+                ),
+            )
+        }
+        if (groups.skipped) {
+            parts.push(
+                withCount(
+                    ngettext("%(count)s not eligible", "%(count)s not eligible", groups.skipped),
+                    groups.skipped,
+                ),
+            )
+        }
+        if (parts.length) {
+            bulkSkipped.textContent = `${gettext("Skipped")}: ${parts.join(" · ")}`
+            bulkSkipped.classList.remove("d-none")
+        } else {
+            bulkSkipped.textContent = ""
+            bulkSkipped.classList.add("d-none")
+        }
+    }
+
+    if (bulkConfirmLabel) {
+        if (groups.send.length && !groups.resend.length) {
+            bulkConfirmLabel.textContent = gettext("Send vouchers")
+        } else if (!groups.send.length && groups.resend.length) {
+            bulkConfirmLabel.textContent = gettext("Resend vouchers")
+        } else {
+            bulkConfirmLabel.textContent = gettext("Send vouchers")
+        }
+    }
+
+    return actionable
+}
+
+const submitBulkForm = (selected) => {
+    if (!bulkForm) return
+    bulkForm.querySelectorAll('input[name="profile_ids"]').forEach((el) => el.remove())
+    selected.forEach((cb) => {
+        const hidden = document.createElement("input")
+        hidden.type = "hidden"
+        hidden.name = "profile_ids"
+        hidden.value = cb.dataset.profileId
+        bulkForm.appendChild(hidden)
+    })
+    if (bulkSendBtn) bulkSendBtn.disabled = true
+    if (bulkConfirmBtn) bulkConfirmBtn.disabled = true
+    bulkForm.requestSubmit()
+}
+
+bulkSendBtn?.addEventListener("click", () => {
+    if (!bulkForm) return
+    const selected = selectedCheckboxes()
+    if (selected.length === 0) {
+        window.alert(gettext("Select at least one speaker."))
+        return
+    }
+
+    if (!bulkDialog || !bulkGroups) {
+        submitBulkForm(selected)
+        return
+    }
+
+    const groups = classifySelected(selected)
+    const actionable = fillBulkDialog(groups)
+    const hasActionable = actionable > 0
+
+    if (bulkEmpty) bulkEmpty.classList.toggle("d-none", hasActionable)
+    if (bulkPreview) {
+        bulkPreview.classList.toggle("d-none", !hasActionable)
+        bulkPreview.open = false
+    }
+    if (bulkConfirmBtn) {
+        bulkConfirmBtn.disabled = !hasActionable
+        bulkConfirmBtn.classList.toggle("d-none", !hasActionable)
+    }
+    bulkDialog.showModal()
+})
+
+document.getElementById("speaker-voucher-bulk-cancel")?.addEventListener("click", () => {
+    bulkDialog?.close()
+})
+
+bulkConfirmBtn?.addEventListener("click", () => {
+    const selected = selectedCheckboxes().filter((cb) => {
+        const state = cb.dataset.voucherState || "dash"
+        return state === "not_sent" || state === "sent"
+    })
+    if (selected.length === 0) return
+    bulkDialog?.close()
+    submitBulkForm(selected)
+})
+
+window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+        if (bulkSendBtn) bulkSendBtn.disabled = false
+        if (bulkConfirmBtn) bulkConfirmBtn.disabled = false
+        refreshSelectionUi()
+    }
 })

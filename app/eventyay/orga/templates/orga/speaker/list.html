@@ -17,7 +17,6 @@
 {% block scripts %}
     {% compress js %}
         <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
-        <script defer src="{% static 'common/js/copy.js' %}"></script>
     {% endcompress %}
 {% endblock scripts %}
 
@@ -59,12 +58,30 @@
 
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
     {% has_event_perm "base.update_speakerprofile" request.user request request.event as can_update_speaker %}
+    {% if speaker_vouchers_enabled and can_update_speaker %}
+        <div class="speaker-list-toolbar">
+            <button type="button" class="btn btn-info speaker-bulk-send-btn" id="speaker-bulk-send-btn">
+                <i class="fa fa-ticket" aria-hidden="true"></i>
+                <span>{% translate "Send voucher" %}</span>
+            </button>
+            <p class="speaker-selected-count text-muted mb-0" id="speakers-selected-count" hidden></p>
+        </div>
+        <form method="post" action="{{ request.event.orga_urls.speaker_vouchers_send }}" id="speaker-bulk-voucher-form" class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        </form>
+    {% endif %}
     <div data-ajax-results-region>
     <div class="table-responsive-md talk-list-table-scroll">
-        <table class="table table-sm table-flip table-sticky speaker-list-table">
+        <table class="table table-sm table-flip table-sticky speaker-list-table{% if speaker_vouchers_enabled and can_update_speaker %} speaker-list-table--selectable{% endif %}">
             <thead>
                 <tr>
-                    <th>
+                    {% if speaker_vouchers_enabled and can_update_speaker %}
+                        <th class="checkbox-column">
+                            <input type="checkbox" id="select-all-speakers" title="{% translate 'Select all' %}" aria-label="{% translate 'Select all' %}">
+                        </th>
+                    {% endif %}
+                    <th class="speaker-list-name-cell">
                         {% translate "Name" %}
                         <a href="{% querystring sort='user__fullname' page=None %}" class="sort-link{% if current_sort == 'user__fullname' %} sort-active{% endif %}" title="{% translate 'Sort by name (a-z)' %}" aria-label="{% translate 'Sort by name (a-z)' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
                         <a href="{% querystring sort='-user__fullname' page=None %}" class="sort-link{% if current_sort == '-user__fullname' %} sort-active{% endif %}" title="{% translate 'Sort by name (z-a)' %}" aria-label="{% translate 'Sort by name (z-a)' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
@@ -105,7 +122,17 @@
             <tbody{% if is_manual_order %} dragsort-url="{{ request.event.orga_urls.speakers }}"{% endif %}>
                 {% for profile in speakers %}
                     <tr dragsort-id="{{ profile.pk }}">
-                        <td>
+                        {% if speaker_vouchers_enabled and can_update_speaker %}
+                            <td class="checkbox-column">
+                                <input type="checkbox"
+                                       class="speaker-checkbox"
+                                       data-profile-id="{{ profile.pk }}"
+                                       data-speaker-name="{{ profile.user.get_display_name }}"
+                                       data-voucher-state="{{ profile.voucher_row_state }}"
+                                       aria-label="{% blocktranslate trimmed with name=profile.user.get_display_name %}Select {{ name }}{% endblocktranslate %}">
+                            </td>
+                        {% endif %}
+                        <td class="speaker-list-name-cell">
                             <a href="{{ profile.orga_urls.base }}" title="{{ profile.user.get_display_name }}">
                                 {% include "orga/includes/user_name.html" with user=profile.user %}
                             </a>
@@ -152,66 +179,49 @@
                                 {% with assignment=profile.voucher_assignment %}
                                     {% if profile.voucher_row_state == 'claimed' %}
                                         <div class="speaker-voucher-status">
-                                            <span class="badge color-success speaker-voucher-badge">{% translate "Used" %}</span>
-                                            {% include "orga/speaker/fragment_voucher_info.html" with assignment=assignment %}
+                                            <span class="speaker-voucher-badge speaker-voucher-badge--claimed">{% translate "Claimed" %}</span>
                                         </div>
                                     {% elif profile.voucher_row_state == 'sent' %}
                                         <div class="speaker-voucher-status">
-                                            <span class="badge color-info speaker-voucher-badge">{% translate "Sent" %}</span>
-                                            {% include "orga/speaker/fragment_voucher_info.html" with assignment=assignment %}
-                                            {% if can_update_speaker %}
-                                                <button type="button"
-                                                        class="btn btn-link btn-sm speaker-voucher-icon-btn speaker-voucher-action"
-                                                        data-action="resend"
-                                                        data-url="{{ profile.orga_urls.voucher_resend }}"
-                                                        data-speaker="{{ profile.user.get_display_name }}"
-                                                        title="{% translate 'Resend voucher email' %}"
-                                                        aria-label="{% translate 'Resend voucher email' %}">
-                                                    <i class="fa fa-repeat" aria-hidden="true"></i>
-                                                </button>
-                                            {% endif %}
+                                            <span class="speaker-voucher-badge speaker-voucher-badge--sent">{% translate "Sent — not claimed" %}</span>
+                                            {% include "orga/speaker/fragment_voucher_sent_date.html" with assignment=assignment %}
                                         </div>
                                     {% elif profile.voucher_row_state == 'withdrawn' %}
                                         <div class="speaker-voucher-status">
-                                            <span class="badge color-warning speaker-voucher-badge">{% translate "Sent" %}</span>
-                                            {% include "orga/speaker/fragment_voucher_info.html" with assignment=assignment %}
-                                            {% if can_update_speaker %}
-                                                <form method="post" action="{{ profile.orga_urls.voucher_cancel }}?next={{ request.get_full_path|urlencode }}" class="speaker-voucher-action-form">
-                                                    {% csrf_token %}
-                                                    <button type="submit"
-                                                            class="btn btn-link btn-sm speaker-voucher-icon-btn"
-                                                            title="{% translate 'Cancel voucher' %}"
-                                                            aria-label="{% translate 'Cancel voucher' %}">
-                                                        <i class="fa fa-ban" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
-                                            {% endif %}
+                                            <div class="speaker-voucher-status-main">
+                                                <span class="speaker-voucher-badge speaker-voucher-badge--withdrawn">{% translate "Sent — session withdrawn" %}</span>
+                                                {% if can_update_speaker %}
+                                                    <form method="post" action="{{ profile.orga_urls.voucher_cancel }}?next={{ request.get_full_path|urlencode }}" class="speaker-voucher-action-form">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-warning">
+                                                            {% translate "Cancel voucher" %}
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                            {% include "orga/speaker/fragment_voucher_sent_date.html" with assignment=assignment %}
                                         </div>
                                     {% elif profile.voucher_row_state == 'cancelled' %}
                                         <div class="speaker-voucher-status">
-                                            <span class="badge color-secondary speaker-voucher-badge">{% translate "Cancelled" %}</span>
-                                            {% include "orga/speaker/fragment_voucher_info.html" with assignment=assignment %}
+                                            <span class="speaker-voucher-badge speaker-voucher-badge--default">{% translate "Cancelled" %}</span>
                                         </div>
                                     {% elif profile.voucher_row_state == 'not_sent' %}
                                         <div class="speaker-voucher-status">
-                                            <span class="badge color-secondary speaker-voucher-badge">{% translate "Not sent" %}</span>
-                                            {% if assignment and assignment.voucher_id %}
-                                                {% include "orga/speaker/fragment_voucher_info.html" with assignment=assignment %}
-                                            {% endif %}
-                                            {% if can_update_speaker %}
-                                                <button type="button"
-                                                        class="btn btn-link btn-sm speaker-voucher-icon-btn speaker-voucher-action"
-                                                        data-action="send"
-                                                        data-url="{{ profile.orga_urls.voucher_send }}"
-                                                        data-speaker="{{ profile.user.get_display_name }}"
-                                                        title="{% translate 'Send voucher email' %}"
-                                                        aria-label="{% translate 'Send voucher email' %}">
-                                                    <i class="fa fa-paper-plane" aria-hidden="true"></i>
-                                                </button>
-                                            {% endif %}
+                                            <div class="speaker-voucher-status-main">
+                                                <span class="speaker-voucher-badge speaker-voucher-badge--default">{% translate "Not sent" %}</span>
+                                                {% if can_update_speaker %}
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-info speaker-voucher-action"
+                                                            data-action="send"
+                                                            data-url="{{ profile.orga_urls.voucher_send }}"
+                                                            data-speaker="{{ profile.user.get_display_name }}">
+                                                        {% translate "Send" %}
+                                                    </button>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     {% else %}
-                                        <span class="text-muted speaker-voucher-ineligible">{% translate "Not eligible" %}</span>
+                                        <span class="text-muted speaker-voucher-ineligible">—</span>
                                     {% endif %}
                                 {% endwith %}
                             </td>
@@ -250,7 +260,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="{% if speaker_vouchers_enabled %}7{% else %}6{% endif %}">{% translate "No submitters found." %}</td>
+                        <td colspan="{% if speaker_vouchers_enabled and can_update_speaker %}8{% elif speaker_vouchers_enabled %}7{% else %}6{% endif %}">{% translate "No submitters found." %}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -289,6 +299,36 @@
                 </span>
             </div>
         </dialog>
+        {% if can_update_speaker %}
+            <dialog id="speaker-voucher-bulk-confirm" class="orga-confirm-dialog speaker-voucher-bulk-dialog" aria-labelledby="speaker-voucher-bulk-confirm-title">
+                <h4 id="speaker-voucher-bulk-confirm-title">{% translate "Send speaker vouchers?" %}</h4>
+                <p id="speaker-voucher-bulk-summary" class="speaker-voucher-bulk-summary"></p>
+                <div id="speaker-voucher-bulk-groups" class="speaker-voucher-bulk-groups"></div>
+                <p id="speaker-voucher-bulk-skipped" class="speaker-voucher-bulk-skipped text-muted mb-0 d-none"></p>
+                <p id="speaker-voucher-bulk-empty" class="text-muted mb-0 d-none">
+                    {% translate "None of the selected speakers can receive a voucher email." %}
+                </p>
+                <details class="speaker-voucher-bulk-preview-details mt-3" id="speaker-voucher-bulk-preview">
+                    <summary>{% translate "Preview email" %}</summary>
+                    <div class="speaker-voucher-mail-preview mt-2">
+                        <div class="mail-preview">
+                            <strong>{{ voucher_email_preview.subject }}</strong>
+                            <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
+                        </div>
+                        <p class="text-muted speaker-voucher-preview-note">{{ voucher_email_preview.sample_note }}</p>
+                    </div>
+                </details>
+                <div class="orga-confirm-dialog-actions mt-3">
+                    <span class="composer-actions">
+                        <button type="button" class="btn btn-outline-info" id="speaker-voucher-bulk-cancel">{% translate "Cancel" %}</button>
+                        <button type="button" class="btn btn-info" id="speaker-voucher-bulk-confirm-btn">
+                            <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                            <span id="speaker-voucher-bulk-confirm-label">{% translate "Send vouchers" %}</span>
+                        </button>
+                    </span>
+                </div>
+            </dialog>
+        {% endif %}
         <script type="module" src="{% static 'orga/js/speaker_list_vouchers.js' %}"></script>
     {% endif %}
 

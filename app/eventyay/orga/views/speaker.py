@@ -213,8 +213,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         template = event.get_mail_template(MailTemplateRoles.SPEAKER_VOUCHER)
         sample_code = 'SPEAKER-EXAMPLE'
         context = get_mail_context(event=event, user=self.request.user)
+        # Keep the preview short and stable even if the organiser name is long.
         context.update(
             {
+                'name': _('Alex'),
                 'voucher_code': sample_code,
                 'voucher_url': voucher_redeem_url(event, sample_code),
             }
@@ -226,7 +228,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             'subject': subject,
             'html': compile_email_body(text),
             'sample_note': _(
-                'This preview uses an example voucher code. Each speaker receives their own code.'
+                'Preview uses a sample name and voucher code. Each speaker gets their own.'
             ),
         }
 
@@ -969,6 +971,12 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
 
 class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
 
+    def _redirect_after_send(self, request, event):
+        next_url = request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect(event.orga_urls.speaker_vouchers)
+
     def post(self, request, *args, **kwargs):
         event = request.event
         with scope(event=event):
@@ -979,26 +987,58 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
 
             if not settings_obj or not settings_obj.enabled or not settings_obj.voucher_tag:
                 messages.error(request, _('Configure a voucher batch first.'))
-                return redirect(event.orga_urls.speaker_vouchers)
+                return self._redirect_after_send(request, event)
 
-            profiles = list(profiles_needing_voucher(event))
+            selected_ids = [
+                int(value)
+                for value in request.POST.getlist('profile_ids')
+                if str(value).isdigit()
+            ]
+            from_speakers_list = bool(selected_ids)
+            if selected_ids:
+                # Speakers list bulk send: include resends for already-sent codes.
+                profiles = list(
+                    SpeakerProfile.objects.filter(event=event, pk__in=selected_ids)
+                    .select_related('user', 'voucher_assignment', 'voucher_assignment__voucher')
+                )
+            else:
+                profiles = list(profiles_needing_voucher(event))
             if not profiles:
-                messages.info(request, _('Every eligible speaker already has a voucher.'))
-                return redirect(event.orga_urls.speaker_vouchers)
+                if from_speakers_list:
+                    messages.info(
+                        request,
+                        _('None of the selected speakers can receive a voucher email.'),
+                    )
+                else:
+                    messages.info(request, _('Every eligible speaker already has a voucher.'))
+                return self._redirect_after_send(request, event)
 
             # Preflight: check that there are enough vouchers before dispatching the
             # background task, so we can surface an actionable error immediately.
             # Only count speakers who actually need a new voucher code from the batch
             # (i.e. no assignment, or assignment has an expired/cancelled voucher).
+            # Resends of an already-usable code do not consume a new batch slot.
             needed = 0
+            actionable = 0
             for profile in profiles:
+                state = speaker_voucher_row_state(profile)
+                if state in ('not_sent', 'sent'):
+                    actionable += 1
                 try:
                     assignment = profile.voucher_assignment
                 except SpeakerVoucher.DoesNotExist:
-                    needed += 1
+                    if state == 'not_sent':
+                        needed += 1
                     continue
-                if assignment_needs_replacement(assignment):
+                if assignment_needs_replacement(assignment) and state == 'not_sent':
                     needed += 1
+
+            if from_speakers_list and actionable == 0:
+                messages.info(
+                    request,
+                    _('None of the selected speakers can receive a voucher email.'),
+                )
+                return self._redirect_after_send(request, event)
 
             available = settings_obj.batch_remaining_count()
             if needed > available:
@@ -1009,9 +1049,11 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                         'Needed {needed}, but only {available} remain. Nothing was sent.'
                     ).format(needed=needed, available=available),
                 )
-                return redirect(event.orga_urls.speaker_vouchers)
+                return self._redirect_after_send(request, event)
 
-        profile_pks = [p.pk for p in profiles]
+            profile_pks = [p.pk for p in profiles]
+            send_count = actionable if from_speakers_list else len(profile_pks)
+
         user_pk = request.user.pk if request.user and request.user.is_authenticated else None
         send_speaker_vouchers_task.apply_async(
             args=[event.pk, settings_obj.pk, profile_pks, user_pk],
@@ -1023,10 +1065,10 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                 'the email will appear in Mails → Sent shortly.',
                 'Sending vouchers to {count} speakers — '
                 'emails will appear in Mails → Sent as they go out.',
-                len(profile_pks),
-            ).format(count=len(profile_pks)),
+                send_count,
+            ).format(count=send_count),
         )
-        return redirect(event.orga_urls.speaker_vouchers)
+        return self._redirect_after_send(request, event)
 
 
 class SpeakerVoucherActionMixin(SpeakerViewMixin):
