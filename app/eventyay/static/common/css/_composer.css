@@ -72,6 +72,7 @@
   border-radius: var(--composer-border-radius);
   box-shadow: none;
   margin-bottom: 16px;
+  overflow: visible;
 }
 
 .mail-composer > .card > .card-header {
@@ -218,10 +219,25 @@
   min-height: 0;
 }
 
+.mail-composer .select2-container .select2-search--inline .select2-search__field,
+.mail-composer .select2-container .select2-search--inline .select2-search__field:focus,
+.mail-composer .select2-container .select2-search--inline .select2-search__field:focus-visible {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+
 .mail-composer .choices__list--dropdown .choices__item--selectable.is-highlighted,
-.select2-container--bootstrap.mail-composer-dropdown .select2-results__option--highlighted[aria-selected] {
+body:has(.mail-composer) > .select2-container--bootstrap.select2-container--open .select2-results__option--highlighted[aria-selected] {
   background-color: var(--color-primary-hover);
   color: var(--color-white);
+}
+
+body:has(.mail-composer) > .select2-container.select2-container--open {
+  z-index: 20000;
 }
 
 .mail-composer .choices__list--dropdown .choices__item--selectable.is-highlighted .choice-item-description {
@@ -931,6 +947,7 @@
   max-width: 70vw;
   min-width: 420px;
   padding: 0;
+  position: fixed;
 }
 
 #send-confirm-dialog::backdrop,
