@@ -874,6 +874,17 @@ def _config_serializer(event, *args, **kwargs):
     )
 
 
+def mask_event_config_secrets(event_config):
+    """Return a copy of a serialized event config with secret settings masked for audit logs."""
+    if not isinstance(event_config, dict):
+        return event_config
+    masked = dict(event_config)
+    password = masked.get("conftool_password")
+    if isinstance(password, str) and password:
+        masked["conftool_password"] = "********"
+    return masked
+
+
 @database_sync_to_async
 @transaction.atomic
 def save_event(event, update_fields, old_data, by_user):
@@ -886,8 +897,8 @@ def save_event(event, update_fields, old_data, by_user):
             user=by_user,
             type="event.updated",
             data={
-                "old": old_data,
-                "new": new,
+                "old": mask_event_config_secrets(old_data),
+                "new": mask_event_config_secrets(new),
             },
         )
         if update_fields and 'feature_flags' in update_fields:
