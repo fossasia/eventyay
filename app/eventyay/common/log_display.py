@@ -216,6 +216,7 @@ LOG_NAMES = {
     'eventyay.speaker_information.create': _('A speaker information note was added.'),
     'eventyay.speaker_information.update': _('A speaker information note was modified.'),
     'eventyay.speaker_information.delete': _('A speaker information note was deleted.'),
+    'eventyay.user.token.create': _('A new API token was created.'),
     'eventyay.user.token.reset': _('The API token was reset.'),
     'eventyay.user.token.revoke': _('The API token was revoked.'),
     'eventyay.user.token.upgrade': _('The API token was upgraded to the latest version.'),

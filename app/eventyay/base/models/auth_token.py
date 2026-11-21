@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy as _p
 
 from eventyay.api.versions import CURRENT_VERSIONS
+
 from .mixins import PretalxModel
 
 
@@ -87,10 +88,10 @@ class UserApiToken(PretalxModel):
     def is_latest_version(self):
         return not self.version or self.version in CURRENT_VERSIONS
 
-    def serialize(self):
+    def serialize(self, mask_token: bool = True):
         return {
             'name': self.name,
-            'token': self.token,
+            'token': '********' if mask_token else self.token,
             'events': [e.slug for e in self.events.all()],
             'expires': self.expires.isoformat() if self.expires else None,
             'endpoints': self.endpoints,

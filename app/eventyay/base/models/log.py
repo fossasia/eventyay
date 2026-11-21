@@ -1,10 +1,11 @@
+import copy
 import json
 import logging
 from contextlib import suppress
-from django.core.serializers.json import DjangoJSONEncoder
-from django_scopes import ScopedManager
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -14,6 +15,41 @@ from django.utils.translation import pgettext_lazy
 from django_scopes import ScopedManager
 
 from eventyay.base.signals import activitylog_display, activitylog_object_link, logentry_object_link
+
+
+SENSITIVE_KEYS = ('password', 'secret', 'api_key', 'token')
+
+
+def mask_sensitive_data(data, sensitive_keys=SENSITIVE_KEYS):
+    """Recursively mask sensitive values in nested dictionaries, lists, or tuples.
+
+    Returns a deep copy of ``data`` with sensitive keys masked as '********'.
+    Original data is not mutated. Falsy/empty values are preserved.
+    """
+    if not isinstance(data, (dict, list, tuple)):
+        return data
+
+    def mask_item(item):
+        if isinstance(item, dict):
+            for k, v in list(item.items()):
+                if any(s in str(k).lower() for s in sensitive_keys) and v:
+                    item[k] = '********'
+                elif isinstance(v, (dict, list, tuple)):
+                    item[k] = mask_item(v)
+            return item
+        elif isinstance(item, list):
+            for idx, element in enumerate(item):
+                if isinstance(element, (dict, list, tuple)):
+                    item[idx] = mask_item(element)
+            return item
+        elif isinstance(item, tuple):
+            return tuple(
+                mask_item(element) if isinstance(element, (dict, list, tuple)) else element for element in item
+            )
+        return item
+
+    copied = copy.deepcopy(data)
+    return mask_item(copied)
 
 
 class LogEntryQuerySet(models.QuerySet):
@@ -58,6 +94,7 @@ class LogEntry(models.Model):
     :param data: Arbitrary data that can be used by the log action renderer
     :type data: str
     """
+
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name='eventyay_log_entries')
     object_id = models.JSONField(encoder=DjangoJSONEncoder)
 
@@ -123,7 +160,7 @@ class LogEntry(models.Model):
     def json_data(self):
         if self.data:
             with suppress(json.JSONDecodeError):
-                return json.loads(self.data)
+                return mask_sensitive_data(json.loads(self.data))
         return {}
 
     @property
@@ -169,9 +206,9 @@ class LogEntry(models.Model):
         """Return an HTML reference to the logged object, or an empty string."""
         from . import (
             Event,
+            Order,
             Product,
             ProductCategory,
-            Order,
             Question,
             Quota,
             SubEvent,
@@ -310,10 +347,7 @@ class LogEntry(models.Model):
 
     @cached_property
     def parsed_data(self):
-        if self.data:
-            with suppress(json.JSONDecodeError):
-                return json.loads(self.data)
-        return {}
+        return self.json_data
 
     def delete(self, using=None, keep_parents=False):
         raise TypeError('Logs cannot be deleted.')
@@ -384,8 +418,12 @@ class ActivityLog(models.Model):
     def json_data(self):
         if self.data:
             with suppress(json.JSONDecodeError):
-                return json.loads(self.data)
+                return mask_sensitive_data(json.loads(self.data))
         return {}
+
+    @cached_property
+    def parsed_data(self):
+        return self.json_data
 
     @cached_property
     def display(self):
