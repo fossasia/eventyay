@@ -16,8 +16,8 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.common.permissions import is_admin_mode_active
+from eventyay.common.system_pages import has_i18n_content
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.forms.pages_admin import (
     ALL_PAGE_I18N_KEYS,
@@ -410,39 +410,38 @@ class ShowPageView(TemplateView):
 
 
 class SystemPageView(ShowPageView):
-    """Render system pages (terms, privacy, support) from DB or with default content if enabled."""
+    """Render system pages (terms, privacy, support) from the database or admin-configured content.
+
+    A page that is disabled, or enabled but without content, returns 404 instead of a placeholder.
+    """
 
     slug = None
+
+    SYSTEM_PAGE_TITLES = {
+        'terms': _('Terms of Service'),
+        'privacy': _('Privacy Policy'),
+        'support': _('Support & Help'),
+    }
 
     def get_slug(self):
         return self.slug or self.kwargs.get('slug')
 
     def get_page(self):
         slug = self.get_slug()
-        try:
-            return Page.objects.get(slug=slug)
-        except Page.DoesNotExist:
-            gs = GlobalSettingsObject().settings
-            enabled_key = f'footer_link_{slug}_enabled'
-            if gs.get(enabled_key, as_type=bool, default=True):
-                title_map = {
-                    'terms': _('Terms of Service'),
-                    'privacy': _('Privacy Policy'),
-                    'support': _('Support & Help'),
-                }
-                title = title_map.get(slug, slug.capitalize())
-                custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
-                if custom_text:
-                    text = custom_text
-                else:
-                    # Default copy is Markdown; convert so ShowPageView can render HTML.
-                    text = compile_markdown(
-                        str(_('Content for this page has not been configured yet.'))
-                    )
-                return Page(
-                    title=title,
-                    slug=slug,
-                    text=text,
-                )
+        gs = GlobalSettingsObject().settings
+        # A disabled system page returns 404 even if a database Page shares the slug.
+        if not gs.get(f'footer_link_{slug}_enabled', as_type=bool, default=True):
             raise Http404(_('The requested page does not exist.'))
+        # slug is not unique on Page, so order deterministically before taking one.
+        db_page = Page.objects.filter(slug=slug).order_by('pk').first()
+        if db_page is not None and has_i18n_content(db_page.text):
+            return db_page
+        custom_text = gs.get(f'footer_page_{slug}_text', as_type=LazyI18nString)
+        if not has_i18n_content(custom_text):
+            raise Http404(_('The requested page does not exist.'))
+        return Page(
+            title=self.SYSTEM_PAGE_TITLES.get(slug, slug.capitalize()),
+            slug=slug,
+            text=custom_text,
+        )
 
