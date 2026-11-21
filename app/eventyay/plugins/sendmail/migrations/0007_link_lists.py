@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0089_organizer_request'),
+        ('base', '0092_speaker_vouchers'),
         ('sendmail', '0006_ticketmailtemplate'),
     ]
 
