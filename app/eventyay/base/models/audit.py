@@ -1,7 +1,41 @@
+import copy
+
 from django.db import models
 from django.db.models import JSONField
 
 from eventyay.base.operational_logging import emit_logged_action
+
+SENSITIVE_EVENT_CONFIG_KEYS = ("password", "secret", "api_key")
+PROVIDER_DEFAULT_KEYS = ("bbb_defaults", "jitsi_defaults", "janus_defaults", "zoom_defaults")
+
+
+def mask_event_config_secrets(event_config):
+    """Return a copy of a serialized event config with secret settings masked for audit logs."""
+    if not isinstance(event_config, dict):
+        return event_config
+    masked = copy.deepcopy(event_config)
+    for key, value in list(masked.items()):
+        if isinstance(value, str) and value and any(s in key for s in SENSITIVE_EVENT_CONFIG_KEYS):
+            masked[key] = "********"
+    for provider_key in PROVIDER_DEFAULT_KEYS:
+        provider_cfg = masked.get(provider_key)
+        if not isinstance(provider_cfg, dict):
+            continue
+        for key, value in list(provider_cfg.items()):
+            if isinstance(value, str) and value and any(s in key for s in SENSITIVE_EVENT_CONFIG_KEYS):
+                provider_cfg[key] = "********"
+    return masked
+
+
+def mask_audit_data(audit_type, data):
+    if audit_type == "event.updated" and isinstance(data, dict):
+        masked = dict(data)
+        if "old" in masked:
+            masked["old"] = mask_event_config_secrets(masked["old"])
+        if "new" in masked:
+            masked["new"] = mask_event_config_secrets(masked["new"])
+        return masked
+    return data
 
 
 class AuditLog(models.Model):
@@ -59,5 +93,5 @@ class AuditLog(models.Model):
             "timestamp": self.timestamp.isoformat(),
             "user": self.user.serialize_public() if self.user else None,
             "type": self.type,
-            "data": self.data,
+            "data": mask_audit_data(self.type, self.data),
         }
