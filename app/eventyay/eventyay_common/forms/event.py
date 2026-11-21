@@ -14,7 +14,7 @@ from django_scopes import scope
 
 from eventyay.timezones import common_timezones
 
-from eventyay.base.forms import I18nModelForm, SettingsForm
+from eventyay.base.forms import I18nModelForm, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.meetup import (
     PRIVACY_CHOICES,
     PRIVACY_PRIVATE,
@@ -282,11 +282,13 @@ class EventCommonSettingsForm(SettingsForm):
                 validators=(StripeKeyValidator(['pk_live_', 'pk_test_']),),
                 widget=forms.TextInput(attrs={'placeholder': _('Publishable key')}),
             )
-            self.fields['payment_stripe_secret_key'] = forms.CharField(
+            # Show a saved key as ***** like the SMTP password on this page, so the
+            # real key never ends up in the page HTML.
+            self.fields['payment_stripe_secret_key'] = SecretKeySettingsField(
                 label=_('Secret key'),
                 required=False,
                 validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
-                widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+                widget=SecretKeySettingsWidget(attrs={'placeholder': _('Secret key')}),
             )
             self.fields['payment_stripe_merchant_country'] = forms.ChoiceField(
                 label=_('Merchant country'),
