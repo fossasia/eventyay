@@ -87,6 +87,8 @@ def test_validate_availability_fail_format(availabilitiesform, avail):
         ({"start": True, "end": True}),  # wrong type
         ({"start": "", "end": ""}),  # empty
         ({"start": "2017", "end": "2017"}),  # missing month
+        ({"start": "0001-01-01 00:00:00+01:00", "end": "2017-01-01 12:00:00+00:00"}),  # too early to convert to UTC
+        ({"start": "9999-12-31 23:30:00-01:00", "end": "9999-12-31 23:45:00-01:00"}),  # too late to convert to UTC
     ),
 )
 def test_validate_availability_fail_date(availabilitiesform, avail):
@@ -94,6 +96,24 @@ def test_validate_availability_fail_date(availabilitiesform, avail):
         availabilitiesform._validate_availability(avail)
 
     assert "invalid date" in str(excinfo.value)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "avail",
+    (
+        ({"start": "2017-01-01 12:00:00", "end": "2017-01-01 10:00:00"}),  # ends before it starts
+        ({"start": "2017-01-01 10:00:00", "end": "2017-01-01 10:00:00"}),  # zero length
+        (
+            {"start": "2017-01-01 10:00:00+00:00", "end": "2017-01-01 11:00:00+02:00"}
+        ),  # later on the clock, but an hour earlier in real time
+    ),
+)
+def test_validate_availability_fail_end_not_after_start(availabilitiesform, avail):
+    with pytest.raises(ValidationError) as excinfo:
+        availabilitiesform._validate_availability(avail)
+
+    assert "must be after its start" in str(excinfo.value)
 
 
 @pytest.mark.django_db
@@ -123,13 +143,13 @@ def test_validate_availability_success(availabilitiesform, avail):
             {"start": "2017-01-02 05:00:00", "end": "2017-01-03 00:00:00"}
         ),  # local time, end
         (
-            {"start": "2017-01-01 00:00:00-05:00", "end": "2017-01-01 00:00:00-05:00"}
+            {"start": "2017-01-01 00:00:00-05:00", "end": "2017-01-01 08:00:00-05:00"}
         ),  # explicit timezone, start
         (
             {"start": "2017-01-02 05:00:00-05:00", "end": "2017-01-03 00:00:00-05:00"}
         ),  # explicit timezone, end
         (
-            {"start": "2017-01-01 05:00:00+00:00", "end": "2017-01-01 00:00:00-05:00"}
+            {"start": "2017-01-01 05:00:00+00:00", "end": "2017-01-01 08:00:00-05:00"}
         ),  # UTC, start
         (
             {"start": "2017-01-02 05:00:00-00:00", "end": "2017-01-03 05:00:00-00:00"}
@@ -220,6 +240,32 @@ def test_clean_availabilities_success(availabilitiesform, json, expected):
         assert act.end.replace(tzinfo=None) == exp.end
         assert act.event_id == availabilitiesform.event.id
         assert act.id is None
+
+
+@pytest.mark.django_db
+def test_clean_availabilities_drops_slots_outside_the_event(availabilitiesform):
+    event = availabilitiesform.event
+    inside = dt.datetime.combine(event.date_from, dt.time(10))
+    # Slots from dates the event no longer covers, before its first and after its last day.
+    before = inside - dt.timedelta(days=2)
+    after = dt.datetime.combine(event.date_to, dt.time(10)) + dt.timedelta(days=3)
+    length = dt.timedelta(hours=2)
+    availabilitiesform.cleaned_data = {
+        "availabilities": json.dumps(
+            {
+                "availabilities": [
+                    {"start": f"{start:%Y-%m-%d %H:%M:%S}", "end": f"{start + length:%Y-%m-%d %H:%M:%S}"}
+                    for start in (before, inside, after)
+                ]
+            }
+        )
+    }
+
+    actual = availabilitiesform.clean_availabilities()
+
+    assert [(avail.start.replace(tzinfo=None), avail.end.replace(tzinfo=None)) for avail in actual] == [
+        (inside, inside + length)
+    ]
 
 
 @pytest.mark.django_db
