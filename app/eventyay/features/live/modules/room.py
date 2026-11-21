@@ -14,10 +14,12 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from django_scopes import scope
 from requests import RequestException
 from sentry_sdk import add_breadcrumb, configure_scope
 
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
+from eventyay.base.models.chat import Channel
 from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
 from eventyay.base.services.event import (
     create_room,
@@ -74,6 +76,11 @@ from eventyay.features.live.decorators import (
 )
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
+from eventyay.features.live.tasks import (
+    build_system_message,
+    deliver_chat_webhook,
+    sign_webhook_body,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -140,12 +147,12 @@ class RoomModule(BaseModule):
         When module_config is updated, verify any new webhook URLs via
         challenge-response before allowing them to be saved.
         """
-        old_urls = {}
+        old_webhooks = {}
         for m in old_module_config:
             cfg = m.get("config", {})
             url = cfg.get("webhook_url")
             if url:
-                old_urls[m["type"]] = url
+                old_webhooks[m["type"]] = (url, cfg.get("webhook_hmac_secret"))
 
         for m in new_module_config:
             cfg = m.get("config", {})
@@ -190,15 +197,20 @@ class RoomModule(BaseModule):
                         "webhook.invalid_url",
                         "Webhook URL must not point to a private network address.",
                     )
-            # Only run challenge verification if the URL is new or changed
-            if old_urls.get(m["type"]) == url:
+            # Only run challenge verification if the URL or the secret is new or changed
+            if old_webhooks.get(m["type"]) == (url, secret):
                 continue
-            # Challenge verification
+            # Challenge verification. The token is signed with the secret, so a
+            # receiver that checks the signature can reject a wrong secret now
+            # instead of rejecting every chat message later.
             challenge_token = secrets.token_urlsafe(32)
             try:
-                resp = await asgiref.sync.sync_to_async(http_requests.get)(
+                resp = await asgiref.sync.sync_to_async(
+                    http_requests.get, thread_sensitive=False
+                )(
                     url,
                     params={"challenge": challenge_token},
+                    headers={"X-Eventyay-Signature": sign_webhook_body(challenge_token, secret)},
                     timeout=5,
                     allow_redirects=False,
                 )
@@ -206,6 +218,17 @@ class RoomModule(BaseModule):
                 raise ConsumerException(
                     "webhook.verification_failed",
                     "Could not reach webhook URL for challenge verification.",
+                )
+            if resp.status_code == 403:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "The webhook receiver rejected the challenge signature (HTTP 403). Check the HMAC secret.",
+                )
+            if resp.status_code == 404:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "The webhook receiver returned HTTP 404. "
+                    "Check the URL, or whether the receiver's channel is active.",
                 )
             if resp.status_code != 200:
                 raise ConsumerException(
@@ -323,8 +346,8 @@ class RoomModule(BaseModule):
                 message=f"Entered room {self.room.pk} ({self.room.name})",
                 level="info",
             )
-            with configure_scope() as scope:
-                scope.set_extra("last_room", str(self.room.pk))
+            with configure_scope() as sentry_scope:
+                sentry_scope.set_extra("last_room", str(self.room.pk))
 
     async def _leave_room(self, room):
         januscall = self.consumer.components.get("januscall")
@@ -769,6 +792,7 @@ class RoomModule(BaseModule):
             validate_room_config_patch
         )(self.room, body, sanitize_interaction_modules=full_edit)
         if validated_data is not None:
+            previous_values = {field: getattr(self.room, field) for field in update_fields}
             for field in update_fields:
                 setattr(self.room, field, validated_data[field])
 
@@ -782,8 +806,10 @@ class RoomModule(BaseModule):
                         self.room.module_config or [],
                     )
                 except ConsumerException:
+                    self._restore_room_fields(previous_values)
                     raise
                 except Exception:
+                    self._restore_room_fields(previous_values)
                     log_event(
                         'video',
                         'connection.webhook',
@@ -833,6 +859,59 @@ class RoomModule(BaseModule):
         else:
             log_event('video', 'room.config', OUTCOME_FAILURE, error_code='invalid', event_id=getattr(self.consumer.event, 'pk', None))
             await self.consumer.send_error(code="config.invalid")
+
+    def _restore_room_fields(self, values):
+        """Undo in-memory changes to the cached room after a rejected patch."""
+        for field, value in values.items():
+            setattr(self.room, field, value)
+
+    @command("webhook.test")
+    @room_action(permission_required=[Permission.ROOM_UPDATE, Permission.EVENT_UPDATE])
+    async def webhook_test(self, body):
+        """Send a ``test`` system message to the room's saved chat webhook and report the HTTP status."""
+        await self.room.refresh_from_db_if_outdated()
+        chat_config = next(
+            (
+                m.get("config") or {}
+                for m in self.room.module_config or []
+                if isinstance(m, dict) and m.get("type") == "chat.native"
+            ),
+            {},
+        )
+        webhook_url = chat_config.get("webhook_url")
+        hmac_secret = chat_config.get("webhook_hmac_secret")
+        if not webhook_url or not hmac_secret:
+            await self.consumer.send_error(
+                code="webhook.not_configured",
+                message="Save a webhook URL and HMAC secret for this room first.",
+            )
+            return
+        if not settings.DEBUG and await asgiref.sync.sync_to_async(
+            self._is_private_url, thread_sensitive=False
+        )(webhook_url):
+            await self.consumer.send_error(
+                code="webhook.invalid_url",
+                message="Webhook URL must not point to a private network address.",
+            )
+            return
+        channel_id = await database_sync_to_async(self._chat_channel_id)()
+        payload = build_system_message(
+            self.room,
+            "test",
+            f"Test event from Eventyay room {self.room.name}",
+            channel_id=channel_id,
+        )
+        status = await asgiref.sync.sync_to_async(
+            deliver_chat_webhook, thread_sensitive=False
+        )(payload, webhook_url, hmac_secret)
+        await self.consumer.send_success(
+            {"status": status, "ok": status is not None and 200 <= status <= 299}
+        )
+
+    def _chat_channel_id(self):
+        with scope(event=self.consumer.event):
+            channel = Channel.objects.filter(event_id=self.room.event_id, room=self.room).only("id").first()
+        return channel.id if channel else None
 
     @command("config.reorder")
     @require_event_permission(Permission.ROOM_UPDATE)
