@@ -27,7 +27,7 @@ class SpeakerVoucherSettingsForm(forms.Form):
         required=False,
         label=_('Voucher batch'),
         help_text=_('Select the voucher batch (tag) created in Tickets → Vouchers.'),
-        widget=forms.Select,
+        widget=forms.Select(attrs={'class': 'form-control'}),
     )
 
     def __init__(self, *args, event=None, **kwargs):

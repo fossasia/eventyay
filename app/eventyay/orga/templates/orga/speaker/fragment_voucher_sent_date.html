@@ -1,0 +1,14 @@
+{% load i18n %}
+{% load tz %}
+{% if assignment.sent_at %}
+    {% timezone request.event.timezone %}
+        {% now "Y" as current_year %}
+        <small class="text-muted speaker-voucher-sent-date" title="{{ assignment.sent_at|date:'j M Y H:i T' }}">
+            {% if assignment.sent_at|date:"Y" == current_year %}
+                {% blocktranslate trimmed with sent=assignment.sent_at|date:"j M" %}Sent {{ sent }}{% endblocktranslate %}
+            {% else %}
+                {% blocktranslate trimmed with sent=assignment.sent_at|date:"j M Y" %}Sent {{ sent }}{% endblocktranslate %}
+            {% endif %}
+        </small>
+    {% endtimezone %}
+{% endif %}

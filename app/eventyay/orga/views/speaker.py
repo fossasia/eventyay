@@ -27,10 +27,13 @@ from eventyay.base.models.speaker_voucher import SpeakerVoucher, SpeakerVoucherS
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.speaker_vouchers import (
+    allocate_and_send_vouchers,
     assignment_needs_replacement,
+    cancel_speaker_voucher,
     profiles_needing_voucher,
     send_speaker_vouchers_task,
     speaker_summary_counts,
+    speaker_voucher_row_state,
     voucher_redeem_url,
 )
 from eventyay.base.services.talkimport import import_speakers
@@ -91,9 +94,19 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         'is_featured': ('position', 'user__fullname'),
         'accepted_submission_count': ('user__fullname',),
         'submission_count': ('user__fullname',),
+        'voucher_sort': ('user__fullname',),
         'has_arrived': ('user__fullname',),
     }
     permission_required = 'base.orga_list_speakerprofile'
+
+    @context
+    @cached_property
+    def speaker_vouchers_enabled(self) -> bool:
+        try:
+            with scope(event=self.request.event):
+                return bool(self.request.event.speaker_voucher_settings.enabled)
+        except SpeakerVoucherSettings.DoesNotExist:
+            return False
 
     def _speaker_list_ordering(self, *, descending=False):
         direction = (
@@ -104,6 +117,9 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         return (direction, 'user__fullname', 'pk')
 
     def sort_queryset(self, qs):
+        # Only allow voucher sorting when the feature is enabled and annotated.
+        if self.speaker_vouchers_enabled:
+            self.sortable_fields = (*type(self).sortable_fields, 'voucher_sort')
         sort_key = self.request.GET.get('sort') or ''
         if not sort_key or sort_key == 'default':
             sort_key = getattr(self, 'default_sort_field', None) or ''
@@ -139,8 +155,18 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                         & Q(user__submissions__state__in=SubmissionStates.accepted_states),
                         distinct=True,
                     ),
+                    confirmed_submission_count=Count(
+                        'user__submissions',
+                        filter=Q(user__submissions__event=self.request.event)
+                        & Q(user__submissions__state=SubmissionStates.CONFIRMED),
+                        distinct=True,
+                    ),
                 )
             )
+            if self.speaker_vouchers_enabled:
+                qs = qs.select_related('voucher_assignment', 'voucher_assignment__voucher').annotate(
+                    voucher_sort=F('voucher_assignment__status'),
+                )
 
             qs = self.filter_queryset(qs)
 
@@ -173,6 +199,22 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                     to_attr='list_sessions',
                 )
             )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.speaker_vouchers_enabled:
+            for profile in context.get('speakers') or []:
+                profile.voucher_row_state = speaker_voucher_row_state(profile)
+            with scope(event=self.request.event):
+                try:
+                    settings_obj = self.request.event.speaker_voucher_settings
+                except SpeakerVoucherSettings.DoesNotExist:
+                    settings_obj = None
+                context['voucher_batch_tag'] = settings_obj.voucher_tag if settings_obj else ''
+                context['voucher_batch_remaining'] = (
+                    settings_obj.batch_remaining_count() if settings_obj and settings_obj.voucher_tag else 0
+                )
+        return context
 
     def _speaker_sessions_queryset(self):
         qs = (
@@ -913,6 +955,12 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
 
 class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
 
+    def _redirect_after_send(self, request, event):
+        next_url = request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect(event.orga_urls.speaker_vouchers)
+
     def post(self, request, *args, **kwargs):
         event = request.event
         with scope(event=event):
@@ -923,26 +971,58 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
 
             if not settings_obj or not settings_obj.enabled or not settings_obj.voucher_tag:
                 messages.error(request, _('Configure a voucher batch first.'))
-                return redirect(event.orga_urls.speaker_vouchers)
+                return self._redirect_after_send(request, event)
 
-            profiles = list(profiles_needing_voucher(event))
+            selected_ids = [
+                int(value)
+                for value in request.POST.getlist('profile_ids')
+                if str(value).isdigit()
+            ]
+            from_speakers_list = bool(selected_ids)
+            if selected_ids:
+                # Speakers list bulk send: include resends for already-sent codes.
+                profiles = list(
+                    SpeakerProfile.objects.filter(event=event, pk__in=selected_ids)
+                    .select_related('user', 'voucher_assignment', 'voucher_assignment__voucher')
+                )
+            else:
+                profiles = list(profiles_needing_voucher(event))
             if not profiles:
-                messages.info(request, _('Every eligible speaker already has a voucher.'))
-                return redirect(event.orga_urls.speaker_vouchers)
+                if from_speakers_list:
+                    messages.info(
+                        request,
+                        _('None of the selected speakers can receive a voucher email.'),
+                    )
+                else:
+                    messages.info(request, _('Every eligible speaker already has a voucher.'))
+                return self._redirect_after_send(request, event)
 
             # Preflight: check that there are enough vouchers before dispatching the
             # background task, so we can surface an actionable error immediately.
             # Only count speakers who actually need a new voucher code from the batch
             # (i.e. no assignment, or assignment has an expired/cancelled voucher).
+            # Resends of an already-usable code do not consume a new batch slot.
             needed = 0
+            actionable = 0
             for profile in profiles:
+                state = speaker_voucher_row_state(profile)
+                if state in ('not_sent', 'sent'):
+                    actionable += 1
                 try:
                     assignment = profile.voucher_assignment
                 except SpeakerVoucher.DoesNotExist:
-                    needed += 1
+                    if state == 'not_sent':
+                        needed += 1
                     continue
-                if assignment_needs_replacement(assignment):
+                if assignment_needs_replacement(assignment) and state == 'not_sent':
                     needed += 1
+
+            if from_speakers_list and actionable == 0:
+                messages.info(
+                    request,
+                    _('None of the selected speakers can receive a voucher email.'),
+                )
+                return self._redirect_after_send(request, event)
 
             available = settings_obj.batch_remaining_count()
             if needed > available:
@@ -953,9 +1033,11 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                         'Needed {needed}, but only {available} remain. Nothing was sent.'
                     ).format(needed=needed, available=available),
                 )
-                return redirect(event.orga_urls.speaker_vouchers)
+                return self._redirect_after_send(request, event)
 
-        profile_pks = [p.pk for p in profiles]
+            profile_pks = [p.pk for p in profiles]
+            send_count = actionable if from_speakers_list else len(profile_pks)
+
         user_pk = request.user.pk if request.user and request.user.is_authenticated else None
         send_speaker_vouchers_task.apply_async(
             args=[event.pk, settings_obj.pk, profile_pks, user_pk],
@@ -967,9 +1049,105 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                 'the email will appear in Mails → Sent shortly.',
                 'Sending vouchers to {count} speakers — '
                 'emails will appear in Mails → Sent as they go out.',
-                len(profile_pks),
-            ).format(count=len(profile_pks)),
+                send_count,
+            ).format(count=send_count),
         )
-        return redirect(event.orga_urls.speaker_vouchers)
+        return self._redirect_after_send(request, event)
 
 
+class SpeakerVoucherActionMixin(SpeakerViewMixin):
+    permission_required = 'base.update_speakerprofile'
+    write_permission_required = 'base.update_speakerprofile'
+
+    def get_permission_object(self):
+        return self.request.event
+
+    def _settings_or_redirect(self):
+        event = self.request.event
+        try:
+            settings_obj = event.speaker_voucher_settings
+        except SpeakerVoucherSettings.DoesNotExist:
+            settings_obj = None
+        if not settings_obj or not settings_obj.enabled or not settings_obj.voucher_tag:
+            messages.error(self.request, _('Configure a voucher batch first.'))
+            return None
+        return settings_obj
+
+    def _redirect_speakers(self):
+        next_url = self.request.GET.get('next') or self.request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect(self.request.event.orga_urls.speakers)
+
+
+class SpeakerVoucherSendView(SpeakerVoucherActionMixin, View):
+    def post(self, request, *args, **kwargs):
+        settings_obj = self._settings_or_redirect()
+        if settings_obj is None:
+            return self._redirect_speakers()
+        profile = self.profile
+        with scope(event=request.event):
+            result = allocate_and_send_vouchers(
+                request.event, settings_obj, [profile], requestor=request.user
+            )
+        if result['aborted_insufficient']:
+            messages.error(
+                request,
+                _(
+                    'Not enough unused vouchers in this batch. '
+                    'Needed {needed}, but only {available} remain. Nothing was sent.'
+                ).format(needed=result['needed'], available=result['available']),
+            )
+        elif result['sent']:
+            messages.success(request, _('Speaker voucher sent.'))
+        elif result['skipped_ineligible']:
+            messages.warning(request, _('This speaker is not eligible for a voucher.'))
+        else:
+            messages.warning(request, _('No voucher was sent.'))
+        return self._redirect_speakers()
+
+
+class SpeakerVoucherResendView(SpeakerVoucherActionMixin, View):
+    def post(self, request, *args, **kwargs):
+        settings_obj = self._settings_or_redirect()
+        if settings_obj is None:
+            return self._redirect_speakers()
+        profile = self.profile
+        with scope(event=request.event):
+            result = allocate_and_send_vouchers(
+                request.event, settings_obj, [profile], requestor=request.user
+            )
+        if result['resent'] or result['sent']:
+            messages.success(
+                request,
+                _('Speaker voucher resent.') if result['resent'] else _('Speaker voucher sent.'),
+            )
+        else:
+            messages.warning(request, _('No voucher was resent.'))
+        return self._redirect_speakers()
+
+
+class SpeakerVoucherCancelView(SpeakerVoucherActionMixin, View):
+    def post(self, request, *args, **kwargs):
+        settings_obj = self._settings_or_redirect()
+        if settings_obj is None:
+            return self._redirect_speakers()
+        profile = self.profile
+        with scope(event=request.event):
+            try:
+                assignment = profile.voucher_assignment
+            except SpeakerVoucher.DoesNotExist:
+                assignment = None
+            if assignment is None:
+                messages.warning(request, _('This speaker has no voucher to cancel.'))
+                return self._redirect_speakers()
+            try:
+                cancel_speaker_voucher(assignment, requestor=request.user)
+            except ValueError:
+                messages.warning(
+                    request,
+                    _('This voucher has already been claimed and cannot be cancelled.'),
+                )
+                return self._redirect_speakers()
+        messages.success(request, _('Speaker voucher cancelled.'))
+        return self._redirect_speakers()

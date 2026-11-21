@@ -18,6 +18,7 @@ from eventyay.base.models.speaker_voucher import (
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.base.services.speaker_vouchers import (
     allocate_and_send_vouchers,
+    cancel_speaker_voucher,
     eligible_speaker_profiles,
     profiles_needing_voucher,
     send_speaker_vouchers_task,
@@ -542,3 +543,180 @@ def test_user_without_permission_cannot_access_or_send(review_client, event):
 
     response = review_client.post(event.orga_urls.speaker_vouchers_send, follow=True)
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_speakers_list_hides_voucher_column_when_disabled(
+    orga_client, event, speaker, confirmed_submission
+):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert 'speaker-voucher-cell' not in response.text
+
+
+@pytest.mark.django_db
+def test_speakers_list_shows_voucher_column_when_enabled(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings
+):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert 'speaker-voucher-cell' in response.text
+    assert 'Not sent' in response.text
+    assert 'speaker-voucher-badge--default' in response.text
+    assert 'data-action="send"' not in response.text
+    assert 'speaker-checkbox' in response.text
+    assert 'data-voucher-state=' in response.text
+    assert 'select-all-speakers' in response.text
+    assert 'id="speaker-bulk-send-btn"' in response.text
+    assert 'id="speaker-voucher-bulk-confirm"' in response.text
+
+
+@pytest.mark.django_db
+def test_orga_bulk_send_selected_speakers_from_list(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    from eventyay.base.models import Event as _Event
+    from eventyay.base.models import SpeakerProfile as _SP
+    from eventyay.base.models import User as _User
+    from eventyay.base.models.speaker_voucher import SpeakerVoucherSettings as _SVS
+    from eventyay.base.services.speaker_vouchers import allocate_and_send_vouchers as _asv
+
+    def _run_sync(args, **kw):
+        ev = _Event.objects.get(pk=args[0])
+        sv_settings = _SVS.objects.get(pk=args[1])
+        profiles = list(_SP.objects.filter(pk__in=args[2]).select_related('user'))
+        user_pk = args[3] if len(args) > 3 else None
+        req = _User.objects.get(pk=user_pk) if user_pk else None
+        with scope(event=ev):
+            _asv(ev, sv_settings, profiles, requestor=req)
+
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+
+    with patch(
+        'eventyay.base.services.speaker_vouchers.send_speaker_vouchers_task.apply_async',
+        side_effect=_run_sync,
+    ):
+        response = orga_client.post(
+            event.orga_urls.speaker_vouchers_send,
+            {
+                'profile_ids': [str(profile.pk)],
+                'next': event.orga_urls.speakers,
+            },
+            follow=True,
+        )
+
+    assert response.status_code == 200
+    assert any(event.orga_urls.speakers in url for url, _status in response.redirect_chain)
+    with scope(event=event):
+        assert SpeakerVoucher.objects.filter(
+            speaker_profile=profile, status=SpeakerVoucherStatus.SENT
+        ).exists()
+
+
+@pytest.mark.django_db
+def test_orga_bulk_send_selected_speakers_can_resend(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    from eventyay.base.models import Event as _Event
+    from eventyay.base.models import SpeakerProfile as _SP
+    from eventyay.base.models import User as _User
+    from eventyay.base.models.speaker_voucher import SpeakerVoucherSettings as _SVS
+    from eventyay.base.services.speaker_vouchers import allocate_and_send_vouchers as _asv
+
+    def _run_sync(args, **kw):
+        ev = _Event.objects.get(pk=args[0])
+        sv_settings = _SVS.objects.get(pk=args[1])
+        profiles = list(_SP.objects.filter(pk__in=args[2]).select_related('user'))
+        user_pk = args[3] if len(args) > 3 else None
+        req = _User.objects.get(pk=user_pk) if user_pk else None
+        with scope(event=ev):
+            return _asv(ev, sv_settings, profiles, requestor=req)
+
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        code = assignment.voucher.code
+        mail_count = QueuedMail.objects.filter(event=event).count()
+
+    with patch(
+        'eventyay.base.services.speaker_vouchers.send_speaker_vouchers_task.apply_async',
+        side_effect=_run_sync,
+    ):
+        response = orga_client.post(
+            event.orga_urls.speaker_vouchers_send,
+            {
+                'profile_ids': [str(profile.pk)],
+                'next': event.orga_urls.speakers,
+            },
+            follow=True,
+        )
+
+    assert response.status_code == 200
+    with scope(event=event):
+        assignment.refresh_from_db()
+        assert assignment.voucher.code == code
+        assert QueuedMail.objects.filter(event=event).count() > mail_count
+
+
+@pytest.mark.django_db
+def test_orga_can_send_single_speaker_voucher(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        url = profile.orga_urls.voucher_send
+    response = orga_client.post(url, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        assert SpeakerVoucher.objects.filter(speaker_profile=profile, status=SpeakerVoucherStatus.SENT).exists()
+
+
+@pytest.mark.django_db
+def test_orga_can_resend_and_cancel_speaker_voucher(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        code = assignment.voucher.code
+
+    response = orga_client.post(profile.orga_urls.voucher_resend, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        assignment.refresh_from_db()
+        assert assignment.voucher.code == code
+
+    # Withdraw the confirmed session so Cancel is the UI action
+    with scope(event=event):
+        confirmed_submission.cancel(force=True)
+        assignment.voucher.refresh_from_db()
+
+    response = orga_client.post(profile.orga_urls.voucher_cancel, follow=True)
+    assert response.status_code == 200
+    with scope(event=event):
+        assignment = SpeakerVoucher.objects.select_related('voucher', 'speaker_profile').get(
+            speaker_profile=profile
+        )
+        assert assignment.voucher.valid_until is not None
+        assert assignment.logged_actions().filter(action_type='eventyay.speaker.voucher.cancelled').exists()
+        assert speaker_voucher_row_state(assignment.speaker_profile) == 'cancelled'
+
+
+@pytest.mark.django_db
+def test_cancel_refuses_claimed_voucher(
+    event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch
+):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        allocate_and_send_vouchers(event, speaker_voucher_settings, [profile])
+        assignment = SpeakerVoucher.objects.get(speaker_profile=profile)
+        assignment.voucher.redeemed = 1
+        assignment.voucher.save(update_fields=['redeemed'])
+        with pytest.raises(ValueError):
+            cancel_speaker_voucher(assignment)
+        assignment.refresh_from_db()
+        assert assignment.voucher.valid_until is None
+        assert speaker_voucher_row_state(profile) == 'claimed'

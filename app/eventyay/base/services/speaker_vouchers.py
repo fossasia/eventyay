@@ -63,7 +63,7 @@ def _has_email(profile: SpeakerProfile) -> bool:
 def assignment_needs_replacement(assignment: SpeakerVoucher) -> bool:
     """True when the linked ticket voucher can no longer be emailed/redeemed."""
     voucher = assignment.voucher
-    return voucher.valid_until is not None and voucher.valid_until < now()
+    return voucher.valid_until is not None and voucher.valid_until <= now()
 
 
 def eligible_speaker_profiles(event: Event):
@@ -422,9 +422,19 @@ class _InsufficientVouchers(Exception):
 
 
 def cancel_speaker_voucher(speaker_voucher: SpeakerVoucher, *, requestor=None) -> None:
-    """Expire the linked voucher so it cannot be redeemed; keep the assignment for audit."""
+    """Expire the linked voucher so it cannot be redeemed; keep the assignment for audit.
+
+    Raises ``ValueError`` when the voucher was already redeemed (claimed).
+    """
     voucher = speaker_voucher.voucher
-    voucher.valid_until = now()
+    speaker_voucher.refresh_claimed_status()
+    if speaker_voucher.status == SpeakerVoucherStatus.CLAIMED or voucher.redeemed > 0:
+        raise ValueError('claimed')
+    if assignment_needs_replacement(speaker_voucher):
+        return
+    # Expire strictly in the past so shop filters (`valid_until__gte=now()`) and
+    # assignment_needs_replacement agree immediately.
+    voucher.valid_until = now() - timedelta(seconds=1)
     voucher.save(update_fields=['valid_until'])
     speaker_user = (
         speaker_voucher.speaker_profile.user
@@ -445,7 +455,7 @@ def cancel_speaker_voucher(speaker_voucher: SpeakerVoucher, *, requestor=None) -
 def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
     """Return the Speakers-list voucher display state for a profile.
 
-    One of: ``dash``, ``not_sent``, ``sent``, ``claimed``, ``withdrawn``.
+    One of: ``dash``, ``not_sent``, ``sent``, ``claimed``, ``withdrawn``, ``cancelled``.
     """
     try:
         assignment = profile.voucher_assignment
@@ -459,8 +469,12 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
 
     if assignment is not None:
         assignment.refresh_claimed_status()
+        assignment.voucher.refresh_from_db(fields=['valid_until', 'redeemed'])
         if assignment.status == SpeakerVoucherStatus.CLAIMED or assignment.voucher.redeemed > 0:
             return 'claimed'
+        if assignment_needs_replacement(assignment):
+            # Expired/cancelled code: confirmed speakers can receive a replacement.
+            return 'not_sent' if confirmed_count else 'cancelled'
         if assignment.status in (SpeakerVoucherStatus.NOT_SENT, SpeakerVoucherStatus.SENDING):
             return 'not_sent' if confirmed_count else 'withdrawn'
         if confirmed_count:
