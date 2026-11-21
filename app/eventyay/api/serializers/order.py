@@ -932,7 +932,9 @@ class PriceCalcSerializer(serializers.Serializer):
 
 
 class AnswerCreateSerializer(AnswerSerializer):
-    pass
+    """Serializer for creating answers, allowing optional answer string for choice-based questions."""
+
+    answer = serializers.CharField(required=False, allow_blank=True, default='')
 
 
 class OrderFeeCreateSerializer(I18nAwareModelSerializer):
