@@ -86,24 +86,25 @@ class LogMixin:
             kwargs['api_token'] = api_token
 
         # Sanitize data
-        payload = data if isinstance(data, dict) else None
         if isinstance(data, dict):
             from .log import mask_sensitive_data
 
-            data = mask_sensitive_data(data)
-            data = json.dumps(data, cls=CustomJSONEncoder, sort_keys=True)
+            sanitized_data = mask_sensitive_data(data)
+            stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder, sort_keys=True)
+            payload = sanitized_data
         elif data:
             raise TypeError(f'Logged data should always be a dictionary, not {type(data)}.')
         else:
             # If data is None, set it to empty JSON object to satisfy NOT NULL constraint
-            data = '{}'
+            stored_data = '{}'
+            payload = None
 
         log_entry = LogEntry.objects.create(
             content_object=content_object or self,
             user=user or person,
             action_type=action,
             event=event,
-            data=data,
+            data=stored_data,
             is_orga_action=orga,
             **kwargs,
         )

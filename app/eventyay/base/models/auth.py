@@ -49,6 +49,7 @@ from eventyay.common.image import (
 )
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.json import CustomJSONEncoder
 from eventyay.helpers.urls import build_absolute_uri
 from eventyay.talk_rules.person import is_administrator
 
@@ -888,10 +889,7 @@ class User(
         :type person: :class:`~pretalx.person.models.user.User`
         :param orga: Was this action initiated by a privileged user?
         """
-        import json
-
         from eventyay.base.models.log import LogEntry, mask_sensitive_data
-        from eventyay.helpers.json import CustomJSONEncoder
 
         if data is None:
             data = {}

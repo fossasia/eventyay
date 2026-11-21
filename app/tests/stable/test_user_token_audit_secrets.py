@@ -172,3 +172,14 @@ def test_user_log_action_with_sequence_data(user):
         assert 'seq-secret' not in entry.data
         assert entry.parsed_data[0]['token'] == '********'
         assert entry.parsed_data[0]['action'] == 'bulk'
+
+
+@pytest.mark.django_db
+def test_emit_logged_action_receives_masked_payload(user, mocker):
+    mock_emit = mocker.patch('eventyay.base.models.auth.emit_logged_action')
+    with scopes_disabled():
+        user.log_action('eventyay.user.token.create', data={'name': 'Emitted', 'token': 'raw-emit-token'})
+        mock_emit.assert_called_once()
+        call_kwargs = mock_emit.call_args.kwargs
+        assert call_kwargs['data']['token'] == '********'
+        assert call_kwargs['data']['name'] == 'Emitted'
