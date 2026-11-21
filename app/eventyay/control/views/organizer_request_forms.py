@@ -7,10 +7,11 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, DeleteView, UpdateView, View
 
-from eventyay.base.forms.organizer_request import OrganizerRequestQuestionForm
+from eventyay.base.forms.organizer_request import OrganizerRequestFieldSettingsForm, OrganizerRequestQuestionForm
 from eventyay.base.models.organizer_request import OrganizerRequestFieldSetting, OrganizerRequestQuestion
 from eventyay.base.organizer_request_fields import (
     REQUEST_FIELDS,
+    ensure_request_field_settings,
     next_form_position,
     organiser_form_rows,
     organizer_request_enabled,
@@ -85,6 +86,44 @@ class OrganizerRequestFieldUpdate(AdministratorPermissionRequiredMixin, View):
             return JsonResponse({'error': _('Could not read that change.')}, status=400)
         setting.save(update_fields=['active', 'required'])
         return JsonResponse({'ok': True})
+
+
+class OrganizerRequestFieldSettings(AdministratorPermissionRequiredMixin, UpdateView):
+    model = OrganizerRequestFieldSetting
+    form_class = OrganizerRequestFieldSettingsForm
+    template_name = 'pretixcontrol/admin/organizer_requests/field_settings.html'
+    success_url = reverse_lazy('eventyay_admin:admin.organizer_forms')
+
+    def get_object(self, queryset=None):
+        key = self.kwargs['key']
+        if not any(field['key'] == key for field in REQUEST_FIELDS):
+            raise Http404
+        ensure_request_field_settings()
+        return get_object_or_404(OrganizerRequestFieldSetting, key=key)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        spec = next(field for field in REQUEST_FIELDS if field['key'] == self.object.key)
+        context['title'] = _('Field settings: {field}').format(field=spec['label'])
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('action') == 'reset':
+            setting = self.get_object()
+            setting.label = ''
+            setting.help_text = ''
+            setting.save(update_fields=['label', 'help_text'])
+            messages.success(request, _('The field has been reset to its defaults.'))
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        # Save only the two text columns, so a stale read cannot overwrite a concurrent change to active, required
+        # or position made on the list page.
+        self.object = form.instance
+        self.object.save(update_fields=['label', 'help_text'])
+        messages.success(self.request, _('The field settings have been saved.'))
+        return redirect(self.get_success_url())
 
 
 class OrganizerRequestQuestionToggle(AdministratorPermissionRequiredMixin, View):

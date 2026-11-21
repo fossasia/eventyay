@@ -91,6 +91,11 @@ class OrganizerRequestForm(TurnstileValidationMixin, OrganizerRequestReviewForm)
         locked = {field['key'] for field in REQUEST_FIELDS if field['locked']}
         known = {field['key'] for field in REQUEST_FIELDS}
         for row in self.field_settings:
+            if row.key in known and row.key in self.fields:
+                if row.label:
+                    self.fields[row.key].label = row.label
+                if row.help_text:
+                    self.fields[row.key].help_text = row.help_text
             if row.key not in known or row.key in locked or row.key not in self.fields:
                 continue
             if not row.active:
@@ -137,6 +142,27 @@ class OrganizerRequestForm(TurnstileValidationMixin, OrganizerRequestReviewForm)
             raise ValidationError(_('Unable to submit this request.'))
         self.clean_turnstile()
         return cleaned
+
+
+class OrganizerRequestFieldSettingsForm(forms.ModelForm):
+    class Meta:
+        model = OrganizerRequestFieldSetting
+        fields = ('label', 'help_text')
+        labels = {'label': _('Label'), 'help_text': _('Help text')}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        default = OrganizerRequestForm.base_fields[self.instance.key]
+        self.fields['label'].widget.attrs['placeholder'] = str(default.label or '')
+        self.fields['help_text'].widget = forms.Textarea(attrs={'rows': 3, 'placeholder': str(default.help_text or '')})
+        self.fields['label'].help_text = _('Leave empty to use the default label.')
+        self.fields['help_text'].help_text = _('Leave empty to use the default help text.')
+
+    def clean_label(self):
+        return self.cleaned_data['label'].strip()
+
+    def clean_help_text(self):
+        return self.cleaned_data['help_text'].strip()
 
 
 class OrganizerRequestRejectForm(forms.Form):

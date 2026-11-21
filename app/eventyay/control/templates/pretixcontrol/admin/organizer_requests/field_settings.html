@@ -1,0 +1,23 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load bootstrap3 i18n %}
+{% block title %}{{ title }}{% endblock %}
+{% block video_admin_content %}
+  <h1>{{ title }}</h1>
+  <p class="text-muted">
+    {% trans 'Change the label and help text that applicants see on the public organizer request form. Whether the question is active or required is set on the Organizer forms page.' %}
+  </p>
+  <form method="post" class="form-horizontal">
+    {% csrf_token %}
+    {% bootstrap_form form layout='control' %}
+    <div class="form-group submit-group">
+      <a href="{% url 'eventyay_admin:admin.organizer_forms' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
+      <button type="submit" form="field-reset-form" class="btn btn-default">{% trans 'Reset to defaults' %}</button>
+      <button type="submit" class="btn btn-primary btn-save">{% trans 'Save' %}</button>
+    </div>
+  </form>
+  {# Separate form, so pressing Enter in a field submits Save and never Reset. #}
+  <form method="post" id="field-reset-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="reset">
+  </form>
+{% endblock %}
