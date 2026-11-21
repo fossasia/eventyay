@@ -15,8 +15,9 @@ Use this skill when preparing changes for review, responding to feedback, and fi
 2. Keep changes scoped to one concern and update tests for behavior changes.
 3. Run targeted checks before requesting review.
 4. Write a concise commit message that states what changed.
-5. Prepare a clear PR description with context, test evidence, and risk notes.
+5. Prepare the PR description using [the PR template](assets/pr-description-template.md).
 6. Address reviewer comments with concrete follow-up commits.
+7. Follow the AI Attribution Rules in [agents.md](../../../agents.md) when creating or reviewing PRs with AI.
 
 ## Guardrails
 

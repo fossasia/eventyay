@@ -1158,7 +1158,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             raise PermissionDenied(_('Please go back and try again.'))
 
         redirect_url = self.generate_token_url(request, order_position, order)
-        logger.info('Redirecting to %s...', redirect_url)
+        logger.info('Redirecting to video for event %s', event.slug)
         return redirect_or_json_redirect(request, redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
