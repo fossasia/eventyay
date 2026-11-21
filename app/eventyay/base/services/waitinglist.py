@@ -1,4 +1,3 @@
-import sys
 from datetime import timedelta
 
 from django.db.models import Q
@@ -7,74 +6,52 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, User, WaitingListEntry
-from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.models.waitinglist import WaitingListBusy, WaitingListException
 from eventyay.base.services.tasks import EventTask
 from eventyay.base.signals import order_canceled, order_changed, periodic_task
 from eventyay.celery_app import app
 
 
-@app.task(base=EventTask)
-def assign_automatically(event: Event, user_id: int = None, subevent_id: int = None):
+@app.task(base=EventTask, bind=True)
+def assign_automatically(self, event: Event, user_id: int = None, subevent_id: int = None, *, sent=0):
+    """Assign eligible entries, retrying temporary conflicts with serializable identifiers."""
     if user_id:
         user = User.objects.get(id=user_id)
     else:
         user = None
 
-    quota_cache = {}
-    gone = set()
-
     qs = (
         WaitingListEntry.objects.filter(event=event, voucher__isnull=True)
         .select_related('product', 'variation', 'subevent')
-        .prefetch_related('product__quotas', 'variation__quotas')
         .order_by('-priority', 'created')
     )
 
     if subevent_id and event.has_subevents:
         subevent = event.subevents.get(id=subevent_id)
         qs = qs.filter(subevent=subevent)
+        subevent_id = subevent.pk
 
-    sent = 0
+    def eligible(entry):
+        """Check automatic assignment rules against the current, locked entry."""
+        date = entry.subevent
+        return (
+            (not subevent_id or not event.has_subevents or entry.subevent_id == subevent_id)
+            and (not date or date.active)
+            and (date or entry.event).presale_is_running
+            and entry.product.is_available()
+        )
 
-    with event.lock():
-        for wle in qs:
-            if (wle.product, wle.variation, wle.subevent) in gone:
-                continue
-
-            ev = wle.subevent or event
-            if not ev.presale_is_running or (wle.subevent and not wle.subevent.active):
-                continue
-            if wle.subevent and not wle.subevent.presale_is_running:
-                continue
-            if not wle.product.is_available():
-                gone.add((wle.product, wle.variation, wle.subevent))
-                continue
-
-            quotas = (
-                wle.variation.quotas.filter(subevent=wle.subevent)
-                if wle.variation
-                else wle.product.quotas.filter(subevent=wle.subevent)
+    for wle in qs:
+        try:
+            wle.send_voucher(user=user, eligible=eligible)
+        except WaitingListBusy as exc:
+            raise self.retry(
+                args=(event.pk, user_id, subevent_id), kwargs={'sent': sent}, exc=exc, countdown=5, max_retries=5,
             )
-            availability = (
-                wle.variation.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
-                if wle.variation
-                else wle.product.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
-            )
-            if availability[1] is None or availability[1] > 0:
-                try:
-                    wle.send_voucher(quota_cache, user=user)
-                    sent += 1
-                except WaitingListException:  # noqa
-                    continue
-
-                # Reduce affected quotas in cache
-                for q in quotas:
-                    quota_cache[q.pk] = (
-                        quota_cache[q.pk][0] if quota_cache[q.pk][0] > 1 else 0,
-                        quota_cache[q.pk][1] - 1 if quota_cache[q.pk][1] is not None else sys.maxsize,
-                    )
-            else:
-                gone.add((wle.product, wle.variation, wle.subevent))
+        except WaitingListException:
+            continue
+        else:
+            sent += 1
 
     return sent
 
