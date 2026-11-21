@@ -1,13 +1,25 @@
 import datetime
 import decimal
 import json
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+from types import SimpleNamespace
 
+import pytest
+from django.apps import apps
 from django.core import mail as djmail
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.core.exceptions import ValidationError
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.db import connection, connections
+from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
+from rest_framework.exceptions import ValidationError as APIValidationError
 
+from eventyay.api.views.voucher import VoucherViewSet
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
+from eventyay.control.forms.vouchers import VoucherBulkForm
+from eventyay.control.views.vouchers import VoucherBulkCreate, VoucherCreate
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 from eventyay.base.models import (
@@ -1026,6 +1038,120 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_create_voucher_valid_values(self):
         self._create_voucher({'value': '50.00', 'price_mode': 'percent', 'budget': '100.00'}, expected_failure=False)
+
+
+class VoucherBulkCodeValidationTest(TestCase):
+    def test_bulk_codes_validation(self):
+        """Validate normalized codes independently of the prefix option."""
+        organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
+        event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
+        for codes, prefix, error, expected in [
+            ('ABCDE\nABCDE', False, 'Voucher codes must be unique.', None),
+            ('ABCDE\nabcde', False, 'Voucher codes must be unique.', None),
+            (' ABCDE \nABCDE', False, 'Voucher codes must be unique.', None),
+            ('ABCDE\nTAGABCDE', True, 'Voucher codes must be unique.', None),
+            ('ABCDE\nFGHIJ', False, None, ['ABCDE', 'FGHIJ']),
+            ('ABCDE\nFGHIJ', True, None, ['TAGABCDE', 'TAGFGHIJ']),
+            ('A' * 255, False, None, ['A' * 255]),
+            ('A' * 252, True, None, ['TAG' + 'A' * 252]),
+            ('A' * 256, False, 'Voucher codes cannot be longer than 255 characters.', None),
+            ('A' * 253, True, 'Voucher codes cannot be longer than 255 characters.', None),
+        ]:
+            with self.subTest(codes=codes, prefix=prefix), scope(event=event, organizer=organizer):
+                form = VoucherBulkForm(
+                    instance=Voucher(event=event),
+                    data={
+                        'codes': codes,
+                        'max_usages': 1,
+                        'price_mode': 'none',
+                        'tag': 'TAG',
+                        'use_tag_as_prefix': prefix,
+                    },
+                )
+                assert form.is_valid() is (error is None), form.errors
+                if error:
+                    assert form.errors['codes'] == [error]
+                else:
+                    assert form.cleaned_data['codes'] == expected
+                assert not event.vouchers.exists()
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
+@pytest.mark.parametrize('other_path,second_code,prefix', [
+    ('bulk', 'ABCDE', False), ('bulk', 'abcde', False),
+    ('bulk', 'ABCDE', True), ('bulk', 'abcde', True),
+    ('form', 'ABCDE', False), ('api', 'ABCDE', False),
+    ('api batch', 'ABCDE', False),
+])
+@pytest.mark.parametrize('no_key_supported', [False, True])
+def test_concurrent_bulk_codes_are_revalidated(other_path, second_code, prefix, no_key_supported, monkeypatch):
+    """Bulk, single-form and API requests must share case-insensitive code validation."""
+    monkeypatch.setattr(type(connection.features), 'has_select_for_no_key_update', no_key_supported)
+    organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
+    event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
+    barrier = Barrier(2)
+
+    def create(code, path):
+        """Use a separate request and database connection for each prevalidated form."""
+        try:
+            with scope(event=event, organizer=organizer):
+                data = {'code': code, 'max_usages': 1, 'price_mode': 'none', 'block_quota': False}
+                if path == 'bulk':
+                    form = VoucherBulkForm(
+                        instance=Voucher(event=event),
+                        data={**data, 'codes': code, 'tag': 'TAG', 'use_tag_as_prefix': prefix},
+                    )
+                    assert form.is_valid(), form.errors
+                barrier.wait(timeout=15)
+                if path == 'form':
+                    request = RequestFactory().post('/', data)
+                    request.event, request.organizer, request.user = event, organizer, None
+                    request.session = {}
+                    request._messages = FallbackStorage(request)
+                    view = VoucherCreate()
+                    view.setup(request)
+                    response = view.post(request)
+                    if response.status_code == 302:
+                        return 'created'
+                    assert response.status_code == 200
+                    assert 'A voucher with this code already exists.' in str(response.context_data['form'].errors)
+                    return 'rejected'
+                if path in ('api', 'api batch'):
+                    payload = [data, {**data, 'code': 'BATCH2'}] if path == 'api batch' else data
+                    request = SimpleNamespace(event=event, user=None, auth=None, data=payload)
+                    view = VoucherViewSet()
+                    view.request, view.format_kwarg = request, None
+                    try:
+                        response = view.batch_create(request) if path == 'api batch' else view.create(request)
+                    except APIValidationError as exc:
+                        assert 'A voucher with this code already exists.' in str(exc)
+                        return 'rejected'
+                    assert response.status_code == 201
+                    return 'created'
+                view = VoucherBulkCreate()
+                view.request = SimpleNamespace(event=event, user=None)
+                task = SimpleNamespace(request=SimpleNamespace(called_directly=True))
+                try:
+                    view.async_form_valid(task, form)
+                except ValidationError as exc:
+                    assert 'A voucher with one of these codes already exists.' in view.get_error_message(exc)
+                    return 'rejected'
+                return 'created'
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first_code = 'ABCDE' if other_path == 'bulk' else 'abcde'
+        requests = [pool.submit(create, first_code, 'bulk'), pool.submit(create, second_code, other_path)]
+        results = [request.result(timeout=30) for request in requests]
+        assert sorted(results) == ['created', 'rejected']
+    with scope(event=event, organizer=organizer):
+        codes = list(event.vouchers.values_list('code', flat=True))
+        expected = ['TAGABCDE' if prefix else 'ABCDE']
+        if other_path == 'api batch' and results[1] == 'created':
+            expected.append('BATCH2')
+        assert sorted(code.upper() for code in codes) == sorted(expected)
 
 
 class InvoiceVoucherFormTest(TestCase):
