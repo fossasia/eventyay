@@ -1442,7 +1442,7 @@ class AdminMessagePreviewView(StaffMemberRequiredMixin, View):
         return JsonResponse({'html': AdminEmailQueue.make_html(preview_html)})
 
 
-class AdminMessageRecipientsView(AdministratorPermissionRequiredMixin, View):
+class AdminMessageRecipientsView(StaffMemberRequiredMixin, View):
     def get(self, request):
         data = request.GET.copy()
         if not data.get('recipient_group'):
