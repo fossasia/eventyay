@@ -134,3 +134,38 @@ def test_update_billing_invoice_does_not_overwrite_already_paid(billing_invoice)
 def test_update_billing_invoice_noop_when_invoice_id_missing():
     assert update_billing_invoice_information(None) is None
     assert update_billing_invoice_information('') is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'manual_status',
+    [
+        BillingInvoice.STATUS_CANCELED,
+        BillingInvoice.STATUS_FAILED,
+        BillingInvoice.STATUS_RESOLVED,
+    ],
+)
+def test_success_webhook_reconciles_manual_status_change(billing_invoice, manual_status):
+    with scopes_disabled():
+        billing_invoice.status = manual_status
+        billing_invoice.automatic_payment_enabled = False
+        billing_invoice.save(update_fields=['status', 'automatic_payment_enabled'])
+        update_billing_invoice_information(str(billing_invoice.pk))
+        billing_invoice.refresh_from_db()
+    assert billing_invoice.status == BillingInvoice.STATUS_PAID
+    assert billing_invoice.payment_method == 'stripe'
+    assert billing_invoice.paid_datetime is not None
+    assert not billing_invoice.automatic_payment_enabled
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('manual_status', [BillingInvoice.STATUS_REFUNDING, BillingInvoice.STATUS_REFUNDED])
+def test_success_webhook_preserves_refund_workflow(billing_invoice, manual_status):
+    with scopes_disabled():
+        billing_invoice.status = manual_status
+        billing_invoice.save(update_fields=['status'])
+        update_billing_invoice_information(str(billing_invoice.pk))
+        billing_invoice.refresh_from_db()
+    assert billing_invoice.status == manual_status
+    assert billing_invoice.payment_method == 'stripe'
+    assert billing_invoice.paid_datetime is not None
