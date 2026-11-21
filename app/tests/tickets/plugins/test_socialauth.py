@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from allauth.core.exceptions import ImmediateHttpResponse
+from allauth.socialaccount.models import SocialApp
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
@@ -15,6 +16,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
+from eventyay.plugins.socialauth.views import SocialLoginView
 
 
 @pytest.fixture
@@ -399,3 +401,46 @@ def test_social_and_account_adapter_rejects_spam_user(provider):
     assert exc_info.value.response['Location'] == reverse('auth.login')
     messages = [str(m.message) for m in getattr(request, '_messages')]
     assert str(SPAM_ACCOUNT_ERROR) in messages
+
+
+@pytest.mark.django_db
+def test_oidc_credentials_create_social_app(monkeypatch):
+    monkeypatch.setenv('EVY_OIDC_ISSUER_URL', 'https://id.example.org/realms/example')
+    providers = {'openid_connect': {'state': True, 'client_id': '', 'secret': ''}}
+    request = RequestFactory().post('/', {
+        'openid_connect_client_id': 'oidc-client',
+        'openid_connect_secret': 'oidc-secret',
+    })
+
+    SocialLoginView().update_credentials(request, 'openid_connect', providers)
+
+    app = SocialApp.objects.get(provider='openid_connect')
+    assert app.provider_id == 'openid_connect'
+    assert app.client_id == 'oidc-client'
+    assert app.secret == 'oidc-secret'
+    assert app.settings['server_url'] == 'https://id.example.org/realms/example'
+
+
+@pytest.mark.django_db
+def test_oidc_enable_and_disable_social_app(monkeypatch):
+    monkeypatch.setenv('EVY_OIDC_ISSUER_URL', 'https://id.example.org/realms/example')
+    providers = {'openid_connect': {
+        'state': False,
+        'client_id': 'oidc-client',
+        'secret': 'oidc-secret',
+    }}
+    view = SocialLoginView()
+
+    view.update_provider_state(
+        RequestFactory().post('/', {'openid_connect_login': 'enabled'}),
+        'openid_connect', providers,
+    )
+    assert providers['openid_connect']['state'] is True
+    assert SocialApp.objects.get(provider='openid_connect').provider_id == 'openid_connect'
+
+    view.update_provider_state(
+        RequestFactory().post('/', {'openid_connect_login': 'disabled'}),
+        'openid_connect', providers,
+    )
+    assert providers['openid_connect']['state'] is False
+    assert not SocialApp.objects.filter(provider='openid_connect').exists()

@@ -1,3 +1,5 @@
+import os
+
 from django import template
 from django.conf import settings
 
@@ -8,13 +10,21 @@ from eventyay.eventyay_common.services.auth_providers import (
     order_login_providers,
 )
 
+
 register = template.Library()
+
+
+@register.filter
+def provider_label(provider):
+    if provider == 'openid_connect':
+        return os.getenv('EVY_OIDC_PROVIDER_NAME', 'OpenID Connect')
+    return provider.capitalize()
 
 
 @register.simple_tag(takes_context=True)
 def get_login_context(context):
     """
-    Return context for authentication login (main page or checkout modal) using the 
+    Return context for authentication login (main page or checkout modal) using the
     same OAuth provider config and ordering as eventyay_common.views.auth.login.
     """
     request = context.get('request')

@@ -14,3 +14,4 @@ class LoginProviders(BaseModel):
     mediawiki: ProviderConfig = Field(default_factory=ProviderConfig)
     github: ProviderConfig = Field(default_factory=ProviderConfig)
     google: ProviderConfig = Field(default_factory=ProviderConfig)
+    openid_connect: ProviderConfig = Field(default_factory=ProviderConfig)

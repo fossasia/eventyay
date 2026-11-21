@@ -1,4 +1,5 @@
 import logging
+import os
 from enum import StrEnum
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -21,6 +22,7 @@ from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
+
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +186,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 defaults={
                     'client_id': client_id_value,
                     'secret': secret_value,
+                    **({'provider_id': 'openid_connect'} if provider == 'openid_connect' else {}),
+                    **self.social_app_settings(provider),
                 },
             )
 
@@ -211,8 +215,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                         defaults={
                             'client_id': client_id,
                             'secret': secret,
+                            **({'provider_id': 'openid_connect'} if provider == 'openid_connect' else {}),
+                            **self.social_app_settings(provider),
                         },
                     )
+
+    @staticmethod
+    def social_app_settings(provider):
+        if provider == 'openid_connect':
+            return {'settings': {'server_url': os.environ['EVY_OIDC_ISSUER_URL']}}
+        return {}
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
