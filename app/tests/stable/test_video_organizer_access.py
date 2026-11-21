@@ -1,9 +1,11 @@
+import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
 from django_scopes import scope
 import pytest
 
+from eventyay.base.models.audit import AuditLog
 from eventyay.base.services.event import mask_event_config_secrets, save_event
 from eventyay.core.permissions import Permission
 from eventyay.features.live.modules.event import EventModule
@@ -404,6 +406,7 @@ async def test_announcements_disabled_guard():
 
 
 @pytest.mark.asyncio
+@pytest.mark.django_db
 async def test_config_get_and_patch_granular_permissions():
     consumer = MagicMock()
     consumer.event = MagicMock()
@@ -455,10 +458,21 @@ async def test_config_get_and_patch_granular_permissions():
 
 
 def test_mask_event_config_secrets_masks_copy_only():
-    config = {'title': 'Conf', 'conftool_password': 'secret_password'}
+    config = {
+        'title': 'Conf',
+        'conftool_password': 'secret_password',
+        'zoom_defaults': {'client_id': 'id', 'client_secret': 'zoom_secret'},
+        'jitsi_defaults': {'app_id': 'app', 'app_secret': 'jitsi_secret'},
+    }
     masked = mask_event_config_secrets(config)
-    assert masked == {'title': 'Conf', 'conftool_password': '********'}
+    assert masked == {
+        'title': 'Conf',
+        'conftool_password': '********',
+        'zoom_defaults': {'client_id': 'id', 'client_secret': '********'},
+        'jitsi_defaults': {'app_id': 'app', 'app_secret': '********'},
+    }
     assert config['conftool_password'] == 'secret_password'
+    assert config['zoom_defaults']['client_secret'] == 'zoom_secret'
     assert mask_event_config_secrets({'conftool_password': ''}) == {'conftool_password': ''}
     assert mask_event_config_secrets({'conftool_password': None}) == {'conftool_password': None}
 
@@ -467,8 +481,16 @@ def test_save_event_masks_conftool_password_in_audit_log():
     fake_event = MagicMock()
     fake_event.id = 1
     fake_event.pk = 1
-    old_data = {'title': 'Conf', 'conftool_password': 'old_secret'}
-    new_data = {'title': 'Conf', 'conftool_password': 'new_secret'}
+    old_data = {
+        'title': 'Conf',
+        'conftool_password': 'old_secret',
+        'zoom_defaults': {'client_secret': 'old_zoom_secret'},
+    }
+    new_data = {
+        'title': 'Conf',
+        'conftool_password': 'new_secret',
+        'zoom_defaults': {'client_secret': 'new_zoom_secret'},
+    }
 
     with (
         patch('eventyay.base.services.event._config_serializer') as mock_serializer,
@@ -482,7 +504,21 @@ def test_save_event_masks_conftool_password_in_audit_log():
     assert old_data['conftool_password'] == 'old_secret'
     audit_payload = mock_audit_create.call_args.kwargs['data']
     assert audit_payload['old']['conftool_password'] == '********'
+    assert audit_payload['old']['zoom_defaults']['client_secret'] == '********'
     assert audit_payload['new']['conftool_password'] == '********'
+    assert audit_payload['new']['zoom_defaults']['client_secret'] == '********'
+
+    historical = AuditLog(
+        id=99,
+        timestamp=datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc),
+        type='event.updated',
+        data={'old': old_data, 'new': new_data},
+    )
+    serialized = historical.serialize_public()
+    assert serialized['data']['old']['conftool_password'] == '********'
+    assert serialized['data']['old']['zoom_defaults']['client_secret'] == '********'
+    assert serialized['data']['new']['conftool_password'] == '********'
+    assert serialized['data']['new']['zoom_defaults']['client_secret'] == '********'
 
 
 def test_ensure_video_configuration_preserves_existing_config():

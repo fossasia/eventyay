@@ -18,7 +18,7 @@ from django_scopes import scope
 from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
-from eventyay.base.models.audit import AuditLog
+from eventyay.base.models.audit import AuditLog, mask_event_config_secrets
 from eventyay.base.models.chat import Channel, ChatEvent, Membership
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView, mask_room_config_secrets
@@ -872,17 +872,6 @@ def _config_serializer(event, *args, **kwargs):
         *args,
         **kwargs,
     )
-
-
-def mask_event_config_secrets(event_config):
-    """Return a copy of a serialized event config with secret settings masked for audit logs."""
-    if not isinstance(event_config, dict):
-        return event_config
-    masked = dict(event_config)
-    password = masked.get("conftool_password")
-    if isinstance(password, str) and password:
-        masked["conftool_password"] = "********"
-    return masked
 
 
 @database_sync_to_async
