@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import dateutil.parser
 import nh3
@@ -946,15 +947,21 @@ class CheckinLogList(ListExporter):
             'list',
             'device',
         ).order_by('datetime', 'pk')
+        tz = (
+            ZoneInfo(self.event.settings.timezone)
+            if getattr(self.event, 'settings', None) and self.event.settings.timezone
+            else self.event.tz
+        )
         for ci in qs.iterator():
             try:
                 ia = ci.position.order.invoice_address
             except InvoiceAddress.DoesNotExist:
                 ia = InvoiceAddress()
 
+            ci_datetime = ci.datetime.astimezone(tz) if ci.datetime else None
             yield [
-                date_format(ci.datetime, 'SHORT_DATE_FORMAT'),
-                date_format(ci.datetime, 'TIME_FORMAT'),
+                date_format(ci_datetime, 'SHORT_DATE_FORMAT') if ci_datetime else '',
+                date_format(ci_datetime, 'TIME_FORMAT') if ci_datetime else '',
                 str(ci.list),
                 ci.get_type_display(),
                 ci.position.order.code,
