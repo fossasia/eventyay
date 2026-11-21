@@ -48,7 +48,6 @@ class PermissionMiddleware:
         'auth.forgot',
         'auth.forgot.recover',
         'auth.invite',
-        'external-link',
         'account.locale',
         'account.notification.flip-off',
         'oauth2_provider',

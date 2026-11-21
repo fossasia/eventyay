@@ -24,7 +24,6 @@ from eventyay.helpers.cookies import set_cookie_without_samesite
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
 MAIN_DOMAIN_AUTH_ROUTES = (
-    'external-link',
     'account_signup',
     'auth.forgot',
     'auth.forgot.recover',
