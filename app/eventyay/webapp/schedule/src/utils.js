@@ -674,3 +674,6 @@ export function getSocialIconHtml(link) {
 		`</svg>`
 	)
 }
+
+export * from './filterUrl.js'
+

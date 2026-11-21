@@ -26,6 +26,11 @@ class AuditLog(models.Model):
     type = models.CharField(max_length=255)
     data = JSONField()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["event", "-timestamp", "-id"], name="base_auditl_event_t_desc_idx"),
+        ]
+
     def save(self, *args, **kwargs):
         created = self._state.adding
         super().save(*args, **kwargs)
@@ -52,7 +57,7 @@ class AuditLog(models.Model):
         return {
             "id": self.id,
             "timestamp": self.timestamp.isoformat(),
-            "user": self.user.serialize_public(),
+            "user": self.user.serialize_public() if self.user else None,
             "type": self.type,
             "data": self.data,
         }

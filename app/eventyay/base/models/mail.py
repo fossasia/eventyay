@@ -67,6 +67,7 @@ class MailTemplateRoles(models.TextChoices):
     EXISTING_SPEAKER_INVITE = 'speaker.invite.existing', _('Add a speaker to a proposal (existing account)')
     QUESTION_REMINDER = 'question.reminder', _('Custom fields reminder')
     NEW_SCHEDULE = 'schedule.new', _('New schedule published')
+    SPEAKER_VOUCHER = 'speaker.voucher', _('Speaker voucher')
 
 
 PLACEHOLDER_KWARGS = {
@@ -78,6 +79,7 @@ PLACEHOLDER_KWARGS = {
     MailTemplateRoles.EXISTING_SPEAKER_INVITE: ['submission', 'event', 'user'],
     MailTemplateRoles.QUESTION_REMINDER: ['event', 'user'],
     MailTemplateRoles.NEW_SCHEDULE: ['event', 'user'],
+    MailTemplateRoles.SPEAKER_VOUCHER: ['event', 'user'],
 }
 
 
@@ -307,6 +309,21 @@ class MailTemplate(PretalxModel):
                 None,
                 'https://eventyay.example.com/orga/events/democon/submissions/124ABCD/',
             )
+        elif self.role == MailTemplateRoles.SPEAKER_VOUCHER:
+            placeholders['voucher_code'] = SimpleFunctionalMailTextPlaceholder(
+                'voucher_code',
+                ['event', 'user'],
+                None,
+                'SPEAKER-EXAMPLE',
+                _('The unique ticket voucher code for this speaker'),
+            )
+            placeholders['voucher_url'] = SimpleFunctionalMailTextPlaceholder(
+                'voucher_url',
+                ['event', 'user'],
+                None,
+                'https://eventyay.example.com/democon/redeem/?voucher=SPEAKER-EXAMPLE',
+                _('Link to the ticket shop with this voucher applied'),
+            )
 
         kwargs = ['event', 'user', 'submission', 'slot']
         if self.role:
@@ -514,6 +531,15 @@ class QueuedMail(PretalxModel):
         """
         if self.sent:
             raise Exception(_('This mail has been sent already. It cannot be sent again.'))
+
+        if self.pk:
+            # Another request may have sent this row since this instance was
+            # loaded (e.g. the outbox while a composer is still dispatching).
+            # Lock the row and re-check so it can only be dispatched once.
+            sent = QueuedMail.objects.select_for_update().filter(pk=self.pk).values_list('sent', flat=True).first()
+            if sent is not None:
+                self.sent = sent
+                return
 
         if self.scheduled_at and self.scheduled_at > now():
             raise SendMailException(_('This mail is scheduled for the future and cannot be sent yet.'), already_logged=True)

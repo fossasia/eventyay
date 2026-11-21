@@ -7,12 +7,13 @@
 {% load rich_text %}
 {% load timezone %}
 <!DOCTYPE html>
-<html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
+<html lang='{{ html_locale }}'{% if rtl %} dir='rtl' class='rtl'{% endif %}>
 	<head>
 		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ settings.INSTANCE_NAME }}</title>
 		{% compress css %}
     		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_fonts.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_variables.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />

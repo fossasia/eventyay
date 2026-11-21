@@ -248,14 +248,14 @@ def test_submission_is_deleted(submission, state, expected):
 
 
 @pytest.mark.django_db
-def test_submission_remove_removes_answers(submission, answer):
+def test_submission_remove_preserves_answers(submission, answer):
     with scope(event=submission.event):
         count = Answer.objects.count()
-        answer_count = submission.answers.count()
-        assert answer_count
+        assert submission.answers.count()
         submission.remove(force=True)
         assert submission.is_deleted
-        assert Answer.objects.count() == count - answer_count
+        # Deleting is a soft delete: the session's data is kept for later review.
+        assert Answer.objects.count() == count
 
 
 @pytest.mark.django_db

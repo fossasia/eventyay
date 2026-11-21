@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main, dev ]
 
+concurrency:
+  # PRs: a new push cancels checks still running for older commits of the same PR.
+  # Branch pushes: grouped per commit, so they never cancel or replace each other.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test-locked-build:
     name: Verify uv --locked constraint during Docker build
