@@ -37,7 +37,7 @@ def backwards(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0089_organizer_request'),
+        ('base', '0092_speaker_vouchers'),
     ]
 
     operations = [
