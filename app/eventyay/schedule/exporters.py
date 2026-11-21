@@ -423,11 +423,12 @@ class ICalExporter(BaseExporter):
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//pretalx//{netloc}//'
         creation_time = dt.datetime.now(ZoneInfo('UTC'))
+        show_abstract = getattr(self.event.cfp, 'public_abstract', True) if hasattr(self.event, 'cfp') else True
 
         talks = (
             self.schedule.talks.filter(is_visible=True)
             .prefetch_related('submission__speakers')
-            .select_related('submission', 'room', 'submission__event')
+            .select_related('submission', 'room', 'submission__event', 'submission__event__cfp')
             .order_by('start')
         )
         if getattr(self, 'featured_only', False):
@@ -435,7 +436,7 @@ class ICalExporter(BaseExporter):
         for talk in talks:
             if self.favs_retrieve and talk.submission and talk.submission.code not in self.talk_ids:
                 continue
-            talk.build_ical(cal, creation_time=creation_time, netloc=netloc)
+            talk.build_ical(cal, creation_time=creation_time, netloc=netloc, show_abstract=show_abstract)
 
         return f'{self.event.slug}.ics', 'text/calendar', cal.serialize()
 
