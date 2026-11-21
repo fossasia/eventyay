@@ -888,16 +888,26 @@ class User(
         :type person: :class:`~pretalx.person.models.user.User`
         :param orga: Was this action initiated by a privileged user?
         """
-        from eventyay.base.models.log import LogEntry
+        import json
+
+        from eventyay.base.models.log import LogEntry, mask_sensitive_data
+        from eventyay.helpers.json import CustomJSONEncoder
 
         if data is None:
             data = {}
+
+        if isinstance(data, dict):
+            sanitized_data = mask_sensitive_data(data)
+            stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder, sort_keys=True)
+        else:
+            sanitized_data = data
+            stored_data = str(data)
 
         LogEntry.objects.create(
             user=user or person or self,
             content_object=self,
             action_type=action,
-            data=data,
+            data=stored_data,
             is_orga_action=orga,
         )
         actor = user or person or self
@@ -908,7 +918,7 @@ class User(
                 user_id=getattr(actor, 'pk', None),
                 is_orga_action=orga,
                 model='User',
-                data=data,
+                data=sanitized_data,
             )
         except Exception:
             pass

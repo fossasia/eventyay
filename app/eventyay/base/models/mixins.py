@@ -87,11 +87,9 @@ class LogMixin:
         # Sanitize data
         payload = data if isinstance(data, dict) else None
         if isinstance(data, dict):
-            sensitive_keys = ['password', 'secret', 'api_key']
-            for sensitive in sensitive_keys:
-                for k, v in data.items():
-                    if sensitive in k and v:
-                        data[k] = '********'
+            from .log import mask_sensitive_data
+
+            data = mask_sensitive_data(data)
             data = json.dumps(data, cls=CustomJSONEncoder, sort_keys=True)
         elif data:
             raise TypeError(f'Logged data should always be a dictionary, not {type(data)}.')

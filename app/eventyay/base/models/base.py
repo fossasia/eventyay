@@ -100,13 +100,9 @@ class LoggingMixin:
             **kwargs,
         )
         if isinstance(data, dict):
-            sensitivekeys = ['password', 'secret', 'api_key']
+            from .log import mask_sensitive_data
 
-            for sensitivekey in sensitivekeys:
-                for k, v in data.items():
-                    if (sensitivekey in k) and v:
-                        data[k] = '********'
-
+            data = mask_sensitive_data(data)
             logentry.data = json.dumps(data, cls=CustomJSONEncoder, sort_keys=True)
         elif data:
             raise TypeError('You should only supply dictionaries as log data.')

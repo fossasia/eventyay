@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 from contextlib import suppress
@@ -14,6 +15,34 @@ from django.utils.translation import pgettext_lazy
 from django_scopes import ScopedManager
 
 from eventyay.base.signals import activitylog_display, activitylog_object_link, logentry_object_link
+
+SENSITIVE_KEYS = ('password', 'secret', 'api_key', 'token')
+
+
+def mask_sensitive_data(data, sensitive_keys=SENSITIVE_KEYS):
+    """Recursively mask sensitive values in nested dictionaries or lists.
+
+    Returns a deep copy of ``data`` with sensitive keys masked as '********'.
+    Original data is not mutated. Empty or non-string/non-numeric values are preserved.
+    """
+    if not isinstance(data, (dict, list)):
+        return data
+
+    def _mask(item):
+        if isinstance(item, dict):
+            for k, v in list(item.items()):
+                if any(s in str(k).lower() for s in sensitive_keys) and v:
+                    item[k] = '********'
+                elif isinstance(v, (dict, list)):
+                    _mask(v)
+        elif isinstance(item, list):
+            for element in item:
+                if isinstance(element, (dict, list)):
+                    _mask(element)
+        return item
+
+    copied = copy.deepcopy(data)
+    return _mask(copied)
 
 
 class LogEntryQuerySet(models.QuerySet):
@@ -123,7 +152,7 @@ class LogEntry(models.Model):
     def json_data(self):
         if self.data:
             with suppress(json.JSONDecodeError):
-                return json.loads(self.data)
+                return mask_sensitive_data(json.loads(self.data))
         return {}
 
     @property
@@ -384,7 +413,7 @@ class ActivityLog(models.Model):
     def json_data(self):
         if self.data:
             with suppress(json.JSONDecodeError):
-                return json.loads(self.data)
+                return mask_sensitive_data(json.loads(self.data))
         return {}
 
     @cached_property
