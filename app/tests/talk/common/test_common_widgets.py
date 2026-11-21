@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from django.utils.datastructures import MultiValueDict
 
-from eventyay.common.forms.widgets import SlidesWidget, get_count
+from eventyay.common.forms.widgets import SelectMultipleWithCount, SlidesWidget, get_count
 
 
 def test_slides_widget_accepts_plain_dict_session_data():
@@ -32,3 +32,16 @@ def test_get_count_reads_countable_label():
 def test_get_count_ignores_callable_instance_count():
     value = SimpleNamespace(instance=SimpleNamespace(count=lambda *args: 5))
     assert get_count(value, 'Design & UX') == 0
+
+
+def test_select_multiple_with_count_keeps_selected_zero_option():
+    widget = SelectMultipleWithCount(
+        choices=[
+            ('1', SimpleNamespace(count=0)),
+            ('2', SimpleNamespace(count=0)),
+            ('3', SimpleNamespace(count=2)),
+        ]
+    )
+    options = widget.optgroups('track', ['1'])[0][1]
+    assert [option['value'] for option in options] == ['3', '1']
+    assert options[1]['selected'] is True

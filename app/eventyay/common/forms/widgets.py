@@ -393,9 +393,9 @@ class SelectMultipleWithCount(EnhancedSelectMultiple):
         result = []
         for index, (option_value, label) in enumerate(choices):
             count = get_count(option_value, label)
-            if count == 0:
-                continue
             selected = str(option_value) in value
+            if count == 0 and not selected:
+                continue
             result.append(
                 self.create_option(
                     name,
