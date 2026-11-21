@@ -3904,62 +3904,31 @@ table thead .sort-link.sort-active {
   line-height: 1.3;
 }
 
-.speaker-voucher-bulk-dialog {
-  width: min(480px, 94vw);
-  max-height: min(85vh, 720px);
-  overflow: auto;
-}
-
-.speaker-voucher-bulk-summary {
-  margin: 0 0 0.85rem;
-  color: var(--color-text-muted, #6c757d);
-}
-
-.speaker-voucher-bulk-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.speaker-voucher-bulk-group-head {
-  margin-bottom: 0.4rem;
-}
-
-.speaker-voucher-bulk-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.speaker-voucher-bulk-chip {
-  display: inline-block;
-  max-width: 100%;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 0.8125rem;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .speaker-voucher-bulk-skipped {
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
+  margin-top: 0.65rem;
+  font-size: 0.8125rem;
 }
 
-.speaker-voucher-bulk-preview-details > summary {
-  cursor: pointer;
-  color: #2185d0;
+#speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.925rem;
+}
+
+#speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary dt {
+  margin: 0;
   font-weight: 600;
-  user-select: none;
 }
 
-.speaker-voucher-bulk-preview-details .mail-preview {
-  max-height: 14rem;
-  overflow: auto;
+#speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary dd {
+  margin: 0;
+}
+
+#speaker-voucher-bulk-confirm h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
 }
 
 .speaker-voucher-ineligible {
@@ -4091,10 +4060,16 @@ button.btn-speaker-not-arrived {
   z-index: 9999;
 }
 
-#speaker-voucher-row-confirm.orga-confirm-dialog {
-  width: min(720px, 94vw);
-  max-height: min(90vh, 900px);
+#speaker-voucher-bulk-confirm.orga-confirm-dialog {
+  width: min(420px, 92vw);
+  max-width: 92vw;
+  max-height: min(80vh, 520px);
   overflow: auto;
+  padding: 1.25rem 1.35rem;
+}
+
+#speaker-voucher-bulk-confirm .orga-confirm-dialog-actions {
+  margin-top: 1rem;
 }
 
 .speaker-voucher-mail-preview {

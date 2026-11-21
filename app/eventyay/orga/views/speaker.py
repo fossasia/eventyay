@@ -205,32 +205,16 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         if self.speaker_vouchers_enabled:
             for profile in context.get('speakers') or []:
                 profile.voucher_row_state = speaker_voucher_row_state(profile)
-            context['voucher_email_preview'] = self._voucher_email_preview()
+            with scope(event=self.request.event):
+                try:
+                    settings_obj = self.request.event.speaker_voucher_settings
+                except SpeakerVoucherSettings.DoesNotExist:
+                    settings_obj = None
+                context['voucher_batch_tag'] = settings_obj.voucher_tag if settings_obj else ''
+                context['voucher_batch_remaining'] = (
+                    settings_obj.batch_remaining_count() if settings_obj and settings_obj.voucher_tag else 0
+                )
         return context
-
-    def _voucher_email_preview(self):
-        event = self.request.event
-        template = event.get_mail_template(MailTemplateRoles.SPEAKER_VOUCHER)
-        sample_code = 'SPEAKER-EXAMPLE'
-        context = get_mail_context(event=event, user=self.request.user)
-        # Keep the preview short and stable even if the organiser name is long.
-        context.update(
-            {
-                'name': _('Alex'),
-                'voucher_code': sample_code,
-                'voucher_url': voucher_redeem_url(event, sample_code),
-            }
-        )
-        subject = str(template.subject).format_map(defaultdict(str, context))
-        text = str(template.text).format_map(defaultdict(str, context))
-        return {
-            'template': template,
-            'subject': subject,
-            'html': compile_email_body(text),
-            'sample_note': _(
-                'Preview uses a sample name and voucher code. Each speaker gets their own.'
-            ),
-        }
 
     def _speaker_sessions_queryset(self):
         qs = (

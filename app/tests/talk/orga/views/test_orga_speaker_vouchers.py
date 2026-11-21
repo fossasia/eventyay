@@ -562,9 +562,8 @@ def test_speakers_list_shows_voucher_column_when_enabled(
     assert response.status_code == 200
     assert 'speaker-voucher-cell' in response.text
     assert 'Not sent' in response.text
-    assert 'data-action="send"' in response.text
-    assert 'speaker-voucher-action' in response.text
-    assert 'btn-sm btn-info speaker-voucher-action' in response.text
+    assert 'speaker-voucher-badge--default' in response.text
+    assert 'data-action="send"' not in response.text
     assert 'speaker-checkbox' in response.text
     assert 'data-voucher-state=' in response.text
     assert 'select-all-speakers' in response.text

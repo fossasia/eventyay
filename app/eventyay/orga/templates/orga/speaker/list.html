@@ -207,18 +207,7 @@
                                         </div>
                                     {% elif profile.voucher_row_state == 'not_sent' %}
                                         <div class="speaker-voucher-status">
-                                            <div class="speaker-voucher-status-main">
-                                                <span class="speaker-voucher-badge speaker-voucher-badge--default">{% translate "Not sent" %}</span>
-                                                {% if can_update_speaker %}
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-info speaker-voucher-action"
-                                                            data-action="send"
-                                                            data-url="{{ profile.orga_urls.voucher_send }}"
-                                                            data-speaker="{{ profile.user.get_display_name }}">
-                                                        {% translate "Send" %}
-                                                    </button>
-                                                {% endif %}
-                                            </div>
+                                            <span class="speaker-voucher-badge speaker-voucher-badge--default">{% translate "Not sent" %}</span>
                                         </div>
                                     {% else %}
                                         <span class="text-muted speaker-voucher-ineligible">—</span>
@@ -270,65 +259,38 @@
     {% include "orga/includes/pagination.html" %}
     </div>
 
-    {% if speaker_vouchers_enabled %}
-        <form method="post" id="speaker-voucher-row-form" class="d-none">
-            {% csrf_token %}
-        </form>
-        <dialog id="speaker-voucher-row-confirm" class="orga-confirm-dialog" aria-labelledby="speaker-voucher-row-confirm-title">
-            <h4 id="speaker-voucher-row-confirm-title">{% translate "Send speaker voucher?" %}</h4>
-            <dl class="speaker-voucher-confirm-summary">
-                <dt>{% translate "Speaker" %}</dt>
-                <dd id="speaker-voucher-row-speaker"></dd>
+    {% if speaker_vouchers_enabled and can_update_speaker %}
+        <dialog id="speaker-voucher-bulk-confirm"
+                class="orga-confirm-dialog speaker-voucher-bulk-dialog"
+                aria-labelledby="speaker-voucher-bulk-confirm-title"
+                data-vouchers-remaining="{{ voucher_batch_remaining }}">
+            <h4 id="speaker-voucher-bulk-confirm-title">{% translate "Send speaker vouchers?" %}</h4>
+            <dl class="speaker-voucher-confirm-summary" id="speaker-voucher-bulk-summary-list">
+                <dt>{% translate "Voucher batch" %}</dt>
+                <dd>{{ voucher_batch_tag|default:"—" }}</dd>
+                <dt id="speaker-voucher-bulk-send-label">{% translate "New emails" %}</dt>
+                <dd id="speaker-voucher-bulk-send-count">0</dd>
+                <dt id="speaker-voucher-bulk-resend-label">{% translate "Resends" %}</dt>
+                <dd id="speaker-voucher-bulk-resend-count">0</dd>
                 <dt>{% translate "Vouchers used" %}</dt>
-                <dd id="speaker-voucher-row-used">1</dd>
+                <dd id="speaker-voucher-bulk-used-count">0</dd>
+                <dt>{% translate "Vouchers remaining after send" %}</dt>
+                <dd id="speaker-voucher-bulk-remaining-count">0</dd>
             </dl>
-            <div class="speaker-voucher-mail-preview mt-3">
-                <div class="mail-preview">
-                    <strong>{{ voucher_email_preview.subject }}</strong>
-                    <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
-                </div>
-                <p class="text-muted speaker-voucher-preview-note">{{ voucher_email_preview.sample_note }}</p>
-            </div>
+            <p id="speaker-voucher-bulk-skipped" class="speaker-voucher-bulk-skipped text-muted mb-0 d-none"></p>
+            <p id="speaker-voucher-bulk-empty" class="text-muted mb-0 d-none">
+                {% translate "None of the selected speakers can receive a voucher email." %}
+            </p>
             <div class="orga-confirm-dialog-actions mt-3">
                 <span class="composer-actions">
-                    <button type="button" class="btn btn-outline-info" id="speaker-voucher-row-cancel">{% translate "Cancel" %}</button>
-                    <button type="button" class="btn btn-primary" id="speaker-voucher-row-confirm-btn">
+                    <button type="button" class="btn btn-outline-info" id="speaker-voucher-bulk-cancel">{% translate "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" id="speaker-voucher-bulk-confirm-btn">
                         <i class="fa fa-paper-plane" aria-hidden="true"></i>
-                        {% translate "Send" %}
+                        <span id="speaker-voucher-bulk-confirm-label">{% translate "Send vouchers" %}</span>
                     </button>
                 </span>
             </div>
         </dialog>
-        {% if can_update_speaker %}
-            <dialog id="speaker-voucher-bulk-confirm" class="orga-confirm-dialog speaker-voucher-bulk-dialog" aria-labelledby="speaker-voucher-bulk-confirm-title">
-                <h4 id="speaker-voucher-bulk-confirm-title">{% translate "Send speaker vouchers?" %}</h4>
-                <p id="speaker-voucher-bulk-summary" class="speaker-voucher-bulk-summary"></p>
-                <div id="speaker-voucher-bulk-groups" class="speaker-voucher-bulk-groups"></div>
-                <p id="speaker-voucher-bulk-skipped" class="speaker-voucher-bulk-skipped text-muted mb-0 d-none"></p>
-                <p id="speaker-voucher-bulk-empty" class="text-muted mb-0 d-none">
-                    {% translate "None of the selected speakers can receive a voucher email." %}
-                </p>
-                <details class="speaker-voucher-bulk-preview-details mt-3" id="speaker-voucher-bulk-preview">
-                    <summary>{% translate "Preview email" %}</summary>
-                    <div class="speaker-voucher-mail-preview mt-2">
-                        <div class="mail-preview">
-                            <strong>{{ voucher_email_preview.subject }}</strong>
-                            <div class="mt-2">{{ voucher_email_preview.html|safe }}</div>
-                        </div>
-                        <p class="text-muted speaker-voucher-preview-note">{{ voucher_email_preview.sample_note }}</p>
-                    </div>
-                </details>
-                <div class="orga-confirm-dialog-actions mt-3">
-                    <span class="composer-actions">
-                        <button type="button" class="btn btn-outline-info" id="speaker-voucher-bulk-cancel">{% translate "Cancel" %}</button>
-                        <button type="button" class="btn btn-info" id="speaker-voucher-bulk-confirm-btn">
-                            <i class="fa fa-paper-plane" aria-hidden="true"></i>
-                            <span id="speaker-voucher-bulk-confirm-label">{% translate "Send vouchers" %}</span>
-                        </button>
-                    </span>
-                </div>
-            </dialog>
-        {% endif %}
         <script type="module" src="{% static 'orga/js/speaker_list_vouchers.js' %}"></script>
     {% endif %}
 
