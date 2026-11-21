@@ -78,9 +78,11 @@ Django Allauth's generic OpenID Connect provider.
    ``https://id.example.org/realms/example``.
 2. Optionally set ``EVY_OIDC_PROVIDER_NAME`` to customize the login-button
    label (defaults to ``OpenID Connect``).
-3. Register an OIDC client with the identity provider, allowing this callback:
+3. Restart the Eventyay application after changing either environment setting,
+   before configuring OpenID Connect in the admin interface.
+4. Register an OIDC client with the identity provider, allowing this callback:
    ``https://your-eventyay-domain/accounts/oidc/openid_connect/login/callback/``
-4. Under Eventyay's admin **Social login settings**, enable **Openid_connect**,
+5. Under Eventyay's admin **Social login settings**, enable **Openid_connect**,
    enter the client ID and secret, and save. Optionally make it the preferred
    login method.
 

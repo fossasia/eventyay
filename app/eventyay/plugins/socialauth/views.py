@@ -135,7 +135,10 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         setting_state = request.POST.get('save_credentials', '').lower()
 
         if setting_state == self.SettingState.CREDENTIALS:
-            check_oidc = bool(request.POST.get('openid_connect_client_id') and request.POST.get('openid_connect_secret'))
+            check_oidc = bool(
+                request.POST.get('openid_connect_client_id')
+                and request.POST.get('openid_connect_secret')
+            )
         else:
             oidc = login_providers.get('openid_connect', {})
             check_oidc = (
@@ -241,6 +244,20 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         issuer = settings.OIDC_ISSUER_URL.strip().rstrip('/')
         if not issuer:
             raise ValueError('Configure EVY_OIDC_ISSUER_URL before enabling OpenID Connect.')
+        parsed = urlparse(issuer)
+        try:
+            parsed.port
+        except ValueError:
+            raise ValueError('EVY_OIDC_ISSUER_URL must be a valid HTTPS issuer URL.') from None
+        if (
+            parsed.scheme != 'https'
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError('EVY_OIDC_ISSUER_URL must be a valid HTTPS issuer URL.')
 
         original = self.gs.settings.get('oidc_issuer_lock', default='')
         existing_app = SocialApp.objects.filter(provider='openid_connect').first()
@@ -248,7 +265,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             original = existing_app.settings.get('server_url', '').rstrip('/')
 
         if original and original != issuer:
-            raise ValueError('The OIDC issuer cannot be changed after configuration without migrating existing accounts.')
+            raise ValueError(
+                'The OIDC issuer cannot be changed after configuration without migrating existing accounts.'
+            )
         if not original and SocialAccount.objects.filter(provider='openid_connect').exists():
             raise ValueError('Existing OIDC accounts need an issuer migration before configuring a new issuer.')
 

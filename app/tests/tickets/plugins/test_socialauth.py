@@ -499,9 +499,11 @@ def test_oidc_rejects_issuer_change_with_existing_app(monkeypatch):
         SocialLoginView().social_app_settings('openid_connect')
 
 
-def test_oidc_dotenv_configuration(tmp_path):
+def test_oidc_dotenv_configuration(tmp_path, monkeypatch):
     from eventyay.config.settings import BaseSettings
 
+    monkeypatch.delenv('EVY_OIDC_ISSUER_URL', raising=False)
+    monkeypatch.delenv('EVY_OIDC_PROVIDER_NAME', raising=False)
     env_file = tmp_path / '.env'
     env_file.write_text(
         'EVY_OIDC_ISSUER_URL=https://id.example/realms/main\n'
@@ -510,3 +512,22 @@ def test_oidc_dotenv_configuration(tmp_path):
     config = BaseSettings(_env_file=env_file)
     assert config.oidc_issuer_url == 'https://id.example/realms/main'
     assert config.oidc_provider_name == 'Organization Login'
+
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('invalid_issuer', [
+    'id.example/realms/main',
+    'http://id.example/realms/main',
+    'https:///realms/main',
+    'https://id.example:70000/realms/main',
+    'https://user:pass@id.example/realms/main',
+    'https://id.example/realms/main?foo=bar',
+])
+def test_oidc_invalid_issuer_does_not_create_lock(monkeypatch, invalid_issuer):
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', invalid_issuer)
+    view = SocialLoginView()
+    with pytest.raises(ValueError, match='valid HTTPS issuer URL'):
+        view.social_app_settings('openid_connect')
+    assert not GlobalSettingsObject().settings.get('oidc_issuer_lock', default='')
+    assert not SocialApp.objects.filter(provider='openid_connect').exists()
