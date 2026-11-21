@@ -293,7 +293,20 @@ export function buildShiftGridTemplateColumns (rooms, sessions, minColWidth, tim
 	return `${t} ${roomCols} auto`
 }
 
-export function computeShiftOverlapPlacement (session, allSessions, columnLayout) {
+/**
+ * Splits one shift into the pieces it is drawn as inside its room.
+ *
+ * A room is divided into as many sub-columns as its busiest overlap, but a shift
+ * only needs a narrow column while another shift runs next to it. The shift is cut
+ * wherever an overlapping shift starts or ends, and in each stretch the shifts that
+ * run at that moment share the room's sub-columns without overlapping, so hours
+ * with no overlap use the full room width. Neighbouring stretches with the same
+ * width are merged. The longest piece is the main card; the others are compact
+ * continuation cards that keep the shift identifiable.
+ *
+ * Returns null when the room has a single column (the caller then places it normally).
+ */
+export function computeShiftPlacements (session, allSessions, columnLayout) {
 	if (!session.start || !session.end || !session.room) return null
 
 	const rid = roomId(session.room)
@@ -304,11 +317,69 @@ export function computeShiftOverlapPlacement (session, allSessions, columnLayout
 	const track = trackMap.get(session.id)
 	if (track == null) return null
 
-	const subCol = roomLayout.colStart + track
-	return {
-		gridRow: `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-		gridColumn: `${subCol} / ${subCol + 1}`,
+	const startMs = session.start.valueOf()
+	const endMs = session.end.valueOf()
+	const others = allSessions.filter(other =>
+		other.id !== session.id && roomId(other.room) === rid && other.start && other.end &&
+		other.start.valueOf() < endMs && startMs < other.end.valueOf() &&
+		trackMap.get(other.id) != null)
+
+	const cuts = new Map([[startMs, session.start], [endMs, session.end]])
+	for (const other of others) {
+		for (const edge of [other.start, other.end]) {
+			const ms = edge.valueOf()
+			if (ms > startMs && ms < endMs) cuts.set(ms, edge)
+		}
 	}
+	const points = [...cuts.entries()].sort((a, b) => a[0] - b[0])
+
+	const segments = []
+	for (let i = 0; i < points.length - 1; i++) {
+		const [fromMs, from] = points[i]
+		const [toMs, to] = points[i + 1]
+		// Tracks of every shift running in this stretch, this one included. Each of them
+		// gets the columns from its own track up to the next one, so no two share a column.
+		const tracks = others
+			.filter(other => other.start.valueOf() < toMs && fromMs < other.end.valueOf())
+			.map(other => trackMap.get(other.id))
+			.concat(track)
+			.sort((a, b) => a - b)
+		const position = tracks.indexOf(track)
+		const first = position === 0 ? 0 : track
+		const last = position === tracks.length - 1 ? roomLayout.colSpan - 1 : tracks[position + 1] - 1
+		const prev = segments[segments.length - 1]
+		if (prev && prev.first === first && prev.last === last) {
+			prev.end = to
+			prev.endMs = toMs
+		} else {
+			segments.push({ first, last, start: from, end: to, startMs: fromMs, endMs: toMs })
+		}
+	}
+
+	let main = 0
+	segments.forEach((seg, i) => {
+		if (seg.endMs - seg.startMs > segments[main].endMs - segments[main].startMs) main = i
+	})
+	return segments.map((seg, i) => ({
+		gridRow: `${getSliceName(seg.start)} / ${getSliceName(seg.end)}`,
+		gridColumn: `${roomLayout.colStart + seg.first} / ${roomLayout.colStart + seg.last + 1}`,
+		continuation: i !== main,
+		segmentStart: seg.start,
+		segmentEnd: seg.end,
+	}))
+}
+
+/**
+ * The grid items for one shift's pieces: where each goes on the grid and whether it is a continuation card.
+ * `base` is the shift's key; each piece gets its own key under it.
+ */
+export function placementGridItems (base, session, placements) {
+	return placements.map((placement, i) => ({
+		key: `${base}-${i}`,
+		session,
+		style: { 'grid-row': placement.gridRow, 'grid-column': placement.gridColumn },
+		props: { continuation: placement.continuation },
+	}))
 }
 
 function getSliceName (date) {
