@@ -350,7 +350,7 @@ class Schedule(PretalxModel):
             raise ValidationError(_('This schedule version is reserved. Please choose a different name.'))
 
         with scope(event=self.event):
-            type(self.event).objects.select_for_update().get(pk=self.event_id)
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event_id)
             try:
                 self.version = Schedule.objects.select_for_update().get(pk=self.pk).version
             except Schedule.DoesNotExist as exc:
@@ -418,9 +418,15 @@ class Schedule(PretalxModel):
         if not self.version:
             raise Exception('Cannot unfreeze schedule version: not released yet.')
 
+        with scope(event=self.event):
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
+            with suppress(AttributeError):
+                del self.event.wip_schedule
+            draft = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
+
         # collect all talks, which have been added since this schedule (#72)
         submission_ids = self.talks.all().values_list('submission_id', flat=True)
-        talks = self.event.wip_schedule.talks.exclude(submission_id__in=submission_ids)
+        talks = draft.talks.exclude(submission_id__in=submission_ids)
         try:
             talks = list(talks.union(self.talks.all()))  # We force evaluation to catch the DatabaseError early
         except DatabaseError:  # SQLite cannot deal with ordered querysets in union()
@@ -432,8 +438,8 @@ class Schedule(PretalxModel):
             new_talks.append(talk.copy_to_schedule(wip_schedule, save=False))
         TalkSlot.objects.bulk_create(new_talks)
 
-        self.event.wip_schedule.talks.all().delete()
-        self.event.wip_schedule.delete()
+        draft.talks.all().delete()
+        draft.delete()
 
         with suppress(AttributeError):
             del wip_schedule.event.wip_schedule
@@ -1348,6 +1354,12 @@ class Schedule(PretalxModel):
                     speaker_data['avatar_thumbnail_tiny'] = tiny
                 elif avatar_urls.get('avatar_thumbnail_default'):
                     speaker_data['avatar_thumbnail_default'] = avatar_urls['avatar_thumbnail_default']
+                # In compact mode, also include the 460x460 default thumbnail for featured speakers
+                # who need hero cards on initial load, keeping the regular schedule grid lean.
+                if speaker_data.get('is_featured') and include_featured_speaker_metadata:
+                    default = avatar_urls.get('avatar_thumbnail_default')
+                    if default:
+                        speaker_data['avatar_thumbnail_default'] = default
             else:
                 speaker_data.update(avatar_urls)
             if include_avatar and needs_avatar_thumbnails(user, avatar_urls):

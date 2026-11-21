@@ -1,0 +1,94 @@
+name: Warm migrated test database cache
+
+# Pull requests can only read caches saved on their own branch or on dev. This
+# builds the migrated test database dump on dev whenever migrations or
+# dependencies change, so the integration shards in "Video & Backend CI" restore
+# it instead of running every migration. A pull request that adds migrations
+# builds its own dump on its first run.
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "app/eventyay/**/migrations/**"
+      - "app/uv.lock"
+      - ".github/actions/migrated-test-db/**"
+      - ".github/workflows/warm-test-db-cache.yml"
+  schedule:
+    # Unused cache entries are evicted after 7 days.
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    name: Build migrated test database
+    if: github.repository == 'fossasia/eventyay'
+    runs-on: ubuntu-latest
+    env:
+      EVY_POSTGRES_USER: eventyay
+      EVY_POSTGRES_PASSWORD: eventyay
+      EVY_POSTGRES_DB: eventyay-db
+      EVY_POSTGRES_HOST: localhost
+      EVY_POSTGRES_PORT: "5432"
+      EVY_REDIS_URL: redis://localhost:6379/0
+      EVY_SECRET_KEY: ci-test-secret-key
+      EVY_DEBUG: "true"
+      EVY_RUNNING_ENVIRONMENT: testing
+      # No DJANGO_SETTINGS_MODULE here: plugin builds in uv sync read it and fail
+      # before eventyay is installed. manage.py sets its own default.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: eventyay
+          POSTGRES_PASSWORD: eventyay
+          POSTGRES_DB: eventyay-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventyay -d eventyay-db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: app/uv.lock
+
+      - name: Sync dependencies (including test group)
+        run: uv sync --directory app --group test
+
+      - name: Prepare migrated test database
+        uses: ./.github/actions/migrated-test-db
+        with:
+          postgres-container: ${{ job.services.postgres.id }}

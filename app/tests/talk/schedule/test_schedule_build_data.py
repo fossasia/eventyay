@@ -243,3 +243,34 @@ def test_build_data_compact_index_has_no_talks(event, slot):
         assert data["days"]
         assert data["rooms"]
         assert data["compact"] is True
+
+
+@pytest.mark.django_db
+def test_build_data_compact_includes_thumbnails_and_omits_raw_avatar(event, slot, monkeypatch):
+    """Compact schedule sends tiny thumbnail for grid and includes default thumbnail for featured speakers."""
+    speaker = slot.submission.speakers.first()
+    mock_urls = {
+        'avatar': 'https://example.com/avatar.jpg',
+        'avatar_thumbnail_default': 'https://example.com/avatar_default.webp',
+        'avatar_thumbnail_tiny': 'https://example.com/avatar_tiny.webp',
+    }
+    monkeypatch.setattr('eventyay.base.models.schedule.list_avatar_urls', lambda user, evt, **kwargs: mock_urls)
+    with scope(event=event):
+        # Non-featured speaker: only tiny thumbnail is sent to keep payload lean
+        data = slot.schedule.build_data(compact=True)
+        spk_data = next(item for item in data['speakers'] if item['code'] == speaker.code)
+        assert spk_data['avatar_thumbnail_tiny'] == 'https://example.com/avatar_tiny.webp'
+        assert 'avatar_thumbnail_default' not in spk_data
+        assert 'avatar' not in spk_data
+
+        # Featured speaker: default 460x460 thumbnail is also included for hero cards
+        profile = speaker.event_profile(event)
+        profile.is_featured = True
+        profile.save()
+
+        data_featured = slot.schedule.build_data(compact=True)
+        spk_featured = next(item for item in data_featured['speakers'] if item['code'] == speaker.code)
+        assert spk_featured['avatar_thumbnail_tiny'] == 'https://example.com/avatar_tiny.webp'
+        assert spk_featured['avatar_thumbnail_default'] == 'https://example.com/avatar_default.webp'
+        assert 'avatar' not in spk_featured
+
