@@ -4,7 +4,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getErrorMessage } from './index.js'
+import { getCanSelfSignup, getErrorMessage } from './index.js'
 
 function errorResponse (body, contentType, status = 400) {
 	return new Response(body, { status, headers: { 'Content-Type': contentType } })
@@ -35,3 +35,18 @@ test('does not show server errors or long plain-text bodies', async () => {
 	assert.equal(await getErrorMessage(errorResponse(JSON.stringify({ detail: 'x'.repeat(301) }), 'application/json')), '')
 	assert.equal(await getErrorMessage(undefined), '')
 })
+
+test('getCanSelfSignup defaults to true and respects explicit false', () => {
+	assert.equal(getCanSelfSignup(null), true)
+	assert.equal(getCanSelfSignup(undefined), true)
+	assert.equal(getCanSelfSignup({}), true)
+	assert.equal(getCanSelfSignup({ schedule: {} }), true)
+	assert.equal(getCanSelfSignup({ schedule: { can_self_signup: true } }), true)
+	assert.equal(getCanSelfSignup({ can_self_signup: true }), true)
+
+	assert.equal(getCanSelfSignup({ schedule: { can_self_signup: false } }), false)
+	assert.equal(getCanSelfSignup({ can_self_signup: false }), false)
+	assert.equal(getCanSelfSignup({ value: { schedule: { can_self_signup: false } } }), false)
+	assert.equal(getCanSelfSignup({ value: { can_self_signup: false } }), false)
+})
+
