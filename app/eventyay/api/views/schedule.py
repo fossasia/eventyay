@@ -12,7 +12,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_flex_fields import is_expanded
 from eventyay.api.throttles import EventyayUserRateThrottle, PublicScheduleThrottle
@@ -229,9 +229,25 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
-        """Validate release data, then release the current draft under the event lock."""
-        serializer = ScheduleReleaseSerializer(data=request.data, context=self.get_serializer_context())
+        """Validate permissions and release the current draft schedule."""
+        if not self.has_perm('release', self.event):
+            raise PermissionDenied(
+                'You do not have permission to release schedules for this event.'
+            )
+
+        serializer = ScheduleReleaseSerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
         serializer.is_valid(raise_exception=True)
+
+        private_talks = request.event.private_testmode and request.event.settings.get(
+            'private_testmode_talks', False, as_type=bool
+        )
+        if not request.event.talks_published and not private_talks:
+            raise ValidationError(
+                'Talks must be published or in private test mode to release a schedule.'
+            )
 
         version_name = serializer.validated_data.get('version')
         comment = serializer.validated_data.get('comment')
@@ -246,7 +262,10 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
         except DjangoValidationError as exc:
             raise ValidationError({'version': exc.messages}) from exc
 
-        response_serializer = ScheduleSerializer(schedule, context=self.get_serializer_context())
+        response_serializer = ScheduleSerializer(
+            schedule,
+            context=self.get_serializer_context(),
+        )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
