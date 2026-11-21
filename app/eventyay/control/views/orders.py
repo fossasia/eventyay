@@ -49,6 +49,7 @@ from django.views.generic import (
     TemplateView,
     View,
 )
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.channels import get_all_sales_channels
@@ -162,6 +163,7 @@ from eventyay.control.forms.orders import (
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import order_search_forms
 from eventyay.control.views import PaginationMixin
+from eventyay.helpers.database import OF_SELF
 from eventyay.helpers.safedownload import check_token
 from eventyay.presale.utils import build_position_additional_fields
 
@@ -1155,6 +1157,13 @@ class OrderRefundView(OrderView):
         )
 
     def choose_form(self):
+        """
+        Render and process the order refund selection form.
+
+        Locks targeted payment rows with select_for_update(of=OF_SELF) inside an atomic
+        transaction, rechecks available refundable balances to prevent concurrent over-refunds,
+        and persists OrderRefund records.
+        """
         payments = list(self.order.payments.filter(state=OrderPayment.PAYMENT_STATE_CONFIRMED))
         comment = self.request.POST.get('comment') or self.request.GET.get('comment') or None
         if self.start_form.cleaned_data.get('mode') == 'full':
@@ -1204,6 +1213,7 @@ class OrderRefundView(OrderView):
                         )
                     )
 
+            giftcard = None
             giftcard_value = self.request.POST.get('refund-new-giftcard', '0') or '0'
             giftcard_value = formats.sanitize_separators(giftcard_value)
             try:
@@ -1214,12 +1224,6 @@ class OrderRefundView(OrderView):
             else:
                 if giftcard_value:
                     refund_selected += giftcard_value
-                    giftcard = self.request.organizer.issued_gift_cards.create(
-                        expires=self.request.organizer.default_gift_card_expiry,
-                        currency=self.request.event.currency,
-                        testmode=self.order.testmode,
-                    )
-                    giftcard.log_action('eventyay.giftcards.created', user=self.request.user, data={})
                     refunds.append(
                         OrderRefund(
                             order=self.order,
@@ -1230,7 +1234,6 @@ class OrderRefundView(OrderView):
                             amount=giftcard_value,
                             provider='giftcard',
                             comment=comment,
-                            info=json.dumps({'gift_card': giftcard.pk}),
                         )
                     )
 
@@ -1335,8 +1338,100 @@ class OrderRefundView(OrderView):
             any_success = False
             refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
+                payment_ids = [r.payment_id for r in refunds if r.payment_id]
+                with transaction.atomic():
+                    with scope(event=self.request.event):
+                        locked_order = (
+                            self.request.event.orders.select_for_update(of=OF_SELF).get(pk=self.order.pk)
+                        )
+                        order_payments_sum = (
+                            locked_order.payments.filter(
+                                state__in=(
+                                    OrderPayment.PAYMENT_STATE_CONFIRMED,
+                                    OrderPayment.PAYMENT_STATE_REFUNDED,
+                                )
+                            ).aggregate(s=Sum('amount'))['s']
+                            or Decimal('0.00')
+                        )
+                        order_refunds_sum = (
+                            locked_order.refunds.filter(
+                                state__in=(
+                                    OrderRefund.REFUND_STATE_DONE,
+                                    OrderRefund.REFUND_STATE_TRANSIT,
+                                    OrderRefund.REFUND_STATE_CREATED,
+                                    OrderRefund.REFUND_STATE_EXTERNAL,
+                                )
+                            ).aggregate(s=Sum('amount'))['s']
+                            or Decimal('0.00')
+                        )
+                        order_available = order_payments_sum - order_refunds_sum
+                        if refund_selected > order_available:
+                            messages.error(
+                                self.request,
+                                _(
+                                    'You can not refund more than the amount of a payment '
+                                    'that is not yet refunded.'
+                                ),
+                            )
+                            is_valid = False
+
+                        if is_valid and payment_ids:
+                            locked_payments = {
+                                p.pk: p
+                                for p in locked_order.payments.select_for_update(of=OF_SELF).filter(
+                                    pk__in=payment_ids
+                                )
+                            }
+                            refund_sums = {
+                                r['payment']: r['s']
+                                for r in locked_order.refunds.filter(
+                                    payment__in=payment_ids,
+                                    state__in=(
+                                        OrderRefund.REFUND_STATE_DONE,
+                                        OrderRefund.REFUND_STATE_TRANSIT,
+                                        OrderRefund.REFUND_STATE_CREATED,
+                                        OrderRefund.REFUND_STATE_EXTERNAL,
+                                    ),
+                                )
+                                .values('payment')
+                                .annotate(s=Sum('amount'))
+                            }
+                            payment_available = {
+                                pk: p.amount - refund_sums.get(pk, Decimal('0.00'))
+                                for pk, p in locked_payments.items()
+                            }
+                            for r in refunds:
+                                if r.payment_id:
+                                    lp = locked_payments.get(r.payment_id)
+                                    available = payment_available.get(r.payment_id, Decimal('0.00'))
+                                    if not lp or r.amount > available:
+                                        messages.error(
+                                            self.request,
+                                            _(
+                                                'You can not refund more than the amount of a payment '
+                                                'that is not yet refunded.'
+                                            ),
+                                        )
+                                        is_valid = False
+                                        break
+                                    payment_available[r.payment_id] -= r.amount
+                                    r.payment = lp
+
+                        if is_valid:
+                            for r in refunds:
+                                r.order = locked_order
+                                if r.provider == 'giftcard' and not r.info:
+                                    giftcard = self.request.organizer.issued_gift_cards.create(
+                                        expires=self.request.organizer.default_gift_card_expiry,
+                                        currency=self.request.event.currency,
+                                        testmode=self.order.testmode,
+                                    )
+                                    giftcard.log_action('eventyay.giftcards.created', user=self.request.user, data={})
+                                    r.info = json.dumps({'gift_card': giftcard.pk})
+                                r.save()
+
+            if refund_selected == full_refund and is_valid:
                 for r in refunds:
-                    r.save()
                     self.order.log_action(
                         'eventyay.event.order.refund.created',
                         {
