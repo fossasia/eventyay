@@ -1,10 +1,9 @@
 import logging
-import os
 from enum import StrEnum
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from allauth.socialaccount.adapter import get_adapter
-from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
@@ -135,6 +134,21 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         setting_state = request.POST.get('save_credentials', '').lower()
 
+        if setting_state == self.SettingState.CREDENTIALS:
+            check_oidc = bool(request.POST.get('openid_connect_client_id') and request.POST.get('openid_connect_secret'))
+        else:
+            oidc = login_providers.get('openid_connect', {})
+            check_oidc = (
+                request.POST.get('openid_connect_login') == self.SettingState.ENABLED
+                and bool(oidc.get('client_id') and oidc.get('secret'))
+            )
+        if check_oidc:
+            try:
+                self.social_app_settings('openid_connect')
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect(self.get_success_url())
+
         self._apply_preferred_provider(request, login_providers)
 
         for provider in LoginProviders.model_fields.keys():
@@ -220,11 +234,27 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                         },
                     )
 
-    @staticmethod
-    def social_app_settings(provider):
-        if provider == 'openid_connect':
-            return {'settings': {'server_url': os.environ['EVY_OIDC_ISSUER_URL']}}
-        return {}
+    def social_app_settings(self, provider):
+        if provider != 'openid_connect':
+            return {}
+
+        issuer = settings.OIDC_ISSUER_URL.strip().rstrip('/')
+        if not issuer:
+            raise ValueError('Configure EVY_OIDC_ISSUER_URL before enabling OpenID Connect.')
+
+        original = self.gs.settings.get('oidc_issuer_lock', default='')
+        existing_app = SocialApp.objects.filter(provider='openid_connect').first()
+        if not original and existing_app:
+            original = existing_app.settings.get('server_url', '').rstrip('/')
+
+        if original and original != issuer:
+            raise ValueError('The OIDC issuer cannot be changed after configuration without migrating existing accounts.')
+        if not original and SocialAccount.objects.filter(provider='openid_connect').exists():
+            raise ValueError('Existing OIDC accounts need an issuer migration before configuring a new issuer.')
+
+        if not self.gs.settings.get('oidc_issuer_lock', default=''):
+            self.gs.settings.set('oidc_issuer_lock', issuer)
+        return {'settings': {'server_url': issuer}}
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')

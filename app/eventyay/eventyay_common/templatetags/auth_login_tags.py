@@ -1,5 +1,3 @@
-import os
-
 from django import template
 from django.conf import settings
 
@@ -17,7 +15,7 @@ register = template.Library()
 @register.filter
 def provider_label(provider):
     if provider == 'openid_connect':
-        return os.getenv('EVY_OIDC_PROVIDER_NAME', 'OpenID Connect')
+        return settings.OIDC_PROVIDER_NAME
     return provider.capitalize()
 
 

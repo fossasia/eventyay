@@ -74,7 +74,7 @@ IV. Generic OpenID Connect (OIDC)
 Eventyay supports OIDC-compatible identity providers (such as Keycloak) through
 Django Allauth's generic OpenID Connect provider.
 
-1. Set ``EVY_OIDC_ISSUER_URL`` to the provider's OIDC issuer URL, for example
+1. Set ``EVY_OIDC_ISSUER_URL`` in the deployment environment or app/.env to the provider's OIDC issuer URL, for example
    ``https://id.example.org/realms/example``.
 2. Optionally set ``EVY_OIDC_PROVIDER_NAME`` to customize the login-button
    label (defaults to ``OpenID Connect``).
@@ -86,3 +86,7 @@ Django Allauth's generic OpenID Connect provider.
 
 Disabling the provider removes its Allauth configuration and blocks new OIDC
 logins. Native password login and other configured providers remain available.
+
+The configured issuer is locked after first use, including while OIDC is disabled.
+Changing identity providers requires a deliberate account migration; rotating
+client credentials for the same issuer is supported.

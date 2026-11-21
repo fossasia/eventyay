@@ -101,6 +101,8 @@ class BaseSettings(_BaseSettings):
     # The names follow what is in Django and converted to lowercase.
     debug: bool = False
     secret_key: str = 'please-give-one-in-secret-file'
+    oidc_issuer_url: str = ''
+    oidc_provider_name: str = 'OpenID Connect'
     postgres_db: str = _DEFAULT_DB_NAME
     # When these values are `None`, "peer" connection method will be used.
     # We just need to have a PostgreSQL user with the same name as Linux user.
@@ -259,6 +261,8 @@ conf = BaseSettings()
 # but please use with caution (it can reveal sensitive data like passwords, API keys).
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
+OIDC_ISSUER_URL = conf.oidc_issuer_url
+OIDC_PROVIDER_NAME = conf.oidc_provider_name
 DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
 CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)

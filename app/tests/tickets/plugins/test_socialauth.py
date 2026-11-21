@@ -6,6 +6,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.models import SocialApp
+from django.conf import settings
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
@@ -405,7 +406,7 @@ def test_social_and_account_adapter_rejects_spam_user(provider):
 
 @pytest.mark.django_db
 def test_oidc_credentials_create_social_app(monkeypatch):
-    monkeypatch.setenv('EVY_OIDC_ISSUER_URL', 'https://id.example.org/realms/example')
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', 'https://id.example.org/realms/example')
     providers = {'openid_connect': {'state': True, 'client_id': '', 'secret': ''}}
     request = RequestFactory().post('/', {
         'openid_connect_client_id': 'oidc-client',
@@ -423,7 +424,7 @@ def test_oidc_credentials_create_social_app(monkeypatch):
 
 @pytest.mark.django_db
 def test_oidc_enable_and_disable_social_app(monkeypatch):
-    monkeypatch.setenv('EVY_OIDC_ISSUER_URL', 'https://id.example.org/realms/example')
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', 'https://id.example.org/realms/example')
     providers = {'openid_connect': {
         'state': False,
         'client_id': 'oidc-client',
@@ -444,3 +445,68 @@ def test_oidc_enable_and_disable_social_app(monkeypatch):
     )
     assert providers['openid_connect']['state'] is False
     assert not SocialApp.objects.filter(provider='openid_connect').exists()
+
+
+
+@pytest.mark.django_db
+def test_oidc_rejects_issuer_change_after_disable(monkeypatch):
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', 'https://id-a.example/realms/main')
+    providers = {'openid_connect': {'state': False, 'client_id': 'client', 'secret': 'secret'}}
+    view = SocialLoginView()
+    view.update_provider_state(
+        RequestFactory().post('/', {'openid_connect_login': 'enabled'}), 'openid_connect', providers,
+    )
+    view.update_provider_state(
+        RequestFactory().post('/', {'openid_connect_login': 'disabled'}), 'openid_connect', providers,
+    )
+
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', 'https://id-b.example/realms/main')
+    with pytest.raises(ValueError, match='cannot be changed'):
+        view.update_provider_state(
+            RequestFactory().post('/', {'openid_connect_login': 'enabled'}), 'openid_connect', providers,
+        )
+    assert not SocialApp.objects.filter(provider='openid_connect').exists()
+
+
+@pytest.mark.django_db
+def test_oidc_allows_credentials_rotation_for_same_issuer(monkeypatch):
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', 'https://id.example/realms/main')
+    providers = {'openid_connect': {'state': True, 'client_id': '', 'secret': ''}}
+    view = SocialLoginView()
+    first = RequestFactory().post('/', {
+        'openid_connect_client_id': 'first', 'openid_connect_secret': 'old-secret',
+    })
+    view.update_credentials(first, 'openid_connect', providers)
+    rotation = RequestFactory().post('/', {
+        'openid_connect_client_id': 'second', 'openid_connect_secret': 'new-secret',
+    })
+    view.update_credentials(rotation, 'openid_connect', providers)
+    app = SocialApp.objects.get(provider='openid_connect')
+    assert app.client_id == 'second'
+    assert app.secret == 'new-secret'
+    assert GlobalSettingsObject().settings.get('oidc_issuer_lock') == 'https://id.example/realms/main'
+
+
+@pytest.mark.django_db
+def test_oidc_rejects_issuer_change_with_existing_app(monkeypatch):
+    SocialApp.objects.create(
+        provider='openid_connect', provider_id='openid_connect',
+        client_id='old-client', secret='old-secret',
+        settings={'server_url': 'https://original.example/realms/main'},
+    )
+    monkeypatch.setattr(settings, 'OIDC_ISSUER_URL', 'https://replacement.example/realms/main')
+    with pytest.raises(ValueError, match='cannot be changed'):
+        SocialLoginView().social_app_settings('openid_connect')
+
+
+def test_oidc_dotenv_configuration(tmp_path):
+    from eventyay.config.settings import BaseSettings
+
+    env_file = tmp_path / '.env'
+    env_file.write_text(
+        'EVY_OIDC_ISSUER_URL=https://id.example/realms/main\n'
+        'EVY_OIDC_PROVIDER_NAME=Organization Login\n'
+    )
+    config = BaseSettings(_env_file=env_file)
+    assert config.oidc_issuer_url == 'https://id.example/realms/main'
+    assert config.oidc_provider_name == 'Organization Login'

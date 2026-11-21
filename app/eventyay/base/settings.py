@@ -67,6 +67,7 @@ settings_hierarkey.add_default('orga_internal_note', '', str)
 
 # Telemetry settings for anonymous usage data collection
 # These are used by GlobalSettingsObject via settings_hierarkey
+settings_hierarkey.add_default('oidc_issuer_lock', '', str)
 settings_hierarkey.add_default('telemetry_enabled', False, bool)
 settings_hierarkey.add_default('telemetry_last_sent', None, dt.datetime)
 settings_hierarkey.add_default('telemetry_endpoint', '', str)
