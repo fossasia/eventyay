@@ -199,12 +199,18 @@ class TestGlobalSettingsEmail:
 @pytest.mark.django_db
 class TestAdminDashboardConfigLinks:
     @override_settings(EMAIL_HOST='')
-    def test_global_settings_links_open_existing_tabs(self, admin_client):
+    @pytest.mark.parametrize('route, expected_tabs', [
+        ('admin.dashboard', []),
+        ('admin.operations', ['tab-email-open', 'tab-email-open']),
+    ])
+    def test_global_settings_links_open_existing_tabs(self, admin_client, route, expected_tabs):
+        """Keep configuration links valid after moving details to System operations."""
         settings_url = reverse('eventyay_admin:admin.global.settings')
-        dashboard = admin_client.get(reverse('eventyay_admin:admin.dashboard'))
+        dashboard = admin_client.get(reverse(f'eventyay_admin:{route}'))
         assert dashboard.status_code == 200
         tabs = re.findall(rf'href="{re.escape(settings_url)}#([\w-]+)"', dashboard.content.decode())
-        assert tabs == ['tab-email-open', 'tab-email-open']
+        assert tabs == expected_tabs
+        assert f'href="{settings_url}"' in dashboard.content.decode()
 
         settings_page = admin_client.get(settings_url)
         assert settings_page.status_code == 200
