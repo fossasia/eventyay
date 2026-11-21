@@ -1,4 +1,9 @@
-from datetime import datetime, timezone as dt_timezone
+import copy
+import hashlib
+import hmac
+import json
+import time
+from datetime import datetime, timedelta, timezone as dt_timezone
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest import mock
@@ -9,8 +14,55 @@ from django.urls import reverse
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import BillingInvoice
+from eventyay.base.models import BillingInvoice, Order, OrderPayment, OrderRefund
 from eventyay.eventyay_common.tasks import update_billing_invoice_information
+
+
+class ObjectWithoutDictMethods:
+    """Stand-in for a stripe-python 15 ``StripeObject``.
+
+    Supports attribute access, ``in``, ``[]`` and ``to_dict()``, but not dict methods such as
+    ``.get()``, so it fails like a stripe-python 15 object on any installed stripe version.
+    """
+
+    def __init__(self, data):
+        self._data = data
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            raise AttributeError(name)
+        try:
+            return self._data[name]
+        except KeyError:
+            raise AttributeError(name) from None
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __contains__(self, key):
+        return key in self._data
+
+    def to_dict(self):
+        return copy.deepcopy(self._data)
+
+
+def _post_webhook(client, event):
+    with (
+        mock.patch(
+            'eventyay.api.views.stripe.get_stripe_webhook_secret_key',
+            return_value='whsec_test',
+        ),
+        mock.patch(
+            'eventyay.api.views.stripe.stripe.Webhook.construct_event',
+            return_value=event,
+        ),
+    ):
+        return client.post(
+            reverse('api-v1:stripe-webhook'),
+            data=b'{}',
+            content_type='application/json',
+            HTTP_STRIPE_SIGNATURE='t=1,v1=deadbeef',
+        )
 
 
 def _payment_intent_event(*, invoice_id=None, event_id='evt_test'):
@@ -134,3 +186,101 @@ def test_update_billing_invoice_does_not_overwrite_already_paid(billing_invoice)
 def test_update_billing_invoice_noop_when_invoice_id_missing():
     assert update_billing_invoice_information(None) is None
     assert update_billing_invoice_information('') is None
+
+
+@pytest.mark.django_db
+def test_billing_webhook_reads_payment_intents_without_dict_methods(billing_invoice):
+    event = SimpleNamespace(
+        id='evt_test',
+        type='payment_intent.succeeded',
+        data=SimpleNamespace(
+            object=ObjectWithoutDictMethods({'id': 'pi_test', 'metadata': {'invoice_id': str(billing_invoice.id)}})
+        ),
+    )
+
+    with mock.patch('eventyay.api.views.stripe.update_billing_invoice_information.delay') as delay:
+        response = _post_webhook(Client(), event)
+
+    assert response.status_code == 200
+    delay.assert_called_once_with(invoice_id=str(billing_invoice.id))
+
+
+@pytest.fixture
+@scopes_disabled()
+def stripe_payment(event):
+    order = Order.objects.create(
+        code='FOO',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PAID,
+        datetime=timezone.now(),
+        expires=timezone.now() + timedelta(days=10),
+        total=Decimal('23.00'),
+        locale='en',
+    )
+    return order.payments.create(
+        provider='stripe',
+        amount=Decimal('23.00'),
+        state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+        info=json.dumps({'id': 'ch_test'}),
+    )
+
+
+def _charge_refunded(payment):
+    return {
+        'id': 'ch_test',
+        'object': 'charge',
+        'refunded': False,
+        'metadata': {'order': payment.order.code, 'payment': str(payment.local_id)},
+        'refunds': {
+            'object': 'list',
+            'data': [{'id': 're_test', 'object': 'refund', 'amount': 500, 'currency': 'eur'}],
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_charge_refunded_webhook_reads_charges_without_dict_methods(stripe_payment):
+    event = SimpleNamespace(
+        id='evt_test',
+        type='charge.refunded',
+        data=SimpleNamespace(object=ObjectWithoutDictMethods(_charge_refunded(stripe_payment))),
+    )
+
+    response = _post_webhook(Client(), event)
+
+    assert response.status_code == 200
+    with scopes_disabled():
+        refund = stripe_payment.order.refunds.get()
+    assert refund.amount == Decimal('5.00')
+    assert refund.state == OrderRefund.REFUND_STATE_DONE
+    assert json.loads(refund.info)['full_data']['id'] == 're_test'
+
+
+@pytest.mark.django_db
+def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(stripe_payment):
+    secret = 'whsec_test'
+    payload = json.dumps(
+        {
+            'id': 'evt_test',
+            'object': 'event',
+            'type': 'charge.refunded',
+            'data': {'object': _charge_refunded(stripe_payment)},
+        }
+    )
+    timestamp = int(time.time())
+    signature = hmac.new(secret.encode(), f'{timestamp}.{payload}'.encode(), hashlib.sha256).hexdigest()
+
+    with mock.patch('eventyay.api.views.stripe.get_stripe_webhook_secret_key', return_value=secret):
+        response = Client().post(
+            reverse('api-v1:stripe-webhook'),
+            data=payload,
+            content_type='application/json',
+            HTTP_STRIPE_SIGNATURE=f't={timestamp},v1={signature}',
+        )
+
+    assert response.status_code == 200
+    with scopes_disabled():
+        refund = stripe_payment.order.refunds.get()
+    assert refund.amount == Decimal('5.00')
+    assert json.loads(refund.info)['full_data']['id'] == 're_test'
