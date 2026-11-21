@@ -1,5 +1,7 @@
 import rules
+from django_scopes import scope
 
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.person.permissions import can_change_submissions
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
@@ -11,6 +13,7 @@ def is_agenda_visible(user, event):
         and event.talks_published
         and event.get_feature_flag("show_schedule")
         and event.current_schedule
+        and not event.private_testmode_talks_enabled
     )
 
 
@@ -42,14 +45,29 @@ def is_submission_visible_via_featured(user, submission):
     )
 
 
+def is_submission_visible_via_accepted(user, submission):
+    if not submission:
+        return False
+    event = getattr(submission, "event", None)
+    if (
+        not event
+        or not event.get_feature_flag("show_accepted_publicly")
+        or getattr(event, "private_testmode_talks_enabled", False)
+    ):
+        return False
+    return submission.state in SubmissionStates.accepted_states
+
+
 @rules.predicate
 def is_submission_visible(user, submission):
     submission = getattr(submission, "submission", submission)
     if not submission:
         return False
-    return is_submission_visible_via_schedule(
-        user, submission
-    ) or is_submission_visible_via_featured(user, submission)
+    return (
+        is_submission_visible_via_schedule(user, submission)
+        or is_submission_visible_via_featured(user, submission)
+        or is_submission_visible_via_accepted(user, submission)
+    )
 
 
 @rules.predicate
@@ -71,9 +89,23 @@ def event_uses_feedback(user, event):
 def is_speaker_viewable(user, profile):
     if not profile:
         return False
-    is_speaker = profile.user.submissions.filter(
-        slots__schedule=profile.event.current_schedule
-    ).exists()
+    event = getattr(profile, "event", None)
+    if not event:
+        return False
+    with scope(event=event):
+        if (
+            event.get_feature_flag("show_accepted_publicly")
+            and not event.private_testmode_talks_enabled
+            and profile.user.submissions.filter(
+                event=event,
+                state__in=SubmissionStates.accepted_states,
+            ).exists()
+        ):
+            return True
+        is_speaker = profile.user.submissions.filter(
+            event=event,
+            slots__schedule=profile.event.current_schedule,
+        ).exists()
     return is_speaker and is_agenda_visible(user, profile.event)
 
 
@@ -91,10 +123,4 @@ rules.add_perm("agenda.view_feedback_page", event_uses_feedback & is_submission_
 rules.add_perm(
     "agenda.view_widget",
     is_agenda_visible | is_widget_always_visible | can_change_submissions,
-)
-# Used by the favourites REST API and agenda utility views to gate access
-# to schedule data.  Matches the predicate used for agenda.view_schedule.
-rules.add_perm(
-    "base.list_schedule",
-    is_agenda_visible | can_change_submissions,
 )

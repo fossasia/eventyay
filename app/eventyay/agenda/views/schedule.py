@@ -43,7 +43,11 @@ from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
-from eventyay.talk_rules.agenda import require_wip_schedule_access
+from eventyay.talk_rules.agenda import (
+    accepted_sessions_publicly_visible,
+    schedule_exposes_slot_times,
+    require_wip_schedule_access,
+)
 from eventyay.talk_rules.submission import are_featured_submissions_visible, can_use_featured_exports
 
 
@@ -213,6 +217,15 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     template_name = 'agenda/schedule.html'
     permission_required = 'base.view_schedule'
 
+    def has_permission(self):
+        if self.version == 'wip':
+            return super().has_permission()
+        if super().has_permission():
+            return True
+        # Accepted sessions can be public before a timetable release.
+        # The WIP preview URL stays on the organiser permission above.
+        return accepted_sessions_publicly_visible(self.request.event)
+
     def get_text(self, request, **kwargs):
         data = ScheduleData(
             event=self.request.event,
@@ -256,6 +269,16 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         accept_header = request.headers.get('Accept') or ''
         if getattr(self, 'is_html_export', False) or (accept_header and request.accepts('text/html')):
             return super().get(request, **kwargs)
+        # Plain-text and export redirects include room times. Pending-only
+        # visitors get the HTML schedule, which omits those assignments.
+        slots_public = schedule_exposes_slot_times(
+            request.user,
+            request.event,
+            self.schedule,
+            preview=self.version == 'wip',
+        )
+        if not slots_public:
+            return super().get(request, **kwargs)
 
         if not accept_header or request.accepts('text/plain'):
             return self.get_text(request, **kwargs)
@@ -279,9 +302,13 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         if self.version == 'wip':
             return self.request.event.wip_schedule
         schedule = super().get_object()
-        if not schedule:
+        if schedule:
+            return schedule
+        if self.version:
             raise Http404()
-        return schedule
+        if accepted_sessions_publicly_visible(self.request.event):
+            return self.request.event.wip_schedule
+        raise Http404()
 
     def get_permission_object(self):
         return self.object
@@ -356,11 +383,19 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         second request. Abstracts and descriptions are included only when the
         page renders them (list view). Other days are fetched on demand.
         """
+        wip_preview = self.version == 'wip'
         return build_schedule_json(
             self.request,
             self.schedule,
             compact=True,
             include_text=self.show_talk_list(),
+            include_scheduled_slots=schedule_exposes_slot_times(
+                self.request.user,
+                self.request.event,
+                self.schedule,
+                preview=wip_preview,
+            ),
+            respect_public_visibility=not wip_preview,
         )
 
     def get_context_data(self, **kwargs):

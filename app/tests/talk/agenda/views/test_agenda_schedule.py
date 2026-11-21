@@ -43,7 +43,7 @@ def test_schedule_page_embeds_compact_day_without_abstract(client, event, slot):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('other_slot')
-@pytest.mark.parametrize('version,max_queries', (('js', 45), ('nojs', 32)))
+@pytest.mark.parametrize('version,max_queries', (('js', 45), ('nojs', 35)))
 def test_can_see_schedule(client, django_assert_max_num_queries, user, event, slot, version, max_queries):
     with scope(event=event):
         event.talks_published = True
