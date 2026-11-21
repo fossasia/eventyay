@@ -284,3 +284,19 @@ def test_charge_refunded_webhook_records_refund_from_a_signed_stripe_event(strip
         refund = stripe_payment.order.refunds.get()
     assert refund.amount == Decimal('5.00')
     assert json.loads(refund.info)['full_data']['id'] == 're_test'
+
+
+@pytest.mark.django_db
+def test_charge_refunded_webhook_records_each_refund_once(stripe_payment):
+    event = SimpleNamespace(
+        id='evt_test',
+        type='charge.refunded',
+        data=SimpleNamespace(object=ObjectWithoutDictMethods(_charge_refunded(stripe_payment))),
+    )
+
+    first = _post_webhook(Client(), event)
+    second = _post_webhook(Client(), event)
+
+    assert first.status_code == second.status_code == 200
+    with scopes_disabled():
+        assert stripe_payment.order.refunds.count() == 1
