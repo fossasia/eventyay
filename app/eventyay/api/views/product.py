@@ -35,6 +35,7 @@ from eventyay.base.models import (
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.helpers.dicts import merge_dicts
 
+
 with scopes_disabled():
 
     class ProductFilter(FilterSet):
@@ -221,7 +222,8 @@ class ProductBundleViewSet(viewsets.ModelViewSet):
         return ctx
 
     def perform_create(self, serializer):
-        product = get_object_or_404(Product, pk=self.kwargs['product'], event=self.request.event)
+        """Create a new product bundle scoped to the base product."""
+        product = self.product
         serializer.save(base_product=product)
         product.log_action(
             'eventyay.event.product.bundles.added',
@@ -231,7 +233,8 @@ class ProductBundleViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        serializer.save(event=self.request.event)
+        """Update an existing product bundle and record audit log."""
+        serializer.save()
         serializer.instance.base_product.log_action(
             'eventyay.event.product.bundles.changed',
             user=self.request.user,
