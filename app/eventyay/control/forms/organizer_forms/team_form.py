@@ -26,6 +26,31 @@ EXHIBITION_PERMISSIONS = (
     'is_exhibition_reviewer',
 )
 
+TEAM_PERMISSION_FIELDS = (
+    'can_create_events',
+    'can_change_teams',
+    'can_change_organizer_settings',
+    'can_manage_gift_cards',
+    'can_change_event_settings',
+    'can_change_items',
+    'can_view_orders',
+    'can_change_orders',
+    'can_manage_bank_transfers',
+    'can_checkin_orders',
+    'can_view_vouchers',
+    'can_change_vouchers',
+    'can_change_submissions',
+    'is_reviewer',
+    'can_change_exhibition_proposals',
+    'is_exhibition_reviewer',
+    'can_manage_social_media',
+    'can_change_config',
+    'can_video_manage_content',
+    'can_video_moderate',
+    'can_video_manage_kiosks',
+    'can_video_view_analytics',
+)
+
 
 def event_has_exhibition(event):
     return bool(re.search(EXHIBITION_PLUGIN_REGEX, event.plugins or ''))
@@ -52,6 +77,10 @@ class TeamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         organizer = kwargs.pop('organizer')
         self.organizer = organizer
+        self.user = kwargs.pop('user', None)
+        self.request = kwargs.pop('request', None)
+        if self.user is None and self.request is not None:
+            self.user = getattr(self.request, 'user', None)
         super().__init__(*args, **kwargs)
         # An empty track selection means access to all tracks, so the toggle mirrors that.
         self.fields['all_tracks'].initial = not (self.instance.pk and self.instance.limit_tracks.exists())
@@ -65,6 +94,15 @@ class TeamForm(forms.ModelForm):
 
         events_qs = organizer.events.all().order_by('-date_from', 'name')
         self._events_with_tracks = self._build_events_with_tracks(events_qs, tracks_qs, with_color=True)
+
+        ceiling = self.user_permission_ceiling
+        if ceiling is not None:
+            for perm in TEAM_PERMISSION_FIELDS:
+                if perm in self.fields and perm not in ceiling:
+                    self.fields[perm].disabled = True
+                    self.fields[perm].help_text = _(
+                        'You cannot grant or change this permission because you do not hold it yourself.'
+                    )
 
         # Cache selected track IDs now (inside scopes_disabled context)
         # so the template can use them without scope issues
@@ -311,6 +349,20 @@ class TeamForm(forms.ModelForm):
                 forms.ValidationError(_('Please select at least one track, or grant access to all tracks.')),
             )
 
+    @property
+    def user_permission_ceiling(self):
+        if not self.user:
+            return None
+        if getattr(self.user, 'is_superuser', False):
+            return None
+        if hasattr(self.user, 'has_active_staff_session') and self.user.has_active_staff_session(
+            self.request.session.session_key if self.request and hasattr(self.request, 'session') else None
+        ):
+            return None
+        if hasattr(self.user, 'get_organizer_permission_set'):
+            return self.user.get_organizer_permission_set(self.organizer)
+        return None
+
     def clean(self):
         data = super().clean()
         all_events = data.get('all_events')
@@ -349,33 +401,40 @@ class TeamForm(forms.ModelForm):
                 data['limit_teamshifts_roles'] = []
                 data['hide_teamshifts_emails'] = False
 
-        permissions = (
-            'can_create_events',
-            'can_change_teams',
-            'can_change_organizer_settings',
-            'can_manage_gift_cards',
-            'can_change_event_settings',
-            'can_change_items',
-            'can_view_orders',
-            'can_change_orders',
-            'can_manage_bank_transfers',
-            'can_checkin_orders',
-            'can_view_vouchers',
-            'can_change_vouchers',
-            'can_change_submissions',
-            'is_reviewer',
-            'can_change_exhibition_proposals',
-            'is_exhibition_reviewer',
-            'can_manage_social_media',
-            'can_change_config',
-            'can_video_manage_content',
-            'can_video_moderate',
-            'can_video_manage_kiosks',
-            'can_video_view_analytics',
-        )
+        permissions = TEAM_PERMISSION_FIELDS
         effective_permissions = permissions
         if not self._exhibition_applies_to_team(data):
             effective_permissions = tuple(p for p in permissions if p not in EXHIBITION_PERMISSIONS)
+
+        ceiling = self.user_permission_ceiling
+        if ceiling is not None:
+            for perm in TEAM_PERMISSION_FIELDS:
+                field_key = self.add_prefix(perm)
+                raw_submitted = bool(self.data.get(field_key) or self.data.get(perm)) if self.is_bound else False
+                if (data.get(perm) or raw_submitted) and perm not in ceiling:
+                    if not (self.instance and self.instance.pk and getattr(self.instance, perm, False)):
+                        target_field = perm if perm in self.fields else None
+                        self.add_error(
+                            target_field,
+                            forms.ValidationError(_('You cannot grant permissions that you do not hold yourself.')),
+                        )
+
+            if self.instance and self.instance.pk and self.user and getattr(self.user, 'is_authenticated', False):
+                with scopes_disabled():
+                    is_member = self.instance.members.filter(pk=self.user.pk).exists()
+                if is_member:
+                    for privacy_field in ('force_hide_speaker_names', 'force_hide_speaker_emails'):
+                        if (
+                            privacy_field in self.fields
+                            and getattr(self.instance, privacy_field, False)
+                            and not data.get(privacy_field)
+                        ):
+                            self.add_error(
+                                privacy_field,
+                                forms.ValidationError(
+                                    _('You cannot remove speaker privacy restrictions from a team you belong to.')
+                                ),
+                            )
 
         has_any_permission = any(data.get(permission) for permission in effective_permissions)
         if not has_any_permission and not data.get('teamshifts_role'):
