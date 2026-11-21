@@ -5,7 +5,6 @@ import logging
 
 from asgiref.sync import async_to_sync
 import dateutil.parser
-from celery.exceptions import TaskError
 from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
@@ -215,25 +214,6 @@ class ScheduleToggleView(EventPermissionRequired, View):
             messages.success(request, _('The schedule is now public.'))
         else:
             messages.success(request, _('The public schedule has been unpublished.'))
-        # Trigger tickets to hidden/unhidden schedule menu
-        try:
-            from eventyay.orga.tasks import trigger_public_schedule
-
-            trigger_public_schedule.apply_async(
-                kwargs={
-                    'is_show_schedule': is_public,
-                    'event_slug': request.event.slug,
-                    'organiser_slug': request.event.organizer.slug,
-                    'user_email': request.user.email,
-                },
-                ignore_result=True,
-            )
-        except (TaskError, ConnectionError):
-            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
-            logger.warning('Could not enqueue schedule visibility sync')
-        except Exception:
-            log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
-            logger.exception('Unexpected error enqueueing schedule visibility sync')
         return redirect(request.event.orga_urls.schedule)
 
 
