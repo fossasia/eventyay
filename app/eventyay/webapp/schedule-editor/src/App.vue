@@ -1389,14 +1389,13 @@ async function editorSave(): Promise<void> {
 }
 
 function permissionDeniedMessage(action: 'save' | 'delete'): string {
-  if (mode === 'shifts' || mode === 'public-shifts') {
-    return action === 'save'
-      ? $t('You do not have permission to save this shift. Your shift role may not allow this change.')
-      : $t('You do not have permission to delete this shift. Your shift role may not allow this change.')
+  // Only shifts are deleted through the confirm dialog that shows the delete message
+  if (action === 'delete') {
+    return $t('You do not have permission to delete this shift. Your shift role may not allow this change.')
   }
-  return action === 'save'
-    ? $t('You do not have permission to save this session.')
-    : $t('You do not have permission to delete this session.')
+  return mode === 'shifts'
+    ? $t('You do not have permission to save this shift. Your shift role may not allow this change.')
+    : $t('You do not have permission to save this session.')
 }
 
 function editorCancel(): void {
