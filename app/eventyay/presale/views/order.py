@@ -306,7 +306,7 @@ class OrderPositionJoin(OrderProtectedActionMixin, EventViewMixin, OrderPosition
         baseurl = request.event.settings.venueless_url
         if '{token}' in baseurl:
             redirect_url = baseurl.format(token=token)
-            logger.info('Redirecting to %s...', redirect_url)
+            logger.info('Redirecting to video for event %s', request.event.slug)
             return redirect(redirect_url)
 
         # Ensure the URL includes the event identifier so VideoSPAView has event context.
@@ -321,7 +321,7 @@ class OrderPositionJoin(OrderProtectedActionMixin, EventViewMixin, OrderPosition
         baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
 
         redirect_url = f'{baseurl}/#token={token}'.replace('//#', '/#')
-        logger.info('Redirecting to %s...', redirect_url)
+        logger.info('Redirecting to video for event %s', request.event.slug)
         return redirect(redirect_url)
 
 

@@ -67,6 +67,7 @@ class MailTemplateRoles(models.TextChoices):
     EXISTING_SPEAKER_INVITE = 'speaker.invite.existing', _('Add a speaker to a proposal (existing account)')
     QUESTION_REMINDER = 'question.reminder', _('Custom fields reminder')
     NEW_SCHEDULE = 'schedule.new', _('New schedule published')
+    SPEAKER_VOUCHER = 'speaker.voucher', _('Speaker voucher')
 
 
 PLACEHOLDER_KWARGS = {
@@ -78,6 +79,7 @@ PLACEHOLDER_KWARGS = {
     MailTemplateRoles.EXISTING_SPEAKER_INVITE: ['submission', 'event', 'user'],
     MailTemplateRoles.QUESTION_REMINDER: ['event', 'user'],
     MailTemplateRoles.NEW_SCHEDULE: ['event', 'user'],
+    MailTemplateRoles.SPEAKER_VOUCHER: ['event', 'user'],
 }
 
 
@@ -306,6 +308,21 @@ class MailTemplate(PretalxModel):
                 ['event', 'submission'],
                 None,
                 'https://eventyay.example.com/orga/events/democon/submissions/124ABCD/',
+            )
+        elif self.role == MailTemplateRoles.SPEAKER_VOUCHER:
+            placeholders['voucher_code'] = SimpleFunctionalMailTextPlaceholder(
+                'voucher_code',
+                ['event', 'user'],
+                None,
+                'SPEAKER-EXAMPLE',
+                _('The unique ticket voucher code for this speaker'),
+            )
+            placeholders['voucher_url'] = SimpleFunctionalMailTextPlaceholder(
+                'voucher_url',
+                ['event', 'user'],
+                None,
+                'https://eventyay.example.com/democon/redeem/?voucher=SPEAKER-EXAMPLE',
+                _('Link to the ticket shop with this voucher applied'),
             )
 
         kwargs = ['event', 'user', 'submission', 'slot']
