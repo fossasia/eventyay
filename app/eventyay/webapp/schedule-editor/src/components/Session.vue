@@ -394,7 +394,7 @@ sessionTextExpand()
 			align-items: center
 			line-height: 0
 			.camera-body, .camera-lens
-				fill: #000000
+				fill: #222222
 				stroke: none
 			.camera-slash
 				fill: none

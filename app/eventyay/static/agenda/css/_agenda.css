@@ -701,7 +701,7 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
   width: 100%;
 }
 .youtube-comment-form textarea:focus {
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid #222222;
   outline: none;
 }
 .comment-avatar {
