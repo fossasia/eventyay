@@ -307,7 +307,7 @@ import GridSchedule from '~/components/GridSchedule.vue'
 import TalkSession from '~/components/Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
 import ConfirmDialog from '~/teamshifts-adapter/ConfirmDialog.vue'
-import api, { isPermissionDenied } from '~/api'
+import api, { isNotFound, isPermissionDenied } from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
@@ -1435,14 +1435,28 @@ async function deleteShiftById(id: number): Promise<boolean> {
     confirmClass: 'btn-danger',
     deniedMessage: permissionDeniedMessage('delete'),
     onConfirm: async () => {
-      await api.deleteTalk({ id })
+      try {
+        await api.deleteTalk({ id })
+      } catch (error) {
+        // A 404 can mean an earlier attempt deleted the shift but its response was lost, or that
+        // the shift API is unavailable. Only treat it as deleted if the schedule no longer has it.
+        if (!isNotFound(error)) throw error
+        const current = await fetchSchedule().catch((fetchError) => {
+          console.error('Failed to check whether the shift still exists', { id, error: fetchError })
+          return null
+        })
+        if (!current || current.talks.some((s) => s.id === id)) throw error
+      }
       if (schedule.value) {
         schedule.value.talks = schedule.value.talks.filter((s) => s.id !== id)
       }
-      // The shift is already deleted: a failed refresh must not be reported as a failed deletion
-      fetchAdditionalScheduleData().catch((error) => {
+      // The shift is already deleted: a failed refresh must not be reported as a failed deletion.
+      // Await it so an older refresh cannot overwrite the warnings of a later one.
+      try {
+        await fetchAdditionalScheduleData()
+      } catch (error) {
         console.error('Failed to refresh additional schedule data after delete', { id, error })
-      })
+      }
     },
   })
 }

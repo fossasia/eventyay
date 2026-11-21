@@ -69,6 +69,10 @@ export function isPermissionDenied(error: unknown): boolean {
   return error instanceof HttpError && error.status === 403
 }
 
+export function isNotFound(error: unknown): boolean {
+  return error instanceof HttpError && error.status === 404
+}
+
 const api = {
   getOrgaEventBase(): string {
     return getApiConfig().baseUrl
@@ -87,7 +91,8 @@ const api = {
   },
 
   /**
-   * @throws {HttpError} when the request fails or the response is not a successful JSON reply
+   * @throws {HttpError} when the request fails, the response is not JSON, or the status is not successful
+   * @throws {SyntaxError} when a successful response declares JSON but its body cannot be decoded
    */
   async http<T>(verb: string, url: string, body: HttpRequestBody): Promise<T> {
     const headers: Record<string, string> = {}
@@ -123,7 +128,15 @@ const api = {
       throw new HttpError(response.status, `HTTP error ${response.status}: server returned non-JSON response`)
     }
 
-    const json = await response.json()
+    let json: unknown
+    try {
+      json = await response.json()
+    } catch (error) {
+      if (response.ok) throw error
+      // Keep the status of a failed response even when its body cannot be decoded
+      logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
+      throw new HttpError(response.status, `HTTP error ${response.status}: server returned invalid JSON`)
+    }
 
     if (!response.ok) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
