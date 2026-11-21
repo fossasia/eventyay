@@ -1,5 +1,7 @@
 import datetime
 
+from django.contrib.staticfiles import finders
+from django.templatetags.static import static
 from django.test import override_settings
 from django_scopes import scopes_disabled
 
@@ -44,8 +46,13 @@ class QuickstartSearchableCurrencyTest(SoupTest):
     @scopes_disabled()
     def test_quickstart_template_includes_searchable_select_assets_and_markup(self):
         doc = self.get_doc(f'/control/event/{self.orga1.slug}/{self.event1.slug}/quickstart/')
-        assert any('searchable-select.css' in link.get('href', '') for link in doc.select('link[rel=stylesheet]'))
-        assert any('searchable-select.js' in s.get('src', '') for s in doc.select('script'))
+        expected_css_url = static('common/css/searchable-select.css')
+        expected_js_url = static('common/js/searchable-select.js')
+
+        assert any(link.get('href') == expected_css_url for link in doc.select('link[rel=stylesheet]'))
+        assert any(s.get('src') == expected_js_url for s in doc.select('script'))
+        assert finders.find('common/css/searchable-select.css') is not None
+        assert finders.find('common/js/searchable-select.js') is not None
 
         currency_select = doc.select('#id_currency')
         assert currency_select, 'id_currency select element not found'
