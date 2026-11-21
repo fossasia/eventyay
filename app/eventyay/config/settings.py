@@ -6,7 +6,7 @@ from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Annotated, cast
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 import django.conf.locale
 import importlib_metadata
@@ -235,19 +235,59 @@ def discover_toml_files() -> list[Path]:
     return toml_files
 
 
-def increase_redis_db(url: str, increment: int) -> str:
+KOMBU_ALLOWED_QUERY_PREFIXES = ('ssl_',)
+KOMBU_ALLOWED_QUERY_KEYS = frozenset({
+    'ssl',
+    'connect_timeout',
+    'login_method',
+    'heartbeat',
+    'transport_options',
+    'insist',
+    'credential_provider',
+})
+
+
+def increase_redis_db(url: str, increment: int, sanitize_broker: bool = True) -> str:
     """Increase the Redis database number in the given URL by the given increment.
 
-    If the provided URL is missing DB number, we assume it is 0.
+    If the provided URL specifies the database via path (e.g. '/0') or query (e.g. '?db=0'),
+    that number is incremented. If missing, 0 is assumed.
+    If sanitize_broker is True, strips query parameters that are incompatible with
+    Kombu / Celery broker connections (e.g. client options like 'protocol').
     """
     parsed = urlparse(url)
-    try:
-        db_number = int(parsed.path.lstrip('/')) + increment
-    except ValueError:
-        db_number = increment
-    new_path = f'/{db_number}'
-    new_url = parsed._replace(path=new_path).geturl()
-    return new_url
+    query_params = parse_qsl(parsed.query, keep_blank_values=True)
+    query_dict = dict(query_params)
+
+    query_db = query_dict.get('db')
+    path_db = parsed.path.lstrip('/')
+    if query_db:
+        try:
+            db_number = int(query_db)
+        except ValueError:
+            db_number = 0
+    elif path_db:
+        try:
+            db_number = int(path_db)
+        except ValueError:
+            db_number = 0
+    else:
+        db_number = 0
+
+    new_db = db_number + increment
+    new_path = f'/{new_db}'
+
+    filtered = []
+    for k, v in query_params:
+        if k == 'db':
+            continue
+        if sanitize_broker:
+            if k in KOMBU_ALLOWED_QUERY_KEYS or any(k.startswith(p) for p in KOMBU_ALLOWED_QUERY_PREFIXES):
+                filtered.append((k, v))
+        else:
+            filtered.append((k, v))
+
+    return parsed._replace(path=new_path, query=urlencode(filtered)).geturl()
 
 
 conf = BaseSettings()
@@ -1131,7 +1171,7 @@ REDIS_USE_PUBSUB = not DOCS_BUILD
 
 HAS_CELERY = True
 CELERY_BROKER_URL = 'memory://' if DOCS_BUILD else increase_redis_db(REDIS_URL, 1)
-CELERY_RESULT_BACKEND = 'cache+memory://' if DOCS_BUILD else increase_redis_db(REDIS_URL, 2)
+CELERY_RESULT_BACKEND = 'cache+memory://' if DOCS_BUILD else increase_redis_db(REDIS_URL, 2, sanitize_broker=False)
 CELERY_TASK_ALWAYS_EAGER = True if DOCS_BUILD else conf.celery_always_eager
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
