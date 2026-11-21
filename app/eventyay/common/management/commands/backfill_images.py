@@ -33,6 +33,7 @@ from eventyay.base.models import (
     Submission,
     User,
 )
+from eventyay.base.signals import register_image_backfill_targets
 from eventyay.common.image import invalidate_speaker_avatar_caches, is_svg_filename, process_image
 from eventyay.helpers.image_optimize import QUESTION_IMAGE_EXTENSIONS
 
@@ -49,6 +50,32 @@ IMAGE_TARGETS = {
     'question_answer': (Answer, 'answer_file', False, True),
     'ticket_question_answer': (QuestionAnswer, 'file', False, True),
 }
+
+
+def get_image_targets():
+    """Return core's image targets plus the ones installed plugins register."""
+    targets = dict(IMAGE_TARGETS)
+    for receiver, response in register_image_backfill_targets.send_robust(sender=None):
+        if isinstance(response, Exception):
+            # One broken plugin shouldn't stop core and other plugins' images from being processed.
+            logger.error('Could not load image backfill targets from %r', receiver, exc_info=response)
+            continue
+        if response is None:
+            continue
+        if not isinstance(response, dict):
+            logger.warning(
+                'Ignoring image backfill targets from %r: expected a dict, got %s',
+                receiver,
+                type(response).__name__,
+            )
+            continue
+        for name, target in response.items():
+            if name in targets or name == 'settings':
+                logger.warning('Ignoring image backfill target %r from %r: the name is already taken', name, receiver)
+                continue
+            targets[name] = target
+    return targets
+
 
 SETTINGS_KEYS = [
     'logo_image',
@@ -94,6 +121,8 @@ class Command(BaseCommand):
     help = 'Compress stored raster images larger than a threshold and regenerate thumbnails.'
 
     def add_arguments(self, parser):
+        # Collected once per run, so handle() processes exactly the targets --model accepted.
+        self.image_targets = get_image_targets()
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -113,7 +142,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--model',
             action='append',
-            choices=list(IMAGE_TARGETS.keys()) + ['settings'],
+            choices=list(self.image_targets.keys()) + ['settings'],
             help='Only process specific models. Can be specified multiple times.',
         )
 
@@ -141,7 +170,9 @@ class Command(BaseCommand):
             if backup_abs == media_abs or backup_abs.startswith(media_abs + os.sep):
                 raise CommandError(f'--backup-dir ({backup_abs}) must not be inside MEDIA_ROOT ({media_abs}).')
                 
-        models_to_process = options.get('model') or list(IMAGE_TARGETS.keys()) + ['settings']
+        # add_arguments() fills this when the command runs through call_command() or the CLI.
+        image_targets = getattr(self, 'image_targets', None) or get_image_targets()
+        models_to_process = options.get('model') or list(image_targets.keys()) + ['settings']
 
         min_bytes = min_size_kb * 1024
         stats = {'compressed': 0, 'failed': 0, 'skipped': 0, 'dry_run': 0}
@@ -159,7 +190,9 @@ class Command(BaseCommand):
             lock = transaction.atomic() if model else nullcontext()
             with lock:
                 if model:
-                    instance = model.objects.select_for_update().filter(pk=pk).first()
+                    # Lock only this row: a model's default ordering can join nullable relations
+                    # (Product orders by category__position), which FOR UPDATE can't lock.
+                    instance = model.objects.select_for_update(of=('self',)).filter(pk=pk).first()
                     if not instance:
                         stats['skipped'] += 1
                         return
@@ -227,7 +260,7 @@ class Command(BaseCommand):
 
         with scopes_disabled():
             # 1. Process regular models
-            for model_key, target in IMAGE_TARGETS.items():
+            for model_key, target in image_targets.items():
                 if model_key not in models_to_process:
                     continue
                 model, field_name, generate_thumbnail, *target_options = target
