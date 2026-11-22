@@ -272,27 +272,27 @@
   color: #6c757d;
 }
 
-/* Tooltip custom styling (white bg, black border, black text) */
+/* Tooltip custom styling (white bg, dark grey border, dark grey text) */
 .order-overview .tooltip-inner {
   background-color: #fff;
-  color: #000;
-  border: 1px solid #000;
+  color: #222222;
+  border: 1px solid #222222;
   padding: 8px 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   text-align: left;
 }
 
 .order-overview .tooltip.top .tooltip-arrow {
-  border-top-color: #000;
+  border-top-color: #222222;
 }
 .order-overview .tooltip.bottom .tooltip-arrow {
-  border-bottom-color: #000;
+  border-bottom-color: #222222;
 }
 .order-overview .tooltip.right .tooltip-arrow {
-  border-right-color: #000;
+  border-right-color: #222222;
 }
 .order-overview .tooltip.left .tooltip-arrow {
-  border-left-color: #000;
+  border-left-color: #222222;
 }
 
 .order-overview-summary-value {
