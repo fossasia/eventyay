@@ -462,7 +462,8 @@ def test_termination_between_dispatch_and_accounting(event, speaker_user, other_
     with scopes_disabled():
         r1 = batch.recipients.get(submission=sub1)
         r1.status = DraftReminderRecipientStatus.SENDING
-        r1.save(update_fields=['status'])
+        r1.sent_at = now() - timedelta(minutes=10)
+        r1.save(update_fields=['status', 'sent_at'])
         batch.status = DraftReminderBatchStatus.SENDING
         batch.save(update_fields=['status'])
 
@@ -638,3 +639,95 @@ def test_submission_deletion_preserves_delivery_record(event, speaker_user, user
 
         assert batch.sent_count == 1
         assert len(recorded_signals) == 0
+
+
+@pytest.mark.django_db
+def test_in_flight_worker_with_live_lease_prevents_premature_batch_finalization(event, speaker_user, user):
+    """When a recipient has an active delivery lease, another worker returns early without finalizing."""
+    make_draft_submission(event, speaker_user)
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+
+    # Recipient has an active live lease (claimed 30 seconds ago)
+    with scopes_disabled():
+        r = batch.recipients.first()
+        r.status = DraftReminderRecipientStatus.SENDING
+        r.sent_at = now() - timedelta(seconds=30)
+        r.save(update_fields=['status', 'sent_at'])
+        batch.status = DraftReminderBatchStatus.SENDING
+        batch.save(update_fields=['status'])
+
+    djmail.outbox = []
+    # Another worker runs: sees no pending recipients, lease is live, returns early
+    send_draft_reminder_batch(batch.pk)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        # Batch remains in SENDING status; not prematurely completed or reconciled
+        assert batch.status == DraftReminderBatchStatus.SENDING
+        assert batch.reconciled is False
+        assert len(djmail.outbox) == 0
+
+
+@pytest.mark.django_db
+def test_cleanup_skips_batches_with_active_live_leases(event, user):
+    """Cleanup command skips batches where workers have active live delivery leases."""
+    with scopes_disabled():
+        batch_live = DraftReminderBatch.objects.create(
+            event=event,
+            subject='Live in-flight',
+            text='text',
+            status=DraftReminderBatchStatus.SENDING,
+            total_count=2,
+            sent_count=0,
+            reconciled=False,
+            created_at=now() - timedelta(hours=30),
+        )
+        r_live = DraftReminderRecipient.objects.create(
+            batch=batch_live,
+            user=user,
+            status=DraftReminderRecipientStatus.SENDING,
+            sent_at=now() - timedelta(seconds=45),
+        )
+
+        batch_expired = DraftReminderBatch.objects.create(
+            event=event,
+            subject='Abandoned expired',
+            text='text',
+            status=DraftReminderBatchStatus.SENDING,
+            total_count=2,
+            sent_count=0,
+            reconciled=False,
+            created_at=now() - timedelta(hours=30),
+        )
+        r_expired = DraftReminderRecipient.objects.create(
+            batch=batch_expired,
+            user=user,
+            status=DraftReminderRecipientStatus.SENDING,
+            sent_at=now() - timedelta(minutes=15),
+        )
+
+    with patch('eventyay.core.management.commands.cleanup.reconcile_draft_reminder_batch_allowance') as mock_rec:
+        CleanupCommand().handle()
+        # Only the batch with expired lease is reconciled and terminalized
+        mock_rec.assert_called_once()
+        assert mock_rec.call_args[0][0].pk == batch_expired.pk
+
+    with scopes_disabled():
+        batch_live.refresh_from_db()
+        assert batch_live.status == DraftReminderBatchStatus.SENDING
+        assert batch_live.reconciled is False
+        r_live.refresh_from_db()
+        assert r_live.status == DraftReminderRecipientStatus.SENDING
+
+        batch_expired.refresh_from_db()
+        assert batch_expired.status == DraftReminderBatchStatus.FAILED
+        r_expired.refresh_from_db()
+        assert r_expired.status == DraftReminderRecipientStatus.SENT
+

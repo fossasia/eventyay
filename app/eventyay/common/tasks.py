@@ -1,10 +1,12 @@
 import logging
+from datetime import timedelta
 from pathlib import Path
 from smtplib import SMTPException
 
 from celery.exceptions import MaxRetriesExceededError
 from django.core.files.storage import default_storage
-from django.db import models, transaction
+from django.db import transaction
+from django.db.models import F, Q
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
@@ -176,17 +178,22 @@ def reconcile_draft_reminder_batch_allowance(batch: DraftReminderBatch) -> None:
     """Reconciles unused allowance for a completed or failed draft reminder batch."""
     if batch.reconciled:
         return
-    unsent_count = batch.total_count - batch.sent_count
-    if unsent_count > 0:
-        event = batch.event
-        accounting_period = (
-            batch.created_at.strftime('%Y-%m')
-            if batch.created_at
-            else now().strftime('%Y-%m')
-        )
-        with transaction.atomic():
+    event = batch.event
+    accounting_period = (
+        batch.created_at.strftime('%Y-%m')
+        if batch.created_at
+        else now().strftime('%Y-%m')
+    )
+    with transaction.atomic():
+        b = DraftReminderBatch.objects.select_for_update().filter(pk=batch.pk).first()
+        if not b or b.reconciled:
+            batch.reconciled = True
+            return
+
+        unsent_count = b.total_count - b.sent_count
+        if unsent_count > 0:
             Organizer.objects.select_for_update().get(pk=event.organizer_id)
-            source_id = batch.uuid.hex
+            source_id = b.uuid.hex
             record_usage(
                 event.organizer,
                 'email.bulk.monthly',
@@ -199,12 +206,13 @@ def reconcile_draft_reminder_batch_allowance(batch: DraftReminderBatch) -> None:
                 accounting_period=accounting_period,
                 metadata={
                     'batch_uuid': source_id,
-                    'batch_created_at': batch.created_at.isoformat() if batch.created_at else None,
+                    'batch_created_at': b.created_at.isoformat() if b.created_at else None,
                     'accounting_period': accounting_period,
                 },
             )
-    batch.reconciled = True
-    batch.save(update_fields=['reconciled'])
+        b.reconciled = True
+        b.save(update_fields=['reconciled'])
+        batch.reconciled = True
 
 
 @app.task(
@@ -289,7 +297,7 @@ def send_draft_reminder_batch(self, batch_id: int):
                         recipient.status = DraftReminderRecipientStatus.SKIPPED
                         recipient.save(update_fields=['status'])
                         DraftReminderBatch.objects.filter(pk=batch_id).update(
-                            skipped_count=models.F('skipped_count') + 1
+                            skipped_count=F('skipped_count') + 1
                         )
                         continue
 
@@ -306,9 +314,10 @@ def send_draft_reminder_batch(self, batch_id: int):
                         commit=False,
                     )
 
-                    # Record SENDING intent and commit immediately before SMTP dispatch
+                    # Record SENDING intent with live delivery lease immediately before SMTP dispatch
                     recipient.status = DraftReminderRecipientStatus.SENDING
-                    recipient.save(update_fields=['status'])
+                    recipient.sent_at = now()
+                    recipient.save(update_fields=['status', 'sent_at'])
 
                 # 2. Dispatch SMTP email outside the database lock
                 try:
@@ -325,8 +334,13 @@ def send_draft_reminder_batch(self, batch_id: int):
                     with transaction.atomic():
                         DraftReminderBatch.objects.select_for_update().filter(pk=batch_id).first()
                         if is_retryable:
-                            recipient.status = DraftReminderRecipientStatus.PENDING
-                            recipient.save(update_fields=['status'])
+                            DraftReminderRecipient.objects.filter(
+                                pk=recipient.pk,
+                                status=DraftReminderRecipientStatus.SENDING,
+                            ).update(
+                                status=DraftReminderRecipientStatus.PENDING,
+                                sent_at=None,
+                            )
                             logger.warning(
                                 '[DraftReminder] Transient transport error for recipient %s in batch %s: %s',
                                 recipient.pk,
@@ -336,12 +350,18 @@ def send_draft_reminder_batch(self, batch_id: int):
                             should_retry = True
                         else:
                             sanitized_err = f'{type(exc).__name__}: delivery failed'
-                            recipient.status = DraftReminderRecipientStatus.FAILED
-                            recipient.error = sanitized_err
-                            recipient.save(update_fields=['status', 'error'])
-                            DraftReminderBatch.objects.filter(pk=batch_id).update(
-                                failed_count=models.F('failed_count') + 1
+                            updated = DraftReminderRecipient.objects.filter(
+                                pk=recipient.pk,
+                                status=DraftReminderRecipientStatus.SENDING,
+                            ).update(
+                                status=DraftReminderRecipientStatus.FAILED,
+                                error=sanitized_err,
+                                sent_at=None,
                             )
+                            if updated:
+                                DraftReminderBatch.objects.filter(pk=batch_id).update(
+                                    failed_count=F('failed_count') + 1
+                                )
                             logger.warning(
                                 '[DraftReminder] Permanent delivery failure for recipient %s in batch %s: %s',
                                 recipient.pk,
@@ -354,26 +374,44 @@ def send_draft_reminder_batch(self, batch_id: int):
                         ) from None
                     continue
 
-                # 3. Confirm SENT delivery status
+                # 3. Confirm SENT delivery status conditionally
                 with transaction.atomic():
                     DraftReminderBatch.objects.select_for_update().filter(pk=batch_id).first()
-                    recipient.status = DraftReminderRecipientStatus.SENT
-                    recipient.sent_at = now()
-                    recipient.save(update_fields=['status', 'sent_at'])
-                    DraftReminderBatch.objects.filter(pk=batch_id).update(
-                        sent_count=models.F('sent_count') + 1
+                    updated = DraftReminderRecipient.objects.filter(
+                        pk=recipient.pk,
+                        status=DraftReminderRecipientStatus.SENDING,
+                    ).update(
+                        status=DraftReminderRecipientStatus.SENT,
+                        sent_at=now(),
                     )
+                    if updated:
+                        DraftReminderBatch.objects.filter(pk=batch_id).update(
+                            sent_count=F('sent_count') + 1
+                        )
 
             with transaction.atomic():
                 batch = DraftReminderBatch.objects.select_for_update().get(pk=batch_id)
-                remaining_pending = DraftReminderRecipient.objects.filter(
-                    batch=batch, status=DraftReminderRecipientStatus.PENDING
+
+                # Recover genuinely abandoned SENDING deliveries whose lease expired (>5 mins)
+                lease_cutoff = now() - timedelta(minutes=5)
+                DraftReminderRecipient.objects.filter(
+                    batch=batch,
+                    status=DraftReminderRecipientStatus.SENDING,
+                ).filter(
+                    Q(sent_at__lte=lease_cutoff) | Q(sent_at__isnull=True)
+                ).update(status=DraftReminderRecipientStatus.SENT, sent_at=now())
+
+                remaining_in_flight = DraftReminderRecipient.objects.filter(
+                    batch=batch,
+                    status__in=[
+                        DraftReminderRecipientStatus.PENDING,
+                        DraftReminderRecipientStatus.SENDING,
+                    ],
                 ).count()
 
-                # Finalize any interrupted SENDING recipients from prior crashes as SENT
-                DraftReminderRecipient.objects.filter(
-                    batch=batch, status=DraftReminderRecipientStatus.SENDING
-                ).update(status=DraftReminderRecipientStatus.SENT, sent_at=now())
+                # If another worker is actively sending (live lease) or pending rows remain, do not finalize
+                if remaining_in_flight > 0:
+                    return
 
                 actual_sent = max(
                     batch.sent_count,
@@ -391,14 +429,11 @@ def send_draft_reminder_batch(self, batch_id: int):
                 batch.failed_count = actual_failed
                 batch.skipped_count = actual_skipped
 
-                if remaining_pending == 0:
-                    if batch.sent_count > 0 or (batch.sent_count == 0 and batch.failed_count == 0):
-                        batch.status = DraftReminderBatchStatus.COMPLETED
-                    else:
-                        batch.status = DraftReminderBatchStatus.FAILED
-                    batch.completed_at = now()
+                if batch.sent_count > 0 or (batch.sent_count == 0 and batch.failed_count == 0):
+                    batch.status = DraftReminderBatchStatus.COMPLETED
                 else:
                     batch.status = DraftReminderBatchStatus.FAILED
+                batch.completed_at = now()
 
                 batch.save(
                     update_fields=[

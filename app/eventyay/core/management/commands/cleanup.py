@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
@@ -49,10 +49,21 @@ def cleanup_draft_reminder_batches():
                     if not b:
                         continue
                     if b.status in [DraftReminderBatchStatus.PENDING, DraftReminderBatchStatus.SENDING]:
-                        # Consistent with worker recovery: account for interrupted SENDING recipients as sent
+                        lease_cutoff = now() - timedelta(minutes=5)
+                        # Exclude live SMTP operations: if any worker is actively in SMTP delivery, do not terminalize
+                        if DraftReminderRecipient.objects.filter(
+                            batch=b,
+                            status=DraftReminderRecipientStatus.SENDING,
+                            sent_at__gt=lease_cutoff,
+                        ).exists():
+                            continue
+
+                        # Account for genuinely abandoned SENDING recipients (lease expired) as sent
                         DraftReminderRecipient.objects.filter(
                             batch=b,
                             status=DraftReminderRecipientStatus.SENDING,
+                        ).filter(
+                            Q(sent_at__lte=lease_cutoff) | Q(sent_at__isnull=True)
                         ).update(status=DraftReminderRecipientStatus.SENT, sent_at=now())
                         # Mark only unattempted recipients as failed
                         DraftReminderRecipient.objects.filter(
