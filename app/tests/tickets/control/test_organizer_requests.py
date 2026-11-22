@@ -28,6 +28,7 @@ from eventyay.base.models.auth import StaffSession
 from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.organizer_requests import review_request
 from eventyay.base.validators import OrganizerSlugBanlistValidator
+from eventyay.control.forms.organizer_forms import OrganizerUpdateForm
 from eventyay.control.views.organizer_requests import request_cursor
 from eventyay.eventyay_common.views.organizer_request import OrganizerRequestCreate
 
@@ -131,6 +132,21 @@ def test_slugs_taken_by_other_pages_are_banned():
         )
     }
     assert taken <= set(OrganizerSlugBanlistValidator.banlist)
+
+
+def test_organizer_pages_take_precedence_over_invite_links():
+    assert resolve('/abcdef/').url_name == 'anonymous.invite.redirect'
+    assert resolve('/abcdef').func.view_class is resolve('/abcdef/').func.view_class
+    Organizer.objects.create(name='Token-shaped', slug='abcdef')
+    assert resolve('/abcdef/').view_name == 'presale:organizer.index'
+
+
+def test_existing_organizer_with_a_reserved_slug_can_still_be_edited():
+    organizer = Organizer.objects.create(name='Existing', slug='page')
+    assert OrganizerUpdateForm(instance=organizer, data={'name': 'Renamed', 'slug': 'page'}).is_valid()
+    assert not OrganizerUpdateForm(
+        instance=organizer, data={'name': 'Renamed', 'slug': 'common'}, change_slug=True
+    ).is_valid()
 
 
 def test_taken_slug(client, data):

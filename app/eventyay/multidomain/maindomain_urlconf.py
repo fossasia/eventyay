@@ -2,9 +2,10 @@ import importlib.util
 import logging
 
 from django.apps import apps
-from django.urls import include, path, re_path, reverse_lazy
+from django.urls import include, path, re_path, register_converter, reverse_lazy
 from django.views.generic.base import RedirectView
 
+from eventyay.base.models import Organizer
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -170,12 +171,24 @@ unified_event_patterns = [
 # Anonymous room invite short token pattern (6 characters)
 # The token uses characters: abcdefghijklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789
 # (excludes visually confusing characters: l, o, I, O, 0)
+class AnonymousInviteTokenConverter:
+    regex = r'[a-km-np-zA-HJ-NP-Z1-9]{6}'
+
+    def to_python(self, value):
+        # Organizer pages also live at /<short form>/. Let them win so such organizers stay reachable.
+        if Organizer.objects.filter(slug__iexact=value).exists():
+            raise ValueError
+        return value
+
+    def to_url(self, value):
+        return value
+
+
+register_converter(AnonymousInviteTokenConverter, 'invitetoken')
+
 anonymous_invite_patterns = [
-    re_path(
-        r'^(?P<token>[a-km-np-zA-HJ-NP-Z1-9]{6})/?$',
-        AnonymousInviteRedirectView.as_view(),
-        name='anonymous.invite.redirect',
-    ),
+    path('<invitetoken:token>', AnonymousInviteRedirectView.as_view()),
+    path('<invitetoken:token>/', AnonymousInviteRedirectView.as_view(), name='anonymous.invite.redirect'),
 ]
 
 urlpatterns = (
