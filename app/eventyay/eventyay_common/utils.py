@@ -7,6 +7,8 @@ from typing import Optional
 import jwt
 from django.conf import settings
 from django.http import HttpRequest
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import SubEvent
 
@@ -81,3 +83,22 @@ def get_subevent(request: HttpRequest) -> Optional[SubEvent]:
             logger.error('Error parsing subevent ID: %s', e)
 
     return None
+
+def api_token_created_message(token):
+    """Success message for a new API token, with a copy button."""
+    token_html = format_html(
+        '<code>{token}</code> '
+        '<button type="button" class="btn btn-default btn-xs btn-clipboard btn-copy-confirm" '
+        'data-clipboard-text="{token}" title="{copy}" aria-label="{copy}">'
+        '<span class="fa fa-copy" aria-hidden="true"></span></button>',
+        token=token.token,
+        copy=_('Copy API token secret'),
+    )
+    return format_html(
+        _(
+            'A new API token has been created with the following secret: {}\n'
+            'Please copy this secret to a safe place. You will not be able to '
+            'view it again here.'
+        ),
+        token_html,
+    )
