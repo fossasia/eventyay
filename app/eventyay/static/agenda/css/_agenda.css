@@ -5,6 +5,7 @@ body.page-agenda #main-container > header {
 }
 
 body.page-agenda {
+  --color-text: #222222;
   --page-inset-block-start: 0.75rem;
   --page-inset-inline: 1rem;
   --page-inset-block-end: 1rem;
@@ -701,7 +702,7 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
   width: 100%;
 }
 .youtube-comment-form textarea:focus {
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid #222222;
   outline: none;
 }
 .comment-avatar {

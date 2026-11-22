@@ -3534,7 +3534,7 @@ export default {
 					display: flex
 					align-items: center
 					justify-content: center
-					background: #000000
+					background: #222222
 
 					.media-frame
 						width: 100%

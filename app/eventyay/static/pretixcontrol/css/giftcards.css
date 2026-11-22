@@ -1,6 +1,7 @@
 /* giftcards.css — Gift Cards page modern card-based styles */
 
 .gc-container {
+  --color-text: #222222;
   max-width: 100%;
   margin: 0 auto;
   padding: 20px 15px;

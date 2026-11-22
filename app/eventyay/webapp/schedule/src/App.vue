@@ -1960,7 +1960,7 @@ export default {
 	.error-message
 		margin-top: 16px
 .schedule-unavailable
-	color: var(--pretalx-clr-text, rgb(13, 15, 16))
+	color: var(--pretalx-clr-text, #222222)
 	font-size: 18px
 	text-align: center
 	padding: 32px
@@ -1969,7 +1969,7 @@ export default {
 		line-height: 1.5
 
 .pretalx-schedule, dialog.pretalx-modal
-	color: rgb(13 15 16)
+	color: #222222
 
 :host(:fullscreen)
 	background: #fff
@@ -1983,7 +1983,7 @@ export default {
 	flex-direction: column
 	min-height: 0
 	font-size: 14px
-	--pretalx-clr-text: rgb(13,15,16)
+	--pretalx-clr-text: #222222
 	fullscreen-root()
 		background: #fff
 		padding: 0 8px

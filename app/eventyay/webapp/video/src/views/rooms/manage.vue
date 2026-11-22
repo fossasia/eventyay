@@ -1095,7 +1095,7 @@ export default {
 		.player-viewport
 			flex: none
 			width: 100%
-			background: #000000
+			background: #222222
 			display: flex
 			justify-content: center
 			align-items: center
@@ -1103,7 +1103,7 @@ export default {
 				width: 100%
 				aspect-ratio: 16 / 9
 				max-height: 52vh
-				background: #000000
+				background: #222222
 
 		&.is-call-media
 			.media-stage-wrapper

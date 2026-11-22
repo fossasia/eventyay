@@ -131,9 +131,10 @@
     max-width: 460px;
     background: #fff;
     border-radius: $border-radius-large;
-    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
+    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(34, 34, 34, 0.07);
     padding: 36px 32px 32px;
     text-align: center;
+    color: #222222;
 
     &__icon {
         margin: 0 0 18px;
@@ -167,7 +168,7 @@ dialog.permission-required-dialog {
     border: none;
     padding: 0;
     border-radius: $border-radius-large;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 10px rgba(34, 34, 34, 0.5), 0 2px 4px rgba(34, 34, 34, 0.15);
     max-width: 70vw;
 
     &[open] {
@@ -180,7 +181,7 @@ dialog.permission-required-dialog {
     }
 
     &::backdrop {
-        background-color: rgba(0, 0, 0, 0.2);
+        background-color: rgba(34, 34, 34, 0.2);
         backdrop-filter: blur(2px);
     }
 

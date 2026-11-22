@@ -145,7 +145,7 @@ export default {
 				margin: 0
 				text-align: center
 			.video-wrapper
-				background: black
+				background: #222222
 				width: 320px
 				max-width: 90vw
 				margin: auto

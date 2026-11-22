@@ -750,8 +750,8 @@ export default {
 	min-height: 0
 	min-width: 0
 	font-size: 14px
-	color: rgb(13, 15, 16)
-	--pretalx-clr-text: rgb(13, 15, 16)
+	color: #222222
+	--pretalx-clr-text: #222222
 	overflow: hidden
 	&:fullscreen
 		background: #fff

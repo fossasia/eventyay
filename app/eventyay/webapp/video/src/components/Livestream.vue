@@ -44,7 +44,7 @@
 <script>
 // TODO
 // - show controls based on mouse move time
-// - backdrop controls with black for contrast on white
+// - backdrop controls with dark grey for contrast on white
 // - add blocking backdrop on level chooser
 import { mapGetters, mapState } from 'vuex'
 import Hls from 'hls.js'
@@ -557,7 +557,7 @@ export default {
 	flex-direction: column
 	min-height: 0
 	height: 100%
-	background-color: $clr-black
+	background-color: #222222
 	position: relative
 	overflow: hidden
 	> .mdi
@@ -814,7 +814,7 @@ export default {
 			height: 100%
 			width: 100%
 			object-fit: contain
-			background: black
+		background: #222222
 	&.size-tiny .offline
 		background-color: $clr-white
 		.offline-message
