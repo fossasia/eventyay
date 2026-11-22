@@ -382,7 +382,7 @@ def test_cleanup_draft_reminder_batches(event, user):
 
 @pytest.mark.django_db
 def test_smtp_failure_privacy_and_error_handling(event, speaker_user, user, caplog):
-    """When SMTP rejects delivery, the error is sanitized and plaintext email is NEVER logged."""
+    """When SMTP rejects delivery, the error is sanitized, email is NEVER logged, and quota is refunded once."""
     make_draft_submission(event, speaker_user, title='Draft with delivery rejection')
 
     with scope(event=event):
@@ -399,9 +399,18 @@ def test_smtp_failure_privacy_and_error_handling(event, speaker_user, user, capl
     def raise_smtp_refused(*args, **kwargs):
         raise SMTPRecipientsRefused({speaker_user.email: (550, b'User unknown')})
 
-    with caplog.at_level(logging.DEBUG):
-        with patch('django.core.mail.backends.locmem.EmailBackend.send_messages', side_effect=raise_smtp_refused):
-            send_draft_reminder_batch(batch.pk)
+    recorded_signals = []
+
+    def signal_receiver(sender, **kwargs):
+        recorded_signals.append((sender, kwargs))
+
+    entitlement_usage_recorded.connect(signal_receiver)
+    try:
+        with caplog.at_level(logging.DEBUG):
+            with patch('django.core.mail.backends.locmem.EmailBackend.send_messages', side_effect=raise_smtp_refused):
+                send_draft_reminder_batch(batch.pk)
+    finally:
+        entitlement_usage_recorded.disconnect(signal_receiver)
 
     with scopes_disabled():
         batch.refresh_from_db()
@@ -418,3 +427,214 @@ def test_smtp_failure_privacy_and_error_handling(event, speaker_user, user, capl
 
     # Assert privacy: the log output must NEVER contain the recipient's plaintext email
     assert speaker_user.email not in caplog.text
+
+    # Assert quota reconciliation: released quota amount equals unsent count and is released exactly once
+    assert len(recorded_signals) == 1
+    sender, kwargs = recorded_signals[0]
+    assert sender == event.organizer
+    assert kwargs['capability'] == 'email.bulk.monthly'
+    assert kwargs['quantity'] == -1
+    assert kwargs['unit'] == 'emails'
+    assert kwargs['source_type'] == 'bulk_email'
+    assert kwargs['metadata']['batch_uuid'] == batch.uuid.hex
+
+    # Re-running reconciliation is idempotent and emits no duplicate release
+    reconcile_draft_reminder_batch_allowance(batch)
+    assert len(recorded_signals) == 1
+
+
+@pytest.mark.django_db
+def test_termination_between_dispatch_and_accounting(event, speaker_user, other_speaker, user):
+    """If process terminates after SMTP dispatch before commit, replay avoids duplicate send."""
+    sub1 = make_draft_submission(event, speaker_user, title='Talk 1')
+    sub2 = make_draft_submission(event, other_speaker, title='Talk 2')
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+
+    # Simulate crash window: recipient 1 was claimed and transitioned to SENDING,
+    # SMTP accepted it, but worker was killed before marking SENT.
+    with scopes_disabled():
+        r1 = batch.recipients.get(submission=sub1)
+        r1.status = DraftReminderRecipientStatus.SENDING
+        r1.save(update_fields=['status'])
+        batch.status = DraftReminderBatchStatus.SENDING
+        batch.save(update_fields=['status'])
+
+    djmail.outbox = []
+    # Replay / recovery runs
+    send_draft_reminder_batch(batch.pk)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        assert batch.status == DraftReminderBatchStatus.COMPLETED
+        # Both recipients are completed and accounted for
+        assert batch.sent_count == 2
+        assert batch.reconciled is True
+
+        # Verify duplicate safety: only recipient 2 was sent over SMTP during replay;
+        # recipient 1 was NOT sent again!
+        assert len(djmail.outbox) == 1
+        assert djmail.outbox[0].to == [other_speaker.email]
+        assert batch.recipients.get(submission=sub1).status == DraftReminderRecipientStatus.SENT
+        assert batch.recipients.get(submission=sub2).status == DraftReminderRecipientStatus.SENT
+
+
+@pytest.mark.django_db
+def test_allowance_reconciliation_receiver_failure_and_retry(event, speaker_user, other_speaker, user):
+    """If entitlement usage receiver fails, batch remains unreconciled and cleanup retries successfully."""
+    make_draft_submission(event, speaker_user, title='Draft 1')
+    sub2 = make_draft_submission(event, other_speaker, title='Draft 2')
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+        sub2.state = SubmissionStates.SUBMITTED
+        sub2.save()
+
+    # 1. Receiver failure during batch reconciliation
+    failing_calls = [True]
+
+    def failing_receiver(sender, **kwargs):
+        if failing_calls[0] and kwargs.get('quantity', 0) < 0:
+            raise RuntimeError('Billing service unavailable')
+
+    entitlement_usage_recorded.connect(failing_receiver)
+    try:
+        send_draft_reminder_batch(batch.pk)
+    finally:
+        entitlement_usage_recorded.disconnect(failing_receiver)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        # Batch completed delivery, but reconciliation failed
+        assert batch.status == DraftReminderBatchStatus.COMPLETED
+        assert batch.sent_count == 1
+        assert batch.reconciled is False
+
+    # 2. Cleanup command runs and retries the failed reconciliation
+    failing_calls[0] = False  # Service recovered
+    # Backdate batch so cleanup considers it eligible for retry (>24h)
+    with scopes_disabled():
+        batch.created_at = now() - timedelta(hours=25)
+        batch.save(update_fields=['created_at'])
+
+    CleanupCommand().handle()
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        assert batch.reconciled is True
+
+
+@pytest.mark.django_db
+def test_batch_usage_across_accounting_period_boundary(event, speaker_user, other_speaker, user):
+    """Reconciliation releases unused allowance against the batch's original reservation accounting period."""
+    make_draft_submission(event, speaker_user, title='Draft 1')
+    sub2 = make_draft_submission(event, other_speaker, title='Draft 2')
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+        # Skip sub2 so 1 unsent reminder needs allowance reconciliation
+        sub2.state = SubmissionStates.SUBMITTED
+        sub2.save()
+
+    # Backdate batch creation into a previous accounting period (e.g. 40 days ago)
+    past_date = now() - timedelta(days=40)
+    expected_period = past_date.strftime('%Y-%m')
+    current_period = now().strftime('%Y-%m')
+    assert expected_period != current_period
+
+    with scopes_disabled():
+        batch.created_at = past_date
+        batch.save(update_fields=['created_at'])
+
+    recorded_signals = []
+
+    def signal_receiver(sender, **kwargs):
+        recorded_signals.append((sender, kwargs))
+
+    entitlement_usage_recorded.connect(signal_receiver)
+    try:
+        send_draft_reminder_batch(batch.pk)
+    finally:
+        entitlement_usage_recorded.disconnect(signal_receiver)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        assert batch.reconciled is True
+        assert batch.sent_count == 1
+        assert batch.skipped_count == 1
+
+    # Assert released quota is bound to the original reservation's accounting period across period boundaries
+    assert len(recorded_signals) == 1
+    sender, kwargs = recorded_signals[0]
+    assert sender == event.organizer
+    assert kwargs['capability'] == 'email.bulk.monthly'
+    assert kwargs['quantity'] == -1
+    assert kwargs['accounting_period'] == expected_period
+    assert kwargs['accounting_period'] != current_period
+    assert kwargs['metadata']['accounting_period'] == expected_period
+    assert kwargs['metadata']['batch_created_at'] == past_date.isoformat()
+
+
+@pytest.mark.django_db
+def test_submission_deletion_preserves_delivery_record(event, speaker_user, user):
+    """Deleting a submission after delivery does not destroy recipient delivery state or cause quota refund."""
+    sub = make_draft_submission(event, speaker_user)
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+
+    send_draft_reminder_batch(batch.pk)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        assert batch.sent_count == 1
+        assert batch.status == DraftReminderBatchStatus.COMPLETED
+
+    # Delete the submission
+    with scope(event=event):
+        sub.delete()
+
+    with scopes_disabled():
+        recipient = batch.recipients.first()
+        # Delivery record is preserved (submission set to NULL)
+        assert recipient is not None
+        assert recipient.submission is None
+        assert recipient.status == DraftReminderRecipientStatus.SENT
+
+        # Re-running reconciliation does not decrease sent_count or refund delivered reminder
+        recorded_signals = []
+
+        def signal_receiver(sender, **kwargs):
+            recorded_signals.append((sender, kwargs))
+
+        entitlement_usage_recorded.connect(signal_receiver)
+        try:
+            batch.reconciled = False
+            batch.save(update_fields=['reconciled'])
+            reconcile_draft_reminder_batch_allowance(batch)
+        finally:
+            entitlement_usage_recorded.disconnect(signal_receiver)
+
+        assert batch.sent_count == 1
+        assert len(recorded_signals) == 0

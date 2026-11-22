@@ -51,7 +51,7 @@ DEBUG_DOMAINS = [
 
 
 RETRY_ERRNOS = (101, 111)
-RETRY_SMTP_CODES = (421, 422, 431, 442, 447, 452)
+RETRY_SMTP_CODES = (421, 422, 431, 442, 447, 451, 452)
 
 
 def send_mail_now(
@@ -175,7 +175,9 @@ def send_mail_now(
             )
         if sensitive:
             raise SendMailException(
-                f'Failed to send an email: {type(exception).__name__}', already_logged=True
+                f'Failed to send an email: {type(exception).__name__}',
+                smtp_code=bounce_code,
+                already_logged=True,
             ) from None
         raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
     except SMTPResponseException as exception:
@@ -194,7 +196,9 @@ def send_mail_now(
             )
             if sensitive:
                 raise SendMailException(
-                    f'Failed to send an email: {type(exception).__name__}', already_logged=True
+                    f'Failed to send an email: {type(exception).__name__}',
+                    smtp_code=exception.smtp_code,
+                    already_logged=True,
                 ) from None
             raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
         if exception.smtp_code >= 500:
@@ -208,12 +212,15 @@ def send_mail_now(
             )
             if sensitive:
                 raise SendMailException(
-                    f'Failed to send an email: {type(exception).__name__}', already_logged=True
+                    f'Failed to send an email: {type(exception).__name__}',
+                    smtp_code=exception.smtp_code,
+                    already_logged=True,
                 ) from None
             raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
         if sensitive:
             raise SendMailException(
-                f'Failed to send an email: {type(exception).__name__}'
+                f'Failed to send an email: {type(exception).__name__}',
+                smtp_code=exception.smtp_code,
             ) from None
         raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
     except Exception as exception:

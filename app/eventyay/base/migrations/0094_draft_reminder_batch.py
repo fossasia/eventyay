@@ -46,8 +46,8 @@ class Migration(migrations.Migration):
                 ('sent_at', models.DateTimeField(blank=True, null=True)),
                 ('error', models.TextField(blank=True, default='')),
                 ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipients', to='base.draftreminderbatch')),
-                ('submission', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to='base.submission')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to=settings.AUTH_USER_MODEL)),
+                ('submission', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='base.submission')),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'unique_together': {('batch', 'submission', 'user')},

@@ -909,6 +909,11 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
 
             batch = form.save(recipients=recipients, created_by=self.request.user)
             source_id = batch.uuid.hex
+            accounting_period = (
+                batch.created_at.strftime('%Y-%m')
+                if batch.created_at
+                else now().strftime('%Y-%m')
+            )
             record_usage(
                 event.organizer,
                 'email.bulk.monthly',
@@ -918,9 +923,11 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
                 source_id=source_id,
                 idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
                 event=event,
+                accounting_period=accounting_period,
                 metadata={
                     'batch_uuid': source_id,
                     'batch_created_at': batch.created_at.isoformat() if batch.created_at else None,
+                    'accounting_period': accounting_period,
                 },
             )
 

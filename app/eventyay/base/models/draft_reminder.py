@@ -82,12 +82,16 @@ class DraftReminderRecipient(models.Model):
     )
     submission = models.ForeignKey(
         'Submission',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='+',
     )
     user = models.ForeignKey(
         'User',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='+',
     )
     status = models.CharField(
