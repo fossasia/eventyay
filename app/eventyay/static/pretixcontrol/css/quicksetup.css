@@ -46,7 +46,7 @@
 .quickstart-wizard-container .quickstart-header .quickstart-header-actions .btn-skip:hover {
   background: var(--color-grey-ultralight, #f8f8f8);
   border-color: #adb5bd;
-  color: #000000;
+  color: #222222;
   text-decoration: none;
 }
 
@@ -136,7 +136,7 @@
 
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item.active .step-label,
 .quickstart-wizard-container .quickstart-stepper .quickstart-step-item:hover .step-label {
-  color: #000000;
+  color: #222222;
   font-weight: 700;
 }
 

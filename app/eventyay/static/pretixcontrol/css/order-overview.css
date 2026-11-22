@@ -283,16 +283,16 @@
 }
 
 .order-overview .tooltip.top .tooltip-arrow {
-  border-top-color: #000;
+  border-top-color: #222222;
 }
 .order-overview .tooltip.bottom .tooltip-arrow {
-  border-bottom-color: #000;
+  border-bottom-color: #222222;
 }
 .order-overview .tooltip.right .tooltip-arrow {
-  border-right-color: #000;
+  border-right-color: #222222;
 }
 .order-overview .tooltip.left .tooltip-arrow {
-  border-left-color: #000;
+  border-left-color: #222222;
 }
 
 .order-overview-summary-value {
