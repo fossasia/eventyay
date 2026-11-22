@@ -1,4 +1,5 @@
 import json
+import logging
 
 import nh3
 from django.contrib import messages
@@ -8,19 +9,30 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import escape
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy, npgettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, View
 from django_context_decorator import context
 
 from eventyay.base.entitlements import check_entitlement, record_usage
-from eventyay.base.models import Organizer
+from eventyay.base.models import (
+    DraftReminderBatch,
+    DraftReminderBatchStatus,
+    DraftReminderRecipient,
+    DraftReminderRecipientStatus,
+    Organizer,
+)
 from eventyay.base.models.mail import MailTemplate, QueuedMail, get_prefixed_subject
 from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
 from eventyay.common.mail import TolerantDict, mail_send_task
-from eventyay.common.tasks import send_draft_reminder_batch, send_scheduled_queuedmail
+from eventyay.common.tasks import (
+    reconcile_draft_reminder_batch_allowance,
+    send_draft_reminder_batch,
+    send_scheduled_queuedmail,
+)
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -43,6 +55,9 @@ from eventyay.orga.forms.mails import (
     WriteSessionMailForm,
     WriteTeamsMailForm,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_send_mail_exceptions(request):
@@ -903,13 +918,35 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
                 source_id=source_id,
                 idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
                 event=event,
+                metadata={
+                    'batch_uuid': source_id,
+                    'batch_created_at': batch.created_at.isoformat() if batch.created_at else None,
+                },
             )
 
-        send_draft_reminder_batch.apply_async(args=[batch.pk])
+        try:
+            send_draft_reminder_batch.apply_async(args=[batch.pk])
+        except Exception as exc:
+            logger.exception('Failed to enqueue draft reminder batch %s: %s', batch.pk, exc)
+            with transaction.atomic():
+                b = DraftReminderBatch.objects.select_for_update().get(pk=batch.pk)
+                b.status = DraftReminderBatchStatus.FAILED
+                b.failed_count = b.total_count
+                b.completed_at = now()
+                b.save(update_fields=['status', 'failed_count', 'completed_at'])
+                DraftReminderRecipient.objects.filter(
+                    batch=b, status=DraftReminderRecipientStatus.PENDING
+                ).update(status=DraftReminderRecipientStatus.FAILED)
+                reconcile_draft_reminder_batch_allowance(b)
+            messages.error(
+                self.request,
+                _('Failed to dispatch reminder emails. Please try again.'),
+            )
+            return redirect(self.get_success_url())
 
         messages.success(
             self.request,
-            _('{count} emails have been sent.').format(count=recipients_count),
+            _('{count} reminder emails have been queued for sending.').format(count=recipients_count),
         )
         return redirect(self.get_success_url())
 

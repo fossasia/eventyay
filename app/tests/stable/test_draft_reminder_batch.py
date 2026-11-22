@@ -14,6 +14,7 @@ from eventyay.base.models.draft_reminder import (
     DraftReminderRecipientStatus,
 )
 from eventyay.base.models.mail import QueuedMail
+from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.tasks import (
     reconcile_draft_reminder_batch_allowance,
     send_draft_reminder_batch,
@@ -83,8 +84,11 @@ def test_batch_creation_and_privacy_guarantee(event, speaker_user, user):
     assert recipient.status == DraftReminderRecipientStatus.PENDING
     assert DraftReminderRecipient.objects.filter(batch=batch).count() == 1
     # Ensure no plaintext email addresses are stored in recipient columns
-    assert not hasattr(recipient, 'email')
-    assert not hasattr(recipient, 'to')
+    field_names = {f.name for f in DraftReminderRecipient._meta.get_fields()}
+    assert field_names == {'id', 'batch', 'submission', 'user', 'status', 'sent_at', 'error'}
+    for f in DraftReminderRecipient._meta.fields:
+        assert 'email' not in f.name.lower()
+        assert 'recipient' not in f.name.lower()
 
     # Ensure no rows were added to the visible QueuedMail outbox
     with scopes_disabled():
@@ -212,6 +216,36 @@ def test_batch_crash_recovery_and_deduplication(event, speaker_user, other_speak
 
 
 @pytest.mark.django_db
+def test_batch_skips_removed_speakers(event, speaker_user, user):
+    """If a speaker is removed from a draft proposal before the batch runs, they must be marked SKIPPED."""
+    sub = make_draft_submission(event, speaker_user, title='Draft with removed speaker')
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+
+        # Remove the speaker from the draft proposal
+        sub.speakers.remove(speaker_user)
+
+    djmail.outbox = []
+    send_draft_reminder_batch(batch.pk)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        assert batch.status == DraftReminderBatchStatus.COMPLETED
+        assert batch.sent_count == 0
+        assert batch.skipped_count == 1
+        assert len(djmail.outbox) == 0
+
+        recipient = batch.recipients.first()
+        assert recipient.status == DraftReminderRecipientStatus.SKIPPED
+
+
+@pytest.mark.django_db
 def test_allowance_reconciliation_releases_unsent_quota(event, speaker_user, other_speaker, user):
     """Unsent allowance from skipped or failed reminders is released back to the organizer."""
     make_draft_submission(event, speaker_user, title='Draft 1')
@@ -229,17 +263,30 @@ def test_allowance_reconciliation_releases_unsent_quota(event, speaker_user, oth
         sub2.state = SubmissionStates.SUBMITTED
         sub2.save()
 
-    with patch('eventyay.common.tasks.record_usage') as mock_record:
-        send_draft_reminder_batch(batch.pk)
+    recorded_signals = []
 
-        # Total was 2, sent was 1, skipped was 1 -> unsent is 1
-        mock_record.assert_called_once()
-        assert mock_record.call_args.kwargs['quantity'] == -1
-        assert mock_record.call_args.kwargs['unit'] == 'emails'
+    def signal_receiver(sender, **kwargs):
+        recorded_signals.append((sender, kwargs))
+
+    entitlement_usage_recorded.connect(signal_receiver)
+    try:
+        send_draft_reminder_batch(batch.pk)
+    finally:
+        entitlement_usage_recorded.disconnect(signal_receiver)
 
     with scopes_disabled():
         batch.refresh_from_db()
         assert batch.reconciled is True
+
+    # Total was 2, sent was 1, skipped was 1 -> unsent is 1 released back
+    assert len(recorded_signals) == 1
+    sender, kwargs = recorded_signals[0]
+    assert sender == event.organizer
+    assert kwargs['capability'] == 'email.bulk.monthly'
+    assert kwargs['quantity'] == -1
+    assert kwargs['unit'] == 'emails'
+    assert kwargs['source_type'] == 'bulk_email'
+    assert kwargs['metadata']['batch_uuid'] == batch.uuid.hex
 
     # Re-running reconciliation on an already-reconciled batch is an idempotent no-op
     with patch('eventyay.common.tasks.record_usage') as mock_record2:
@@ -251,7 +298,7 @@ def test_allowance_reconciliation_releases_unsent_quota(event, speaker_user, oth
 def test_cleanup_draft_reminder_batches(event, user):
     """The cleanup command purges completed/failed batches older than retention, preserving pending batches."""
     with scopes_disabled():
-        # Completed batch older than 7 days -> should be deleted
+        # Completed batch older than 7 days, reconciled -> should be deleted
         b_old_completed = DraftReminderBatch.objects.create(
             event=event,
             subject='Old Completed',
@@ -260,7 +307,7 @@ def test_cleanup_draft_reminder_batches(event, user):
             reconciled=True,
             created_at=now() - timedelta(days=8),
         )
-        # Failed batch older than 7 days -> should be deleted
+        # Failed batch older than 7 days, reconciled -> should be deleted
         b_old_failed = DraftReminderBatch.objects.create(
             event=event,
             subject='Old Failed',
@@ -269,7 +316,16 @@ def test_cleanup_draft_reminder_batches(event, user):
             reconciled=True,
             created_at=now() - timedelta(days=8),
         )
-        # Pending/sending batch older than 7 days (e.g. queue delay) -> should NOT be deleted
+        # Failed batch older than 7 days but UNRECONCILED -> must NOT be deleted yet!
+        b_old_unreconciled = DraftReminderBatch.objects.create(
+            event=event,
+            subject='Old Unreconciled',
+            text='text',
+            status=DraftReminderBatchStatus.FAILED,
+            reconciled=False,
+            created_at=now() - timedelta(days=8),
+        )
+        # Pending/sending batch older than 7 days -> should NOT be deleted
         b_old_pending = DraftReminderBatch.objects.create(
             event=event,
             subject='Old Pending',
@@ -287,25 +343,37 @@ def test_cleanup_draft_reminder_batches(event, user):
             reconciled=True,
             created_at=now() - timedelta(days=2),
         )
-        # Abandoned unreconciled batch older than 24h -> should be reconciled
+        # Abandoned unreconciled batch older than 24h that was PENDING
+        # -> should be terminalized to FAILED and reconciled
         b_abandoned = DraftReminderBatch.objects.create(
             event=event,
             subject='Abandoned',
             text='text',
-            status=DraftReminderBatchStatus.FAILED,
+            status=DraftReminderBatchStatus.PENDING,
             total_count=5,
             sent_count=2,
             reconciled=False,
             created_at=now() - timedelta(hours=36),
         )
 
-    with patch('eventyay.core.management.commands.cleanup.reconcile_draft_reminder_batch_allowance') as mock_reconcile:
+    def mock_reconcile(batch):
+        if batch.pk == b_old_unreconciled.pk:
+            raise RuntimeError('Temporary reconciliation failure')
+        batch.reconciled = True
+        batch.save(update_fields=['reconciled'])
+
+    with patch(
+        'eventyay.core.management.commands.cleanup.reconcile_draft_reminder_batch_allowance',
+        side_effect=mock_reconcile,
+    ):
         CleanupCommand().handle()
-        mock_reconcile.assert_called_once_with(b_abandoned)
 
     with scopes_disabled():
         assert not DraftReminderBatch.objects.filter(pk=b_old_completed.pk).exists()
         assert not DraftReminderBatch.objects.filter(pk=b_old_failed.pk).exists()
+        assert DraftReminderBatch.objects.filter(pk=b_old_unreconciled.pk).exists()
         assert DraftReminderBatch.objects.filter(pk=b_old_pending.pk).exists()
         assert DraftReminderBatch.objects.filter(pk=b_recent_completed.pk).exists()
-        assert DraftReminderBatch.objects.filter(pk=b_abandoned.pk).exists()
+        b_abandoned.refresh_from_db()
+        assert b_abandoned.status == DraftReminderBatchStatus.FAILED
+        assert b_abandoned.reconciled is True

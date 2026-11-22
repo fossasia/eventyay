@@ -2,10 +2,16 @@ import logging
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.db.models import F
 from django.utils.timezone import now
 
-from eventyay.base.models import DraftReminderBatch, DraftReminderBatchStatus
+from eventyay.base.models import (
+    DraftReminderBatch,
+    DraftReminderBatchStatus,
+    DraftReminderRecipient,
+    DraftReminderRecipientStatus,
+)
 from eventyay.base.models.auth import ShortToken
 from eventyay.base.models.event import EventView
 from eventyay.base.models.room import AnonymousInvite, RoomView
@@ -26,20 +32,36 @@ class Command(BaseCommand):
         self._cleanup_draft_reminder_batches()
 
     def _cleanup_draft_reminder_batches(self):
-        cutoff = now() - timedelta(days=7)
+        cutoff_retention = now() - timedelta(days=7)
+        cutoff_abandoned = now() - timedelta(hours=24)
+
+        # 1. Terminalize and reconcile abandoned batches older than 24 hours (Reviews 2, 7, 21)
         abandoned = DraftReminderBatch.objects.filter(
             reconciled=False,
-            created_at__lt=now() - timedelta(hours=24),
+            created_at__lt=cutoff_abandoned,
         )
         for batch in abandoned:
             try:
-                reconcile_draft_reminder_batch_allowance(batch)
+                with transaction.atomic():
+                    b = DraftReminderBatch.objects.select_for_update().get(pk=batch.pk)
+                    if b.status in [DraftReminderBatchStatus.PENDING, DraftReminderBatchStatus.SENDING]:
+                        b.status = DraftReminderBatchStatus.FAILED
+                        b.completed_at = now()
+                        b.failed_count = b.total_count - b.sent_count - b.skipped_count
+                        b.save(update_fields=['status', 'completed_at', 'failed_count'])
+                        DraftReminderRecipient.objects.filter(
+                            batch=b, status=DraftReminderRecipientStatus.PENDING
+                        ).update(status=DraftReminderRecipientStatus.FAILED)
+                    reconcile_draft_reminder_batch_allowance(b)
             except Exception:
                 logger.exception('Failed to reconcile draft reminder batch %s during cleanup', batch.pk)
 
+        # 2. Delete completed/failed batches older than retention window
+        # ONLY if successfully reconciled (Reviews 6 & 22)
         DraftReminderBatch.objects.filter(
             status__in=[DraftReminderBatchStatus.COMPLETED, DraftReminderBatchStatus.FAILED],
-            created_at__lt=cutoff,
+            reconciled=True,
+            created_at__lt=cutoff_retention,
         ).delete()
 
     def _cleanup_files(self):
