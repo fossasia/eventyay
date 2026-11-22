@@ -293,32 +293,34 @@ def send_draft_reminder_batch(self, batch_id: int):
                         )
                         continue
 
-                    # Record SENDING intent and commit before SMTP dispatch
+                    # Prepare message before committing SENDING so template errors do not leave recipient in SENDING
+                    mail = template.to_mail(
+                        user=recipient.user,
+                        event=event,
+                        locale=sub.get_email_locale(recipient.user.locale),
+                        context_kwargs={
+                            'submission': sub,
+                            'user': recipient.user,
+                        },
+                        skip_queue=False,
+                        commit=False,
+                    )
+
+                    # Record SENDING intent and commit immediately before SMTP dispatch
                     recipient.status = DraftReminderRecipientStatus.SENDING
                     recipient.save(update_fields=['status'])
 
-                # 2. Prepare message and dispatch SMTP email outside the database lock
-                mail = template.to_mail(
-                    user=recipient.user,
-                    event=event,
-                    locale=sub.get_email_locale(recipient.user.locale),
-                    context_kwargs={
-                        'submission': sub,
-                        'user': recipient.user,
-                    },
-                    skip_queue=False,
-                    commit=False,
-                )
-
+                # 2. Dispatch SMTP email outside the database lock
                 try:
                     # Direct synchronous send within worker thread: sensitive=True redacts logs and exceptions
                     mail.send(synchronous=True, sensitive=True)
                 except (SendMailException, SMTPException, OSError) as exc:
                     cause = getattr(exc, '__cause__', None) or exc
                     smtp_code = getattr(exc, 'smtp_code', None) or getattr(cause, 'smtp_code', None)
+                    errno = getattr(exc, 'errno', None) or getattr(cause, 'errno', None)
                     is_retryable = (
                         (smtp_code in RETRY_SMTP_CODES or (isinstance(smtp_code, int) and 400 <= smtp_code < 500))
-                        or (isinstance(cause, OSError) and getattr(cause, 'errno', None) in RETRY_ERRNOS)
+                        or errno in RETRY_ERRNOS
                     )
                     with transaction.atomic():
                         DraftReminderBatch.objects.select_for_update().filter(pk=batch_id).first()

@@ -409,38 +409,38 @@ def test_smtp_failure_privacy_and_error_handling(event, speaker_user, user, capl
         with caplog.at_level(logging.DEBUG):
             with patch('django.core.mail.backends.locmem.EmailBackend.send_messages', side_effect=raise_smtp_refused):
                 send_draft_reminder_batch(batch.pk)
+
+        with scopes_disabled():
+            batch.refresh_from_db()
+            assert batch.status == DraftReminderBatchStatus.FAILED
+            assert batch.sent_count == 0
+            assert batch.failed_count == 1
+            assert batch.reconciled is True
+
+            recipient = batch.recipients.first()
+            assert recipient.status == DraftReminderRecipientStatus.FAILED
+            # Error detail must not expose the user's email address
+            assert speaker_user.email not in recipient.error
+            assert 'delivery failed' in recipient.error
+
+        # Assert privacy: the log output must NEVER contain the recipient's plaintext email
+        assert speaker_user.email not in caplog.text
+
+        # Assert quota reconciliation: released quota amount equals unsent count and is released exactly once
+        assert len(recorded_signals) == 1
+        sender, kwargs = recorded_signals[0]
+        assert sender == event.organizer
+        assert kwargs['capability'] == 'email.bulk.monthly'
+        assert kwargs['quantity'] == -1
+        assert kwargs['unit'] == 'emails'
+        assert kwargs['source_type'] == 'bulk_email'
+        assert kwargs['metadata']['batch_uuid'] == batch.uuid.hex
+
+        # Re-running reconciliation is idempotent and emits no duplicate release
+        reconcile_draft_reminder_batch_allowance(batch)
+        assert len(recorded_signals) == 1
     finally:
         entitlement_usage_recorded.disconnect(signal_receiver)
-
-    with scopes_disabled():
-        batch.refresh_from_db()
-        assert batch.status == DraftReminderBatchStatus.FAILED
-        assert batch.sent_count == 0
-        assert batch.failed_count == 1
-        assert batch.reconciled is True
-
-        recipient = batch.recipients.first()
-        assert recipient.status == DraftReminderRecipientStatus.FAILED
-        # Error detail must not expose the user's email address
-        assert speaker_user.email not in recipient.error
-        assert 'delivery failed' in recipient.error
-
-    # Assert privacy: the log output must NEVER contain the recipient's plaintext email
-    assert speaker_user.email not in caplog.text
-
-    # Assert quota reconciliation: released quota amount equals unsent count and is released exactly once
-    assert len(recorded_signals) == 1
-    sender, kwargs = recorded_signals[0]
-    assert sender == event.organizer
-    assert kwargs['capability'] == 'email.bulk.monthly'
-    assert kwargs['quantity'] == -1
-    assert kwargs['unit'] == 'emails'
-    assert kwargs['source_type'] == 'bulk_email'
-    assert kwargs['metadata']['batch_uuid'] == batch.uuid.hex
-
-    # Re-running reconciliation is idempotent and emits no duplicate release
-    reconcile_draft_reminder_batch_allowance(batch)
-    assert len(recorded_signals) == 1
 
 
 @pytest.mark.django_db

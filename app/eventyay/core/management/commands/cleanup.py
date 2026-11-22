@@ -49,17 +49,43 @@ def cleanup_draft_reminder_batches():
                     if not b:
                         continue
                     if b.status in [DraftReminderBatchStatus.PENDING, DraftReminderBatchStatus.SENDING]:
-                        b.status = DraftReminderBatchStatus.FAILED
-                        b.completed_at = now()
-                        b.failed_count = b.total_count - b.sent_count - b.skipped_count
-                        b.save(update_fields=['status', 'completed_at', 'failed_count'])
+                        # Consistent with worker recovery: account for interrupted SENDING recipients as sent
                         DraftReminderRecipient.objects.filter(
                             batch=b,
-                            status__in=[
-                                DraftReminderRecipientStatus.PENDING,
-                                DraftReminderRecipientStatus.SENDING,
-                            ],
+                            status=DraftReminderRecipientStatus.SENDING,
+                        ).update(status=DraftReminderRecipientStatus.SENT, sent_at=now())
+                        # Mark only unattempted recipients as failed
+                        DraftReminderRecipient.objects.filter(
+                            batch=b,
+                            status=DraftReminderRecipientStatus.PENDING,
                         ).update(status=DraftReminderRecipientStatus.FAILED)
+
+                        actual_sent = max(
+                            b.sent_count,
+                            DraftReminderRecipient.objects.filter(
+                                batch=b, status=DraftReminderRecipientStatus.SENT
+                            ).count(),
+                        )
+                        actual_failed = DraftReminderRecipient.objects.filter(
+                            batch=b, status=DraftReminderRecipientStatus.FAILED
+                        ).count()
+                        actual_skipped = DraftReminderRecipient.objects.filter(
+                            batch=b, status=DraftReminderRecipientStatus.SKIPPED
+                        ).count()
+                        b.sent_count = actual_sent
+                        b.failed_count = actual_failed
+                        b.skipped_count = actual_skipped
+                        b.status = DraftReminderBatchStatus.FAILED
+                        b.completed_at = now()
+                        b.save(
+                            update_fields=[
+                                'status',
+                                'completed_at',
+                                'sent_count',
+                                'failed_count',
+                                'skipped_count',
+                            ]
+                        )
                     reconcile_draft_reminder_batch_allowance(b)
         except Exception:
             logger.exception('Failed to reconcile draft reminder batch %s during cleanup', batch_id)

@@ -223,11 +223,23 @@ def send_mail_now(
                 smtp_code=exception.smtp_code,
             ) from None
         raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
+    except OSError as exception:
+        if sensitive:
+            logger.error('Error sending email to [REDACTED]: %s', type(exception).__name__)
+            raise SendMailException(
+                f'Failed to send an email: {type(exception).__name__}',
+                errno=getattr(exception, 'errno', None),
+                already_logged=True,
+            ) from None
+        logger.exception('Error sending email to %s', to)
+        raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
     except Exception as exception:
         if sensitive:
             logger.error('Error sending email to [REDACTED]: %s', type(exception).__name__)
             raise SendMailException(
-                f'Failed to send an email: {type(exception).__name__}'
+                f'Failed to send an email: {type(exception).__name__}',
+                errno=getattr(exception, 'errno', None),
+                already_logged=True,
             ) from None
         logger.exception('Error sending email to %s', to)
         raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception

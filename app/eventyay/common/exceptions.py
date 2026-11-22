@@ -7,9 +7,10 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 
 
 class SendMailException(Exception):
-    def __init__(self, *args, smtp_code=None, already_logged=False):
+    def __init__(self, *args, smtp_code=None, errno=None, already_logged=False):
         super().__init__(*args)
         self.smtp_code = smtp_code
+        self.errno = errno
         if not already_logged:
             log_event('mail', 'mail.send', OUTCOME_FAILURE, error_code='send_failed')
 
