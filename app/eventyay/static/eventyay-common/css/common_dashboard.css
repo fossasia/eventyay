@@ -2585,7 +2585,7 @@ body:has(.td-dashboard) #page-content {
 }
 .personal-empty-state p {
   margin: 0;
-  color: var(--color-text,var(--cd-text));
+  color: var(--color-text,#222222);
   font-size: 1.08rem;
   line-height: 1.55;
   max-width: 52rem
