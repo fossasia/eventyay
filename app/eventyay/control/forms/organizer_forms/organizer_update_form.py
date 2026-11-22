@@ -63,13 +63,6 @@ class OrganizerUpdateForm(OrganizerForm):
             return self.cleaned_data['slug']
         return self.instance.slug
 
-    def _get_validation_exclusions(self):
-        exclude = super()._get_validation_exclusions()
-        # A short form that was reserved after the organizer was created must not block its other edits.
-        if self.cleaned_data.get('slug') == self.instance.slug:
-            exclude.add('slug')
-        return exclude
-
     def save(self, commit=True):
         instance = super().save(commit)
 

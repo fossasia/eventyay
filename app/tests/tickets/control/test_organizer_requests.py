@@ -141,12 +141,16 @@ def test_organizer_pages_take_precedence_over_invite_links():
     assert resolve('/abcdef/').view_name == 'presale:organizer.index'
 
 
-def test_existing_organizer_with_a_reserved_slug_can_still_be_edited():
+def test_organizer_update_only_validates_a_changed_slug():
     organizer = Organizer.objects.create(name='Existing', slug='page')
-    assert OrganizerUpdateForm(instance=organizer, data={'name': 'Renamed', 'slug': 'page'}).is_valid()
-    assert not OrganizerUpdateForm(
-        instance=organizer, data={'name': 'Renamed', 'slug': 'common'}, change_slug=True
-    ).is_valid()
+    Organizer.objects.create(name='Other', slug='taken-org')
+
+    def form(slug):
+        return OrganizerUpdateForm(instance=organizer, data={'name': 'Renamed', 'slug': slug}, change_slug=True)
+
+    assert form('page').is_valid()
+    assert not form('common').is_valid()
+    assert not form('taken-org').is_valid()
 
 
 def test_taken_slug(client, data):
