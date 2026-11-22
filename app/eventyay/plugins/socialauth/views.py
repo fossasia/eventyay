@@ -42,7 +42,7 @@ class OAuthLoginView(View):
         known_providers = frozenset(LoginProviders.model_fields.keys())
         if (
             provider not in known_providers
-            or provider not in login_providers
+            or not isinstance(login_providers.get(provider), dict)
             or not login_providers[provider].get('state')
             or not login_providers[provider].get('client_id')
             or not login_providers[provider].get('secret')
@@ -100,6 +100,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         self.gs = GlobalSettingsObject()
         self.set_initial_state()
 
+    @transaction.atomic
     def set_initial_state(self):
         """
         Validate and normalize the login providers stored in global settings.
@@ -113,9 +114,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         unchanged rather than silently overwriting with all-disabled defaults,
         which would wipe out the admin's configuration.
         """
+        GlobalSettingsObject_SettingsStore.objects.select_for_update().get_or_create(
+            key='login_providers', defaults={'value': '{}'},
+        )
+        self.gs.settings.flush()
         raw = self.gs.settings.get('login_providers', as_type=dict)
         try:
-            validated = LoginProviders.model_validate(raw or {})
+            values = raw or {}
+            if isinstance(values, dict) and not isinstance(values.get('openid_connect', {}), dict):
+                values = {**values, 'openid_connect': {}}
+            validated = LoginProviders.model_validate(values)
         except ValidationError as e:
             logger.error(
                 'login_providers settings failed validation (not overwriting): %s', e

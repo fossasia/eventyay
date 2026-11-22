@@ -27,7 +27,7 @@ def require_provider_enabled(request, provider):
     cfg = login_providers.get(provider)
     if provider == 'openid_connect' or provider.startswith('oidc-'):
         oidc = login_providers.get('openid_connect', {})
-        cfg = oidc if provider == oidc.get('provider_id', 'openid_connect') else None
+        cfg = oidc if isinstance(oidc, dict) and provider == oidc.get('provider_id', 'openid_connect') else None
     if (
         not isinstance(cfg, dict)
         or not cfg.get('state')
@@ -82,6 +82,18 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def get_provider(self, request, provider, client_id=None):
+        if (provider == 'openid_connect' and client_id
+                and getattr(getattr(request, 'resolver_match', None), 'url_name', None) == 'socialaccount_signup'):
+            # Allauth serializes the provider type, but the pending account records the actual issuer-specific ID.
+            pending = request.session.get('socialaccount_sociallogin', {})
+            account_provider = pending.get('account', {}).get('provider')
+            try:
+                instance = super().get_provider(request, provider, client_id)
+            except SocialApp.DoesNotExist as exc:
+                raise ValueError('The OIDC signup has expired.') from exc
+            if account_provider != instance.app.provider_id:
+                raise ValueError('The OIDC signup has expired.')
+            return instance
         instance = super().get_provider(request, provider, client_id)
         if provider == 'openid_connect' and instance.app.provider_id != provider:
             # Allauth also matches the generic provider name on a retired callback URL.

@@ -29,6 +29,7 @@ def get_login_context(context):
 
     gs = global_settings_object(request) if request else GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict) or {}
+    oidc = raw_providers.get('openid_connect')
     ordered = order_login_providers(raw_providers)
     enabled_providers = [
         (key, cfg)
@@ -56,7 +57,7 @@ def get_login_context(context):
     return {
         'request': request,
         'enabled_providers': enabled_providers,
-        'oidc_label': (raw_providers.get('openid_connect') or {}).get('display_name', ''),
+        'oidc_label': oidc.get('display_name', '') if isinstance(oidc, dict) else '',
         'preferred_provider': preferred_provider,
         'can_reset': can_reset,
         'can_register': can_register,

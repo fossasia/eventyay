@@ -12,7 +12,10 @@ from allauth.socialaccount.models import SocialAccount, SocialApp
 from bs4 import BeautifulSoup
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.template.loader import render_to_string
 from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -526,3 +529,69 @@ def test_admin_switch_and_return_through_oidc_callback(client, settings):
     assert not SocialApp.objects.filter(provider='openid_connect').exists()
     client.post(url, {'openid_connect_login': 'enabled'})
     assert SocialApp.objects.get(provider='openid_connect').settings['server_url'] == issuer
+
+
+@pytest.mark.django_db
+def test_malformed_oidc_settings_leave_login_and_admin_available(client, preferred_login_providers):
+    gs = GlobalSettingsObject()
+    providers = gs.settings.get('login_providers', as_type=dict)
+    gs.settings.set('login_providers', {**providers, 'openid_connect': 'disabled'})
+    assert 'Login with Github' in client.get(reverse('auth.login')).text
+    admin = User.objects.create_user('admin@example.org', 'test', is_staff=True)
+    client.force_login(admin)
+    admin.staffsession_set.create(date_start=now(), session_key=client.session.session_key)
+    page = client.get(reverse('plugins:socialauth:admin.global.social.auth.settings'))
+    assert page.status_code == 200
+    repaired = page.context['login_providers']
+    assert not repaired['openid_connect']['state']
+    assert repaired['github'] == providers['github']
+
+
+@pytest.mark.django_db
+def test_pending_oidc_signup_uses_current_account_provider(client, rf, settings):
+    settings.EVENTYAY_REGISTRATION = True
+    app = SocialApp.objects.create(provider='openid_connect', provider_id='openid_connect', client_id='client')
+    signup = reverse('socialaccount_signup')
+
+    def start_signup(provider_id):
+        request = rf.get('/')
+        provider = get_adapter().get_provider(request, provider_id)
+        login = provider.sociallogin_from_response(request, {'userinfo': {'sub': 'new-user'}})
+        session = client.session
+        session['socialaccount_sociallogin'] = login.serialize()
+        session.save()
+
+    start_signup(app.provider_id)
+    app.provider_id = 'oidc-second'
+    app.save()
+    assert client.post(signup, {'email': 'new@example.org'}).status_code == 302
+    assert not SocialAccount.objects.filter(uid='new-user').exists()
+    start_signup(app.provider_id)
+    response = client.get(signup)
+    assert response.status_code == 200
+    assert response.context_data['form'].sociallogin.account.provider == app.provider_id
+    client.post(signup, {'email': 'new@example.org'})
+    assert SocialAccount.objects.get(uid='new-user').provider == app.provider_id
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('preferred', [True, False])
+def test_checkout_modal_uses_oidc_label(rf, preferred):
+    GlobalSettingsObject().settings.set('login_providers', {'openid_connect': {
+        'state': True, 'client_id': 'client', 'secret': 'secret',
+        'display_name': 'Company login', 'is_preferred': preferred,
+    }})
+    html = render_to_string('pretixpresale/fragment_modals.html', request=rf.get('/'))
+    assert 'Login with Company login' in html
+
+
+@pytest.mark.django_db
+def test_oidc_normalization_locks_before_updating():
+    GlobalSettingsObject().settings.set('login_providers', {'openid_connect': {'display_name': 'Latest'}})
+    with CaptureQueriesContext(connection) as queries:
+        view = SocialLoginView()
+    statements = [query['sql'] for query in queries]
+    lock = next(i for i, sql in enumerate(statements) if 'FOR UPDATE' in sql)
+    write = next(i for i, sql in enumerate(statements) if sql.startswith('UPDATE'))
+    assert lock < write
+    assert view.gs.settings.get('login_providers', as_type=dict)['openid_connect']['display_name'] == 'Latest'
