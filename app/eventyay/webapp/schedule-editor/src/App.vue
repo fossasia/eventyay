@@ -172,6 +172,7 @@
 					:draggedSession="draggedSession",
 					:isUnassigning="isUnassigning",
 					:allowOverlap="caps.allowOverlap",
+					:canEdit="caps.canEdit",
 					@changeDay="changeDay",
 					@startDragging="caps.canDrag ? startDragging($event) : null",
 					@rescheduleSession="caps.canDrag ? rescheduleSession($event) : null",
@@ -467,6 +468,7 @@ let breakDeleteId: number | string | null = null
 const pendingBreakCreations = new Map<string, { dismissed: boolean }>()
 const pendingBreakDeletions = new Set<string>()
 const deletedBreakIds = new Set<string>()
+const pendingStretchRooms = new Set<number | string>()
 
 const scheduleActionError = ref<string>('')
 let scheduleActionErrorTimer: ReturnType<typeof setTimeout> | null = null
@@ -1181,7 +1183,12 @@ interface CreateSessionEvent {
   session: Talk
 }
 
-async function createSession(e: CreateSessionEvent): Promise<void> {
+interface CreateSessionResult {
+  success: boolean
+  session?: any
+}
+
+async function createSession(e: CreateSessionEvent): Promise<CreateSessionResult> {
   stopDragging()
   const roomId = typeof e.session.room === 'object' && e.session.room !== null ? (e.session.room as any).id : e.session.room
   const startStr = typeof e.session.start === 'object' && e.session.start !== null && 'format' in e.session.start
@@ -1242,7 +1249,7 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
           pendingBreakDeletions.delete(String(realId))
         }
       }
-      return
+      return { success: false }
     }
 
     if (e.session.code && Array.isArray(response.warnings)) {
@@ -1262,6 +1269,11 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
       if (idx !== -1) {
         schedule.value.talks[idx] = realSession
         schedule.value.talks = [...schedule.value.talks]
+      } else {
+        const exists = schedule.value.talks.some((s) => String(s.id) === String(realSession.id))
+        if (!exists) {
+          schedule.value.talks = [...schedule.value.talks, realSession]
+        }
       }
     }
     if (e.session.code) {
@@ -1269,12 +1281,14 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
         console.error('Failed to refresh additional schedule data after create', error)
       })
     }
+    return { success: true, session: realSession }
   } catch (error) {
     pendingBreakCreations.delete(tempId)
     if (schedule.value) {
       schedule.value.talks = schedule.value.talks.filter((s) => String(s.id) !== tempId)
     }
     console.error('Failed to create session', error)
+    return { success: false }
   }
 }
 
@@ -1372,13 +1386,21 @@ async function editorSave(): Promise<void> {
         sessionInSchedule.title = editorSession.value.title as Record<string, string>
       }
     }
-    editorSaveWaiting.value = false
     editorSession.value = null
     lastModalClosedAt = Date.now()
 
     try {
       if (caps.showRoles) {
-        schedule.value = await fetchSchedule()
+        const newSched = await fetchSchedule()
+        if (schedule.value) {
+          const pendingOptimistic = schedule.value.talks.filter((s) => String(s.id).startsWith('temp-'))
+          for (const opt of pendingOptimistic) {
+            if (!newSched.talks.some((t) => String(t.id) === String(opt.id))) {
+              newSched.talks.push(opt)
+            }
+          }
+        }
+        schedule.value = newSched
       }
       await fetchAdditionalScheduleData()
     } catch {
@@ -1431,16 +1453,38 @@ async function onStretchBreakDrop(payload: {
   }
   if (!payload.targetRooms?.length) return
 
+  if (payload.targetRooms.some((room) => pendingStretchRooms.has(room.id))) {
+    showScheduleActionError($t('Cannot stretch break: an operation is already pending for target room.'))
+    return
+  }
+
+  const failedRooms: string[] = []
   for (const room of payload.targetRooms) {
-    const newBreakData: any = {
-      title: payload.session.title,
-      duration: payload.session.duration,
-      start: payload.session.start,
-      end: payload.session.end,
-      room: { id: room.id, name: room.name },
-      uncreated: true,
+    pendingStretchRooms.add(room.id)
+    try {
+      const newBreakData: any = {
+        title: payload.session.title,
+        duration: payload.session.duration,
+        start: payload.session.start,
+        end: payload.session.end,
+        room: { id: room.id, name: room.name },
+        uncreated: true,
+      }
+      const result = await createSession({ session: newBreakData })
+      if (!result.success) {
+        failedRooms.push(getLocalizedString(room.name) || String(room.name))
+      }
+    } finally {
+      pendingStretchRooms.delete(room.id)
     }
-    await createSession({ session: newBreakData })
+  }
+
+  if (failedRooms.length > 0) {
+    showScheduleActionError(
+      $t('Failed to create break in: {{rooms}}. Please retry for those rooms.', {
+        rooms: failedRooms.join(', '),
+      })
+    )
   }
 }
 

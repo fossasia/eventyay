@@ -23,6 +23,7 @@
 			session(
 				v-if="hasValidPosition(session)"
 				:session="session",
+				:canEdit="canEdit",
 				:warnings="warningsFor(session)",
 				:isDragged="draggedSession && (session.id === draggedSession.id)",
 				:style="sessionStyles.get(session.id)",
@@ -161,6 +162,7 @@ const props = defineProps<{
   density: 'compact' | 'default' | 'comfortable'
   timeDensityMinutes: number
   allowOverlap?: boolean
+  canEdit?: boolean
   isUnassigning?: boolean
 }>()
 
@@ -195,6 +197,7 @@ const stretchingBreak = ref<{
   session: SessionDatum
   direction: 'left' | 'right'
   originRoomIndex: number
+  pointerId: number
 } | null>(null)
 const stretchTargetRoomIndex = ref<number | null>(null)
 
@@ -475,6 +478,7 @@ const gridStyle = computed(() => {
 })
 
 const stretchConflicted = computed(() => {
+  if (props.allowOverlap) return false
   if (!stretchingBreak.value || stretchTargetRoomIndex.value === null) return false
   const s = stretchingBreak.value.session
   if (!s.start || !s.end) return false
@@ -616,6 +620,7 @@ const startDragging = ({ session, event }: DragEventPayload) => {
 
 const startStretchingBreak = ({
   session,
+  event,
   direction,
 }: {
   session: SessionDatum
@@ -626,7 +631,7 @@ const startStretchingBreak = ({
   const originRoomIndex = visibleRooms.value.findIndex((r) => r.id === roomId)
   if (originRoomIndex === -1) return
   refreshGridOffset()
-  stretchingBreak.value = { session, direction, originRoomIndex }
+  stretchingBreak.value = { session, direction, originRoomIndex, pointerId: event.pointerId }
   stretchTargetRoomIndex.value = originRoomIndex
 }
 
@@ -637,13 +642,22 @@ const updateStretchRoom = (clientX: number, clientY: number) => {
     syncCachedGridToScroll()
     const r = cachedGrid.rooms.find((room) => clientX >= room.left && clientX < room.right)
     if (r) {
-      stretchTargetRoomIndex.value = r.roomIndex
+      if (stretchingBreak.value.direction === 'left' && r.roomIndex > stretchingBreak.value.originRoomIndex) {
+        stretchTargetRoomIndex.value = stretchingBreak.value.originRoomIndex
+      } else if (stretchingBreak.value.direction === 'right' && r.roomIndex < stretchingBreak.value.originRoomIndex) {
+        stretchTargetRoomIndex.value = stretchingBreak.value.originRoomIndex
+      } else {
+        stretchTargetRoomIndex.value = r.roomIndex
+      }
     }
   }
 }
 
-const stopStretching = () => {
+const stopStretching = (event?: PointerEvent) => {
   if (!stretchingBreak.value) return
+  if (event && event.pointerId !== undefined && event.pointerId !== stretchingBreak.value.pointerId) {
+    return
+  }
   const { session, originRoomIndex } = stretchingBreak.value
   const targetIndex = stretchTargetRoomIndex.value
   const conflicted = stretchConflicted.value
@@ -670,9 +684,19 @@ const stopStretching = () => {
   cachedGrid = null
 }
 
+const cancelStretching = (event?: PointerEvent) => {
+  if (!stretchingBreak.value) return
+  if (event && event.pointerId !== undefined && event.pointerId !== stretchingBreak.value.pointerId) {
+    return
+  }
+  stretchingBreak.value = null
+  stretchTargetRoomIndex.value = null
+  cachedGrid = null
+}
+
 const stopDragging = (event: PointerEvent) => {
   if (stretchingBreak.value) {
-    stopStretching()
+    stopStretching(event)
     return
   }
   if (dragStart.value && props.draggedSession) {
@@ -925,7 +949,7 @@ const scheduleHoverUpdate = () => {
   })
 }
 const onDocPointerMove = (e: PointerEvent) => {
-  if (stretchingBreak.value && e.isPrimary) {
+  if (stretchingBreak.value && e.pointerId === stretchingBreak.value.pointerId) {
     updateStretchRoom(e.clientX, e.clientY)
     return
   }
@@ -1153,6 +1177,7 @@ onMounted(async () => {
   // Listen on document level so touch drags (where pointer is captured elsewhere) work
   document.addEventListener('pointermove', onDocPointerMove)
   window.addEventListener('pointerup', stopStretching)
+  window.addEventListener('pointercancel', cancelStretching)
 
   observer = new IntersectionObserver(onIntersect, {
     root: scrollParent.value,
@@ -1170,6 +1195,7 @@ onUnmounted(() => {
   timesliceRefs.value = []
   document.removeEventListener('pointermove', onDocPointerMove)
   window.removeEventListener('pointerup', stopStretching)
+  window.removeEventListener('pointercancel', cancelStretching)
   scrollParent.value?.removeEventListener('scroll', onScroll)
   if (pointerRaf !== null) {
     cancelAnimationFrame(pointerRaf)

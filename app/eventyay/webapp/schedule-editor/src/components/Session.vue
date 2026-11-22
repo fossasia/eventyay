@@ -31,12 +31,12 @@
 	button.unschedule-btn.no-print(v-if="showUnschedule", type="button", @pointerdown.stop, @pointerup.stop, @click.stop="onUnschedule", :aria-label="$t('Remove from schedule')", :title="$t('Remove from schedule')")
 		i.fa.fa-times(aria-hidden="true")
 	.break-stretch-handle.handle-left(
-		v-if="isBreak && !isDragClone && session.start",
+		v-if="isBreak && !isDragClone && session.start && canEdit",
 		@pointerdown.stop="onStretchStart('left', $event)",
 		:title="$t('Drag to stretch break')"
 	)
 	.break-stretch-handle.handle-right(
-		v-if="isBreak && !isDragClone && session.start",
+		v-if="isBreak && !isDragClone && session.start && canEdit",
 		@pointerdown.stop="onStretchStart('right', $event)",
 		:title="$t('Drag to stretch break')"
 	)
@@ -93,6 +93,7 @@ const props = defineProps<{
   isDragClone?: boolean
   overrideStart?: Moment | null
   allowUnschedule?: boolean
+  canEdit?: boolean
 }>()
 
 const emit = defineEmits<{
