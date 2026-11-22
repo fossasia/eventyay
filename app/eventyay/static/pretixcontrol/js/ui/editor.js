@@ -1633,7 +1633,15 @@ var editor = {
     },
 
     _source_save: function () {
-        editor.load(JSON.parse($("#source-textarea").val()));
+        var previous = editor.dump();
+        try {
+            editor.load(JSON.parse($("#source-textarea").val()));
+        } catch (err) {
+            console.error('Could not apply the layout code', err);
+            editor.load(previous);
+            alert(gettext('The layout code could not be applied. Please check it and try again.'));
+            return;
+        }
         editor._create_savepoint();
         $("#source-container").hide();
     },
@@ -1740,10 +1748,10 @@ var editor = {
             editor._create_savepoint();
         });
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
-        $("#toolbox .colorpickerfield").bind('showPicker', function () {
+        $("#toolbox .colorpickerfield").on('showPicker', function () {
             editor._color_picker_open = true;
         });
-        $("#toolbox .colorpickerfield").bind('hidePicker', function () {
+        $("#toolbox .colorpickerfield").on('hidePicker', function () {
             editor._color_picker_open = false;
             editor._create_savepoint();
         });
