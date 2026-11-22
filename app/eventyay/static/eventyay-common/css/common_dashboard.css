@@ -1788,7 +1788,7 @@ body:has(.td-dashboard) #page-content {
   --cd-border-strong: #aeb6c2;
   --cd-surface: #fff;
   --cd-surface-hover: #f1f5f9;
-  --cd-muted: var(--color-text, var(--cd-text));
+  --cd-muted: var(--cd-text);
   --cd-gap: 3rem;
   --cd-primary: var(--color-primary, #2185d0);
   --cd-warning: var(--color-warning, #f9a557);
@@ -1832,7 +1832,7 @@ body:has(.td-dashboard) #page-content {
   margin: 0;
   font-size: clamp(2.3rem, 2.8vw, 2.75rem);
   font-weight: 700;
-  color: var(--color-text,var(--cd-text));
+  color: var(--cd-text);
   line-height: 1.15;
   letter-spacing: -.025em
 }
@@ -1917,11 +1917,11 @@ body:has(.td-dashboard) #page-content {
   font-size: clamp(1.75rem, 2.2vw, 2.05rem);
   font-weight: 700;
   letter-spacing: -.02em;
-  color: var(--color-text,var(--cd-text))
+  color: var(--cd-text)
 }
 .cd-welcome__body p {
   margin: 0 0 1.5rem;
-  color: var(--color-text,var(--cd-text));
+  color: var(--cd-text);
   font-size: 1.15rem;
   line-height: 1.6;
   max-width: 58rem
@@ -1946,7 +1946,7 @@ body:has(.td-dashboard) #page-content {
   border-width: 1.5px;
   border-color: var(--cd-border-strong);
   background: #fff;
-  color: var(--color-text,var(--cd-text))
+  color: var(--cd-text)
 }
 .cd-btn.btn-default:focus,
 .cd-btn.btn-default:hover {
@@ -2048,7 +2048,7 @@ body:has(.td-dashboard) #page-content {
 .cd-search .event-dropdown li a {
   display: block;
   padding: .85rem 1.25rem;
-  color: var(--color-text,var(--cd-text));
+  color: var(--cd-text);
   border-bottom: 1px solid color-mix(in srgb,var(--cd-border) 60%,transparent);
   border-left: 3px solid transparent;
   transition: all var(--cd-ease);
@@ -2183,7 +2183,7 @@ body:has(.td-dashboard) #page-content {
 }
 .cd-action-card__icon--accent,
 .cd-action-card__icon--organise {
-  color: color-mix(in srgb,var(--cd-warning) 75%,#222222);
+  color: color-mix(in srgb,var(--cd-warning) 69%,#222222);
   background: color-mix(in srgb,var(--cd-warning) 22%,#fff)
 }
 .cd-action-card h3 {
