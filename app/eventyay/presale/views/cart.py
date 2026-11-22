@@ -464,11 +464,26 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                 separator = '&' if '?' in url else '?'
                 url += '{}cart_id={}'.format(separator, quote(cart_id, safe=''))
             return url
+        elif isinstance(value, dict) and value.get('info'):
+            url = eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            disclose_cart_id = (
+                'iframe' in self.request.GET or settings.SESSION_COOKIE_NAME not in self.request.COOKIES
+            ) and self.kwargs.get('cart_namespace')
+            if disclose_cart_id:
+                url += '?cart_id=' + quote(get_or_create_cart_id(self.request), safe='')
+            return url
         else:
             # Return to event page using 'next' parameter (original behavior)
             return self.get_next_url()
 
+    def get_success_message_level(self, value):
+        if isinstance(value, dict) and value.get('info'):
+            return messages.INFO
+        return messages.SUCCESS
+
     def get_success_message(self, value):
+        if isinstance(value, dict) and value.get('info'):
+            return value['info']
         if isinstance(value, dict) and value.get('warning'):
             return value['warning']
         return _('The products have been successfully added to your cart.')

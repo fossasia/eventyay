@@ -60,7 +60,7 @@ class AsyncMixin:
             if res.successful() and not isinstance(res.info, Exception):
                 smes = self.get_success_message(res.info)
                 if smes:
-                    messages.success(self.request, smes)
+                    messages.add_message(self.request, self.get_success_message_level(res.info), smes)
                 # TODO: Do not store message if the ajax client states that it will not redirect
                 # but handle the message itself
                 data.update(
@@ -106,7 +106,7 @@ class AsyncMixin:
     def success(self, value):
         smes = self.get_success_message(value)
         if smes:
-            messages.success(self.request, smes)
+            messages.add_message(self.request, self.get_success_message_level(value), smes)
         if 'ajax' in self.request.POST or 'ajax' in self.request.GET:
             return JsonResponse(
                 {
@@ -139,6 +139,9 @@ class AsyncMixin:
         else:
             logger.error('Unexpected exception: %r' % exception)
             return _('An unexpected error has occurred, please try again later.')
+
+    def get_success_message_level(self, value):
+        return messages.SUCCESS
 
     def get_success_message(self, value):
         return _('The task has been completed.')

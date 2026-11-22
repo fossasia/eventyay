@@ -2,6 +2,7 @@ import datetime
 import json
 from datetime import timedelta
 from decimal import Decimal
+from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
@@ -2519,6 +2520,145 @@ class CartTest(CartTestMixin, TestCase):
             assert positions.exists()
             assert all(cp.voucher == v for cp in positions)
 
+    def test_voucher_partial_adds_remainder_at_regular_price(self):
+        with scopes_disabled():
+            self.ticket.default_price = Decimal('20.00')
+            self.ticket.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+            follow=True,
+        )
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.count() == 5
+            assert positions.filter(voucher=voucher, price=Decimal('10.00')).count() == 3
+            assert positions.filter(voucher__isnull=True, price=Decimal('20.00')).count() == 2
+            assert sum(positions.values_list('price', flat=True)) == Decimal('70.00')
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert 'Voucher applied to 3 tickets. The other 2 tickets were added at regular price.' in doc.select_one('.alert-info').text
+        assert not any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+        rows = doc.select('.cart .cart-row:not(.total)')
+        assert len(rows) == 2
+        assert sum('Voucher code used:' in row.text for row in rows) == 1
+        assert '70.00' in doc.select_one('.cart .total').text
+
+    def test_voucher_partial_remainder_respects_stock(self):
+        with scopes_disabled():
+            self.quota_tickets.size = 4
+            self.quota_tickets.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+            follow=True,
+        )
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher).count() == 3
+            assert positions.filter(voucher__isnull=True).count() == 1
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+        assert not doc.select('.alert-info')
+
+    def test_voucher_partial_remainder_cannot_bypass_quota(self):
+        with scopes_disabled():
+            self.quota_tickets.size = 0
+            self.quota_tickets.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'),
+                max_usages=3, allow_ignore_quota=True,
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+            follow=True,
+        )
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher).count() == 3
+            assert not positions.filter(voucher__isnull=True).exists()
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+        assert not doc.select('.alert-info')
+
+    def test_voucher_partial_remainder_requires_public_purchase(self):
+        with scopes_disabled():
+            self.ticket.require_voucher = True
+            self.ticket.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+            follow=True,
+        )
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher).count() == 3
+            assert not positions.filter(voucher__isnull=True).exists()
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+        assert not doc.select('.alert-info')
+
+    def test_voucher_partial_redirect_does_not_report_own_cart_locked(self):
+        with scopes_disabled():
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        redeem_url = '/%s/%s/redeem/?voucher=%s' % (self.orga.slug, self.event.slug, voucher.code)
+        response = self.client.post(
+            '/%s/%s/cart/add?next=%s' % (self.orga.slug, self.event.slug, quote(redeem_url, safe='')),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+            follow=True,
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert 'Voucher applied to 3 tickets.' in doc.select_one('.alert-info').text
+        assert 'currently locked since it is already contained in a cart' not in doc.get_text()
+
+    def test_voucher_partial_remainder_ajax_notice(self):
+        with scopes_disabled():
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add?ajax=1' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+        )
+        data = response.json()
+        assert data['success']
+        assert data['message'] == 'Voucher applied to 3 tickets. The other 2 tickets were added at regular price.'
+        doc = BeautifulSoup(self.client.get(data['redirect']).rendered_content, 'lxml')
+        assert len(doc.select('.alert-info')) == 1
+        assert not doc.select('.alert-success')
+
+    def test_voucher_partial_remainder_hidden_product(self):
+        with scopes_disabled():
+            self.ticket.hide_without_voucher = True
+            self.ticket.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'),
+                max_usages=3, show_hidden_products=True,
+            )
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+            follow=True,
+        )
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher).count() == 3
+            assert not positions.filter(voucher__isnull=True).exists()
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+        assert not doc.select('.alert-info')
+
     def test_voucher_multiuse_partially(self):
         with scopes_disabled():
             v = Voucher.objects.create(
@@ -2537,10 +2677,12 @@ class CartTest(CartTestMixin, TestCase):
             follow=True,
         )
         doc = BeautifulSoup(response.rendered_content, 'lxml')
-        self.assertIn('only be redeemed 1 more time', doc.select('.alert-danger')[0].text)
+        assert 'Voucher applied to 1 ticket. The other 1 ticket was added at regular price.' in doc.select_one('.alert-info').text
         with scopes_disabled():
             positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
-            assert positions.count() == 1
+            assert positions.count() == 2
+            assert positions.filter(voucher=v).count() == 1
+            assert positions.filter(voucher__isnull=True, price=Decimal('23.00')).count() == 1
 
     def test_voucher_multiuse_multiprod_partially(self):
         with scopes_disabled():
@@ -2561,11 +2703,12 @@ class CartTest(CartTestMixin, TestCase):
             follow=True,
         )
         doc = BeautifulSoup(response.rendered_content, 'lxml')
-        self.assertIn('can only be redeemed 1 more times', doc.select('.alert-danger')[0].text)
+        assert 'Voucher applied to 1 ticket. The other 1 ticket was added at regular price.' in doc.select_one('.alert-info').text
         with scopes_disabled():
             positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
-            assert positions.count() == 1
-            assert all(cp.voucher == v for cp in positions)
+            assert positions.count() == 2
+            assert positions.filter(product=self.ticket, voucher=v).count() == 1
+            assert positions.filter(product=self.shirt, voucher__isnull=True, price=Decimal('14.00')).count() == 1
 
     def test_voucher_multiuse_multiprod_remaining_count(self):
         with scopes_disabled():
@@ -2582,13 +2725,13 @@ class CartTest(CartTestMixin, TestCase):
             follow=True,
         )
         doc = BeautifulSoup(response.rendered_content, 'lxml')
-        self.assertIn('can only be redeemed 2 more times', doc.select('.alert-danger')[0].text)
+        assert 'Voucher applied to 3 tickets. The other 1 ticket was added at regular price.' in doc.select_one('.alert-info').text
         with scopes_disabled():
             positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
-            assert positions.count() == 3
-            assert positions.filter(product=self.ticket).count() == 1
-            assert positions.filter(product=self.shirt).count() == 2
-            assert all(cp.voucher == v for cp in positions)
+            assert positions.count() == 4
+            assert positions.filter(product=self.ticket, voucher=v).count() == 1
+            assert positions.filter(product=self.shirt, voucher=v).count() == 2
+            assert positions.filter(product=self.shirt, voucher__isnull=True, price=Decimal('14.00')).count() == 1
 
     def test_voucher_multiuse_multiprod_exhausted_after_add(self):
         with scopes_disabled():
@@ -2603,11 +2746,12 @@ class CartTest(CartTestMixin, TestCase):
             follow=True,
         )
         doc = BeautifulSoup(response.rendered_content, 'lxml')
-        self.assertIn('can only be redeemed 2 more times', doc.select('.alert-danger')[0].text)
+        assert 'Voucher applied to 2 tickets. The other 1 ticket was added at regular price.' in doc.select_one('.alert-info').text
         with scopes_disabled():
             positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
-            assert positions.count() == 2
-            assert all(cp.product == self.ticket and cp.voucher == v for cp in positions)
+            assert positions.count() == 3
+            assert positions.filter(product=self.ticket, voucher=v).count() == 2
+            assert positions.filter(product=self.shirt, voucher__isnull=True, price=Decimal('14.00')).count() == 1
 
     def test_voucher_multiuse_multiprod_remaining_count_after_renewal(self):
         with scopes_disabled():
@@ -2632,15 +2776,15 @@ class CartTest(CartTestMixin, TestCase):
             follow=True,
         )
         doc = BeautifulSoup(response.rendered_content, 'lxml')
-        self.assertIn('can only be redeemed 2 more times', doc.select('.alert-danger')[0].text)
+        assert 'Voucher applied to 3 tickets. The other 1 ticket was added at regular price.' in doc.select_one('.alert-info').text
         with scopes_disabled():
             cp.refresh_from_db()
             assert cp.expires > now()
             positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
-            assert positions.count() == 4
-            assert positions.filter(product=self.ticket).count() == 2
-            assert positions.filter(product=self.shirt).count() == 2
-            assert all(p.voucher == v for p in positions)
+            assert positions.count() == 5
+            assert positions.filter(product=self.ticket, voucher=v).count() == 2
+            assert positions.filter(product=self.shirt, voucher=v).count() == 2
+            assert positions.filter(product=self.shirt, voucher__isnull=True, price=Decimal('14.00')).count() == 1
 
     def test_voucher_multiuse_redeemed(self):
         with scopes_disabled():
@@ -3850,6 +3994,21 @@ class CartBundleTest(CartTestMixin, TestCase):
         assert a.product == self.trans
         assert a.price == 1.5
         assert not a.voucher
+
+    @classscope(attr='orga')
+    def test_partial_voucher_preserves_regular_bundle_price(self):
+        voucher = self.event.vouchers.create(
+            code='partial', product=self.ticket, price_mode='set', value=Decimal('10.00'),
+            max_usages=1, all_bundles_included=True,
+        )
+        self.cm.add_new_products([{'product': self.ticket.pk, 'variation': None, 'voucher': voucher.code, 'count': 2}])
+        self.cm.commit()
+        discounted = CartPosition.objects.get(addon_to__isnull=True, voucher=voucher)
+        regular = CartPosition.objects.get(addon_to__isnull=True, voucher__isnull=True)
+        assert discounted.price == Decimal('10.00')
+        assert discounted.addons.get().price == Decimal('0.00')
+        assert regular.price == Decimal('21.50')
+        assert regular.addons.get().price == Decimal('1.50')
 
     @classscope(attr='orga')
     def test_simple_bundle_with_variation(self):

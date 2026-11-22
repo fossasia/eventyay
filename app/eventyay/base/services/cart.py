@@ -11,7 +11,7 @@ from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
 from django.dispatch import receiver
 from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
-from django.utils.translation import pgettext_lazy
+from django.utils.translation import ngettext, pgettext_lazy
 from django_scopes import scopes_disabled
 
 from eventyay.base.channels import get_all_sales_channels
@@ -168,7 +168,10 @@ class CartManager:
             'bundled',
             'seat',
             'price_before_voucher',
+            'regular_operation',
+            'regular_error',
         ),
+        defaults=(None, None),
     )
     RemoveOperation = namedtuple('RemoveOperation', ('position',))
     VoucherOperation = namedtuple('VoucherOperation', ('position', 'voucher', 'price'))
@@ -217,6 +220,7 @@ class CartManager:
         self._widget_data = widget_data or {}
         self._sales_channel = sales_channel
         self._last_warning = None
+        self._voucher_split = None
 
     def get_last_warning(self):
         """Get the last warning message from cart operations."""
@@ -694,6 +698,7 @@ class CartManager:
         operations = []
 
         for i in products:
+            previous_quota_diff = quota_diff.copy()
             if self.event.has_subevents:
                 if not i.get('subevent') or int(i.get('subevent')) not in self._subevents_cache:
                     raise CartError(error_messages['subevent_required'])
@@ -834,6 +839,25 @@ class CartManager:
                 price_before_voucher=pbv,
             )
             self._check_product_constraints(op, operations)
+            if voucher:
+                regular_manager = CartManager(
+                    event=self.event,
+                    cart_id=self.cart_id,
+                    invoice_address=self.invoice_address,
+                    widget_data=self._widget_data,
+                    sales_channel=self._sales_channel,
+                )
+                regular_input = dict(i)
+                regular_input.pop('voucher', None)
+                try:
+                    regular_manager.add_new_products([regular_input])
+                except CartError as exc:
+                    op = op._replace(regular_error=str(exc))
+                else:
+                    op = op._replace(regular_operation=regular_manager._operations[0])
+                    for quota, demand in regular_manager._quota_diff.items():
+                        existing = quota_diff[quota] - previous_quota_diff[quota]
+                        quota_diff[quota] += max(0, demand - existing)
             operations.append(op)
 
         self._quota_diff.update(quota_diff)
@@ -1228,8 +1252,21 @@ class CartManager:
 
         self._operations.sort(key=lambda a: self.order[type(a)])
         seats_seen = set()
+        regular_operations = {}
+        regular_used = Counter()
 
         for iop, op in enumerate(self._operations):
+            if isinstance(op, self.AddOperation) and op.voucher and op.count > vouchers_ok[op.voucher]:
+                voucher_count = max(0, vouchers_ok[op.voucher])
+                if op.regular_operation and (voucher_count or vouchers_used[self.AddOperation, op.voucher]):
+                    regular = op.regular_operation._replace(count=op.count - voucher_count)
+                    regular_operations[id(regular)] = op.voucher
+                    self._operations.insert(iop + 1, regular)
+                    if not voucher_count:
+                        continue
+                    op = op._replace(count=voucher_count)
+                elif op.regular_error and (voucher_count or vouchers_used[self.AddOperation, op.voucher]):
+                    err = err or op.regular_error
             if isinstance(op, self.RemoveOperation):
                 if op.position.expires > self.now_dt:
                     for q in op.position.quotas:
@@ -1383,6 +1420,8 @@ class CartManager:
                         new_cart_positions.append(cp)
                     if op.voucher:
                         vouchers_used[type(op), op.voucher] += available_count
+                    elif id(op) in regular_operations:
+                        regular_used[regular_operations[id(op)]] += available_count
                 elif isinstance(op, self.ExtendOperation):
                     if op.seat and not op.seat.is_available(
                         ignore_cart=op.position,
@@ -1434,6 +1473,11 @@ class CartManager:
         CartPosition.objects.bulk_create(
             [p for p in new_cart_positions if not getattr(p, '_answers', None) and not p.pk]
         )
+        if not err and not warning and regular_used:
+            self._voucher_split = (
+                sum(vouchers_used[self.AddOperation, voucher] for voucher in regular_used),
+                sum(regular_used.values()),
+            )
         return err, warning
 
     def _require_locking(self):
@@ -1605,12 +1649,23 @@ def add_products_to_cart(
                 cm.add_new_products(products)
                 cm.commit()
                 
-                # Check if there was a warning about quantity adjustment
                 warning = cm.get_last_warning()
                 if warning:
                     return {'success': True, 'warning': str(warning)}
-                else:
-                    return {'success': True}
+                if cm._voucher_split:
+                    discounted, regular = cm._voucher_split
+                    first = ngettext(
+                        'Voucher applied to %(count)d ticket.',
+                        'Voucher applied to %(count)d tickets.',
+                        discounted,
+                    ) % {'count': discounted}
+                    second = ngettext(
+                        'The other %(count)d ticket was added at regular price.',
+                        'The other %(count)d tickets were added at regular price.',
+                        regular,
+                    ) % {'count': regular}
+                    return {'success': True, 'info': f'{first} {second}'}
+                return {'success': True}
                     
             except LockTimeoutException:
                 self.retry()
