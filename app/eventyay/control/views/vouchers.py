@@ -30,8 +30,9 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from django_scopes import scope
 
-from eventyay.base.models import CartPosition, LogEntry, Quota, Voucher
+from eventyay.base.models import CartPosition, Event, LogEntry, Quota, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
@@ -859,8 +860,12 @@ class VoucherCreate(EventPermissionRequiredMixin, CreateView):
         return ret
 
     def post(self, request, *args, **kwargs):
+        """Serialize single-voucher creation with the other voucher creation views."""
         # TODO: Transform this into an asynchronous call?
-        with request.event.lock():
+        with scope(event=request.event), request.event.lock(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=request.event.pk,
+            )
             return super().post(request, *args, **kwargs)
 
 
@@ -944,6 +949,7 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
         return form_kwargs
 
     def async_form_valid(self, task, form):
+        """Revalidate and create the bulk batch in one serialized transaction."""
         lockfn = NoLockManager
         if form.data.get('block_quota'):
             lockfn = self.request.event.lock
@@ -980,7 +986,11 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
             set_progress(len(voucherids) / total_num * (50.0 if form.cleaned_data['send'] else 100.0))
 
         voucherids = []
-        with lockfn(), transaction.atomic():
+        with scope(event=self.request.event), lockfn(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=self.request.event.pk,
+            )
+            form.full_clean()
             if not form.is_valid():
                 raise ValidationError(form.errors)
             total_num = len(form.cleaned_data['codes'])
