@@ -2546,6 +2546,121 @@ class CartTest(CartTestMixin, TestCase):
         assert sum('Voucher code used:' in row.text for row in rows) == 1
         assert '70.00' in doc.select_one('.cart .total').text
 
+    def test_voucher_cart_row_readds_with_available_voucher(self):
+        with scopes_disabled():
+            self.ticket.default_price = Decimal('20.00')
+            self.ticket.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        base = '/%s/%s/' % (self.orga.slug, self.event.slug)
+        self.client.post(base + 'cart/add', {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code})
+        with scopes_disabled():
+            position = CartPosition.objects.filter(cart_id=self.session_key, voucher=voucher).first()
+        response = self.client.post(base + 'cart/remove', {'id': position.id}, follow=True)
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        row = next(row for row in doc.select('.cart-row') if voucher.code in row.get_text())
+        form = row.select_one('form:has(button[aria-label="Add one more"])')
+        data = {i['name']: i.get('value', '') for i in form.select('input[name]')}
+        self.client.post(form['action'], data, follow=True)
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher, price=Decimal('10.00')).count() == 3
+            assert positions.filter(voucher__isnull=True, price=Decimal('20.00')).count() == 2
+
+    def test_cart_row_voucher_limit_and_removal(self):
+        with scopes_disabled():
+            self.quota_tickets.size = 10
+            self.quota_tickets.save()
+            self.ticket.default_price = Decimal('20.00')
+            self.ticket.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        base = '/%s/%s/' % (self.orga.slug, self.event.slug)
+        response = self.client.post(
+            base + 'cart/add', {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code}, follow=True
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        rows = doc.select('.cart-row:not(.total)')
+        voucher_row = next(row for row in rows if voucher.code in row.get_text())
+        regular_row = next(row for row in rows if voucher.code not in row.get_text())
+        voucher_form = voucher_row.select_one('form:has(button[aria-label="Add one more"])')
+        regular_form = regular_row.select_one('form:has(button[aria-label="Add one more"])')
+        voucher_data = {i['name']: i.get('value', '') for i in voucher_form.select('input[name]')}
+        regular_data = {i['name']: i.get('value', '') for i in regular_form.select('input[name]')}
+        assert '_voucher_code' not in regular_data
+        response = self.client.post(voucher_form['action'], voucher_data, follow=True)
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        assert 'The voucher has no uses left. One ticket was added at regular price.' in doc.select_one('.alert-info').get_text()
+        assert not any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher, price=Decimal('10.00')).count() == 3
+            assert positions.filter(voucher__isnull=True, price=Decimal('20.00')).count() == 3
+            voucher_ids = list(positions.filter(voucher=voucher).values_list('id', flat=True))
+        for position_id in voucher_ids:
+            self.client.post(base + 'cart/remove', {'id': position_id})
+        self.client.post(regular_form['action'], regular_data, follow=True)
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher).count() == 0
+            assert positions.filter(voucher__isnull=True, price=Decimal('20.00')).count() == 4
+
+    def test_exhausted_voucher_row_respects_regular_sale_constraints(self):
+        with scopes_disabled():
+            self.ticket.require_voucher = True
+            self.ticket.save()
+            self.quota_tickets.size = 3
+            self.quota_tickets.save()
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        base = '/%s/%s/' % (self.orga.slug, self.event.slug)
+        response = self.client.post(
+            base + 'cart/add', {'item_%d' % self.ticket.id: '3', '_voucher_code': voucher.code}, follow=True
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        row = next(row for row in doc.select('.cart-row') if voucher.code in row.get_text())
+        form = row.select_one('form:has(button[aria-label="Add one more"])')
+        data = {i['name']: i.get('value', '') for i in form.select('input[name]')}
+        for restriction in ('voucher_required', 'sold_out'):
+            if restriction == 'sold_out':
+                with scopes_disabled():
+                    self.ticket.require_voucher = False
+                    self.ticket.save()
+            response = self.client.post(form['action'], data, follow=True)
+            doc = BeautifulSoup(response.rendered_content, 'lxml')
+            assert any(alert.get_text(strip=True) for alert in doc.select('.alert-danger'))
+            assert not doc.select('.alert-info')
+            with scopes_disabled():
+                positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+                assert positions.filter(voucher=voucher).count() == 3
+                assert not positions.filter(voucher__isnull=True).exists()
+
+    def test_exhausted_voucher_row_ajax_notice(self):
+        with scopes_disabled():
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=1
+            )
+        base = '/%s/%s/' % (self.orga.slug, self.event.slug)
+        response = self.client.post(
+            base + 'cart/add', {'item_%d' % self.ticket.id: '1', '_voucher_code': voucher.code}, follow=True
+        )
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        row = next(row for row in doc.select('.cart-row') if voucher.code in row.get_text())
+        form = row.select_one('form:has(button[aria-label="Add one more"])')
+        data = {i['name']: i.get('value', '') for i in form.select('input[name]')}
+        result = self.client.post(form['action'] + '?ajax=1', data).json()
+        assert result['success']
+        assert result['message'] == 'The voucher has no uses left. One ticket was added at regular price.'
+        doc = BeautifulSoup(self.client.get(result['redirect']).rendered_content, 'lxml')
+        assert len(doc.select('.alert-info')) == 1
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(cart_id=self.session_key, event=self.event)
+            assert positions.filter(voucher=voucher, price=Decimal('10.00')).count() == 1
+            assert positions.filter(voucher__isnull=True, price=Decimal('23.00')).count() == 1
+
     def test_voucher_partial_remainder_respects_stock(self):
         with scopes_disabled():
             self.quota_tickets.size = 4

@@ -202,6 +202,8 @@ class CartActionMixin:
                     messages.error(self.request, str(e))
                     return
                 if product:
+                    if product.get('voucher') and self.request.POST.get('_voucher_row') == '1':
+                        product['fallback_if_exhausted'] = True
                     products.append(product)
 
         if len(products) == 0:

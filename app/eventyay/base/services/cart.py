@@ -170,8 +170,9 @@ class CartManager:
             'price_before_voucher',
             'regular_operation',
             'regular_error',
+            'fallback_if_exhausted',
         ),
-        defaults=(None, None),
+        defaults=(None, None, False),
     )
     RemoveOperation = namedtuple('RemoveOperation', ('position',))
     VoucherOperation = namedtuple('VoucherOperation', ('position', 'voucher', 'price'))
@@ -837,6 +838,7 @@ class CartManager:
                 bundled=bundled,
                 seat=seat,
                 price_before_voucher=pbv,
+                fallback_if_exhausted=bool(i.get('fallback_if_exhausted')),
             )
             self._check_product_constraints(op, operations)
             if voucher:
@@ -849,6 +851,8 @@ class CartManager:
                 )
                 regular_input = dict(i)
                 regular_input.pop('voucher', None)
+                if op.fallback_if_exhausted:
+                    regular_input['price'] = ''
                 try:
                     regular_manager.add_new_products([regular_input])
                 except CartError as exc:
@@ -1090,8 +1094,13 @@ class CartManager:
             
             # Validate availability after acquiring lock to prevent over-redemption
             if v_avail < 1:
-                raise CartError(error_messages['voucher_redeemed'])
-            
+                voucher_ops = [op for op in self._operations if getattr(op, 'voucher', None) == voucher]
+                if not voucher_ops or not all(
+                    isinstance(op, self.AddOperation) and op.fallback_if_exhausted for op in voucher_ops
+                ):
+                    raise CartError(error_messages['voucher_redeemed'])
+                v_avail = 0
+
             if cart_count > 0:
                 self._voucher_depend_on_cart.add(voucher)
             vouchers_ok[voucher] = v_avail
@@ -1258,14 +1267,18 @@ class CartManager:
         for iop, op in enumerate(self._operations):
             if isinstance(op, self.AddOperation) and op.voucher and op.count > vouchers_ok[op.voucher]:
                 voucher_count = max(0, vouchers_ok[op.voucher])
-                if op.regular_operation and (voucher_count or vouchers_used[self.AddOperation, op.voucher]):
+                if op.regular_operation and (
+                    op.fallback_if_exhausted or voucher_count or vouchers_used[self.AddOperation, op.voucher]
+                ):
                     regular = op.regular_operation._replace(count=op.count - voucher_count)
                     regular_operations[id(regular)] = op.voucher
                     self._operations.insert(iop + 1, regular)
                     if not voucher_count:
                         continue
                     op = op._replace(count=voucher_count)
-                elif op.regular_error and (voucher_count or vouchers_used[self.AddOperation, op.voucher]):
+                elif op.regular_error and (
+                    op.fallback_if_exhausted or voucher_count or vouchers_used[self.AddOperation, op.voucher]
+                ):
                     err = err or op.regular_error
             if isinstance(op, self.RemoveOperation):
                 if op.position.expires > self.now_dt:
@@ -1654,6 +1667,12 @@ def add_products_to_cart(
                     return {'success': True, 'warning': str(warning)}
                 if cm._voucher_split:
                     discounted, regular = cm._voucher_split
+                    if not discounted:
+                        return {'success': True, 'info': ngettext(
+                            'The voucher has no uses left. One ticket was added at regular price.',
+                            'The voucher has no uses left. %(count)d tickets were added at regular price.',
+                            regular,
+                        ) % {'count': regular}}
                     first = ngettext(
                         'Voucher applied to %(count)d ticket.',
                         'Voucher applied to %(count)d tickets.',
