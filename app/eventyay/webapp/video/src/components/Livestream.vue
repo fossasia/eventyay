@@ -814,7 +814,7 @@ export default {
 			height: 100%
 			width: 100%
 			object-fit: contain
-		background: #222222
+			background: #222222
 	&.size-tiny .offline
 		background-color: $clr-white
 		.offline-message

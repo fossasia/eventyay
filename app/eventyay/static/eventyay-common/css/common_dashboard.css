@@ -2370,7 +2370,7 @@ body:has(.td-dashboard) #page-content {
   border-color: color-mix(in srgb,var(--cd-positive) 28%,#fff)
 }
 .cd-badge--accent {
-  color: color-mix(in srgb,var(--cd-warning) 55%,#222222);
+  color: color-mix(in srgb,var(--cd-warning) 50%,#222222);
   background: color-mix(in srgb,var(--cd-warning) 18%,#fff);
   border-color: color-mix(in srgb,var(--cd-warning) 35%,#fff)
 }

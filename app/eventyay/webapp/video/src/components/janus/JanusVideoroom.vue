@@ -3610,7 +3610,7 @@ export default {
 			width: var(--tile-width)
 
 	.video-tile
-		background: #1e2229
+		background: #222222
 		border-radius: 10px
 		box-shadow: 0 2px 8px rgba(0,0,0,.35)
 		height: 100%
@@ -3636,7 +3636,7 @@ export default {
 			transform: rotateY(180deg)
 
 		.media-frame
-			background: #1e2229
+			background: #222222
 			border-radius: 10px
 			height: 100%
 			overflow: hidden
@@ -3644,7 +3644,7 @@ export default {
 			transition: box-shadow .16s ease
 			width: 100%
 			video
-				background: #111317
+				background: #222222
 				height: 100%
 				object-fit: cover
 				width: 100%
@@ -3655,7 +3655,7 @@ export default {
 
 	.local-screen-placeholder
 		align-items: center
-		background: #111317
+		background: #222222
 		color: #d7dde6
 		display: flex
 		flex-direction: column
@@ -3801,7 +3801,7 @@ export default {
 		&.hand-pill
 			background: #ffb020
 			.mdi
-				color: #111317
+				color: #222222
 
 	.tile-overlay
 		align-items: center
