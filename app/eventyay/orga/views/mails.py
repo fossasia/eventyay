@@ -1,5 +1,4 @@
 import json
-import uuid
 
 import nh3
 from django.contrib import messages
@@ -21,7 +20,7 @@ from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
 from eventyay.common.mail import TolerantDict, mail_send_task
-from eventyay.common.tasks import send_scheduled_queuedmail
+from eventyay.common.tasks import send_draft_reminder_batch, send_scheduled_queuedmail
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -870,61 +869,49 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.base
 
     def form_valid(self, form):
-        """Reserve allowance before sending, then release any unsent reminders."""
+        """Reserve allowance before dispatching the durable draft reminder batch."""
         event = self.request.event
         recipients = form.get_recipients()
         recipients_count = len(recipients)
-        source_id = uuid.uuid4().hex
+        if not recipients_count:
+            messages.info(self.request, _('No draft submissions found.'))
+            return redirect(self.get_success_url())
+
         with transaction.atomic():
             Organizer.objects.select_for_update().get(pk=event.organizer_id)
-            if recipients_count:
-                decision = check_entitlement(
-                    event.organizer,
-                    'email.bulk.monthly',
-                    event=event,
-                    quantity=recipients_count,
+            decision = check_entitlement(
+                event.organizer,
+                'email.bulk.monthly',
+                event=event,
+                quantity=recipients_count,
+            )
+            if not decision.allowed:
+                error_msg = decision.message or _(
+                    'You have reached the limit for sending bulk emails on your plan.'
                 )
-                if not decision.allowed:
-                    error_msg = decision.message or _(
-                        'You have reached the limit for sending bulk emails on your plan.'
-                    )
-                    form.add_error(None, error_msg)
-                    return self.form_invalid(form)
+                form.add_error(None, error_msg)
+                return self.form_invalid(form)
 
-                # Commit the reservation before dispatch: a usage failure must not send mail.
-                record_usage(
-                    event.organizer,
-                    'email.bulk.monthly',
-                    quantity=recipients_count,
-                    unit='emails',
-                    source_type='bulk_email',
-                    source_id=source_id,
-                    idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
-                    event=event,
-                )
+            batch = form.save(recipients=recipients, created_by=self.request.user)
+            source_id = batch.uuid.hex
+            record_usage(
+                event.organizer,
+                'email.bulk.monthly',
+                quantity=recipients_count,
+                unit='emails',
+                source_type='bulk_email',
+                source_id=source_id,
+                idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
+                event=event,
+            )
 
-        try:
-            result = form.save(recipients=recipients)
-        finally:
-            unsent_count = recipients_count - form.sent_count
-            if unsent_count:
-                with transaction.atomic():
-                    Organizer.objects.select_for_update().get(pk=event.organizer_id)
-                    record_usage(
-                        event.organizer,
-                        'email.bulk.monthly',
-                        quantity=-unsent_count,
-                        unit='emails',
-                        source_type='bulk_email',
-                        source_id=source_id,
-                        idempotency_key=f'bulk_mail_draft_reminders_{source_id}_release',
-                        event=event,
-                    )
+        send_draft_reminder_batch.apply_async(args=[batch.pk])
+
         messages.success(
             self.request,
-            _('{count} emails have been sent.').format(count=result),
+            _('{count} emails have been sent.').format(count=recipients_count),
         )
-        return super().form_valid(form)
+        return redirect(self.get_success_url())
 
 
 class MailTemplateView(OrgaCRUDView):

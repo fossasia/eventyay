@@ -5,10 +5,13 @@ from django.core.management.base import BaseCommand
 from django.db.models import F
 from django.utils.timezone import now
 
+from eventyay.base.models import DraftReminderBatch, DraftReminderBatchStatus
 from eventyay.base.models.auth import ShortToken
 from eventyay.base.models.event import EventView
 from eventyay.base.models.room import AnonymousInvite, RoomView
 from eventyay.base.models.storage_model import StoredFile
+from eventyay.common.tasks import reconcile_draft_reminder_batch_allowance
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +23,24 @@ class Command(BaseCommand):
         self._cleanup_views()
         self._cleanup_files()
         self._cleanup_tokens()
+        self._cleanup_draft_reminder_batches()
+
+    def _cleanup_draft_reminder_batches(self):
+        cutoff = now() - timedelta(days=7)
+        abandoned = DraftReminderBatch.objects.filter(
+            reconciled=False,
+            created_at__lt=now() - timedelta(hours=24),
+        )
+        for batch in abandoned:
+            try:
+                reconcile_draft_reminder_batch_allowance(batch)
+            except Exception:
+                logger.exception('Failed to reconcile draft reminder batch %s during cleanup', batch.pk)
+
+        DraftReminderBatch.objects.filter(
+            status__in=[DraftReminderBatchStatus.COMPLETED, DraftReminderBatchStatus.FAILED],
+            created_at__lt=cutoff,
+        ).delete()
 
     def _cleanup_files(self):
         for f in StoredFile.objects.filter(expires__isnull=False, expires__lt=now()):

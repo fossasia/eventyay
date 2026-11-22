@@ -14,7 +14,7 @@ from django_scopes import scope
 from i18nfield.forms import I18nModelForm
 
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
-from eventyay.base.models import MailTemplate, QueuedMail, Track, User
+from eventyay.base.models import DraftReminderBatch, DraftReminderRecipient, MailTemplate, QueuedMail, Track, User
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.forms.fields import I18nEmailBodyFormField
@@ -160,27 +160,31 @@ class DraftRemindersForm(MailTemplateForm):
             ).prefetch_related('speakers')
             return [(submission, user) for submission in submissions for user in submission.speakers.all()]
 
-    def save(self, *args, recipients=None, **kwargs):
-        """Send the checked audience without storing draft authors' mail details.
-
-        Keep the successful count available if a later dispatch raises.
-        """
-        self.sent_count = 0
+    def save(self, *args, recipients=None, created_by=None, **kwargs):
+        """Create a durable DraftReminderBatch and recipient records without storing plaintext emails."""
         if recipients is None:
             recipients = self.get_recipients()
-        template = self.instance
-        for submission, user in recipients:
-            template.to_mail(
-                user=user,
-                event=self.event,
-                locale=submission.get_email_locale(user.locale),
-                context_kwargs={'submission': submission, 'user': user},
-                skip_queue=True,
-                commit=False,
-            )
-            self.sent_count += 1
+        if not recipients:
+            return None
 
-        return self.sent_count
+        with transaction.atomic():
+            batch = DraftReminderBatch.objects.create(
+                event=self.event,
+                subject=self.cleaned_data['subject'],
+                text=self.cleaned_data['text'],
+                total_count=len(recipients),
+                created_by=created_by,
+            )
+            DraftReminderRecipient.objects.bulk_create([
+                DraftReminderRecipient(
+                    batch=batch,
+                    submission=sub,
+                    user=user,
+                )
+                for sub, user in recipients
+            ])
+
+        return batch
 
     class Meta:
         model = MailTemplate
