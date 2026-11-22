@@ -90,7 +90,8 @@ def median_value(queryset, term):
 
 
 def get_schedule(event: Event, fail_silently=True):
-    pretalx_config = event.config.get("pretalx", {})
+    cfg = getattr(event, "config", None) or {}
+    pretalx_config = cfg.get("pretalx", {})
     if pretalx_config.get("url"):
         url = pretalx_config["url"]
     elif pretalx_config.get("domain"):
