@@ -2269,7 +2269,7 @@ body:has(.td-dashboard) #page-content {
   border-color: color-mix(in srgb,var(--cd-primary) 70%,#222222)
 }
 .cd-event-kind--warning {
-  color: color-mix(in srgb,var(--cd-warning) 35%,#222222);
+  color: color-mix(in srgb,var(--cd-warning) 26%,#222222);
   background: var(--cd-warning);
   border-color: color-mix(in srgb,var(--cd-warning) 70%,#222222)
 }
