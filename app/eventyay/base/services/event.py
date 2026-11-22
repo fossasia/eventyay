@@ -21,7 +21,7 @@ from rest_framework import serializers
 from eventyay.base.models.audit import AuditLog
 from eventyay.base.models.chat import Channel, ChatEvent, Membership
 from eventyay.base.models.event import Event
-from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
+from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView, mask_room_config_secrets
 from eventyay.base.services.room_creation_gate import (
     SERVER_BACKED_ROOM_MODULE_TYPES,
     user_can_create_server_backed_room_during_development,
@@ -479,7 +479,7 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         type="event.room.added",
         data={
             "object": str(room.id),
-            "new": RoomConfigSerializer(room).data,
+            "new": mask_room_config_secrets(RoomConfigSerializer(room).data),
         },
     )
     return room, channel
