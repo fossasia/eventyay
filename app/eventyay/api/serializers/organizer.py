@@ -191,6 +191,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_teams',
             'can_change_organizer_settings',
             'can_manage_gift_cards',
+            'can_view_event_info',
             'can_change_event_settings',
             'can_change_config',
             'can_change_items',
