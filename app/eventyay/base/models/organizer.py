@@ -355,6 +355,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     :type can_change_teams: bool
     :param can_change_organizer_settings: If ``True``, the members can change the settings of this organizer account.
     :type can_change_organizer_settings: bool
+    :param can_view_event_info: If ``True``, the members can read the public-facing setup of the associated
+                                events, e.g. for website integrations. It does not allow any changes.
+    :type can_view_event_info: bool
     :param can_change_event_settings: If ``True``, the members can change the settings of the associated events.
     :type can_change_event_settings: bool
     :param can_change_items: If ``True``, the members can change and add items and related objects
@@ -398,6 +401,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
     can_manage_gift_cards = models.BooleanField(default=False, verbose_name=_('Can manage gift cards'))
 
+    can_view_event_info = models.BooleanField(
+        default=False,
+        verbose_name=_('Read-only access to event information'),
+        help_text=_('For website and other integrations that only display event information'),
+    )
     can_change_event_settings = models.BooleanField(default=False, verbose_name=_('Can change event settings'))
     can_change_config = models.BooleanField(
         default=False,
