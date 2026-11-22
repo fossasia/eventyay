@@ -12,6 +12,7 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,6 +65,7 @@ def send_mail_now(
     bcc: list = None,
     headers: dict = None,
     attachments: list = None,
+    sensitive: bool = False,
 ):
     """Hands an email to the configured backend and waits for the result.
 
@@ -149,22 +151,77 @@ def send_mail_now(
     except SMTPRecipientsRefused as exception:
         smtp_codes = [item[0] for item in exception.recipients.values()]
         bounce_code = smtp_codes[0] if smtp_codes else None
-        logger.exception('Error sending email to %s', to)
-        if bounce_code in (554, 571):
-            log_event('mail', 'mail.complaint', OUTCOME_FAILURE, error_code='policy_rejected', smtp_code=bounce_code, event_id=event.pk if event else None)
+        if sensitive:
+            logger.error('Error sending email to [REDACTED]: %s', type(exception).__name__)
         else:
-            log_event('mail', 'mail.bounce', OUTCOME_FAILURE, error_code='recipient_refused', smtp_code=bounce_code, event_id=event.pk if event else None)
+            logger.exception('Error sending email to %s', to)
+        if bounce_code in (554, 571):
+            log_event(
+                'mail',
+                'mail.complaint',
+                OUTCOME_FAILURE,
+                error_code='policy_rejected',
+                smtp_code=bounce_code,
+                event_id=event.pk if event else None,
+            )
+        else:
+            log_event(
+                'mail',
+                'mail.bounce',
+                OUTCOME_FAILURE,
+                error_code='recipient_refused',
+                smtp_code=bounce_code,
+                event_id=event.pk if event else None,
+            )
+        if sensitive:
+            raise SendMailException(
+                f'Failed to send an email: {type(exception).__name__}', already_logged=True
+            ) from None
         raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
     except SMTPResponseException as exception:
-        logger.exception('Error sending email to %s', to)
+        if sensitive:
+            logger.error('Error sending email to [REDACTED]: %s', type(exception).__name__)
+        else:
+            logger.exception('Error sending email to %s', to)
         if exception.smtp_code in (554, 571):
-            log_event('mail', 'mail.complaint', OUTCOME_FAILURE, error_code='policy_rejected', smtp_code=exception.smtp_code, event_id=event.pk if event else None)
+            log_event(
+                'mail',
+                'mail.complaint',
+                OUTCOME_FAILURE,
+                error_code='policy_rejected',
+                smtp_code=exception.smtp_code,
+                event_id=event.pk if event else None,
+            )
+            if sensitive:
+                raise SendMailException(
+                    f'Failed to send an email: {type(exception).__name__}', already_logged=True
+                ) from None
             raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
         if exception.smtp_code >= 500:
-            log_event('mail', 'mail.bounce', OUTCOME_FAILURE, error_code='recipient_refused', smtp_code=exception.smtp_code, event_id=event.pk if event else None)
+            log_event(
+                'mail',
+                'mail.bounce',
+                OUTCOME_FAILURE,
+                error_code='recipient_refused',
+                smtp_code=exception.smtp_code,
+                event_id=event.pk if event else None,
+            )
+            if sensitive:
+                raise SendMailException(
+                    f'Failed to send an email: {type(exception).__name__}', already_logged=True
+                ) from None
             raise SendMailException(f'Failed to send an email to {to}: {exception}', already_logged=True) from exception
+        if sensitive:
+            raise SendMailException(
+                f'Failed to send an email: {type(exception).__name__}'
+            ) from None
         raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
     except Exception as exception:
+        if sensitive:
+            logger.error('Error sending email to [REDACTED]: %s', type(exception).__name__)
+            raise SendMailException(
+                f'Failed to send an email: {type(exception).__name__}'
+            ) from None
         logger.exception('Error sending email to %s', to)
         raise SendMailException(f'Failed to send an email to {to}: {exception}') from exception
 

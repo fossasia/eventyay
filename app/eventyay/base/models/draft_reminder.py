@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 from django.utils.timezone import now
+from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField, I18nTextField
 
 
@@ -14,6 +15,7 @@ class DraftReminderBatchStatus(models.TextChoices):
 
 class DraftReminderRecipientStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
+    SENDING = 'sending', 'Sending'
     SENT = 'sent', 'Sent'
     FAILED = 'failed', 'Failed'
     SKIPPED = 'skipped', 'Skipped'
@@ -55,6 +57,9 @@ class DraftReminderBatch(models.Model):
         related_name='+',
     )
 
+    objects = ScopedManager(event='event')
+    all_objects = models.Manager()
+
     class Meta:
         ordering = ['-created_at']
 
@@ -92,6 +97,9 @@ class DraftReminderRecipient(models.Model):
     )
     sent_at = models.DateTimeField(null=True, blank=True)
     error = models.TextField(blank=True, default='')
+
+    objects = ScopedManager(event='batch__event')
+    all_objects = models.Manager()
 
     class Meta:
         unique_together = [('batch', 'submission', 'user')]

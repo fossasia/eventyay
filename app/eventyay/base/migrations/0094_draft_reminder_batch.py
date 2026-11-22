@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
             name='DraftReminderRecipient',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('sent', 'Sent'), ('failed', 'Failed'), ('skipped', 'Skipped')], default='pending', max_length=10)),
+                ('status', models.CharField(choices=[('pending', 'Pending'), ('sending', 'Sending'), ('sent', 'Sent'), ('failed', 'Failed'), ('skipped', 'Skipped')], default='pending', max_length=10)),
                 ('sent_at', models.DateTimeField(blank=True, null=True)),
                 ('error', models.TextField(blank=True, default='')),
                 ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipients', to='base.draftreminderbatch')),

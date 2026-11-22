@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from smtplib import SMTPResponseException
 
 from celery.exceptions import MaxRetriesExceededError
 from django.core.files.storage import default_storage
@@ -20,6 +21,7 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.base.signals import periodic_task as base_periodic_task
 from eventyay.celery_app import app
 from eventyay.common.image import process_image
+from eventyay.common.mail import RETRY_ERRNOS, RETRY_SMTP_CODES
 from eventyay.common.signals import periodic_task as common_periodic_task
 
 
@@ -202,8 +204,15 @@ def reconcile_draft_reminder_batch_allowance(batch: DraftReminderBatch) -> None:
 def send_draft_reminder_batch(self, batch_id: int):
     """Processes a draft reminder batch with crash-safe idempotency and privacy guarantees."""
     try:
-        with transaction.atomic():
-            with scopes_disabled():
+        # Cross-event bootstrap lookup to identify the event
+        with scopes_disabled():
+            batch = DraftReminderBatch.all_objects.filter(pk=batch_id).first()
+            if not batch:
+                return
+            event = batch.event
+
+        with scope(event=event):
+            with transaction.atomic():
                 batch = (
                     DraftReminderBatch.objects
                     .select_for_update(skip_locked=True)
@@ -222,68 +231,90 @@ def send_draft_reminder_batch(self, batch_id: int):
                 batch.status = DraftReminderBatchStatus.SENDING
                 batch.save(update_fields=['status'])
 
-        event = batch.event
-        template = MailTemplate(
-            event=event,
-            subject=batch.subject,
-            text=batch.text,
-        )
+            template = MailTemplate(
+                event=event,
+                subject=batch.subject,
+                text=batch.text,
+            )
 
-        with scopes_disabled():
             pending_recipient_ids = list(
                 DraftReminderRecipient.objects
                 .filter(batch=batch, status=DraftReminderRecipientStatus.PENDING)
                 .values_list('pk', flat=True)
             )
 
-        for recipient_id in pending_recipient_ids:
-            with transaction.atomic():
-                with scopes_disabled():
+            for recipient_id in pending_recipient_ids:
+                should_retry = False
+                with transaction.atomic():
+                    # Consistent lock order across worker and cleanup: Batch first, then Recipient
+                    b = DraftReminderBatch.objects.select_for_update().get(pk=batch_id)
+                    if b.status != DraftReminderBatchStatus.SENDING:
+                        return
+
                     recipient = (
                         DraftReminderRecipient.objects
                         .select_for_update(skip_locked=True)
-                        .filter(pk=recipient_id, status=DraftReminderRecipientStatus.PENDING)
+                        .filter(batch=b, pk=recipient_id, status=DraftReminderRecipientStatus.PENDING)
                         .select_related('user')
                         .first()
                     )
                     if not recipient:
                         continue
 
-                    with scope(event=event):
-                        sub = (
-                            Submission.all_objects
-                            .select_for_update()
-                            .filter(pk=recipient.submission_id)
-                            .first()
+                    sub = (
+                        Submission.all_objects
+                        .select_for_update()
+                        .filter(pk=recipient.submission_id)
+                        .first()
+                    )
+                    # Recheck submission state and speaker association atomically
+                    if (
+                        not sub
+                        or sub.state != SubmissionStates.DRAFT
+                        or not sub.speakers.filter(pk=recipient.user_id).exists()
+                    ):
+                        recipient.status = DraftReminderRecipientStatus.SKIPPED
+                        recipient.save(update_fields=['status'])
+                        DraftReminderBatch.objects.filter(pk=batch_id).update(
+                            skipped_count=models.F('skipped_count') + 1
                         )
-                        # Recheck submission state and speaker association atomically
-                        if (
-                            not sub
-                            or sub.state != SubmissionStates.DRAFT
-                            or not sub.speakers.filter(pk=recipient.user_id).exists()
-                        ):
-                            recipient.status = DraftReminderRecipientStatus.SKIPPED
-                            recipient.save(update_fields=['status'])
-                            DraftReminderBatch.objects.filter(pk=batch_id).update(
-                                skipped_count=models.F('skipped_count') + 1
-                            )
-                            continue
+                        continue
 
-                        try:
-                            mail = template.to_mail(
-                                user=recipient.user,
-                                event=event,
-                                locale=sub.get_email_locale(recipient.user.locale),
-                                context_kwargs={
-                                    'submission': sub,
-                                    'user': recipient.user,
-                                },
-                                skip_queue=False,
-                                commit=False,
+                    try:
+                        # Record SENDING intent to avoid duplicate dispatch on post-SMTP crash
+                        recipient.status = DraftReminderRecipientStatus.SENDING
+                        recipient.save(update_fields=['status'])
+
+                        mail = template.to_mail(
+                            user=recipient.user,
+                            event=event,
+                            locale=sub.get_email_locale(recipient.user.locale),
+                            context_kwargs={
+                                'submission': sub,
+                                'user': recipient.user,
+                            },
+                            skip_queue=False,
+                            commit=False,
+                        )
+                        # Direct synchronous send within worker thread: sensitive=True redacts logs and exceptions
+                        mail.send(synchronous=True, sensitive=True)
+                    except Exception as exc:
+                        cause = getattr(exc, '__cause__', None) or exc
+                        is_retryable = (
+                            (isinstance(cause, SMTPResponseException) and cause.smtp_code in RETRY_SMTP_CODES)
+                            or (isinstance(cause, OSError) and getattr(cause, 'errno', None) in RETRY_ERRNOS)
+                        )
+                        if is_retryable:
+                            recipient.status = DraftReminderRecipientStatus.PENDING
+                            recipient.save(update_fields=['status'])
+                            logger.warning(
+                                '[DraftReminder] Transient transport error for recipient %s in batch %s: %s',
+                                recipient.pk,
+                                batch_id,
+                                type(exc).__name__,
                             )
-                            # Direct synchronous send within worker thread: no Celery broker payload leak
-                            mail.send(synchronous=True)
-                        except Exception as exc:
+                            should_retry = True
+                        else:
                             sanitized_err = f'{type(exc).__name__}: delivery failed'
                             recipient.status = DraftReminderRecipientStatus.FAILED
                             recipient.error = sanitized_err
@@ -292,13 +323,14 @@ def send_draft_reminder_batch(self, batch_id: int):
                                 failed_count=models.F('failed_count') + 1
                             )
                             logger.warning(
-                                '[DraftReminder] Failed delivery for recipient %s in batch %s: %s',
+                                '[DraftReminder] Permanent delivery failure for recipient %s in batch %s: %s',
                                 recipient.pk,
                                 batch_id,
                                 sanitized_err,
                             )
                             continue
 
+                    if not should_retry:
                         # Mark SENT upon confirmed delivery
                         recipient.status = DraftReminderRecipientStatus.SENT
                         recipient.sent_at = now()
@@ -307,8 +339,10 @@ def send_draft_reminder_batch(self, batch_id: int):
                             sent_count=models.F('sent_count') + 1
                         )
 
-        with transaction.atomic():
-            with scopes_disabled():
+                if should_retry:
+                    raise Exception(f'Retryable mail transport failure encountered for batch {batch_id}')
+
+            with transaction.atomic():
                 batch = DraftReminderBatch.objects.select_for_update().get(pk=batch_id)
                 remaining_pending = DraftReminderRecipient.objects.filter(
                     batch=batch, status=DraftReminderRecipientStatus.PENDING
@@ -343,9 +377,9 @@ def send_draft_reminder_batch(self, batch_id: int):
                 raise MaxRetriesExceededError()
             self.retry(exc=exc, args=[batch_id])
         except MaxRetriesExceededError:
-            with transaction.atomic():
-                with scopes_disabled():
-                    batch = DraftReminderBatch.objects.select_for_update().filter(pk=batch_id).first()
+            with scopes_disabled():
+                with transaction.atomic():
+                    batch = DraftReminderBatch.all_objects.select_for_update().filter(pk=batch_id).first()
                     if batch:
                         batch.status = DraftReminderBatchStatus.FAILED
                         batch.completed_at = now()

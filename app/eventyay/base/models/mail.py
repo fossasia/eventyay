@@ -1,4 +1,3 @@
-import functools
 import logging
 from collections import defaultdict
 from copy import deepcopy
@@ -17,13 +16,14 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.i18n import is_rtl
 from eventyay.mail.context import get_available_placeholders, get_mail_context, get_used_placeholders
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
 from eventyay.mail.signals import queuedmail_post_send, queuedmail_pre_send
 from eventyay.talk_rules.submission import orga_can_change_submissions
-from eventyay.helpers.i18n import is_rtl
 
 from .mixins import PretalxModel
+
 
 logger = logging.getLogger(__name__)
 
@@ -518,7 +518,7 @@ class QueuedMail(PretalxModel):
         return get_prefixed_subject(event, self.subject)
 
     @transaction.atomic
-    def send(self, requestor=None, orga: bool = True, synchronous: bool = False):
+    def send(self, requestor=None, orga: bool = True, synchronous: bool = False, sensitive: bool = False):
         """Sends an email.
 
         :param requestor: The user issuing the command. Used for logging.
@@ -576,7 +576,7 @@ class QueuedMail(PretalxModel):
             'attachments': self.attachments,
         }
         if synchronous:
-            send_mail_now(**mail_kwargs)
+            send_mail_now(**mail_kwargs, sensitive=sensitive)
         else:
             mail_send_task.apply_async(kwargs=mail_kwargs, ignore_result=True)
         log_event('mail', 'mail.outbox', OUTCOME_SUCCESS, event_id=self.event.pk if has_event else None, object_id=self.pk, recipient_count=len(to))

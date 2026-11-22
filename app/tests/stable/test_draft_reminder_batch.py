@@ -77,12 +77,13 @@ def test_batch_creation_and_privacy_guarantee(event, speaker_user, user):
     assert str(batch.subject) == 'Reminder Subject'
     assert batch.created_by == user
 
-    recipient = batch.recipients.first()
-    assert recipient is not None
-    assert recipient.submission == sub
-    assert recipient.user == speaker_user
-    assert recipient.status == DraftReminderRecipientStatus.PENDING
-    assert DraftReminderRecipient.objects.filter(batch=batch).count() == 1
+    with scope(event=event):
+        recipient = batch.recipients.first()
+        assert recipient is not None
+        assert recipient.submission == sub
+        assert recipient.user == speaker_user
+        assert recipient.status == DraftReminderRecipientStatus.PENDING
+        assert DraftReminderRecipient.objects.filter(batch=batch).count() == 1
     # Ensure no plaintext email addresses are stored in recipient columns
     field_names = {f.name for f in DraftReminderRecipient._meta.get_fields()}
     assert field_names == {'id', 'batch', 'submission', 'user', 'status', 'sent_at', 'error'}
@@ -377,3 +378,43 @@ def test_cleanup_draft_reminder_batches(event, user):
         b_abandoned.refresh_from_db()
         assert b_abandoned.status == DraftReminderBatchStatus.FAILED
         assert b_abandoned.reconciled is True
+
+
+@pytest.mark.django_db
+def test_smtp_failure_privacy_and_error_handling(event, speaker_user, user, caplog):
+    """When SMTP rejects delivery, the error is sanitized and plaintext email is NEVER logged."""
+    make_draft_submission(event, speaker_user, title='Draft with delivery rejection')
+
+    with scope(event=event):
+        form = DraftRemindersForm(
+            event=event,
+            data={'subject_0': 'Reminder', 'text_0': 'Submit {submission_title}.'},
+        )
+        assert form.is_valid()
+        batch = form.save(created_by=user)
+
+    import logging
+    from smtplib import SMTPRecipientsRefused
+
+    def raise_smtp_refused(*args, **kwargs):
+        raise SMTPRecipientsRefused({speaker_user.email: (550, b'User unknown')})
+
+    with caplog.at_level(logging.DEBUG):
+        with patch('django.core.mail.backends.locmem.EmailBackend.send_messages', side_effect=raise_smtp_refused):
+            send_draft_reminder_batch(batch.pk)
+
+    with scopes_disabled():
+        batch.refresh_from_db()
+        assert batch.status == DraftReminderBatchStatus.FAILED
+        assert batch.sent_count == 0
+        assert batch.failed_count == 1
+        assert batch.reconciled is True
+
+        recipient = batch.recipients.first()
+        assert recipient.status == DraftReminderRecipientStatus.FAILED
+        # Error detail must not expose the user's email address
+        assert speaker_user.email not in recipient.error
+        assert 'delivery failed' in recipient.error
+
+    # Assert privacy: the log output must NEVER contain the recipient's plaintext email
+    assert speaker_user.email not in caplog.text
