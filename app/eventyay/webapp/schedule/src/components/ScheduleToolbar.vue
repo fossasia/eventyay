@@ -161,14 +161,14 @@
 						line(x1="3", y1="12", x2="3.01", y2="12")
 						line(x1="3", y1="18", x2="3.01", y2="18")
 				span.sessions-toggle-label {{ sessionsMode ? t.cal : t.list }}
-		.toolbar-center(v-if="!isListView && days && days.length > 1", ref="dayNavCenter")
+		.toolbar-center(v-if="!isFeaturedPage && days && days.length > 1", ref="dayNavCenter")
 			button.day-arrow(v-if="showDayArrows", :disabled="dayWindowStart <= 0", @click="shiftDays(-1)", :title="t.previous_days", :aria-label="t.previous_days")
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M15 18l-6-6 6-6")
 			button.day-btn(
 				v-for="day in visibleDays",
 				:key="day.id",
-				:class="{active: currentDay === day.id}",
+				:class="{active: isDayActive(day.id)}"
 				@click="$emit('selectDay', day.id)")
 				| {{ day.label }}
 			button.day-arrow(v-if="showDayArrows", :disabled="dayWindowStart + dayWindowSize >= days.length", @click="shiftDays(1)", :title="t.next_days", :aria-label="t.next_days")
@@ -398,7 +398,8 @@ export default {
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
 		timeDensityMinutes: { type: Number, default: 30 },
 		isFeaturedPage: { type: Boolean, default: false },
-		isListView: { type: Boolean, default: false }
+		isListView: { type: Boolean, default: false },
+		selectedDay: { type: String, default: null }
 	},
 	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
@@ -427,7 +428,7 @@ export default {
 				group.refKey !== 'language' && Array.isArray(group.data) && group.data.some(item => item.selected)
 			);
 			const recordingActive = this.showRecordingFilter && this.recordingModel !== 'all';
-			return groupActive || recordingActive;
+			return groupActive || recordingActive || !!this.selectedDay;
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -959,6 +960,15 @@ export default {
 		toggleFilter(item) {
 			item.selected = !item.selected
 			this.$emit('filterToggle', item)
+		},
+		isDayActive(dayId) {
+			if (this.selectedDay) {
+				return this.selectedDay === dayId
+			}
+			if (this.sessionsMode) {
+				return false
+			}
+			return this.currentDay === dayId
 		},
 		ensureCurrentDayVisible() {
 			if (!this.days || this.days.length <= 1) return

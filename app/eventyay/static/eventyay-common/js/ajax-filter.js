@@ -4,7 +4,7 @@ const isFilterForm = function(form) {
         return false;
     }
 
-    return form.classList.contains('filter-form') || !!form.querySelector('.filter-form') || !!form.closest('.filter-form');
+    return form.classList.contains('filter-form') || form.classList.contains('gc-filter-form') || !!form.querySelector('.filter-form') || !!form.closest('.filter-form');
 };
 
 const getFilterForms = function(root = document) {
@@ -154,6 +154,53 @@ const syncMarkedRegions = function(oldContext, newContext) {
     });
 };
 
+/**
+ * Synchronizes filter form controls from the fetched document into the current DOM form(s).
+ * Restores input and select values during browser history navigation (popstate).
+ *
+ * @param {Element|Document} oldContext - The current container or document.
+ * @param {Element|Document} newContext - The freshly fetched container or document.
+ */
+const syncFormControls = function(oldContext, newContext) {
+    if (!oldContext || !newContext) return;
+
+    const oldForms = getFilterForms(oldContext);
+    const newForms = getFilterForms(newContext);
+    if (!oldForms.length || !newForms.length) return;
+
+    oldForms.forEach(function(oldForm, index) {
+        const newForm = newForms[index];
+        if (!newForm) return;
+
+        const newControlsMap = new Map();
+        newForm.querySelectorAll('input, select, textarea').forEach(function(ctrl) {
+            if (ctrl.name) {
+                newControlsMap.set(ctrl.name, ctrl);
+            }
+        });
+
+        oldForm.querySelectorAll('input, select, textarea').forEach(function(oldCtrl) {
+            if (!oldCtrl.name || (oldCtrl.type === 'hidden' && oldCtrl.name === 'csrfmiddlewaretoken')) {
+                return;
+            }
+            const newCtrl = newControlsMap.get(oldCtrl.name);
+            if (!newCtrl) {
+                return;
+            }
+
+            if (oldCtrl.type === 'checkbox' || oldCtrl.type === 'radio') {
+                if (oldCtrl.checked !== newCtrl.checked) {
+                    oldCtrl.checked = newCtrl.checked;
+                    oldCtrl.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (oldCtrl.value !== newCtrl.value) {
+                oldCtrl.value = newCtrl.value;
+                oldCtrl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+};
+
 const fetchAndReplace = async function(url, replaceUrlParams, form) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
@@ -204,6 +251,10 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         syncFilterBadge(tabContext.context, newContext); 
         syncMarkedRegions(tabContext.context, newContext);
 
+        if (!replaceUrlParams) {
+            syncFormControls(tabContext.context, newContext);
+        }
+
         reinitializeBehaviors(resultsContainer);
 
         if (replaceUrlParams) {
@@ -236,6 +287,10 @@ const buildFormUrl = function(form) {
     const currentSort = new URLSearchParams(window.location.search).get('sort');
     if (!action && currentSort && !params.has('sort')) {
         params.set('sort', currentSort);
+    }
+    const currentOrdering = new URLSearchParams(window.location.search).get('ordering');
+    if (!action && currentOrdering && !params.has('ordering')) {
+        params.set('ordering', currentOrdering);
     }
     const query = params.toString();
     if (!query) {
@@ -298,7 +353,7 @@ const handleClearFilter = function(event) {
 };
 
 const handlePaginationClick = function(event) {
-    const paginationLink = event.target.closest('.pagination-container a, .pagination a');
+    const paginationLink = event.target.closest('.pagination-container a, .pagination a, .gc-pagination a');
     if (!paginationLink) {
         return;
     }
@@ -316,14 +371,26 @@ const handlePaginationClick = function(event) {
     fetchAndReplace(url, true, formInTab || tabPane || defaultForm);
 };
 
+/**
+ * Intercepts clicks on column sort header links within table headers or results regions,
+ * loading sorted results asynchronously and updating browser history via pushState.
+ *
+ * @param {MouseEvent} event - The click event.
+ */
 const handleSortClick = function(event) {
-    const sortLink = event.target.closest('thead a[href]');
+    const sortLink = event.target.closest(
+        'thead a[href], [data-ajax-results-region] th a[href], .table-sort a[href], .gc-sort-arrows a[href]'
+    );
     if (!sortLink) {
         return;
     }
 
     const url = sortLink.getAttribute('href');
-    if (!url || !url.startsWith('?')) {
+    if (!url || url === '#' || url.startsWith('javascript:')) {
+        return;
+    }
+
+    if (!url.startsWith('?') && !url.includes('ordering=') && !url.includes('sort=')) {
         return;
     }
 

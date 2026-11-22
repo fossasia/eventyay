@@ -312,6 +312,7 @@ EVY_RUNNING_ENVIRONMENT = "testing"
 environments = [
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'linux'",
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'darwin'",
+    "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'win32'",
 ]
 
 [tool.uv.sources]
