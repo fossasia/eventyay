@@ -55,6 +55,21 @@ class OrganizerSlugBanlistValidator(BanlistValidator):
         'api',
         'csp_report',
         'widget',
+        'admin',
+        'all-events',
+        'common',
+        'exhibitor-invitation',
+        'followed-events',
+        'login',
+        'media',
+        'orga',
+        'page',
+        'past',
+        'privacy',
+        'static',
+        'support',
+        'terms',
+        'upcoming',
     ]
 
 
