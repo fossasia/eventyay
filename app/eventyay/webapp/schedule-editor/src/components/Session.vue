@@ -30,6 +30,16 @@
 			p(v-for="warning of warnings") {{ warning.message }}
 	button.unschedule-btn.no-print(v-if="showUnschedule", type="button", @pointerdown.stop, @pointerup.stop, @click.stop="onUnschedule", :aria-label="$t('Remove from schedule')", :title="$t('Remove from schedule')")
 		i.fa.fa-times(aria-hidden="true")
+	.break-stretch-handle.handle-left(
+		v-if="isBreak && !isDragClone && session.start",
+		@pointerdown.stop="onStretchStart('left', $event)",
+		:title="$t('Drag to stretch break')"
+	)
+	.break-stretch-handle.handle-right(
+		v-if="isBreak && !isDragClone && session.start",
+		@pointerdown.stop="onStretchStart('right', $event)",
+		:title="$t('Drag to stretch break')"
+	)
 </template>
 
 <script lang="ts" setup>
@@ -87,6 +97,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'startDragging', payload: { session: Session; event: PointerEvent }): void
+  (e: 'stretchBreak', payload: { session: Session; event: PointerEvent; direction: 'left' | 'right' }): void
   (e: 'editSession', payload: Session): void
   (e: 'deleteSession', payload: Session): void
   (e: 'unscheduleSession', payload: Session): void
@@ -206,6 +217,11 @@ function onPointerDown(event: PointerEvent): void {
 function onUnschedule(): void {
   emit('unscheduleSession', props.session)
 }
+
+function onStretchStart(direction: 'left' | 'right', event: PointerEvent): void {
+  if (!event.isPrimary || event.button !== 0) return
+  emit('stretchBreak', { session: props.session, event, direction })
+}
 </script>
 
 <style lang="stylus">
@@ -251,6 +267,19 @@ sessionTextExpand()
 	&.dragging
 		opacity: 0.3
 		cursor: inherit
+	.break-stretch-handle
+		position: absolute
+		top: 0
+		bottom: 0
+		width: 14px
+		cursor: ew-resize
+		touch-action: none
+		z-index: 10
+		background: transparent
+		&.handle-left
+			left: 0
+		&.handle-right
+			right: 0
 	&.isbreak
 		background-color: $clr-grey-200
 		border-radius: 6px
