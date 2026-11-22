@@ -1354,6 +1354,12 @@ class Schedule(PretalxModel):
                     speaker_data['avatar_thumbnail_tiny'] = tiny
                 elif avatar_urls.get('avatar_thumbnail_default'):
                     speaker_data['avatar_thumbnail_default'] = avatar_urls['avatar_thumbnail_default']
+                # In compact mode, also include the 460x460 default thumbnail for featured speakers
+                # who need hero cards on initial load, keeping the regular schedule grid lean.
+                if speaker_data.get('is_featured') and include_featured_speaker_metadata:
+                    default = avatar_urls.get('avatar_thumbnail_default')
+                    if default:
+                        speaker_data['avatar_thumbnail_default'] = default
             else:
                 speaker_data.update(avatar_urls)
             if include_avatar and needs_avatar_thumbnails(user, avatar_urls):
