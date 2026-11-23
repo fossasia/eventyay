@@ -18,6 +18,17 @@ const hasAjaxResultsRegion = function(root = document) {
 };
 
 let activeRequestController = null;
+let pendingResultsLoadingAnnouncement = null;
+let pendingResultsLoadingAnnouncementTimeout = null;
+
+const cancelPendingResultsLoadingAnnouncement = function() {
+    if (pendingResultsLoadingAnnouncementTimeout !== null) {
+        window.clearTimeout(pendingResultsLoadingAnnouncementTimeout);
+        pendingResultsLoadingAnnouncementTimeout = null;
+    }
+
+    pendingResultsLoadingAnnouncement = null;
+};
 
 const getTableContainer = function(context) {
     return context.querySelector('.table-responsive') || context.querySelector('table.table') || context.querySelector('.empty-collection');
@@ -112,9 +123,15 @@ const getResultsLoadingAnnouncement = function(resultsContainer) {
 };
 
 const clearResultsLoadingAnnouncement = function(announcement) {
-    if (announcement) {
-        announcement.textContent = '';
+    if (!announcement) {
+        return;
     }
+
+    if (pendingResultsLoadingAnnouncement === announcement) {
+        cancelPendingResultsLoadingAnnouncement();
+    }
+
+    announcement.textContent = '';
 };
 
 const showResultsLoadingState = function(resultsContainer) {
@@ -124,9 +141,24 @@ const showResultsLoadingState = function(resultsContainer) {
     const loadingText = typeof window.gettext === 'function'
         ? window.gettext('Loading…')
         : 'Loading…';
+    cancelPendingResultsLoadingAnnouncement();
     const announcement = getResultsLoadingAnnouncement(resultsContainer);
     if (announcement) {
-        announcement.textContent = loadingText;
+        announcement.textContent = '';
+        pendingResultsLoadingAnnouncement = announcement;
+        pendingResultsLoadingAnnouncementTimeout = window.setTimeout(function() {
+            if (
+                pendingResultsLoadingAnnouncement === announcement
+                && resultsContainer.getAttribute('aria-busy') === 'true'
+            ) {
+                announcement.textContent = loadingText;
+            }
+
+            if (pendingResultsLoadingAnnouncement === announcement) {
+                pendingResultsLoadingAnnouncement = null;
+                pendingResultsLoadingAnnouncementTimeout = null;
+            }
+        }, 0);
     }
 
     const loadingStatus = document.createElement('div');
