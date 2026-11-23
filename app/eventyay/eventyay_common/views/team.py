@@ -19,6 +19,7 @@ from eventyay.control.views.organizer import OrganizerDetailViewMixin
 
 from ...control.forms.organizer_forms import TeamForm
 from ...control.permissions import OrganizerPermissionRequiredMixin
+from eventyay.eventyay_common.utils import api_token_created_message
 from ..video.traits_sync import (
     sync_video_traits_for_platform_users,
     sync_video_traits_for_team,
@@ -194,14 +195,7 @@ class TeamMemberView(
                 user=self.request.user,
                 data={'name': self.add_token_form.cleaned_data['name'], 'id': token.pk},
             )
-            messages.success(
-                self.request,
-                _(
-                    'A new API token has been created with the following secret: {}\n'
-                    'Please copy this secret to a safe place. You will not be able to '
-                    'view it again here.'
-                ).format(token.token),
-            )
+            messages.success(self.request, api_token_created_message(token))
             return redirect(self.get_success_url())
         else:
             messages.error(self.request, _('Your changes could not be saved.'))
