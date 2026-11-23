@@ -91,6 +91,29 @@ const reinitializeBehaviors = function(resultsContainer) {
     }));
 };
 
+const showResultsLoadingState = function(resultsContainer) {
+    resultsContainer.setAttribute('aria-busy', 'true');
+    resultsContainer.style.opacity = '1';
+
+    const loadingStatus = document.createElement('div');
+    loadingStatus.className = 'text-center text-muted';
+    loadingStatus.setAttribute('role', 'status');
+    loadingStatus.setAttribute('aria-live', 'polite');
+    loadingStatus.style.padding = '2rem 0';
+
+    const spinner = document.createElement('span');
+    spinner.className = 'fa fa-spinner fa-spin';
+    spinner.setAttribute('aria-hidden', 'true');
+    loadingStatus.appendChild(spinner);
+
+    const loadingText = typeof window.gettext === 'function'
+        ? window.gettext('Loading…')
+        : 'Loading…';
+    loadingStatus.appendChild(document.createTextNode(' ' + loadingText));
+
+    resultsContainer.replaceChildren(loadingStatus);
+};
+
 const updateNextInputs = function(url, tabId) {
     const normalizedUrl = new URL(url, window.location.href);
     const nextValue = normalizedUrl.pathname + normalizedUrl.search;
@@ -201,7 +224,7 @@ const syncFormControls = function(oldContext, newContext) {
     });
 };
 
-const fetchAndReplace = async function(url, replaceUrlParams, form) {
+const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingIndicator = false) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
     let requestController = null;
@@ -210,7 +233,11 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         return;
     }
 
-    resultsContainer.style.opacity = '0.5';
+    if (showLoadingIndicator) {
+        showResultsLoadingState(resultsContainer);
+    } else {
+        resultsContainer.style.opacity = '0.5';
+    }
 
     try {
         if (activeRequestController) {
@@ -235,6 +262,11 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         }
 
         const data = await response.text();
+
+        // A newer tab selection may have started while the response body was being read.
+        if (activeRequestController !== requestController) {
+            return;
+        }
         const doc = new DOMParser().parseFromString(data, 'text/html');
         const newContext = tabContext.tabId ? doc.getElementById(tabContext.tabId) : doc;
         const newResultsContainer = newContext ? getResultsContainer(newContext) : null;
@@ -264,7 +296,10 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         updateNextInputs(url, tabContext.tabId);
     } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
-            resultsContainer.style.opacity = '1';
+            return;
+        }
+
+        if (activeRequestController !== requestController) {
             return;
         }
 
@@ -473,20 +508,22 @@ const handleTabClick = function(event) {
     event.preventDefault();
 
     setActiveTabUI(tabParam);
-    if (tabLink.closest('.events-overview-tabs')) {
+    const isEventsOverviewTab = !!tabLink.closest('.events-overview-tabs');
+    if (isEventsOverviewTab) {
         syncSelectedEventTab(tabParam);
     }
 
     const activeTab = document.getElementById(tabParam);
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || null;
 
-    fetchAndReplace(url, true, targetElement);
+    fetchAndReplace(url, true, targetElement, isEventsOverviewTab);
 };
 
 const handlePopState = function() {
     const url = new URL(window.location.href, window.location.origin);
     const tabParam = url.searchParams.get('tab');
-    if (document.querySelector('.events-overview-tabs')) {
+    const isEventsOverview = !!document.querySelector('.events-overview-tabs');
+    if (isEventsOverview) {
         const status = url.searchParams.get('status');
         const resolvedTab = tabParam || (status === 'draft' || status === 'past' || status === 'live' ? status : 'live');
         setActiveTabUI(resolvedTab);
@@ -498,7 +535,7 @@ const handlePopState = function() {
     const activeTab = tabPane || document.querySelector('.tab-pane.active');
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || getFilterForms()[0] || null;
 
-    fetchAndReplace(window.location.href, false, targetElement);
+    fetchAndReplace(window.location.href, false, targetElement, isEventsOverview);
 };
 
 const initAjaxFilter = function() {
