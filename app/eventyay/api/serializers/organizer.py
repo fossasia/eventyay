@@ -1,7 +1,6 @@
 import logging
 from decimal import Decimal
 
-from django.db.models import Q
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
@@ -116,18 +115,13 @@ class GiftCardSerializer(I18nAwareModelSerializer):
     def validate(self, data):
         data = super().validate(data)
         s = data['secret']
-        qs = GiftCard.objects.filter(secret=s).filter(
-            Q(issuer=self.context['organizer'])
-            | Q(issuer__gift_card_collector_acceptance__collector=self.context['organizer'])
-        )
+        qs = self.context['organizer'].issued_gift_cards.filter(secret=s)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise ValidationError(
                 {
-                    'secret': _(
-                        'A gift card with the same secret already exists in your or an affiliated organizer account.'
-                    )
+                    'secret': _('A gift card with the same secret already exists in your organizer account.')
                 }
             )
         return data
@@ -191,6 +185,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_teams',
             'can_change_organizer_settings',
             'can_manage_gift_cards',
+            'can_view_event_info',
             'can_change_event_settings',
             'can_change_config',
             'can_change_items',

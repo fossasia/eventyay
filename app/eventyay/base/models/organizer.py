@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models import Exists, OuterRef, Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
@@ -254,16 +253,14 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         return self.cache.get_or_set(
             key='has_gift_cards',
             timeout=15,
-            default=lambda: self.issued_gift_cards.exists() or self.gift_card_issuer_acceptance.exists(),
+            default=self.issued_gift_cards.exists,
         )
 
     @property
     def accepted_gift_cards(self):
-        from .giftcards import GiftCard, GiftCardAcceptance
-
-        return GiftCard.objects.annotate(
-            accepted=Exists(GiftCardAcceptance.objects.filter(issuer=OuterRef('issuer'), collector=self))
-        ).filter(Q(issuer=self) | Q(accepted=True))
+        # Gift cards are only valid within the organizer that issued them. Money paid for a card
+        # is held by the issuer's payment account, so redeeming it elsewhere would shift liability.
+        return self.issued_gift_cards.all()
 
     @property
     def default_gift_card_expiry(self):
@@ -355,6 +352,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     :type can_change_teams: bool
     :param can_change_organizer_settings: If ``True``, the members can change the settings of this organizer account.
     :type can_change_organizer_settings: bool
+    :param can_view_event_info: If ``True``, the members can read the public-facing setup of the associated
+                                events, e.g. for website integrations. It does not allow any changes.
+    :type can_view_event_info: bool
     :param can_change_event_settings: If ``True``, the members can change the settings of the associated events.
     :type can_change_event_settings: bool
     :param can_change_items: If ``True``, the members can change and add items and related objects
@@ -398,6 +398,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
     can_manage_gift_cards = models.BooleanField(default=False, verbose_name=_('Can manage gift cards'))
 
+    can_view_event_info = models.BooleanField(
+        default=False,
+        verbose_name=_('Read-only access to event information'),
+        help_text=_('For website and other integrations that only display event information'),
+    )
     can_change_event_settings = models.BooleanField(default=False, verbose_name=_('Can change event settings'))
     can_change_config = models.BooleanField(
         default=False,
