@@ -1,7 +1,7 @@
 import datetime as dt
 import io
 import json
-from urllib.parse import unquote, urljoin, urlparse
+from urllib.parse import unquote, urlencode, urljoin, urlparse
 
 import vobject
 from django.conf import settings
@@ -313,7 +313,7 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
             request.user,
             speaker=speaker.user,
             wip_preview=getattr(self, 'wip_preview', False),
-        ).select_related('room', 'submission')
+        ).select_related('room', 'submission', 'submission__event__cfp')
         if not slots.exists():
             raise Http404()
         netloc = urlparse(settings.SITE_URL).netloc
@@ -321,8 +321,9 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//eventyay//{netloc}//{request.event.slug}//{speaker.code}'
 
+        show_abstract = getattr(request.event.cfp, 'public_abstract', True) if hasattr(request.event, 'cfp') else True
         for slot in slots:
-            slot.build_ical(cal)
+            slot.build_ical(cal, show_abstract=show_abstract)
 
         try:
             speaker_name = Storage().get_valid_name(name=speaker.user.fullname or speaker.user.code)
@@ -467,23 +468,43 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
         if not slots.exists():
             raise Http404()
 
+        parsed_base = urlparse(get_base_url(request.event))
+        scheme = parsed_base.scheme or 'http'
+        base_url = f'{scheme}://{parsed_base.netloc}'
+        ical_url = urljoin(
+            base_url,
+            reverse(
+                'agenda:speaker.talks.ical',
+                kwargs={
+                    'organizer': request.event.organizer.slug,
+                    'event': event,
+                    'code': self.kwargs['code'],
+                },
+            ),
+        )
+
         if provider == 'google-calendar':
-            slot = slots.first()
-            return self.google_calendar_redirect(slot, request)
+            valid_slots = [s for s in slots if s.start and s.real_end]
+            if not valid_slots:
+                raise Http404()
+
+            talk_code = request.GET.get('talk') or request.GET.get('session')
+            if talk_code:
+                talk_slot = next(
+                    (s for s in valid_slots if s.submission.code.lower() == talk_code.lower()),
+                    None,
+                )
+                if not talk_slot:
+                    raise Http404()
+                return self.google_calendar_redirect(talk_slot, request)
+
+            if len(valid_slots) == 1:
+                return self.google_calendar_redirect(valid_slots[0], request)
+
+            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ical_url.replace("https://", "http://")})}'
+            return HttpResponseRedirect(google_url)
+
         if provider == 'webcal':
-            parsed_base = urlparse(get_base_url(request.event))
-            base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
-            ical_url = urljoin(
-                base_url,
-                reverse(
-                    'agenda:speaker.talks.ical',
-                    kwargs={
-                        'organizer': request.event.organizer.slug,
-                        'event': event,
-                        'code': self.kwargs['code'],
-                    },
-                ),
-            )
             webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
             response = HttpResponse(status=302)
             response['Location'] = webcal_url

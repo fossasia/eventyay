@@ -103,6 +103,7 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     pagination_class = RoomPagination
     endpoint = "rooms"
     search_fields = ("name",)
+    write_permission = "can_change_event_settings"
 
     def get_queryset(self):
         if self.event:
