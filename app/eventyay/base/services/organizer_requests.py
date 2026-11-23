@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 
 from eventyay.base.forms.organizer_request import validate_request_slug
 from eventyay.base.models import Organizer, OrganizerRequest, User
+from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.organizer_creation import create_core_team
 
@@ -86,7 +87,7 @@ def notify_submission(application: OrganizerRequest) -> None:
     body = _(
         'A new organiser request is waiting for review.\n\n'
         'Open the request to read the details and decide: {review_url}\n\n'
-        'You can also approve or reject pending requests from the list: {list_url}'
+        'All pending requests are listed here: {list_url}'
     ).format(review_url=review_url, list_url=list_url)
     for email in User.objects.filter(
         Q(is_staff=True) | Q(is_superuser=True), is_active=True, is_spam=False
@@ -135,9 +136,11 @@ def review_request(
             body += '\n\n' + _('Reason from the reviewer: {reason}').format(reason=reason)
         else:
             body += '\n\n' + _('The reviewer did not give a reason.')
-        body += '\n\n' + _(
-            'What you can do next: if you would like to try again, you can send a new request: {url}'
-        ).format(url=absolute_url(reverse('organizer_request.create')))
+        # The request form returns 404 while organiser requests are switched off.
+        if organizer_request_enabled():
+            body += '\n\n' + _(
+                'What you can do next: if you would like to try again, you can send a new request: {url}'
+            ).format(url=absolute_url(reverse('organizer_request.create')))
     application.reviewed_by = reviewer
     application.reviewed_at = timezone.now()
     application.save()

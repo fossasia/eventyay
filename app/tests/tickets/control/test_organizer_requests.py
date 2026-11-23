@@ -234,6 +234,18 @@ def test_reject_without_reason_says_so(application, admin, django_capture_on_com
     assert 'Reason from the reviewer' not in body
 
 
+def test_reject_while_requests_disabled_has_no_retry_link(application, admin, django_capture_on_commit_callbacks):
+    with (
+        patch('eventyay.base.services.organizer_requests.organizer_request_enabled', return_value=False),
+        patch('eventyay.base.services.organizer_requests.mail') as mail,
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        review_request(application.pk, admin, approve=False, reason='No')
+    body = mail.call_args.args[3]['body']
+    assert 'was not approved' in body
+    assert reverse('organizer_request.create') not in body
+
+
 def test_admin_review_pages(client, application, admin):
     url = reverse('eventyay_admin:admin.organizer_requests.detail', args=[application.pk])
     assert client.get(reverse('eventyay_admin:admin.organizer_requests')).status_code == 200
@@ -554,7 +566,7 @@ def test_staff_notification_excludes_applicant_text(client, data, admin, django_
     assert 'untrusted.example' not in body
     assert data['name'] not in body
     assert '/admin/organizer-requests/' in body
-    assert 'approve or reject pending requests from the list' in body
+    assert 'All pending requests are listed here' in body
 
 
 def test_required_question_is_stored_with_the_request(client, data):
