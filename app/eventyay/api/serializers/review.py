@@ -110,9 +110,14 @@ class ReviewWriteSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         return value
 
     def validate_submission(self, value):
-        if self.event.reviews.filter(
-            user=self.context["request"].user, submission=value
-        ).exists():
+        if self.instance is not None:
+            if value != self.instance.submission:
+                raise ValidationError("A review cannot be moved to another submission.")
+            return value
+        user = self.context["request"].user
+        if not user.has_perm(Submission.get_perm("review"), value):
+            raise ValidationError("You cannot review this submission.")
+        if self.event.reviews.filter(user=user, submission=value).exists():
             raise ValidationError("You have already reviewed this submission.")
         return value
 

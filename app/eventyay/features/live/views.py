@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from eventyay.base.models import SystemLog, Event
+from eventyay.base.services.event import get_event_timezone_name
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.models.auth import ShortToken
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
@@ -176,7 +177,7 @@ class AppView(View):
                             "date_from": event.date_from.isoformat() if event.date_from else None,
                             "date_to": event.date_to.isoformat() if event.date_to else None,
                         },
-                        "eventTimezone": event.settings.timezone,
+                        "eventTimezone": get_event_timezone_name(event),
                         "eventTitle": str(event.name),
                         "visibleLogoUrl": event.visible_logo_url or "",
                         "visibleHeaderImageUrl": event.visible_header_image_url or "",

@@ -18,8 +18,9 @@ from django.db.models import (
     Q,
     Subquery,
     Sum,
+    Value,
 )
-from django.db.models.functions import Greatest
+from django.db.models.functions import Coalesce, Greatest, Least
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.timezone import is_naive, make_aware, now
@@ -39,19 +40,22 @@ from reportlab.platypus import (
 
 from eventyay.base.models import Channel, ChatEvent, Room, User
 from eventyay.base.models.room import RoomView
+from eventyay.base.services.event import get_event_timezone
 from eventyay.features.analytics.graphs.utils import PdfImage, get_schedule, median_value, pretalx_uni18n
 from eventyay.features.analytics.graphs.views import build_room_view_fig
 from eventyay.base.models.storage_model import StoredFile
 
 
 class ReportGenerator:
-    def __init__(self, event, pdf_graphs=True):
+    def __init__(self, event, pdf_graphs=True, input=None):
         self.event = event
         self.pdf_graphs = pdf_graphs
+        self.input = input or {}
 
-    def build(self, input):
-        self.input = input
-        self.schedule = get_schedule(self.event)
+    def build(self, input=None):
+        if input is not None:
+            self.input = input or {}
+        _ = self.schedule
 
         with tempfile.NamedTemporaryFile(suffix=".pdf") as f:
             doc = self.get_doc_template()(
@@ -164,38 +168,63 @@ class ReportGenerator:
         )
 
     @cached_property
-    def tz(self):
-        return ZoneInfo(self.event.timezone)
+    def schedule(self):
+        return get_schedule(self.event)
+
+    @cached_property
+    def tz(self) -> ZoneInfo:
+        return get_event_timezone(self.event)
 
     @cached_property
     def date_begin(self):
-        begin = RoomView.objects.filter(
-            room__event=self.event, user__type=User.UserType.PERSON
-        ).aggregate(min=Min("start"))["min"]
-
-        if "begin" in self.input:
+        begin = None
+        inp = getattr(self, "input", None) or {}
+        if inp.get("begin"):
             try:
-                begin = dateutil.parser.parse(self.input.get("begin"))
-                if is_naive(begin):
-                    make_aware(begin, self.tz)
-            except ValueError:
+                begin = dateutil.parser.parse(str(inp.get("begin")))
+            except (ValueError, TypeError):
                 pass
+
+        if begin is None:
+            begin = getattr(self.event, "date_from", None)
+        if begin is None:
+            begin = (
+                RoomView.objects.filter(
+                    room__event=self.event, user__type=User.UserType.PERSON
+                ).aggregate(min=Min("start"))["min"]
+                or now()
+            )
+
+        if is_naive(begin):
+            begin = make_aware(begin, self.tz)
         return begin.astimezone(self.tz)
 
     @cached_property
     def date_end(self):
-        end = RoomView.objects.filter(
-            room__event=self.event, user__type=User.UserType.PERSON
-        ).aggregate(max=Greatest(Max("start"), Max("end")))["max"]
-
-        if "end" in self.input:
+        end = None
+        inp = getattr(self, "input", None) or {}
+        if inp.get("end"):
             try:
-                end = dateutil.parser.parse(self.input.get("end"))
-                if is_naive(end):
-                    make_aware(end, self.tz)
-            except ValueError:
+                end = dateutil.parser.parse(str(inp.get("end")))
+            except (ValueError, TypeError):
                 pass
-        return end.astimezone(self.tz)
+
+        if end is None:
+            end = getattr(self.event, "date_to", None)
+        if end is None:
+            end = (
+                RoomView.objects.filter(
+                    room__event=self.event, user__type=User.UserType.PERSON
+                ).aggregate(max=Greatest(Max("start"), Max("end")))["max"]
+                or (self.date_begin + timedelta(days=1))
+            )
+
+        if is_naive(end):
+            end = make_aware(end, self.tz)
+        end = end.astimezone(self.tz)
+        if end.astimezone(datetime.timezone.utc) < self.date_begin.astimezone(datetime.timezone.utc):
+            end = self.date_begin + timedelta(days=1)
+        return end
 
     def get_story(self):
         s = [
@@ -242,8 +271,36 @@ class ReportGenerator:
             ("FONTSIZE", (0, 0), (-1, -1), 10),
         ]
 
-        rvqs = RoomView.objects.exclude(
-            Q(end__lt=self.date_begin) | Q(start__gt=self.date_end)
+        date_begin_utc = self.date_begin.astimezone(datetime.timezone.utc)
+        rvqs = RoomView.objects.filter(
+            Q(end__gte=self.date_begin)
+            | Q(end__isnull=True, start__gte=date_begin_utc - timedelta(hours=3)),
+            start__lte=self.date_end,
+        )
+
+        report_now = now()
+        clipped_duration = Greatest(
+            ExpressionWrapper(
+                Least(
+                    Coalesce(
+                        "end",
+                        Least(
+                            Value(report_now, output_field=models.DateTimeField()),
+                            ExpressionWrapper(
+                                F("start") + timedelta(hours=3),
+                                output_field=models.DateTimeField(),
+                            ),
+                        ),
+                    ),
+                    Value(self.date_end, output_field=models.DateTimeField()),
+                )
+                - Greatest(
+                    F("start"),
+                    Value(self.date_begin, output_field=models.DateTimeField()),
+                ),
+                output_field=models.DurationField(),
+            ),
+            Value(timedelta(0), output_field=models.DurationField()),
         )
 
         unique_users = rvqs.filter(room=room, user__type=User.UserType.PERSON).values(
@@ -261,12 +318,7 @@ class ReportGenerator:
                 .values("room")
                 .order_by()
                 .annotate(
-                    total_duration=Sum(
-                        ExpressionWrapper(
-                            F("end") - F("start"),
-                            output_field=models.DurationField(),
-                        )
-                    )
+                    total_duration=Sum(clipped_duration)
                 )
                 .values("total_duration")
             )
@@ -324,11 +376,14 @@ class ReportGenerator:
             if self.day_whitelist is not None and day.date() not in self.day_whitelist:
                 day += timedelta(days=1)
                 continue
+            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day.replace(hour=23, minute=59, second=59, microsecond=0)
+            gds = max(self.date_begin, day_start)
+            gde = min(self.date_end, day_end)
+            if gds.astimezone(datetime.timezone.utc) >= gde.astimezone(datetime.timezone.utc):
+                day += timedelta(days=1)
+                continue
             fig = Figure(figsize=(7, 4))
-            gds = day.replace(hour=self.date_begin.hour, minute=0, second=0)
-            gde = day.replace(
-                hour=self.date_end.hour, minute=self.date_end.minute, second=0
-            )
             build_room_view_fig(fig, room, gds, gde, self.tz)
             s.append(
                 KeepTogether(
@@ -356,17 +411,31 @@ class ReportGenerator:
                 ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.black),
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
             ]
+            date_begin_utc = self.date_begin.astimezone(datetime.timezone.utc)
+            date_end_utc = self.date_end.astimezone(datetime.timezone.utc)
             for talk in self.schedule["talks"]:
                 if str(talk["room"]) != str(room.pretalx_id):
                     continue
                 talk_start = dateutil.parser.parse(talk["start"])
                 talk_end = dateutil.parser.parse(talk["end"])
-                if talk_start > self.date_end or talk_end < self.date_begin:
+                if is_naive(talk_start):
+                    talk_start = make_aware(talk_start, self.tz)
+                talk_start = talk_start.astimezone(self.tz)
+                if is_naive(talk_end):
+                    talk_end = make_aware(talk_end, self.tz)
+                talk_end = talk_end.astimezone(self.tz)
+                talk_start_utc = talk_start.astimezone(datetime.timezone.utc)
+                talk_end_utc = talk_end.astimezone(datetime.timezone.utc)
+                if talk_start_utc > date_end_utc or talk_end_utc < date_begin_utc:
                     continue
 
                 viewers = (
                     RoomView.objects.filter(room=room, user__type=User.UserType.PERSON)
-                    .exclude(Q(end__lt=talk_start) | Q(start__gt=talk_end))
+                    .filter(
+                        Q(end__gte=talk_start)
+                        | Q(end__isnull=True, start__gte=talk_start_utc - timedelta(hours=3)),
+                        start__lte=talk_end,
+                    )
                     .values("user")
                     .distinct()
                     .count()
@@ -492,11 +561,14 @@ class ReportGenerator:
             if self.day_whitelist is not None and day.date() not in self.day_whitelist:
                 day += timedelta(days=1)
                 continue
+            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day.replace(hour=23, minute=59, second=59, microsecond=0)
+            gds = max(self.date_begin, day_start)
+            gde = min(self.date_end, day_end)
+            if gds.astimezone(datetime.timezone.utc) >= gde.astimezone(datetime.timezone.utc):
+                day += timedelta(days=1)
+                continue
             fig = Figure(figsize=(7, 4))
-            gds = day.replace(hour=self.date_begin.hour, minute=0, second=0)
-            gde = day.replace(
-                hour=self.date_end.hour, minute=self.date_end.minute, second=0
-            )
             build_room_view_fig(fig, self.event, gds, gde, self.tz)
             s.append(
                 KeepTogether(
