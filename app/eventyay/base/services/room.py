@@ -21,6 +21,7 @@ from eventyay.base.models.room import (
     RoomConfigSerializer,
     RoomView,
     get_room_with_linked_sessions,
+    mask_room_config_secrets,
     partial_validated_update,
     validate_room_can_be_deleted,
 )
@@ -406,8 +407,8 @@ def save_room(event, room, update_fields, old_data, by_user):
         type='event.room.updated',
         data={
             'object': str(room.id),
-            'old': old_data,
-            'new': new,
+            'old': mask_room_config_secrets(old_data),
+            'new': mask_room_config_secrets(new),
         },
     )
 
@@ -435,7 +436,7 @@ def soft_delete_room(event, room, by_user=None):
         type='event.room.deleted',
         data={
             'object': str(room.id),
-            'old': old,
+            'old': mask_room_config_secrets(old),
         },
     )
     return room
