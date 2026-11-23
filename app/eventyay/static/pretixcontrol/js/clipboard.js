@@ -22,6 +22,24 @@ $(function() {
       if (e.text.length > 0) {
         setTooltip(e.trigger, gettext('Copied!'));
         hideTooltip(e.trigger);
+
+        if (e.trigger.classList.contains('btn-copy-confirm')) {
+          var btn = e.trigger;
+          var icon = btn.querySelector('.fa');
+          btn.classList.add('copied');
+          if (icon) {
+            icon.classList.remove('fa-copy');
+            icon.classList.add('fa-check');
+          }
+          clearTimeout(btn._copyResetTimer);
+          btn._copyResetTimer = setTimeout(function() {
+            btn.classList.remove('copied');
+            if (icon) {
+              icon.classList.remove('fa-check');
+              icon.classList.add('fa-copy');
+            }
+          }, 2000);
+        }
       }
     });
 
