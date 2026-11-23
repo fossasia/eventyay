@@ -161,7 +161,7 @@ class WaitingListEntry(LoggedModel):
         with scope(event=self.event, organizer=self.event.organizer), transaction.atomic():
             try:
                 self.refresh_from_db(
-                    from_queryset=type(self).objects.select_for_update(of=('self',)).select_related(
+                    from_queryset=type(self).objects.select_for_update(of=('self',), nowait=True).select_related(
                         'product', 'variation', 'subevent',
                     ),
                 )
@@ -176,7 +176,7 @@ class WaitingListEntry(LoggedModel):
 
             # A new quota link must validate its foreign key against this row.
             model, pk = (ProductVariation, self.variation_id) if self.variation_id else (Product, self.product_id)
-            target = model.objects.select_for_update(of=('self',)).get(pk=pk)
+            target = model.objects.select_for_update(of=('self',), nowait=True).get(pk=pk)
             # An editor may already hold a quota lock while waiting to link it to the target.
             quotas = target.quotas.order_by('pk').select_for_update(of=('self',), nowait=True)
             if self.subevent_id:

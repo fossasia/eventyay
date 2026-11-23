@@ -198,6 +198,71 @@ def test_reservation_database_error_classification(sqlstate, wrapped, monkeypatc
 
 @pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
 @pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
+@pytest.mark.parametrize('locked_row', ['entry', 'product', 'variation'])
+def test_reservation_row_contention_returns_busy(locked_row, monkeypatch):
+    """Return a retryable conflict instead of waiting while holding the booking lock."""
+    organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
+    event = Event.objects.create(organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now())
+    sent = []
+    monkeypatch.setattr('eventyay.base.models.waitinglist.mail', lambda *args, **kwargs: sent.append(args[0]))
+    with scope(event=event, organizer=organizer):
+        product = Item.objects.create(event=event, name='Ticket', default_price=23)
+        variation = None
+        if locked_row == 'variation':
+            variation = ItemVariation.objects.create(product=product, value='Standard')
+        quota = Quota.objects.create(event=event, name='Tickets', size=None)
+        (quota.variations if variation else quota.products).add(variation or product)
+        entry = WaitingListEntry.objects.create(
+            event=event, product=product, variation=variation, email='waiting@example.test',
+        )
+        target = entry if locked_row == 'entry' else variation or product
+
+    def reserve():
+        """Attempt the reservation on another connection with a bounded safety timeout."""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SET lock_timeout = '2s'")
+            with scope(event=event, organizer=organizer):
+                candidate = WaitingListEntry.objects.get(pk=entry.pk)
+                with connection.execute_wrapper(record_query):
+                    with pytest.raises(WaitingListBusy) as error:
+                        candidate.send_voucher()
+                cause = error.value.__cause__.__cause__ or error.value.__cause__
+                code = getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)
+                assert code == '55P03'
+                view = WaitingListViewSet()
+                view.request = SimpleNamespace(event=event, user=None, auth=None)
+                monkeypatch.setattr(view, 'get_object', lambda: candidate)
+                response = view.send_voucher()
+                assert response.status_code == 409
+                assert response['Retry-After'] == '5'
+        finally:
+            connections.close_all()
+
+    def record_query(execute, sql, params, many, context):
+        """Assert the reservation requests nonblocking locks before the safety timeout."""
+        if 'FOR UPDATE' in sql:
+            assert 'NOWAIT' in sql
+        return execute(sql, params, many, context)
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with scope(event=event, organizer=organizer), transaction.atomic():
+            type(target).objects.select_for_update().get(pk=target.pk)
+            pool.submit(reserve).result(timeout=15)
+        with scope(event=event, organizer=organizer):
+            entry.refresh_from_db()
+            assert entry.voucher_id is None
+            assert not Voucher.objects.exists()
+            assert not sent
+            entry.send_voucher()
+            entry.refresh_from_db()
+            assert entry.voucher_id is not None
+            assert Voucher.objects.count() == 1
+            assert sent == [entry.email]
+
+
+@pytest.mark.django_db(transaction=True, available_apps=[app.name for app in apps.get_app_configs()])
+@pytest.mark.skipif(connection.vendor != 'postgresql', reason='Requires PostgreSQL row locks.')
 @pytest.mark.parametrize('competing_action', ['assignment', 'product change'])
 def test_api_update_revalidates_locked_entry(monkeypatch, competing_action):
     """Recheck a stale PATCH after a competing assignment or product change commits."""
