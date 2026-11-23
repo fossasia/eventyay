@@ -200,6 +200,10 @@ const stretchingBreak = ref<{
   pointerId: number
 } | null>(null)
 const stretchTargetRoomIndex = ref<number | null>(null)
+const isRtl = computed(() => {
+  if (typeof document === 'undefined') return false
+  return document.documentElement.dir === 'rtl' || document.documentElement.classList.contains('rtl')
+})
 
 let cachedGrid: {
   rooms: CachedRoom[]
@@ -642,10 +646,14 @@ const updateStretchRoom = (clientX: number, clientY: number) => {
     syncCachedGridToScroll()
     const r = cachedGrid.rooms.find((room) => clientX >= room.left && clientX < room.right)
     if (r) {
-      if (stretchingBreak.value.direction === 'left' && r.roomIndex > stretchingBreak.value.originRoomIndex) {
-        stretchTargetRoomIndex.value = stretchingBreak.value.originRoomIndex
-      } else if (stretchingBreak.value.direction === 'right' && r.roomIndex < stretchingBreak.value.originRoomIndex) {
-        stretchTargetRoomIndex.value = stretchingBreak.value.originRoomIndex
+      const rtl = isRtl.value
+      const origin = stretchingBreak.value.originRoomIndex
+      if (stretchingBreak.value.direction === 'left') {
+        const isDisallowed = rtl ? r.roomIndex < origin : r.roomIndex > origin
+        stretchTargetRoomIndex.value = isDisallowed ? origin : r.roomIndex
+      } else if (stretchingBreak.value.direction === 'right') {
+        const isDisallowed = rtl ? r.roomIndex > origin : r.roomIndex < origin
+        stretchTargetRoomIndex.value = isDisallowed ? origin : r.roomIndex
       } else {
         stretchTargetRoomIndex.value = r.roomIndex
       }

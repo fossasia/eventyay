@@ -1185,6 +1185,7 @@ interface CreateSessionEvent {
 
 interface CreateSessionResult {
   success: boolean
+  dismissed?: boolean
   session?: any
 }
 
@@ -1249,7 +1250,7 @@ async function createSession(e: CreateSessionEvent): Promise<CreateSessionResult
           pendingBreakDeletions.delete(String(realId))
         }
       }
-      return { success: false }
+      return { success: false, dismissed: true }
     }
 
     if (e.session.code && Array.isArray(response.warnings)) {
@@ -1288,7 +1289,7 @@ async function createSession(e: CreateSessionEvent): Promise<CreateSessionResult
       schedule.value.talks = schedule.value.talks.filter((s) => String(s.id) !== tempId)
     }
     console.error('Failed to create session', error)
-    return { success: false }
+    return { success: false, dismissed: false }
   }
 }
 
@@ -1458,10 +1459,13 @@ async function onStretchBreakDrop(payload: {
     return
   }
 
-  const failedRooms: string[] = []
   for (const room of payload.targetRooms) {
     pendingStretchRooms.add(room.id)
-    try {
+  }
+
+  const failedRooms: string[] = []
+  try {
+    for (const room of payload.targetRooms) {
       const newBreakData: any = {
         title: payload.session.title,
         duration: payload.session.duration,
@@ -1471,10 +1475,12 @@ async function onStretchBreakDrop(payload: {
         uncreated: true,
       }
       const result = await createSession({ session: newBreakData })
-      if (!result.success) {
+      if (!result.success && !result.dismissed) {
         failedRooms.push(getLocalizedString(room.name) || String(room.name))
       }
-    } finally {
+    }
+  } finally {
+    for (const room of payload.targetRooms) {
       pendingStretchRooms.delete(room.id)
     }
   }
