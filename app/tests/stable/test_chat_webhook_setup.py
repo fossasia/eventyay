@@ -109,11 +109,11 @@ def test_deliver_chat_webhook_signs_body_and_returns_status(monkeypatch):
     """Delivery signs the exact body sent and reports the receiver's status."""
     sent = {}
 
-    def fake_post(url, data=None, headers=None, **kwargs):
+    def fake_post(url, data, headers):
         sent.update(url=url, data=data, headers=headers)
         return FakeResponse(403)
 
-    monkeypatch.setattr(live_tasks.requests, "post", fake_post)
+    monkeypatch.setattr(live_tasks, "post_webhook", fake_post)
     status = live_tasks.deliver_chat_webhook({"b": 1, "a": 2}, URL, SECRET)
     assert status == 403
     assert sent["url"] == URL
@@ -125,7 +125,7 @@ def test_deliver_chat_webhook_returns_none_when_unreachable(monkeypatch):
     def fake_post(*args, **kwargs):
         raise RequestException("boom")
 
-    monkeypatch.setattr(live_tasks.requests, "post", fake_post)
+    monkeypatch.setattr(live_tasks, "post_webhook", fake_post)
     assert live_tasks.deliver_chat_webhook({}, URL, SECRET) is None
 
 

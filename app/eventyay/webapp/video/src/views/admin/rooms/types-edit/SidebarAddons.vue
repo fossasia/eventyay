@@ -232,6 +232,7 @@ export default {
 				const { status, ok } = await api.call('room.webhook.test', { room: this.config.id })
 				this.webhookTestResult = { ok, text: this.describeWebhookStatus(status, ok) }
 			} catch (error) {
+				console.error('room.webhook.test failed for room %s: %o', this.config.id, error)
 				this.webhookTestResult = { ok: false, text: error.message || String(error) }
 			} finally {
 				this.testingWebhook = false
