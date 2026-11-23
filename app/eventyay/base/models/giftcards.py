@@ -22,6 +22,11 @@ def gen_giftcard_secret(length=8):
 
 
 class GiftCardAcceptance(models.Model):
+    """
+    Legacy cross-organizer acceptance link. No longer used: gift cards are only
+    accepted by the organizer that issued them.
+    """
+
     issuer = models.ForeignKey(
         'Organizer',
         related_name='gift_card_collector_acceptance',
@@ -82,11 +87,8 @@ class GiftCard(LoggedModel):
     def value(self):
         return self.transactions.aggregate(s=Sum('value'))['s'] or Decimal('0.00')
 
-    def accepted_by(self, organizer):
-        return (
-            self.issuer == organizer
-            or GiftCardAcceptance.objects.filter(issuer=self.issuer, collector=organizer).exists()
-        )
+    def accepted_by(self, organizer) -> bool:
+        return self.issuer_id == organizer.pk
 
     def save(self, *args, **kwargs):
         if not self.secret:
