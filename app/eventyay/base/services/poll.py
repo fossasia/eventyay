@@ -1,3 +1,5 @@
+import uuid
+
 from channels.db import database_sync_to_async
 from django.db import transaction
 from django.db.models import Q
@@ -98,18 +100,31 @@ def delete_poll(**kwargs):
     return True
 
 
+def parse_option_ids(options: object) -> frozenset[uuid.UUID]:
+    """
+    :raises PollOption.DoesNotExist: when ``options`` is not a non-empty list of option IDs
+    """
+    if not isinstance(options, list) or not options:
+        raise PollOption.DoesNotExist
+    try:
+        return frozenset(uuid.UUID(str(option)) for option in options)
+    except ValueError as e:
+        raise PollOption.DoesNotExist from e
+
+
 @database_sync_to_async
 def vote_on_poll(pk, room, user, options):
     """
     :raises Poll.DoesNotExist: when the poll is not open in ``room``
-    :raises PollOption.DoesNotExist: when none of ``options`` belongs to the poll
+    :raises PollOption.DoesNotExist: when ``options`` is empty or any of them is not an option of the poll
     """
     with scope(event=room.event):
         poll = Poll.objects.get(pk=pk, room=room, state=Poll.States.OPEN)
-        validated_options = list(
-            PollOption.objects.filter(poll=poll, id__in=options).values_list("id", flat=True)
+        requested_options = parse_option_ids(options)
+        validated_options = set(
+            PollOption.objects.filter(poll=poll, id__in=requested_options).values_list("id", flat=True)
         )
-        if not validated_options:
+        if validated_options != requested_options:
             raise PollOption.DoesNotExist
         # replace the previous vote in one step, so a failed insert keeps it
         with transaction.atomic():

@@ -6,7 +6,7 @@ from django_scopes import scope
 from eventyay.base.models import Room
 from eventyay.base.models.poll import Poll, PollOption, PollVote
 from eventyay.base.models.roomquestion import QuestionVote, RoomQuestion
-from eventyay.base.services.poll import vote_on_poll
+from eventyay.base.services.poll import parse_option_ids, vote_on_poll
 from eventyay.base.services.question import vote_on_question
 from eventyay.features.live import decorators
 from eventyay.features.live.exceptions import ConsumerException
@@ -173,3 +173,26 @@ def test_vote_on_removed_option_keeps_previous_vote(event, room, user):
             vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[removed_id])
 
         assert list(PollVote.objects.filter(sender=user).values_list('option', flat=True)) == [talks.pk]
+
+
+@pytest.mark.django_db
+def test_vote_with_one_removed_option_is_rejected(event, room, user):
+    with scope(event=event):
+        poll = Poll.objects.create(room=room, content='Format?', state=Poll.States.OPEN)
+        talks = PollOption.objects.create(poll=poll, content='Talks', order=1)
+        panels = PollOption.objects.create(poll=poll, content='Panels', order=2)
+        vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[str(talks.pk)])
+
+        removed = PollOption.objects.create(poll=poll, content='Workshops', order=3)
+        removed_id = str(removed.pk)
+        removed.delete()
+        with pytest.raises(PollOption.DoesNotExist):
+            vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[str(panels.pk), removed_id])
+
+        assert list(PollVote.objects.filter(sender=user).values_list('option', flat=True)) == [talks.pk]
+
+
+@pytest.mark.parametrize('options', [[], None, 'not-a-list', ['not-a-uuid']])
+def test_parse_option_ids_rejects_malformed_input(options):
+    with pytest.raises(PollOption.DoesNotExist):
+        parse_option_ids(options)
