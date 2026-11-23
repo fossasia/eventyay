@@ -9,9 +9,6 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.common.redirects import get_redirect_target
-
-
 # Error message shown when a spam-marked user attempts to authenticate.
 SPAM_ACCOUNT_ERROR = _('This account has been suspended. Please contact the site administrator.')
 
@@ -88,11 +85,12 @@ class BaseAuthBackend:
     def get_next_url(self, request):
         """
         This method will be called after a successful login to determine the next URL. Eventyay in general uses the
-        ``'next'`` or ``'redirect_url'`` from the submitted form or query parameters. External authentication methods
-        can use custom attributes with hardcoded names for security purposes. For example, OAuth uses ``'state'``
-        for keeping track of application state.
+        ``'next'`` query parameter. However, external authentication methods could use custom attributes with hardcoded
+        names for security purposes. For example, OAuth uses ``'state'`` for keeping track of application state.
         """
-        return get_redirect_target(request)
+        if 'next' in request.GET:
+            return request.GET.get('next')
+        return None
 
 
 class NativeAuthBackend(BaseAuthBackend):
