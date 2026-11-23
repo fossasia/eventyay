@@ -15357,7 +15357,7 @@ msgid "From"
 msgstr ""
 
 #: eventyay/common/templates/common/includes/contact_organizer_modal.html:39
-msgid "What's your question for the organizer?"
+msgid "What\\"
 msgstr ""
 
 #: eventyay/common/templates/common/includes/contact_organizer_modal.html:40
