@@ -86,6 +86,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     endpoint = 'schedules'
     search_fields = ('version',)
     allow_public_read = True
+    write_permission = 'can_change_submissions'
     # We look up schedules by IDs, but we permit the special names "wip" and "latest"
     lookup_value_regex = '[^/]+'
     permission_map = {
@@ -350,6 +351,7 @@ class TalkSlotViewSet(
     search_fields = ('submission__title', 'submission__speakers__fullname')
     filterset_class = TalkSlotFilter
     allow_public_read = True
+    write_permission = 'can_change_submissions'
     permission_map = {'ical': 'schedule.view_talkslot'}
 
     @cached_property

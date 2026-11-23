@@ -824,10 +824,13 @@ class EventSettingsSerializer(SettingsSerializer):
         'menu_label_tickets',
         'menu_label_join_video',
     ]
+    include_plugin_fields = True
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
+        if not self.include_plugin_fields:
+            return
 
         for recv, resp in api_event_settings_fields.send(sender=self.event):
             for fname, field in resp.items():
@@ -888,6 +891,49 @@ class EventSettingsSerializer(SettingsSerializer):
         )
         # TODO: make sure pub is always correct
         return 'pub/' + fname
+
+
+class PublicEventSettingsSerializer(EventSettingsSerializer):
+    """
+    Event settings for read-only integrations: only what the public event page shows.
+
+    Settings added by plugins are left out, since they may hold credentials.
+    """
+
+    default_fields = [
+        'imprint_url',
+        'contact_mail',
+        'locales',
+        'locale',
+        'region',
+        'show_date_to',
+        'show_times',
+        'frontpage_text',
+        'event_info_text',
+        'banner_text',
+        'banner_text_bottom',
+        'presale_has_ended_text',
+        'header_background_color',
+        'header_text_color',
+        'navigation_text_color',
+        'menu_text_scroll_over_color',
+        'primary_color',
+        'theme_color_success',
+        'theme_color_danger',
+        'theme_color_background',
+        'theme_round_borders',
+        'hover_button_color',
+        'primary_font',
+        'logo_image',
+        'logo_image_large',
+        'event_logo_image',
+        'event_preview_image',
+        'logo_show_title',
+        'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
+    ]
+    include_plugin_fields = False
 
 
 class DeviceEventSettingsSerializer(EventSettingsSerializer):
