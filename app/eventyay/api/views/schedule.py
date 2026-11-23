@@ -86,6 +86,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     endpoint = 'schedules'
     search_fields = ('version',)
     allow_public_read = True
+    write_permission = 'can_change_submissions'
     # We look up schedules by IDs, but we permit the special names "wip" and "latest"
     lookup_value_regex = '[^/]+'
     permission_map = {
@@ -229,16 +230,15 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
-        """Validate release data before accessing or creating the draft schedule."""
+        """Validate release data, then release the current draft under the event lock."""
         serializer = ScheduleReleaseSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
 
-        wip_schedule = request.event.wip_schedule
         version_name = serializer.validated_data.get('version')
         comment = serializer.validated_data.get('comment')
 
         try:
-            schedule, _ = wip_schedule.freeze(
+            schedule, _ = request.event.release_schedule(
                 name=version_name,
                 user=request.user,
                 notify_speakers=False,
@@ -351,6 +351,7 @@ class TalkSlotViewSet(
     search_fields = ('submission__title', 'submission__speakers__fullname')
     filterset_class = TalkSlotFilter
     allow_public_read = True
+    write_permission = 'can_change_submissions'
     permission_map = {'ical': 'schedule.view_talkslot'}
 
     @cached_property

@@ -9,12 +9,14 @@ from django_scopes import scopes_disabled
 from PIL import UnidentifiedImageError
 from requests import get
 
-from eventyay.celery_app import app
-from eventyay.common.image import create_thumbnail, get_thumbnail_field_name, is_svg_filename
-from eventyay.common.signals import minimum_interval, periodic_task
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.auth_token import UserApiToken
 from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
+from eventyay.base.signals import periodic_task
+from eventyay.celery_app import app
+from eventyay.common.image import create_thumbnail, get_thumbnail_field_name, is_svg_filename
+from eventyay.common.signals import minimum_interval
+
 
 logger = logging.getLogger(__name__)
 
