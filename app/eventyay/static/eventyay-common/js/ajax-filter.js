@@ -265,7 +265,9 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingI
     if (showLoadingIndicator) {
         loadingAnnouncement = showResultsLoadingState(resultsContainer);
     } else {
-        clearResultsLoadingAnnouncement(getResultsLoadingAnnouncement(resultsContainer));
+        const parent = resultsContainer.parentElement;
+        const announcement = parent ? parent.querySelector('[data-ajax-loading-announcement]') : null;
+        clearResultsLoadingAnnouncement(announcement);
         resultsContainer.removeAttribute('aria-busy');
         resultsContainer.style.opacity = '0.5';
     }
