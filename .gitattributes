@@ -51,3 +51,4 @@ app/eventyay/static/vendored/** linguist-vendored
 *.js text eol=lf
 *.json text eol=lf
 *.svg text eol=lf
+*.sh text eol=lf

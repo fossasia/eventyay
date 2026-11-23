@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
@@ -22,16 +21,8 @@ class GiftCardCreateForm(forms.ModelForm):
 
     def clean_secret(self):
         secret = self.cleaned_data.get('secret')
-        exists = (
-            GiftCard.objects.filter(secret__iexact=secret)
-            .filter(Q(issuer=self.organizer) | Q(issuer__gift_card_collector_acceptance__collector=self.organizer))
-            .exists()
-        )
-
-        if exists:
-            raise ValidationError(
-                _('A gift card with the same secret already exists in your or an affiliated organizer account.')
-            )
+        if self.organizer.issued_gift_cards.filter(secret__iexact=secret).exists():
+            raise ValidationError(_('A gift card with the same secret already exists in your organizer account.'))
 
         return secret
 
