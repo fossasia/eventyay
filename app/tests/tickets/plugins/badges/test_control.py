@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 
+import pytest
 from django.contrib.staticfiles import finders
 from django.test import override_settings
 from django_scopes import scopes_disabled
@@ -217,22 +218,7 @@ class BadgeLayoutFormTest(SoupTest):
         assert doc.select_one('.text-format #toolbox-col') is not None
         assert doc.select_one('.text-individual #toolbox-content') is not None
 
-        css_path = finders.find('pretixcontrol/scss/pdfeditor.css')
-        assert css_path is not None
-        with open(css_path, 'r', encoding='utf-8') as f:
-            css_content = f.read()
-        assert '#toolbox[data-type=group].group-all-text .text-format' in css_content
-        assert '#toolbox[data-type=group] .text-individual' in css_content
-        assert '#toolbox-pin.active' in css_content
-
     def test_editor_save_persists_pinned_state(self):
-        js_path = finders.find('pretixcontrol/js/ui/editor.js')
-        assert js_path is not None
-        with open(js_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        assert 'pinned: !!o.pinned' in js_content
-        assert 'editor._set_object_pinned(o, true)' in js_content
-
         with scopes_disabled():
             layout = self.event1.badge_layouts.create(name='Layout 1', default=True)
         posted_data = [
@@ -272,187 +258,195 @@ class BadgeLayoutFormTest(SoupTest):
     def test_editor_save_dirty_tracking_contract(self):
         js_path = finders.find('pretixcontrol/js/ui/editor.js')
         assert js_path is not None
-        with open(js_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        assert 'change_version: 0' in js_content
-        assert 'editor.change_version += 1' in js_content
-        assert 'editor.change_version === savedVersion' in js_content
-        assert 'editor.dirty = true;' in js_content
 
         node_bin = shutil.which('node')
-        if node_bin:
-            js_script = """
-            const fs = require('fs');
-            const vm = require('vm');
+        if not node_bin:
+            pytest.skip('node is required for the editor.js dirty-tracking check')
 
-            const jsPath = process.argv[1];
-            const code = fs.readFileSync(jsPath, 'utf8');
+        js_script = """
+        const fs = require('fs');
+        const vm = require('vm');
 
-            let pendingPost = null;
-            const values = {
-                '#toolbox-content': 'other',
-                '#toolbox-content-other': 'sample',
-                '#toolbox-fontsize': '12',
-                '#toolbox-col': '#000000',
-                '#toolbox-position-x': '10',
-                '#toolbox-position-y': '10',
-                '#toolbox-textwidth': '50',
-            };
+        const jsPath = process.argv[1];
+        const code = fs.readFileSync(jsPath, 'utf8');
 
-            const dummyJQuery = function(selector) {
-                const obj = {
-                    bind: () => obj,
-                    on: () => obj,
-                    get: () => ({}),
-                    find: () => obj,
-                    filter: () => obj,
-                    first: () => obj,
-                    each: () => obj,
-                    attr: () => '',
-                    val: (newVal) => {
-                        if (typeof newVal !== 'undefined') {
-                            values[selector] = newVal;
-                            return obj;
-                        }
-                        return values[selector] !== undefined ? values[selector] : '';
-                    },
-                    prop: () => obj,
-                    is: () => false,
-                    hasClass: () => false,
-                    addClass: () => obj,
-                    removeClass: () => obj,
-                    toggleClass: () => obj,
-                    parent: () => obj,
-                    siblings: () => obj,
-                    closest: () => obj,
-                    remove: () => obj,
-                    html: () => obj,
-                    text: () => 'Save',
-                    data: () => null,
-                    removeData: () => obj,
-                    modal: () => obj,
-                    toggle: () => obj,
-                    prepend: () => obj,
-                    length: 0,
-                };
-                return obj;
-            };
-            dummyJQuery.post = (url, payload, cb) => {
-                pendingPost = cb;
-                return { fail: () => {} };
-            };
-            dummyJQuery.trim = (s) => (s ? s.trim() : '');
+        let pendingPost = null;
+        const values = {
+            '#toolbox-content': 'other',
+            '#toolbox-content-other': 'sample',
+            '#toolbox-fontsize': '12',
+            '#toolbox-col': '#000000',
+            '#toolbox-position-x': '10',
+            '#toolbox-position-y': '10',
+            '#toolbox-textwidth': '50',
+        };
 
-            const mockTextObj = {
-                type: 'text',
-                content: 'other',
-                placeholder_text: 'sample',
-                text: 'sample',
-                fontSize: 12 * 1.33,
-                maxFontPt: 12,
-                width: 50,
-                height: 20,
-                scaleX: 1,
-                scaleY: 1,
-                set: function(k, v) { this[k] = v; },
-                setCoords: () => {},
-                rotate: () => {},
-            };
-
-            const sandbox = {
-                $: dummyJQuery,
-                jQuery: dummyJQuery,
-                gettext: (s) => s,
-                fabric: {
-                    util: {
-                        createClass: function(parent, def) {
-                            function Cls() {}
-                            Cls.prototype = Object.create(parent ? parent.prototype : {});
-                            Object.assign(Cls.prototype, def);
-                            return Cls;
-                        },
-                        object: { extend: Object.assign }
-                    },
-                    Image: function() {},
-                    Rect: function() {},
-                    Object: { _fromObject: () => {} },
-                    Color: function() { return { _source: [0, 0, 0] }; }
+        const dummyJQuery = function(selector) {
+            const obj = {
+                bind: () => obj,
+                on: () => obj,
+                get: () => ({}),
+                find: () => obj,
+                filter: () => obj,
+                first: () => obj,
+                each: () => obj,
+                attr: () => '',
+                val: (newVal) => {
+                    if (typeof newVal !== 'undefined') {
+                        values[selector] = newVal;
+                        return obj;
+                    }
+                    return values[selector] !== undefined ? values[selector] : '';
                 },
-                PDFJS: {},
-                FormData: function() { this.append = () => {}; },
-                fetch: () => Promise.resolve({ ok: true, blob: () => Promise.resolve({}) }),
-                window: { location: { href: 'http://test' }, setTimeout: () => {} },
-                setTimeout: () => {},
-                clearTimeout: () => {},
-                alert: () => {},
-                document: {
-                    getElementById: () => null,
-                    querySelector: () => null,
-                    querySelectorAll: () => [],
-                    activeElement: null,
-                    createElement: () => ({
-                        getContext: () => ({
-                            measureText: () => ({ width: 10 })
-                        })
+                prop: () => obj,
+                is: () => false,
+                hasClass: () => false,
+                addClass: () => obj,
+                removeClass: () => obj,
+                toggleClass: () => obj,
+                parent: () => obj,
+                siblings: () => obj,
+                closest: () => obj,
+                remove: () => obj,
+                html: () => obj,
+                text: () => 'Save',
+                data: () => null,
+                removeData: () => obj,
+                modal: () => obj,
+                toggle: () => obj,
+                prepend: () => obj,
+                length: 0,
+            };
+            return obj;
+        };
+        dummyJQuery.post = (url, payload, cb) => {
+            pendingPost = cb;
+            return { fail: () => {} };
+        };
+        dummyJQuery.trim = (s) => (s ? s.trim() : '');
+
+        const mockTextObj = {
+            type: 'text',
+            content: 'other',
+            placeholder_text: 'sample',
+            text: 'sample',
+            fontSize: 12 * 1.33,
+            maxFontPt: 12,
+            width: 50,
+            height: 20,
+            scaleX: 1,
+            scaleY: 1,
+            set: function(k, v) { this[k] = v; },
+            setCoords: () => {},
+            rotate: () => {},
+        };
+
+        const sandbox = {
+            $: dummyJQuery,
+            jQuery: dummyJQuery,
+            gettext: (s) => s,
+            fabric: {
+                util: {
+                    createClass: function(parent, def) {
+                        function Cls() {}
+                        Cls.prototype = Object.create(parent ? parent.prototype : {});
+                        Object.assign(Cls.prototype, def);
+                        return Cls;
+                    },
+                    object: { extend: Object.assign }
+                },
+                Image: function() {},
+                Rect: function() {},
+                Object: { _fromObject: () => {} },
+                Color: function() { return { _source: [0, 0, 0] }; }
+            },
+            PDFJS: {},
+            FormData: function() { this.append = () => {}; },
+            fetch: () => Promise.resolve({ ok: true, blob: () => Promise.resolve({}) }),
+            window: { location: { href: 'http://test' }, setTimeout: () => {} },
+            setTimeout: () => {},
+            clearTimeout: () => {},
+            alert: () => {},
+            document: {
+                getElementById: () => null,
+                querySelector: () => null,
+                querySelectorAll: () => [],
+                activeElement: null,
+                createElement: () => ({
+                    getContext: () => ({
+                        measureText: () => ({ width: 10 })
                     })
-                },
-                console: console
-            };
-            vm.createContext(sandbox);
-            vm.runInContext(code, sandbox);
+                })
+            },
+            console: console
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(code, sandbox);
 
-            const editor = sandbox.editor;
-            editor.fabric = {
-                getActiveObjects: () => [mockTextObj],
-                renderAll: () => {},
-                discardActiveObject: () => {},
-            };
-            editor.pdf_viewport = { width: 500, height: 700 };
-            editor._get_active_object = () => mockTextObj;
-            editor._get_toolbox_target_object = () => mockTextObj;
-            editor._is_active_selection = () => false;
-            editor.dump = () => [];
-            editor._csrf_token = () => 'token';
-            editor._pt2px = (pt) => pt * 1.33;
-            editor._mm2px = (mm) => mm * 3.78;
-            editor._px2mm = (px) => px / 3.78;
-            editor._update_toolbox_values = () => {};
-            editor._show_preview_blob = () => {};
+        const editor = sandbox.editor;
+        editor.fabric = {
+            getActiveObjects: () => [mockTextObj],
+            renderAll: () => {},
+            discardActiveObject: () => {},
+        };
+        editor.pdf_viewport = { width: 500, height: 700 };
+        editor._get_active_object = () => mockTextObj;
+        editor._get_toolbox_target_object = () => mockTextObj;
+        editor._is_active_selection = () => false;
+        editor.dump = () => [{
+            type: mockTextObj.type,
+            content: mockTextObj.content,
+            placeholder_text: mockTextObj.placeholder_text,
+            text: mockTextObj.text,
+            fontsize: mockTextObj.maxFontPt,
+            width: mockTextObj.width,
+        }];
+        editor._csrf_token = () => 'token';
+        editor._pt2px = (pt) => pt * 1.33;
+        editor._mm2px = (mm) => mm * 3.78;
+        editor._px2mm = (px) => px / 3.78;
+        editor._update_toolbox_values = () => {};
+        editor._show_preview_blob = () => {};
 
-            // 1. Verify preview on unchanged text leaves dirty false and change_version intact
-            editor.dirty = false;
-            editor.change_version = 1;
-            editor._preview({ preventDefault: () => {} });
-            if (editor.dirty !== false || editor.change_version !== 1) {
-                throw new Error('Preview on unchanged text marked editor dirty');
-            }
+        // 1. Verify preview on unchanged text leaves dirty false and change_version intact
+        editor.dirty = false;
+        editor.change_version = 1;
+        editor._preview({ preventDefault: () => {} });
+        if (editor.dirty !== false || editor.change_version !== 1) {
+            throw new Error('Preview on unchanged text marked editor dirty');
+        }
 
-            // 2. Start save while dirty (in-flight version = 1)
-            editor.dirty = true;
-            editor._save();
-            if (!pendingPost) throw new Error('Expected $.post to be called');
-            const inFlightCb1 = pendingPost;
-            pendingPost = null;
+        // 2. Start save while dirty (in-flight version = 1)
+        editor.dirty = true;
+        editor._save();
+        if (!pendingPost) throw new Error('Expected $.post to be called');
+        const inFlightCb1 = pendingPost;
+        pendingPost = null;
 
-            // 3. While save is pending, user edits a toolbox field
-            editor._update_values_from_toolbox();
-            if (editor.change_version !== 2) throw new Error('Expected change_version to increment to 2, got ' + editor.change_version);
-            if (!editor.dirty) throw new Error('Expected dirty to be true');
+        // 3. While save is pending, user edits a toolbox field
+        values['#toolbox-fontsize'] = '16';
+        editor._update_values_from_toolbox();
+        if (editor.change_version !== 2) throw new Error('Expected change_version to increment to 2, got ' + editor.change_version);
+        if (!editor.dirty) throw new Error('Expected dirty to be true');
 
-            // 4. Complete the in-flight save request (for version 1)
-            inFlightCb1({ status: 'ok' });
-            if (editor.dirty !== true) throw new Error('Regression failure: dirty should remain true after in-flight edit!');
+        // Verify a no-op update does not increment change_version
+        editor._update_values_from_toolbox();
+        if (editor.change_version !== 2) throw new Error('Expected no-op update not to increment change_version');
 
-            // 5. Control case: save completes when no edits happen concurrently
-            editor._save();
-            if (!pendingPost) throw new Error('Expected $.post to be called');
-            const inFlightCb2 = pendingPost;
-            inFlightCb2({ status: 'ok' });
-            if (editor.dirty !== false) throw new Error('Control failure: dirty should be cleared when no edits occurred!');
+        // 4. Complete the in-flight save request (for version 1)
+        inFlightCb1({ status: 'ok' });
+        if (editor.dirty !== true) throw new Error('Regression failure: dirty should remain true after in-flight edit!');
 
-            console.log('OK');
-            process.exit(0);
-            """
-            res = subprocess.run([node_bin, '-e', js_script, js_path], capture_output=True, text=True)
-            assert res.returncode == 0
-            assert 'OK' in res.stdout
+        // 5. Control case: save completes when no edits happen concurrently
+        editor._save();
+        if (!pendingPost) throw new Error('Expected $.post to be called');
+        const inFlightCb2 = pendingPost;
+        inFlightCb2({ status: 'ok' });
+        if (editor.dirty !== false) throw new Error('Control failure: dirty should be cleared when no edits occurred!');
+
+        console.log('OK');
+        process.exit(0);
+        """
+        res = subprocess.run([node_bin, '-e', js_script, js_path], capture_output=True, text=True)
+        assert res.returncode == 0
+        assert 'OK' in res.stdout

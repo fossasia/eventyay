@@ -279,13 +279,7 @@ var editor = {
         } else {
             var sel = new fabric.ActiveSelection(objs, {canvas: editor.fabric});
             if (objs.some(function (o) { return !!o.pinned; })) {
-                sel.lockMovementX = true;
-                sel.lockMovementY = true;
-                sel.lockRotation = true;
-                sel.lockScalingX = true;
-                sel.lockScalingY = true;
-                sel.lockUniScaling = true;
-                sel.hasControls = false;
+                editor._apply_lock(sel, true);
             }
             editor.fabric.setActiveObject(sel);
         }
@@ -293,18 +287,23 @@ var editor = {
         editor._update_toolbox();
     },
 
+    _apply_lock: function (target, locked) {
+        locked = !!locked;
+        target.lockMovementX = locked;
+        target.lockMovementY = locked;
+        target.lockRotation = locked;
+        target.lockScalingX = locked;
+        target.lockScalingY = locked;
+        target.lockUniScaling = locked;
+        target.hasControls = !locked;
+        if (target.setCoords) {
+            target.setCoords();
+        }
+    },
+
     _set_object_pinned: function (o, isPinned) {
         o.pinned = !!isPinned;
-        o.lockMovementX = !!isPinned;
-        o.lockMovementY = !!isPinned;
-        o.lockRotation = !!isPinned;
-        o.lockScalingX = !!isPinned;
-        o.lockScalingY = !!isPinned;
-        o.lockUniScaling = !!isPinned;
-        o.hasControls = !isPinned;
-        if (o.setCoords) {
-            o.setCoords();
-        }
+        editor._apply_lock(o, isPinned);
     },
 
     _update_pin_button_state: function (selected) {
@@ -362,14 +361,7 @@ var editor = {
 
         var active = editor._get_active_object();
         if (editor._is_active_selection(active)) {
-            active.lockMovementX = newPinnedState;
-            active.lockMovementY = newPinnedState;
-            active.lockRotation = newPinnedState;
-            active.lockScalingX = newPinnedState;
-            active.lockScalingY = newPinnedState;
-            active.lockUniScaling = newPinnedState;
-            active.hasControls = !newPinnedState;
-            active.setCoords();
+            editor._apply_lock(active, newPinnedState);
         }
 
         editor.fabric.renderAll();
@@ -1030,7 +1022,10 @@ var editor = {
                 var sameSize = selected.every(function (item) {
                     return editor._get_text_max_font_pt(item).toFixed(1) === editor._get_text_max_font_pt(first).toFixed(1);
                 });
-                setVal("#toolbox-fontsize", sameSize ? editor._get_text_max_font_pt(first).toFixed(1) : "");
+                var fontEl = document.getElementById("toolbox-fontsize");
+                if (document.activeElement !== fontEl) {
+                    setVal("#toolbox-fontsize", sameSize ? editor._get_text_max_font_pt(first).toFixed(1) : "");
+                }
 
                 var firstFill = first.fill || '#000000';
                 var firstCol = (new fabric.Color(firstFill))._source;
@@ -1273,6 +1268,9 @@ var editor = {
                     editor.dirty = true;
                     editor.fabric.discardActiveObject();
                     editor._set_selection(selected);
+                    if (!e || e.type === 'change' || e.type === 'changeColor' || e.type === 'click') {
+                        editor._create_savepoint();
+                    }
                     return;
                 }
             }
@@ -1282,41 +1280,51 @@ var editor = {
             return;
         }
 
+        var before = JSON.stringify(editor.dump([o]));
+
         var new_top = editor.pdf_viewport.height - editor._mm2px($("#toolbox-position-y").val()) - o.height * o.scaleY;
         if (o.type === "textarea" || o.type === "text") {
             if ($("#toolbox").find("button[data-action=downward]").is('.active')) {
                 new_top = editor.pdf_viewport.height - editor._mm2px($("#toolbox-position-y").val());
             }
         }
-        o.set('left', editor._mm2px($("#toolbox-position-x").val()));
-        o.set('top', new_top);
+        if (!o.pinned) {
+            o.set('left', editor._mm2px($("#toolbox-position-x").val()));
+            o.set('top', new_top);
+        }
 
         if (o.type === "barcodearea") {
-            var new_h = editor._mm2px($("#toolbox-squaresize").val());
-            new_top += o.height * o.scaleY - new_h;
-            o.set('height', new_h);
-            o.set('width', new_h);
-            o.set('scaleX', 1);
-            o.set('scaleY', 1);
-            o.set('top', new_top)
+            if (!o.pinned) {
+                var new_h = editor._mm2px($("#toolbox-squaresize").val());
+                new_top += o.height * o.scaleY - new_h;
+                o.set('height', new_h);
+                o.set('width', new_h);
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                o.set('top', new_top);
+            }
         } else if (o.type === "imagearea") {
-            var new_w = editor._mm2px($("#toolbox-width").val());
-            var new_h = editor._mm2px($("#toolbox-height").val());
-            new_top += o.height * o.scaleY - new_h;
-            o.set('height', new_h);
-            o.set('width', new_w);
-            o.set('scaleX', 1);
-            o.set('scaleY', 1);
-            o.set('top', new_top)
+            if (!o.pinned) {
+                var new_w = editor._mm2px($("#toolbox-width").val());
+                var new_h = editor._mm2px($("#toolbox-height").val());
+                new_top += o.height * o.scaleY - new_h;
+                o.set('height', new_h);
+                o.set('width', new_w);
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                o.set('top', new_top);
+            }
             o.content = $("#toolbox-imagecontent").val();
         } else if (o.type === "poweredby") {
-            var new_h = Math.max(1, editor._mm2px($("#toolbox-squaresize").val()));
-            new_top += o.height * o.scaleY - new_h;
-            o.set('width', new_h / o.height * o.width);
-            o.set('height', new_h);
-            o.set('scaleX', 1);
-            o.set('scaleY', 1);
-            o.set('top', new_top)
+            if (!o.pinned) {
+                var new_h = Math.max(1, editor._mm2px($("#toolbox-squaresize").val()));
+                new_top += o.height * o.scaleY - new_h;
+                o.set('width', new_h / o.height * o.width);
+                o.set('height', new_h);
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                o.set('top', new_top);
+            }
             if ($("#toolbox-poweredby-style").val() !== o.content) {
                 var data = editor.dump([o]);
                 data[0].content = $("#toolbox-poweredby-style").val();
@@ -1340,28 +1348,32 @@ var editor = {
             if (align) {
                 o.set('textAlign', align);
             }
-            var w = parseFloat($("#toolbox-textwidth").val());
-            if (!isNaN(w)) {
-                o.set('width', editor._mm2px(w));
-                o.set('scaleX', 1);
-                o.set('scaleY', 1);
-                if (o.initDimensions) o.initDimensions();
-                if (o._clearCache) o._clearCache();
-                o.dirty = true;
-            }
-            o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
-            var r = parseFloat($("#toolbox-textrotation").val());
-            if (!isNaN(r)) {
-                o.rotate(r);
-                o.dirty = true;
+            if (!o.pinned) {
+                var w = parseFloat($("#toolbox-textwidth").val());
+                if (!isNaN(w)) {
+                    o.set('width', editor._mm2px(w));
+                    o.set('scaleX', 1);
+                    o.set('scaleY', 1);
+                    if (o.initDimensions) o.initDimensions();
+                    if (o._clearCache) o._clearCache();
+                    o.dirty = true;
+                }
+                o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
+                var r = parseFloat($("#toolbox-textrotation").val());
+                if (!isNaN(r)) {
+                    o.rotate(r);
+                    o.dirty = true;
+                }
             }
             editor._apply_text_content_to_object(o);
             editor._apply_autofit_fontsize(o, o.maxFontPt, w);
         }
 
         o.setCoords();
-        editor.change_version += 1;
-        editor.dirty = true;
+        if (JSON.stringify(editor.dump([o])) !== before) {
+            editor.change_version += 1;
+            editor.dirty = true;
+        }
         editor.fabric.renderAll();
         editor._update_toolbox_values();
     },
@@ -1408,13 +1420,7 @@ var editor = {
         var active = editor.fabric.getActiveObject();
         if (active && editor._is_active_selection(active)) {
             var anyPinned = active.getObjects().some(function (o) { return !!o.pinned; });
-            active.lockMovementX = anyPinned;
-            active.lockMovementY = anyPinned;
-            active.lockRotation = anyPinned;
-            active.lockScalingX = anyPinned;
-            active.lockScalingY = anyPinned;
-            active.lockUniScaling = anyPinned;
-            active.hasControls = !anyPinned;
+            editor._apply_lock(active, anyPinned);
         }
         var isSingleText = selected.length === 1 && (selected[0].type === "textarea" || selected[0].type === "text");
         if (isSingleText) {
@@ -1616,7 +1622,7 @@ var editor = {
         editor._history_modification_in_progress = true;
         var objs = [];
         for (var i in editor.clipboard) {
-            objs.push(editor._add_from_data(editor.clipboard[i]));
+            objs.push(editor._add_from_data(Object.assign({}, editor.clipboard[i], {pinned: false})));
         }
         editor._set_selection(objs);
         editor._history_modification_in_progress = false;
@@ -1638,13 +1644,9 @@ var editor = {
         editor._update_toolbox();
     },
 
-    _on_canvas_mouse_down: function (opt) {
+    _on_canvas_mouse_down: function () {
         editor._focus_canvas();
-        if (opt && opt.target) {
-            editor._drag_start = {left: opt.target.left, top: opt.target.top};
-        } else {
-            editor._drag_start = null;
-        }
+        editor._drag_start = null;
     },
 
     _on_object_moving: function (opt) {
@@ -1652,19 +1654,17 @@ var editor = {
         if (!o) {
             return;
         }
-        var isPinned = o.pinned || (editor._is_active_selection(o) && o.getObjects().some(function (item) { return !!item.pinned; }));
-        if (isPinned) {
-            if (editor._drag_start) {
-                o.set({
-                    left: editor._drag_start.left,
-                    top: editor._drag_start.top
-                });
-                o.setCoords();
-            }
-            return;
-        }
         if (!editor._drag_start) {
             editor._drag_start = {left: o.left, top: o.top};
+        }
+        var isPinned = o.pinned || (editor._is_active_selection(o) && o.getObjects().some(function (item) { return !!item.pinned; }));
+        if (isPinned) {
+            o.set({
+                left: editor._drag_start.left,
+                top: editor._drag_start.top
+            });
+            o.setCoords();
+            return;
         }
         if (!opt.e || !opt.e.shiftKey) {
             return;
@@ -1839,6 +1839,9 @@ var editor = {
             return;
         }
         var state = editor.dump();
+        if (editor.history.length > 0 && JSON.stringify(editor.history[editor.history.length - 1]) === JSON.stringify(state)) {
+            return;
+        }
         if (editor._history_pos > 0) {
             editor.history.splice(-1 * editor._history_pos, editor._history_pos);
             editor._history_pos = 0;
