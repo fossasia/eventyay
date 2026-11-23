@@ -752,6 +752,9 @@ class RoomModule(BaseModule):
                     message=decision.message or 'Your plan does not include this video feature.',
                 )
                 return
+            if full_edit:
+                # Compare submitted webhook credentials against the latest saved config.
+                await self.room.refresh_from_db_if_outdated()
         newly_added_server_modules = newly_added_server_backed_room_modules(
             self.room.module_config,
             body.get("module_config"),
@@ -870,17 +873,27 @@ class RoomModule(BaseModule):
     async def webhook_test(self, body):
         """Send a ``test`` system message to the room's saved chat webhook and report the HTTP status."""
         await self.room.refresh_from_db_if_outdated()
+        modules = self.room.module_config
+        if not isinstance(modules, list):
+            modules = []
         chat_config = next(
             (
-                m.get("config") or {}
-                for m in self.room.module_config or []
+                m.get("config")
+                for m in modules
                 if isinstance(m, dict) and m.get("type") == "chat.native"
             ),
-            {},
+            None,
         )
+        if not isinstance(chat_config, dict):
+            chat_config = {}
         webhook_url = chat_config.get("webhook_url")
         hmac_secret = chat_config.get("webhook_hmac_secret")
-        if not webhook_url or not hmac_secret:
+        if not (
+            isinstance(webhook_url, str)
+            and webhook_url
+            and isinstance(hmac_secret, str)
+            and hmac_secret
+        ):
             await self.consumer.send_error(
                 code="webhook.not_configured",
                 message="Save a webhook URL and HMAC secret for this room first.",

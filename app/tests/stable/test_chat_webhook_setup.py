@@ -203,9 +203,19 @@ async def test_webhook_test_reports_receiver_status(chat_room, settings, monkeyp
 
 
 @pytest.mark.asyncio
-async def test_webhook_test_needs_saved_webhook(settings, monkeypatch):
+@pytest.mark.parametrize(
+    "modules",
+    [
+        42,
+        [{"type": "chat.native", "config": {}}],
+        [{"type": "chat.native", "config": ["unexpected"]}],
+        [chat_module(url=42)],
+        [chat_module(secret=["unexpected"])],
+    ],
+)
+async def test_webhook_test_needs_saved_webhook(modules, settings, monkeypatch):
     settings.DEBUG = True
-    room = Room(pk=4, name="Empty", module_config=[{"type": "chat.native", "config": {}}])
+    room = Room(pk=4, name="Invalid webhook", module_config=modules)
     room.refresh_from_db_if_outdated = AsyncMock()
     deliver = MagicMock()
     monkeypatch.setattr(room_module, "deliver_chat_webhook", deliver)
@@ -243,10 +253,20 @@ async def test_webhook_test_blocks_private_address(chat_room, settings, monkeypa
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_rejected_secret_does_not_stay_on_cached_room(chat_room, challenge_get, settings, monkeypatch):
+@pytest.mark.parametrize("cached_secret", [SECRET, "wrong"])
+async def test_rejected_secret_does_not_stay_on_cached_room(
+    chat_room, challenge_get, settings, monkeypatch, cached_secret
+):
     """A failed challenge leaves the cached room with its previous webhook settings."""
     settings.DEBUG = True
     challenge_get.behaviour["status"] = 403
+    chat_room.module_config = [chat_module(secret=cached_secret)]
+
+    async def refresh(allowed_age=0):
+        if allowed_age == 0:
+            chat_room.module_config = [chat_module()]
+
+    chat_room.refresh_from_db_if_outdated.side_effect = refresh
     monkeypatch.setattr(
         room_module,
         "serialize_room_config",
@@ -262,6 +282,8 @@ async def test_rejected_secret_does_not_stay_on_cached_room(chat_room, challenge
         lambda room, body, **kw: ({"module_config": new_modules}, {"module_config"}),
     )
     module, consumer = make_editor_module(chat_room)
-    with pytest.raises(ConsumerException):
+    with pytest.raises(ConsumerException) as exc:
         await module.config_patch({"room": str(chat_room.pk), "module_config": new_modules})
+    assert exc.value.code == "webhook.verification_failed"
+    assert len(challenge_get) == 1
     assert chat_room.module_config == [chat_module()]
