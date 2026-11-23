@@ -32,6 +32,7 @@ from eventyay.api.auth.permission import CloneEventPermission, EventCRUDPermissi
 from eventyay.api.serializers.event import (
     CloneEventSerializer,
     EventSettingsSerializer,
+    PublicEventSettingsSerializer,
     SubEventSerializer,
     TaxRuleSerializer,
 )
@@ -455,12 +456,17 @@ class TaxRuleViewSet(ConditionalListView, viewsets.ModelViewSet):
 
 
 class EventSettingsView(views.APIView):
-    permission = 'can_change_event_settings'
+    permission = ('can_change_event_settings', 'can_view_event_info')
+    write_permission = 'can_change_event_settings'
     permission_classes = (EventPermission,)
     endpoint = 'events'
 
     def get(self, request, *args, **kwargs):
-        s = EventSettingsSerializer(
+        if 'can_change_event_settings' in request.eventpermset:
+            serializer_class = EventSettingsSerializer
+        else:
+            serializer_class = PublicEventSettingsSerializer
+        s = serializer_class(
             instance=request.event.settings,
             event=request.event,
             context={'request': request},

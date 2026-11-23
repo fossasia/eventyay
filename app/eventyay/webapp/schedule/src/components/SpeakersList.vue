@@ -99,8 +99,8 @@
 		)
 			.speaker-avatar
 				img(
-					v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default",
-					:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default",
+					v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+					:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
 					:alt="speaker.name",
 					loading="lazy",
 					decoding="async"
@@ -125,8 +125,8 @@
 						summary.featured-speaker-summary
 							.thumbnail
 								img(
-									v-if="speaker.avatar_thumbnail_default || speaker.avatar_thumbnail_tiny",
-									:src="speaker.avatar_thumbnail_default || speaker.avatar_thumbnail_tiny",
+									v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url || speaker.avatar_thumbnail_tiny",
+									:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url || speaker.avatar_thumbnail_tiny",
 									:alt="speaker.name || t.speaker_fallback",
 									loading="lazy",
 									decoding="async"
