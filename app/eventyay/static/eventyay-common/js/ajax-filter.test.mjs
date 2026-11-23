@@ -5,6 +5,30 @@ import { runInNewContext } from 'node:vm';
 
 const source = readFileSync(new URL('./ajax-filter.js', import.meta.url), 'utf8');
 
+function createScheduler() {
+    let nextId = 0;
+    const pending = new Map();
+
+    return {
+        setTimeout(callback) {
+            const id = ++nextId;
+            pending.set(id, callback);
+            return id;
+        },
+        clearTimeout(id) {
+            pending.delete(id);
+        },
+        flush() {
+            const callbacks = Array.from(pending.values());
+            pending.clear();
+            callbacks.forEach(callback => callback());
+        },
+        get pendingCount() {
+            return pending.size;
+        },
+    };
+}
+
 function createElement(tagName) {
     return {
         tagName,
@@ -17,6 +41,9 @@ function createElement(tagName) {
         textContent: '',
         setAttribute(name, value) {
             this.attributes[name] = value;
+        },
+        getAttribute(name) {
+            return this.attributes[name] ?? null;
         },
         removeAttribute(name) {
             delete this.attributes[name];
@@ -57,7 +84,7 @@ function createElement(tagName) {
     };
 }
 
-function createHarness({ resultsContainer, fetch, DOMParser } = {}) {
+function createHarness({ resultsContainer, fetch, DOMParser, scheduler = createScheduler() } = {}) {
     const resultsParent = createElement('main');
     resultsParent.children = [resultsContainer];
     resultsContainer.parentElement = resultsParent;
@@ -81,6 +108,8 @@ function createHarness({ resultsContainer, fetch, DOMParser } = {}) {
         gettext: text => text,
         location: { href: 'https://eventyay.test/events', origin: 'https://eventyay.test' },
         addEventListener() {},
+        setTimeout: scheduler.setTimeout,
+        clearTimeout: scheduler.clearTimeout,
     };
 
     const context = {
@@ -105,6 +134,7 @@ function createHarness({ resultsContainer, fetch, DOMParser } = {}) {
         ...context.__ajaxFilterTestHooks,
         document,
         resultsParent,
+        scheduler,
     };
 }
 
@@ -129,7 +159,7 @@ function createResponseDocument(resultsContainer) {
 
 test('shows an accessible loading state outside the busy results region', () => {
     const resultsContainer = createElement('div');
-    const { showResultsLoadingState, resultsParent } = createHarness({ resultsContainer });
+    const { showResultsLoadingState, resultsParent, scheduler } = createHarness({ resultsContainer });
 
     const announcement = showResultsLoadingState(resultsContainer);
 
@@ -142,6 +172,11 @@ test('shows an accessible loading state outside the busy results region', () => 
     assert.equal(announcement.attributes.role, 'status');
     assert.equal(announcement.attributes['aria-live'], 'polite');
     assert.equal(announcement.attributes['aria-atomic'], 'true');
+    assert.equal(announcement.textContent, '');
+    assert.equal(scheduler.pendingCount, 1);
+
+    scheduler.flush();
+
     assert.equal(announcement.textContent, 'Loading…');
 });
 
@@ -168,7 +203,7 @@ test('ignores an older response when a newer tab request has started and fails',
         }
     }
 
-    const { fetchAndReplace } = createHarness({
+    const { fetchAndReplace, resultsParent, scheduler } = createHarness({
         resultsContainer,
         fetch,
         DOMParser: TestDOMParser,
@@ -180,6 +215,9 @@ test('ignores an older response when a newer tab request has started and fails',
     };
 
     const olderRequest = fetchAndReplace('/events?tab=past', true, null, true);
+    const announcement = resultsParent.children.find(child => child.attributes['data-ajax-loading-announcement'] !== undefined);
+    assert.equal(scheduler.pendingCount, 1);
+
     firstResponse.resolve({
         ok: true,
         text() {
@@ -194,9 +232,12 @@ test('ignores an older response when a newer tab request has started and fails',
 
     firstBody.resolve('<html>stale results</html>');
     await olderRequest;
+    scheduler.flush();
 
     assert.equal(parserCalls, 0);
     assert.equal(replacements, 0);
+    assert.equal(announcement.textContent, '');
+    assert.equal(scheduler.pendingCount, 0);
 });
 
 test('keeps successful newer results when an older response body resolves later', async () => {
@@ -226,7 +267,7 @@ test('keeps successful newer results when an older response body resolves later'
         }
     }
 
-    const { fetchAndReplace, resultsParent } = createHarness({
+    const { fetchAndReplace, resultsParent, scheduler } = createHarness({
         resultsContainer,
         fetch,
         DOMParser: TestDOMParser,
@@ -238,6 +279,9 @@ test('keeps successful newer results when an older response body resolves later'
     };
 
     const olderRequest = fetchAndReplace('/events?tab=past', true, null, true);
+    const announcement = resultsParent.children.find(child => child.attributes['data-ajax-loading-announcement'] !== undefined);
+    assert.equal(scheduler.pendingCount, 1);
+
     firstResponse.resolve({
         ok: true,
         text() {
@@ -253,11 +297,16 @@ test('keeps successful newer results when an older response body resolves later'
     assert.equal(resultsParent.children[0], newerResults);
     assert.equal(replacements, 1);
     assert.equal(parserCalls, 1);
+    assert.equal(announcement.textContent, '');
+    assert.equal(scheduler.pendingCount, 0);
 
     firstBody.resolve('<html>stale results</html>');
     await olderRequest;
+    scheduler.flush();
 
     assert.equal(resultsParent.children[0], newerResults);
     assert.equal(replacements, 1);
     assert.equal(parserCalls, 1);
+    assert.equal(announcement.textContent, '');
+    assert.equal(scheduler.pendingCount, 0);
 });
