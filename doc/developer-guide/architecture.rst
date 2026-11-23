@@ -205,21 +205,31 @@ Eventyay can be deployed in several configurations:
 Environment Variables
 ---------------------
 
-Settings are read by ``app/eventyay/config/settings.py``. Environment variables
-must start with ``EVY_``; other names are ignored. Common ones:
+Settings are read by ``app/eventyay/config/settings.py``. The settings loader
+(``BaseSettings``) only reads environment variables that start with ``EVY_``.
+Common ones:
 
-* ``EVY_RUNNING_ENVIRONMENT`` - ``development`` (default), ``testing`` or ``production``.
-  It picks the config file ``eventyay.<environment>.toml``.
 * ``EVY_POSTGRES_DB``, ``EVY_POSTGRES_USER``, ``EVY_POSTGRES_PASSWORD``,
   ``EVY_POSTGRES_HOST``, ``EVY_POSTGRES_PORT`` - Database connection
 * ``EVY_REDIS_URL`` - Redis connection
 * ``EVY_SITE_URL`` - Public URL of the site
 * ``EVY_SECRET_KEY`` - Django secret key
-* ``EVY_DEBUG`` - Debug mode (development only)
+* ``EVY_DEBUG`` - Debug mode. Use it only for development: running in
+  ``production`` does not switch it off for you.
 
-Every setting can also go in ``eventyay.local.toml`` or a ``.env`` file. Secrets
-can be stored as files in ``app/.secrets/``, named like the variable (for example
-``.secrets/EVY_SECRET_KEY``). See ``deployment/env.sample`` for a full example.
+These loader settings can also go in ``eventyay.local.toml`` or a ``.env`` file.
+Secrets can be stored as files in ``app/.secrets/``, named like the variable (for
+example ``.secrets/EVY_SECRET_KEY``). See ``deployment/env.sample`` for a full
+example.
+
+A few variables are read directly from the process environment instead. Set them
+in the shell or in Docker Compose's ``env_file`` before the app starts; the
+``.env`` and TOML files that the app loads itself do not apply to them:
+
+* ``EVY_RUNNING_ENVIRONMENT`` - ``development`` (default), ``testing`` or
+  ``production``. It picks the config file ``eventyay.<environment>.toml``.
+* ``EVENTYAY_COMMIT_SHA`` and ``EVENTYAY_ENVIRONMENT`` - Build and environment
+  labels (default ``unknown``).
 
 Migration from Legacy Systems
 -----------------------------
@@ -227,7 +237,9 @@ Migration from Legacy Systems
 If migrating from standalone Pretix, Pretalx, or Venueless:
 
 1. **Database Migration:** Use the provided migration scripts in ``app/eventyay/base/migrations/``
-2. **Configuration:** Rename environment variables to the ``EVY_`` names listed above
+2. **Configuration:** Move your settings to the ``EVY_`` names listed above. There
+   is no single database URL setting: split an old ``EVENTYAY_DB_URL`` into the
+   ``EVY_POSTGRES_*`` values.
 3. **Plugins:** Update plugin entry points to use ``eventyay.plugin``
 4. **Custom Code:** Update imports from ``pretix.*`` to ``eventyay.*``
 
