@@ -212,7 +212,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
-    email = EmailField(source='user.email')
+    email = EmailField(source='user.email', allow_null=True)
     timezone = CharField(source='user.timezone', read_only=True)
     locale = CharField(source='user.locale', read_only=True)
     availabilities = AvailabilitySerializer(many=True, required=False)
@@ -289,6 +289,8 @@ class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
         return instance
 
     def validate_email(self, value):
+        if value is None:
+            raise exceptions.ValidationError('This field may not be null.')
         value = value.lower()
         if User.objects.exclude(pk=self.instance.pk).filter(email__iexact=value).exists():
             raise exceptions.ValidationError('Email already exists in system.')

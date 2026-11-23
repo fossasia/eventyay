@@ -41,6 +41,12 @@ from .admin_mail import AdminEmailQueue, AdminEmailQueueFilter, AdminEmailQueueR
 from .loungemesh import LoungeMeshAccessToken, LoungeMeshServer
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
 from .mixins import FileCleanupMixin, GenerateCode, LogMixin, OrderedModel, PretalxModel, TimestampedModel
+from .organizer_request import (
+    OrganizerRequest,
+    OrganizerRequestAnswer,
+    OrganizerRequestFieldSetting,
+    OrganizerRequestQuestion,
+)
 from .notifications import NotificationSetting
 from .orders import (
     AbstractPosition,
@@ -68,12 +74,6 @@ from .organizer import (
     TeamInvite,
 )
 from .organizer_follower import OrganizerFollower
-from .organizer_request import (
-    OrganizerRequest,
-    OrganizerRequestAnswer,
-    OrganizerRequestFieldSetting,
-    OrganizerRequestQuestion,
-)
 from .poll import Poll, PollOption, PollVote
 from .privacy import ConsentCategory, ConsentProvider, ThirdPartyService
 from .product import (
@@ -114,6 +114,7 @@ from .speaker_invitation import (
     SpeakerInvitationMailStates,
     SpeakerInvitationStates,
 )
+from .speaker_voucher import SpeakerVoucher, SpeakerVoucherSettings, SpeakerVoucherStatus
 from .submission import Submission, SubmissionFavourite, SubmissionStates
 from .systemlog import SystemLog
 from .tag import Tag
@@ -234,6 +235,9 @@ __all__ = [
     'SpeakerInvitationStates',
     'SpeakerProfile',
     'SpeakerSocialLink',
+    'SpeakerVoucher',
+    'SpeakerVoucherSettings',
+    'SpeakerVoucherStatus',
     'SubEvent',
     'SubEventProduct',
     'SubEventProductVariation',

@@ -5,13 +5,24 @@ document.querySelectorAll('.teamshifts-lead-options[data-role-name]').forEach(fu
     return;
   }
 
+  var roleInputs = form.querySelectorAll('input[type="checkbox"][name="' + roleName + '"]');
+
   function toggleLeadOptions() {
-    var checked = form.querySelector('input[name="' + roleName + '"]:checked');
-    optionsDiv.hidden = !(checked && checked.value === 'lead');
+    var lead = form.querySelector('input[type="checkbox"][name="' + roleName + '"][value="lead"]');
+    optionsDiv.hidden = !(lead && lead.checked);
   }
 
-  form.querySelectorAll('input[name="' + roleName + '"]').forEach(function (radio) {
-    radio.addEventListener('change', toggleLeadOptions);
+  roleInputs.forEach(function (input) {
+    input.addEventListener('change', function () {
+      if (input.checked) {
+        roleInputs.forEach(function (other) {
+          if (other !== input) {
+            other.checked = false;
+          }
+        });
+      }
+      toggleLeadOptions();
+    });
   });
 
   toggleLeadOptions();

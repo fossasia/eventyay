@@ -41,6 +41,8 @@
     <meta name="referrer" content="origin">
 {% endblock %}
 
+{% block public_fonts_stylesheet %}{% endblock public_fonts_stylesheet %}
+
 {% block public_stylesheets %}
     {% if css_file %}
         <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
@@ -53,6 +55,7 @@
         {% endcompress %}
     {% endif %}
         {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_fonts.css' %}">
             <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/presale-login-modal.css' %}">
             <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/image-preview-dialog.css' %}">
         {% endcompress %}

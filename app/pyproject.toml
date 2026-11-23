@@ -264,6 +264,7 @@ test = [
     "pytest-env>=1.7.0",
     "pytest-mock>=3.15.1",
     "pytest-rerunfailures>=16.5",
+    "pytest-split>=0.10",
     "pytest-sugar>=1.1.1",
     "pytest-xdist>=3.6.1",
 ]
@@ -311,6 +312,7 @@ EVY_RUNNING_ENVIRONMENT = "testing"
 environments = [
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'linux'",
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'darwin'",
+    "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'win32'",
 ]
 
 [tool.uv.sources]
