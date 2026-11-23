@@ -198,12 +198,13 @@ const stretchingBreak = ref<{
   direction: 'left' | 'right'
   originRoomIndex: number
   pointerId: number
+  isRtl?: boolean
 } | null>(null)
 const stretchTargetRoomIndex = ref<number | null>(null)
-const isRtl = computed(() => {
+const getIsRtl = (): boolean => {
   if (typeof document === 'undefined') return false
   return document.documentElement.dir === 'rtl' || document.documentElement.classList.contains('rtl')
-})
+}
 
 let cachedGrid: {
   rooms: CachedRoom[]
@@ -635,7 +636,13 @@ const startStretchingBreak = ({
   const originRoomIndex = visibleRooms.value.findIndex((r) => r.id === roomId)
   if (originRoomIndex === -1) return
   refreshGridOffset()
-  stretchingBreak.value = { session, direction, originRoomIndex, pointerId: event.pointerId }
+  stretchingBreak.value = {
+    session,
+    direction,
+    originRoomIndex,
+    pointerId: event.pointerId,
+    isRtl: getIsRtl(),
+  }
   stretchTargetRoomIndex.value = originRoomIndex
 }
 
@@ -646,7 +653,7 @@ const updateStretchRoom = (clientX: number, clientY: number) => {
     syncCachedGridToScroll()
     const r = cachedGrid.rooms.find((room) => clientX >= room.left && clientX < room.right)
     if (r) {
-      const rtl = isRtl.value
+      const rtl = stretchingBreak.value.isRtl ?? getIsRtl()
       const origin = stretchingBreak.value.originRoomIndex
       if (stretchingBreak.value.direction === 'left') {
         const isDisallowed = rtl ? r.roomIndex < origin : r.roomIndex > origin
