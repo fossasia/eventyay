@@ -5,7 +5,7 @@ from rest_framework.permissions import SAFE_METHODS
 
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.filters.review import ReviewFilter
-from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.mixins import PretalxViewSetMixin, WriteRulesMixin
 from eventyay.api.serializers.review import ReviewSerializer, ReviewWriteSerializer
 from eventyay.base.models.review import Review
 from eventyay.base.models.submission import Submission
@@ -51,12 +51,20 @@ from eventyay.talk_rules.submission import get_reviewable_submissions
     ),
     destroy=extend_schema(summary="Delete Reviews"),
 )
-class ReviewViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
+class ReviewViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     queryset = Review.objects.none()
     search_fields = ("submission__title", "user__fullname")
     filterset_class = ReviewFilter
     endpoint = "reviews"
+    write_permission = "is_reviewer"
+    # Reviews belong to their author, so every write is checked against the review rules.
+    write_rules = {
+        "create": "create",
+        "update": "update",
+        "partial_update": "update",
+        "destroy": "delete",
+    }
     # We only permit access to this endpoint if the user can see all reviews,
     # as otherwise we would potentially have to filter for reviews to submissions
     # that the user has reviewed already.
