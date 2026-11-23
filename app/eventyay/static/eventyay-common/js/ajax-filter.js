@@ -305,6 +305,8 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingI
         const newResultsContainer = newContext ? getResultsContainer(newContext) : null;
 
         if (!newResultsContainer) {
+            clearResultsLoadingAnnouncement(loadingAnnouncement);
+            resultsContainer.removeAttribute('aria-busy');
             window.location.href = url;
             return;
         }
