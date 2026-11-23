@@ -218,7 +218,10 @@ Common ones:
   ``production`` does not switch it off for you.
 
 These loader settings can also go in a ``.env`` file (same ``EVY_`` names) or in
-``eventyay.local.toml``. In the TOML file, use the field name without the prefix,
+``eventyay.local.toml``. The ``.env`` file is read from the directory the app is
+started in, so for the usual development commands it is ``app/.env``. The TOML
+file is looked up from ``app/eventyay/config/`` up to ``app/``, for example
+``app/eventyay.local.toml``. In the TOML file, use the field name without the prefix,
 for example ``redis_url = "redis://localhost/0"``; an ``EVY_`` key there stops the
 app from starting. Secrets can be stored as files in ``app/.secrets/``, named like
 the variable (for example ``.secrets/EVY_SECRET_KEY``).
