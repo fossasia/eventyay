@@ -54,6 +54,7 @@ class QuestionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     filterset_fields = ("is_public", "is_visible_to_reviewers", "target", "variant")
     search_fields = ("question",)
     endpoint = "questions"
+    write_permission = "can_change_event_settings"
 
     def get_queryset(self):
         queryset = questions_for_user(self.request, self.event, self.request.user).select_related(
@@ -114,6 +115,7 @@ class AnswerOptionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     filterset_fields = ("question",)
     search_fields = ("answer",)
     endpoint = "question-options"
+    write_permission = "can_change_event_settings"
 
     def get_queryset(self):
         questions = questions_for_user(self.request, self.event, self.request.user)
@@ -200,6 +202,7 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     filterset_class = AnswerFilterSet
     search_fields = ("answer",)
     endpoint = "answers"
+    write_permission = "can_change_event_settings"
     permission_map = {
         "list": "submission.api_answer",
         "retrieve": "submission.api_answer",
