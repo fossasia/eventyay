@@ -46,6 +46,17 @@ fi
 python manage.py migrate
 python manage.py compilemessages -i .venv
 python manage.py updatestyles
+
+# Rebuild compressed assets if missing in development environment
+if [ "$EVY_RUNNING_ENVIRONMENT" = "development" ]; then
+  CACHE_DIR="/usr/src/app/eventyay/static.dist/CACHE"
+  if [ ! -d "$CACHE_DIR/css" ] || [ -z "$(ls -A "$CACHE_DIR/css" 2>/dev/null)" ]; then
+    echo "Compressed assets missing in $CACHE_DIR — running collectstatic and compress..."
+    python manage.py collectstatic --noinput
+    python manage.py compress --force
+  fi
+fi
+
 find /usr/src/app/eventyay/locale -name "*.mo" -exec sh -c 'chown --reference="${1%.mo}.po" "$1" 2>/dev/null || true' _ {} \;
 
 # Web-only development initialization

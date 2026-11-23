@@ -8,6 +8,7 @@ from i18nfield.rest_framework import I18nField
 from rest_flex_fields import is_expanded
 from rest_flex_fields.utils import split_levels
 from rest_framework import exceptions
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from rest_framework.settings import api_settings
@@ -84,6 +85,38 @@ class PretalxViewSetMixin:
 
     def check_expanded_fields(self, *args):
         return [arg for arg in args if is_expanded(self.request, arg)]
+
+
+class WriteRulesMixin:
+    """
+    Check write requests against the model's rules when the team permission alone is not enough.
+
+    Holders of ``rules_bypass_permission`` may use every write action. Everyone else may only use
+    the actions in ``write_rules``, and only if the model rule named there allows it: list actions
+    are checked against the event, detail actions against the object.
+    """
+
+    rules_bypass_permission = None
+    write_rules = {}
+
+    def bypasses_write_rules(self):
+        permission = self.rules_bypass_permission
+        return bool(permission) and permission in getattr(self.request, 'eventpermset', set())
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.method in SAFE_METHODS or self.bypasses_write_rules():
+            return
+        rule = self.write_rules.get(self.action)
+        if not rule or (not self.detail and not self.has_perm(rule, self.event)):
+            self.permission_denied(request)
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if request.method in SAFE_METHODS or self.bypasses_write_rules():
+            return
+        if not self.has_perm(self.write_rules[self.action], obj):
+            self.permission_denied(request)
 
 
 @extend_schema_field(
