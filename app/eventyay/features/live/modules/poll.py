@@ -151,8 +151,10 @@ class PollModule(BaseModule):
                 user=self.consumer.user,
                 options=body.get("options", []),
             )
-        except Exception as e:
-            await self.consumer.send_error("poll.vote", message=str(e))
+        except Poll.DoesNotExist:
+            await self.consumer.send_error(
+                "poll.closed", message="This poll is no longer open for voting."
+            )
             return
 
         await self.consumer.send_success({"poll": poll})

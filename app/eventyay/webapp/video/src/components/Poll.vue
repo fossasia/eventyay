@@ -2,11 +2,16 @@
 .c-poll(:class="[poll.state, {'has-voted': poll.answers, pinned: poll.is_pinned, managing: isManaging}]", :style="{'--total-votes': totalVotes}")
 	.question {{ poll.content }}
 	template(v-if="!isManaging && !poll.answers && poll.state === 'open'")
-		bunt-button.btn-option(v-for="option of poll.options", @click="$store.dispatch('poll/vote', {poll, option})") {{ option.content }}
+		bunt-button.btn-option(v-for="option of poll.options", :disabled="isVoting", @click="vote(option)") {{ option.content }}
 	template(v-else)
-		.option(v-for="option of poll.options", :class="{'most-votes': optionsWithMostVotes.includes(option.id)}")
-			.content {{ option.content }}
-			.votes(:style="{'--votes': poll.results[option.id]}") {{ totalVotes ? (poll.results[option.id] / totalVotes * 100).toFixed() : 0 }}%
+		.option(v-for="option of poll.options", :class="{'most-votes': optionsWithMostVotes.includes(option.id), 'own-vote': ownAnswers.includes(option.id)}")
+			.content
+				| {{ option.content }}
+				span.own-vote-label(v-if="ownAnswers.includes(option.id)")
+					span.mdi.mdi-check(aria-hidden="true")
+					| {{ $t('Your vote') }}
+			.votes(:style="{'--votes': optionVotes(option)}") {{ totalVotes ? (optionVotes(option) / totalVotes * 100).toFixed() : 0 }}%
+	.action-error(v-if="actionError", role="alert") {{ actionError }}
 	.actions(v-if="isManaging && hasPermission('room:poll.manage')")
 		bunt-icon-button(@click="$emit('edit')") pencil
 		menu-dropdown(v-model="showModerationMenu", strategy="fixed")
@@ -32,10 +37,10 @@
 	)
 </template>
 <script>
-// TODO show own vote
 import { mapGetters } from 'vuex'
 import ConfirmPrompt from 'components/ConfirmPrompt'
 import MenuDropdown from 'components/MenuDropdown'
+import { roomInteractionErrorMessage } from 'lib/roomInteractions'
 
 export default {
 	components: { ConfirmPrompt, MenuDropdown },
@@ -51,17 +56,23 @@ export default {
 	data() {
 		return {
 			showModerationMenu: false,
-			showDeletePrompt: false
+			showDeletePrompt: false,
+			isVoting: false,
+			actionError: null
 		}
 	},
 	computed: {
 		...mapGetters(['hasPermission']),
+		ownAnswers() {
+			return this.poll.answers || []
+		},
 		totalVotes() {
 			if (!this.poll.results) return 0
 			return Object.values(this.poll.results).reduce((acc, result) => acc + result, 0)
 		},
 		optionsWithMostVotes() {
-			const sortedResults = Object.entries(this.poll.results).slice().sort((a, b) => b[1] - a[1])
+			const sortedResults = Object.entries(this.poll.results || {}).sort((a, b) => b[1] - a[1])
+			if (!sortedResults.length) return []
 			const mostVotes = sortedResults[0][1]
 			const optionsWithMostVotes = []
 			for (const result of sortedResults) {
@@ -72,8 +83,21 @@ export default {
 		}
 	},
 	methods: {
-		async vote() {
-			this.$store.dispatch('question/vote', this.question)
+		optionVotes(option) {
+			return this.poll.results?.[option.id] || 0
+		},
+		async vote(option) {
+			if (this.isVoting) return
+			this.isVoting = true
+			this.actionError = null
+			try {
+				await this.$store.dispatch('poll/vote', {poll: this.poll, option})
+			} catch (error) {
+				console.error('Failed to vote on poll', this.poll.id, error)
+				this.actionError = roomInteractionErrorMessage(error, key => this.$t(key))
+			} finally {
+				this.isVoting = false
+			}
 		},
 		requestDelete() {
 			this.showModerationMenu = false
@@ -84,8 +108,15 @@ export default {
 			await this.doAction('delete')
 		},
 		async doAction(action) {
-			await this.$store.dispatch(`poll/${action}Poll`, this.poll)
-			this.showModerationMenu = false
+			this.actionError = null
+			try {
+				await this.$store.dispatch(`poll/${action}Poll`, this.poll)
+			} catch (error) {
+				console.error('Failed to moderate poll', action, this.poll.id, error)
+				this.actionError = roomInteractionErrorMessage(error, key => this.$t(key))
+			} finally {
+				this.showModerationMenu = false
+			}
 		}
 	}
 }
@@ -154,6 +185,20 @@ export default {
 		&.most-votes
 			.votes::before
 				background-color: var(--clr-primary)
+		&.own-vote .content
+			font-weight: 600
+		.own-vote-label
+			display: inline-flex
+			align-items: center
+			gap: 2px
+			margin-left: 8px
+			font-size: 12px
+			font-weight: 500
+			color: $clr-green-800
+	.action-error
+		margin-top: 8px
+		color: $clr-danger
+		font-size: 13px
 	.actions
 		position: absolute
 		top: 4px

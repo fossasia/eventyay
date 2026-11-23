@@ -18,12 +18,18 @@ export default {
 				state.questions = await api.call('question.list', {room: room.id})
 			}
 		},
+		/**
+		 * @throws {ApiError} when the server rejects the question, e.g. `question.empty`
+		 */
 		async submitQuestion({state, rootState}, question) {
 			const result = await api.call('question.ask', {room: rootState.activeRoom.id, content: question})
 			if (state.questions.some(q => q.id === result.question.id)) return
 			// add own question to the list since we're not getting a broadcast for own questions waiting in mod queue
 			state.questions.push(result.question)
 		},
+		/**
+		 * @throws {ApiError} when the server rejects the vote, e.g. `question.unknown`
+		 */
 		async vote({state, rootState}, question) {
 			await api.call('question.vote', {room: rootState.activeRoom.id, id: question.id, vote: !question.voted})
 			question.voted = !question.voted
@@ -31,17 +37,14 @@ export default {
 		approveQuestion({state, rootState}, question) {
 			return api.call('question.update', {room: rootState.activeRoom.id, id: question.id, state: 'visible'})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		archiveQuestion({state, rootState}, question) {
 			return api.call('question.update', {room: rootState.activeRoom.id, id: question.id, state: 'archived', is_pinned: false})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		unarchiveQuestion({state, rootState}, question) {
 			return api.call('question.update', {room: rootState.activeRoom.id, id: question.id, state: 'visible'})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		archiveAll({state, rootState}) {
 			// just send all updates in parallel
@@ -52,7 +55,6 @@ export default {
 		deleteQuestion({state, rootState}, question) {
 			return api.call('question.delete', {room: rootState.activeRoom.id, id: question.id})
 			// update handled in api::question.deleted
-			// TODO error handling
 		},
 		pinQuestion({state, rootState}, question) {
 			return api.call('question.pin', {room: rootState.activeRoom.id, id: question.id})

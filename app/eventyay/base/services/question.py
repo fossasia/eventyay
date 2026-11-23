@@ -61,10 +61,14 @@ def delete_question(**kwargs):
 
 @database_sync_to_async
 def vote_on_question(pk, room, user, vote):
+    """
+    :raises RoomQuestion.DoesNotExist: when the question is not in ``room``
+    """
+    question = RoomQuestion.objects.get(pk=pk, room=room)
     if vote is True:  # upvote
-        QuestionVote.objects.update_or_create(question_id=pk, sender_id=user.id)
+        QuestionVote.objects.update_or_create(question=question, sender_id=user.id)
     else:
-        QuestionVote.objects.filter(question_id=pk, sender_id=user.id).delete()
+        QuestionVote.objects.filter(question=question, sender_id=user.id).delete()
 
     question = RoomQuestion.objects.with_score().get(pk=pk, room=room)
     return question.serialize_public()

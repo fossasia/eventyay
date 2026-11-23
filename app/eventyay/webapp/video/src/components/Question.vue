@@ -2,11 +2,13 @@
 .c-question(:class="{queued: question.state === 'mod_queue', 'has-voted': question.voted, pinned: question.is_pinned, archived: question.state === 'archived', managing: isManaging}")
 	.moderation-block(v-if="question.state === 'mod_queue'")
 		bunt-icon-button(:disabled="!isManaging", :tooltip="isManaging ? $t('Approve question') : $t('Awaiting approval')", tooltip-placement="right", :tooltip-fixed="true", @click="doAction('approve')") {{ isManaging ? 'eye-check' : 'eye-off' }}
-	.votes(v-else, @click="vote")
+	.votes(v-else, :class="{busy: isVoting}", :aria-busy="isVoting ? 'true' : 'false'", @click="vote")
 		.mdi.mdi-menu-up.upvote(v-if="!isManaging")
 		.vote-count {{ question.score }}
 		| {{ $t('Votes') }}
-	.content {{ question.content }}
+	.content
+		| {{ question.content }}
+		.action-error(v-if="actionError", role="alert") {{ actionError }}
 	menu-dropdown(v-if="isManaging && hasPermission('room:question.moderate')", v-model="showModerationMenu", strategy="fixed")
 		template(#button="{toggle}")
 			bunt-icon-button#btn-menu-toggle(@click="toggle") dots-vertical
@@ -31,6 +33,7 @@
 import { mapGetters } from 'vuex'
 import ConfirmPrompt from 'components/ConfirmPrompt'
 import MenuDropdown from 'components/MenuDropdown'
+import { roomInteractionErrorMessage } from 'lib/roomInteractions'
 
 export default {
 	components: { ConfirmPrompt, MenuDropdown },
@@ -45,7 +48,9 @@ export default {
 	data() {
 		return {
 			showModerationMenu: false,
-			showDeletePrompt: false
+			showDeletePrompt: false,
+			isVoting: false,
+			actionError: null
 		}
 	},
 	computed: {
@@ -58,7 +63,17 @@ export default {
 	},
 	methods: {
 		async vote() {
-			this.$store.dispatch('question/vote', this.question)
+			if (this.isVoting) return
+			this.isVoting = true
+			this.actionError = null
+			try {
+				await this.$store.dispatch('question/vote', this.question)
+			} catch (error) {
+				console.error('Failed to vote on question', this.question.id, error)
+				this.actionError = roomInteractionErrorMessage(error, key => this.$t(key))
+			} finally {
+				this.isVoting = false
+			}
 		},
 		requestDelete() {
 			this.showModerationMenu = false
@@ -69,8 +84,15 @@ export default {
 			await this.doAction('delete')
 		},
 		async doAction(action) {
-			await this.$store.dispatch(`question/${action}Question`, this.question)
-			this.showModerationMenu = false
+			this.actionError = null
+			try {
+				await this.$store.dispatch(`question/${action}Question`, this.question)
+			} catch (error) {
+				console.error('Failed to moderate question', action, this.question.id, error)
+				this.actionError = roomInteractionErrorMessage(error, key => this.$t(key))
+			} finally {
+				this.showModerationMenu = false
+			}
 		}
 	}
 }
@@ -127,6 +149,13 @@ export default {
 	.content
 		flex: auto
 		margin: 8px
+		.action-error
+			margin-top: 4px
+			color: $clr-danger
+			font-size: 13px
+	.votes.busy
+		cursor: progress
+		opacity: .6
 	&.queued
 		$clr-queued = alpha($clr-black, .05)
 		background: repeating-linear-gradient(-45deg, transparent, transparent 10px, $clr-queued 10px, $clr-queued 20px, transparent 20px)

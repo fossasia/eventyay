@@ -6,12 +6,13 @@
 		.asking-form(v-if="showAskingForm")
 			bunt-input-outline-container(:label="$t('Your question')")
 				template(#default="{focus, blur}")
-					textarea(v-model="question", @focus="focus", @blur="blur")
+					textarea(v-model="question", :maxlength="maxQuestionLength", :aria-invalid="submitError ? 'true' : 'false'", @focus="focus", @blur="blur")
+			.submit-error(v-if="submitError", role="alert") {{ submitError }}
 			.actions
-				bunt-button#btn-cancel(@click="showAskingForm = false") {{ $t('cancel') }}
-				bunt-button#btn-submit-question(@click="submitQuestion") {{ $t('Submit your question') }}
+				bunt-button#btn-cancel(@click="closeAskingForm") {{ $t('cancel') }}
+				bunt-button#btn-submit-question(:disabled="!canSubmit", :loading="isSubmitting", @click="submitQuestion") {{ $t('Submit your question') }}
 		template(v-else-if="!isManaging")
-			bunt-button#btn-ask-question(v-if="hasPermission('room:question.ask')", @click="question = ''; showAskingForm = true") {{ $t('Ask a Question') }}
+			bunt-button#btn-ask-question(v-if="hasPermission('room:question.ask')", @click="openAskingForm") {{ $t('Ask a Question') }}
 			//- v-else ?
 	.questions(v-if="questions && module.config.active", :class="{'can-vote': hasPermission('room:question.vote')}", v-scrollbar.y="")
 		.empty-placeholder(v-if="sortedQuestions.length === 0") {{ $t('No questions yet, why not ask one?') }}
@@ -19,6 +20,12 @@
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
+import {
+	MAX_QUESTION_LENGTH,
+	canSubmitQuestion,
+	normalizeQuestion,
+	roomInteractionErrorMessage
+} from 'lib/roomInteractions'
 import Question from './Question'
 
 export default {
@@ -39,12 +46,18 @@ export default {
 		return {
 			question: '',
 			showAskingForm: false,
-			hasLoaded: false
+			isSubmitting: false,
+			submitError: null,
+			hasLoaded: false,
+			maxQuestionLength: MAX_QUESTION_LENGTH
 		}
 	},
 	computed: {
 		...mapState('question', ['questions']),
 		...mapGetters(['hasPermission']),
+		canSubmit() {
+			return canSubmitQuestion(this.question, this.isSubmitting)
+		},
 		sortedQuestions() {
 			if (!this.questions) return
 			let questions
@@ -63,6 +76,9 @@ export default {
 		}
 	},
 	watch: {
+		question() {
+			this.submitError = null
+		},
 		sortedQuestions() {
 			// HACK suppress firing event on `question.list`
 			if (this.hasLoaded) {
@@ -73,10 +89,30 @@ export default {
 		}
 	},
 	methods: {
-		async submitQuestion() {
-			await this.$store.dispatch('question/submitQuestion', this.question) // TODO error handling
+		openAskingForm() {
 			this.question = ''
+			this.submitError = null
+			this.showAskingForm = true
+		},
+		closeAskingForm() {
+			this.submitError = null
 			this.showAskingForm = false
+		},
+		async submitQuestion() {
+			if (!this.canSubmit) return
+			this.isSubmitting = true
+			this.submitError = null
+			try {
+				await this.$store.dispatch('question/submitQuestion', normalizeQuestion(this.question))
+				this.question = ''
+				this.showAskingForm = false
+			} catch (error) {
+				// keep the form open with the text so the user can retry
+				console.error('Failed to submit question', error)
+				this.submitError = roomInteractionErrorMessage(error, key => this.$t(key))
+			} finally {
+				this.isSubmitting = false
+			}
 		}
 	}
 }
@@ -116,6 +152,11 @@ export default {
 				min-height: 64px
 				padding: 0 8px
 				font-family: $font-stack
+		.submit-error
+			margin-top: 8px
+			padding: 0 8px
+			color: $clr-danger
+			font-size: 14px
 		.actions
 			align-self: flex-end
 			margin: 16px 0

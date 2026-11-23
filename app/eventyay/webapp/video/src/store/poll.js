@@ -28,34 +28,33 @@ export default {
 			// update handled in create_or_update
 			// TODO error handling
 		},
+		/**
+		 * @throws {ApiError} when the server rejects the vote, e.g. `poll.closed`
+		 */
 		async vote({state, rootState}, {poll, option}) {
-			await api.call('poll.vote', {room: rootState.activeRoom.id, id: poll.id, options: [option.id]})
-			poll.answers = [option.id]
+			const result = await api.call('poll.vote', {room: rootState.activeRoom.id, id: poll.id, options: [option.id]})
+			// the response carries the updated results, so the results view never renders without them
+			Object.assign(poll, result.poll, {answers: [option.id]})
 		},
 		openPoll({state, rootState}, poll) {
 			return api.call('poll.update', {room: rootState.activeRoom.id, id: poll.id, state: 'open'})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		closePoll({state, rootState}, poll) {
 			return api.call('poll.update', {room: rootState.activeRoom.id, id: poll.id, state: 'closed'})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		redraftPoll({state, rootState}, poll) {
 			return api.call('poll.update', {room: rootState.activeRoom.id, id: poll.id, state: 'draft'})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		archivePoll({state, rootState}, poll) {
 			return api.call('poll.update', {room: rootState.activeRoom.id, id: poll.id, state: 'archived', is_pinned: false})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		unarchivePoll({state, rootState}, poll) {
 			return api.call('poll.update', {room: rootState.activeRoom.id, id: poll.id, state: 'open'})
 			// update handled in create_or_update
-			// TODO error handling
 		},
 		archiveAll({state, rootState}) {
 			// just send all updates in parallel
@@ -66,7 +65,6 @@ export default {
 		deletePoll({state, rootState}, poll) {
 			return api.call('poll.delete', {room: rootState.activeRoom.id, id: poll.id})
 			// update handled in api::poll.deleted
-			// TODO error handling
 		},
 		pinPoll({state, rootState}, poll) {
 			return api.call('poll.pin', {room: rootState.activeRoom.id, id: poll.id})
