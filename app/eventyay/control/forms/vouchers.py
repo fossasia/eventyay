@@ -625,7 +625,7 @@ class VoucherBulkForm(VoucherForm):
                 ]
 
         codes = data.get('codes', [])
-        if data.get('use_tag_as_prefix') and codes:
+        if codes:
             if len(codes) != len({code.upper() for code in codes}):
                 self.add_error('codes', _('Voucher codes must be unique.'))
             elif any(len(code) > 255 for code in codes):
