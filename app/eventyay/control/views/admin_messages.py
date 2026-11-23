@@ -48,7 +48,8 @@ from eventyay.base.models.product import Product
 from eventyay.base.models.event import Event_SettingsStore
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.cfp import CfP
-from eventyay.base.models.organizer import TEAM_INVITE_SUBJECT, TEAM_INVITE_TEXT, OrganizerBillingModel
+from eventyay.base.models.organizer import OrganizerBillingModel
+from eventyay.base.services.teams import TEAM_INVITATION_MAIL_TEMPLATES
 from eventyay.common.mail import mail_send_task
 from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.control.forms.admin.admin_messages import (
@@ -1077,19 +1078,11 @@ def _security_notice_mail():
     return str(_('Account information changed')), body
 
 
-def _organiser_invitation_mail(is_registered_user):
+def _team_invitation_mail(template):
     def load():
-        body = _render_mail_template(
-            'pretixcontrol/email/invitation.txt',
-            {'organizer': '{organizer}', 'team': '{team}', 'url': '{url}', 'is_registered_user': is_registered_user},
-        )
-        return str(_('eventyay account invitation')), body
+        return str(template['subject']), str(template['text'])
 
     return load
-
-
-def _team_invite_mail():
-    return str(TEAM_INVITE_SUBJECT), str(TEAM_INVITE_TEXT)
 
 
 def _monthly_invoice_mail():
@@ -1176,13 +1169,12 @@ def get_platform_mail_templates() -> list[dict]:
          'trigger': _('Password reset requested'), 'load': _password_reset_mail},
         {'key': 'account-notification', 'name': _('Account notification'), 'category': _('Account'),
          'trigger': _('Account status changed'), 'load': _security_notice_mail},
-        {'key': 'organiser-invitation', 'name': _('Organiser invitation'), 'category': _('Team'),
-         'trigger': _('Team invitation sent'), 'load': _organiser_invitation_mail(False)},
-        {'key': 'organiser-added-to-team', 'name': _('Organiser added to team'), 'category': _('Team'),
-         'trigger': _('Existing user added to a team'), 'load': _organiser_invitation_mail(True)},
-        {'key': 'event-team-invitation', 'name': _('Event team invitation'), 'category': _('Team'),
-         'trigger': _('Event team invitation sent'), 'load': _team_invite_mail,
-         'preview': {'name': 'Program committee'}},
+        *[
+            {'key': template['key'], 'name': template['name'], 'category': _('Team'),
+             'trigger': template['trigger'], 'load': _team_invitation_mail(template),
+             'preview': {'team': 'Program committee', 'expires': 'October 15, 2026, 10:00 (UTC)'}}
+            for template in TEAM_INVITATION_MAIL_TEMPLATES
+        ],
         {'key': 'platform-fee-notification', 'name': _('Platform fee notification'), 'category': _('Billing'),
          'trigger': _('Fee invoiced'), 'load': _monthly_invoice_mail},
         {'key': 'ticket-order-confirmation', 'name': _('Ticket order confirmation'), 'category': _('Ticketing'),

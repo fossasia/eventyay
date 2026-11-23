@@ -549,7 +549,10 @@ information about the properties.
 
    Get current values of event settings.
 
-   Permission required: "Can change event settings" (Exception: with device auth, *some* settings can always be *read*.)
+   Permission required: "Can change event settings" or "Read-only access to event information". With
+   "Read-only access to event information" only, the response contains just the settings that are shown on the
+   public event page, such as texts, colors, images and languages. (Exception: with device auth, *some* settings
+   can always be *read*.)
 
    **Example request**:
 
