@@ -302,9 +302,13 @@ export default {
 				align-self: flex-end
 		.preview-card
 			display: block
+			box-sizing: border-box
+			width: 100%
+			max-width: 520px
+			min-width: 0
+			overflow: hidden
 			border: border-separator()
 			border-radius: 4px
-			max-width: 520px
 			align-self: flex-start
 			margin: 8px 0 4px 0
 			padding: 8px
@@ -319,16 +323,27 @@ export default {
 				color: $clr-disabled-text-light
 				font-weight: 500
 				font-size: 12px
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
 			img
+				display: block
 				max-width: 100%
+				margin-top: 4px
 				object-fit: contain
 				max-height: 400px
 			.title
 				font-size: 16px
 				font-weight: 500
 				margin: 4px 0
+				overflow-wrap: anywhere
 			.description
 				white-space: pre-wrap
+				overflow-wrap: anywhere
+				display: -webkit-box
+				-webkit-line-clamp: 4
+				-webkit-box-orient: vertical
+				overflow: hidden
 	.reactions
 		display: flex
 		flex-wrap: wrap

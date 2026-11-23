@@ -20,11 +20,15 @@ from eventyay.control.views import (
 app_name = 'eventyay_admin'
 
 urlpatterns = [
-    path('organizer-requests/', organizer_requests.OrganizerRequestList.as_view(), name='admin.organizer_requests'),
+    path(
+        'organizer-requests/',
+        admin.OrganizerList.as_view(initial_organizer_tab='tab-organizer-requests'),
+        name='admin.organizer_requests',
+    ),
     path('organizer-requests/<int:pk>/', organizer_requests.OrganizerRequestDetail.as_view(), name='admin.organizer_requests.detail'),
     path(
         'organizer-forms/',
-        organizer_request_forms.OrganizerRequestQuestionList.as_view(),
+        admin.OrganizerList.as_view(initial_organizer_tab='tab-organizer-forms'),
         name='admin.organizer_forms',
     ),
     path(

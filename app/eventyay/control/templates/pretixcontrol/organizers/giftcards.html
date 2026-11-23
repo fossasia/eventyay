@@ -30,7 +30,7 @@
             </div>
             <p class="gc-subtitle">
                 {% blocktrans trimmed %}
-                    Create, manage, and track gift card codes issued for your event ticket shops, or configure cross-organizer gift card acceptance.
+                    Create, manage, and track gift card codes issued for your event ticket shops.
                 {% endblocktrans %}
             </p>
         </div>
@@ -93,7 +93,7 @@
     </div>
 
     <div class="gc-card gc-filter-card">
-        <form class="gc-filter-form" action="" method="get" aria-label="{% trans 'Filter gift cards' %}">
+        <form class="gc-filter-form filter-form" action="" method="get" aria-label="{% trans 'Filter gift cards' %}">
             <div class="gc-filter-input-wrap">
                 <i class="fa fa-search gc-filter-search-icon" aria-hidden="true"></i>
                 {{ filter_form.query }}
@@ -114,14 +114,15 @@
                     <i class="fa fa-filter" aria-hidden="true"></i>
                     {% trans "Filter" %}
                 </button>
-                <a href="{% url 'control:organizer.giftcards' organizer=request.organizer.slug %}" class="gc-btn-reset">
+                <a href="{% url 'control:organizer.giftcards' organizer=request.organizer.slug %}" class="gc-btn-reset btn-clear-filter">
                     {% trans "Reset" %}
                 </a>
             </div>
         </form>
     </div>
 
-    <div class="gc-card gc-table-card">
+    <div data-ajax-results-region>
+        <div class="gc-card gc-table-card">
         {% if giftcards|length == 0 %}
             <div class="gc-empty-box">
                 <div class="gc-empty-icon">
@@ -190,7 +191,7 @@
                                             <a href="{% url 'control:organizer.giftcard' organizer=request.organizer.slug giftcard=g.id %}" class="gc-code-link" title="{% trans 'View details' %}">
                                                 <code class="gc-code">{{ g.secret }}</code>
                                             </a>
-                                            <button type="button" class="btn-clipboard gc-copy-btn" data-clipboard-text="{{ g.secret }}" title="{% trans 'Copy to clipboard' %}">
+                                            <button type="button" class="gc-copy-btn" data-clipboard-text="{{ g.secret }}" title="{% trans 'Copy to clipboard' %}" aria-label="{% trans 'Copy to clipboard' %}">
                                                 <i class="fa fa-clone" aria-hidden="true"></i>
                                             </button>
                                         </div>
@@ -286,73 +287,7 @@
                 </div>
             </div>
         {% endif %}
+        </div>
     </div>
-
-    {% if not is_paginated or page_obj.number == 1 %}
-        <section class="gc-card gc-accepted-card" aria-labelledby="gc-accepted-heading">
-            <div class="gc-accepted-header">
-                <div class="gc-accepted-icon">
-                    <i class="fa fa-users" aria-hidden="true"></i>
-                </div>
-                <div>
-                    <h2 id="gc-accepted-heading" class="gc-accepted-title">{% trans "Accepted gift cards of other organizers" %}</h2>
-                    <p class="gc-accepted-desc">
-                        {% blocktrans trimmed %}
-                            If you have access to multiple organizer accounts, you can configure that ticket shops in
-                            this account will also accept gift codes issued through a different organizer account, and
-                            vice versa.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-            </div>
-
-            <div class="gc-accepted-body">
-                <form action="" method="post">
-                    {% csrf_token %}
-                    {% if not request.organizer.gift_card_issuer_acceptance.all %}
-                        <div class="gc-info-banner">
-                            <i class="fa fa-info-circle gc-banner-icon" aria-hidden="true"></i>
-                            <span>{% trans "You are currently not accepting gift cards from other organizers." %}</span>
-                        </div>
-                    {% else %}
-                        <div class="gc-accepted-list">
-                            {% for gca in request.organizer.gift_card_issuer_acceptance.all %}
-                                <div class="gc-accepted-row">
-                                    <span class="gc-accepted-name">
-                                        <i class="fa fa-building-o" aria-hidden="true"></i>
-                                        <strong>{{ gca.issuer }}</strong>
-                                    </span>
-                                    <button type="submit" name="del" value="{{ gca.issuer.slug }}" class="gc-btn-danger-sm" title="{% trans 'Remove' %}">
-                                        <i class="fa fa-trash" aria-hidden="true"></i>
-                                        <span>{% trans "Remove" %}</span>
-                                    </button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    {% if other_organizers %}
-                        <div class="gc-add-section">
-                            <label for="gc-add-select" class="gc-add-label">
-                                {% trans "Allow gift cards from organizer" %}
-                            </label>
-                            <div class="gc-add-controls">
-                                <select name="add" id="gc-add-select" class="form-control gc-add-select">
-                                    <option value="">{% trans "Select an organizer" %}</option>
-                                    {% for o in other_organizers %}
-                                        <option value="{{ o.slug }}">{{ o }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button class="gc-btn-primary" type="submit">
-                                    <i class="fa fa-plus" aria-hidden="true"></i>
-                                    {% trans "Add" %}
-                                </button>
-                            </div>
-                        </div>
-                    {% endif %}
-                </form>
-            </div>
-        </section>
-    {% endif %}
 </div>
 {% endblock %}

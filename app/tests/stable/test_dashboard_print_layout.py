@@ -18,7 +18,10 @@ def test_event_dashboards_leave_the_navigation_out_of_the_printout(organizer_cli
     html = response.content.decode()
     assert 'class="navigation-button hidden-print"' in html
     assert 'class="navbar-default sidebar hidden-print"' in html
-    assert 'class="nojs sidebar-minimized dashboard-print"' in html
+    body_classes = 'dashboard-print'
+    if response.resolver_match.view_name == 'control:event.index':
+        body_classes += ' dashboard-event-overview'
+    assert f'class="nojs sidebar-minimized {body_classes}"' in html
 
 
 @pytest.mark.django_db
@@ -33,9 +36,11 @@ def test_organizer_dashboard_uses_the_dashboard_print_layout(organizer_client, o
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-def test_other_pages_keep_their_print_layout(organizer_client):
+@pytest.mark.parametrize('view_name', ['common:events', 'control:event.settings'])
+def test_other_pages_keep_their_print_layout(organizer_client, organizer, event, view_name):
     """Only the dashboards opt in to the dashboard print rules."""
-    response = organizer_client.get(reverse('eventyay_common:events'))
+    kwargs = {'organizer': organizer.slug, 'event': event.slug} if view_name == 'control:event.settings' else None
+    response = organizer_client.get(reverse(view_name, kwargs=kwargs))
 
     assert response.status_code == 200
     assert 'dashboard-print' not in response.content.decode()

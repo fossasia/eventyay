@@ -1,8 +1,6 @@
 import logging
 from decimal import Decimal
 
-from django.db import transaction
-from django.db.models import Q
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
@@ -12,7 +10,6 @@ from rest_framework.exceptions import ValidationError
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.api.serializers.order import CompatibleJSONField
 from eventyay.api.serializers.settings import SettingsSerializer
-from eventyay.base.auth import get_auth_backends
 from eventyay.base.i18n import get_language_without_region
 from eventyay.base.models import (
     Device,
@@ -28,10 +25,8 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.seating import SeatingPlanLayoutValidator
 from eventyay.base.models.track import Track
-from eventyay.base.services.mail import SendMailException, mail
-from eventyay.base.services.teams import check_full_admin_limit, get_team_invitation_url, send_team_invitation_email
+from eventyay.base.services.teams import TeamInviteError, invite_to_team
 from eventyay.base.settings import validate_organizer_settings
-from eventyay.helpers.urls import build_absolute_uri
 
 
 logger = logging.getLogger(__name__)
@@ -120,18 +115,13 @@ class GiftCardSerializer(I18nAwareModelSerializer):
     def validate(self, data):
         data = super().validate(data)
         s = data['secret']
-        qs = GiftCard.objects.filter(secret=s).filter(
-            Q(issuer=self.context['organizer'])
-            | Q(issuer__gift_card_collector_acceptance__collector=self.context['organizer'])
-        )
+        qs = self.context['organizer'].issued_gift_cards.filter(secret=s)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise ValidationError(
                 {
-                    'secret': _(
-                        'A gift card with the same secret already exists in your or an affiliated organizer account.'
-                    )
+                    'secret': _('A gift card with the same secret already exists in your organizer account.')
                 }
             )
         return data
@@ -195,6 +185,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_teams',
             'can_change_organizer_settings',
             'can_manage_gift_cards',
+            'can_view_event_info',
             'can_change_event_settings',
             'can_change_config',
             'can_change_items',
@@ -270,81 +261,18 @@ class TeamInviteSerializer(serializers.ModelSerializer):
         model = TeamInvite
         fields = ('id', 'email')
 
-    def _send_invite(self, instance):
-        try:
-            mail(
-                instance.email,
-                _('eventyay account invitation'),
-                'pretixcontrol/email/invitation.txt',
-                {
-                    'user': self,
-                    'organizer': self.context['organizer'].name,
-                    'team': instance.team.name,
-                    'url': build_absolute_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),
-                },
-                event=None,
-                locale=get_language_without_region(),  # TODO: expose?
-            )
-        except SendMailException:
-            pass  # Already logged
-
-    def _check_full_admin_limit(self, email, user=None):
-        """Enforce full-admin entitlement before adding a member or invite."""
-        decision = check_full_admin_limit(self.context['team'], email=email, user=user)
-        if not decision.allowed:
-            raise ValidationError(decision.message)
-
     def create(self, validated_data):
-        if 'email' in validated_data:
-            try:
-                user = User.objects.get(email__iexact=validated_data['email'])
-            except User.DoesNotExist:
-                if self.context['team'].invites.filter(email__iexact=validated_data['email']).exists():
-                    raise ValidationError(_('This user already has been invited for this team.'))
-                if 'native' not in get_auth_backends():
-                    raise ValidationError('Users need to have a eventyay account before they can be invited.')
-
-                self._check_full_admin_limit(validated_data['email'])
-
-                invite = self.context['team'].invites.create(email=validated_data['email'])
-                transaction.on_commit(lambda: self._send_invite(invite))
-                invite.team.log_action(
-                    'eventyay.team.invite.created',
-                    data={'email': validated_data['email']},
-                    **self.context['log_kwargs'],
-                )
-                return invite
-            else:
-                if self.context['team'].members.filter(pk=user.pk).exists():
-                    raise ValidationError(_('This user already has permissions for this team.'))
-
-                self._check_full_admin_limit(validated_data['email'], user=user)
-
-                self.context['team'].members.add(user)
-
-                self.context['team'].log_action(
-                    'eventyay.team.member.added',
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
-                    **self.context['log_kwargs'],
-                )
-
-                transaction.on_commit(
-                    lambda: send_team_invitation_email(
-                        user=user,
-                        organizer_name=self.context['organizer'].name,
-                        team_name=self.context['team'].name,
-                        url=get_team_invitation_url(self.context['team']),
-                        locale=get_language_without_region(),
-                        is_registered_user=True,
-                    )
-                )
-
-                return TeamInvite(email=user.email)
-        else:
+        if 'email' not in validated_data:
             raise ValidationError('No email address given.')
+        try:
+            return invite_to_team(
+                self.context['team'],
+                validated_data['email'],
+                locale=get_language_without_region(),
+                log_kwargs=self.context['log_kwargs'],
+            )
+        except TeamInviteError as e:
+            raise ValidationError(str(e))
 
 
 class TeamAPITokenSerializer(serializers.ModelSerializer):

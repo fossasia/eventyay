@@ -29,6 +29,8 @@ class SpeakerInformationViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     queryset = SpeakerInformation.objects.none()
     endpoint = "speaker-information"
     search_fields = ("title",)
+    permission = "can_change_submissions"
+    write_permission = "can_change_event_settings"
     permission_map = {"retrieve": "person.orga_view_speakerinformation"}
 
     def get_queryset(self):

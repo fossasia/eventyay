@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
-from django.db.models import Min, Q, Subquery, Sum
+from django.db.models import F, Min, Q, Subquery, Sum
 from django.http import (
     Http404,
     HttpResponse,
@@ -16,25 +16,29 @@ from django.http import (
 )
 from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 from django.views.generic import (
     CreateView,
     DeleteView,
+    FormView,
     ListView,
     UpdateView,
     View,
 )
+from django_scopes import scope
 
-from eventyay.base.models import CartPosition, LogEntry, Voucher
+from eventyay.base.models import CartPosition, Event, LogEntry, Quota, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
 from eventyay.base.views.tasks import AsyncFormView
 from eventyay.control.forms.filter import VoucherFilterForm, advanced_filter_count, advanced_filters_open_from_get
-from eventyay.control.forms.vouchers import VoucherBulkForm, VoucherForm
+from eventyay.control.forms.vouchers import VoucherBulkForm, VoucherForm, VoucherGroupForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import voucher_form_class
 from eventyay.control.views import PaginationMixin
@@ -275,6 +279,495 @@ class VoucherDelete(EventPermissionRequiredMixin, DeleteView):
         )
 
 
+def voucher_group_queryset(event, tags=None, ids=None):
+    if not tags and not ids:
+        return event.vouchers.none()
+    query = Q()
+    if tags:
+        query |= Q(tag__in=tags)
+    if ids:
+        query |= Q(pk__in=ids)
+    return event.vouchers.filter(query, waitinglistentries__isnull=True).distinct()
+
+
+def voucher_group_mixed_fields(objects, instance):
+    mixed_fields = {
+        field
+        for field in (
+            'tag',
+            'valid_until',
+            'block_quota',
+            'allow_ignore_quota',
+            'allow_ignore_approval',
+            'value',
+            'max_usages',
+            'price_mode',
+            'subevent',
+            'show_hidden_products',
+            'all_addons_included',
+            'all_bundles_included',
+            'budget',
+            'comment',
+        )
+        if objects.exclude(**{field: getattr(instance, field)}).exists()
+    }
+    product_values = {
+        (
+            voucher.quota_id,
+            voucher.product_id,
+            voucher.variation_id,
+            tuple(p.pk for p in voucher.limit_products.all()),
+            tuple(v.pk for v in voucher.limit_variations.all()),
+        )
+        for voucher in objects
+    }
+    if len(product_values) > 1:
+        mixed_fields.add('productvar')
+    return mixed_fields
+
+
+class VoucherGroupDelete(EventPermissionRequiredMixin, View):
+    permission = 'can_change_vouchers'
+
+    def get_objects(self):
+        try:
+            representative = self.request.event.vouchers.get(pk=self.kwargs['voucher'])
+        except Voucher.DoesNotExist:
+            raise Http404(_('The requested voucher does not exist.'))
+        if not representative.tag:
+            raise Http404(_('The requested voucher does not belong to a group.'))
+        return voucher_group_queryset(self.request.event, tags=[representative.tag]), representative.tag
+
+    def get(self, request, *args, **kwargs):
+        objects, tag = self.get_objects()
+        return render(
+            request,
+            'pretixcontrol/vouchers/delete_group.html',
+            {
+                'group_name': tag,
+                'unused_count': objects.filter(redeemed=0, orderposition__isnull=True).count(),
+                'used_count': objects.exclude(redeemed=0, orderposition__isnull=True).count(),
+            },
+        )
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        objects, tag = self.get_objects()
+        object_ids = list(objects.values_list('pk', flat=True))
+        objects = list(
+            self.request.event.vouchers.filter(pk__in=object_ids)
+            .select_for_update()
+        )
+        for obj in objects:
+            if obj.redeemed or obj.orderposition_set.exists():
+                continue
+            obj.log_action('eventyay.voucher.deleted', user=request.user)
+            CartPosition.objects.filter(addon_to__voucher=obj).delete()
+            obj.cartposition_set.all().delete()
+            obj.delete()
+        messages.success(request, _('The unused vouchers in group "%s" have been deleted.') % tag)
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            'control:event.vouchers',
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
+        )
+
+
+class VoucherGroupUpdate(EventPermissionRequiredMixin, FormView):
+    permission = 'can_change_vouchers'
+    template_name = 'pretixcontrol/vouchers/group_form.html'
+
+    def get_form_class(self):
+        form_class = VoucherGroupForm
+        for receiver, response in voucher_form_class.send(self.request.event, cls=form_class):
+            if response:
+                form_class = response
+        return form_class
+
+    def get_objects(self):
+        if self.request.POST.getlist('voucher') or self.request.POST.getlist('voucher_group'):
+            selected_groups = self.request.POST.getlist('voucher_group')
+            tags = self.request.event.vouchers.filter(pk__in=selected_groups).exclude(tag='').values_list('tag', flat=True)
+            return voucher_group_queryset(
+                self.request.event,
+                tags=tags,
+                ids=self.request.POST.getlist('voucher'),
+            ).exclude(pk__in=self.request.POST.getlist('voucher_exclude'))
+        try:
+            representative = self.request.event.vouchers.get(pk=self.kwargs['voucher'])
+        except Voucher.DoesNotExist:
+            raise Http404(_('The requested voucher does not exist.'))
+        if not representative.tag:
+            raise Http404(_('The requested voucher does not belong to a group.'))
+        return voucher_group_queryset(self.request.event, tags=[representative.tag])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        objects = self.get_objects()
+        instance = objects.order_by('pk').first()
+        if instance is None:
+            raise Http404(_('The requested vouchers do not exist.'))
+        kwargs['instance'] = instance
+        prefetched_objects = objects.prefetch_related('limit_products', 'limit_variations')
+        mixed_fields = voucher_group_mixed_fields(prefetched_objects, instance)
+        kwargs['mixed_fields'] = mixed_fields
+        kwargs.setdefault('initial', {}).update({field: None for field in mixed_fields})
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['selection_voucher_ids'] = self.request.POST.getlist('voucher')
+        context['selection_group_ids'] = self.request.POST.getlist('voucher_group')
+        context['selection_excluded_voucher_ids'] = self.request.POST.getlist('voucher_exclude')
+        context['voucher_codes'] = self.get_objects().order_by('pk').values_list('code', flat=True)
+        context['mixed_fields'] = getattr(context['form'], 'mixed_fields', set())
+        return context
+
+    def is_mixed_field_unchanged(self, field, form):
+        val = form.cleaned_data.get(field)
+        return val is None or val == ''
+
+    def get_changed_fields(self, objects, form):
+        changed_fields = set(form.changed_data) - {'seat'}
+        for field in form.mixed_fields:
+            if self.is_mixed_field_unchanged(field, form):
+                changed_fields.discard(field)
+        scalar_fields = set(form.cleaned_data) - {'productvar', 'seat'} - form.mixed_fields
+        scalar_fields.update(field for field in form.mixed_fields if not self.is_mixed_field_unchanged(field, form))
+        for field in scalar_fields:
+            if any(getattr(obj, field, None) != form.cleaned_data[field] for obj in objects):
+                changed_fields.add(field)
+        if 'productvar' not in form.mixed_fields or (
+            form.cleaned_data.get('productvar') and not self.is_mixed_field_unchanged('productvar', form)
+        ):
+            product_changed = any(
+                obj.quota_id != form.instance.quota_id
+                or obj.product_id != form.instance.product_id
+                or obj.variation_id != form.instance.variation_id
+                or {p.pk for p in obj.limit_products.all()} != {p.pk for p in form._limit_products}
+                or {v.pk for v in obj.limit_variations.all()} != {v.pk for v in form._limit_variations}
+                for obj in objects
+            )
+            if product_changed:
+                changed_fields.add('productvar')
+        return changed_fields
+
+    def skipped_objects(self, objects, form, changed_fields):
+        skip_query = Q(redeemed__gte=F('max_usages'))
+        if 'max_usages' in changed_fields:
+            skip_query |= Q(redeemed__gt=form.cleaned_data['max_usages'])
+        if hasattr(objects, 'filter'):
+            return objects.filter(skip_query)
+        return [obj for obj in objects if obj.redeemed >= obj.max_usages or (
+            'max_usages' in changed_fields and obj.redeemed > form.cleaned_data['max_usages']
+        )]
+
+    def skipped_object_ids(self, objects, form, changed_fields):
+        skipped = self.skipped_objects(objects, form, changed_fields)
+        skipped_ids = {obj.pk for obj in skipped}
+        reasons = {
+            'fully_used': 0,
+            'max_too_low': 0,
+            'seat_incompatible': 0,
+        }
+        for obj in objects:
+            if obj.pk in skipped_ids:
+                if obj.redeemed >= obj.max_usages:
+                    reasons['fully_used'] += 1
+                elif 'max_usages' in changed_fields:
+                    reasons['max_too_low'] += 1
+        if 'productvar' in changed_fields:
+            for obj in objects:
+                if (
+                    obj.pk not in skipped_ids
+                    and obj.seat_id
+                    and (not form.instance.product_id or obj.seat.product_id != form.instance.product_id)
+                ):
+                    skipped_ids.add(obj.pk)
+                    reasons['seat_incompatible'] += 1
+        return skipped_ids, reasons
+
+    def validate_quota_delta(self, objects, form, changed_fields):
+        now = timezone.now()
+        quota_delta = {}
+
+        def add_targets(targets, amount):
+            for target in targets:
+                quota_delta[target] = quota_delta.get(target, 0) + amount
+
+        def targets_for(voucher, *, new=False):
+            if new:
+                block_quota = form.cleaned_data['block_quota'] if 'block_quota' in changed_fields else voucher.block_quota
+                allow_ignore_quota = (
+                    form.cleaned_data['allow_ignore_quota']
+                    if 'allow_ignore_quota' in changed_fields
+                    else voucher.allow_ignore_quota
+                )
+                valid_until = (
+                    form.cleaned_data['valid_until'] if 'valid_until' in changed_fields else voucher.valid_until
+                )
+                subevent = form.cleaned_data['subevent'] if 'subevent' in changed_fields else voucher.subevent
+                quota = form.instance.quota if 'productvar' in changed_fields else voucher.quota
+                product = form.instance.product if 'productvar' in changed_fields else voucher.product
+                variation = form.instance.variation if 'productvar' in changed_fields else voucher.variation
+                limit_products = (
+                    getattr(form, '_limit_products', [])
+                    if 'productvar' in changed_fields
+                    else voucher.limit_products.all()
+                )
+                limit_variations = (
+                    getattr(form, '_limit_variations', [])
+                    if 'productvar' in changed_fields
+                    else voucher.limit_variations.all()
+                )
+                if not block_quota or allow_ignore_quota or (valid_until is not None and valid_until < now):
+                    return set()
+            else:
+                if not voucher.block_quota or voucher.allow_ignore_quota or (
+                    voucher.valid_until is not None and voucher.valid_until < now
+                ):
+                    return set()
+                subevent = voucher.subevent
+                quota = voucher.quota
+                product = voucher.product
+                variation = voucher.variation
+                limit_products = voucher.limit_products.all()
+                limit_variations = voucher.limit_variations.all()
+            if quota:
+                return {quota}
+            targets = set(limit_variations)
+            targets.update(p for p in limit_products if not p.has_variations)
+            if variation:
+                targets.add(variation)
+            elif product and not product.has_variations:
+                targets.add(product)
+            return {
+                quota
+                for target in targets
+                for quota in target.quotas.filter(subevent=subevent)
+            }
+
+        for obj in objects:
+            max_usages = form.cleaned_data['max_usages'] if 'max_usages' in changed_fields else obj.max_usages
+            remaining_old = max(0, obj.max_usages - obj.redeemed)
+            remaining_new = max(0, max_usages - obj.redeemed)
+            add_targets(targets_for(obj), -remaining_old)
+            add_targets(targets_for(obj, new=True), remaining_new)
+        lockfn = NoLockManager
+        if any(delta > 0 for delta in quota_delta.values()):
+            lockfn = self.request.event.lock
+        with lockfn():
+            for quota, delta in quota_delta.items():
+                if delta <= 0:
+                    continue
+                availability = quota.availability(count_waitinglist=False)
+                if availability[0] != Quota.AVAILABILITY_OK or (
+                    availability[1] is not None and availability[1] < delta
+                ):
+                    raise ValidationError(
+                        _(
+                            'You cannot create a voucher that blocks quota as the selected product or '
+                            'quota is currently sold out or completely reserved.'
+                        )
+                    )
+
+    def preview_context(self, form):
+        objects = list(self.get_objects().select_related('seat').prefetch_related('limit_products', 'limit_variations'))
+        changed_fields = self.get_changed_fields(objects, form)
+        skipped_ids, reasons = self.skipped_object_ids(objects, form, changed_fields)
+        return {
+            'form': form,
+            'selection_voucher_ids': self.request.POST.getlist('voucher'),
+            'selection_group_ids': self.request.POST.getlist('voucher_group'),
+            'selection_excluded_voucher_ids': self.request.POST.getlist('voucher_exclude'),
+            'voucher_codes': [obj.code for obj in objects],
+            'update_count': len(objects) - len(skipped_ids),
+            'skip_count': len(skipped_ids),
+            'fully_used_count': reasons['fully_used'],
+            'max_too_low_count': reasons['max_too_low'],
+            'seat_incompatible_count': reasons['seat_incompatible'],
+            'preview': True,
+        }
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or self.request.POST.get('ajax_preview') == '1':
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        return super().form_invalid(form)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        object_ids = list(self.get_objects().values_list('pk', flat=True))
+        objects = list(
+            self.request.event.vouchers.filter(pk__in=object_ids)
+            .prefetch_related('limit_products', 'limit_variations')
+            .select_for_update()
+        )
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or self.request.POST.get('ajax_preview') == '1':
+            changed_fields = self.get_changed_fields(objects, form)
+            skipped_ids, reasons = self.skipped_object_ids(objects, form, changed_fields)
+            eligible_objects = [obj for obj in objects if obj.pk not in skipped_ids]
+            try:
+                self.validate_quota_delta(eligible_objects, form, changed_fields)
+            except ValidationError as exc:
+                msg = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+
+            if not changed_fields:
+                return JsonResponse({
+                    'success': True,
+                    'has_changes': False,
+                    'message': _('No voucher changes were submitted.'),
+                })
+
+            update_count = len(objects) - len(skipped_ids)
+            skip_count = len(skipped_ids)
+            update_text = ngettext(
+                '%(count)d voucher will be updated.',
+                '%(count)d vouchers will be updated.',
+                update_count,
+            ) % {'count': update_count}
+            lines = [update_text]
+            html_lines = [
+                f'<div class="confirm-stat confirm-stat--success"><i class="fa fa-check-circle text-success" aria-hidden="true"></i> <span><strong>{update_count}</strong> {escape(ngettext("voucher will be updated.", "vouchers will be updated.", update_count))}</span></div>'
+            ]
+
+            if skip_count:
+                only_fully_used = reasons['fully_used'] == skip_count
+                only_max_too_low = reasons['max_too_low'] == skip_count
+                only_seat_incompatible = reasons['seat_incompatible'] == skip_count
+
+                if only_fully_used:
+                    detail = _('fully used')
+                elif only_max_too_low:
+                    detail = _('maximum usages below redemptions')
+                elif only_seat_incompatible:
+                    detail = _('seat belongs to another product')
+                else:
+                    parts = []
+                    if reasons['fully_used']:
+                        parts.append(
+                            ngettext('%(count)d fully used', '%(count)d fully used', reasons['fully_used'])
+                            % {'count': reasons['fully_used']}
+                        )
+                    if reasons['max_too_low']:
+                        parts.append(
+                            ngettext(
+                                '%(count)d maximum usages below redemptions',
+                                '%(count)d maximum usages below redemptions',
+                                reasons['max_too_low'],
+                            )
+                            % {'count': reasons['max_too_low']}
+                        )
+                    if reasons['seat_incompatible']:
+                        parts.append(
+                            ngettext(
+                                '%(count)d seat belongs to another product',
+                                '%(count)d seat belongs to another product',
+                                reasons['seat_incompatible'],
+                            )
+                            % {'count': reasons['seat_incompatible']}
+                        )
+                    detail = ', '.join(parts)
+
+                if detail:
+                    skip_text = ngettext(
+                        '%(count)d voucher will be skipped (%(detail)s).',
+                        '%(count)d vouchers will be skipped (%(detail)s).',
+                        skip_count,
+                    ) % {'count': skip_count, 'detail': detail}
+                    skip_suffix = ngettext(
+                        'voucher will be skipped (%(detail)s).',
+                        'vouchers will be skipped (%(detail)s).',
+                        skip_count,
+                    ) % {'detail': detail}
+                else:
+                    skip_text = ngettext(
+                        '%(count)d voucher will be skipped.',
+                        '%(count)d vouchers will be skipped.',
+                        skip_count,
+                    ) % {'count': skip_count}
+                    skip_suffix = ngettext(
+                        'voucher will be skipped.',
+                        'vouchers will be skipped.',
+                        skip_count,
+                    )
+                lines.append(skip_text)
+                html_lines.append(
+                    f'<div class="confirm-stat confirm-stat--warning"><i class="fa fa-exclamation-triangle text-warning" aria-hidden="true"></i> <span><strong>{skip_count}</strong> {escape(skip_suffix)}</span></div>'
+                )
+
+            html_message = f'<div class="confirm-dialog-stats">{"".join(html_lines)}</div>'
+
+            return JsonResponse({
+                'success': True,
+                'has_changes': True,
+                'update_count': update_count,
+                'skip_count': skip_count,
+                'message': '\n'.join(lines),
+                'html_message': html_message,
+            })
+
+        if self.request.POST.get('confirm') != '1':
+            return self.render_to_response(self.preview_context(form))
+        changed_fields = self.get_changed_fields(objects, form)
+        skipped_ids, _skipped_reasons = self.skipped_object_ids(objects, form, changed_fields)
+        if not changed_fields:
+            messages.info(self.request, _('No voucher changes were submitted.'))
+            return redirect(self.get_success_url())
+        eligible_objects = [obj for obj in objects if obj.pk not in skipped_ids]
+        try:
+            self.validate_quota_delta(eligible_objects, form, changed_fields)
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        changed_data = {
+            field: form.cleaned_data[field]
+            for field in changed_fields
+            if field not in {'productvar', 'seat'}
+        }
+        if 'productvar' in changed_fields:
+            changed_data.update(
+                product=form.instance.product,
+                variation=form.instance.variation,
+                quota=form.instance.quota,
+            )
+        updated_count = 0
+        log_data = {}
+        for field, value in changed_data.items():
+            if field in {'product', 'variation', 'quota', 'subevent'}:
+                log_data[f'{field}_id'] = value.pk if value else None
+            else:
+                log_data[field] = value
+        for obj in objects:
+            if obj.pk in skipped_ids:
+                continue
+            for field, value in changed_data.items():
+                setattr(obj, field, value)
+            obj.save()
+            if 'productvar' in changed_fields:
+                obj.limit_products.set(form._limit_products)
+                obj.limit_variations.set(form._limit_variations)
+            if changed_data:
+                obj.log_action('eventyay.voucher.changed', user=self.request.user, data=log_data)
+            updated_count += 1
+        messages.success(
+            self.request,
+            _('Updated %(updated)s vouchers. Skipped %(skipped)s vouchers.') % {
+                'updated': updated_count,
+                'skipped': len(skipped_ids),
+            },
+        )
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse(
+            'control:event.vouchers',
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug},
+        )
+
+
 class VoucherUpdate(EventPermissionRequiredMixin, UpdateView):
     model = Voucher
     template_name = 'pretixcontrol/vouchers/detail.html'
@@ -367,8 +860,12 @@ class VoucherCreate(EventPermissionRequiredMixin, CreateView):
         return ret
 
     def post(self, request, *args, **kwargs):
+        """Serialize single-voucher creation with the other voucher creation views."""
         # TODO: Transform this into an asynchronous call?
-        with request.event.lock():
+        with scope(event=request.event), request.event.lock(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=request.event.pk,
+            )
             return super().post(request, *args, **kwargs)
 
 
@@ -452,6 +949,7 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
         return form_kwargs
 
     def async_form_valid(self, task, form):
+        """Revalidate and create the bulk batch in one serialized transaction."""
         lockfn = NoLockManager
         if form.data.get('block_quota'):
             lockfn = self.request.event.lock
@@ -488,7 +986,11 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
             set_progress(len(voucherids) / total_num * (50.0 if form.cleaned_data['send'] else 100.0))
 
         voucherids = []
-        with lockfn(), transaction.atomic():
+        with scope(event=self.request.event), lockfn(), transaction.atomic():
+            Event.objects.select_for_update(no_key=connection.features.has_select_for_no_key_update).get(
+                pk=self.request.event.pk,
+            )
+            form.full_clean()
             if not form.is_valid():
                 raise ValidationError(form.errors)
             total_num = len(form.cleaned_data['codes'])
@@ -594,7 +1096,9 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
             )
             selected_vouchers |= Q(tag__in=Subquery(selected_group_tags), waitinglistentries__isnull=True)
 
-        return self.request.event.vouchers.filter(selected_vouchers).distinct()
+        return self.request.event.vouchers.filter(selected_vouchers).exclude(
+            id__in=self.request.POST.getlist('voucher_exclude')
+        ).distinct()
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -606,31 +1110,79 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
                 request,
                 'pretixcontrol/vouchers/delete_bulk.html',
                 {
-                    'allowed': self.objects.filter(redeemed=0, orderposition__isnull=True),
-                    'forbidden': self.objects.exclude(redeemed=0, orderposition__isnull=True),
+                    'allowed_count': self.objects.filter(redeemed=0, orderposition__isnull=True).count(),
+                    'forbidden_count': self.objects.exclude(redeemed=0, orderposition__isnull=True).count(),
+                    'voucher_ids': self.objects.values_list('pk', flat=True),
+                },
+            )
+        elif request.POST.get('action') == 'edit':
+            first = self.objects.order_by('pk').first()
+            form_class = VoucherGroupForm
+            for receiver, response in voucher_form_class.send(request.event, cls=form_class):
+                if response:
+                    form_class = response
+            prefetched_objects = self.objects.prefetch_related('limit_products', 'limit_variations')
+            mixed_fields = voucher_group_mixed_fields(prefetched_objects, first)
+            form = form_class(
+                instance=first,
+                mixed_fields=mixed_fields,
+                initial={field: None for field in mixed_fields},
+            )
+            return render(
+                request,
+                'pretixcontrol/vouchers/group_form.html',
+                {
+                    'form': form,
+                    'selection_voucher_ids': request.POST.getlist('voucher'),
+                    'selection_group_ids': request.POST.getlist('voucher_group'),
+                    'selection_excluded_voucher_ids': request.POST.getlist('voucher_exclude'),
+                    'mixed_fields': form.mixed_fields,
+                    'voucher_codes': self.objects.order_by('pk').values_list('code', flat=True),
+                    'action_url': reverse(
+                        'control:event.voucher.group_edit',
+                        kwargs={
+                            'organizer': request.event.organizer.slug,
+                            'event': request.event.slug,
+                            'voucher': first.pk,
+                        },
+                    ),
                 },
             )
         elif request.POST.get('action') == 'delete_confirm':
-            allowed = self.objects.filter(redeemed=0, orderposition__isnull=True)
-            forbidden = self.objects.exclude(redeemed=0, orderposition__isnull=True)
-            has_allowed = allowed.exists()
-            has_forbidden = forbidden.exists()
-
-            for obj in allowed.iterator():
+            object_ids = list(self.objects.values_list('pk', flat=True))
+            locked_objects = list(self.request.event.vouchers.filter(pk__in=object_ids).select_for_update())
+            deleted_count = 0
+            kept_count = 0
+            for obj in locked_objects:
+                if obj.redeemed or obj.orderposition_set.exists():
+                    kept_count += 1
+                    continue
                 obj.log_action('eventyay.voucher.deleted', user=self.request.user)
                 CartPosition.objects.filter(addon_to__voucher=obj).delete()
                 obj.cartposition_set.all().delete()
                 obj.delete()
+                deleted_count += 1
 
-            if has_forbidden:
-                messages.error(
+            if kept_count:
+                messages.warning(
                     request,
-                    _('Deletion failed for some vouchers because they have already been redeemed or used in an order.'),
+                    ngettext(
+                        '%(count)d used voucher was kept. Existing orders were not affected.',
+                        '%(count)d used vouchers were kept. Existing orders were not affected.',
+                        kept_count,
+                    )
+                    % {'count': kept_count},
                 )
-                if has_allowed:
-                    messages.success(request, _('The other selected vouchers have been deleted.'))
-            else:
-                messages.success(request, _('The selected vouchers have been deleted.'))
+            if deleted_count:
+                messages.success(
+                    request,
+                    ngettext(
+                        '%(count)d unused voucher was deleted.',
+                        '%(count)d unused vouchers were deleted.',
+                        deleted_count,
+                    )
+                    % {'count': deleted_count},
+                )
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
