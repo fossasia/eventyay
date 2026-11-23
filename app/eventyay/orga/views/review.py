@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -18,6 +18,7 @@ from django_scopes import scope
 
 from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates
 from eventyay.common.forms.renderers import InlineFormRenderer
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView
 from eventyay.common.views.mixins import (
@@ -459,18 +460,25 @@ class ReviewViewMixin:
     @context
     @cached_property
     def submission(self):
+        # Deleted sessions stay readable; writing reviews is still blocked by can_be_reviewed.
         return get_object_or_404(
-            self.request.event.submissions.prefetch_related('speakers', 'resources'),
+            self.request.event.submissions(manager='all_objects')
+            .exclude(state=SubmissionStates.DRAFT)
+            .prefetch_related('speakers', 'resources'),
             code__iexact=self.kwargs['code'],
         )
 
     @cached_property
     def object(self):
-        return (
-            self.submission.reviews.exclude(user__in=self.submission.speakers.all())
-            .filter(user=self.request.user)
-            .first()
-        )
+        # Use all_objects so saved reviews stay readable on deleted sessions; writes
+        # remain blocked by can_be_reviewed.
+        with scope(event=self.request.event):
+            return (
+                self.submission.reviews(manager='all_objects')
+                .exclude(user__in=self.submission.speakers.all())
+                .filter(user=self.request.user)
+                .first()
+            )
 
     def get_object(self):
         return self.object
@@ -483,6 +491,10 @@ class ReviewViewMixin:
     def read_only(self):
         if self.request.user in self.submission.speakers.all():
             return True
+        if is_admin_mode_active(self.request):
+            # Admin mode grants organizer-level access, so admins can review
+            # without being on a reviewer team, but only while reviews are open.
+            return not can_be_reviewed(self.request.user, self.submission)
         if self.object and self.object.pk:
             return not self.request.user.has_perm('base.update_review', self.get_object())
         return not self.request.user.has_perm('base.review_submission', self.get_object() or self.submission)
@@ -562,9 +574,9 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
                 'user': review.user,
                 'answers': [review.answers.filter(question=question).first() for question in self.qform.queryset],
             }
-            for review in self.submission.reviews.exclude(
-                pk=(self.object.pk if self.object else None)
-            ).prefetch_related('scores', 'scores__category')
+            for review in self.submission.reviews(manager='all_objects')
+            .exclude(pk=(self.object.pk if self.object else None))
+            .prefetch_related('scores', 'scores__category')
         ]
 
     @context
@@ -628,6 +640,8 @@ class ReviewSubmission(ReviewViewMixin, PermissionRequired, CreateOrUpdateView):
     def post(self, request, *args, **kwargs):
         action = self.request.POST.get('review_submit') or 'save'
         if action == 'abstain':
+            if not can_be_reviewed(self.request.user, self.submission):
+                raise Http404()
             Review.objects.get_or_create(user=self.request.user, submission=self.submission)
             return redirect(self.get_success_url())
         if action == 'skip_for_now':
