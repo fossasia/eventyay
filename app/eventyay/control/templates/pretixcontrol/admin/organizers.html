@@ -8,70 +8,90 @@
 
 {% block custom_header %}
     {{ block.super }}
+    <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
+    <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+    <link rel="stylesheet" href="{% static 'orga/css/cfp.css' %}">
+    <link rel="stylesheet" href="{% static 'control/css/organizer-form-fields.css' %}">
 {% endblock %}
 {% block content %}
 	<h1>{% trans "Organizers" %}</h1>
-	<p>{% trans "The list below shows all organizer accounts you have administrative access to." %}</p>
-    <div class="advanced-filter-search" data-advanced-filter-search>
-        <form class="filter-form advanced-filter-search-form" action="" method="get">
-            <div class="advanced-filter-search-bar">
-                <div class="input-group advanced-filter-search-query-group">
-                    <input type="text" name="query" class="form-control" placeholder="{% trans 'Search organizers' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
-                    <span class="input-group-btn">
-                        <button class="btn btn-primary" type="submit">
-                            <span class="fa fa-search"></span>
-                            {% trans "Search" %}
-                        </button>
-                    </span>
-                </div>
-                <div class="advanced-filter-search-actions">
-                    <a href="{{ clear_url|default:request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
-                        <span class="fa fa-eraser" aria-hidden="true"></span>
-                        <span class="sr-only">{% trans "Clear filters" %}</span>
-                    </a>
-                </div>
+    <div class="tabbed-form organizer-admin-tabs" data-initial-tab="{{ initial_organizer_tab }}">
+        <fieldset id="tab-organizers">
+            <legend>{% trans "Organizers" %}</legend>
+            <p>{% trans "The list below shows all organizer accounts you have administrative access to." %}</p>
+            <div class="advanced-filter-search" data-advanced-filter-search>
+                <form class="filter-form advanced-filter-search-form" action="{% url 'eventyay_admin:admin.organizers' %}" method="get">
+                    <div class="advanced-filter-search-bar">
+                        <div class="input-group advanced-filter-search-query-group">
+                            <input type="text" name="query" class="form-control" placeholder="{% trans 'Search organizers' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit">
+                                    <span class="fa fa-search"></span>
+                                    {% trans "Search" %}
+                                </button>
+                            </span>
+                        </div>
+                        <div class="advanced-filter-search-actions">
+                            <a href="{{ clear_url|default:request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                                <span class="fa fa-eraser" aria-hidden="true"></span>
+                                <span class="sr-only">{% trans "Clear filters" %}</span>
+                            </a>
+                        </div>
+                    </div>
+                </form>
             </div>
-        </form>
+            {% if staff_session %}
+                <p>
+                    <a href="{% url 'control:organizers.add' %}" class="btn btn-default">
+                        <span class="fa fa-plus"></span>
+                        {% trans "Create a new organizer" %}
+                    </a>
+                </p>
+            {% endif %}
+            <table class="table table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            {% trans "Organizer name" %}
+                            <a href="?{% url_replace request 'ordering' '-name' %}#tab-organizers"><i class="fa fa-caret-down"></i></a>
+                            <a href="?{% url_replace request 'ordering' 'name' %}#tab-organizers"><i class="fa fa-caret-up"></i></a>
+                        </th>
+                        <th>
+                            {% trans "Short form" %}
+                            <a href="?{% url_replace request 'ordering' '-slug' %}#tab-organizers"><i class="fa fa-caret-down"></i></a>
+                            <a href="?{% url_replace request 'ordering' 'slug' %}#tab-organizers"><i class="fa fa-caret-up"></i></a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in organizers %}
+                    <tr>
+                        <td><strong>
+                            <a href="{% url 'eventyay_common:organizer.events' organizer=o.slug %}">{{ o.name }}</a>
+                        </strong></td>
+                        <td>{{ o.slug }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-muted">
+                            {% trans "No organizers found." %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% include 'pretixcontrol/pagination.html' with pagination_hash='tab-organizers' %}
+        </fieldset>
+        <fieldset id="tab-organizer-requests">
+            <legend>{% trans "Organizer requests" %}</legend>
+            {% include "pretixcontrol/admin/includes/organizer_requests_tabs.html" %}
+        </fieldset>
+        <fieldset id="tab-organizer-forms">
+            <legend>{% trans "Organizer forms" %}</legend>
+            {% include "pretixcontrol/admin/includes/organizer_forms_panel.html" %}
+        </fieldset>
     </div>
-    {% if staff_session %}
-        <p>
-            <a href="{% url "control:organizers.add" %}" class="btn btn-default">
-                <span class="fa fa-plus"></span>
-                {% trans "Create a new organizer" %}
-            </a>
-        </p>
-    {% endif %}
-	<table class="table table-condensed table-hover">
-		<thead>
-			<tr>
-                <th>
-                    {% trans "Organizer name" %}
-                    <a href="?{% url_replace request 'ordering' '-name' %}"><i class="fa fa-caret-down"></i></a>
-                    <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a>
-                </th>
-                <th>
-                    {% trans "Short form" %}
-                    <a href="?{% url_replace request 'ordering' '-slug' %}"><i class="fa fa-caret-down"></i></a>
-                    <a href="?{% url_replace request 'ordering' 'slug' %}"><i class="fa fa-caret-up"></i></a>
-                </th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for o in organizers %}
-			<tr>
-				<td><strong>
-                    <a href="{% url "eventyay_common:organizer.events" organizer=o.slug %}">{{ o.name }}</a>
-                </strong></td>
-                <td>{{ o.slug }}</td>
-			</tr>
-			{% empty %}
-			<tr>
-				<td colspan="2" class="text-muted">
-					{% trans "No organizers found." %}
-				</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-    {% include "pretixcontrol/pagination.html" %}
+    <script type="module" src="{% static 'orga/js/dragsort.js' %}"></script>
+    <script type="module" src="{% static 'control/js/organizer-form-fields.js' %}"></script>
+    <script type="module" src="{% static 'control/js/organizer-request-tabs.js' %}"></script>
 {% endblock %}

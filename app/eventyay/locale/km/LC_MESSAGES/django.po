@@ -8,8 +8,9 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-26 20:35+0000\n"
-"PO-Revision-Date: 2026-08-27 18:00+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-11-12 10:27+0000\n"
+"Last-Translator: Saksham Sirohi <saksham-"
+"sirohi@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Khmer (Central) <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/km/>\n"
 "Language: km\n"
@@ -17,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.11.2.dev0\n"
 
 #: data/templates/exhibitors/exhibitor_info.html:3
 #: data/templates/exhibitors/exhibitor_info.html:5
@@ -14053,7 +14054,8 @@ msgstr "អ៊ីមែលនេះត្រូវបានផ្ញើរួច
 msgid ""
 "Upload a valid SVG image. The file you uploaded was either not an SVG or a "
 "corrupted SVG."
-msgstr "សូមផ្ទុកឡើងរូបភាពត្រឹមត្រូវ។ ឯកសារដែលបានផ្ទុកឡើងមិនមែនជារូបភាព ឬជារូបភាពខូច។"
+msgstr ""
+"សូមផ្ទុកឡើងរូបភាពត្រឹមត្រូវ។ ឯកសារដែលបានផ្ទុកឡើងមិនមែនជារូបភាព ឬជារូបភាពខូច។"
 
 #: eventyay/common/image.py:187 eventyay/common/image.py:196
 msgid ""
@@ -26408,8 +26410,8 @@ msgstr ""
 #| "confirmed and forms a valid contract."
 msgid "Orders that require approval by an organizer before they can be paid."
 msgstr ""
-"ការបញ្ជាទិញត្រូវការការអនុម័តពីអ្នករៀបចំព្រឹត្តិការណ៍ មុនពេលអាចបញ្ជាក់បាន "
-"ហើយក្លាយជាកិច្ចសន្យាត្រឹមត្រូវ។"
+"ការបញ្ជាទិញត្រូវការការអនុម័តពីអ្នករៀបចំព្រឹត្តិការណ៍ មុនពេលអាចបញ្ជាក់បាន ហើយក្លាយជាកិច្ចសន្យាត្រឹមត្រូ"
+"វ។"
 
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:156
 msgctxt "subevent"
@@ -31198,9 +31200,8 @@ msgid ""
 "pages. Users with appropriate permissions can propose sessions or add "
 "speaker info."
 msgstr ""
-"របៀបសាកល្បងឯកជនត្រូវបានបើកសម្រាប់សុន្ទរកថា។ មានតែអ្នករៀបចំ អ្នកពិនិត្យ "
-"និងអ្នកគ្រប់គ្រងប្រព័ន្ធប៉ុណ្ណោះដែលអាចចូលប្រើ កាលវិភាគ សម័យ អ្នកនិយាយ "
-"និងការអំពាវនាវសម្រាប់អ្នកនិយាយ។"
+"របៀបសាកល្បងឯកជនត្រូវបានបើកសម្រាប់សុន្ទរកថា។ មានតែអ្នករៀបចំ អ្នកពិនិត្យ និងអ្នកគ្រប់គ្រងប្រព័ន្ធប៉ុណ្"
+"ណោះដែលអាចចូលប្រើ កាលវិភាគ សម័យ អ្នកនិយាយ និងការអំពាវនាវសម្រាប់អ្នកនិយាយ។"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/live.html:388
 #, fuzzy

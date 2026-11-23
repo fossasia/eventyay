@@ -13,9 +13,11 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from i18nfield.strings import LazyI18nString
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
+from eventyay.base.templatetags.rich_text import email_body_to_editor_html
 from eventyay.mail.context import get_available_placeholders as get_talk_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
@@ -374,7 +376,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
     def _set_field_placeholders(self, fn, base_parameters):
         """Validate placeholders without rendering the long help-text list (drawer covers that)."""
         phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
     def __init__(self, *args, **kwargs):
         event = self.event = kwargs.pop('event')
@@ -924,6 +926,50 @@ class MailContentSettingsForm(SettingsForm):
             self.fields[fn].help_text = ht
         self.fields[fn].validators.append(PlaceholderValidator(phs))
 
+    @staticmethod
+    def _body_to_editor_html(value):
+        """Convert a stored email body to HTML the Tiptap editor can load.
+
+        Legacy templates are stored as plain text / Markdown; converting them
+        with ``email_body_to_editor_html`` keeps their text, line breaks and
+        ``{placeholder}`` tokens intact in the editor. Bodies that are already
+        Tiptap HTML are sanitized and returned unchanged (no double conversion).
+        """
+        if not value:
+            return value
+        if isinstance(value, LazyI18nString):
+            data = value.data
+            if isinstance(data, dict):
+                return LazyI18nString({locale: email_body_to_editor_html(text) for locale, text in data.items()})
+            if isinstance(data, str):
+                return LazyI18nString(email_body_to_editor_html(data))
+            return value
+        if isinstance(value, str):
+            return email_body_to_editor_html(value)
+        return value
+
+    def _upgrade_to_email_editor(self, fn, base_parameters):
+        """Replace a plain textarea body field with the shared Tiptap email editor.
+
+        The placeholder menu is scoped to the placeholders available for this
+        field (``base_parameters``), matching the Compose email editor.
+        """
+        # Copy: get_available_placeholders appends to the list it is given.
+        placeholder_names = sorted(get_available_placeholders(self.event, list(base_parameters)).keys())
+        old_field = self.fields[fn]
+        field = I18nEmailBodyFormField(
+            label=old_field.label,
+            help_text=old_field.help_text,
+            required=old_field.required,
+            locales=self.locales,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names},
+        )
+        field.widget.enabled_locales = self.locales
+        self.fields[fn] = field
+        if fn in self.initial:
+            self.initial[fn] = self._body_to_editor_html(self.initial[fn])
+
     def __init__(self, *args, **kwargs):
         self.event = kwargs.get('obj')
         self.template_key = kwargs.pop('template_key', None)
@@ -947,6 +993,7 @@ class MailContentSettingsForm(SettingsForm):
 
         for k, v in self.base_context.items():
             if k in self.fields:
+                self._upgrade_to_email_editor(k, v)
                 self._set_field_placeholders(k, v)
 
 
@@ -1050,7 +1097,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
     def clean_emails(self):
         updated_emails = [
@@ -1219,6 +1266,10 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
             for field_name in ('teams', 'subject', 'message'):
                 self.fields[field_name].required = False
 
+        phs = [f'{{{p}}}' for p in placeholder_names]
+        self.fields['subject'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+        self.fields['message'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+
     @cached_property
     def grouped_placeholders(self):
         placeholders = self.valid_placeholders
@@ -1346,8 +1397,8 @@ class TicketMailTemplateForm(I18nModelForm):
             locales=locales,
         )
         phs = [f'{{{p}}}' for p in placeholder_names]
-        self.fields['subject'].validators.append(PlaceholderValidator(phs))
-        self.fields['text'].validators.append(PlaceholderValidator(phs))
+        self.fields['subject'].validators.append(PlaceholderValidator(phs, literal_braces=True))
+        self.fields['text'].validators.append(PlaceholderValidator(phs, literal_braces=True))
 
         reply_to_field = self.fields['reply_to']
         self.fields['reply_to'] = forms.EmailField(

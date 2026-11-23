@@ -1,7 +1,7 @@
 import json
 import logging
 import string
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models import Exists, OuterRef, Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
@@ -40,16 +39,8 @@ from .auth import User
 
 logger = logging.getLogger(__name__)
 
-TEAM_INVITE_SUBJECT = _('You have been invited to an organizer team')
-TEAM_INVITE_TEXT = _(
-    """Hi!
-You have been invited to the {name} event organizer team - Please click here to accept:
-
-{invitation_link}
-
-See you there,
-The {organizer} team"""
-)
+TEAM_INVITE_VALIDITY = timedelta(hours=48)
+TEAM_INVITE_REMINDER_AFTER = timedelta(hours=24)
 
 
 class TeamPermissionError(PermissionDenied):
@@ -262,16 +253,14 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         return self.cache.get_or_set(
             key='has_gift_cards',
             timeout=15,
-            default=lambda: self.issued_gift_cards.exists() or self.gift_card_issuer_acceptance.exists(),
+            default=self.issued_gift_cards.exists,
         )
 
     @property
     def accepted_gift_cards(self):
-        from .giftcards import GiftCard, GiftCardAcceptance
-
-        return GiftCard.objects.annotate(
-            accepted=Exists(GiftCardAcceptance.objects.filter(issuer=OuterRef('issuer'), collector=self))
-        ).filter(Q(issuer=self) | Q(accepted=True))
+        # Gift cards are only valid within the organizer that issued them. Money paid for a card
+        # is held by the issuer's payment account, so redeeming it elsewhere would shift liability.
+        return self.issued_gift_cards.all()
 
     @property
     def default_gift_card_expiry(self):
@@ -363,6 +352,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     :type can_change_teams: bool
     :param can_change_organizer_settings: If ``True``, the members can change the settings of this organizer account.
     :type can_change_organizer_settings: bool
+    :param can_view_event_info: If ``True``, the members can read the public-facing setup of the associated
+                                events, e.g. for website integrations. It does not allow any changes.
+    :type can_view_event_info: bool
     :param can_change_event_settings: If ``True``, the members can change the settings of the associated events.
     :type can_change_event_settings: bool
     :param can_change_items: If ``True``, the members can change and add items and related objects
@@ -406,6 +398,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
     can_manage_gift_cards = models.BooleanField(default=False, verbose_name=_('Can manage gift cards'))
 
+    can_view_event_info = models.BooleanField(
+        default=False,
+        verbose_name=_('Read-only access to event information'),
+        help_text=_('For website and other integrations that only display event information'),
+    )
     can_change_event_settings = models.BooleanField(default=False, verbose_name=_('Can change event settings'))
     can_change_config = models.BooleanField(
         default=False,
@@ -668,10 +665,27 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         delete = '{base_path}/common/organizer/{self.organizer.slug}/team/{self.pk}/delete'
 
 
+def default_team_invite_expiry():
+    return now() + TEAM_INVITE_VALIDITY
+
+
+class TeamInviteQuerySet(models.QuerySet):
+    def open(self):
+        """Invites that are still pending and have not expired yet."""
+        return self.filter(state=TeamInvite.State.PENDING, expires__gt=now())
+
+
+class TeamInviteManager(models.Manager.from_queryset(TeamInviteQuerySet)):
+    """Hides accepted invites; the invitee is a team member from then on."""
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(state=TeamInvite.State.ACCEPTED)
+
+
 class TeamInvite(models.Model):
     """
-    A TeamInvite represents someone who has been invited to a team but hasn't accept the invitation
-    yet.
+    A TeamInvite represents someone who has been invited to a team. Team membership is only
+    granted once the invitee accepts the invitation.
 
     :param team: The team the person is invited to
     :type team: Team
@@ -679,11 +693,46 @@ class TeamInvite(models.Model):
     :type email: str
     :param token: The secret required to redeem the invite
     :type token: str
+    :param user: The account the invite is bound to, set when the invitee already has an account,
+        registers through the invitation link, or opens that link while logged in with the invited address
+    :type user: User
+    :param state: Whether the invite is pending, accepted, declined or expired
+    :type state: str
+    :param expires: After this point in time, the invite can no longer be accepted
+    :type expires: datetime
     """
+
+    class State(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        ACCEPTED = 'accepted', _('Accepted')
+        DECLINED = 'declined', _('Declined')
+        EXPIRED = 'expired', _('Expired')
 
     team = models.ForeignKey(Team, related_name='invites', on_delete=models.CASCADE)
     email = models.EmailField(null=True, blank=True)
     token = models.CharField(default=generate_invite_token, max_length=64, null=True, blank=True)
+    user = models.ForeignKey(
+        User,
+        related_name='team_invites',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    invited_by = models.ForeignKey(
+        User,
+        related_name='+',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    state = models.CharField(max_length=16, choices=State.choices, default=State.PENDING)
+    created = models.DateTimeField(default=now)
+    expires = models.DateTimeField(default=default_team_invite_expiry)
+    reminder_sent = models.DateTimeField(null=True, blank=True)
+    responded = models.DateTimeField(null=True, blank=True)
+
+    objects = TeamInviteManager()
+    all_objects = models.Manager.from_queryset(TeamInviteQuerySet)()
 
     def __str__(self) -> str:
         return _("Invite to team '{team}' for '{email}'").format(team=str(self.team), email=self.email)
@@ -694,29 +743,39 @@ class TeamInvite(models.Model):
 
     @cached_property
     def invitation_url(self):
-        return build_absolute_uri('orga:invitation.view', kwargs={'code': self.token})
+        return build_absolute_uri('eventyay_common:auth.invite', kwargs={'token': self.token})
+
+    @property
+    def is_expired(self) -> bool:
+        if self.state == self.State.EXPIRED:
+            return True
+        return self.state == self.State.PENDING and self.expires <= now()
+
+    @property
+    def is_open(self) -> bool:
+        return self.state == self.State.PENDING and self.expires > now()
+
+    @property
+    def display_state(self) -> str:
+        return self.State.EXPIRED if self.is_expired else self.state
+
+    @property
+    def display_state_label(self) -> str:
+        return self.State(self.display_state).label
+
+    @property
+    def display_state_css_class(self) -> str:
+        return {
+            self.State.ACCEPTED: 'label-success',
+            self.State.DECLINED: 'label-danger',
+            self.State.EXPIRED: 'label-warning',
+            self.State.PENDING: 'label-info',
+        }.get(self.display_state, 'label-default')
 
     def send(self):
-        from django.utils.translation import get_language
+        from eventyay.base.services.teams import send_team_invite
 
-        from eventyay.base.models.mail import QueuedMail
-
-        invitation_link = self.invitation_url
-        invitation_text = str(TEAM_INVITE_TEXT).format(
-            name=str(self.team.name),
-            invitation_link=invitation_link,
-            organizer=str(self.team.organizer.name),
-        )
-        invitation_subject = TEAM_INVITE_SUBJECT
-
-        mail = QueuedMail.objects.create(
-            to=self.email,
-            subject=str(invitation_subject),
-            text=str(invitation_text),
-            locale=get_language(),
-        )
-        mail.send()
-        return mail
+        return send_team_invite(self)
 
     send.alters_data = True
 
