@@ -217,10 +217,23 @@ Common ones:
 * ``EVY_DEBUG`` - Debug mode. Use it only for development: running in
   ``production`` does not switch it off for you.
 
-These loader settings can also go in ``eventyay.local.toml`` or a ``.env`` file.
-Secrets can be stored as files in ``app/.secrets/``, named like the variable (for
-example ``.secrets/EVY_SECRET_KEY``). See ``deployment/env.sample`` for a full
-example.
+These loader settings can also go in a ``.env`` file (same ``EVY_`` names) or in
+``eventyay.local.toml``. In the TOML file, use the field name without the prefix,
+for example ``redis_url = "redis://localhost/0"``; an ``EVY_`` key there stops the
+app from starting. Secrets can be stored as files in ``app/.secrets/``, named like
+the variable (for example ``.secrets/EVY_SECRET_KEY``).
+
+Do not copy ``deployment/env.sample`` to the app's own ``.env``. That file is for
+Docker Compose and the deployment scripts, and it has entries such as ``TAG`` that
+the loader rejects. A minimal ``.env`` for the loader looks like this:
+
+.. code-block:: bash
+
+   EVY_POSTGRES_DB=eventyay-db
+   EVY_POSTGRES_USER=eventyay
+   EVY_POSTGRES_PASSWORD=change-me
+   EVY_POSTGRES_HOST=localhost
+   EVY_REDIS_URL=redis://localhost/0
 
 A few variables are read directly from the process environment instead. Set them
 in the shell or in Docker Compose's ``env_file`` before the app starts; the
