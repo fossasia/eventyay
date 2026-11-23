@@ -66,11 +66,16 @@ export function initFeedbackSettings() {
   });
 
   if (btnCancel && btnConfirm && dialog) {
-    btnCancel.addEventListener('click', () => {
-      dialog.close();
+    const handleCancel = () => {
+      if (dialog.open) {
+        dialog.close();
+      }
       useFeedbackCheckbox.checked = true;
       toggleInputs();
-    });
+    };
+
+    btnCancel.addEventListener('click', handleCancel);
+    dialog.addEventListener('cancel', handleCancel);
 
     btnConfirm.addEventListener('click', () => {
       dialog.close();
