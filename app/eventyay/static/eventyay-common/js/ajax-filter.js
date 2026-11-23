@@ -91,27 +91,55 @@ const reinitializeBehaviors = function(resultsContainer) {
     }));
 };
 
+const getResultsLoadingAnnouncement = function(resultsContainer) {
+    const parent = resultsContainer.parentElement;
+    if (!parent) {
+        return null;
+    }
+
+    let announcement = parent.querySelector('[data-ajax-loading-announcement]');
+    if (!announcement) {
+        announcement = document.createElement('span');
+        announcement.className = 'sr-only';
+        announcement.setAttribute('data-ajax-loading-announcement', '');
+        announcement.setAttribute('role', 'status');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        parent.insertBefore(announcement, resultsContainer.nextSibling);
+    }
+
+    return announcement;
+};
+
+const clearResultsLoadingAnnouncement = function(announcement) {
+    if (announcement) {
+        announcement.textContent = '';
+    }
+};
+
 const showResultsLoadingState = function(resultsContainer) {
     resultsContainer.setAttribute('aria-busy', 'true');
     resultsContainer.style.opacity = '1';
 
-    const loadingStatus = document.createElement('div');
-    loadingStatus.className = 'text-center text-muted';
-    loadingStatus.setAttribute('role', 'status');
-    loadingStatus.setAttribute('aria-live', 'polite');
-    loadingStatus.style.padding = '2rem 0';
-
-    const spinner = document.createElement('span');
-    spinner.className = 'fa fa-spinner fa-spin';
-    spinner.setAttribute('aria-hidden', 'true');
-    loadingStatus.appendChild(spinner);
-
     const loadingText = typeof window.gettext === 'function'
         ? window.gettext('Loading…')
         : 'Loading…';
-    loadingStatus.appendChild(document.createTextNode(' ' + loadingText));
+    const announcement = getResultsLoadingAnnouncement(resultsContainer);
+    if (announcement) {
+        announcement.textContent = loadingText;
+    }
+
+    const loadingStatus = document.createElement('div');
+    loadingStatus.className = 'text-center text-muted';
+    loadingStatus.style.padding = '2rem 0';
+    loadingStatus.setAttribute('aria-hidden', 'true');
+
+    const spinner = document.createElement('span');
+    spinner.className = 'fa fa-spinner fa-spin';
+    loadingStatus.appendChild(spinner);
 
     resultsContainer.replaceChildren(loadingStatus);
+    return announcement;
 };
 
 const updateNextInputs = function(url, tabId) {
@@ -228,14 +256,17 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingI
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
     let requestController = null;
+    let loadingAnnouncement = null;
     if (!resultsContainer) {
         window.location.href = url;
         return;
     }
 
     if (showLoadingIndicator) {
-        showResultsLoadingState(resultsContainer);
+        loadingAnnouncement = showResultsLoadingState(resultsContainer);
     } else {
+        clearResultsLoadingAnnouncement(getResultsLoadingAnnouncement(resultsContainer));
+        resultsContainer.removeAttribute('aria-busy');
         resultsContainer.style.opacity = '0.5';
     }
 
@@ -279,6 +310,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingI
         resultsContainer.replaceWith(newResultsContainer);
         resultsContainer = newResultsContainer;
         resultsContainer.style.opacity = '1';
+        clearResultsLoadingAnnouncement(loadingAnnouncement);
 
         syncFilterBadge(tabContext.context, newContext); 
         syncMarkedRegions(tabContext.context, newContext);
@@ -303,6 +335,8 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingI
             return;
         }
 
+        clearResultsLoadingAnnouncement(loadingAnnouncement);
+        resultsContainer.removeAttribute('aria-busy');
         console.error('AJAX filter update failed', {
             url: url,
             error: error,
