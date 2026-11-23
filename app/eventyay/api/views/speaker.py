@@ -127,6 +127,7 @@ class SpeakerViewSet(
     search_fields = ('user__fullname', 'user__email')
     endpoint = 'speakers'
     allow_public_read = True
+    write_permission = 'can_change_submissions'
     filter_backends = (SpeakerSearchFilter, DjangoFilterBackend)
 
     def get_legacy_serializer_class(self):  # pragma: no cover

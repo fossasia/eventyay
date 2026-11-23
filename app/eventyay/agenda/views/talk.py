@@ -788,7 +788,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         }
         token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
         redirect_url = urljoin(event.settings.venueless_url, f'#token={token}')
-        logger.info('Redirect URL to Video: %s', redirect_url)
+        logger.info('Redirecting to video for event %s', event.slug)
         return redirect_or_json_redirect(request, redirect_url)
 
 

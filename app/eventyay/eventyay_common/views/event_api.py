@@ -28,6 +28,7 @@ from eventyay.eventyay_common.api_catalog import (
     tickets_api_base,
     talks_api_base,
 )
+from eventyay.eventyay_common.utils import api_token_created_message
 
 
 class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, TemplateView):
@@ -159,14 +160,7 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
                 user=request.user,
                 data={'name': token.name, 'id': token.pk, 'event': request.event.slug},
             )
-        messages.success(
-            request,
-            _(
-                'A new API token has been created with the following secret: {}\n'
-                'Please copy this secret to a safe place. You will not be able to '
-                'view it again here.'
-            ).format(token.token),
-        )
+        messages.success(request, api_token_created_message(token))
         return redirect(self.get_success_url() + '#tokens')
 
     def _revoke_token(self, request):
