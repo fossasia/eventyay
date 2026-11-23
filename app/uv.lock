@@ -1879,16 +1879,16 @@ wheels = [
 
 [[package]]
 name = "geoip2"
-version = "5.3.0"
+version = "5.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "maxminddb" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/8d/a62c6e56545049605777ad47de2274a72ed60e3991433ca3f1bcdd761ef5/geoip2-5.3.0.tar.gz", hash = "sha256:66df653e16c535f9bb45e3c7ce992fbe008911d9c7c349540574ea2fe8931db5", size = 177948, upload-time = "2026-07-16T22:34:01.497Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/18/c3681237cfc76058dd10b93a3e9414ceb4bd54b1bc3715a369a29202794e/geoip2-5.4.0.tar.gz", hash = "sha256:1359a2a2e706719b0c8f532c68635f872f3b0a8e076862e518bbfd008e9c76f1", size = 191248, upload-time = "2026-11-17T23:25:07.14Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/bf/407ea894512ad989f6fbf9f8e50a02a69ce888bf6a2b799e53a99e4d26a7/geoip2-5.3.0-py3-none-any.whl", hash = "sha256:7f82c587f3f3691f30adc8634d0b93de9853d96d514ed48ff3ba38f188a5df31", size = 29186, upload-time = "2026-07-16T22:34:00.126Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/6b/6154ce79b48cb75a9d054356aa5c2ff6c2e8f48294662b2737ab342ec11a/geoip2-5.4.0-py3-none-any.whl", hash = "sha256:3339c6be50b6c665a3d4cbb313a27ebeba17f40d07f8703c73d51af7910861a3", size = 29204, upload-time = "2026-11-17T23:25:05.44Z" },
 ]
 
 [[package]]
