@@ -3,6 +3,7 @@ import datetime
 import re
 import uuid
 from contextlib import suppress
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any, TypedDict
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -23,7 +24,7 @@ from rest_framework import serializers
 from eventyay.base.models.audit import AuditLog
 from eventyay.base.models.chat import Channel, ChatEvent, Membership
 from eventyay.base.models.event import Event
-from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
+from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView, mask_room_config_secrets
 from eventyay.base.services.room_creation_gate import (
     SERVER_BACKED_ROOM_MODULE_TYPES,
     user_can_create_server_backed_room_during_development,
@@ -419,6 +420,25 @@ def get_room_config(room, permissions, *, current_stream=_UNSET, can_edit_rooms=
     return room_config
 
 
+def get_event_timezone_name(event: Event) -> str:
+    tzname = ""
+    try:
+        tzname = event.settings.timezone
+    except (AttributeError, KeyError):
+        pass
+    if not tzname:
+        tzname = getattr(event, "timezone", "")
+    return str(tzname or "UTC")
+
+
+def get_event_timezone(event: Event) -> ZoneInfo:
+    tzname = get_event_timezone_name(event)
+    try:
+        return ZoneInfo(tzname)
+    except (ZoneInfoNotFoundError, ValueError, KeyError):
+        return ZoneInfo("UTC")
+
+
 def get_event_config_for_user(event, user):
     permissions = event.get_all_permissions(user)
     cfg = event.config or {}
@@ -432,7 +452,7 @@ def get_event_config_for_user(event, user):
         "title": getattr(event, "title", getattr(event, "name", "")),
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
-        "timezone": event.settings.timezone,
+        "timezone": get_event_timezone_name(event),
         "date_from": event.date_from.isoformat() if event.date_from else None,
         "date_to": event.date_to.isoformat() if event.date_to else None,
         "visible_logo_url": event.visible_logo_url,
@@ -532,7 +552,7 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         type="event.room.added",
         data={
             "object": str(room.id),
-            "new": RoomConfigSerializer(room).data,
+            "new": mask_room_config_secrets(RoomConfigSerializer(room).data),
         },
     )
     return room, channel
@@ -916,7 +936,7 @@ def _config_serializer(event, *args, **kwargs):
             },
             "pretalx": cfg.get("pretalx", {}),
             "video_player": cfg.get("video_player"),
-            "timezone": event.timezone,
+            "timezone": get_event_timezone_name(event),
             "trait_grants": event.trait_grants,
             "connection_limit": cfg.get("connection_limit", 0),
             "onsite_traits": cfg.get("onsite_traits", []),
