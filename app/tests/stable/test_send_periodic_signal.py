@@ -8,6 +8,7 @@ from eventyay.base.services import cleanup as base_cleanup  # noqa: F401
 from eventyay.base.services import invoices as base_invoices  # noqa: F401
 from eventyay.base.services import orders as base_orders  # noqa: F401
 from eventyay.base.services import room as base_room  # noqa: F401
+from eventyay.base.services import teams as base_teams  # noqa: F401
 from eventyay.base.services import telemetry as base_telemetry  # noqa: F401
 from eventyay.base.services import update_check as base_update_check  # noqa: F401
 from eventyay.base.services import waitinglist as base_waitinglist  # noqa: F401
@@ -32,6 +33,7 @@ EXPECTED_CORE_RECEIVERS = frozenset({
     'eventyay.base.services.orders.send_download_reminders',
     'eventyay.base.services.orders.send_expiry_warnings',
     'eventyay.base.services.room.check_stream_schedule_changes',
+    'eventyay.base.services.teams.process_team_invites',
     'eventyay.base.services.telemetry.run_telemetry',
     'eventyay.base.services.update_check.run_update_check',
     'eventyay.base.services.waitinglist.process_waitinglist',
