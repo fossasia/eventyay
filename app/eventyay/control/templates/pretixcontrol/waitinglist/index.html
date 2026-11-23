@@ -56,7 +56,7 @@
                             </p>
                         {% endif %}
                         {% if request.event.has_subevents %}
-                            <select name="subevent" class="form-control">
+                            <select id="id_auto_subevent" name="subevent" class="form-control" data-searchable-select data-search-placeholder="{% trans 'Search' %}" data-empty-text="{% trans 'No results' %}">
                                 <option value="">{% trans "All dates" context "subevent" %}</option>
                                 {% for se in request.event.subevents.all %}
                                     <option value="{{ se.id }}"
@@ -124,7 +124,7 @@
                 </div>
                 {% if request.event.has_subevents %}
                     <div class="input-group advanced-filter-search-query-group">
-                        <select name="subevent" class="form-control">
+                        <select id="id_subevent" name="subevent" class="form-control" data-searchable-select data-search-placeholder="{% trans 'Search' %}" data-empty-text="{% trans 'No results' %}">
                             <option value="">{% trans "All dates" context "subevent" %}</option>
                             {% for se in request.event.subevents.all %}
                                 <option value="{{ se.id }}"
