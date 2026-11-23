@@ -27,6 +27,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
+from eventyay.base.services.event import get_event_timezone_name
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.settings import get_video_provider_visibility
 from eventyay.common.gzip import gzip_if_accepted
@@ -236,7 +237,7 @@ class VideoSPAView(View):
                     'date_from': event.date_from.isoformat() if event.date_from else None,
                     'date_to': event.date_to.isoformat() if event.date_to else None,
                 },
-                'eventTimezone': event.settings.timezone,
+                'eventTimezone': get_event_timezone_name(event),
                 'eventTitle': str(event.name),
                 'visibleLogoUrl': event.visible_logo_url or '',
                 'visibleHeaderImageUrl': event.visible_header_image_url or '',
