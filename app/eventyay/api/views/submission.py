@@ -30,7 +30,12 @@ from rest_framework.views import APIView
 
 from eventyay.api.auth.permission import EventPermission
 from eventyay.api.documentation import build_expand_docs, build_search_docs
-from eventyay.api.mixins import CachedCatalogListMixin, PretalxViewSetMixin, prefetch_submission_relations
+from eventyay.api.mixins import (
+    CachedCatalogListMixin,
+    PretalxViewSetMixin,
+    WriteRulesMixin,
+    prefetch_submission_relations,
+)
 from eventyay.api.serializers.legacy import (
     LegacySubmissionOrgaSerializer,
     LegacySubmissionReviewerSerializer,
@@ -256,13 +261,21 @@ with scopes_disabled():
         responses={200: SubmissionOrgaSerializer},
     ),
 )
-class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
+class SubmissionViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = SubmissionSerializer
     queryset = Submission.objects.none()
     lookup_field = 'code__iexact'
     search_fields = ('title', 'speakers__fullname')
     filterset_class = SubmissionFilter
     allow_public_read = True
+    write_permission = ('can_change_submissions', 'is_reviewer')
+    rules_bypass_permission = 'can_change_submissions'
+    # Reviewers may change proposal states when the active review phase allows it.
+    write_rules = {
+        'accept': 'accept',
+        'reject': 'reject',
+        'make_submitted': 'state_change',
+    }
     permission_map = {
         'make_submitted': 'submission.state_change_submission',
         'add_speaker': 'submission.update_submission',
@@ -374,8 +387,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST'])
     def accept(self, request, **kwargs):
+        submission = self.get_object()
         try:
-            submission = self.get_object()
             submission.accept(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
@@ -385,8 +398,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST'])
     def reject(self, request, **kwargs):
+        submission = self.get_object()
         try:
-            submission = self.get_object()
             submission.reject(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
@@ -396,8 +409,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST'])
     def confirm(self, request, **kwargs):
+        submission = self.get_object()
         try:
-            submission = self.get_object()
             submission.confirm(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
@@ -407,8 +420,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST'])
     def cancel(self, request, **kwargs):
+        submission = self.get_object()
         try:
-            submission = self.get_object()
             submission.cancel(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
@@ -418,8 +431,8 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST'], url_path='make-submitted')
     def make_submitted(self, request, **kwargs):
+        submission = self.get_object()
         try:
-            submission = self.get_object()
             submission.make_submitted(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
@@ -565,12 +578,21 @@ def favourites_merge_view(request, event):
     partial_update=extend_schema(summary='Update Tags (Partial Update)'),
     destroy=extend_schema(summary='Delete Tags'),
 )
-class TagViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
+class TagViewSet(WriteRulesMixin, CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = TagSerializer
     queryset = Tag.objects.none()
     endpoint = 'tags'
     search_fields = ('tag',)
     allow_public_read = True
+    write_permission = ('can_change_submissions', 'is_reviewer')
+    rules_bypass_permission = 'can_change_submissions'
+    # Reviewers may create or change tags when the active review phase allows it.
+    write_rules = {
+        'create': 'create',
+        'update': 'update',
+        'partial_update': 'update',
+        'destroy': 'delete',
+    }
     catalog_name = 'tags'
     catalog_max_age = 3600
 
@@ -717,6 +739,7 @@ class SubmissionTypeViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewset
     endpoint = 'submission-types'
     search_fields = ('name',)
     allow_public_read = True
+    write_permission = 'can_change_event_settings'
     catalog_name = 'submission-types'
     catalog_max_age = 3600
 
