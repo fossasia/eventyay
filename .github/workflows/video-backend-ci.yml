@@ -11,6 +11,7 @@ on:
       - "app/uv.lock"
       - "app/tests/stable/.test_durations"
       - ".github/workflows/video-backend-ci.yml"
+      - ".github/actions/migrated-test-db/**"
 
 env:
   PYTHON_VERSION: "3.12"
@@ -92,6 +93,18 @@ jobs:
       fail-fast: false
       matrix:
         group: [1, 2, 3, 4]
+    env:
+      EVY_POSTGRES_USER: eventyay
+      EVY_POSTGRES_PASSWORD: eventyay
+      EVY_POSTGRES_DB: eventyay-db
+      EVY_POSTGRES_HOST: localhost
+      EVY_POSTGRES_PORT: "5432"
+      EVY_REDIS_URL: redis://localhost:6379/0
+      EVY_SECRET_KEY: ci-test-secret-key
+      EVY_DEBUG: "true"
+      EVY_RUNNING_ENVIRONMENT: testing
+      # DJANGO_SETTINGS_MODULE is set only where pytest runs: plugin builds in
+      # uv sync read it and fail before eventyay is installed.
     services:
       postgres:
         image: postgres:16
@@ -136,23 +149,22 @@ jobs:
       - name: Sync dependencies (including test group)
         run: uv sync --directory app --group test
 
+      - name: Prepare migrated test database
+        uses: ./.github/actions/migrated-test-db
+        with:
+          postgres-container: ${{ job.services.postgres.id }}
+
       - name: Run pytest
         env:
-          EVY_POSTGRES_USER: eventyay
-          EVY_POSTGRES_PASSWORD: eventyay
-          EVY_POSTGRES_DB: eventyay-db
-          EVY_POSTGRES_HOST: localhost
-          EVY_POSTGRES_PORT: "5432"
-          EVY_REDIS_URL: redis://localhost:6379/0
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
-          EVY_RUNNING_ENVIRONMENT: testing
+          # Overrides the tests.tickets.settings default in pyproject.toml.
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
         # Each shard has its own Postgres and Redis services. duration_based_chunks keeps
         # files contiguous, so module-scoped fixtures are not rebuilt in several shards.
+        # --reuse-db keeps the database prepared above; Django still applies any
+        # migration missing from it.
         run: >-
-          uv run pytest tests/stable -v --tb=short --durations=10
+          uv run pytest tests/stable -v --tb=short --durations=10 --reuse-db
           --splits 4 --group ${{ matrix.group }} --durations-path tests/stable/.test_durations
 
   pytest-integration-result:
