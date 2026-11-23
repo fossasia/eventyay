@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0090_team_invite_state'),
+        ('base', '0093_team_can_view_event_info'),
     ]
 
     operations = [
