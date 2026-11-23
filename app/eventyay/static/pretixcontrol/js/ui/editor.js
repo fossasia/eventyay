@@ -472,7 +472,7 @@ var editor = {
                     bottom: editor._px2mm(bottom).toFixed(2),
                     fontsize: editor._get_text_max_font_pt(o).toFixed(1),
                     color: col,
-                    //lineheight: o.lineHeight,
+                    lineheight: Number(o.lineHeight) !== 1 ? o.lineHeight : undefined,
                     fontfamily: o.fontFamily,
                     bold: o.fontWeight === 'bold',
                     italic: o.fontStyle === 'italic',
@@ -1633,13 +1633,23 @@ var editor = {
     },
 
     _source_save: function () {
+        var failed = function (err) {
+            console.error('Could not apply the layout code', err);
+            alert(gettext('The layout code could not be applied. Please check it and try again.'));
+        };
+        var data;
+        try {
+            data = JSON.parse($("#source-textarea").val());
+        } catch (err) {
+            failed(err);
+            return;
+        }
         var previous = editor.dump();
         try {
-            editor.load(JSON.parse($("#source-textarea").val()));
+            editor.load(data);
         } catch (err) {
-            console.error('Could not apply the layout code', err);
             editor.load(previous);
-            alert(gettext('The layout code could not be applied. Please check it and try again.'));
+            failed(err);
             return;
         }
         editor._create_savepoint();
