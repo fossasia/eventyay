@@ -1,5 +1,7 @@
 from channels.db import database_sync_to_async
+from django.db import transaction
 from django.db.models import Q
+from django_scopes import scope
 
 from eventyay.base.models.poll import Poll, PollOption, PollVote
 
@@ -102,16 +104,19 @@ def vote_on_poll(pk, room, user, options):
     :raises Poll.DoesNotExist: when the poll is not open in ``room``
     :raises PollOption.DoesNotExist: when none of ``options`` belongs to the poll
     """
-    poll = Poll.objects.get(pk=pk, room=room, state=Poll.States.OPEN)
-    validated_options = list(
-        PollOption.objects.filter(poll=poll, id__in=options).values_list("id", flat=True)
-    )
-    if not validated_options:
-        raise PollOption.DoesNotExist
-    PollVote.objects.filter(sender=user, option__poll=poll).delete()
-    PollVote.objects.bulk_create(
-        [PollVote(sender=user, option_id=option) for option in validated_options]
-    )
-    return Poll.objects.get(pk=pk).serialize_public(
-        force_results=True, answers=None
-    )  # Do not send answers, as this object will be sent to everybody with access
+    with scope(event=room.event):
+        poll = Poll.objects.get(pk=pk, room=room, state=Poll.States.OPEN)
+        validated_options = list(
+            PollOption.objects.filter(poll=poll, id__in=options).values_list("id", flat=True)
+        )
+        if not validated_options:
+            raise PollOption.DoesNotExist
+        # replace the previous vote in one step, so a failed insert keeps it
+        with transaction.atomic():
+            PollVote.objects.filter(sender=user, option__poll=poll).delete()
+            PollVote.objects.bulk_create(
+                [PollVote(sender=user, option_id=option) for option in validated_options]
+            )
+        return Poll.objects.get(pk=pk).serialize_public(
+            force_results=True, answers=None
+        )  # Do not send answers, as this object will be sent to everybody with access

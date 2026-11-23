@@ -146,7 +146,7 @@ class PollModule(BaseModule):
 
         try:
             poll = await vote_on_poll(
-                room=body.get("room"),
+                room=self.room,
                 pk=body.get("id"),
                 user=self.consumer.user,
                 options=body.get("options", []),

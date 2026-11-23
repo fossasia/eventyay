@@ -123,25 +123,28 @@ async def test_vote_on_closed_poll_reports_error(monkeypatch):
 def test_vote_on_question_from_another_room_is_not_stored(event, room, user):
     with scope(event=event):
         other_room = Room.objects.create(event=event, name='Other room', position=2)
-    question = RoomQuestion.objects.create(
-        room=other_room, sender=user, content='Why?', state=RoomQuestion.States.VISIBLE
-    )
+        question = RoomQuestion.objects.create(
+            room=other_room, sender=user, content='Why?', state=RoomQuestion.States.VISIBLE
+        )
 
-    with pytest.raises(RoomQuestion.DoesNotExist):
-        vote_on_question.func(pk=question.pk, room=room, user=user, vote=True)
+        with pytest.raises(RoomQuestion.DoesNotExist):
+            vote_on_question.func(pk=question.pk, room=room, user=user, vote=True)
 
-    assert not QuestionVote.objects.filter(question=question).exists()
+        assert not QuestionVote.objects.filter(question=question).exists()
 
 
 @pytest.mark.django_db
 def test_vote_on_question_counts_vote(event, room, user):
-    question = RoomQuestion.objects.create(room=room, sender=user, content='Why?', state=RoomQuestion.States.VISIBLE)
+    with scope(event=event):
+        question = RoomQuestion.objects.create(
+            room=room, sender=user, content='Why?', state=RoomQuestion.States.VISIBLE
+        )
 
-    result = vote_on_question.func(pk=question.pk, room=room, user=user, vote=True)
-    assert result['score'] == 1
+        result = vote_on_question.func(pk=question.pk, room=room, user=user, vote=True)
+        assert result['score'] == 1
 
-    result = vote_on_question.func(pk=question.pk, room=room, user=user, vote=False)
-    assert result['score'] == 0
+        result = vote_on_question.func(pk=question.pk, room=room, user=user, vote=False)
+        assert result['score'] == 0
 
 
 @pytest.mark.asyncio
@@ -157,15 +160,16 @@ async def test_vote_on_removed_option_reports_error(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_vote_on_removed_option_keeps_previous_vote(room, user):
-    poll = Poll.objects.create(room=room, content='Format?', state=Poll.States.OPEN)
-    talks = PollOption.objects.create(poll=poll, content='Talks', order=1)
-    vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[str(talks.pk)])
+def test_vote_on_removed_option_keeps_previous_vote(event, room, user):
+    with scope(event=event):
+        poll = Poll.objects.create(room=room, content='Format?', state=Poll.States.OPEN)
+        talks = PollOption.objects.create(poll=poll, content='Talks', order=1)
+        vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[str(talks.pk)])
 
-    removed = PollOption.objects.create(poll=poll, content='Panels', order=2)
-    removed_id = str(removed.pk)
-    removed.delete()
-    with pytest.raises(PollOption.DoesNotExist):
-        vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[removed_id])
+        removed = PollOption.objects.create(poll=poll, content='Panels', order=2)
+        removed_id = str(removed.pk)
+        removed.delete()
+        with pytest.raises(PollOption.DoesNotExist):
+            vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[removed_id])
 
-    assert list(PollVote.objects.filter(sender=user).values_list('option', flat=True)) == [talks.pk]
+        assert list(PollVote.objects.filter(sender=user).values_list('option', flat=True)) == [talks.pk]

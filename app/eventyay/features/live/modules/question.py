@@ -157,7 +157,7 @@ class QuestionModule(BaseModule):
 
         try:
             question = await vote_on_question(
-                room=body.get("room"),
+                room=self.room,
                 pk=body.get("id"),
                 user=self.consumer.user,
                 vote=body.get("vote", True),
