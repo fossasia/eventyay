@@ -879,6 +879,12 @@ export default {
 	--room-col-min: 320px
 	&.is-shift-mode
 		--room-col-min: 420px
+		// Shifts can run past midnight, so the day divider must sit under the cards (z-index 10)
+		// and not cut across them. The time column keeps the divider as an inset edge.
+		.timeline.datebreak
+			z-index: 9
+		.timeslice.datebreak
+			box-shadow: inset 0 2px 0 $clr-grey-500
 	.sticky-header
 		position: sticky
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
