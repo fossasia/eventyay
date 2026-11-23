@@ -24,6 +24,8 @@ can_create_events                     boolean
 can_change_teams                      boolean
 can_change_organizer_settings         boolean
 can_manage_gift_cards                 boolean
+can_view_event_info                   boolean                    Read-only access to the public-facing setup of
+                                                                 the team's events, for website integrations
 can_change_event_settings             boolean
 can_change_items                      boolean
 can_view_orders                       boolean
