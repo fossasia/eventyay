@@ -86,6 +86,7 @@ function createHarness({ resultsContainer, fetch, DOMParser } = {}) {
     const context = {
         AbortController,
         DOMException,
+        URL,
         CustomEvent: class CustomEvent {},
         document,
         window,
@@ -136,6 +137,7 @@ test('shows an accessible loading state outside the busy results region', () => 
     assert.equal(resultsContainer.style.opacity, '1');
     assert.equal(resultsContainer.children.length, 1);
     assert.equal(resultsContainer.children[0].attributes['aria-hidden'], 'true');
+    assert.equal(resultsContainer.children[0].children[0].className, 'fa fa-spinner fa-spin');
     assert.equal(announcement.parentElement, resultsParent);
     assert.equal(announcement.attributes.role, 'status');
     assert.equal(announcement.attributes['aria-live'], 'polite');
