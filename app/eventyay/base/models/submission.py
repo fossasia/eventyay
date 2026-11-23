@@ -2,6 +2,7 @@ import copy
 import datetime as dt
 import json
 import statistics
+from contextlib import suppress
 from itertools import repeat
 
 from django.conf import settings
@@ -94,14 +95,14 @@ class SubmissionStates(Choices):
     valid_choices = [(key, value) for key, value in display_values.items()]
 
     valid_next_states = {
-        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED),
-        REJECTED: (ACCEPTED, SUBMITTED),
-        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN),
-        CONFIRMED: (ACCEPTED, CANCELED),
-        CANCELED: (ACCEPTED, CONFIRMED),
-        WITHDRAWN: (SUBMITTED),
+        SUBMITTED: (REJECTED, WITHDRAWN, ACCEPTED, DELETED),
+        REJECTED: (ACCEPTED, SUBMITTED, DELETED),
+        ACCEPTED: (CONFIRMED, CANCELED, REJECTED, SUBMITTED, WITHDRAWN, DELETED),
+        CONFIRMED: (ACCEPTED, CANCELED, DELETED),
+        CANCELED: (ACCEPTED, CONFIRMED, DELETED),
+        WITHDRAWN: (SUBMITTED, DELETED),
         DELETED: (),
-        DRAFT: (SUBMITTED,),
+        DRAFT: (SUBMITTED, DELETED),
     }
 
     method_names = {
@@ -116,6 +117,7 @@ class SubmissionStates(Choices):
 
     accepted_states = (ACCEPTED, CONFIRMED)
     terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
+    valid_submission_states = (SUBMITTED, ACCEPTED, CONFIRMED, REJECTED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -124,6 +126,7 @@ class SubmissionStates(Choices):
             SubmissionStates.ACCEPTED: '--color-success',
             SubmissionStates.CONFIRMED: '--color-success',
             SubmissionStates.REJECTED: '--color-danger',
+            SubmissionStates.DELETED: '--color-danger',
         }.get(state, '--color-grey')
 
 
@@ -458,6 +461,16 @@ class Submission(GenerateCode, PretalxModel):
             tags.append({'id': tag.id, 'tag': tag.tag, 'color': tag.color})
         return tags
 
+    def refresh_for_update(self, changed_fields):
+        """Lock and reload a bound submission while retaining only this edit's changed fields."""
+        changes = {
+            field.attname: getattr(self, field.attname)
+            for field in self._meta.concrete_fields if field.name in changed_fields
+        }
+        self.refresh_from_db(from_queryset=type(self).all_objects.select_for_update())
+        for name, value in changes.items():
+            setattr(self, name, value)
+
     def update_duration(self):
         """Apply the submission's duration to its currently scheduled.
 
@@ -465,9 +478,16 @@ class Submission(GenerateCode, PretalxModel):
 
         Should be called whenever the duration changes.
         """
-        for slot in self.event.wip_schedule.talks.filter(submission=self, start__isnull=False):
-            slot.end = slot.start + dt.timedelta(minutes=self.get_duration())
-            slot.save()
+        with scope(event=self.event), transaction.atomic():
+            type(self.event).objects.select_for_update(no_key=True).get(pk=self.event.pk)
+            with suppress(AttributeError):
+                del self.event.wip_schedule
+            schedule = self.event.schedules.select_for_update().get(pk=self.event.wip_schedule.pk)
+            submission = type(self).all_objects.select_related('submission_type').get(pk=self.pk)
+            duration = submission.get_duration()
+            schedule.talks.filter(submission=self, start__isnull=False).update(
+                end=models.F('start') + dt.timedelta(minutes=duration), updated=now(),
+            )
 
     update_duration.alters_data = True
 
@@ -836,17 +856,19 @@ class Submission(GenerateCode, PretalxModel):
         orga: bool = True,
         from_pending: bool = False,
     ):
-        """Sets the submission's state to 'deleted'."""
+        """Sets the submission's state to 'deleted' while preserving session data."""
         previous = self.state
-        self._set_state(SubmissionStates.DELETED, force, person=person)
-        for answer in self.answers.all():
-            answer.remove(person=person, force=force)
-        self.log_action(
-            'eventyay.submission.deleted',
-            person=person,
-            orga=True,
-            data={'previous': previous, 'from_pending': from_pending},
-        )
+        # _set_state clears pending_state (so ApplyPending cannot restore the session)
+        # and update_talk_slots() drops its WIP schedule slots. Keep that and the log
+        # entry in one transaction so a failure cannot leave stale slots behind.
+        with transaction.atomic():
+            self._set_state(SubmissionStates.DELETED, force, person=person)
+            self.log_action(
+                'eventyay.submission.deleted',
+                person=person,
+                orga=True,
+                data={'previous': previous, 'from_pending': from_pending},
+            )
 
     remove.alters_data = True
 

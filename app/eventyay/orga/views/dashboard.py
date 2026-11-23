@@ -344,6 +344,7 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
                     | Q(action_type__contains='schedule'),
                     event=self.request.event,
                 )
+                .exclude_unresolvable_content_types()
                 .select_related('user', 'event', 'content_type')
                 .prefetch_related('content_object')[:10]
             )
@@ -465,9 +466,14 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
 
             scheduled_sessions_count = 0
             if getattr(event, 'current_schedule', None):
-                scheduled_sessions_count = event.current_schedule.talks.filter(
-                    start__isnull=False, room__isnull=False, is_visible=True, submission__isnull=False
-                ).count()
+                # Released schedules keep the slots of sessions deleted afterwards.
+                scheduled_sessions_count = (
+                    event.current_schedule.talks.filter(
+                        start__isnull=False, room__isnull=False, is_visible=True, submission__isnull=False
+                    )
+                    .exclude(submission__state=SubmissionStates.DELETED)
+                    .count()
+                )
 
             speakers_count = event.speakers.count()
         
