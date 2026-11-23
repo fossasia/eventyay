@@ -1508,12 +1508,14 @@ def get_fees(event, request, total, invoice_address, provider, positions):
     cs = cart_session(request)
     effective_testmode = event.testmode or event.private_testmode_tickets_enabled
     if cs.get('gift_cards'):
-        gcs = cs['gift_cards']
+        # Rebuild the list from cards that are still usable, so IDs the organizer no longer
+        # accepts (e.g. other organizers' cards from an older session) cannot block checkout.
+        gcs = []
         gc_qs = event.organizer.accepted_gift_cards.filter(pk__in=cs.get('gift_cards'), currency=event.currency)
         for gc in gc_qs:
             if gc.testmode != effective_testmode:
-                gcs.remove(gc.pk)
                 continue
+            gcs.append(gc.pk)
             fval = Decimal(gc.value)  # TODO: don't require an extra query
             fval = min(fval, total)
             if fval > 0:
