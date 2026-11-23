@@ -228,6 +228,7 @@ test('ignores an older response when a newer tab request has started and fails',
     await firstBodyStarted.promise;
 
     const newerRequest = fetchAndReplace('/events?tab=draft', true, null, true);
+    assert.equal(scheduler.pendingCount, 1);
     await newerRequest;
 
     firstBody.resolve('<html>stale results</html>');
@@ -292,6 +293,7 @@ test('keeps successful newer results when an older response body resolves later'
     await firstBodyStarted.promise;
 
     const newerRequest = fetchAndReplace('/events?tab=draft', true, null, true);
+    assert.equal(scheduler.pendingCount, 1);
     await newerRequest;
 
     assert.equal(resultsParent.children[0], newerResults);
