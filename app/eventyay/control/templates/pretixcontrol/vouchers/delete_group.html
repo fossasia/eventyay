@@ -1,0 +1,20 @@
+{% extends 'pretixcontrol/items/base.html' %}
+{% load i18n %}
+{% block title %}{% trans 'Delete vouchers' %}{% endblock %}
+{% block inside %}
+  <h1>{% trans 'Delete vouchers' %}</h1>
+  <form action='' method='post'>
+    {% csrf_token %}
+    <p>{% blocktrans with group=group_name %}Are you sure you want to delete the voucher group <strong>{{ group }}</strong>?{% endblocktrans %}</p>
+    <ul>
+      <li>{% blocktrans count count=unused_count %}<strong>{{ count }}</strong> unused voucher will be deleted.{% plural %}<strong>{{ count }}</strong> unused vouchers will be deleted.{% endblocktrans %}</li>
+      <li>{% blocktrans count count=used_count %}<strong>{{ count }}</strong> used voucher will be kept. Existing orders are not affected.{% plural %}<strong>{{ count }}</strong> used vouchers will be kept. Existing orders are not affected.{% endblocktrans %}</li>
+    </ul>
+    <div class='form-group submit-group'>
+      <a href="{% url 'control:event.vouchers' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-default btn-cancel'>{% trans 'Cancel' %}</a>
+      <button type='submit' class='btn btn-delete btn-danger btn-save' {% if not unused_count %}disabled{% endif %}>
+        {% blocktrans count count=unused_count %}Delete {{ count }} voucher{% plural %}Delete {{ count }} vouchers{% endblocktrans %}
+      </button>
+    </div>
+  </form>
+{% endblock %}
