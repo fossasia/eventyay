@@ -5,9 +5,20 @@ export function normalizeQuestion(text) {
 	return typeof text === 'string' ? text.trim() : ''
 }
 
+/**
+ * Length in Unicode code points, the way the server counts it (Python `len`).
+ * `String.length` counts UTF-16 code units, so an emoji would count twice.
+ */
+export function questionLength(text) {
+	return [...normalizeQuestion(text)].length
+}
+
+export function isQuestionTooLong(text) {
+	return questionLength(text) > MAX_QUESTION_LENGTH
+}
+
 export function canSubmitQuestion(text, isSubmitting) {
-	const question = normalizeQuestion(text)
-	return !isSubmitting && question.length > 0 && question.length <= MAX_QUESTION_LENGTH
+	return !isSubmitting && questionLength(text) > 0 && !isQuestionTooLong(text)
 }
 
 /**
@@ -30,6 +41,8 @@ export function roomInteractionErrorMessage(error, t) {
 			return t('Polls are currently disabled.')
 		case 'poll.closed':
 			return t('This poll is no longer open for voting.')
+		case 'poll.unknown_option':
+			return t('This option is no longer available.')
 		case 'protocol.denied':
 			return t('You are not allowed to do this.')
 		default:

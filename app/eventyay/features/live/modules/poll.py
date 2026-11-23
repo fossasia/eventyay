@@ -1,6 +1,6 @@
 import logging
 
-from eventyay.base.models.poll import Poll
+from eventyay.base.models.poll import Poll, PollOption
 from eventyay.core.permissions import Permission
 from eventyay.base.services.chat import ChatService, get_channel
 from eventyay.base.services.poll import (
@@ -154,6 +154,11 @@ class PollModule(BaseModule):
         except Poll.DoesNotExist:
             await self.consumer.send_error(
                 "poll.closed", message="This poll is no longer open for voting."
+            )
+            return
+        except PollOption.DoesNotExist:
+            await self.consumer.send_error(
+                "poll.unknown_option", message="This option is no longer available."
             )
             return
 

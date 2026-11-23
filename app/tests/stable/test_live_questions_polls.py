@@ -4,8 +4,9 @@ import pytest
 from django_scopes import scope
 
 from eventyay.base.models import Room
-from eventyay.base.models.poll import Poll
+from eventyay.base.models.poll import Poll, PollOption, PollVote
 from eventyay.base.models.roomquestion import QuestionVote, RoomQuestion
+from eventyay.base.services.poll import vote_on_poll
 from eventyay.base.services.question import vote_on_question
 from eventyay.features.live import decorators
 from eventyay.features.live.exceptions import ConsumerException
@@ -141,3 +142,30 @@ def test_vote_on_question_counts_vote(event, room, user):
 
     result = vote_on_question.func(pk=question.pk, room=room, user=user, vote=False)
     assert result['score'] == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_vote_on_removed_option_reports_error(monkeypatch):
+    module, consumer = make_module(PollModule, 'poll', monkeypatch)
+    monkeypatch.setattr(poll_module, 'vote_on_poll', AsyncMock(side_effect=PollOption.DoesNotExist))
+
+    await module.vote({'room': '1', 'id': 'p1', 'options': ['o1']})
+
+    consumer.send_error.assert_awaited_once_with('poll.unknown_option', message='This option is no longer available.')
+    consumer.channel_layer.group_send.assert_not_awaited()
+
+
+@pytest.mark.django_db
+def test_vote_on_removed_option_keeps_previous_vote(room, user):
+    poll = Poll.objects.create(room=room, content='Format?', state=Poll.States.OPEN)
+    talks = PollOption.objects.create(poll=poll, content='Talks', order=1)
+    vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[str(talks.pk)])
+
+    removed = PollOption.objects.create(poll=poll, content='Panels', order=2)
+    removed_id = str(removed.pk)
+    removed.delete()
+    with pytest.raises(PollOption.DoesNotExist):
+        vote_on_poll.func(pk=poll.pk, room=room, user=user, options=[removed_id])
+
+    assert list(PollVote.objects.filter(sender=user).values_list('option', flat=True)) == [talks.pk]

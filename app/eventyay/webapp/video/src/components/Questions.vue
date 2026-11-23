@@ -6,10 +6,11 @@
 		.asking-form(v-if="showAskingForm")
 			bunt-input-outline-container(:label="$t('Your question')")
 				template(#default="{focus, blur}")
-					textarea(v-model="question", :maxlength="maxQuestionLength", :aria-invalid="submitError ? 'true' : 'false'", @focus="focus", @blur="blur")
+					textarea(v-model="question", :aria-invalid="submitError || questionTooLong ? 'true' : 'false'", @focus="focus", @blur="blur")
 			.submit-error(v-if="submitError", role="alert") {{ submitError }}
+			.submit-error(v-else-if="questionTooLong", role="alert") {{ $t('Your question is too long.') }}
 			.actions
-				bunt-button#btn-cancel(@click="closeAskingForm") {{ $t('cancel') }}
+				bunt-button#btn-cancel(:disabled="isSubmitting", @click="closeAskingForm") {{ $t('cancel') }}
 				bunt-button#btn-submit-question(:disabled="!canSubmit", :loading="isSubmitting", @click="submitQuestion") {{ $t('Submit your question') }}
 		template(v-else-if="!isManaging")
 			bunt-button#btn-ask-question(v-if="hasPermission('room:question.ask')", @click="openAskingForm") {{ $t('Ask a Question') }}
@@ -21,8 +22,8 @@
 <script>
 import { mapState, mapGetters } from 'vuex'
 import {
-	MAX_QUESTION_LENGTH,
 	canSubmitQuestion,
+	isQuestionTooLong,
 	normalizeQuestion,
 	roomInteractionErrorMessage
 } from 'lib/roomInteractions'
@@ -48,8 +49,7 @@ export default {
 			showAskingForm: false,
 			isSubmitting: false,
 			submitError: null,
-			hasLoaded: false,
-			maxQuestionLength: MAX_QUESTION_LENGTH
+			hasLoaded: false
 		}
 	},
 	computed: {
@@ -57,6 +57,9 @@ export default {
 		...mapGetters(['hasPermission']),
 		canSubmit() {
 			return canSubmitQuestion(this.question, this.isSubmitting)
+		},
+		questionTooLong() {
+			return isQuestionTooLong(this.question)
 		},
 		sortedQuestions() {
 			if (!this.questions) return
@@ -95,6 +98,8 @@ export default {
 			this.showAskingForm = true
 		},
 		closeAskingForm() {
+			// the pending request would otherwise clear or hide a reopened draft
+			if (this.isSubmitting) return
 			this.submitError = null
 			this.showAskingForm = false
 		},
