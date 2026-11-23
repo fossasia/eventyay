@@ -112,8 +112,12 @@ def test_card_list_pagination(organizer, admin_user, client):
 def test_card_detail_view(organizer, admin_user, gift_card, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
     resp = client.get(f'/control/organizer/dummy/giftcard/{gift_card.pk}/')
-    assert gift_card.secret in resp.content.decode()
-    assert '42.00' in resp.content.decode()
+    content = resp.content.decode()
+    assert gift_card.secret in content
+    assert '42.00' in content
+    assert 'id="manual-transaction-form"' in content
+    assert 'id="revert-transaction-form"' in content
+    assert 'form="manual-transaction-form"' in content
 
 
 @pytest.mark.django_db
