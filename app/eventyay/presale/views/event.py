@@ -361,11 +361,21 @@ def get_grouped_products(
             if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
                 product.min_per_order = 1
 
+            now_dt = now()
             for var in product.available_variations:
                 var.description = str(var.description)
                 for recv, resp in product_description.send(sender=event, product=product, variation=var):
                     if resp:
                         var.description += ('<br/>' if var.description else '') + resp
+
+                if var.available_from and var.available_from > now_dt:
+                    var.sales_state = 'upcoming'
+                elif var.available_until and var.available_until < now_dt:
+                    var.sales_state = 'expired'
+                elif not var.active:
+                    var.sales_state = 'inactive'
+                else:
+                    var.sales_state = 'active'
 
                 if voucher and (voucher.allow_ignore_quota or voucher.block_quota):
                     var.cached_availability = (
@@ -377,10 +387,13 @@ def get_grouped_products(
                         var.check_quotas(subevent=subevent, _cache=quota_cache, include_bundled=True)
                     )
 
-                var.order_max = min(
-                    var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
-                    max_per_order,
-                )
+                if var.sales_state != 'active':
+                    var.order_max = 0
+                else:
+                    var.order_max = min(
+                        var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
+                        max_per_order,
+                    )
 
                 if product.limit_one_per_user:
                     var.order_max = min(var.order_max, 1)

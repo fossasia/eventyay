@@ -98,7 +98,7 @@
                     </summary>
                     <div id="item-{{ product.id }}-variations" class="variations variation-list {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
                         {% for var in product.available_variations %}
-                            <article class="row-fluid product-row variation variation-option">
+                            <article class="row-fluid product-row variation variation-option variation-compact{% if var.sales_state == 'upcoming' %} variation-upcoming{% elif var.sales_state == 'expired' %} variation-expired{% endif %}">
                                 <div class="col-md-8 col-xs-12">
                                     <h5>
                                         <label for="variation_{{ product.pk }}_{{ var.pk }}">
@@ -108,6 +108,11 @@
                                     {% if var.description %}
                                         <div class="variation-description">
                                             {{ var.description|event_localize|rich_text }}
+                                        </div>
+                                    {% endif %}
+                                    {% if event.settings.show_variation_sales_deadlines and var.sales_state == 'active' and var.available_until %}
+                                        <div class="variation-deadline text-muted">
+                                            <small><i class="fa fa-clock-o" aria-hidden="true"></i> {% blocktrans trimmed with date=var.available_until|date:"SHORT_DATE_FORMAT" time=var.available_until|time:"TIME_FORMAT" %}Available until {{ date }} {{ time }}{% endblocktrans %}</small>
                                         </div>
                                     {% endif %}
                                     {% if product.do_show_quota_left %}
@@ -164,13 +169,27 @@
                                         {% endblocktrans %}</small>
                                     {% endif %}
                                 </div>
-                                {% if product.require_voucher %}
+                                {% if var.sales_state == 'upcoming' %}
+                                    <div class="col-md-2 col-xs-6 availability-box unavailable">
+                                        <span class="label label-info">{% trans "UPCOMING" %}</span>
+                                        {% if event.settings.show_variation_sales_deadlines and var.available_from %}
+                                            <br/><small class="text-muted">{% blocktrans trimmed with date=var.available_from|date:"SHORT_DATE_FORMAT" time=var.available_from|time:"TIME_FORMAT" %}From {{ date }} {{ time }}{% endblocktrans %}</small>
+                                        {% endif %}
+                                    </div>
+                                {% elif var.sales_state == 'expired' %}
+                                    <div class="col-md-2 col-xs-6 availability-box gone">
+                                        <span class="label label-default">{% trans "SALE ENDED" %}</span>
+                                        {% if event.settings.show_variation_sales_deadlines and var.available_until %}
+                                            <br/><small class="text-muted">{% blocktrans trimmed with date=var.available_until|date:"SHORT_DATE_FORMAT" time=var.available_until|time:"TIME_FORMAT" %}Ended {{ date }} {{ time }}{% endblocktrans %}</small>
+                                        {% endif %}
+                                    </div>
+                                {% elif product.require_voucher %}
                                     <div class="col-md-2 col-xs-6 availability-box unavailable">
                                         <small>
                                             <a href="#voucher">{% trans "Enter a voucher code below to buy this ticket." %}</a>
                                         </small>
                                     </div>
-                                    {% elif var.cached_availability.0 == 100 %}
+                                {% elif var.cached_availability.0 == 100 %}
                                     <div class="col-md-2 col-xs-6 availability-box available">
                                         {% if var.order_max == 1 %}
                                             <label class="item-checkbox-label variation-selector-label">

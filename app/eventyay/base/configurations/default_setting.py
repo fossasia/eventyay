@@ -1039,6 +1039,16 @@ DEFAULT_SETTINGS = {
             label=_('Show variations of a product expanded by default'),
         ),
     },
+    'show_variation_sales_deadlines': {
+        'default': 'False',
+        'type': bool,
+        'serializer_class': serializers.BooleanField,
+        'form_class': forms.BooleanField,
+        'form_kwargs': dict(
+            label=_('Display sales deadlines of ticket variants publicly'),
+            help_text=_('If enabled, sales start and end dates of variants will be shown on the ticket page.'),
+        ),
+    },
     'waiting_list_enabled': {
         'default': 'False',
         'type': bool,

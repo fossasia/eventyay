@@ -2275,6 +2275,35 @@ class ItemTest(TestCase):
         assert not i.is_available()
 
     @classscope(attr='o')
+    def test_variation_is_available(self):
+        i = Item.objects.create(
+            event=self.event,
+            name='Ticket',
+            default_price=23,
+            active=True,
+        )
+        v = ItemVariation.objects.create(
+            product=i,
+            value='Early Bird',
+            active=True,
+            available_until=now() + timedelta(days=1),
+        )
+        assert v.is_available()
+        v.available_from = now() - timedelta(days=1)
+        assert v.is_available()
+        v.available_from = now() + timedelta(days=1)
+        v.available_until = None
+        assert not v.is_available()
+        v.available_from = None
+        v.available_until = now() - timedelta(days=1)
+        assert not v.is_available()
+        v.available_from = None
+        v.available_until = None
+        assert v.is_available()
+        v.active = False
+        assert not v.is_available()
+
+    @classscope(attr='o')
     def test_availability_filter(self):
         i = Item.objects.create(
             event=self.event,

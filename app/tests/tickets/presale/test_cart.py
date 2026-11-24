@@ -879,6 +879,40 @@ class CartTest(CartTestMixin, TestCase):
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 0)
 
+    def test_variation_upcoming(self):
+        self.shirt_red.available_from = now() + timedelta(days=2)
+        self.shirt_red.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        with scopes_disabled():
+            objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
+        self.assertEqual(len(objs), 0)
+
+    def test_variation_expired(self):
+        self.shirt_red.available_until = now() - timedelta(days=2)
+        self.shirt_red.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        with scopes_disabled():
+            objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
+        self.assertEqual(len(objs), 0)
+
     def test_variation(self):
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),

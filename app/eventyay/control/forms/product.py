@@ -1003,6 +1003,9 @@ class ProductVariationForm(I18nModelForm):
     def clean(self):
         cleaned_data = super().clean()
         Product.clean_admission_validity_data(cleaned_data, event=self.event)
+        if cleaned_data.get('available_from') and cleaned_data.get('available_until'):
+            if cleaned_data['available_from'] > cleaned_data['available_until']:
+                raise ValidationError(_('The end date of the sales period cannot be before the start date.'))
         return cleaned_data
 
     class Meta:
@@ -1013,14 +1016,20 @@ class ProductVariationForm(I18nModelForm):
             'active',
             'default_price',
             'original_price',
+            'available_from',
+            'available_until',
             'description',
             *ADMISSION_VALIDITY_FIELD_NAMES,
         ]
         field_classes = {
+            'available_from': SplitDateTimeField,
+            'available_until': SplitDateTimeField,
             'admission_valid_from': SplitDateTimeField,
             'admission_valid_until': SplitDateTimeField,
         }
         widgets = {
+            'available_from': SplitDateTimePickerWidget(),
+            'available_until': SplitDateTimePickerWidget(),
             'admission_valid_from': SplitDateTimePickerWidget(),
             'admission_valid_until': SplitDateTimePickerWidget(),
         }

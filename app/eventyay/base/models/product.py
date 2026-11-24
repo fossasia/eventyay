@@ -897,6 +897,18 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
             'discounted one. This is just a cosmetic setting and will not actually impact pricing.'
         ),
     )
+    available_from = models.DateTimeField(
+        verbose_name=_('Available from'),
+        null=True,
+        blank=True,
+        help_text=_('This variation will not be sold before the given date.'),
+    )
+    available_until = models.DateTimeField(
+        verbose_name=_('Available until'),
+        null=True,
+        blank=True,
+        help_text=_('This variation will not be sold after the given date.'),
+    )
     ADMISSION_VALIDITY_MODE_INHERIT = 'inherit'
     ADMISSION_VALIDITY_MODE_CHOICES = (
         (ADMISSION_VALIDITY_MODE_INHERIT, _('Same as product')),
@@ -931,6 +943,24 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
     @property
     def price(self):
         return self.default_price if self.default_price is not None else self.product.default_price
+
+    def is_available_by_time(self, now_dt: datetime = None) -> bool:
+        now_dt = now_dt or now()
+        if self.available_from and self.available_from > now_dt:
+            return False
+        if self.available_until and self.available_until < now_dt:
+            return False
+        return True
+
+    def is_available(self, now_dt: datetime = None) -> bool:
+        """
+        Returns whether this variation is available according to its ``active``
+        flag and its ``available_from`` and ``available_until`` fields
+        """
+        now_dt = now_dt or now()
+        if not self.active or not self.is_available_by_time(now_dt):
+            return False
+        return True
 
     def tax(
         self,

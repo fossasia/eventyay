@@ -409,6 +409,22 @@ header .header-row-right {
     margin: 0;
 }
 
+.variation-option.variation-compact {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.variation-option.variation-upcoming,
+.variation-option.variation-expired {
+    opacity: 0.75;
+}
+
+.variation-option .variation-deadline {
+    padding-left: 16px;
+    font-size: 0.85em;
+    margin-top: 2px;
+}
+
 .variation-selector-label.is-exclusive-disabled,
 .item-checkbox-label.is-exclusive-disabled,
 .variation-option.is-exclusive-disabled,
