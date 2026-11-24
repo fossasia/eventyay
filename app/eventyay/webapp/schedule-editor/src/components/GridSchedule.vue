@@ -52,7 +52,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import TalkSession from './Session.vue'
 import ShiftSession from '~/teamshifts-adapter/Session.vue'
-import { resolveMode, computeShiftColumnLayout, buildShiftGridTemplateColumns, computeShiftOverlapSubcolumn, assignRoomTracks } from '~/teamshifts-adapter'
+import { resolveMode, computeShiftColumnLayout, buildShiftGridTemplateColumns, assignRoomTracks } from '~/teamshifts-adapter'
 import { getLocalizedString } from '~/utils'
 
 const mode = resolveMode()
@@ -868,9 +868,7 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
     }
     const layout = shiftColumnLayout.value.get(session.room.id)
     if (layout) {
-      style['grid-column'] = !('id' in session)
-        ? `${layout.colStart} / ${layout.colStart + layout.colSpan}`
-        : layout.colStart.toString()
+      style['grid-column'] = `${layout.colStart} / ${layout.colStart + layout.colSpan}`
       return style
     }
     if (roomIndex > -1) {

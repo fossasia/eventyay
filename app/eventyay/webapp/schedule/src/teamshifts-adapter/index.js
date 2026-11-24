@@ -293,7 +293,7 @@ export function buildShiftGridTemplateColumns (rooms, sessions, minColWidth, tim
 	return `${t} ${roomCols} auto`
 }
 
-export function computeShiftOverlapPlacement (session, allSessions, columnLayout) {
+export function computeShiftPlacements (session, allSessions, columnLayout) {
 	if (!session.start || !session.end || !session.room) return null
 
 	const rid = roomId(session.room)
@@ -304,11 +304,86 @@ export function computeShiftOverlapPlacement (session, allSessions, columnLayout
 	const track = trackMap.get(session.id)
 	if (track == null) return null
 
-	const subCol = roomLayout.colStart + track
-	return {
-		gridRow: `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-		gridColumn: `${subCol} / ${subCol + 1}`,
+	const startMs = session.start.valueOf()
+	const endMs = session.end.valueOf()
+	const others = allSessions.filter(other =>
+		other.id !== session.id && roomId(other.room) === rid && other.start && other.end &&
+		other.start.valueOf() < endMs && startMs < other.end.valueOf() &&
+		trackMap.get(other.id) != null)
+
+	if (!others.length) {
+		return [{
+			gridRow: `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+			gridColumn: `${roomLayout.colStart} / ${roomLayout.colStart + roomLayout.colSpan}`,
+			continuation: false,
+			continuationBefore: false,
+			continuationAfter: false,
+			segmentStart: session.start,
+			segmentEnd: session.end,
+		}]
 	}
+
+	const cuts = new Map([[startMs, session.start], [endMs, session.end]])
+	for (const other of others) {
+		for (const edge of [other.start, other.end]) {
+			const ms = edge.valueOf()
+			if (ms > startMs && ms < endMs) cuts.set(ms, edge)
+		}
+	}
+	const points = [...cuts.entries()].sort((a, b) => a[0] - b[0])
+
+	const segments = []
+	for (let i = 0; i < points.length - 1; i++) {
+		const [fromMs, from] = points[i]
+		const [toMs, to] = points[i + 1]
+		const tracks = others
+			.filter(other => other.start.valueOf() < toMs && fromMs < other.end.valueOf())
+			.map(other => trackMap.get(other.id))
+			.concat(track)
+			.sort((a, b) => a - b)
+		const position = tracks.indexOf(track)
+		const first = position === 0 ? 0 : track
+		const last = position === tracks.length - 1 ? roomLayout.colSpan - 1 : tracks[position + 1] - 1
+		const prev = segments[segments.length - 1]
+		if (prev && prev.first === first && prev.last === last) {
+			prev.end = to
+			prev.endMs = toMs
+		} else {
+			segments.push({ first, last, start: from, end: to, startMs: fromMs, endMs: toMs })
+		}
+	}
+
+	let main = 0
+	segments.forEach((seg, i) => {
+		if (seg.endMs - seg.startMs > segments[main].endMs - segments[main].startMs) main = i
+	})
+	return segments.map((seg, i) => ({
+		gridRow: `${getSliceName(seg.start)} / ${getSliceName(seg.end)}`,
+		gridColumn: `${roomLayout.colStart + seg.first} / ${roomLayout.colStart + seg.last + 1}`,
+		continuation: i !== main,
+		continuationBefore: i > 0,
+		continuationAfter: i < segments.length - 1,
+		segmentStart: seg.start,
+		segmentEnd: seg.end,
+	}))
+}
+
+export function placementGridItems (base, session, placements) {
+	return placements.map((placement, i) => ({
+		key: `${base}-${i}`,
+		session,
+		style: { 'grid-row': placement.gridRow, 'grid-column': placement.gridColumn },
+		props: {
+			continuation: placement.continuation,
+			continuationBefore: placement.continuationBefore,
+			continuationAfter: placement.continuationAfter,
+		},
+	}))
+}
+
+export function computeShiftOverlapPlacement (session, allSessions, columnLayout) {
+	const placements = computeShiftPlacements(session, allSessions, columnLayout)
+	return placements ? placements[0] : null
 }
 
 function getSliceName (date) {
