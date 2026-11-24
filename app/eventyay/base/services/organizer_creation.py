@@ -1,12 +1,14 @@
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import Team
+from eventyay.base.models import Event, Organizer, Team, User
 
 
-def create_core_team(organizer, user):
+def create_core_team(organizer: Organizer, user: User) -> Team:
     t = Team.objects.create(
         organizer=organizer,
         name=_('Core Organizing Team'),
+        is_core_team=True,
         all_events=True,
         can_create_events=True,
         can_change_teams=True,
@@ -33,3 +35,19 @@ def create_core_team(organizer, user):
     )
     t.members.add(user)
     return t
+
+
+def is_event_core_team_member(user: User, event: Event) -> bool:
+    """
+    Whether ``user`` belongs to a Core Organizing Team of the event's organizer that covers ``event``.
+
+    This is deliberately a membership check, not a team permission: API tokens and devices of the core
+    team do not pass it, and no team setting editable by organizers can grant it.
+    """
+    if not user.is_authenticated or not user.is_active:
+        return False
+    return (
+        Team.objects.filter(organizer_id=event.organizer_id, is_core_team=True, members=user)
+        .filter(Q(all_events=True) | Q(limit_events=event))
+        .exists()
+    )

@@ -23,6 +23,7 @@
                             {{ team.name }}
                         </a>
                     </strong>
+                    {% if team.is_core_team %}<span class="label label-primary">{% translate "Core team" %}</span>{% endif %}
                 </td>
                 <td class="text-right flip">
                     <a href='{% url "eventyay_common:organizer.team.edit" organizer=request.organizer.slug team=team.id %}'
