@@ -364,6 +364,8 @@ header .header-row-right {
 
 .variation-option {
     padding-left: 18px;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .variation-option > div {
@@ -407,6 +409,27 @@ header .header-row-right {
 
 .variation-option .variation-description p {
     margin: 0;
+}
+
+.variation-option .variation-sales-period {
+    margin: 0;
+    padding-left: 16px;
+    color: var(--color-grey-dark, #777);
+}
+
+/* Upcoming and expired variations: one muted line without inputs. */
+.variation-option.variation-compact {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    color: var(--color-grey-dark, #777);
+}
+
+.variation-option.variation-compact .variation-compact-name {
+    padding-left: 16px;
+}
+
+.variation-option.variation-compact .variation-compact-price {
+    text-align: right;
 }
 
 .variation-selector-label.is-exclusive-disabled,

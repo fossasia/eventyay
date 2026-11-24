@@ -98,6 +98,38 @@
                     </summary>
                     <div id="item-{{ product.id }}-variations" class="variations variation-list {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
                         {% for var in product.available_variations %}
+                            {% if var.sales_state != 'current' %}
+                            <article class="row-fluid product-row variation variation-option variation-compact variation-{{ var.sales_state }}">
+                                <div class="col-md-10 col-xs-8">
+                                    <span class="variation-compact-name">{{ var.value|event_localize }}</span>
+                                    <span class="variation-compact-state">&middot;
+                                        {% if var.sales_state == 'upcoming' %}
+                                            {% if var.show_sales_period and var.available_from %}
+                                                {% blocktrans trimmed with date=var.available_from|date:"SHORT_DATETIME_FORMAT" %}From {{ date }}{% endblocktrans %}
+                                            {% else %}
+                                                {% trans "Not yet available" %}
+                                            {% endif %}
+                                        {% else %}
+                                            {% if var.show_sales_period and var.available_until %}
+                                                {% blocktrans trimmed with date=var.available_until|date:"SHORT_DATETIME_FORMAT" %}Ended {{ date }}{% endblocktrans %}
+                                            {% else %}
+                                                {% trans "Sales ended" %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="col-md-2 col-xs-4 price variation-compact-price">
+                                    {% if not var.display_price.gross %}
+                                        {% trans "FREE" context "price" %}
+                                    {% elif event.settings.display_net_prices %}
+                                        {{ var.display_price.net|money:event.currency }}
+                                    {% else %}
+                                        {{ var.display_price.gross|money:event.currency }}
+                                    {% endif %}
+                                </div>
+                                <div class="clearfix"></div>
+                            </article>
+                            {% else %}
                             <article class="row-fluid product-row variation variation-option">
                                 <div class="col-md-8 col-xs-12">
                                     <h5>
@@ -109,6 +141,11 @@
                                         <div class="variation-description">
                                             {{ var.description|event_localize|rich_text }}
                                         </div>
+                                    {% endif %}
+                                    {% if var.show_sales_period and var.available_until %}
+                                        <p class="variation-sales-period">
+                                            <small>{% blocktrans trimmed with date=var.available_until|date:"SHORT_DATETIME_FORMAT" %}Available until {{ date }}{% endblocktrans %}</small>
+                                        </p>
                                     {% endif %}
                                     {% if product.do_show_quota_left %}
                                         {% include "pretixpresale/event/fragment_quota_left.html" with avail=var.cached_availability %}
@@ -196,6 +233,7 @@
                                 {% endif %}
                                 <div class="clearfix"></div>
                             </article>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </details>

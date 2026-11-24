@@ -382,6 +382,11 @@ def get_grouped_products(
                     max_per_order,
                 )
 
+                # Variations outside their sales period stay visible but cannot be ordered.
+                var.sales_state = var.get_sales_state()
+                if var.sales_state != 'current':
+                    var.order_max = 0
+
                 if product.limit_one_per_user:
                     var.order_max = min(var.order_max, 1)
                     if hasattr(var, 'min_per_order') and var.min_per_order and var.min_per_order > 1:

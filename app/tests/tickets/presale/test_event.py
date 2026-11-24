@@ -10,7 +10,7 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 from zoneinfo import ZoneInfo
 
 from eventyay.base.models import (
@@ -134,6 +134,54 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
         self.assertNotIn('href="http://example.net', html)
         self.assertIn('href="/redirect/?url=http%3A//example.org%3A', html)
         self.assertIn('href="/redirect/?url=http%3A//example.net%3A', html)
+
+    def _create_phased_ticket(self, **period):
+        # The shop only lists the products once the tickets are published.
+        self.event.tickets_published = True
+        self.event.save()
+        with scope(organizer=self.orga):
+            q = Quota.objects.create(event=self.event, name='Quota', size=20)
+            item = Item.objects.create(event=self.event, name='Summit ticket', default_price=10, active=True)
+            current = ItemVariation.objects.create(product=item, value='Regular', position=1, **period.get('current', {}))
+            upcoming = ItemVariation.objects.create(product=item, value='Late', position=2, **period.get('upcoming', {}))
+            expired = ItemVariation.objects.create(product=item, value='Early Bird', position=0, **period.get('expired', {}))
+            q.products.add(item)
+            q.variations.add(current, upcoming, expired)
+        return item, current, upcoming, expired
+
+    def test_variation_sales_states_hide_inputs(self):
+        item, current, upcoming, expired = self._create_phased_ticket(
+            upcoming={'available_from': now() + datetime.timedelta(days=2)},
+            expired={'available_until': now() - datetime.timedelta(days=2)},
+        )
+        html = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug)).rendered_content
+        assert 'name="variation_%d_%d"' % (item.pk, current.pk) in html
+        assert 'name="variation_%d_%d"' % (item.pk, upcoming.pk) not in html
+        assert 'name="variation_%d_%d"' % (item.pk, expired.pk) not in html
+        assert 'Not yet available' in html
+        assert 'Sales ended' in html
+
+    def test_variation_sales_period_hidden_by_default(self):
+        self._create_phased_ticket(
+            upcoming={'available_from': now() + datetime.timedelta(days=2)},
+            expired={'available_until': now() - datetime.timedelta(days=2)},
+            current={'available_until': now() + datetime.timedelta(days=1)},
+        )
+        html = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug)).rendered_content
+        assert 'From ' not in html
+        assert 'Ended ' not in html
+        assert 'Available until' not in html
+
+    def test_variation_sales_period_shown_when_enabled(self):
+        self._create_phased_ticket(
+            upcoming={'available_from': now() + datetime.timedelta(days=2), 'show_sales_period': True},
+            expired={'available_until': now() - datetime.timedelta(days=2), 'show_sales_period': True},
+            current={'available_until': now() + datetime.timedelta(days=1), 'show_sales_period': True},
+        )
+        html = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug)).rendered_content
+        assert 'From ' in html
+        assert 'Ended ' in html
+        assert 'Available until' in html
 
     def test_not_active(self):
         with scopes_disabled():
