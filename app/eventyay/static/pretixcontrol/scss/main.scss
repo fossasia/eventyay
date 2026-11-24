@@ -109,6 +109,28 @@ h1 .btn-sm {
     margin-top: 20px;
 }
 
+.container-fluid > .alert {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.alert code {
+    color: inherit;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.alert .btn-clipboard {
+    margin-left: 6px;
+}
+
+.alert .btn-copy-confirm.copied {
+    background: #dff0d8;
+    border-color: #5cb85c;
+    color: #3c763d;
+}
+
 .flipped-scroll-wrapper {
     overflow-y: auto;
 }
@@ -956,22 +978,26 @@ h1 .label {
 
 .pretix-confirm-dialog {
   border: none;
-  border-radius: $border-radius-large;
-  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-  width: 420px;
-  max-width: 90vw;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+  padding: 22px 24px 20px;
+  width: 440px;
+  max-width: 92vw;
   background: $body-bg;
   overflow: hidden;
 
+  &[open] {
+    animation: pretix-confirm-dialog-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   &::backdrop {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
   }
 
   &__title {
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     font-size: 18px;
     font-weight: 700;
     color: $text-color;
@@ -982,14 +1008,62 @@ h1 .label {
     margin-bottom: 20px;
     font-size: 14px;
     line-height: 1.5;
-    color: $text-muted;
+    color: $text-color;
     white-space: pre-wrap;
   }
 
   &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
     .btn + .btn {
-      margin-left: 8px;
+      margin-left: 0;
     }
+  }
+}
+
+@keyframes pretix-confirm-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirm-dialog-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 16px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.confirm-stat {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #334155;
+
+  i {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  &--success i {
+    color: #16a34a;
+  }
+
+  &--warning i {
+    color: #d97706;
   }
 }
 

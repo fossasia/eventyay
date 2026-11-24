@@ -1797,7 +1797,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         )
         assert 'This gift card is not known.' in response.content.decode()
 
-    def test_giftcard_cross_organizer(self):
+    def test_giftcard_cross_organizer_rejected_even_with_legacy_acceptance(self):
         self.orga.issued_gift_cards.create(currency='EUR')
         orga2 = Organizer.objects.create(slug='foo2', name='foo2')
         gc = orga2.issued_gift_cards.create(currency='EUR')
@@ -1817,20 +1817,8 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             {'payment': 'giftcard', 'giftcard': gc.secret},
             follow=True,
         )
-        self.assertRedirects(
-            response,
-            '/%s/%s/checkout/confirm/' % (self.orga.slug, self.event.slug),
-            target_status_code=200,
-        )
-        assert '-€23.00' in response.content.decode()
-        assert '0.00' in response.content.decode()
-
-        response = self.client.post('/%s/%s/checkout/confirm/' % (self.orga.slug, self.event.slug), follow=True)
-        doc = BeautifulSoup(response.content.decode(), 'lxml')
-        self.assertEqual(len(doc.select('.thank-you')), 1)
-        with scopes_disabled():
-            o = Order.objects.last()
-            assert o.payments.get(provider='giftcard').amount == Decimal('23.00')
+        assert 'This gift card is not known.' in response.content.decode()
+        assert gc.value == Decimal('23.00')
 
     def test_giftcard_in_test_mode(self):
         gc = self.orga.issued_gift_cards.create(currency='EUR')
