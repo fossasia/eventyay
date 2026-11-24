@@ -17,6 +17,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
+from eventyay.base.services.organizer_creation import create_core_team
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
@@ -86,35 +87,8 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
         messages.success(self.request, _('New organizer is created.'))
         had_default = bool(self.request.user.get_default_organizer())
         response = super().form_valid(form)
-        team = Team.objects.create(
-            organizer=form.instance,
-            name=_('Core Organizing Team'),
-            all_events=True,
-            can_create_events=True,
-            can_change_teams=True,
-            can_manage_gift_cards=True,
-            can_change_organizer_settings=True,
-            can_change_event_settings=True,
-            can_change_config=True,
-            can_change_items=True,
-            can_view_orders=True,
-            can_change_orders=True,
-            can_manage_bank_transfers=True,
-            can_checkin_orders=True,
-            can_view_vouchers=True,
-            can_change_vouchers=True,
-            can_change_submissions=True,
-            is_reviewer=True,
-            can_change_exhibition_proposals=True,
-            is_exhibition_reviewer=True,
-            can_manage_social_media=True,
-            can_video_manage_content=True,
-            can_video_moderate=True,
-            can_video_manage_kiosks=True,
-            can_video_view_analytics=True,
-        )
+        create_core_team(form.instance, self.request.user)
         # Trigger webhook in talk to create organiser in talk component
-        team.members.add(self.request.user)
         if form.cleaned_data.get('set_as_default') or not had_default:
             self.request.user.default_organizer = self.object
             self.request.user.save(update_fields=['default_organizer'])
