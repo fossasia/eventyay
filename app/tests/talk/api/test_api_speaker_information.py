@@ -481,3 +481,47 @@ def test_orga_can_add_resource_to_speaker_information_without_one(
     assert new_name
     with default_storage.open(new_name) as new_file:
         assert new_file.read() == b"%PDF-1.4 first"
+
+
+@pytest.mark.django_db
+def test_replacing_speaker_information_resource_keeps_file_used_by_another_entry(
+    client, event, settings, tmp_path, allow_all_entitlements, django_capture_on_commit_callbacks
+):
+    settings.MEDIA_ROOT = tmp_path
+    with scope(event=event):
+        team = event.organizer.teams.filter(can_change_organizer_settings=True, is_reviewer=False).first()
+        team_token = team.tokens.create(name="testtoken")
+        first = event.information.create(title="First", text="First entry", target_group="accepted")
+        first.resource.save("shared.pdf", ContentFile(b"%PDF-1.4 shared"))
+        shared_name = first.resource.name
+        second = event.information.create(title="Second", text="Second entry", target_group="accepted")
+        second.resource = shared_name
+        second.save()
+
+    response = client.post(
+        "/api/v1/upload",
+        data={"file": ContentFile(b"%PDF-1.4 new", name="new.pdf")},
+        headers={"Authorization": f"Token {team_token.token}"},
+    )
+    assert response.status_code == 201, response.content
+    file_id = response.json()["id"]
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.patch(
+            event.api_urls.speaker_information + f"{first.pk}/",
+            follow=True,
+            data=json.dumps({"resource": file_id}),
+            headers={
+                "Authorization": f"Token {team_token.token}",
+                "Content-Type": "application/json",
+            },
+        )
+    assert response.status_code == 200, response.text
+
+    with scope(event=event):
+        first.refresh_from_db()
+        second.refresh_from_db()
+    assert first.resource.name != shared_name
+    assert second.resource.name == shared_name
+    # The second entry still uses the old file, so it must not be deleted.
+    assert default_storage.exists(shared_name)
