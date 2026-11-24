@@ -1078,7 +1078,7 @@ class Schedule(PretalxModel):
             'submission__track',
             'submission__event',
             'submission__submission_type',
-        ).prefetch_related('submission__speakers')
+        ).prefetch_related('submission__speakers', 'submission__tags')
         if enrich:
             talks = talks.prefetch_related(
                 'submission__resources',

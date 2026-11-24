@@ -43,6 +43,7 @@ from eventyay.person.services import build_public_speaker_role
 from eventyay.person.tasks import enqueue_missing_avatar_thumbnails
 from eventyay.schedule.exporters import FavedICalExporter, filter_featured_public_talk_slots
 from eventyay.talk_rules.agenda import (
+    accepted_sessions_publicly_visible,
     can_list_released_schedule_speakers,
     can_view_public_schedule_sessions,
     can_view_schedule,
@@ -871,15 +872,8 @@ def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = Fa
         return '{}'
 
     featured = include_public_featured_speaker_metadata(request.user, event)
-    settings_part = schedule_widget_featured_cache_key_part(event)
-    slots_public = schedule_exposes_slot_times(
-        request.user,
-        event,
-        schedule,
-        preview=wip_preview,
-    )
     if schedule.version:
-        cache_key = f'eagenda:enriched:{schedule.pk}:{int(featured)}:{settings_part}:slots={int(slots_public)}'
+        cache_key = f'eagenda:enriched:{schedule.pk}:{int(featured)}'
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
@@ -889,7 +883,6 @@ def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = Fa
         all_talks=wip_preview or not schedule.version,
         enrich=True,
         include_featured_speaker_metadata=featured,
-        include_scheduled_slots=slots_public,
         respect_public_visibility=not wip_preview,
     )
 
@@ -1613,6 +1606,8 @@ def is_public_speakers_empty(request):
         return False
     if can_list_released_schedule_speakers(request.user, request.event):
         return False
+    if accepted_sessions_publicly_visible(request.event):
+        return False
     return bool(
         request.event.is_public
         and request.event.get_feature_flag('show_schedule')
@@ -1676,10 +1671,6 @@ def clear_schedule_caches(event, submission=None, speaker=None):
                 keys.append(f'eagenda:schedule:{schedule_pk}:{featured}:{settings_part}')
                 keys.append(f'eagenda:enriched:{schedule_pk}:{featured}')
                 keys.append(f'eagenda:enriched:{schedule_pk}:{featured}:{settings_part}')
-                for slots_public in (0, 1):
-                    keys.append(
-                        f'eagenda:enriched:{schedule_pk}:{featured}:{settings_part}:slots={slots_public}'
-                    )
                 if submission:
                     keys.append(f'eagenda:talk:{schedule_pk}:{submission.code}:{featured}')
                 keys.extend(

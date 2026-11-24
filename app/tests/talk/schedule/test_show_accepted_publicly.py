@@ -661,6 +661,99 @@ class TestShowAcceptedPubliclyEndToEnd:
         assert client.get(accepted.urls.feedback).status_code == 404
 
     @pytest.mark.django_db
+    def test_speaker_page_accessible_after_schedule_release_with_talks_unpublished(self, client, event, user, room):
+        with scope(event=event):
+            sub_type = SubmissionType.objects.create(event=event, name="Talk")
+            accepted = Submission.objects.create(
+                title="Accepted Speaker Talk",
+                event=event,
+                submission_type=sub_type,
+                abstract="Abstract",
+                content_locale="en",
+            )
+            accepted.speakers.add(user)
+            accepted.accept()
+            profile, _ = SpeakerProfile.objects.get_or_create(event=event, user=user)
+            event.talks_published = False
+            event.feature_flags["show_schedule"] = True
+            event.feature_flags["show_accepted_publicly"] = True
+            event.save()
+
+        # Before release: talk and speaker pages are accessible
+        assert client.get(accepted.urls.public).status_code == 200
+        assert client.get(profile.urls.public).status_code == 200
+
+        # After release with talks unpublished and show_accepted_publicly=True:
+        # speaker page and talk page remain accessible and do not redirect to 404
+        with scope(event=event):
+            event.release_schedule("v1")
+
+        talk_res = client.get(accepted.urls.public)
+        assert talk_res.status_code == 200
+        assert "Accepted Speaker Talk" in talk_res.text
+
+        speaker_res = client.get(profile.urls.public)
+        assert speaker_res.status_code == 200
+        assert "Accepted Speaker Talk" in speaker_res.text
+
+        # When show_accepted_publicly is disabled, public access is blocked
+        with scope(event=event):
+            event.feature_flags["show_accepted_publicly"] = False
+            event.save()
+
+        assert client.get(accepted.urls.public).status_code == 404
+        assert client.get(profile.urls.public).status_code == 404
+
+        # When private testmode is enabled, public access is blocked even if toggle is on
+        with scope(event=event):
+            event.feature_flags["show_accepted_publicly"] = True
+            _enable_private_talk_testmode(event)
+
+        assert client.get(accepted.urls.public).status_code == 404
+        assert client.get(profile.urls.public).status_code == 404
+
+    @pytest.mark.django_db
+    def test_public_stars_after_release_with_toggle_off(self, client, orga_user, event, slot, user):
+        from django.core.cache import cache
+        from django.test import Client
+
+        with scope(event=event):
+            user.code = "STARREDUSER"
+            user.show_publicly = True
+            user.fullname = "Starred User"
+            user.save(update_fields=["code", "show_publicly", "fullname"])
+            event.talks_published = True
+            event.feature_flags["show_schedule"] = False
+            event.feature_flags["show_accepted_publicly"] = False
+            event.save()
+            event.release_schedule("v1")
+            SubmissionFavourite.objects.create(user=user, submission=slot.submission)
+
+        cache.clear()
+        stars_url = f"{event.urls.base}people/{user.code}/stars/"
+
+        # Public visitor sees the starred session with hidden time/room (pending)
+        res = client.get(stars_url, HTTP_ACCEPT="text/html")
+        assert res.status_code == 200
+        payload = json.loads(res.context["schedule_json"])
+        talks = [t for t in payload.get("talks", []) if t.get("code") == slot.submission.code]
+        assert len(talks) == 1
+        assert talks[0]["start"] is None
+        assert talks[0]["room"] is None
+        assert talks[0]["schedule_pending"] is True
+
+        # Organizer sees the starred session with full time/room details
+        orga_client = Client()
+        orga_client.force_login(orga_user)
+        orga_res = orga_client.get(stars_url, HTTP_ACCEPT="text/html")
+        assert orga_res.status_code == 200
+        orga_payload = json.loads(orga_res.context["schedule_json"])
+        orga_talks = [t for t in orga_payload.get("talks", []) if t.get("code") == slot.submission.code]
+        assert len(orga_talks) == 1
+        assert orga_talks[0]["start"] is not None
+        assert orga_talks[0]["room"] == slot.room_id
+
+    @pytest.mark.django_db
     def test_released_schedule_hides_times_until_timetable_is_public(self, client, event, slot):
         with scope(event=event):
             event.talks_published = True

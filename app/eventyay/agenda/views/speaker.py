@@ -56,6 +56,7 @@ from eventyay.talk_rules.agenda import (
     can_list_released_schedule_speakers,
     is_speaker_viewable,
     should_hide_public_speaker_sessions,
+    speaker_may_show_pending_sessions,
 )
 
 
@@ -213,7 +214,11 @@ class SpeakerView(PermissionRequired, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if not self.profile:
             raise Http404()
-        if not self.wip_preview and is_public_speakers_empty(request):
+        if (
+            not self.wip_preview
+            and not speaker_may_show_pending_sessions(request.user, request.event, self.kwargs['code'])
+            and is_public_speakers_empty(request)
+        ):
             return redirect_to_presale_with_warning(request, _('No published speakers.'))
         return super().dispatch(request, *args, **kwargs)
 

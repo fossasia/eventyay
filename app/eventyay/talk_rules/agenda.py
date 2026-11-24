@@ -353,7 +353,7 @@ def schedule_exposes_slot_times(user, event, schedule, *, preview=False) -> bool
         return True
     if schedule is None:
         return False
-    if is_agenda_visible(user, event):
+    if is_agenda_visible(user, event) or can_view_schedule(user, event):
         return True
     if not accepted_sessions_publicly_visible(event):
         return False
@@ -434,7 +434,8 @@ def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kw
         slug = (url_kwargs or {}).get('slug')
         if not slug:
             return False
-        submission = event.submissions.filter(code__iexact=slug).first()
+        with scope(event=event):
+            submission = event.submissions.filter(code__iexact=slug).first()
         return bool(
             is_submission_visible_via_featured(user, submission)
             or submission_belongs_to_public_featured_speaker(user, submission)

@@ -26,6 +26,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
+from eventyay.agenda.views.utils import clear_schedule_caches
 from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.base.models.room import (
     ROOM_DELETE_LINKED_SESSIONS_MESSAGE,
@@ -247,8 +248,6 @@ class ScheduleToggleAcceptedView(EventPermissionRequired, View):
         flags['show_accepted_publicly'] = is_shown
         event.feature_flags = flags
         event.save(update_fields=['feature_flags'])
-        from eventyay.agenda.views.utils import clear_schedule_caches
-
         clear_schedule_caches(event)
         log_event('talk', 'feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_accepted_publicly')
 
