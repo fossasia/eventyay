@@ -10,8 +10,9 @@
  */
 
 function setHint(selector, required) {
-  const field = document.querySelector(selector)
-  const label = field?.closest('.form-group')?.querySelector('label')
+  const fields = document.querySelectorAll(selector)
+  if (!fields.length) return
+  const label = fields[0].closest('.form-group')?.querySelector('label')
   if (!label) return
   const text = label.querySelector('.label-text') ?? label
 
@@ -33,7 +34,8 @@ function setHint(selector, required) {
   }
 
   // Expose the required state to assistive technology (not valid on a single radio button)
-  if (field.type !== 'radio') {
+  for (const field of fields) {
+    if (field.type === 'radio') continue
     if (required) {
       field.setAttribute('aria-required', 'true')
     } else {
