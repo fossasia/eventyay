@@ -895,12 +895,11 @@ class User(
             data = {}
 
         sanitized_data = mask_sensitive_data(data)
-        if isinstance(sanitized_data, dict):
-            stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder, sort_keys=True)
-        elif isinstance(sanitized_data, (list, tuple)):
-            stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder)
-        else:
-            stored_data = str(sanitized_data)
+        stored_data = json.dumps(
+            sanitized_data,
+            cls=CustomJSONEncoder,
+            sort_keys=isinstance(sanitized_data, dict),
+        )
 
         LogEntry.objects.create(
             user=user or person or self,

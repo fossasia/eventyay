@@ -188,6 +188,16 @@ def test_user_log_action_with_sequence_data(user):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('value', ['plain text', True, 42])
+def test_user_log_action_stores_scalar_data_as_json(user, value):
+    with scopes_disabled():
+        user.log_action('eventyay.user.scalar.test', data=value)
+        entry = LogEntry.objects.filter(user=user, action_type='eventyay.user.scalar.test').first()
+        assert json.loads(entry.data) == value
+        assert entry.parsed_data == value
+
+
+@pytest.mark.django_db
 def test_emit_logged_action_receives_masked_payload(user, mocker):
     mock_emit = mocker.patch('eventyay.base.models.auth.emit_logged_action')
     with scopes_disabled():
