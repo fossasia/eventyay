@@ -108,6 +108,10 @@ def save_form_order(tokens):
 
 
 def organiser_form_rows():
+    # Imported here because the form module imports this one. The public form is the source of the default text.
+    from eventyay.base.forms.organizer_request import OrganizerRequestForm
+
+    defaults = OrganizerRequestForm.base_fields
     items = ordered_form_items()
     rows = []
     for kind, obj, spec in items:
@@ -115,9 +119,11 @@ def organiser_form_rows():
             required = spec['locked'] or obj.required
             rows.append(
                 {
-                    'label': obj.label or spec['label'],
-                    'help_text': obj.help_text or spec['help_text'],
-                    'settings_url': reverse('eventyay_admin:admin.organizer_forms.field.settings', kwargs={'key': obj.key}),
+                    'label': obj.label or defaults[obj.key].label or spec['label'],
+                    'help_text': obj.help_text or defaults[obj.key].help_text or '',
+                    'settings_url': reverse(
+                        'eventyay_admin:admin.organizer_forms.field.settings', kwargs={'key': obj.key}
+                    ),
                     'locked': spec['locked'],
                     'active': spec['locked'] or obj.active,
                     'required': required,

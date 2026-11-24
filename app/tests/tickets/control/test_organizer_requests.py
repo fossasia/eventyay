@@ -683,10 +683,22 @@ def test_organizer_request_form_order_ajax(client, admin):
 
 def test_every_default_field_has_a_settings_button(client, admin):
     page = client.get(reverse('eventyay_admin:admin.organizer_forms')).content.decode()
-    for key in ('name', 'email', 'organizer_name', 'slug', 'affiliation', 'events'):
+    rows = re.findall(r'<tr.*?</tr>', page, flags=re.DOTALL)
+    expected = {
+        'name': 'Your name',
+        'email': 'Email',
+        'organizer_name': 'Organiser name on Eventyay',
+        'slug': 'Short form',
+        'affiliation': 'Organisation',
+        'events': 'Events you organise',
+    }
+    for key, label in expected.items():
         url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=[key])
-        assert f'href="{url}"' in page
-    assert page.count('aria-label="Settings for ') == 6
+        row = next(row for row in rows if f"href='{url}'" in row)
+        # The button sits in its own field's row, and its accessible name is that field's label.
+        assert f"aria-label='Settings for {label}'" in row
+        assert row.count('/settings/') == 1
+    assert page.count("aria-label='Settings for ") == 6
 
 
 def test_field_settings_override_label_and_help_text(client, admin):
@@ -736,11 +748,11 @@ def test_field_settings_require_admin(client, application):
 def test_field_settings_reset_button_is_not_part_of_the_save_form(client, admin):
     url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
     html = client.get(url).content.decode()
-    save_form = html.split('<form method="post" class="form-horizontal">', 1)[1].split('</form>', 1)[0]
-    assert 'value="reset"' not in save_form
-    assert 'form="field-reset-form"' in save_form
-    assert 'id="field-reset-form"' in html
-    assert 'name="action" value="reset"' in html
+    save_form = html.split("<form method='post' class='form-horizontal'>", 1)[1].split('</form>', 1)[0]
+    assert "value='reset'" not in save_form
+    assert "form='field-reset-form'" in save_form
+    assert "id='field-reset-form'" in html
+    assert "name='action' value='reset'" in html
 
 
 def test_field_settings_save_only_writes_the_two_text_columns(client, admin):
@@ -749,6 +761,34 @@ def test_field_settings_save_only_writes_the_two_text_columns(client, admin):
         assert client.post(url, {'label': 'Group', 'help_text': ''}).status_code == 302
     updates = [q['sql'] for q in queries if q['sql'].startswith('UPDATE "base_organizerrequestfieldsetting"')]
     assert len(updates) == 1
-    assert '"label"' in updates[0] and '"help_text"' in updates[0]
-    for column in ('"active"', '"required"', '"position"'):
+    assert '"label"' in updates[0]
+    for column in ('"help_text"', '"active"', '"required"', '"position"'):
         assert column not in updates[0].split(' WHERE ')[0]
+
+
+def test_field_settings_stale_form_does_not_overwrite_a_concurrent_text_edit(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    html = client.get(url).content.decode()
+    assert "name='initial-label'" in html
+    assert "name='initial-help_text'" in html
+    # Another admin saves a new label after this form was opened.
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    # This admin only edits the help text. The form still carries the old, empty label.
+    response = client.post(url, {'label': '', 'initial-label': '', 'help_text': 'New help', 'initial-help_text': ''})
+    assert response.status_code == 302
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    assert setting.label == 'Newer label'
+    assert setting.help_text == 'New help'
+
+
+def test_admin_list_defaults_match_the_public_form(client, admin):
+    from eventyay.base.forms.organizer_request import OrganizerRequestForm
+    from eventyay.base.organizer_request_fields import organiser_form_rows
+
+    rows = {row['sort_id']: row for row in organiser_form_rows() if not row['is_custom']}
+    for key, field in OrganizerRequestForm.base_fields.items():
+        row = rows.get(f'field:{key}')
+        if row is None:
+            continue
+        assert row['label'] == str(field.label)
+        assert row['help_text'] == str(field.help_text or '')

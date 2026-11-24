@@ -157,6 +157,9 @@ class OrganizerRequestFieldSettingsForm(forms.ModelForm):
         self.fields['help_text'].widget = forms.Textarea(attrs={'rows': 3, 'placeholder': str(default.help_text or '')})
         self.fields['label'].help_text = _('Leave empty to use the default label.')
         self.fields['help_text'].help_text = _('Leave empty to use the default help text.')
+        # Render the values this form was loaded with, so the view can tell which fields this admin really changed.
+        self.fields['label'].show_hidden_initial = True
+        self.fields['help_text'].show_hidden_initial = True
 
     def clean_label(self):
         return self.cleaned_data['label'].strip()

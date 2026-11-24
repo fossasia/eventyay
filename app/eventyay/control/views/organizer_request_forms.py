@@ -118,10 +118,13 @@ class OrganizerRequestFieldSettings(AdministratorPermissionRequiredMixin, Update
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # Save only the two text columns, so a stale read cannot overwrite a concurrent change to active, required
-        # or position made on the list page.
+        # Save only the text fields this admin changed, compared with the values the form was rendered with. A stale
+        # form then cannot overwrite a concurrent text edit, or a change to active, required or position made on the
+        # list page.
         self.object = form.instance
-        self.object.save(update_fields=['label', 'help_text'])
+        changed = [name for name in ('label', 'help_text') if name in form.changed_data]
+        if changed:
+            self.object.save(update_fields=changed)
         messages.success(self.request, _('The field settings have been saved.'))
         return redirect(self.get_success_url())
 
