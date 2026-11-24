@@ -6,7 +6,7 @@ from django_scopes import scope
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.serializers import (
     CharField,
     DateTimeField,
@@ -102,7 +102,7 @@ class TalkSlotSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                     _('The draft schedule changed. Reload it before editing this slot.')
                 ) from exc
             if instance.schedule.version:
-                raise serializers.ValidationError(
+                raise PermissionDenied(
                     _('Released schedule slots cannot be edited. Reload the draft schedule.')
                 )
             if 'local_end' in validated_data:
