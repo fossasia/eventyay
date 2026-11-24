@@ -157,8 +157,13 @@ class BaseQuestionsViewMixin:
 
         return storage
 
+    def is_valid(self):
+        return all(f.is_valid() for f in self.forms)
+
     def save(self):
         failed = False
+        if not self.is_valid():
+            return False
         for form in self.forms:
             meta_info = form.pos.meta_info_data
             # Every form represents a CartPosition or OrderPosition with questions attached
