@@ -3,7 +3,8 @@ from decimal import Decimal
 
 import pytest
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.db import transaction
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
@@ -20,6 +21,7 @@ from eventyay.base.models import (
     Team,
     User,
 )
+from eventyay.base.views.mixins import OrderQuestionsViewMixin
 
 
 @pytest.fixture
@@ -218,6 +220,8 @@ def test_invalid_invoice_form_preserves_all_attendee_and_order_info(client, modi
 
     response = client.post(url, data, follow=False)
     assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
 
     with scopes_disabled():
         env['inv_addr'].refresh_from_db()
@@ -272,6 +276,8 @@ def test_invalid_attendee_form_prevents_partial_changes(client, modify_env):
 
     response = client.post(url, data, follow=False)
     assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
 
     with scopes_disabled():
         env['inv_addr'].refresh_from_db()
@@ -326,6 +332,8 @@ def test_multiple_positions_one_invalid_leaves_no_positions_updated(client, modi
 
     response = client.post(url, data, follow=False)
     assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
 
     with scopes_disabled():
         env['inv_addr'].refresh_from_db()
@@ -343,6 +351,62 @@ def test_multiple_positions_one_invalid_leaves_no_positions_updated(client, modi
         assert env['pos2'].attendee_email == 'att2@dummy.test'
         assert env['pos2'].company == 'Original Company 2'
         assert env['pos2'].answers.get(question=env['question']).answer == 'M'
+
+        assert not LogEntry.objects.filter(
+            content_type__model='order',
+            object_id=env['order'].pk,
+            action_type='eventyay.event.order.modified',
+        ).exists()
+
+        assert len(mail.outbox) == 0
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_invalid_us_invoice_state_does_not_persist_attendee_changes(client, modify_env):
+    """Reproduces issue #7676: US invoice address with empty state fails validation
+    and must not persist attendee updates.
+    """
+    env = modify_env
+    client.force_login(env['user'])
+
+    url = f"/control/event/{env['organizer'].slug}/{env['event'].slug}/orders/{env['order'].code}/info"
+    data = {
+        'name_parts_0': 'US Invoicee',
+        'street': '123 Main Street',
+        'zipcode': '90210',
+        'city': 'Beverly Hills',
+        'country': 'US',
+        'state': '',  # required for US
+        f"{env['pos1'].pk}-attendee_name_parts_0": 'Updated Attendee 1',
+        f"{env['pos1'].pk}-attendee_email": 'updated1@dummy.test',
+        f"{env['pos1'].pk}-company": 'Updated Company 1',
+        f"{env['pos1'].pk}-question_{env['question'].pk}": env['opt_m'].identifier,
+        f"{env['pos2'].pk}-attendee_name_parts_0": 'Updated Attendee 2',
+        f"{env['pos2'].pk}-attendee_email": 'updated2@dummy.test',
+        f"{env['pos2'].pk}-company": 'Updated Company 2',
+        f"{env['pos2'].pk}-question_{env['question'].pk}": env['opt_s'].identifier,
+        'other-notify': 'on',
+    }
+
+    response = client.post(url, data, follow=False)
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
+    assert 'This field is required' in content
+
+    with scopes_disabled():
+        env['inv_addr'].refresh_from_db()
+        assert env['inv_addr'].name == 'Original Invoicee'
+        assert env['inv_addr'].country == 'DE'
+
+        env['pos1'].refresh_from_db()
+        assert env['pos1'].attendee_name == 'Original Attendee 1'
+        assert env['pos1'].attendee_email == 'att1@dummy.test'
+
+        env['pos2'].refresh_from_db()
+        assert env['pos2'].attendee_name == 'Original Attendee 2'
+        assert env['pos2'].attendee_email == 'att2@dummy.test'
 
         assert not LogEntry.objects.filter(
             content_type__model='order',
@@ -375,10 +439,17 @@ def test_presale_order_modify_invalid_invoice_leaves_attendee_info_unchanged(cli
         f"{env['pos1'].pk}-attendee_email": 'presale1@dummy.test',
         f"{env['pos1'].pk}-company": 'Presale Company 1',
         f"{env['pos1'].pk}-question_{env['question'].pk}": env['opt_m'].identifier,
+        f"{env['pos2'].pk}-attendee_name_parts_0": 'Presale Attendee 2',
+        f"{env['pos2'].pk}-attendee_email": 'presale2@dummy.test',
+        f"{env['pos2'].pk}-company": 'Presale Company 2',
+        f"{env['pos2'].pk}-question_{env['question'].pk}": env['opt_s'].identifier,
     }
 
     response = client.post(url, data, follow=False)
     assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
+    assert 'This field is required' in content
 
     with scopes_disabled():
         env['inv_addr'].refresh_from_db()
@@ -391,8 +462,67 @@ def test_presale_order_modify_invalid_invoice_leaves_attendee_info_unchanged(cli
         assert env['pos1'].company == 'Original Company 1'
         assert env['pos1'].answers.get(question=env['question']).answer == 'S'
 
+        env['pos2'].refresh_from_db()
+        assert env['pos2'].attendee_name == 'Original Attendee 2'
+        assert env['pos2'].attendee_email == 'att2@dummy.test'
+        assert env['pos2'].company == 'Original Company 2'
+        assert env['pos2'].answers.get(question=env['question']).answer == 'M'
+
         assert not LogEntry.objects.filter(
             content_type__model='order',
             object_id=env['order'].pk,
             action_type='eventyay.event.order.modified',
         ).exists()
+
+
+@pytest.mark.django_db
+def test_duplicate_answer_recovery_inside_transaction(modify_env):
+    """Verifies that duplicate-key IntegrityError inside an atomic transaction recovers via savepoint."""
+    env = modify_env
+    with scopes_disabled():
+        new_q = Question.objects.create(
+            event=env['event'],
+            question='Dietary Requirement',
+            type=Question.TYPE_STRING,
+            required=False,
+        )
+        env['product'].questions.add(new_q)
+
+    factory = RequestFactory()
+    request = factory.post(
+        '/',
+        data={
+            f"{env['pos1'].pk}-attendee_name_parts_0": 'Original Attendee 1',
+            f"{env['pos1'].pk}-question_{env['question'].pk}": env['opt_s'].identifier,
+            f"{env['pos1'].pk}-question_{new_q.pk}": 'Vegetarian',
+            f"{env['pos2'].pk}-attendee_name_parts_0": 'Original Attendee 2',
+            f"{env['pos2'].pk}-question_{env['question'].pk}": env['opt_m'].identifier,
+        },
+    )
+    request.event = env['event']
+
+    class MockView(OrderQuestionsViewMixin):
+        def __init__(self, order, req):
+            self.order = order
+            self.request = req
+
+    view = MockView(env['order'], request)
+    # Instantiate forms while pos1 does not yet have an answer for new_q in memory
+    _ = view.forms
+
+    # Simulate race condition: another request created the answer before view.save() runs
+    with scopes_disabled():
+        QuestionAnswer.objects.create(
+            orderposition=env['pos1'],
+            question=new_q,
+            answer='Old Answer',
+        )
+
+    # Calling save() inside an atomic transaction must recover without TransactionManagementError
+    with transaction.atomic():
+        success = view.save()
+
+    assert success is True
+    with scopes_disabled():
+        ans = QuestionAnswer.objects.get(orderposition=env['pos1'], question=new_q)
+        assert ans.answer == 'Vegetarian'

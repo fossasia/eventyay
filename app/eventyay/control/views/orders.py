@@ -2291,8 +2291,10 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
         )
 
     def post(self, request, *args, **kwargs):
-        forms_valid = self.is_valid() and self.invoice_form.is_valid() and self.other_form.is_valid()
-        if not forms_valid:
+        questions_valid = self.is_valid()
+        invoice_valid = self.invoice_form.is_valid()
+        other_valid = self.other_form.is_valid()
+        if not (questions_valid and invoice_valid and other_valid):
             messages.error(
                 self.request,
                 _('We had difficulties processing your input. Please review the errors below.'),

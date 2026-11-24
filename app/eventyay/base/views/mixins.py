@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, QuerySet
 from django.utils.functional import cached_property
 
@@ -158,7 +158,10 @@ class BaseQuestionsViewMixin:
         return storage
 
     def is_valid(self):
-        return all(f.is_valid() for f in self.forms)
+        return all([f.is_valid() for f in self.forms])
+
+    def questions_are_valid(self):
+        return self.is_valid()
 
     def save(self):
         failed = False
@@ -215,8 +218,9 @@ class BaseQuestionsViewMixin:
                                 question=field.question,
                             )
                             try:
-                                self._save_to_answer(field, answer, v)
-                                answer.save()
+                                with transaction.atomic():
+                                    self._save_to_answer(field, answer, v)
+                                    answer.save()
                             except IntegrityError:
                                 # Since we prefill ``field.answer`` at form creation time, there's a possible
                                 #  race condition here if the users submits their save request a second time

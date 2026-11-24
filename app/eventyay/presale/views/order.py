@@ -973,8 +973,9 @@ class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, O
         return override_sets
 
     def post(self, request, *args, **kwargs):
-        forms_valid = self.is_valid() and self.invoice_form.is_valid()
-        if not forms_valid:
+        questions_valid = self.is_valid()
+        invoice_valid = self.invoice_form.is_valid()
+        if not (questions_valid and invoice_valid):
             messages.error(
                 self.request,
                 _('We had difficulties processing your input. Please review the errors below.'),
