@@ -77,3 +77,9 @@ updates:
       time: "06:00"
       timezone: "Asia/Singapore"
     open-pull-requests-limit: 15
+    groups:
+      # Keep Stylelint and its configs/plugins compatible across major upgrades.
+      stylelint:
+        patterns:
+          - "stylelint"
+          - "stylelint-*"
