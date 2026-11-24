@@ -1,13 +1,13 @@
 import time
 import traceback
 
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.dispatch.dispatcher import NO_RECEIVERS
 
+from eventyay.base.signals import periodic_task
 from eventyay.helpers.periodic import SKIPPED
-
-from ...signals import periodic_task
 
 
 class Command(BaseCommand):
@@ -33,7 +33,11 @@ class Command(BaseCommand):
         if not periodic_task.receivers or periodic_task.sender_receivers_cache.get(self) is NO_RECEIVERS:
             return
 
-        for receiver in periodic_task._live_receivers(self):
+        sync_receivers, async_receivers = periodic_task._live_receivers(self)
+        for receiver, is_async in (
+            *((item, False) for item in sync_receivers),
+            *((item, True) for item in async_receivers),
+        ):
             name = f'{receiver.__module__}.{receiver.__name__}'
             if options.get('tasks'):
                 if name not in options.get('tasks').split(','):
@@ -46,7 +50,10 @@ class Command(BaseCommand):
                 self.stdout.write(f'INFO Running {name}…')
             t0 = time.time()
             try:
-                r = receiver(signal=periodic_task, sender=self)
+                if is_async:
+                    r = async_to_sync(receiver)(signal=periodic_task, sender=self)
+                else:
+                    r = receiver(signal=periodic_task, sender=self)
             except Exception as err:
                 if isinstance(Exception, KeyboardInterrupt):
                     raise err
