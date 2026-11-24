@@ -129,6 +129,7 @@
                                        data-profile-id="{{ profile.pk }}"
                                        data-speaker-name="{{ profile.user.get_display_name }}"
                                        data-voucher-state="{{ profile.voucher_row_state }}"
+                                       data-voucher-needs-code="{% if profile.voucher_needs_new_code %}1{% else %}0{% endif %}"
                                        aria-label="{% blocktranslate trimmed with name=profile.user.get_display_name %}Select {{ name }}{% endblocktranslate %}">
                             </td>
                         {% endif %}

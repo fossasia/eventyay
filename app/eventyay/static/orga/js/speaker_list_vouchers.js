@@ -15,9 +15,6 @@ function withCount(template, count) {
     return template.replace("%(count)s", String(count)).replace("{count}", String(count))
 }
 
-const selectAll = document.getElementById("select-all-speakers")
-const checkboxes = document.querySelectorAll(".speaker-checkbox")
-const selectedCount = document.getElementById("speakers-selected-count")
 const bulkSendBtn = document.getElementById("speaker-bulk-send-btn")
 const bulkForm = document.getElementById("speaker-bulk-voucher-form")
 const bulkDialog = document.getElementById("speaker-voucher-bulk-confirm")
@@ -32,10 +29,15 @@ const sendLabelEl = document.getElementById("speaker-voucher-bulk-send-label")
 const resendLabelEl = document.getElementById("speaker-voucher-bulk-resend-label")
 const usedCountEl = document.getElementById("speaker-voucher-bulk-used-count")
 const remainingCountEl = document.getElementById("speaker-voucher-bulk-remaining-count")
+const selectedCount = document.getElementById("speakers-selected-count")
 
-const selectedCheckboxes = () => Array.from(checkboxes).filter((cb) => cb.checked)
+const currentCheckboxes = () => document.querySelectorAll(".speaker-checkbox")
+const currentSelectAll = () => document.getElementById("select-all-speakers")
+const selectedCheckboxes = () => Array.from(currentCheckboxes()).filter((cb) => cb.checked)
 
 const refreshSelectionUi = () => {
+    const checkboxes = currentCheckboxes()
+    const selectAll = currentSelectAll()
     const count = selectedCheckboxes().length
     if (selectedCount) {
         selectedCount.textContent = count > 0 ? `${count} ${gettext("selected")}` : ""
@@ -44,30 +46,52 @@ const refreshSelectionUi = () => {
     if (selectAll && checkboxes.length > 0) {
         selectAll.checked = count > 0 && count === checkboxes.length
         selectAll.indeterminate = count > 0 && count < checkboxes.length
+    } else if (selectAll) {
+        selectAll.checked = false
+        selectAll.indeterminate = false
     }
 }
 
-if (selectAll && checkboxes.length > 0) {
-    selectAll.addEventListener("change", () => {
-        checkboxes.forEach((cb) => {
-            cb.checked = selectAll.checked
+// Delegated handlers survive AJAX result replacement of the speakers table.
+document.addEventListener("change", (event) => {
+    const target = event.target
+    if (!(target instanceof HTMLInputElement)) {
+        return
+    }
+    if (target.id === "select-all-speakers") {
+        currentCheckboxes().forEach((cb) => {
+            cb.checked = target.checked
         })
         refreshSelectionUi()
-    })
-    checkboxes.forEach((cb) => {
-        cb.addEventListener("change", refreshSelectionUi)
-    })
+        return
+    }
+    if (target.classList.contains("speaker-checkbox")) {
+        refreshSelectionUi()
+    }
+})
+
+refreshSelectionUi()
+
+document.addEventListener("eventyay:ajax-results-replaced", () => {
     refreshSelectionUi()
-}
+})
 
 const classifySelected = (selected) => {
-    const groups = { send: 0, resend: 0, claimed: 0, skipped: 0 }
+    const groups = { send: 0, resend: 0, claimed: 0, skipped: 0, needsCode: 0 }
     selected.forEach((cb) => {
         const state = cb.dataset.voucherState || "dash"
-        if (state === "not_sent") groups.send += 1
-        else if (state === "sent") groups.resend += 1
-        else if (state === "claimed") groups.claimed += 1
-        else groups.skipped += 1
+        if (state === "not_sent") {
+            groups.send += 1
+            if (cb.dataset.voucherNeedsCode === "1") {
+                groups.needsCode += 1
+            }
+        } else if (state === "sent") {
+            groups.resend += 1
+        } else if (state === "claimed") {
+            groups.claimed += 1
+        } else {
+            groups.skipped += 1
+        }
     })
     return groups
 }
@@ -79,7 +103,8 @@ const setRowVisible = (labelEl, valueEl, visible) => {
 
 const fillBulkDialog = (groups) => {
     const remaining = Number.parseInt(bulkDialog?.dataset.vouchersRemaining || "0", 10) || 0
-    const vouchersUsed = groups.send
+    // Only new allocations consume a batch code; retries of a failed send reuse theirs.
+    const vouchersUsed = groups.needsCode
     const remainingAfter = Math.max(remaining - vouchersUsed, 0)
 
     if (sendCountEl) sendCountEl.textContent = String(groups.send)

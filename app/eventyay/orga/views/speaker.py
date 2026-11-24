@@ -32,7 +32,9 @@ from eventyay.base.services.speaker_vouchers import (
     cancel_speaker_voucher,
     profiles_needing_voucher,
     send_speaker_vouchers_task,
+    speaker_has_email,
     speaker_summary_counts,
+    speaker_voucher_needs_new_code,
     speaker_voucher_row_state,
     voucher_redeem_url,
 )
@@ -205,6 +207,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         if self.speaker_vouchers_enabled:
             for profile in context.get('speakers') or []:
                 profile.voucher_row_state = speaker_voucher_row_state(profile)
+                profile.voucher_needs_new_code = speaker_voucher_needs_new_code(profile)
             with scope(event=self.request.event):
                 try:
                     settings_obj = self.request.event.speaker_voucher_settings
@@ -973,12 +976,18 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                 messages.error(request, _('Configure a voucher batch first.'))
                 return self._redirect_after_send(request, event)
 
+            raw_profile_ids = request.POST.getlist('profile_ids')
             selected_ids = [
                 int(value)
-                for value in request.POST.getlist('profile_ids')
+                for value in raw_profile_ids
                 if str(value).isdigit()
             ]
-            from_speakers_list = bool(selected_ids)
+            # Speakers list always posts profile_ids. Reject invalid selections instead of
+            # falling through to the settings-page "send everyone eligible" path.
+            from_speakers_list = bool(raw_profile_ids)
+            if from_speakers_list and not selected_ids:
+                messages.warning(request, _('No valid speakers were selected.'))
+                return self._redirect_after_send(request, event)
             if selected_ids:
                 # Speakers list bulk send: include resends for already-sent codes.
                 profiles = list(
@@ -1002,22 +1011,20 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
             # Only count speakers who actually need a new voucher code from the batch
             # (i.e. no assignment, or assignment has an expired/cancelled voucher).
             # Resends of an already-usable code do not consume a new batch slot.
+            # Speakers without email are skipped here — allocation would reject them too.
             needed = 0
-            actionable = 0
+            recipients = []
             for profile in profiles:
-                state = speaker_voucher_row_state(profile)
-                if state in ('not_sent', 'sent'):
-                    actionable += 1
-                try:
-                    assignment = profile.voucher_assignment
-                except SpeakerVoucher.DoesNotExist:
-                    if state == 'not_sent':
-                        needed += 1
+                if not speaker_has_email(profile):
                     continue
-                if assignment_needs_replacement(assignment) and state == 'not_sent':
+                state = speaker_voucher_row_state(profile)
+                if state not in ('not_sent', 'sent'):
+                    continue
+                recipients.append(profile)
+                if speaker_voucher_needs_new_code(profile):
                     needed += 1
 
-            if from_speakers_list and actionable == 0:
+            if from_speakers_list and not recipients:
                 messages.info(
                     request,
                     _('None of the selected speakers can receive a voucher email.'),
@@ -1035,8 +1042,8 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
                 )
                 return self._redirect_after_send(request, event)
 
-            profile_pks = [p.pk for p in profiles]
-            send_count = actionable if from_speakers_list else len(profile_pks)
+            profile_pks = [p.pk for p in recipients] if from_speakers_list else [p.pk for p in profiles]
+            send_count = len(recipients) if from_speakers_list else len(profile_pks)
 
         user_pk = request.user.pk if request.user and request.user.is_authenticated else None
         send_speaker_vouchers_task.apply_async(
@@ -1098,8 +1105,11 @@ class SpeakerVoucherSendView(SpeakerVoucherActionMixin, View):
                     'Needed {needed}, but only {available} remain. Nothing was sent.'
                 ).format(needed=result['needed'], available=result['available']),
             )
-        elif result['sent']:
-            messages.success(request, _('Speaker voucher sent.'))
+        elif result['sent'] or result['resent']:
+            messages.success(
+                request,
+                _('Speaker voucher resent.') if result['resent'] else _('Speaker voucher sent.'),
+            )
         elif result['skipped_ineligible']:
             messages.warning(request, _('This speaker is not eligible for a voucher.'))
         else:
@@ -1117,7 +1127,15 @@ class SpeakerVoucherResendView(SpeakerVoucherActionMixin, View):
             result = allocate_and_send_vouchers(
                 request.event, settings_obj, [profile], requestor=request.user
             )
-        if result['resent'] or result['sent']:
+        if result['aborted_insufficient']:
+            messages.error(
+                request,
+                _(
+                    'Not enough unused vouchers in this batch. '
+                    'Needed {needed}, but only {available} remain. Nothing was sent.'
+                ).format(needed=result['needed'], available=result['available']),
+            )
+        elif result['resent'] or result['sent']:
             messages.success(
                 request,
                 _('Speaker voucher resent.') if result['resent'] else _('Speaker voucher sent.'),
@@ -1143,11 +1161,16 @@ class SpeakerVoucherCancelView(SpeakerVoucherActionMixin, View):
                 return self._redirect_speakers()
             try:
                 cancel_speaker_voucher(assignment, requestor=request.user)
-            except ValueError:
-                messages.warning(
-                    request,
-                    _('This voucher has already been claimed and cannot be cancelled.'),
-                )
+            except ValueError as exc:
+                if str(exc) == 'claimed':
+                    messages.warning(
+                        request,
+                        _('This voucher has already been claimed and cannot be cancelled.'),
+                    )
+                elif str(exc) == 'already_expired':
+                    messages.info(request, _('This voucher is already expired.'))
+                else:
+                    raise
                 return self._redirect_speakers()
         messages.success(request, _('Speaker voucher cancelled.'))
         return self._redirect_speakers()
