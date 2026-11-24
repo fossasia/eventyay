@@ -43,7 +43,13 @@
                     <div class="panel panel-default mt-3">
                     <div class="panel-heading team-panel-heading">
                         <div class="team-heading-main">
-                            <h3 class="panel-title">{{ panel.team.name }}</h3>
+                            <h3 class="panel-title">{{ panel.team.name }}
+                                {% if panel.team.is_core_team %}
+                                    <span class="label label-info" id="team-core-flag-{{ panel.team.pk }}">
+                                        {% translate "Core team" %}
+                                    </span>
+                                {% endif %}
+                            </h3>
                             <div class="text-muted team-meta">
                                 <span class="team-meta-item">
                                     <i class="fa fa-user"></i>
