@@ -85,7 +85,11 @@ class LegacySpeakerSerializer(ModelSerializer):
         self._featured_speakers_visible: bool | None = None
         if self.event:
             request = self.context.get('request')
-            is_public_view = bool(request and not request.user.has_perm('base.orga_list_speakerprofile', self.event))
+            is_public_view = bool(
+                not request
+                or not request.user.is_authenticated
+                or not request.user.has_perm('base.orga_list_speakerprofile', self.event)
+            )
             if is_public_view and not self.event.cfp.public_biography:
                 self.fields.pop('biography', None)
 
@@ -94,7 +98,11 @@ class LegacySpeakerSerializer(ModelSerializer):
         request = self.context.get('request')
         event = self.event or getattr(instance, 'event', None)
         if event:
-            is_public_view = bool(request and not request.user.has_perm('base.orga_list_speakerprofile', event))
+            is_public_view = bool(
+                not request
+                or not request.user.is_authenticated
+                or not request.user.has_perm('base.orga_list_speakerprofile', event)
+            )
             if is_public_view and not event.cfp.public_biography:
                 data.pop('biography', None)
         return data
@@ -105,11 +113,16 @@ class LegacySpeakerSerializer(ModelSerializer):
             return obj.avatar_url
 
     def get_submissions(self, obj):
-        if obj.event.current_schedule:
-            talks = obj.event.current_schedule.talks.all()
-            return obj.user.submissions.filter(event=obj.event, slots__in=talks).values_list('code', flat=True)
+        submissions = self.context.get('submissions')
+        if submissions is not None:
+            return submissions.filter(speakers__in=[obj.user]).values_list('code', flat=True)
         request = self.context.get('request')
         user = getattr(request, 'user', None)
+        if request and request.user.has_perm('base.orga_list_submission', obj.event):
+            return obj.user.submissions.filter(event=obj.event).values_list('code', flat=True)
+        if obj.event.current_schedule and obj.event.get_feature_flag('show_schedule'):
+            talks = obj.event.current_schedule.talks.all()
+            return obj.user.submissions.filter(event=obj.event, slots__in=talks).values_list('code', flat=True)
         if are_featured_submissions_visible(user, obj.event):
             return obj.user.submissions.filter(
                 event=obj.event,
@@ -189,8 +202,16 @@ class LegacySpeakerReviewerSerializer(LegacySpeakerOrgaSerializer):
         pass
 
 
+class I18nSlugRelatedField(SlugRelatedField):
+    def to_representation(self, obj):
+        val = getattr(obj, self.slug_field)
+        if hasattr(val, 'data'):
+            return val.data
+        return val
+
+
 class LegacySlotSerializer(I18nAwareModelSerializer):
-    room = SlugRelatedField(slug_field='name', read_only=True)
+    room = I18nSlugRelatedField(slug_field='name', read_only=True)
     end = SerializerMethodField()
 
     @staticmethod
@@ -210,8 +231,8 @@ class LegacyBreakSerializer(LegacySlotSerializer):
 
 
 class LegacySubmissionSerializer(I18nAwareModelSerializer):
-    submission_type = SlugRelatedField(slug_field='name', read_only=True)
-    track = SlugRelatedField(slug_field='name', read_only=True)
+    submission_type = I18nSlugRelatedField(slug_field='name', read_only=True)
+    track = I18nSlugRelatedField(slug_field='name', read_only=True)
     slot = LegacySlotSerializer(TalkSlot.objects.none().filter(is_visible=True), read_only=True)
     duration = SerializerMethodField()
     speakers = SerializerMethodField()
@@ -243,10 +264,12 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
     def get_speakers(self, obj):
         has_slots = bool(obj.slots.filter(is_visible=True)) and obj.state == SubmissionStates.CONFIRMED
         request = self.context.get('request')
+        is_anon = bool(request and request.query_params.get('anon'))
         user = getattr(request, 'user', None)
         event = self.event or obj.event
         is_featured_visible = (
-            event
+            not is_anon
+            and event
             and are_featured_submissions_visible(user, event)
             and obj.is_featured
             and obj.state in SubmissionStates.accepted_states

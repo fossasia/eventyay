@@ -162,32 +162,40 @@ class SpeakerViewSet(
             accepted_subs = self.event.submissions.filter(
                 state__in=SubmissionStates.accepted_states,
             )
-            return SpeakerProfile.objects.filter(
-                Q(event=self.event, is_featured=True, user__isnull=False, user__submissions__in=accepted_subs)
-                | (
-                    Q(event=self.event, is_featured=True, user__isnull=False)
-                    & ~Q(user__submissions__event=self.event)
+            return (
+                SpeakerProfile.objects.filter(
+                    Q(event=self.event, is_featured=True, user__isnull=False, user__submissions__in=accepted_subs)
+                    | (
+                        Q(event=self.event, is_featured=True, user__isnull=False)
+                        & ~Q(user__submissions__event=self.event)
+                    )
                 )
-            ).distinct().order_by(
-                OrderBy(F('is_featured'), descending=True),
-                OrderBy(F('position'), nulls_last=True),
-                'user__fullname',
-                'pk',
+                .distinct()
+                .order_by(
+                    OrderBy(F('is_featured'), descending=True),
+                    OrderBy(F('position'), nulls_last=True),
+                    'user__fullname',
+                    'pk',
+                )
             )
         return SpeakerProfile.objects.none()
 
     def get_serializer(self, *args, **kwargs):
         if self.api_version == LEGACY:  # pragma: no cover
             kwargs['questions'] = (self.request.query_params.get('questions') or '').split(',')
+            kwargs['event'] = self.event
         return super().get_serializer(*args, **kwargs)
 
     @cached_property
     def is_orga(self):
         return self.event and self.request.user.has_perm('base.orga_list_submission', self.event)
 
-    def get_unversioned_serializer_class(self):
+    def get_serializer_class(self):
         if self.api_version == LEGACY:  # pragma: no cover
             return self.get_legacy_serializer_class()
+        return super().get_serializer_class()
+
+    def get_unversioned_serializer_class(self):
         if self.is_orga:
             if self.request.method not in SAFE_METHODS:
                 return SpeakerUpdateSerializer
@@ -239,9 +247,7 @@ class SpeakerViewSet(
                     self.event, self.request.user, submissions=self.submissions_for_user
                 )
         else:
-            queryset = speaker_profiles_for_user(
-                self.event, self.request.user, submissions=self.submissions_for_user
-            )
+            queryset = speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user)
         queryset = prefetch_speaker_profiles(
             queryset,
             self.event,

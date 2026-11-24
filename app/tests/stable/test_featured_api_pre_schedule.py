@@ -355,31 +355,42 @@ def test_legacy_featured_api_pre_schedule(client, featured_setup):
 
 
 @pytest.mark.django_db
-def test_organizer_patch_is_featured(orga_client, featured_setup):
+def test_organizer_patch_is_featured(organizer_client, featured_setup, team):
     """Organizer can update is_featured via PATCH on the modern submission endpoint."""
+    team.can_change_submissions = True
+    team.save()
+
     event = featured_setup['event']
     sub3 = featured_setup['sub3']
     assert sub3.is_featured is False
 
     url = f'{event.api_urls.submissions}{sub3.code}/'
-    resp = orga_client.patch(url, {'is_featured': True}, format='json')
+    resp = organizer_client.patch(
+        url,
+        data=json.dumps({'is_featured': True}),
+        content_type='application/json',
+    )
     assert resp.status_code == 200
     sub3.refresh_from_db()
     assert sub3.is_featured is True
 
 
 @pytest.mark.django_db
-def test_legacy_biography_and_avatar_privacy(client, orga_client, featured_setup):
+def test_legacy_biography_and_avatar_privacy(client, organizer_client, featured_setup, team):
     """Legacy speaker list and nested submitter respect public_biography and public_avatar flags."""
     from eventyay.api.versions import LEGACY
 
+    team.can_change_submissions = True
+    team.save()
+
     event = featured_setup['event']
     with scope(event=event):
-        event.cfp.public_biography = False
-        event.cfp.public_avatar = False
+        event.cfp.fields['biography']['public'] = False
+        event.cfp.fields['avatar']['public'] = False
         event.cfp.save()
 
     # Public legacy speaker list hides biography
+    client.logout()
     resp = client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
     assert resp.status_code == 200
     content = json.loads(resp.text)
@@ -387,12 +398,15 @@ def test_legacy_biography_and_avatar_privacy(client, orga_client, featured_setup
         assert 'biography' not in spk or not spk['biography']
 
     # Organizer legacy speaker list still sees biography
-    orga_resp = orga_client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
+    orga_user = team.members.first()
+    organizer_client.force_login(orga_user)
+    orga_resp = organizer_client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
     assert orga_resp.status_code == 200
     orga_content = json.loads(orga_resp.text)
     assert any(spk.get('biography') for spk in orga_content['results'])
 
     # Public legacy submissions nested speakers hide avatar
+    client.logout()
     sub_resp = client.get(event.api_urls.submissions, headers={'Pretalx-Version': LEGACY}, follow=True)
     assert sub_resp.status_code == 200
     sub_content = json.loads(sub_resp.text)
@@ -416,7 +430,13 @@ def test_featured_speaker_with_other_event_submission(client, featured_setup, pr
     # In another event, user has a rejected submission
     with scope(event=event):
         other_org = Organizer.objects.create(name='Other Org', slug='other-org')
-        other_event = Event.objects.create(organizer=other_org, name='Other Event', slug='other-event')
+        other_event = Event.objects.create(
+            organizer=other_org,
+            name='Other Event',
+            slug='other-event',
+            date_from=event.date_from,
+            date_to=event.date_to,
+        )
     with scope(event=other_event):
         stype = SubmissionType.objects.create(event=other_event, name='Talk')
         sub = Submission.objects.create(
@@ -461,3 +481,49 @@ def test_speakers_not_leaked_when_show_featured_speakers_never(client, featured_
     assert resp.status_code == 200
     content = json.loads(resp.text)
     assert content['count'] == 0
+
+
+@pytest.mark.django_db
+def test_legacy_speaker_submissions_filtered_by_visibility(client, featured_setup):
+    """Legacy speaker submissions relation respects request visibility when schedule is not public."""
+    from eventyay.api.versions import LEGACY
+
+    event = featured_setup['event']
+    sub1 = featured_setup['sub1']
+    with scope(event=event):
+        # Schedule exists, but schedule is hidden, featured sessions are hidden, featured speakers always visible
+        event.feature_flags['show_schedule'] = False
+        event.feature_flags['show_featured'] = 'never'
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.save()
+        room = Room.objects.create(event=event, name='Main Hall')
+        event.release_schedule('v1')
+        TalkSlot.objects.create(
+            submission=sub1,
+            schedule=event.current_schedule,
+            room=room,
+            start=now(),
+            is_visible=True,
+        )
+
+    resp = client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    assert content['count'] > 0
+    # Because show_schedule=False and show_featured=never, submission codes should not be disclosed
+    for spk in content['results']:
+        assert spk['submissions'] == []
+
+
+@pytest.mark.django_db
+def test_legacy_submissions_anon_suppresses_featured_speakers(client, featured_setup):
+    """Request with ?anon=true suppresses nested speakers even for accepted featured submissions."""
+    from eventyay.api.versions import LEGACY
+
+    event = featured_setup['event']
+    resp = client.get(f'{event.api_urls.submissions}?anon=true', headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    assert content['count'] > 0
+    for item in content['results']:
+        assert item['speakers'] == []
