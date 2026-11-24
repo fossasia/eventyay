@@ -25,6 +25,13 @@ from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.tag import Tag
+from eventyay.talk_rules.orga import (
+    can_view_speaker_emails,
+    can_view_speaker_names,
+    enforces_hide_speaker_emails,
+    enforces_hide_speaker_names,
+    is_reviewer_only_for_event,
+)
 from eventyay.talk_rules.submission import (
     are_featured_speakers_visible,
     are_featured_submissions_visible,
@@ -62,6 +69,18 @@ class LegacySubmitterSerializer(ModelSerializer):
 
 
 class LegacySubmitterOrgaSerializer(LegacySubmitterSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        event = self.event or getattr(instance, 'event', None)
+        if event and request and request.user.is_authenticated:
+            hide_emails = enforces_hide_speaker_emails(request.user, event) or (
+                is_reviewer_only_for_event(request.user, event) and not can_view_speaker_emails(request.user, event)
+            )
+            if hide_emails:
+                data.pop('email', None)
+        return data
+
     class Meta(LegacySubmitterSerializer.Meta):
         fields = LegacySubmitterSerializer.Meta.fields + ('email',)
 
@@ -198,6 +217,26 @@ class LegacySpeakerReviewerSerializer(LegacySpeakerOrgaSerializer):
     def answers_queryset(self, obj):
         return obj.reviewer_answers.all()
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        event = self.event or getattr(instance, 'event', None)
+        if event and request and request.user.is_authenticated:
+            hide_names = enforces_hide_speaker_names(request.user, event) or (
+                is_reviewer_only_for_event(request.user, event) and not can_view_speaker_names(request.user, event)
+            )
+            hide_emails = enforces_hide_speaker_emails(request.user, event) or (
+                is_reviewer_only_for_event(request.user, event) and not can_view_speaker_emails(request.user, event)
+            )
+            if hide_names:
+                data.pop('name', None)
+                data.pop('email', None)
+                data.pop('biography', None)
+                data.pop('avatar', None)
+            elif hide_emails:
+                data.pop('email', None)
+        return data
+
     class Meta(LegacySpeakerOrgaSerializer.Meta):
         pass
 
@@ -267,8 +306,16 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
         is_anon = bool(request and request.query_params.get('anon'))
         user = getattr(request, 'user', None)
         event = self.event or obj.event
+        hide_speaker_names_for_reviewer = bool(
+            user
+            and user.is_authenticated
+            and event
+            and user.has_perm('base.orga_list_submission', event)
+            and (enforces_hide_speaker_names(user, event) or not can_view_speaker_names(user, event))
+        )
         is_featured_visible = (
             not is_anon
+            and not hide_speaker_names_for_reviewer
             and event
             and are_featured_submissions_visible(user, event)
             and obj.is_featured

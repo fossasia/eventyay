@@ -46,8 +46,8 @@ def get_serializer_by_version(name, version):
 def get_api_version_from_request(request):
     api_version = (
         request.headers.get('eventyay-version')
-        or request.headers.get('pretalx-version')
         or getattr(request.auth, 'version', None)
+        or request.headers.get('pretalx-version')
         or CURRENT_VERSION
     )
     if api_version not in SUPPORTED_VERSIONS:

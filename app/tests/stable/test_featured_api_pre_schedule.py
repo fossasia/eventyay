@@ -384,18 +384,43 @@ def test_legacy_biography_and_avatar_privacy(client, organizer_client, featured_
     team.save()
 
     event = featured_setup['event']
+    user1 = User.objects.get(email='alice@example.com')
+    user1.profile = {'avatar': {'url': 'https://example.com/alice.png'}}
+    user1.save()
+
+    with scope(event=event):
+        event.cfp.fields['avatar']['public'] = True
+        event.cfp.fields['biography']['public'] = True
+        event.cfp.save()
+
+    # Public legacy speaker list and submissions show avatar when public_avatar=True
+    client.logout()
+    resp = client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    alice_spk = next(spk for spk in content['results'] if spk['code'] == user1.code)
+    assert alice_spk['avatar'] == 'https://example.com/alice.png'
+
+    sub_resp = client.get(event.api_urls.submissions, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert sub_resp.status_code == 200
+    sub_content = json.loads(sub_resp.text)
+    featured_sub = next(item for item in sub_content['results'] if item['title'] == 'Featured Confirmed Talk 1')
+    alice_nested = next(spk for spk in featured_sub['speakers'] if spk['code'] == user1.code)
+    assert alice_nested['avatar'] == 'https://example.com/alice.png'
+
     with scope(event=event):
         event.cfp.fields['biography']['public'] = False
         event.cfp.fields['avatar']['public'] = False
         event.cfp.save()
 
-    # Public legacy speaker list hides biography
+    # Public legacy speaker list hides biography and avatar
     client.logout()
     resp = client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
     assert resp.status_code == 200
     content = json.loads(resp.text)
     for spk in content['results']:
         assert 'biography' not in spk or not spk['biography']
+        assert spk.get('avatar') is None
 
     # Organizer legacy speaker list still sees biography
     orga_user = team.members.first()
@@ -527,3 +552,119 @@ def test_legacy_submissions_anon_suppresses_featured_speakers(client, featured_s
     assert content['count'] > 0
     for item in content['results']:
         assert item['speakers'] == []
+
+
+def test_api_version_token_precedence_over_pretalx_header(rf):
+    """Token-pinned version takes precedence over pretalx-version header,
+    while eventyay-version retains highest precedence.
+    """
+    from unittest.mock import MagicMock
+
+    from eventyay.api.versions import CURRENT_VERSION, LEGACY, get_api_version_from_request
+
+    # 1. Eventyay-Version header overrides everything
+    req = rf.get('/api/events/', HTTP_EVENTYAY_VERSION='v1', HTTP_PRETALX_VERSION=LEGACY)
+    req.auth = MagicMock(version=LEGACY)
+    assert get_api_version_from_request(req) == 'v1'
+
+    # 2. Token-pinned version takes precedence over Pretalx-Version header
+    req = rf.get('/api/events/', HTTP_PRETALX_VERSION=LEGACY)
+    req.auth = MagicMock(version='v1')
+    assert get_api_version_from_request(req) == 'v1'
+
+    # 3. Pretalx-Version header applies when token has no version (or auth is None)
+    req = rf.get('/api/events/', HTTP_PRETALX_VERSION=LEGACY)
+    req.auth = None
+    assert get_api_version_from_request(req) == LEGACY
+
+    # 4. Fallback to CURRENT_VERSION when no headers and no auth
+    req = rf.get('/api/events/')
+    req.auth = None
+    assert get_api_version_from_request(req) == CURRENT_VERSION
+
+
+@pytest.mark.django_db
+def test_legacy_restricted_reviewer_redacts_email_and_speakers(client, featured_setup, pre_schedule_event):
+    """Reviewers with force_hide_speaker_emails or force_hide_speaker_names
+    have restrictions enforced in legacy endpoints.
+    """
+    from eventyay.api.versions import LEGACY
+    from eventyay.base.models import ReviewPhase
+
+    event = featured_setup['event']
+
+    # Create reviewer user and reviewer team
+    reviewer_user = User.objects.create_user(email='reviewer@example.com', password='pass', fullname='Reviewer Alice')
+    with scope(event=event):
+        phase, _ = ReviewPhase.objects.get_or_create(
+            event=event,
+            name='Review',
+            defaults={
+                'is_active': True,
+                'can_see_speaker_names': True,
+            },
+        )
+        phase.is_active = True
+        phase.can_see_speaker_names = True
+        phase.save()
+        event.__dict__.pop('active_review_phase', None)
+
+        reviewer_team, _ = event.organizer.teams.get_or_create(
+            organizer=event.organizer,
+            name='Reviewers',
+            defaults={
+                'all_events': True,
+                'is_reviewer': True,
+                'can_change_submissions': False,
+                'force_hide_speaker_emails': True,
+                'force_hide_speaker_names': False,
+            },
+        )
+        reviewer_team.all_events = True
+        reviewer_team.is_reviewer = True
+        reviewer_team.can_change_submissions = False
+        reviewer_team.force_hide_speaker_emails = True
+        reviewer_team.force_hide_speaker_names = False
+        reviewer_team.save()
+        reviewer_team.members.add(reviewer_user)
+        event.__dict__.pop('teams', None)
+
+    # 1. Reviewer with force_hide_speaker_emails=True:
+    client.force_login(reviewer_user)
+    # Legacy speaker endpoint redacts email
+    resp = client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    for spk in content['results']:
+        assert 'email' not in spk
+
+    # Legacy submissions endpoint nested speakers redact email
+    sub_resp = client.get(event.api_urls.submissions, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert sub_resp.status_code == 200
+    sub_content = json.loads(sub_resp.text)
+    for item in sub_content['results']:
+        for spk in item.get('speakers', []):
+            assert 'email' not in spk
+
+    # 2. Reviewer with force_hide_speaker_names=True:
+    with scope(event=event):
+        reviewer_team.force_hide_speaker_names = True
+        reviewer_team.save()
+        event.__dict__.pop('teams', None)
+
+    # Pre-schedule featured-speaker fallback in submissions is suppressed for restricted reviewer
+    sub_resp = client.get(event.api_urls.submissions, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert sub_resp.status_code == 200
+    sub_content = json.loads(sub_resp.text)
+    for item in sub_content['results']:
+        assert item.get('speakers') == []
+
+    # Unauthenticated public caller still gets featured speakers
+    client.logout()
+    pub_sub_resp = client.get(event.api_urls.submissions, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert pub_sub_resp.status_code == 200
+    pub_sub_content = json.loads(pub_sub_resp.text)
+    featured_items = [i for i in pub_sub_content['results'] if i.get('is_featured')]
+    assert len(featured_items) > 0
+    for item in featured_items:
+        assert len(item.get('speakers', [])) > 0
