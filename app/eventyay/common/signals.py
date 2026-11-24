@@ -23,7 +23,7 @@ from eventyay.base.models import BillingInvoice, BillingInvoiceEmail, Event
 from eventyay.base.operational_logging import OUTCOME_SUCCESS, log_event
 from eventyay.base.signals import activitylog_display as base_activitylog_display
 from eventyay.base.signals import activitylog_object_link as base_activitylog_object_link
-from eventyay.base.signals import check_plugin_active, resolve_app_for_module
+from eventyay.base.signals import check_plugin_active, periodic_task, resolve_app_for_module
 from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE
 
 logger = logging.getLogger(__name__)
@@ -175,15 +175,6 @@ def minimum_interval(minutes_after_success, minutes_after_error=0, minutes_runni
 
     return decorate
 
-
-periodic_task = django.dispatch.Signal()
-"""
-This is a regular django signal (no pretalx event signal) that we send out every
-time the periodic task cronjob runs. This interval is not sharply defined, it can
-be everything between a minute and a day. The actions you perform should be
-idempotent, meaning it should not make a difference if this is sent out more often
-than expected.
-"""
 
 user_menu_items = EventPluginSignal()
 """Collects extra ``<a class="dropdown-item">`` entries for the user account menu."""
