@@ -183,7 +183,8 @@ class OrderAnonymizeTest(SoupTest):
             assert self.customer.email == 'customer@example.com'
 
             # Order fields
-            assert self.order.email is None
+            assert self.order.email.startswith('order.')
+            assert self.order.email.endswith('@eventyay.invalid')
             assert self.order.phone is None
             assert self.order.comment == 'Anonymized order ticketing data'
             # Financial fields are preserved
@@ -191,7 +192,8 @@ class OrderAnonymizeTest(SoupTest):
             assert self.order.status == Order.STATUS_PAID
 
             # Attendee fields on OrderPosition
-            assert self.position.attendee_email is None
+            assert self.position.attendee_email.endswith('@eventyay.invalid')
+            # The fixture has no name parts, so save() never stored a name for this attendee
             assert self.position.attendee_name_cached is None
             assert self.position.attendee_name_parts == {}
             assert self.position.company is None
@@ -216,7 +218,7 @@ class OrderAnonymizeTest(SoupTest):
             # Invoices are kept without buyer details; the PDF is generated again
             assert self.invoice.shredded is False
             assert bool(self.invoice.file) is False
-            assert self.invoice.invoice_to == ''
+            assert self.invoice.invoice_to == 'Anonymized'
             assert self.invoice.introductory_text == 'Hello John'
             assert self.invoice.additional_text == 'Thank you'
             assert self.invoice.payment_provider_text == 'Paid via bank transfer'
@@ -248,7 +250,7 @@ class OrderAnonymizeTest(SoupTest):
 
         with scopes_disabled():
             self.order.refresh_from_db()
-            assert self.order.email is None
+            assert self.order.email.endswith('@eventyay.invalid')
 
     def test_order_detail_view_toolbar_button(self):
         """Order detail view toolbar displays enabled link when event ended and disabled button with tooltip when ongoing."""

@@ -59,6 +59,7 @@ from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.system_questions import product_has_system_questions
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import order_gracefully_delete
+from eventyay.helpers.anonymization import is_anonymized_email
 from eventyay.helpers.placeholders import escape_stray_braces
 
 from ...helpers.countries import CachedCountries, FastCountryField
@@ -1165,7 +1166,7 @@ class Order(LockModel, LoggedModel):
             render_mail,
         )
 
-        if not self.email:
+        if not self.email or is_anonymized_email(self.email):
             return
 
         for k, v in self.event.meta_data.items():
@@ -2625,7 +2626,7 @@ class OrderPosition(AbstractPosition):
             render_mail,
         )
 
-        if not self.attendee_email:
+        if not self.attendee_email or is_anonymized_email(self.attendee_email):
             return
 
         for k, v in self.event.meta_data.items():

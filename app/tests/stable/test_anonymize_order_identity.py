@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import timedelta
 from decimal import Decimal
 
@@ -27,11 +28,14 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.organizer import TeamAPIToken
 from eventyay.base.services.anonymize import anonymize_order
+from eventyay.base.services.mail import mail, mail_send_task
 from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
 
 
 ATTENDEE = 'John Doe'
 EMAIL = 'customer@example.com'
+ORDER_PLACEHOLDER = re.compile(r'^order\.[a-z0-9]{10}@eventyay\.invalid$')
+ATTENDEE_PLACEHOLDER = re.compile(r'^attendee\.[a-z0-9]{10}@eventyay\.invalid$')
 
 
 @pytest.fixture
@@ -200,15 +204,15 @@ def test_identity_is_removed_from_order_and_attendees(data, rendered_invoices):
     anonymize_order(order)
     refresh(order, position, address)
 
-    assert order.email is None
+    assert ORDER_PLACEHOLDER.match(order.email)
     assert order.phone is None
     assert order.secret != old_secret
     assert order.meta_info_data == {'other': 'kept'}
     assert order.comment == 'Anonymized order ticketing data'
 
-    assert position.attendee_name is None
-    assert position.attendee_name_parts == {}
-    assert position.attendee_email is None
+    assert position.attendee_name == 'Anonymized'
+    assert position.attendee_name_cached == 'Anonymized'
+    assert ATTENDEE_PLACEHOLDER.match(position.attendee_email)
     assert position.company is None
     assert position.street is None
     assert position.zipcode is None
@@ -216,8 +220,8 @@ def test_identity_is_removed_from_order_and_attendees(data, rendered_invoices):
     assert not position.country
     assert 'attendee_form_data' not in (position.meta_info_data or {})
 
-    assert address.name_cached == ''
-    assert address.name_parts == {}
+    assert address.name_cached == 'Anonymized'
+    assert address.name_parts == {'_legacy': 'Anonymized'}
     assert address.company == ''
     assert address.street == ''
     assert address.vat_id == ''
@@ -252,16 +256,15 @@ def test_invoice_keeps_number_and_amounts_but_loses_buyer(data, rendered_invoice
     assert invoice.full_invoice_no == 'INV-00001'
     assert invoice.introductory_text == 'Thanks for your order'
     assert not invoice.shredded
-    assert invoice.invoice_to == ''
-    assert invoice.invoice_to_name is None
+    assert invoice.invoice_to == 'Anonymized'
+    assert invoice.invoice_to_name == 'Anonymized'
     assert invoice.invoice_to_company is None
     assert invoice.invoice_to_street is None
     assert invoice.invoice_to_vat_id is None
     assert not invoice.invoice_to_country
     assert line.gross_value == Decimal('23.00')
-    assert line.attendee_name is None
-    assert ATTENDEE not in line.description
-    assert line.description.startswith('Ticket<br />Attendee: ')
+    assert line.attendee_name == 'Anonymized'
+    assert line.description == 'Ticket<br />Attendee: Anonymized'
     assert not invoice.file
     assert rendered_invoices == [invoice.pk]
 
@@ -332,12 +335,53 @@ def test_order_is_unlinked_from_account_and_gets_no_mail(data, customer, rendere
 
 @pytest.mark.django_db
 def test_running_twice_is_safe(data, rendered_invoices):
-    order = data['order']
+    order, position, line = data['order'], data['position'], data['line']
     anonymize_order(order)
+    refresh(order, position)
+    placeholders = (order.email, position.attendee_email)
     anonymize_order(order)
-    refresh(order, data['text_answer'])
-    assert order.email is None
+    refresh(order, position, line, data['text_answer'])
+    assert (order.email, position.attendee_email) == placeholders
+    assert line.description == 'Ticket<br />Attendee: Anonymized'
     assert data['text_answer'].answer == 'Vegan'
+
+
+@pytest.mark.django_db
+def test_placeholders_are_unique_per_order(data, rendered_invoices):
+    order = data['order']
+    with scopes_disabled():
+        other = Order.objects.create(
+            code='ANON2',
+            event=order.event,
+            email=EMAIL,
+            status=Order.STATUS_PAID,
+            datetime=order.datetime,
+            expires=order.expires,
+            total=Decimal('0.00'),
+        )
+    anonymize_order(order)
+    anonymize_order(other)
+    refresh(order, other)
+    assert ORDER_PLACEHOLDER.match(other.email)
+    assert order.email != other.email
+
+
+@pytest.mark.django_db
+def test_mail_is_never_sent_to_placeholder_addresses(mailoutbox):
+    placeholder = 'order.abcdefghij@eventyay.invalid'
+    mail(placeholder, 'Subject', 'Body', {}, sync_send=True)
+    mail([placeholder, 'Order.X@EVENTYAY.INVALID'], 'Subject', 'Body', {}, sync_send=True)
+    assert mailoutbox == []
+    mail_send_task.apply(
+        kwargs={
+            'to': [placeholder, 'real@example.com'],
+            'subject': 'S',
+            'body': 'B',
+            'html': None,
+            'sender': 'x@example.com',
+        }
+    )
+    assert [m.to for m in mailoutbox] == [['real@example.com']]
 
 
 @pytest.mark.django_db
@@ -384,7 +428,7 @@ def test_control_view_anonymizes(data, client, rendered_invoices, allow_all_enti
     response = client.post(url)
     assert response.status_code == 302
     refresh(order)
-    assert order.email is None
+    assert ORDER_PLACEHOLDER.match(order.email)
 
 
 @pytest.mark.django_db
@@ -397,5 +441,5 @@ def test_api_anonymizes(data, client, rendered_invoices, allow_all_entitlements)
         HTTP_AUTHORIZATION=f'Token {token.token}',
     )
     assert response.status_code == 200
-    assert response.data['email'] is None
+    assert ORDER_PLACEHOLDER.match(response.data['email'])
     assert response.data['phone'] is None

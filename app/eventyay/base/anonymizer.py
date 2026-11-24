@@ -25,6 +25,7 @@ from eventyay.base.models.orders import generate_secret
 from eventyay.base.services.invoices import invoice_pdf
 from eventyay.base.shredder import shred_log_fields
 from eventyay.base.signals import register_ticketing_anonymizers
+from eventyay.helpers.anonymization import ANONYMIZED_NAME, anonymized_email, is_anonymized_email
 
 
 REDACTED = '█'
@@ -75,9 +76,10 @@ class OrderContactAnonymizer(BaseTicketingAnonymizer):
     verbose_name = _('Order contact details')
 
     def anonymize_order(self, order: Order) -> None:
-        # Accounts are linked to orders only by email address, so clearing it unlinks the order from
-        # every account. Orders without an email address never receive mail.
-        order.email = None
+        # Accounts are linked to orders only by email address, so a unique placeholder unlinks the order
+        # from every account. Mail is never sent to placeholder addresses.
+        if order.email and not is_anonymized_email(order.email):
+            order.email = anonymized_email('order')
         order.phone = None
         order.email_known_to_work = False
         # Rotating the secret stops the order links in earlier emails from opening the order.
@@ -97,9 +99,13 @@ class AttendeeAnonymizer(BaseTicketingAnonymizer):
 
     def anonymize_order(self, order: Order) -> None:
         for position in order.all_positions.all():
-            position.attendee_email = None
-            position.attendee_name_cached = None
-            position.attendee_name_parts = {}
+            if position.attendee_email and not is_anonymized_email(position.attendee_email):
+                position.attendee_email = anonymized_email('attendee')
+            if position.attendee_name_parts:
+                position.attendee_name_parts = {'_legacy': ANONYMIZED_NAME}
+                position.attendee_name_cached = ANONYMIZED_NAME
+            else:
+                position.attendee_name_cached = None
             position.company = None
             position.street = None
             position.zipcode = None
@@ -135,8 +141,8 @@ class InvoiceAddressAnonymizer(BaseTicketingAnonymizer):
             address = order.invoice_address
         except InvoiceAddress.DoesNotExist:
             return
-        address.name_cached = ''
-        address.name_parts = {}
+        # save() derives name_cached from name_parts.
+        address.name_parts = {'_legacy': ANONYMIZED_NAME} if address.name_parts else {}
         address.company = ''
         address.street = ''
         address.zipcode = ''
@@ -177,9 +183,9 @@ class InvoiceAnonymizer(BaseTicketingAnonymizer):
         # The invoice stays with its number, lines, amounts and tax details. Only the buyer is replaced,
         # and the PDF is rendered again from the anonymized data.
         for invoice in order.invoices.prefetch_related('lines'):
-            invoice.invoice_to = ''
+            invoice.invoice_to = ANONYMIZED_NAME if invoice.invoice_to else ''
             invoice.invoice_to_company = None
-            invoice.invoice_to_name = None
+            invoice.invoice_to_name = ANONYMIZED_NAME if invoice.invoice_to_name else None
             invoice.invoice_to_street = None
             invoice.invoice_to_zipcode = None
             invoice.invoice_to_city = None
@@ -190,10 +196,10 @@ class InvoiceAnonymizer(BaseTicketingAnonymizer):
             invoice.internal_reference = ''
             invoice.custom_field = None
             for line in invoice.lines.all():
-                if not line.attendee_name:
+                if not line.attendee_name or line.attendee_name == ANONYMIZED_NAME:
                     continue
-                line.description = line.description.replace(line.attendee_name, REDACTED)
-                line.attendee_name = None
+                line.description = line.description.replace(line.attendee_name, ANONYMIZED_NAME)
+                line.attendee_name = ANONYMIZED_NAME
                 line.save(update_fields=['description', 'attendee_name'])
             had_file = bool(invoice.file)
             if had_file:

@@ -5236,11 +5236,11 @@ def test_order_anonymize_success(token_client, organizer, event, order):
         '/api/v1/organizers/{}/events/{}/orders/{}/anonymize/'.format(organizer.slug, event.slug, order.code)
     )
     assert resp.status_code == 200
-    assert resp.data['email'] is None
+    assert resp.data['email'].endswith('@eventyay.invalid')
     assert resp.data['phone'] is None
 
     order.refresh_from_db()
-    assert order.email is None
+    assert order.email == resp.data['email']
 
 
 @pytest.mark.django_db

@@ -12,7 +12,7 @@
       Do you really want to anonymize the ticketing and personal attendee data for order <strong>{{ order.code }}</strong>?
     {% endblocktrans %}</p>
     <ul>
-      <li>{% trans "Names, email addresses, phone numbers, postal addresses and billing details of the buyer and all attendees will be removed." %}</li>
+      <li>{% trans "Names and email addresses of the buyer and all attendees are replaced with anonymous placeholders, and phone numbers, postal addresses and billing details are removed. No email is sent to the placeholder addresses." %}</li>
       <li>{% trans "Payment details stored from the payment provider are reduced to the transaction ID, amount and status." %}</li>
       <li>{% trans "Invoices are kept with their numbers and amounts, but the buyer details are removed and the PDF is generated again. Download the invoices first if you need them for your records." %}</li>
       <li>{% trans "Tickets, answers to ticket questions, payments and check-ins are kept and stay linked to the anonymous attendee, so reports and statistics still add up." %}</li>
