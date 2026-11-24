@@ -66,11 +66,16 @@ export function initFeedbackSettings() {
   });
 
   if (btnCancel && btnConfirm && dialog) {
-    btnCancel.addEventListener('click', () => {
-      dialog.close();
+    const keepFeedbackEnabled = () => {
       useFeedbackCheckbox.checked = true;
       toggleInputs();
+    };
+    btnCancel.addEventListener('click', () => {
+      dialog.close();
+      keepFeedbackEnabled();
     });
+    // Escape closes the dialog through its cancel event, so treat it like the Cancel button.
+    dialog.addEventListener('cancel', keepFeedbackEnabled);
 
     btnConfirm.addEventListener('click', () => {
       dialog.close();
