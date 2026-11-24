@@ -9,7 +9,7 @@
  * so "Save draft" keeps working.
  */
 
-function setHint(selector, required) {
+function setBankTransferHint(selector, required) {
   const fields = document.querySelectorAll(selector)
   if (!fields.length) return
   const label = fields[0].closest('.form-group')?.querySelector('label')
@@ -51,14 +51,23 @@ function updateBankTransferHints() {
   if (!sepaRadio) return
   const isSepa = sepaRadio.checked
   // Account type always has a selection, so show it as required
-  setHint("input[name='payment_banktransfer_bank_details_type']", true)
+  setBankTransferHint("input[name='payment_banktransfer_bank_details_type']", true)
   for (const f of ['name', 'iban', 'bic', 'bank']) {
-    setHint(`#id_payment_banktransfer_bank_details_sepa_${f}`, isSepa)
+    setBankTransferHint(`#id_payment_banktransfer_bank_details_sepa_${f}`, isSepa)
   }
-  setHint("textarea[name^='payment_banktransfer_bank_details_']", !isSepa)
+  // I18nTextarea renders one textarea per event language (..._en, ..._de), so match by prefix
+  setBankTransferHint("textarea[name^='payment_banktransfer_bank_details_']", !isSepa)
 }
 
-for (const radio of document.querySelectorAll("input[name='payment_banktransfer_bank_details_type']")) {
-  radio.addEventListener('change', updateBankTransferHints)
+function initBankTransferHints() {
+  for (const radio of document.querySelectorAll("input[name='payment_banktransfer_bank_details_type']")) {
+    radio.addEventListener('change', updateBankTransferHints)
+  }
+  updateBankTransferHints()
 }
-updateBankTransferHints()
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBankTransferHints)
+} else {
+  initBankTransferHints()
+}
