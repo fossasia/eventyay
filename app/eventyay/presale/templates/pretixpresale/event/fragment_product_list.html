@@ -105,8 +105,12 @@
                                             {{ var.value|event_localize }}
                                         </label>
                                         {% if event.settings.show_variation_sales_deadlines %}
-                                            {% if var.sales_state == 'upcoming' and var.available_from %}
-                                                <span class="variation-deadline-inline text-muted">· {% blocktrans trimmed with date=var.available_from|date:"SHORT_DATE_FORMAT" time=var.available_from|time:"TIME_FORMAT" %}From {{ date }} {{ time }}{% endblocktrans %}</span>
+                                            {% if var.sales_state == 'upcoming' %}
+                                                {% if var.available_from and var.available_until %}
+                                                    <span class="variation-deadline-inline text-muted">· {% blocktrans trimmed with sdate=var.available_from|date:"SHORT_DATE_FORMAT" stime=var.available_from|time:"TIME_FORMAT" edate=var.available_until|date:"SHORT_DATE_FORMAT" etime=var.available_until|time:"TIME_FORMAT" %}From {{ sdate }} {{ stime }} until {{ edate }} {{ etime }}{% endblocktrans %}</span>
+                                                {% elif var.available_from %}
+                                                    <span class="variation-deadline-inline text-muted">· {% blocktrans trimmed with date=var.available_from|date:"SHORT_DATE_FORMAT" time=var.available_from|time:"TIME_FORMAT" %}From {{ date }} {{ time }}{% endblocktrans %}</span>
+                                                {% endif %}
                                             {% elif var.sales_state == 'expired' and var.available_until %}
                                                 <span class="variation-deadline-inline text-muted">· {% blocktrans trimmed with date=var.available_until|date:"SHORT_DATE_FORMAT" time=var.available_until|time:"TIME_FORMAT" %}Ended {{ date }} {{ time }}{% endblocktrans %}</span>
                                             {% endif %}

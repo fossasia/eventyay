@@ -298,6 +298,10 @@ class WidgetAPIProductList(EventListMixin, View):
                                         var.cached_availability[0],
                                         var.cached_availability[1] if product.do_show_quota_left else None,
                                     ],
+                                    'order_max': var.order_max,
+                                    'sales_state': getattr(var, 'sales_state', 'active'),
+                                    'available_from': var.available_from.isoformat() if var.available_from else None,
+                                    'available_until': var.available_until.isoformat() if var.available_until else None,
                                 }
                                 for var in product.available_variations
                             ],

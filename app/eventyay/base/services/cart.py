@@ -597,7 +597,7 @@ class CartManager:
 
             quotas = list(cp.quotas)
             if not quotas or not cp.product.is_available() or (cp.variation and not cp.variation.is_available()):
-                root_pos = cp.addon_to if (cp.addon_to_id and cp.addon_to) else cp
+                root_pos = cp.addon_to if (cp.addon_to_id and cp.is_bundled and cp.addon_to) else cp
                 root_id = root_pos.pk
 
                 kept_operations = []
@@ -1417,7 +1417,11 @@ class CartManager:
 
                         new_cart_positions.append(cp)
                 elif isinstance(op, self.ExtendOperation):
-                    if op.seat and not op.seat.is_available(
+                    if (op.product and not op.product.is_available()) or (op.variation and not op.variation.is_available()):
+                        err = err or error_messages['unavailable']
+                        op.position.addons.all().delete()
+                        op.position.delete()
+                    elif op.seat and not op.seat.is_available(
                         ignore_cart=op.position,
                         sales_channel=self._sales_channel,
                         ignore_voucher_id=op.position.voucher_id,

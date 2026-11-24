@@ -35,6 +35,8 @@ _VARIATION_SERIALIZER_FIELDS = (
     'default_price',
     'price',
     'original_price',
+    'available_from',
+    'available_until',
 ) + ADMISSION_VALIDITY_FIELD_NAMES
 
 
@@ -57,6 +59,9 @@ class ProductVariationSerializer(I18nAwareModelSerializer):
         data = super().validate(data)
         full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
         full_data.update(data)
+        if full_data.get('available_from') and full_data.get('available_until'):
+            if full_data['available_from'] > full_data['available_until']:
+                raise ValidationError(_('The end date of the sales period must be after the start date.'))
         event = self.context.get('event')
         if event is None and self.instance is not None:
             event = self.instance.product.event

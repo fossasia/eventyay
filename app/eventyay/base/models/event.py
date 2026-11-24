@@ -367,6 +367,8 @@ class EventMixin:
                 & Q(product__active=True)
                 & Q(Q(product__available_from__isnull=True) | Q(product__available_from__lte=now()))
                 & Q(Q(product__available_until__isnull=True) | Q(product__available_until__gte=now()))
+                & Q(Q(available_from__isnull=True) | Q(available_from__lte=now()))
+                & Q(Q(available_until__isnull=True) | Q(available_until__gte=now()))
                 & Q(Q(product__category__isnull=True) | Q(product__category__is_addon=False))
                 & Q(product__sales_channels__contains=channel)
                 & Q(product__hide_without_voucher=False)

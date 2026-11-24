@@ -83,14 +83,24 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             )
 
         with self.context['event'].lock():
+            product = validated_data.get('product')
+            variation = validated_data.get('variation')
+            if product and not product.is_available():
+                raise ValidationError(
+                    gettext_lazy('The product "{}" is currently not available.').format(str(product))
+                )
+            if variation and not variation.is_available():
+                raise ValidationError(
+                    gettext_lazy('The variation "{}" is currently not available.').format(str(variation))
+                )
             new_quotas = (
-                validated_data.get('variation').quotas.filter(subevent=validated_data.get('subevent'))
-                if validated_data.get('variation')
-                else validated_data.get('product').quotas.filter(subevent=validated_data.get('subevent'))
+                variation.quotas.filter(subevent=validated_data.get('subevent'))
+                if variation
+                else product.quotas.filter(subevent=validated_data.get('subevent'))
             )
             if len(new_quotas) == 0:
                 raise ValidationError(
-                    gettext_lazy('The product "{}" is not assigned to a quota.').format(str(validated_data.get('product')))
+                    gettext_lazy('The product "{}" is not assigned to a quota.').format(str(product))
                 )
             for quota in new_quotas:
                 avail = quota.availability()

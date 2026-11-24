@@ -3828,11 +3828,39 @@ class CartAddonTest(CartTestMixin, TestCase):
             event=self.event,
             cart_id=self.session_key,
             addon_to=cp1,
+            is_bundled=True,
         )
         self.cm.extend_expired_positions()
         self.cm.commit()
         with scopes_disabled():
             assert not CartPosition.objects.filter(pk__in=[cp1.pk, cp2.pk]).exists()
+
+    @classscope(attr='orga')
+    def test_expand_expired_unavailable_optional_addon(self):
+        self.shirt_red.available_until = now() - timedelta(days=1)
+        self.shirt_red.save()
+        cp1 = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            product=self.ticket,
+            price=Decimal('23.00'),
+            event=self.event,
+            cart_id=self.session_key,
+        )
+        cp2 = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            product=self.shirt,
+            variation=self.shirt_red,
+            price=Decimal('12.00'),
+            event=self.event,
+            cart_id=self.session_key,
+            addon_to=cp1,
+            is_bundled=False,
+        )
+        self.cm.extend_expired_positions()
+        self.cm.commit()
+        with scopes_disabled():
+            assert CartPosition.objects.filter(pk=cp1.pk).exists()
+            assert not CartPosition.objects.filter(pk=cp2.pk).exists()
 
 
 class CartBundleTest(CartTestMixin, TestCase):
