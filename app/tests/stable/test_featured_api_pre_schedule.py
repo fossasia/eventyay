@@ -347,5 +347,117 @@ def test_legacy_featured_api_pre_schedule(client, featured_setup):
     spk_codes = {s['code'] for s in spk_content['results']}
     assert spk_codes == {user1.code, user2.code}
     assert user3.code not in spk_codes
+    # Position 1 precedes position 2 in legacy
+    assert spk_content['results'][0]['code'] == user2.code
+    assert spk_content['results'][1]['code'] == user1.code
     for s in spk_content['results']:
         assert s['is_featured'] is True
+
+
+@pytest.mark.django_db
+def test_organizer_patch_is_featured(orga_client, featured_setup):
+    """Organizer can update is_featured via PATCH on the modern submission endpoint."""
+    event = featured_setup['event']
+    sub3 = featured_setup['sub3']
+    assert sub3.is_featured is False
+
+    url = f'{event.api_urls.submissions}{sub3.code}/'
+    resp = orga_client.patch(url, {'is_featured': True}, format='json')
+    assert resp.status_code == 200
+    sub3.refresh_from_db()
+    assert sub3.is_featured is True
+
+
+@pytest.mark.django_db
+def test_legacy_biography_and_avatar_privacy(client, orga_client, featured_setup):
+    """Legacy speaker list and nested submitter respect public_biography and public_avatar flags."""
+    from eventyay.api.versions import LEGACY
+
+    event = featured_setup['event']
+    with scope(event=event):
+        event.cfp.public_biography = False
+        event.cfp.public_avatar = False
+        event.cfp.save()
+
+    # Public legacy speaker list hides biography
+    resp = client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    for spk in content['results']:
+        assert 'biography' not in spk or not spk['biography']
+
+    # Organizer legacy speaker list still sees biography
+    orga_resp = orga_client.get(event.api_urls.speakers, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert orga_resp.status_code == 200
+    orga_content = json.loads(orga_resp.text)
+    assert any(spk.get('biography') for spk in orga_content['results'])
+
+    # Public legacy submissions nested speakers hide avatar
+    sub_resp = client.get(event.api_urls.submissions, headers={'Pretalx-Version': LEGACY}, follow=True)
+    assert sub_resp.status_code == 200
+    sub_content = json.loads(sub_resp.text)
+    for item in sub_content['results']:
+        for spk in item.get('speakers', []):
+            assert spk.get('avatar') is None
+
+
+@pytest.mark.django_db
+def test_featured_speaker_with_other_event_submission(client, featured_setup, pre_schedule_event):
+    """A user who has submissions in other events but none in this event remains eligible as featured speaker."""
+    from eventyay.base.models import Event, Organizer
+
+    event = featured_setup['event']
+    user = User.objects.create_user(email='otherevent@example.com', password='pass', fullname='Other Event Speaker')
+
+    with scope(event=event):
+        # Featured profile in this event with 0 submissions in this event
+        SpeakerProfile.objects.create(event=event, user=user, is_featured=True, position=5)
+
+    # In another event, user has a rejected submission
+    with scope(event=event):
+        other_org = Organizer.objects.create(name='Other Org', slug='other-org')
+        other_event = Event.objects.create(organizer=other_org, name='Other Event', slug='other-event')
+    with scope(event=other_event):
+        stype = SubmissionType.objects.create(event=other_event, name='Talk')
+        sub = Submission.objects.create(
+            event=other_event,
+            submission_type=stype,
+            title='Rejected elsewhere',
+            state=SubmissionStates.REJECTED,
+        )
+        sub.speakers.add(user)
+
+    resp = client.get(event.api_urls.speakers, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    codes = [s['code'] for s in content['results']]
+    assert user.code in codes
+
+
+@pytest.mark.django_db
+def test_speaker_profile_without_user_does_not_crash(client, featured_setup):
+    """Profiles without an associated user are excluded and do not crash the endpoint."""
+    event = featured_setup['event']
+    with scope(event=event):
+        SpeakerProfile.objects.create(event=event, user=None, is_featured=True)
+
+    resp = client.get(event.api_urls.speakers, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    assert all(s.get('code') for s in content['results'])
+
+
+@pytest.mark.django_db
+def test_speakers_not_leaked_when_show_featured_speakers_never(client, featured_setup):
+    """When schedule exists but show_schedule=False, and show_featured_speakers='never', no speakers are leaked."""
+    event = featured_setup['event']
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.feature_flags['show_featured_speakers'] = 'never'
+        event.save()
+        event.release_schedule('v1')
+
+    resp = client.get(event.api_urls.speakers, follow=True)
+    assert resp.status_code == 200
+    content = json.loads(resp.text)
+    assert content['count'] == 0

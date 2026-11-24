@@ -42,6 +42,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._featured_speakers_visible: bool | None = None
         if not self.event:
             self.fields.pop('social_links', None)
             return
@@ -162,7 +163,9 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         user = getattr(request, 'user', None)
         if self.event and request and request.user.has_perm('base.orga_list_speakerprofile', self.event):
             return bool(obj.is_featured)
-        if self.event and not are_featured_speakers_visible(user, self.event):
+        if self.event and self._featured_speakers_visible is None:
+            self._featured_speakers_visible = are_featured_speakers_visible(user, self.event)
+        if self.event and not self._featured_speakers_visible:
             return False
         return bool(obj.is_featured)
 
@@ -172,7 +175,9 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         user = getattr(request, 'user', None)
         if self.event and request and request.user.has_perm('base.orga_list_speakerprofile', self.event):
             return obj.position
-        if self.event and not are_featured_speakers_visible(user, self.event):
+        if self.event and self._featured_speakers_visible is None:
+            self._featured_speakers_visible = are_featured_speakers_visible(user, self.event)
+        if self.event and not self._featured_speakers_visible:
             return None
         return obj.position if obj.is_featured else None
 

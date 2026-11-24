@@ -34,6 +34,7 @@ from eventyay.talk_rules.submission import (
 class LegacySubmitterSerializer(ModelSerializer):
     name = CharField(source='fullname', read_only=True)
     biography = SerializerMethodField()
+    avatar = SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event', None)
@@ -44,9 +45,20 @@ class LegacySubmitterSerializer(ModelSerializer):
         fields = ('code', 'name', 'biography', 'avatar')
 
     def get_biography(self, obj):
+        request = self.context.get('request')
+        if self.event and request and request.user.has_perm('base.orga_list_submission', self.event):
+            return getattr(obj.profiles.filter(event=self.event).first(), 'biography', '')
         if self.event and self.event.cfp.public_biography:
             return getattr(obj.profiles.filter(event=self.event).first(), 'biography', '')
         return ''
+
+    def get_avatar(self, obj):
+        request = self.context.get('request')
+        if self.event and request and request.user.has_perm('base.orga_list_submission', self.event):
+            return obj.avatar_url
+        if self.event and self.event.cfp.request_avatar and self.event.cfp.public_avatar:
+            return obj.avatar_url
+        return None
 
 
 class LegacySubmitterOrgaSerializer(LegacySubmitterSerializer):
@@ -65,10 +77,27 @@ class LegacySpeakerSerializer(ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         questions = kwargs.pop('questions', [])
+        self.event = kwargs.pop('event', None)
         self.questions = (
             questions if questions in ('all', ['all']) else [question for question in questions if question.isnumeric()]
         )
         super().__init__(*args, **kwargs)
+        self._featured_speakers_visible: bool | None = None
+        if self.event:
+            request = self.context.get('request')
+            is_public_view = bool(request and not request.user.has_perm('base.orga_list_speakerprofile', self.event))
+            if is_public_view and not self.event.cfp.public_biography:
+                self.fields.pop('biography', None)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        event = self.event or getattr(instance, 'event', None)
+        if event:
+            is_public_view = bool(request and not request.user.has_perm('base.orga_list_speakerprofile', event))
+            if is_public_view and not event.cfp.public_biography:
+                data.pop('biography', None)
+        return data
 
     @staticmethod
     def get_avatar(obj):
@@ -106,7 +135,9 @@ class LegacySpeakerSerializer(ModelSerializer):
         user = getattr(request, 'user', None)
         if request and request.user.has_perm('base.orga_list_speakerprofile', obj.event):
             return bool(obj.is_featured)
-        if not are_featured_speakers_visible(user, obj.event):
+        if self._featured_speakers_visible is None:
+            self._featured_speakers_visible = are_featured_speakers_visible(user, obj.event)
+        if not self._featured_speakers_visible:
             return False
         return bool(obj.is_featured)
 
@@ -116,7 +147,9 @@ class LegacySpeakerSerializer(ModelSerializer):
         user = getattr(request, 'user', None)
         if request and request.user.has_perm('base.orga_list_speakerprofile', obj.event):
             return obj.position
-        if not are_featured_speakers_visible(user, obj.event):
+        if self._featured_speakers_visible is None:
+            self._featured_speakers_visible = are_featured_speakers_visible(user, obj.event)
+        if not self._featured_speakers_visible:
             return None
         return obj.position if obj.is_featured else None
 
@@ -197,6 +230,7 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
         questions = kwargs.pop('questions', [])
         self.questions = questions if questions == 'all' else [question for question in questions if question]
         super().__init__(*args, **kwargs)
+        self._featured_sessions_visible: bool | None = None
         for field in ('title', 'abstract', 'description'):
             partial_name = f'get_{field}'
             setattr(self, partial_name, partial(self.get_attribute, attribute=field))
@@ -233,7 +267,9 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
         event = self.event or obj.event
         if event and request and request.user.has_perm('base.orga_list_submission', event):
             return bool(obj.is_featured)
-        if event and not are_featured_submissions_visible(user, event):
+        if event and self._featured_sessions_visible is None:
+            self._featured_sessions_visible = are_featured_submissions_visible(user, event)
+        if event and not self._featured_sessions_visible:
             return False
         return bool(obj.is_featured)
 

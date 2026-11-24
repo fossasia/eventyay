@@ -163,9 +163,17 @@ class SpeakerViewSet(
                 state__in=SubmissionStates.accepted_states,
             )
             return SpeakerProfile.objects.filter(
-                Q(event=self.event, is_featured=True, user__submissions__in=accepted_subs)
-                | Q(event=self.event, is_featured=True, user__submissions__isnull=True)
-            ).distinct()
+                Q(event=self.event, is_featured=True, user__isnull=False, user__submissions__in=accepted_subs)
+                | (
+                    Q(event=self.event, is_featured=True, user__isnull=False)
+                    & ~Q(user__submissions__event=self.event)
+                )
+            ).distinct().order_by(
+                OrderBy(F('is_featured'), descending=True),
+                OrderBy(F('position'), nulls_last=True),
+                'user__fullname',
+                'pk',
+            )
         return SpeakerProfile.objects.none()
 
     def get_serializer(self, *args, **kwargs):
@@ -207,20 +215,33 @@ class SpeakerViewSet(
         if not self.event:
             # This is just during api doc creation
             return self.queryset
-        if not self.is_orga and not self.event.current_schedule:
-            if not are_featured_speakers_visible(self.request.user, self.event):
-                return SpeakerProfile.objects.none()
-            from eventyay.base.models import SubmissionStates
-
-            accepted_subs = self.event.submissions.filter(
-                state__in=SubmissionStates.accepted_states,
+        if not self.is_orga:
+            has_public_schedule = self.event.current_schedule and self.request.user.has_perm(
+                'base.list_schedule', self.event
             )
-            queryset = SpeakerProfile.objects.filter(
-                Q(event=self.event, is_featured=True, user__submissions__in=accepted_subs)
-                | Q(event=self.event, is_featured=True, user__submissions__isnull=True)
-            ).distinct()
+            if not has_public_schedule:
+                if not are_featured_speakers_visible(self.request.user, self.event):
+                    return SpeakerProfile.objects.none()
+                from eventyay.base.models import SubmissionStates
+
+                accepted_subs = self.event.submissions.filter(
+                    state__in=SubmissionStates.accepted_states,
+                )
+                queryset = SpeakerProfile.objects.filter(
+                    Q(event=self.event, is_featured=True, user__isnull=False, user__submissions__in=accepted_subs)
+                    | (
+                        Q(event=self.event, is_featured=True, user__isnull=False)
+                        & ~Q(user__submissions__event=self.event)
+                    )
+                ).distinct()
+            else:
+                queryset = speaker_profiles_for_user(
+                    self.event, self.request.user, submissions=self.submissions_for_user
+                )
         else:
-            queryset = speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user)
+            queryset = speaker_profiles_for_user(
+                self.event, self.request.user, submissions=self.submissions_for_user
+            )
         queryset = prefetch_speaker_profiles(
             queryset,
             self.event,
