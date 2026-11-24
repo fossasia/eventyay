@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, QuerySet
 from django.utils.functional import cached_property
 
@@ -220,8 +220,12 @@ class BaseQuestionsViewMixin:
                                 question=field.question,
                             )
                             try:
-                                self._save_to_answer(field, answer, v)
-                                answer.save()
+                                # The savepoint keeps a duplicate-key error recoverable when this runs inside
+                                # the caller's transaction: without it, the failed INSERT would mark the outer
+                                # transaction as broken and the recovery query below would raise instead.
+                                with transaction.atomic():
+                                    self._save_to_answer(field, answer, v)
+                                    answer.save()
                             except IntegrityError:
                                 # Since we prefill ``field.answer`` at form creation time, there's a possible
                                 #  race condition here if the users submits their save request a second time
