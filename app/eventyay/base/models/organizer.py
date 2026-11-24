@@ -379,6 +379,14 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     members = models.ManyToManyField(User, related_name='teams', verbose_name=_('Team members'))
     all_events = models.BooleanField(default=False, verbose_name=_('All events (including newly created ones)'))
     limit_events = models.ManyToManyField('Event', verbose_name=_('Limit to events'), blank=True)
+    is_core_team = models.BooleanField(
+        default=False,
+        verbose_name=_('Core organizing team'),
+        help_text=_(
+            'Set by platform administrators. Members of the core team may anonymize the ticketing data of '
+            'this organizer. The flag is not available in the organizer team forms.'
+        ),
+    )
 
     can_create_events = models.BooleanField(
         default=False,
@@ -458,6 +466,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         'can_manage_bank_transfers': ('can_view_orders',),
     }
 
+    # Boolean fields that look like permissions but are not granted through team permissions.
+    NON_PERMISSION_FIELD_NAMES = frozenset({'is_core_team'})
+
     @classmethod
     def _permission_field_names(cls) -> tuple:
         cached = cls.__dict__.get('_permission_field_names_cache')
@@ -467,6 +478,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
                 for field in cls._meta.get_fields()
                 if isinstance(field, models.BooleanField)
                 and (field.name.startswith('can_') or field.name.startswith('is_'))
+                and field.name not in cls.NON_PERMISSION_FIELD_NAMES
             )
             cls._permission_field_names_cache = cached
         return cached

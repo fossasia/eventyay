@@ -7,6 +7,7 @@ def create_core_team(organizer, user):
     t = Team.objects.create(
         organizer=organizer,
         name=_('Core Organizing Team'),
+        is_core_team=True,
         all_events=True,
         can_create_events=True,
         can_change_teams=True,
