@@ -7,7 +7,8 @@ developer material is kept as the detailed reference.
 .. toctree::
    :maxdepth: 1
 
-   ../development/api/plugins
+   ../reference/unmapped/development/api/plugins
+   ../reference/unmapped/development/api/general
 
 The feature-specific plugin examples remain available from the
-:doc:`legacy plugin index </talk/developer/plugins/index>`.
+:doc:`legacy plugin index </reference/unmapped/talk/developer/plugins/index>`.
