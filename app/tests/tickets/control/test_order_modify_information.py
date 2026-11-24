@@ -2,15 +2,14 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Order, OrderPosition, Organizer, Team, User
-from eventyay.base.models.product import Product
-from django.contrib.contenttypes.models import ContentType
-
 from eventyay.base.models.log import LogEntry
 from eventyay.base.models.orders import InvoiceAddress
+from eventyay.base.models.product import Product
 
 pytestmark = pytest.mark.django_db
 
@@ -89,15 +88,17 @@ def info_url(event, order):
 
 
 def modified_log_entries(order):
-    return LogEntry.objects.filter(
-        content_type=ContentType.objects.get_for_model(order),
-        object_id=order.pk,
-        action_type='eventyay.event.order.modified',
-    )
+    with scopes_disabled():
+        return LogEntry.objects.filter(
+            content_type=ContentType.objects.get_for_model(order),
+            object_id=order.pk,
+            action_type='eventyay.event.order.modified',
+        )
 
 
 def invoice_address(order):
-    return InvoiceAddress.objects.filter(order=order).first()
+    with scopes_disabled():
+        return InvoiceAddress.objects.filter(order=order).first()
 
 
 def test_invalid_invoice_address_does_not_persist_attendee_changes(logged_in_client, event, order, position):
@@ -114,6 +115,9 @@ def test_invalid_invoice_address_does_not_persist_attendee_changes(logged_in_cli
     )
 
     assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
+    assert 'This field is required.' in content
     position.refresh_from_db()
     assert position.attendee_name_parts == {'full_name': 'Peter', '_scheme': 'full'}
     assert not modified_log_entries(order).exists()
@@ -133,6 +137,7 @@ def test_invalid_invoice_address_does_not_persist_the_invoice_address(logged_in_
     )
 
     assert response.status_code == 200
+    assert 'This field is required.' in response.content.decode()
     address = invoice_address(order)
     assert address is None or not address.street
 
@@ -151,6 +156,9 @@ def test_invalid_attendee_form_does_not_persist_the_invoice_address(logged_in_cl
     )
 
     assert response.status_code == 200
+    content = response.content.decode()
+    assert 'We had difficulties processing your input' in content
+    assert 'valid email address' in content
     position.refresh_from_db()
     assert position.attendee_name_parts == {'full_name': 'Peter', '_scheme': 'full'}
     address = invoice_address(order)
