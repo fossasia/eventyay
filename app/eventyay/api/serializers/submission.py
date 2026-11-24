@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from django.db import transaction
+from django_scopes import scope
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions, serializers
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from django_scopes import scope
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.serializers.fields import UploadedFileField
@@ -19,6 +19,7 @@ from eventyay.base.models.tag import Tag
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
 from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 @register_serializer()
@@ -140,6 +141,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     speakers = serializers.SerializerMethodField()
     answers = serializers.SerializerMethodField()
     slots = serializers.SerializerMethodField()
+    is_featured = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -240,6 +242,16 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         if serializer := self.get_extra_flex_field('slots', qs):
             return serializer.data
         return qs.values_list('pk', flat=True)
+
+    @extend_schema_field(bool)
+    def get_is_featured(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if self.event and request and request.user.has_perm('base.orga_list_submission', self.event):
+            return bool(obj.is_featured)
+        if self.event and not are_featured_submissions_visible(user, self.event):
+            return False
+        return bool(obj.is_featured)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -346,6 +358,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'slot_count',
             'content_locale',
             'do_not_record',
+            'is_featured',
             'image',
             'resources',
             'slots',
@@ -419,7 +432,6 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
     class Meta(SubmissionSerializer.Meta):
         fields = SubmissionSerializer.Meta.fields + [
             'pending_state',
-            'is_featured',
             'notes',
             'internal_notes',
             'invitation_token',

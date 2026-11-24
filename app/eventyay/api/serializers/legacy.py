@@ -1,5 +1,6 @@
 from functools import partial
 
+from drf_spectacular.utils import extend_schema_field
 from i18nfield.rest_framework import I18nAwareModelSerializer
 from rest_framework.serializers import (
     CharField,
@@ -24,6 +25,10 @@ from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.tag import Tag
+from eventyay.talk_rules.submission import (
+    are_featured_speakers_visible,
+    are_featured_submissions_visible,
+)
 
 
 class LegacySubmitterSerializer(ModelSerializer):
@@ -55,6 +60,8 @@ class LegacySpeakerSerializer(ModelSerializer):
     avatar = SerializerMethodField()
     submissions = SerializerMethodField()
     answers = SerializerMethodField()
+    is_featured = SerializerMethodField()
+    featured_position = SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         questions = kwargs.pop('questions', [])
@@ -68,10 +75,19 @@ class LegacySpeakerSerializer(ModelSerializer):
         if obj.event.cfp.request_avatar and obj.event.cfp.public_avatar:
             return obj.avatar_url
 
-    @staticmethod
-    def get_submissions(obj):
-        talks = obj.event.current_schedule.talks.all() if obj.event.current_schedule else []
-        return obj.user.submissions.filter(event=obj.event, slots__in=talks).values_list('code', flat=True)
+    def get_submissions(self, obj):
+        if obj.event.current_schedule:
+            talks = obj.event.current_schedule.talks.all()
+            return obj.user.submissions.filter(event=obj.event, slots__in=talks).values_list('code', flat=True)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if are_featured_submissions_visible(user, obj.event):
+            return obj.user.submissions.filter(
+                event=obj.event,
+                is_featured=True,
+                state__in=SubmissionStates.accepted_states,
+            ).values_list('code', flat=True)
+        return []
 
     def answers_queryset(self, obj):
         return obj.answers.all().filter(question__is_public=True, question__active=True, question__target='speaker')
@@ -84,9 +100,38 @@ class LegacySpeakerSerializer(ModelSerializer):
             queryset = queryset.filter(question__in=self.questions)
         return AnswerSerializer(queryset, many=True).data
 
+    @extend_schema_field(bool)
+    def get_is_featured(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if request and request.user.has_perm('base.orga_list_speakerprofile', obj.event):
+            return bool(obj.is_featured)
+        if not are_featured_speakers_visible(user, obj.event):
+            return False
+        return bool(obj.is_featured)
+
+    @extend_schema_field(int | None)
+    def get_featured_position(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if request and request.user.has_perm('base.orga_list_speakerprofile', obj.event):
+            return obj.position
+        if not are_featured_speakers_visible(user, obj.event):
+            return None
+        return obj.position if obj.is_featured else None
+
     class Meta:
         model = SpeakerProfile
-        fields = ('code', 'name', 'biography', 'submissions', 'avatar', 'answers')
+        fields = (
+            'code',
+            'name',
+            'biography',
+            'submissions',
+            'avatar',
+            'answers',
+            'is_featured',
+            'featured_position',
+        )
 
 
 class LegacySpeakerOrgaSerializer(LegacySpeakerSerializer):
@@ -142,6 +187,7 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
     abstract = SerializerMethodField()
     description = SerializerMethodField()
     answers = SerializerMethodField()
+    is_featured = SerializerMethodField()
 
     speaker_serializer_class = LegacySubmitterSerializer
 
@@ -161,8 +207,17 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
         return obj.get_duration()
 
     def get_speakers(self, obj):
-        has_slots = obj.slots.filter(is_visible=True) and obj.state == SubmissionStates.CONFIRMED
-        if has_slots or self.can_view_speakers:
+        has_slots = bool(obj.slots.filter(is_visible=True)) and obj.state == SubmissionStates.CONFIRMED
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        event = self.event or obj.event
+        is_featured_visible = (
+            event
+            and are_featured_submissions_visible(user, event)
+            and obj.is_featured
+            and obj.state in SubmissionStates.accepted_states
+        )
+        if has_slots or self.can_view_speakers or is_featured_visible:
             return self.speaker_serializer_class(
                 obj.speakers.all(),
                 many=True,
@@ -170,6 +225,17 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
                 event=self.event,
             ).data
         return []
+
+    @extend_schema_field(bool)
+    def get_is_featured(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        event = self.event or obj.event
+        if event and request and request.user.has_perm('base.orga_list_submission', event):
+            return bool(obj.is_featured)
+        if event and not are_featured_submissions_visible(user, event):
+            return False
+        return bool(obj.is_featured)
 
     def get_attribute(self, obj, attribute=None):
         if attribute in {'abstract', 'description'} and not obj.event.cfp.is_field_public(attribute):

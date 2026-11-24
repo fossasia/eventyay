@@ -1,3 +1,4 @@
+from django.db.models import F, OrderBy, Q
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -24,6 +25,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.services.talkimport import import_speaker_records
 from eventyay.talk_rules.submission import (
+    are_featured_speakers_visible,
     questions_for_user,
     speaker_profiles_for_user,
     submissions_for_user,
@@ -89,6 +91,13 @@ class SpeakerImportView(APIView):
 @extend_schema_view(
     list=extend_schema(
         summary='List Speakers',
+        description=(
+            'List speakers for this event. For organizers, all event speakers are returned. '
+            'Before the schedule is released, if "show featured speakers" is enabled on the event, '
+            'featured speakers of accepted sessions are publicly returned in organizer-configured order '
+            'without requiring organizer permissions. Once the schedule is released, all public schedule '
+            'speakers are returned.'
+        ),
         parameters=[
             build_search_docs(
                 'name',
@@ -147,6 +156,16 @@ class SpeakerViewSet(
                     'submission_id', flat=True
                 ),
             ).distinct()
+        if are_featured_speakers_visible(self.request.user, self.event):
+            from eventyay.base.models import SubmissionStates
+
+            accepted_subs = self.event.submissions.filter(
+                state__in=SubmissionStates.accepted_states,
+            )
+            return SpeakerProfile.objects.filter(
+                Q(event=self.event, is_featured=True, user__submissions__in=accepted_subs)
+                | Q(event=self.event, is_featured=True, user__submissions__isnull=True)
+            ).distinct()
         return SpeakerProfile.objects.none()
 
     def get_serializer(self, *args, **kwargs):
@@ -188,10 +207,29 @@ class SpeakerViewSet(
         if not self.event:
             # This is just during api doc creation
             return self.queryset
+        if not self.is_orga and not self.event.current_schedule:
+            if not are_featured_speakers_visible(self.request.user, self.event):
+                return SpeakerProfile.objects.none()
+            from eventyay.base.models import SubmissionStates
+
+            accepted_subs = self.event.submissions.filter(
+                state__in=SubmissionStates.accepted_states,
+            )
+            queryset = SpeakerProfile.objects.filter(
+                Q(event=self.event, is_featured=True, user__submissions__in=accepted_subs)
+                | Q(event=self.event, is_featured=True, user__submissions__isnull=True)
+            ).distinct()
+        else:
+            queryset = speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user)
         queryset = prefetch_speaker_profiles(
-            speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user),
+            queryset,
             self.event,
-        ).order_by('pk')
+        ).order_by(
+            OrderBy(F('is_featured'), descending=True),
+            OrderBy(F('position'), nulls_last=True),
+            'user__fullname',
+            'pk',
+        )
         if fields := self.check_expanded_fields(
             'answers.question',
             'answers.question.tracks',

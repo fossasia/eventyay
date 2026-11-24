@@ -31,6 +31,7 @@ def test_submission_serializer(slot):
             "duration_override",
             "slot_count",
             "do_not_record",
+            "is_featured",
             "content_locale",
             "slots",
             "tags",

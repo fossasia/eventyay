@@ -24,6 +24,7 @@ from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, validate_image
 from eventyay.common.social_links import serialize_social_link
 from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.talk_rules.orga import is_reviewer_only_for_event
+from eventyay.talk_rules.submission import are_featured_speakers_visible
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -36,6 +37,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     answers = SerializerMethodField()
     submissions = SerializerMethodField()
     social_links = SerializerMethodField()
+    is_featured = SerializerMethodField()
+    featured_position = SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -153,6 +156,26 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def get_social_links(self, obj):
         return [serialize_social_link(link) for link in obj.social_links.all()]
 
+    @extend_schema_field(bool)
+    def get_is_featured(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if self.event and request and request.user.has_perm('base.orga_list_speakerprofile', self.event):
+            return bool(obj.is_featured)
+        if self.event and not are_featured_speakers_visible(user, self.event):
+            return False
+        return bool(obj.is_featured)
+
+    @extend_schema_field(int | None)
+    def get_featured_position(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if self.event and request and request.user.has_perm('base.orga_list_speakerprofile', self.event):
+            return obj.position
+        if self.event and not are_featured_speakers_visible(user, self.event):
+            return None
+        return obj.position if obj.is_featured else None
+
     def update(self, instance, validated_data):
         availabilities_data = validated_data.pop('availabilities', None)
         profile = super().update(instance, validated_data)
@@ -183,6 +206,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'avatar_url',
             'avatar_source',
             'avatar_license',
+            'is_featured',
+            'featured_position',
             'answers',
             'social_links',
         )

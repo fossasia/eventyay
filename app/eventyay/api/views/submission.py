@@ -66,6 +66,7 @@ from eventyay.common.auth import TokenAuthentication
 from eventyay.common.exceptions import SubmissionError
 from eventyay.common.text.rich_text import is_empty_rich_text
 from eventyay.talk_rules.submission import (
+    are_featured_submissions_visible,
     questions_for_user,
     speaker_profiles_for_user,
     submissions_for_user,
@@ -190,6 +191,12 @@ with scopes_disabled():
 @extend_schema_view(
     list=extend_schema(
         summary='List Submissions',
+        description=(
+            'List submissions for this event. For organizers, all event submissions are returned. '
+            'Before the schedule is released, if "show featured sessions" is enabled on the event, '
+            'accepted featured sessions are publicly returned without requiring organizer permissions. '
+            'Once the schedule is released, all public schedule sessions are returned.'
+        ),
         parameters=[
             build_search_docs('title', 'speaker.fullname'),
             build_expand_docs(
@@ -286,11 +293,17 @@ class SubmissionViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelView
     def get_legacy_queryset(self):  # pragma: no cover
         base_qs = self.event.submissions.all().prefetch_related('resources').order_by('code')
         if not self.request.user.has_perm('base.orga_list_submission', self.event):
-            if not self.request.user.has_perm('base.list_schedule', self.event) or not self.event.current_schedule:
-                return Submission.objects.none()
-            return base_qs.filter(
-                pk__in=self.event.current_schedule.talks.filter(is_visible=True).values_list('submission_id', flat=True)
-            )
+            if self.request.user.has_perm('base.list_schedule', self.event) and self.event.current_schedule:
+                talk_submission_ids = self.event.current_schedule.talks.filter(
+                    is_visible=True
+                ).values_list('submission_id', flat=True)
+                return base_qs.filter(pk__in=talk_submission_ids)
+            if are_featured_submissions_visible(self.request.user, self.event):
+                return base_qs.filter(
+                    is_featured=True,
+                    state__in=SubmissionStates.accepted_states,
+                )
+            return Submission.objects.none()
         return base_qs
 
     def get_legacy_serializer_class(self):  # pragma: no cover
