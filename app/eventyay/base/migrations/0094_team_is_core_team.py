@@ -1,61 +1,25 @@
 from django.db import migrations, models
-
-
-# The default name given to the team created together with an organizer, in English and in every
-# translation shipped when this migration was written. Existing teams with one of these names are the
-# Core Organizing Team of their organizer.
-CORE_TEAM_NAMES = (
-    'Alap szervezőcsapat',
-    'Ana Organizasyon Ekibi',
-    'Core Organizing Team',
-    'Echipa principală de organizare',
-    'Equip organitzador principal',
-    'Equipa Nuclear de Organização',
-    'Equipe principal de organização',
-    'Equipo organizador principal',
-    'Galvenā organizatoru komanda',
-    'Główny zespół organizacyjny',
-    'Hlavní organizační tým',
-    'Kern-Organisationsteam',
-    'Kerneteam for organisering',
-    'Kernorganisatieteam',
-    'Kjerneteam for organisering',
-    'Kärnteam för organisering',
-    'Nhóm tổ chức chính',
-    'Osrednja organizacijska ekipa',
-    'Pasukan Penganjur Teras',
-    'Team organizzativo principale',
-    'Tim Inti Penyelenggara',
-    'Timu Kuu ya Uratibu',
-    'Ydinjärjestäjätiimi',
-    'Équipe organisatrice principale',
-    'Κεντρική Ομάδα Διοργάνωσης',
-    'Основен организационен екип',
-    'Основна команда організаторів',
-    'Основная команда организаторов',
-    'تیم اصلی برگزارکننده',
-    'فريق التنظيم الأساسي',
-    'مرکزی تنظیمی ٹیم',
-    'मुख्य आयोजन टीम',
-    'मुख्य आयोजन संघ',
-    'মূল আয়োজক দল',
-    'મુખ્ય આયોજન ટીમ',
-    'மைய ஒழுங்கமைப்பு குழு',
-    'కోర్ ఆర్గనైజింగ్ టీమ్',
-    'കോർ ഓർഗനൈസിംഗ് ടീം',
-    'මූලික සංවිධාන කණ්ඩායම',
-    'ทีมผู้จัดหลัก',
-    'ក្រុមរៀបចំស្នូល',
-    'コア運営チーム',
-    '核心主辦團隊',
-    '核心组织团队',
-    '핵심 운영팀',
-)
+from django.db.models import Min
 
 
 def flag_core_teams(apps, schema_editor):
+    """
+    Flag the Core Organizing Team of every organizer.
+
+    Every organizer creation path creates the owner team in the same transaction as the organizer, with
+    access to all events and the right to change teams and organizer settings. Its name is not reliable:
+    it was "Administrators" before it became "Core Organizing Team", it is stored translated, and
+    organizers can rename it. So the core team is the organizer's oldest team with that owner-level
+    access.
+    """
     Team = apps.get_model('base', 'Team')
-    Team.objects.filter(name__in=CORE_TEAM_NAMES).update(is_core_team=True)
+    first_owner_teams = (
+        Team.objects.filter(all_events=True, can_change_teams=True, can_change_organizer_settings=True)
+        .values('organizer_id')
+        .annotate(first_id=Min('id'))
+        .values_list('first_id', flat=True)
+    )
+    Team.objects.filter(id__in=list(first_owner_teams)).update(is_core_team=True)
 
 
 class Migration(migrations.Migration):

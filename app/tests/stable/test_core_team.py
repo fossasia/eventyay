@@ -115,13 +115,49 @@ def test_organizer_create_view_creates_flagged_core_team(client):
     assert list(team.members.all()) == [user]
 
 
-@pytest.mark.django_db
-def test_backfill_flags_teams_with_default_name(organizer):
+OWNER_ACCESS = {'all_events': True, 'can_change_teams': True, 'can_change_organizer_settings': True}
+
+
+def run_backfill():
     migration = importlib.import_module('eventyay.base.migrations.0094_team_is_core_team')
-    english = Team.objects.create(organizer=organizer, name='Core Organizing Team')
-    german = Team.objects.create(organizer=organizer, name='Kern-Organisationsteam')
-    renamed = Team.objects.create(organizer=organizer, name='Board')
     migration.flag_core_teams(apps, None)
-    assert Team.objects.get(pk=english.pk).is_core_team
-    assert Team.objects.get(pk=german.pk).is_core_team
-    assert not Team.objects.get(pk=renamed.pk).is_core_team
+
+
+def core_team_ids():
+    return set(Team.objects.filter(is_core_team=True).values_list('pk', flat=True))
+
+
+@pytest.mark.django_db
+def test_backfill_flags_oldest_owner_team_whatever_its_name(organizer):
+    legacy = Team.objects.create(organizer=organizer, name='Administrators', **OWNER_ACCESS)
+    Team.objects.create(organizer=organizer, name='Second admins', **OWNER_ACCESS)
+    Team.objects.create(organizer=organizer, name='Reviewers', all_events=True, is_reviewer=True)
+    run_backfill()
+    assert core_team_ids() == {legacy.pk}
+
+
+@pytest.mark.django_db
+def test_backfill_flags_renamed_and_translated_core_teams(organizer):
+    renamed = Team.objects.create(organizer=organizer, name='Board', **OWNER_ACCESS)
+    other_organizer = Organizer.objects.create(name='Other', slug='otherorg')
+    translated = Team.objects.create(organizer=other_organizer, name='Kern-Organisationsteam', **OWNER_ACCESS)
+    run_backfill()
+    assert core_team_ids() == {renamed.pk, translated.pk}
+
+
+@pytest.mark.django_db
+def test_backfill_skips_older_teams_without_owner_access(organizer):
+    Team.objects.create(organizer=organizer, name='Core Organizing Team', all_events=True, can_change_orders=True)
+    owner = Team.objects.create(organizer=organizer, name='Owners', **OWNER_ACCESS)
+    run_backfill()
+    assert core_team_ids() == {owner.pk}
+
+
+@pytest.mark.django_db
+def test_backfill_leaves_organizer_without_owner_team_alone(organizer):
+    Team.objects.create(organizer=organizer, name='Helpers', all_events=True, can_change_teams=True)
+    Team.objects.create(
+        organizer=organizer, name='Limited admins', can_change_teams=True, can_change_organizer_settings=True
+    )
+    run_backfill()
+    assert core_team_ids() == set()
