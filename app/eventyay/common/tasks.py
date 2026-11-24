@@ -20,11 +20,10 @@ from eventyay.base.models.draft_reminder import (
 )
 from eventyay.base.models.mail import MailTemplate
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
-from eventyay.base.signals import periodic_task as base_periodic_task
+from eventyay.base.signals import periodic_task
 from eventyay.celery_app import app
 from eventyay.common.image import process_image
 from eventyay.common.mail import RETRY_ERRNOS, RETRY_SMTP_CODES, SendMailException
-from eventyay.common.signals import periodic_task as common_periodic_task
 
 
 logger = logging.getLogger(__name__)
@@ -146,32 +145,28 @@ def send_scheduled_queuedmail(self, mail_pk: int):
 @app.task(name='eventyay.common.tasks.send_periodic_signal')
 def send_periodic_signal():
     """
-    Celery task that sends the periodic_task signals.
+    Celery task that sends the canonical ``periodic_task`` signal.
 
     This task is intended to be run periodically by Celery beat (for example,
     via django-celery-beat's DatabaseScheduler) and triggers all signal receivers
-    listening to the periodic_task signals, including process_scheduled_emails.
-
-    Both the ``eventyay.common.signals`` and the ``eventyay.base.signals``
-    ``periodic_task`` signals are sent, since receivers are registered on both
-    (the latter holds e.g. the ECB rate fetch and the billing jobs). Receiver
-    errors are logged and do not stop the remaining receivers.
+    listening to ``eventyay.base.signals.periodic_task``, including
+    process_scheduled_emails. Receiver errors are logged and do not stop the
+    remaining receivers.
 
     Celery beat loads this task from CELERY_BEAT_SCHEDULE with a one-minute
     interval.
     """
-    logger.debug('Sending periodic_task signals')
-    for signal in (common_periodic_task, base_periodic_task):
-        for receiver, response in signal.send_robust(sender=None):
-            if isinstance(response, Exception):
-                log_event('core', 'periodic_task.receiver', OUTCOME_FAILURE, error_code='receiver_error')
-                logger.error(
-                    'Periodic task receiver %s.%s failed',
-                    receiver.__module__,
-                    receiver.__name__,
-                    exc_info=response,
-                )
-    logger.debug('Periodic_task signals sent successfully')
+    logger.debug('Sending periodic_task signal')
+    for receiver, response in periodic_task.send_robust(sender=None):
+        if isinstance(response, Exception):
+            log_event('core', 'periodic_task.receiver', OUTCOME_FAILURE, error_code='receiver_error')
+            logger.error(
+                'Periodic task receiver %s.%s failed',
+                receiver.__module__,
+                receiver.__name__,
+                exc_info=response,
+            )
+    logger.debug('Periodic_task signal sent successfully')
 
 
 def reconcile_draft_reminder_batch_allowance(batch: DraftReminderBatch) -> None:

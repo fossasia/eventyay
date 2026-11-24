@@ -3145,7 +3145,7 @@ body:has(.od-dashboard) #page-content {
 }
 .od-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(6,minmax(0,1fr));
+  grid-template-columns: repeat(auto-fit, minmax(max(170px, calc((100% - 5 * 12px) / 6)), 1fr));
   gap: 12px;
   align-items: stretch
 }
@@ -3218,7 +3218,8 @@ body:has(.od-dashboard) #page-content {
   font-weight: 800;
   color: var(--od-text);
   line-height: 1.3;
-  min-width: 0
+  min-width: 0;
+  overflow-wrap: anywhere
 }
 .od-kpi-value {
   font-family: var(--od-font-display);
@@ -3669,9 +3670,6 @@ h4.od-subchart {
   }
 }
 @media (max-width:1200px) {
-  .od-kpi-grid {
-    grid-template-columns: repeat(3,minmax(0,1fr))
-  }
   .od-action-grid {
     grid-template-columns: repeat(2,minmax(0,1fr))
   }
@@ -3684,9 +3682,6 @@ h4.od-subchart {
 @media (max-width:991px) {
   .od-analytics-grid {
     grid-template-columns: 1fr
-  }
-  .od-kpi-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr))
   }
 }
 @media (max-width:767px) {
