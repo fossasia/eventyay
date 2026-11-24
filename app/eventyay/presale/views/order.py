@@ -973,8 +973,12 @@ class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, O
         return override_sets
 
     def post(self, request, *args, **kwargs):
-        failed = not self.save() or not self.invoice_form.is_valid()
-        if failed:
+        # Validate everything, including the country the tax rules will be checked against, before
+        # writing. ``save()`` persists attendee fields and answers immediately, so a later failure
+        # would otherwise leave a half-applied modification without an audit entry.
+        questions_valid = self.questions_are_valid()
+        invoice_valid = self.invoice_form.is_valid()
+        if not (questions_valid and invoice_valid):
             messages.error(
                 self.request,
                 _('We had difficulties processing your input. Please review the errors below.'),
@@ -989,25 +993,28 @@ class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, O
                         _('One of the selected products is not available in the selected country.'),
                     )
                     return self.get(request, *args, **kwargs)
-        if hasattr(self.invoice_form, 'save'):
-            self.invoice_form.save()
-        self.order.log_action(
-            'eventyay.event.order.modified',
-            {
-                'invoice_data': self.invoice_form.cleaned_data,
-                'data': [
-                    {
-                        k: (
-                            f.cleaned_data.get(k).name
-                            if isinstance(f.cleaned_data.get(k), File)
-                            else f.cleaned_data.get(k)
-                        )
-                        for k in f.changed_data
-                    }
-                    for f in self.forms
-                ],
-            },
-        )
+
+        with transaction.atomic():
+            self.save()
+            if hasattr(self.invoice_form, 'save'):
+                self.invoice_form.save()
+            self.order.log_action(
+                'eventyay.event.order.modified',
+                {
+                    'invoice_data': self.invoice_form.cleaned_data,
+                    'data': [
+                        {
+                            k: (
+                                f.cleaned_data.get(k).name
+                                if isinstance(f.cleaned_data.get(k), File)
+                                else f.cleaned_data.get(k)
+                            )
+                            for k in f.changed_data
+                        }
+                        for f in self.forms
+                    ],
+                },
+            )
         order_modified.send(sender=self.request.event, order=self.order)
         if request.GET.get('generate_invoice') == 'true':
             if not can_generate_invoice(self.request.event, self.order):
