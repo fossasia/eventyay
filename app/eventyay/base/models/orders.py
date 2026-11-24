@@ -1166,7 +1166,7 @@ class Order(LockModel, LoggedModel):
             render_mail,
         )
 
-        if not self.email or is_anonymized_email(self.email):
+        if not self.email:
             return
 
         for k, v in self.event.meta_data.items():
@@ -1176,6 +1176,8 @@ class Order(LockModel, LoggedModel):
             recipient = self.email
             if position and position.attendee_email:
                 recipient = position.attendee_email
+            if is_anonymized_email(recipient):
+                return
 
             try:
                 email_content = render_mail(template, context)

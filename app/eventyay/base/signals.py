@@ -335,7 +335,7 @@ subclass of pretix.base.shredder.BaseDataShredder or a list of these
 As with all event-plugin signals, the ``sender`` keyword argument will contain the event.
 """
 
-register_ticketing_anonymizers = EventPluginSignal()
+register_ticketing_anonymizers = django.dispatch.Signal()
 """
 This signal is sent out to get all known ticketing anonymizers. Receivers should return a
 subclass of ``eventyay.base.anonymizer.BaseTicketingAnonymizer`` or a list of these.
@@ -343,7 +343,9 @@ subclass of ``eventyay.base.anonymizer.BaseTicketingAnonymizer`` or a list of th
 Anonymizers replace the identity of buyers and attendees in data they own. They never delete
 records.
 
-As with all event-plugin signals, the ``sender`` keyword argument will contain the event.
+Unlike most event plugin signals, this one reaches every receiver whether or not the plugin is
+enabled for the event, because the data a plugin stored stays in the database after the plugin
+has been disabled. The ``sender`` keyword argument contains the event.
 """
 
 register_ticket_outputs = EventPluginSignal()

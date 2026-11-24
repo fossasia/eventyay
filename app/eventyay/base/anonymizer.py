@@ -11,6 +11,7 @@ Plugins take part by returning a ``BaseTicketingAnonymizer`` subclass from the
 
 import json
 
+from django.db import transaction
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
@@ -47,9 +48,42 @@ ORDER_LOG_IDENTITY_FIELDS = (
     'name_parts',
     'name_cached',
 )
+PAYMENT_INFO_KEPT_KEYS = frozenset(
+    {'id', 'status', 'state', 'amount', 'currency', 'transaction_id', 'payment_id', 'update_time', 'created'}
+)
 POSITION_LOG_IDENTITY_FIELDS = frozenset(
     {'attendee_name', 'attendee_email', 'company', 'street', 'zipcode', 'city', 'state', 'country'}
 )
+
+
+def anonymize_line_description(description: str, attendee_name: str) -> str:
+    """
+    Replace the attendee name in an invoice line description. The description starts with the product name,
+    and everything after the first line break (the attendee line and printed answers) can mention the
+    attendee, so only that part is changed.
+    """
+    product, separator, details = description.partition('<br />')
+    return product + separator + details.replace(attendee_name, ANONYMIZED_NAME)
+
+
+def anonymize_unknown_payment_info(info: str) -> str:
+    """
+    Reduce stored payment info of a provider that is not available for the event, for example because its
+    plugin was disabled after the payment. Without the provider we cannot tell which values identify the
+    payer, so only well-known reconciliation keys stay and every other value is masked.
+    """
+    try:
+        data = json.loads(info)
+    except ValueError:
+        return '{}'
+    if not isinstance(data, dict):
+        return '{}'
+    masked = {
+        key: value if key in PAYMENT_INFO_KEPT_KEYS or value in (None, '', [], {}) else REDACTED
+        for key, value in data.items()
+    }
+    masked['_shredded'] = True
+    return json.dumps(masked)
 
 
 class BaseTicketingAnonymizer:
@@ -99,6 +133,8 @@ class AttendeeAnonymizer(BaseTicketingAnonymizer):
 
     def anonymize_order(self, order: Order) -> None:
         for position in order.all_positions.all():
+            # Like the order secret, this stops ticket page links in earlier emails from working.
+            position.web_secret = generate_secret()
             if position.attendee_email and not is_anonymized_email(position.attendee_email):
                 position.attendee_email = anonymized_email('attendee')
             if position.attendee_name_parts:
@@ -128,6 +164,7 @@ class AttendeeAnonymizer(BaseTicketingAnonymizer):
                     'state',
                     'country',
                     'meta_info',
+                    'web_secret',
                 ]
             )
 
@@ -198,12 +235,13 @@ class InvoiceAnonymizer(BaseTicketingAnonymizer):
             for line in invoice.lines.all():
                 if not line.attendee_name or line.attendee_name == ANONYMIZED_NAME:
                     continue
-                line.description = line.description.replace(line.attendee_name, ANONYMIZED_NAME)
+                line.description = anonymize_line_description(line.description, line.attendee_name)
                 line.attendee_name = ANONYMIZED_NAME
                 line.save(update_fields=['description', 'attendee_name'])
-            had_file = bool(invoice.file)
-            if had_file:
-                invoice.file.delete(save=False)
+            old_pdf = invoice.file.name if invoice.file else None
+            if old_pdf:
+                # The reference is cleared inside the transaction, so a rollback restores it. The stored
+                # file is only deleted once the transaction has committed.
                 invoice.file = None
             invoice.save(
                 update_fields=[
@@ -222,7 +260,9 @@ class InvoiceAnonymizer(BaseTicketingAnonymizer):
                     'file',
                 ]
             )
-            if had_file and not invoice.shredded:
+            if old_pdf and not invoice.shredded:
+                invoice_file = invoice.file
+                transaction.on_commit(lambda name=old_pdf, storage=invoice_file.storage: storage.delete(name))
                 invoice_pdf(invoice.pk)
 
 
@@ -239,7 +279,7 @@ class PaymentInfoAnonymizer(BaseTicketingAnonymizer):
             if provider:
                 provider.shred_payment_info(obj)
             elif obj.info and obj.info != '{}':
-                obj.info = '{}'
+                obj.info = anonymize_unknown_payment_info(obj.info)
                 obj.save(update_fields=['info'])
 
 

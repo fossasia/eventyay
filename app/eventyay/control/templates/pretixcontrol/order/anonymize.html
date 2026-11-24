@@ -13,10 +13,10 @@
     {% endblocktrans %}</p>
     <ul>
       <li>{% trans "Names and email addresses of the buyer and all attendees are replaced with anonymous placeholders, and phone numbers, postal addresses and billing details are removed. No email is sent to the placeholder addresses." %}</li>
-      <li>{% trans "Payment details stored from the payment provider are reduced to the transaction ID, amount and status." %}</li>
+      <li>{% trans "Personal data in payment details stored from the payment provider is removed or masked. Transaction IDs, amounts and status are kept." %}</li>
       <li>{% trans "Invoices are kept with their numbers and amounts, but the buyer details are removed and the PDF is generated again. Download the invoices first if you need them for your records." %}</li>
       <li>{% trans "Tickets, answers to ticket questions, payments and check-ins are kept and stay linked to the anonymous attendee, so reports and statistics still add up." %}</li>
-      <li>{% trans "The order will no longer appear in the buyer's account and links in earlier emails stop working. The account itself is not changed." %}</li>
+      <li>{% trans "The order will no longer appear in the buyer's account, and order and ticket page links in earlier emails stop working. The account itself is not changed." %}</li>
       <li><strong>{% trans "This action cannot be undone." %}</strong></li>
     </ul>
   </div>
