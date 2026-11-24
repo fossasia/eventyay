@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0091_auditlog_event_timestamp_idx'),
+        ('base', '0093_team_can_view_event_info'),
     ]
 
     operations = [
