@@ -71,7 +71,9 @@ class SeatingPlan(LoggedModel):
         for zi, z in enumerate(self.layout_data['zones']):
             zpos = (z['position']['x'], z['position']['y'])
             for ri, r in enumerate(z['rows']):
-                rpos = (zpos[0] + r['position']['x'], zpos[1] + r['position']['y'])
+                # The layout schema requires neither a row position nor a zone name.
+                roffset = r.get('position', {'x': 0, 'y': 0})
+                rpos = (zpos[0] + roffset['x'], zpos[1] + roffset['y'])
                 row_label = None
                 if r.get('row_label'):
                     row_label = r['row_label'].replace('%s', r.get('row_number', str(ri)))
@@ -95,7 +97,7 @@ class SeatingPlan(LoggedModel):
                         row=r['row_number'],
                         row_label=row_label,
                         seat_label=seat_label,
-                        zone=z['name'],
+                        zone=z.get('name', ''),
                         category=s['category'],
                         sorting_rank=rank,
                         x=rpos[0] + s['position']['x'],
