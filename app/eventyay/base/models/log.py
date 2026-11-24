@@ -1,4 +1,3 @@
-import copy
 import json
 import logging
 from contextlib import suppress
@@ -23,33 +22,23 @@ SENSITIVE_KEYS = ('password', 'secret', 'api_key', 'token')
 def mask_sensitive_data(data, sensitive_keys=SENSITIVE_KEYS):
     """Recursively mask sensitive values in nested dictionaries, lists, or tuples.
 
-    Returns a deep copy of ``data`` with sensitive keys masked as '********'.
-    Original data is not mutated. Falsy/empty values are preserved.
+    Containers are rebuilt rather than deep-copied, so the caller's data is never
+    mutated and leaf values that cannot be copied (such as uploaded files) are
+    kept by reference. Sensitive keys are masked as '********'; falsy/empty
+    values are preserved.
     """
-    if not isinstance(data, (dict, list, tuple)):
-        return data
-
-    def mask_item(item):
-        if isinstance(item, dict):
-            for k, v in list(item.items()):
-                if any(s in str(k).lower() for s in sensitive_keys) and v:
-                    item[k] = '********'
-                elif isinstance(v, (dict, list, tuple)):
-                    item[k] = mask_item(v)
-            return item
-        elif isinstance(item, list):
-            for idx, element in enumerate(item):
-                if isinstance(element, (dict, list, tuple)):
-                    item[idx] = mask_item(element)
-            return item
-        elif isinstance(item, tuple):
-            return tuple(
-                mask_item(element) if isinstance(element, (dict, list, tuple)) else element for element in item
-            )
-        return item
-
-    copied = copy.deepcopy(data)
-    return mask_item(copied)
+    if isinstance(data, dict):
+        return {
+            k: '********'
+            if v and any(s in str(k).lower() for s in sensitive_keys)
+            else mask_sensitive_data(v, sensitive_keys)
+            for k, v in data.items()
+        }
+    if isinstance(data, list):
+        return [mask_sensitive_data(item, sensitive_keys) for item in data]
+    if isinstance(data, tuple):
+        return tuple(mask_sensitive_data(item, sensitive_keys) for item in data)
+    return data
 
 
 class LogEntryQuerySet(models.QuerySet):

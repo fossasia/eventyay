@@ -58,6 +58,19 @@ def test_mask_sensitive_data_handles_tuples():
     assert masked_tuple[1][1] == 42
 
 
+def test_mask_sensitive_data_keeps_uncopyable_values_by_reference():
+    # Uploaded files (e.g. TemporaryUploadedFile) cannot be deep-copied, and DRF
+    # passes them through request.data into audit logging.
+    with open(__file__) as upload:
+        raw = {'token': 'secret-token', 'upload': upload, 'items': [{'file': upload}]}
+        masked = mask_sensitive_data(raw)
+
+        assert masked['token'] == '********'
+        assert masked['upload'] is upload
+        assert masked['items'][0]['file'] is upload
+        assert raw['token'] == 'secret-token'
+
+
 @pytest.mark.django_db
 def test_user_api_token_serialize_masks_by_default(user):
     with scopes_disabled():
