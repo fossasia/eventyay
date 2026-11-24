@@ -17,5 +17,9 @@ def test_submission_content_edit_compress_blocks():
     nodes = list(parser.walk_nodes(template, context=context))
     compress_nodes = [n for n in nodes if n.__class__.__name__ == 'CompressorNode']
     rendered_blocks = [parser.render_nodelist(template, context, n) for n in compress_nodes]
-    assert any('submission_video.js' in b for b in rendered_blocks)
-    assert any('submission_form.js' in b for b in rendered_blocks)
+    video_blocks = [b for b in rendered_blocks if 'submission_video.js' in b]
+    form_blocks = [b for b in rendered_blocks if 'submission_form.js' in b]
+    assert len(video_blocks) == 1
+    assert len(form_blocks) == 1
+    assert 'submission_form.js' not in video_blocks[0]
+    assert 'submission_video.js' not in form_blocks[0]
