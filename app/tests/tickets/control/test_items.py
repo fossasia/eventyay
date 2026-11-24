@@ -1,15 +1,17 @@
 import datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import pytest
 from django import forms
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from eventyay.control.forms.product import ProductCreateForm, clean_free_price_bounds
+from eventyay.control.forms.product import ProductCreateForm, ProductVariationForm, clean_free_price_bounds
 
 from eventyay.base.models import (
     Event,
@@ -1408,3 +1410,82 @@ class FreePriceBoundsTest(ItemFormTest):
             assert saved_item.free_price_max is None
 
 
+class VariationSalesPeriodFormTest(ItemFormTest):
+    def _form(self, **data):
+        with scope(organizer=self.orga1):
+            var = ItemVariation.objects.create(product=self.item1, value='Early Bird')
+        payload = {'value_0': 'Early Bird', 'active': 'on'}
+        payload.update(data)
+        return var, ProductVariationForm(
+            instance=var,
+            event=self.event1,
+            locales=self.event1.settings.get('locales'),
+            data=payload,
+        )
+
+    def test_sales_period_saved_in_event_timezone(self):
+        tz = ZoneInfo('Asia/Singapore')
+        # The control middleware activates the event timezone for every request.
+        with timezone.override(tz):
+            var, form = self._form(
+                available_from_0='2030-03-01',
+                available_from_1='10:00:00',
+                available_until_0='2030-03-31',
+                available_until_1='18:30:00',
+                show_sales_period='on',
+            )
+            assert form.is_valid(), form.errors
+            form.save()
+        var.refresh_from_db()
+        assert var.show_sales_period
+        assert var.available_from.astimezone(tz).strftime('%Y-%m-%d %H:%M') == '2030-03-01 10:00'
+        assert var.available_until.astimezone(tz).strftime('%Y-%m-%d %H:%M') == '2030-03-31 18:30'
+
+    def test_sales_period_is_optional(self):
+        var, form = self._form()
+        assert form.is_valid(), form.errors
+        form.save()
+        var.refresh_from_db()
+        assert var.available_from is None
+        assert var.available_until is None
+        assert not var.show_sales_period
+
+    def test_copied_product_keeps_variation_sales_period(self):
+        with scope(organizer=self.orga1):
+            source = Item.objects.create(event=self.event1, name='Summit', default_price=10)
+            ItemVariation.objects.create(
+                product=source,
+                value='Early Bird',
+                available_from=now() - datetime.timedelta(days=5),
+                available_until=now() - datetime.timedelta(days=1),
+                show_sales_period=True,
+            )
+            new_item = Item(event=self.event1)
+            form = ProductCreateForm(
+                instance=new_item,
+                event=self.event1,
+                user=self.user,
+                data={
+                    'name_0': 'Summit copy',
+                    'default_price': '10.00',
+                    'quota_option': 'none',
+                    'has_variations': 'on',
+                    'copy_from': str(source.pk),
+                },
+            )
+            assert form.is_valid(), form.errors
+            form.save()
+            copied = new_item.variations.get()
+            original = source.variations.get()
+        assert copied.available_from == original.available_from
+        assert copied.available_until == original.available_until
+        assert copied.show_sales_period
+
+    def test_end_before_start_is_rejected(self):
+        var, form = self._form(
+            available_from_0='2030-03-31',
+            available_from_1='10:00:00',
+            available_until_0='2030-03-01',
+            available_until_1='10:00:00',
+        )
+        assert not form.is_valid()

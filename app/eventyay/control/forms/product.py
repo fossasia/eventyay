@@ -608,6 +608,9 @@ class ProductCreateForm(I18nModelForm):
                         default_price=variation.default_price,
                         description=variation.description,
                         original_price=variation.original_price,
+                        available_from=variation.available_from,
+                        available_until=variation.available_until,
+                        show_sales_period=variation.show_sales_period,
                     )
             else:
                 ProductVariation.objects.create(product=instance, value=__('Standard'))
@@ -1014,13 +1017,20 @@ class ProductVariationForm(I18nModelForm):
             'default_price',
             'original_price',
             'description',
+            'available_from',
+            'available_until',
+            'show_sales_period',
             *ADMISSION_VALIDITY_FIELD_NAMES,
         ]
         field_classes = {
+            'available_from': SplitDateTimeField,
+            'available_until': SplitDateTimeField,
             'admission_valid_from': SplitDateTimeField,
             'admission_valid_until': SplitDateTimeField,
         }
         widgets = {
+            'available_from': SplitDateTimePickerWidget(),
+            'available_until': SplitDateTimePickerWidget(),
             'admission_valid_from': SplitDateTimePickerWidget(),
             'admission_valid_until': SplitDateTimePickerWidget(),
         }
