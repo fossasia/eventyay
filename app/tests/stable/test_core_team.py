@@ -3,12 +3,19 @@ import importlib
 import pytest
 from django.apps import apps
 from django.contrib.auth.models import AnonymousUser
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
+from rest_framework.test import APIClient
 
-from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.base.models import Event, Organizer, Team, TeamInvite, User
+from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.organizer import TeamAPIToken
-from eventyay.base.services.organizer_creation import create_core_team, is_event_core_team_member
+from eventyay.base.services.organizer_creation import (
+    can_manage_team_members,
+    create_core_team,
+    is_event_core_team_member,
+)
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.organizer_forms.team_form import TeamForm as ControlTeamForm
 from eventyay.event.forms import TeamForm as TalkTeamForm
@@ -161,3 +168,144 @@ def test_backfill_leaves_organizer_without_owner_team_alone(organizer):
     )
     run_backfill()
     assert core_team_ids() == set()
+
+
+@pytest.fixture
+def manager(organizer):
+    """A team manager who is not in the core team."""
+    user = User.objects.create_user('manager@example.com', 'manager')
+    team = Team.objects.create(organizer=organizer, name='Managers', all_events=True, can_change_teams=True)
+    team.members.add(user)
+    return user
+
+
+@pytest.mark.django_db
+def test_any_actor_may_manage_members_of_ordinary_teams(organizer, manager):
+    ordinary = Team.objects.create(organizer=organizer, name='Helpers')
+    assert can_manage_team_members(ordinary, user=manager)
+    assert can_manage_team_members(ordinary)
+
+
+@pytest.mark.django_db
+def test_only_the_core_side_may_manage_core_team_members(core_team, owner, manager, organizer):
+    token = TeamAPIToken.objects.create(team=core_team, name='Core token')
+    other_token = TeamAPIToken.objects.create(
+        team=Team.objects.get(organizer=organizer, name='Managers'), name='Manager token'
+    )
+    assert can_manage_team_members(core_team, user=owner)
+    assert can_manage_team_members(core_team, token=token)
+    assert not can_manage_team_members(core_team, user=manager)
+    assert not can_manage_team_members(core_team, token=other_token)
+    assert not can_manage_team_members(core_team, user=AnonymousUser())
+    assert not can_manage_team_members(core_team)
+
+
+@pytest.mark.django_db
+def test_inactive_core_member_and_foreign_core_token_may_not_manage(core_team, owner):
+    foreign = Organizer.objects.create(name='Foreign', slug='foreign')
+    foreign_token = TeamAPIToken.objects.create(team=create_core_team(foreign, owner), name='Foreign token')
+    assert not can_manage_team_members(core_team, token=foreign_token)
+    owner.is_active = False
+    owner.save()
+    assert not can_manage_team_members(core_team, user=owner)
+
+
+@pytest.mark.django_db
+def test_staff_session_may_manage_core_team_members(core_team):
+    staff = User.objects.create_user('staff-admin@example.com', 'x', is_staff=True)
+    assert not can_manage_team_members(core_team, user=staff, session_key='abc')
+    StaffSession.objects.create(user=staff, date_start=now(), session_key='abc')
+    staff = User.objects.get(pk=staff.pk)  # the staff session lookup is cached per user object
+    assert can_manage_team_members(core_team, user=staff, session_key='abc')
+    assert not can_manage_team_members(core_team, user=staff, session_key='other')
+
+
+def invite_post(team, email, **extra):
+    return {'team_action': 'members', 'team_id': team.pk, f'team-{team.pk}-invite-user': email, **extra}
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_manager_cannot_invite_themselves_into_core_team_on_organizer_page(
+    client, core_team, manager, organizer, event
+):
+    client.force_login(manager)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    response = client.post(url, invite_post(core_team, manager.email), follow=True)
+    assert 'Only members of the Core Organizing Team' in response.content.decode()
+    assert not TeamInvite.all_objects.filter(team=core_team).exists()
+    assert not is_event_core_team_member(manager, event)
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_manager_cannot_change_core_team_members_on_organizer_page(client, core_team, owner, manager, organizer):
+    pending = core_team.invites.create(email='pending@example.com')
+    client.force_login(manager)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    base = {'team_action': 'members', 'team_id': core_team.pk}
+    for action in (
+        {'remove-member': owner.pk},
+        {'remove-invite': pending.pk},
+        {'resend-invite': pending.pk},
+    ):
+        response = client.post(url, {**base, **action}, follow=True)
+        assert 'Only members of the Core Organizing Team' in response.content.decode()
+    assert list(core_team.members.all()) == [owner]
+    assert TeamInvite.all_objects.filter(pk=pending.pk).exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_core_member_can_invite_into_core_team_on_organizer_page(client, core_team, owner, organizer):
+    client.force_login(owner)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    client.post(url, invite_post(core_team, 'new-owner@example.com'), follow=True)
+    assert TeamInvite.all_objects.filter(team=core_team, email='new-owner@example.com').exists()
+
+
+@pytest.mark.django_db
+def test_organizer_api_refuses_core_team_member_changes_by_non_core_token(
+    core_team, owner, manager, organizer, allow_all_entitlements
+):
+    manager_team = Team.objects.get(organizer=organizer, name='Managers')
+    token = TeamAPIToken.objects.create(team=manager_team, name='Manager token')
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+    base = f'/api/v1/organizers/{organizer.slug}/teams/{core_team.pk}'
+
+    assert client.post(f'{base}/invites/', {'email': manager.email}).status_code == 403
+    assert client.delete(f'{base}/members/{owner.pk}/').status_code == 403
+    assert not TeamInvite.all_objects.filter(team=core_team).exists()
+    assert list(core_team.members.all()) == [owner]
+
+
+@pytest.mark.django_db
+def test_organizer_api_lets_core_team_token_invite_into_core_team(
+    core_team, organizer, allow_all_entitlements, django_capture_on_commit_callbacks
+):
+    token = TeamAPIToken.objects.create(team=core_team, name='Core token')
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            f'/api/v1/organizers/{organizer.slug}/teams/{core_team.pk}/invites/', {'email': 'new-owner@example.com'}
+        )
+    assert response.status_code == 201
+    assert TeamInvite.all_objects.filter(team=core_team, email='new-owner@example.com').exists()
+
+
+@pytest.mark.django_db
+def test_invites_to_ordinary_teams_are_not_restricted(
+    organizer, manager, allow_all_entitlements, django_capture_on_commit_callbacks
+):
+    ordinary = Team.objects.create(organizer=organizer, name='Helpers')
+    manager_team = Team.objects.get(organizer=organizer, name='Managers')
+    token = TeamAPIToken.objects.create(team=manager_team, name='Manager token')
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + token.token)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            f'/api/v1/organizers/{organizer.slug}/teams/{ordinary.pk}/invites/', {'email': 'helper@example.com'}
+        )
+    assert response.status_code == 201

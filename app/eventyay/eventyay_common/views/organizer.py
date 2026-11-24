@@ -17,7 +17,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
-from eventyay.base.services.organizer_creation import create_core_team
+from eventyay.base.services.organizer_creation import CORE_TEAM_MEMBERS_DENIED, can_manage_team_members, create_core_team
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
@@ -455,6 +455,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_members(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        if not can_manage_team_members(
+            team, user=self.request.user, session_key=self.request.session.session_key
+        ):
+            messages.error(self.request, CORE_TEAM_MEMBERS_DENIED)
+            return self._redirect_to_team_permissions(team.pk)
         invite_form_prefix = self._invite_form_prefix(team)
         prefixed_user_field = f'{invite_form_prefix}-user'
         invite_form = InviteForm(
