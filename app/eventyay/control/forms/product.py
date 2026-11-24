@@ -608,6 +608,8 @@ class ProductCreateForm(I18nModelForm):
                         default_price=variation.default_price,
                         description=variation.description,
                         original_price=variation.original_price,
+                        available_from=variation.available_from,
+                        available_until=variation.available_until,
                     )
             else:
                 ProductVariation.objects.create(product=instance, value=__('Standard'))

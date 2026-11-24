@@ -589,7 +589,7 @@ class CartManager:
                     )
 
             quotas = list(cp.quotas)
-            if not quotas:
+            if not quotas or not cp.product.is_available() or (cp.variation and not cp.variation.is_available()):
                 self._operations.append(self.RemoveOperation(position=cp))
                 err = error_messages['unavailable']
                 continue
