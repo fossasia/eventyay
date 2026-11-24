@@ -897,6 +897,23 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
             'discounted one. This is just a cosmetic setting and will not actually impact pricing.'
         ),
     )
+    available_from = models.DateTimeField(
+        verbose_name=_('Available from'),
+        null=True,
+        blank=True,
+        help_text=_('This variation will not be sold before the given date and time.'),
+    )
+    available_until = models.DateTimeField(
+        verbose_name=_('Available until'),
+        null=True,
+        blank=True,
+        help_text=_('This variation will not be sold after the given date and time.'),
+    )
+    show_sales_period = models.BooleanField(
+        verbose_name=_('Show sales period publicly'),
+        help_text=_('If checked, the sales start and end of this variation are shown on the ticket shop page.'),
+        default=False,
+    )
     ADMISSION_VALIDITY_MODE_INHERIT = 'inherit'
     ADMISSION_VALIDITY_MODE_CHOICES = (
         (ADMISSION_VALIDITY_MODE_INHERIT, _('Same as product')),
@@ -931,6 +948,31 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
     @property
     def price(self):
         return self.default_price if self.default_price is not None else self.product.default_price
+
+    def is_available_by_time(self, now_dt: datetime = None) -> bool:
+        now_dt = now_dt or now()
+        if self.available_from and self.available_from > now_dt:
+            return False
+        if self.available_until and self.available_until < now_dt:
+            return False
+        return True
+
+    def is_available(self, now_dt: datetime = None) -> bool:
+        """
+        Returns whether this variation is active and inside its (optional) sales period.
+        """
+        return bool(self.active) and self.is_available_by_time(now_dt)
+
+    def get_sales_state(self, now_dt: datetime = None) -> str:
+        """
+        One of ``'upcoming'``, ``'expired'`` or ``'current'``, based on the sales period only.
+        """
+        now_dt = now_dt or now()
+        if self.available_from and self.available_from > now_dt:
+            return 'upcoming'
+        if self.available_until and self.available_until < now_dt:
+            return 'expired'
+        return 'current'
 
     def tax(
         self,
@@ -988,6 +1030,11 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
                     t.name = 'MIXED!'
 
         return t
+
+    def clean(self):
+        super().clean()
+        if self.available_from and self.available_until and self.available_until < self.available_from:
+            raise ValidationError(_("The variation's sales period cannot end before it starts."))
 
     def delete(self, *args, **kwargs):
         self.vouchers.update(product=None, variation=None, quota=None)

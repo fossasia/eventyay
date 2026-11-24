@@ -3434,3 +3434,54 @@ def test_subevent_date_updates_order_date():
 
         assert order1.last_modified > o1lm
         assert order2.last_modified == o2lm
+
+
+class ProductVariationSalesPeriodTest(TestCase):
+    def setUp(self):
+        self.organizer = Organizer.objects.create(name='Dummy', slug='dummy')
+        self.event = Event.objects.create(
+            organizer=self.organizer,
+            name='Dummy',
+            slug='dummy',
+            date_from=now(),
+        )
+        with scope(organizer=self.organizer):
+            self.product = Item.objects.create(event=self.event, name='Ticket', default_price=10)
+
+    def _variation(self, **kwargs):
+        with scope(organizer=self.organizer):
+            return ItemVariation.objects.create(product=self.product, value='Var', **kwargs)
+
+    def test_no_period_is_always_available(self):
+        var = self._variation()
+        assert var.is_available()
+        assert var.get_sales_state() == 'current'
+
+    def test_upcoming(self):
+        var = self._variation(available_from=now() + timedelta(hours=1))
+        assert not var.is_available()
+        assert var.get_sales_state() == 'upcoming'
+
+    def test_expired(self):
+        var = self._variation(available_until=now() - timedelta(hours=1))
+        assert not var.is_available()
+        assert var.get_sales_state() == 'expired'
+
+    def test_inside_period(self):
+        var = self._variation(available_from=now() - timedelta(hours=1), available_until=now() + timedelta(hours=1))
+        assert var.is_available()
+        assert var.get_sales_state() == 'current'
+
+    def test_inactive_variation_is_never_available(self):
+        var = self._variation(active=False)
+        assert not var.is_available()
+
+    def test_end_before_start_is_invalid(self):
+        var = ItemVariation(
+            product=self.product,
+            value='Var',
+            available_from=now() + timedelta(hours=2),
+            available_until=now() + timedelta(hours=1),
+        )
+        with pytest.raises(ValidationError):
+            var.clean()

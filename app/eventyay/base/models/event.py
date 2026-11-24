@@ -364,6 +364,8 @@ class EventMixin:
         sq_active_variation = (
             ProductVariation.objects.filter(
                 Q(active=True)
+                & Q(Q(available_from__isnull=True) | Q(available_from__lte=now()))
+                & Q(Q(available_until__isnull=True) | Q(available_until__gte=now()))
                 & Q(product__active=True)
                 & Q(Q(product__available_from__isnull=True) | Q(product__available_from__lte=now()))
                 & Q(Q(product__available_until__isnull=True) | Q(product__available_until__gte=now()))

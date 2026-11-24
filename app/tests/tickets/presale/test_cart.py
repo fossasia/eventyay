@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from django.test import TestCase
 from django.utils.timezone import now
 from django_countries.fields import Country
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.decimal import round_decimal
 from eventyay.base.models import (
@@ -878,6 +878,53 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 0)
+
+    def _add_shirt_red_and_count(self):
+        self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
+            follow=True,
+        )
+        with scope(organizer=self.orga):
+            return CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count()
+
+    def test_variation_sales_not_started(self):
+        self.shirt_red.available_from = now() + timedelta(hours=1)
+        self.shirt_red.save()
+        assert self._add_shirt_red_and_count() == 0
+
+    def test_variation_sales_ended(self):
+        self.shirt_red.available_until = now() - timedelta(hours=1)
+        self.shirt_red.save()
+        assert self._add_shirt_red_and_count() == 0
+
+    def test_renew_expired_position_of_ended_variation(self):
+        # The expired position cannot be renewed any more, but it must not block other additions.
+        self.shirt_red.available_until = now() - timedelta(hours=1)
+        self.shirt_red.save()
+        with scope(organizer=self.orga):
+            expired = CartPosition.objects.create(
+                event=self.event,
+                cart_id=self.session_key,
+                product=self.shirt,
+                variation=self.shirt_red,
+                price=14,
+                expires=now() - timedelta(minutes=10),
+            )
+        self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1'},
+            follow=True,
+        )
+        with scope(organizer=self.orga):
+            assert not CartPosition.objects.filter(pk=expired.pk).exists()
+            assert CartPosition.objects.filter(cart_id=self.session_key, product=self.ticket).count() == 1
+
+    def test_variation_inside_sales_period(self):
+        self.shirt_red.available_from = now() - timedelta(hours=1)
+        self.shirt_red.available_until = now() + timedelta(hours=1)
+        self.shirt_red.save()
+        assert self._add_shirt_red_and_count() == 1
 
     def test_variation(self):
         response = self.client.post(
