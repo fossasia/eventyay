@@ -115,9 +115,9 @@ def test_card_detail_view(organizer, admin_user, gift_card, client):
     content = resp.content.decode()
     assert gift_card.secret in content
     assert '42.00' in content
-    assert 'id="manual-transaction-form"' in content
-    assert 'id="revert-transaction-form"' in content
-    assert 'form="manual-transaction-form"' in content
+    assert "id='manual-transaction-form'" in content
+    assert "id='revert-transaction-form'" in content
+    assert "form='manual-transaction-form'" in content
 
 
 @pytest.mark.django_db
@@ -186,6 +186,10 @@ def test_card_detail_view_transact_revert_refund(organizer, admin_user, gift_car
         t = gift_card.transactions.create(value=14, order=o, refund=r)
 
     client.login(email='dummy@dummy.dummy', password='dummy')
+    resp = client.get(f'/control/organizer/dummy/giftcard/{gift_card.pk}/')
+    content = resp.content.decode()
+    assert f"name='revert' value='{t.pk}'" in content
+    assert "form='revert-transaction-form'" in content
     r = client.post(
         f'/control/organizer/dummy/giftcard/{gift_card.pk}/',
         {'revert': str(t.pk)},

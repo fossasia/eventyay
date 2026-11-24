@@ -55,10 +55,10 @@
                         {% trans "Transactions" %}
                     </h3>
                 </div>
-                <form id="revert-transaction-form" method="post" action="">
+                <form id='revert-transaction-form' method='post' action=''>
                     {% csrf_token %}
                 </form>
-                <form id="manual-transaction-form" method="post" action="">
+                <form id='manual-transaction-form' method='post' action=''>
                     {% csrf_token %}
                 </form>
                 <table class="panel-body table">
@@ -80,7 +80,7 @@
                                     </a>
                                     {% if t.refund and t.value > 0 and t.value <= card.value %}
                                         <button type="submit" name="revert" value="{{ t.pk }}"
-                                                form="revert-transaction-form"
+                                                form='revert-transaction-form'
                                                 class="btn btn-default btn-xs" data-toggle="tooltip"
                                                 title="{% trans "Create a payment on the respective order that cancels out with this transaction. The order will then likely be overpaid." %}">
                                             <span class="fa fa-repeat"></span>
@@ -102,11 +102,11 @@
                         <td></td>
                         <td>
                             <input type="text" class="form-control helper-display-block" placeholder="{% trans "Text" %}"
-                                    name="text" form="manual-transaction-form">
+                                    name="text" form='manual-transaction-form'>
                         </td>
                         <td class="text-right form-inline">
-                            <input type="text" class="form-control input-sm" placeholder="{% trans "Value" %}" name="value" form="manual-transaction-form">
-                            <button type="submit" class="btn btn-primary" form="manual-transaction-form">
+                            <input type="text" class="form-control input-sm" placeholder="{% trans "Value" %}" name="value" form='manual-transaction-form'>
+                            <button type="submit" class="btn btn-primary" form='manual-transaction-form'>
                                 <span class="fa fa-plus"></span>
                             </button>
                         </td>
