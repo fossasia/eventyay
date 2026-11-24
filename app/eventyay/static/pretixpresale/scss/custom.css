@@ -363,7 +363,7 @@ header .header-row-right {
 }
 
 .variation-option {
-    padding-left: 18px;
+    padding-left: 0;
 }
 
 .variation-option > div {
@@ -375,34 +375,32 @@ header .header-row-right {
     position: relative;
 }
 
-.variation-option > div:first-child::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 2px;
-    width: 1px;
-    background: var(--color-grey-light, #d0d0d0);
-}
-
-.variation-option > div:first-child::after {
-    content: '';
-    position: absolute;
-    top: 0.75em;
-    left: 2px;
-    width: 10px;
-    height: 1px;
-    background: var(--color-grey-light, #d0d0d0);
-}
-
 .variation-option h5 {
-    padding-left: 16px;
     margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.variation-option h5 label {
+    font-weight: inherit;
+    margin-bottom: 0;
+    cursor: default;
+}
+
+.variation-option.variation-upcoming h5 label,
+.variation-option.variation-expired h5 label {
+    font-weight: 500;
+}
+
+.variation-deadline-inline {
+    font-weight: normal;
+    font-size: 0.9em;
+    color: var(--color-grey-dark, #777);
+    margin-left: 4px;
 }
 
 .variation-option .variation-description {
     margin: 0;
-    padding-left: 16px;
 }
 
 .variation-option .variation-description p {
@@ -410,19 +408,19 @@ header .header-row-right {
 }
 
 .variation-option.variation-compact {
-    padding-top: 4px;
-    padding-bottom: 4px;
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
 .variation-option.variation-upcoming,
 .variation-option.variation-expired {
-    opacity: 0.75;
+    opacity: 0.85;
 }
 
 .variation-option .variation-deadline {
-    padding-left: 16px;
-    font-size: 0.85em;
+    font-size: 0.88em;
     margin-top: 2px;
+    color: var(--color-grey-dark, #777);
 }
 
 .variation-selector-label.is-exclusive-disabled,
@@ -434,14 +432,6 @@ header .header-row-right {
 
 .availability-box .label {
     display: inline-block;
-    margin-bottom: 5px;
-}
-
-.availability-box small,
-.availability-box .variation-status-date {
-    display: block;
-    line-height: 1.3;
-    font-size: 0.85em;
-    margin-top: 3px;
+    vertical-align: middle;
 }
 
