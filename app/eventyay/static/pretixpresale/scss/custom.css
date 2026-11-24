@@ -431,3 +431,17 @@ header .header-row-right {
 .product-row.simple.is-exclusive-disabled {
     opacity: 0.55;
 }
+
+.availability-box .label {
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.availability-box small,
+.availability-box .variation-status-date {
+    display: block;
+    line-height: 1.3;
+    font-size: 0.85em;
+    margin-top: 3px;
+}
+

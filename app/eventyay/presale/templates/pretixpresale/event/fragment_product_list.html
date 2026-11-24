@@ -173,14 +173,14 @@
                                     <div class="col-md-2 col-xs-6 availability-box unavailable">
                                         <span class="label label-info">{% trans "UPCOMING" %}</span>
                                         {% if event.settings.show_variation_sales_deadlines and var.available_from %}
-                                            <br/><small class="text-muted">{% blocktrans trimmed with date=var.available_from|date:"SHORT_DATE_FORMAT" time=var.available_from|time:"TIME_FORMAT" %}From {{ date }} {{ time }}{% endblocktrans %}</small>
+                                            <span class="variation-status-date text-muted">{% blocktrans trimmed with date=var.available_from|date:"SHORT_DATE_FORMAT" time=var.available_from|time:"TIME_FORMAT" %}From {{ date }} {{ time }}{% endblocktrans %}</span>
                                         {% endif %}
                                     </div>
                                 {% elif var.sales_state == 'expired' %}
                                     <div class="col-md-2 col-xs-6 availability-box gone">
                                         <span class="label label-default">{% trans "SALE ENDED" %}</span>
                                         {% if event.settings.show_variation_sales_deadlines and var.available_until %}
-                                            <br/><small class="text-muted">{% blocktrans trimmed with date=var.available_until|date:"SHORT_DATE_FORMAT" time=var.available_until|time:"TIME_FORMAT" %}Ended {{ date }} {{ time }}{% endblocktrans %}</small>
+                                            <span class="variation-status-date text-muted">{% blocktrans trimmed with date=var.available_until|date:"SHORT_DATE_FORMAT" time=var.available_until|time:"TIME_FORMAT" %}Ended {{ date }} {{ time }}{% endblocktrans %}</span>
                                         {% endif %}
                                     </div>
                                 {% elif product.require_voucher %}

@@ -3080,14 +3080,14 @@ class CartAddonTest(CartTestMixin, TestCase):
             category=self.workshopcat,
             default_price=12,
         )
-        self.workshop3a = ItemVariation.objects.create(item=self.workshop3, value='3a')
-        self.workshop3b = ItemVariation.objects.create(item=self.workshop3, value='3b')
-        self.workshopquota.items.add(self.workshop1)
-        self.workshopquota.items.add(self.workshop2)
-        self.workshopquota.items.add(self.workshop3)
+        self.workshop3a = ItemVariation.objects.create(product=self.workshop3, value='3a')
+        self.workshop3b = ItemVariation.objects.create(product=self.workshop3, value='3b')
+        self.workshopquota.products.add(self.workshop1)
+        self.workshopquota.products.add(self.workshop2)
+        self.workshopquota.products.add(self.workshop3)
         self.workshopquota.variations.add(self.workshop3a)
         self.workshopquota.variations.add(self.workshop3b)
-        self.addon1 = ItemAddOn.objects.create(base_item=self.ticket, addon_category=self.workshopcat)
+        self.addon1 = ItemAddOn.objects.create(base_product=self.ticket, addon_category=self.workshopcat)
         self.cm = CartManager(event=self.event, cart_id=self.session_key)
 
     @classscope(attr='orga')
@@ -3739,14 +3739,14 @@ class CartAddonTest(CartTestMixin, TestCase):
     def test_expand_expired(self):
         cp1 = CartPosition.objects.create(
             expires=now() - timedelta(minutes=10),
-            item=self.ticket,
+            product=self.ticket,
             price=Decimal('23.00'),
             event=self.event,
             cart_id=self.session_key,
         )
         cp2 = CartPosition.objects.create(
             expires=now() - timedelta(minutes=10),
-            item=self.workshop1,
+            product=self.workshop1,
             price=Decimal('12.00'),
             event=self.event,
             cart_id=self.session_key,
@@ -3763,7 +3763,7 @@ class CartAddonTest(CartTestMixin, TestCase):
     @classscope(attr='orga')
     def test_expand_expired_refresh_voucher(self):
         v = Voucher.objects.create(
-            item=self.ticket,
+            product=self.ticket,
             value=Decimal('20.00'),
             event=self.event,
             price_mode='set',
@@ -3773,7 +3773,7 @@ class CartAddonTest(CartTestMixin, TestCase):
         )
         cp1 = CartPosition.objects.create(
             expires=now() - timedelta(minutes=10),
-            item=self.ticket,
+            product=self.ticket,
             price=Decimal('21.50'),
             event=self.event,
             cart_id=self.session_key,
@@ -3784,6 +3784,55 @@ class CartAddonTest(CartTestMixin, TestCase):
         cp1.refresh_from_db()
         assert cp1.expires > now()
         assert cp1.price_before_voucher == Decimal('23.00')
+
+    @classscope(attr='orga')
+    def test_expand_expired_unavailable_parent(self):
+        self.ticket.available_until = now() - timedelta(days=1)
+        self.ticket.save()
+        cp1 = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            product=self.ticket,
+            price=Decimal('23.00'),
+            event=self.event,
+            cart_id=self.session_key,
+        )
+        cp2 = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            product=self.workshop1,
+            price=Decimal('12.00'),
+            event=self.event,
+            cart_id=self.session_key,
+            addon_to=cp1,
+        )
+        self.cm.extend_expired_positions()
+        self.cm.commit()
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(pk__in=[cp1.pk, cp2.pk]).exists()
+
+    @classscope(attr='orga')
+    def test_expand_expired_unavailable_child_variation(self):
+        self.shirt_red.available_until = now() - timedelta(days=1)
+        self.shirt_red.save()
+        cp1 = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            product=self.ticket,
+            price=Decimal('23.00'),
+            event=self.event,
+            cart_id=self.session_key,
+        )
+        cp2 = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            product=self.shirt,
+            variation=self.shirt_red,
+            price=Decimal('12.00'),
+            event=self.event,
+            cart_id=self.session_key,
+            addon_to=cp1,
+        )
+        self.cm.extend_expired_positions()
+        self.cm.commit()
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(pk__in=[cp1.pk, cp2.pk]).exists()
 
 
 class CartBundleTest(CartTestMixin, TestCase):

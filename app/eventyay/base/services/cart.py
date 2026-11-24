@@ -478,6 +478,13 @@ class CartManager:
             else:
                 raise
 
+    def _discard_extend_op(self, op):
+        if op.quotas:
+            for quota in op.quotas:
+                self._quota_diff[quota] -= 1
+        if op.voucher:
+            self._voucher_use_diff[op.voucher] -= 1
+
     def extend_expired_positions(self):
         requires_seat = Exists(
             SeatCategoryMapping.objects.filter(
@@ -590,7 +597,23 @@ class CartManager:
 
             quotas = list(cp.quotas)
             if not quotas or not cp.product.is_available() or (cp.variation and not cp.variation.is_available()):
-                self._operations.append(self.RemoveOperation(position=cp))
+                root_pos = cp.addon_to if (cp.addon_to_id and cp.addon_to) else cp
+                root_id = root_pos.pk
+
+                kept_operations = []
+                for existing_op in self._operations:
+                    if isinstance(existing_op, self.ExtendOperation) and (
+                        existing_op.position.pk == root_id or existing_op.position.addon_to_id == root_id
+                    ):
+                        self._discard_extend_op(existing_op)
+                    else:
+                        kept_operations.append(existing_op)
+                self._operations = kept_operations
+
+                if not any(isinstance(op, self.RemoveOperation) and op.position.pk == root_id for op in self._operations):
+                    self._operations.append(self.RemoveOperation(position=root_pos))
+                if cp.pk != root_id and not any(isinstance(op, self.RemoveOperation) and op.position.pk == cp.pk for op in self._operations):
+                    self._operations.append(self.RemoveOperation(position=cp))
                 err = error_messages['unavailable']
                 continue
 
@@ -618,6 +641,18 @@ class CartManager:
                 self._voucher_use_diff[cp.voucher] += 1
 
             self._operations.append(op)
+
+        removed_positions = {op.position.pk for op in self._operations if isinstance(op, self.RemoveOperation)}
+        if removed_positions:
+            kept_operations = []
+            for op in self._operations:
+                if isinstance(op, self.ExtendOperation) and (
+                    op.position.pk in removed_positions or op.position.addon_to_id in removed_positions
+                ):
+                    self._discard_extend_op(op)
+                else:
+                    kept_operations.append(op)
+            self._operations = kept_operations
         return err
 
     @staticmethod
