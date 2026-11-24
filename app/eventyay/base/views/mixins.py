@@ -157,6 +157,16 @@ class BaseQuestionsViewMixin:
 
         return storage
 
+    def questions_are_valid(self):
+        """Whether every question form validates, without writing anything to the database.
+
+        ``save()`` persists attendee data position by position, so callers that have further
+        forms to validate must check those first. ``all()`` would short-circuit and skip the
+        remaining forms, so every form is validated to surface all errors at once.
+        """
+        results = [form.is_valid() for form in self.forms]
+        return all(results)
+
     def save(self):
         failed = False
         for form in self.forms:
