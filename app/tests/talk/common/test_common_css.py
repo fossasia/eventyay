@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -219,3 +220,43 @@ def test_organizer_custom_primary_font_precedence_in_presale_template():
     assert presale_html.count('common/css/_fonts.css') == 1
     assert base_public_html.count('common/css/_fonts.css') == 1
     assert presale_html.index('/media/pub/org/presale.1234.css') < presale_html.index('common/css/_fonts.css')
+
+
+def test_organizer_dashboard_kpi_responsive_layout():
+    css_path = finders.find('eventyay-common/css/common_dashboard.css')
+    assert css_path is not None
+    css_content = Path(css_path).read_text(encoding='utf-8')
+
+    # .od-kpi-grid uses responsive auto-fit / minmax sizing rule with a six-column cap
+    kpi_grid_match = re.search(r'\.od-kpi-grid\s*\{([^}]+)\}', css_content)
+    assert kpi_grid_match is not None
+    kpi_grid_rules = kpi_grid_match.group(1)
+    kpi_grid_pattern = (
+        r'grid-template-columns:\s*'
+        r'repeat\(\s*auto-fit,\s*'
+        r'minmax\(\s*'
+        r'max\(\s*170px,\s*calc\(\s*\(\s*100%\s*-\s*5\s*\*\s*12px\s*\)\s*/\s*6\s*\)\s*\),\s*'
+        r'1fr\s*\)\s*\)'
+    )
+    assert re.search(kpi_grid_pattern, kpi_grid_rules) is not None
+
+    # .od-kpi-label includes overflow-wrap: anywhere
+    kpi_label_match = re.search(r'\.od-kpi-label\s*\{([^}]+)\}', css_content)
+    assert kpi_label_match is not None
+    assert re.search(r'overflow-wrap:\s*anywhere', kpi_label_match.group(1)) is not None
+
+    # Obsolete 1200px and 991px fixed-column overrides are absent
+    for query in ('1200px', '991px'):
+        for match in re.finditer(rf'@media[^{{]*{query}[^{{]*\{{((?:[^{{}}]*\{{[^{{}}]*\}})*\s*)\}}', css_content):
+            assert '.od-kpi-grid' not in match.group(1)
+
+    # Existing mobile breakpoint (767px) sets exactly 1fr columns for .od-kpi-grid
+    mobile_match = re.search(
+        r'@media[^{]*max-width:\s*767px[^{]*\{'
+        r'(?:[^{}]*\{[^{}]*\})*?'
+        r'[^{}]*\.od-kpi-grid[^{]*\{'
+        r'([^}]+)\}',
+        css_content,
+    )
+    assert mobile_match is not None
+    assert re.search(r'(?:^|;)\s*grid-template-columns:\s*1fr\s*(?:;|$)', mobile_match.group(1)) is not None
