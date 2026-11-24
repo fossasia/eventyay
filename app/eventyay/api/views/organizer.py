@@ -25,7 +25,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from eventyay.api.auth.permission import _TOKEN_AUTH_TYPES
-from eventyay.api.auth.team_members import ensure_can_manage_team_members
+from eventyay.api.auth.team_members import ensure_can_manage_team_members, ensure_core_team_keeps_a_member
 from eventyay.api.models import OAuthAccessToken
 from eventyay.api.serializers.organizer import (
     DeviceSerializer,
@@ -434,6 +434,7 @@ class TeamMemberViewSet(DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     @transaction.atomic()
     def perform_destroy(self, instance):
         ensure_can_manage_team_members(self.request, self.team)
+        ensure_core_team_keeps_a_member(self.team, instance)
         self.team.members.remove(instance)
         self.team.log_action(
             'eventyay.team.member.removed',
@@ -510,6 +511,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
 
     @transaction.atomic()
     def perform_destroy(self, instance):
+        ensure_can_manage_team_members(self.request, self.team)
         instance.active = False
         instance.save()
         self.team.log_action(
@@ -523,6 +525,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
 
     @transaction.atomic()
     def perform_create(self, serializer):
+        ensure_can_manage_team_members(self.request, self.team)
         instance = serializer.save(team=self.team)
         self.team.log_action(
             'eventyay.team.token.created',

@@ -12,7 +12,6 @@ from rest_framework import exceptions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from eventyay.api.auth.team_members import ensure_can_manage_team_members
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.team import TeamInviteSerializer, TeamSerializer
@@ -96,7 +95,6 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def invite(self, request, *args, **kwargs):
         team = self.get_object()
-        ensure_can_manage_team_members(request, team)
         input_serializer = TeamInviteCreateSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         email = input_serializer.validated_data['email']
@@ -124,7 +122,6 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['delete'], url_path='invites/(?P<invite_id>[^/.]+)')
     def delete_invite(self, request, invite_id, *args, **kwargs):
         team = self.get_object()
-        ensure_can_manage_team_members(request, team)
         invite = get_object_or_404(TeamInvite, pk=invite_id, team=team)
         email = invite.email
         invite.delete()
@@ -148,7 +145,6 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='remove_member')
     def remove_member(self, request, *args, **kwargs):
         team = self.get_object()
-        ensure_can_manage_team_members(request, team)
         input_serializer = TeamMemberRemoveSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         user_code = input_serializer.validated_data['user_code']

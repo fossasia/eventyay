@@ -15,6 +15,7 @@ from eventyay.base.services.organizer_creation import (
     can_manage_team_members,
     create_core_team,
     is_event_core_team_member,
+    removes_last_active_core_member,
 )
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.organizer_forms.team_form import TeamForm as ControlTeamForm
@@ -309,3 +310,116 @@ def test_invites_to_ordinary_teams_are_not_restricted(
             f'/api/v1/organizers/{organizer.slug}/teams/{ordinary.pk}/invites/', {'email': 'helper@example.com'}
         )
     assert response.status_code == 201
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_manager_cannot_create_or_revoke_core_team_tokens_on_organizer_page(client, core_team, manager, organizer):
+    existing = core_team.tokens.create(name='Existing')
+    client.force_login(manager)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    base = {'team_action': 'tokens', 'team_id': core_team.pk}
+    for data in ({f'team-{core_team.pk}-token-name': 'Escalation'}, {'remove-token': existing.pk}):
+        response = client.post(url, {**base, **data}, follow=True)
+        assert 'Only members of the Core Organizing Team' in response.content.decode()
+    assert list(core_team.tokens.values_list('name', 'active')) == [('Existing', True)]
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_core_member_can_create_core_team_tokens_on_organizer_page(client, core_team, owner, organizer):
+    client.force_login(owner)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    client.post(
+        url,
+        {'team_action': 'tokens', 'team_id': core_team.pk, f'team-{core_team.pk}-token-name': 'Automation'},
+        follow=True,
+    )
+    assert list(core_team.tokens.values_list('name', flat=True)) == ['Automation']
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_manager_cannot_manage_core_team_tokens_on_event_api_page(client, core_team, manager, organizer, event):
+    existing = core_team.tokens.create(name='Existing')
+    client.force_login(manager)
+    url = reverse('eventyay_common:event.api', kwargs={'organizer': organizer.slug, 'event': event.slug})
+    for data in (
+        {'token_action': 'create', 'team_id': core_team.pk, f'token-{core_team.pk}-name': 'Escalation'},
+        {'token_action': 'revoke', 'team_id': core_team.pk, 'token_id': existing.pk},
+    ):
+        response = client.post(url, data, follow=True)
+        assert 'Only members of the Core Organizing Team' in response.content.decode()
+    assert list(core_team.tokens.values_list('name', 'active')) == [('Existing', True)]
+
+
+@pytest.mark.django_db
+def test_organizer_api_refuses_core_team_token_changes_by_non_core_token(
+    core_team, manager, organizer, allow_all_entitlements
+):
+    manager_team = Team.objects.get(organizer=organizer, name='Managers')
+    existing = core_team.tokens.create(name='Existing')
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + TeamAPIToken.objects.create(team=manager_team, name='M').token)
+    base = f'/api/v1/organizers/{organizer.slug}/teams/{core_team.pk}/tokens/'
+
+    assert client.post(base, {'name': 'Escalation'}).status_code == 403
+    assert client.delete(f'{base}{existing.pk}/').status_code == 403
+    assert list(core_team.tokens.values_list('name', 'active')) == [('Existing', True)]
+
+
+@pytest.mark.django_db
+def test_core_team_token_can_create_core_team_tokens_through_the_api(core_team, organizer, allow_all_entitlements):
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + TeamAPIToken.objects.create(team=core_team, name='Core').token)
+    response = client.post(f'/api/v1/organizers/{organizer.slug}/teams/{core_team.pk}/tokens/', {'name': 'Second'})
+    assert response.status_code == 201
+    assert core_team.tokens.filter(name='Second').exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_last_active_core_member_cannot_remove_themselves_on_organizer_page(
+    client, core_team, owner, manager, organizer
+):
+    client.force_login(owner)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    response = client.post(
+        url, {'team_action': 'members', 'team_id': core_team.pk, 'remove-member': owner.pk}, follow=True
+    )
+    assert 'cannot remove the last active member of the Core Organizing Team' in response.content.decode()
+    assert list(core_team.members.all()) == [owner]
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_core_member_can_be_removed_while_another_active_member_remains(client, core_team, owner, organizer):
+    second = User.objects.create_user('second-owner@example.com', 'x')
+    core_team.members.add(second)
+    client.force_login(owner)
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    client.post(url, {'team_action': 'members', 'team_id': core_team.pk, 'remove-member': second.pk}, follow=True)
+    assert list(core_team.members.all()) == [owner]
+
+
+@pytest.mark.django_db
+def test_inactive_core_members_do_not_count_as_remaining(core_team, owner):
+    inactive = User.objects.create_user('inactive-owner@example.com', 'x')
+    inactive.is_active = False
+    inactive.save()
+    core_team.members.add(inactive)
+    assert removes_last_active_core_member(core_team, owner)
+    assert not removes_last_active_core_member(core_team, inactive)
+    ordinary = Team.objects.create(organizer=core_team.organizer, name='Helpers')
+    ordinary.members.add(owner)
+    assert not removes_last_active_core_member(ordinary, owner)
+
+
+@pytest.mark.django_db
+def test_organizer_api_keeps_the_last_active_core_member(core_team, owner, organizer, allow_all_entitlements):
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + TeamAPIToken.objects.create(team=core_team, name='Core').token)
+    response = client.delete(f'/api/v1/organizers/{organizer.slug}/teams/{core_team.pk}/members/{owner.pk}/')
+    assert response.status_code == 400
+    assert 'last active member' in str(response.data)
+    assert list(core_team.members.all()) == [owner]

@@ -57,8 +57,9 @@ def is_event_core_team_member(user: User, event: Event) -> bool:
 
 CORE_TEAM_MEMBERS_DENIED = _(
     'Only members of the Core Organizing Team can add, invite or remove its members, '
-    'and resend or revoke its invitations.'
+    'resend or revoke its invitations, and create or revoke its API tokens.'
 )
+CORE_TEAM_LAST_MEMBER = _('You cannot remove the last active member of the Core Organizing Team.')
 
 
 def can_manage_team_members(
@@ -69,12 +70,13 @@ def can_manage_team_members(
     token: TeamAPIToken | None = None,
 ) -> bool:
     """
-    Whether the actor may add, invite or remove members of ``team``, or resend and revoke its invitations.
+    Whether the actor may add, invite or remove members of ``team``, resend and revoke its invitations, or
+    create and revoke its API tokens.
 
     Any team manager may do this for an ordinary team. For a core team it is limited to members of the
     organizer's core team, to the API tokens of that team, and to platform administrators with an active
     staff session. Otherwise a manager could invite themselves into the core team and pass
-    ``is_event_core_team_member()``.
+    ``is_event_core_team_member()``, or create a token of the core team and use it to do the same.
     """
     if not team.is_core_team:
         return True
@@ -88,3 +90,8 @@ def can_manage_team_members(
     if token is not None:
         return token.active and token.team.is_core_team and token.team.organizer_id == team.organizer_id
     return False
+
+
+def removes_last_active_core_member(team: Team, user: User) -> bool:
+    """Whether removing ``user`` would leave the core team without an active member."""
+    return team.is_core_team and not team.members.exclude(pk=user.pk).filter(is_active=True).exists()

@@ -17,7 +17,13 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
-from eventyay.base.services.organizer_creation import CORE_TEAM_MEMBERS_DENIED, can_manage_team_members, create_core_team
+from eventyay.base.services.organizer_creation import (
+    CORE_TEAM_LAST_MEMBER,
+    CORE_TEAM_MEMBERS_DENIED,
+    can_manage_team_members,
+    create_core_team,
+    removes_last_active_core_member,
+)
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
@@ -489,6 +495,10 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         except (User.DoesNotExist, ValueError):
             return self._redirect_to_team_permissions(team.pk)
 
+        if removes_last_active_core_member(team, user):
+            messages.error(self.request, CORE_TEAM_LAST_MEMBER)
+            return self._redirect_to_team_members_panel(team.pk)
+
         other_admin_teams = (
             self.request.organizer.teams.exclude(pk=team.pk)
             .filter(can_change_teams=True, members__isnull=False)
@@ -581,6 +591,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        if not can_manage_team_members(
+            team, user=self.request.user, session_key=self.request.session.session_key
+        ):
+            messages.error(self.request, CORE_TEAM_MEMBERS_DENIED)
+            return self._redirect_to_team_permissions(team.pk)
         token_form_prefix = self._token_form_prefix(team)
         prefixed_name_field = f'{token_form_prefix}-name'
         token_form = TokenForm(
