@@ -3971,11 +3971,11 @@ wheels = [
 
 [[package]]
 name = "urlman"
-version = "2.0.3"
+version = "2.0.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/96/84/98b4475229b1fd611a4b60bfa456bc139357698958288ee096c02568e0fe/urlman-2.0.3.tar.gz", hash = "sha256:40fe1b181914a61f0547e6686235b60fd74f325396bcaf1cdd0b63260e2984ae", size = 12034, upload-time = "2025-12-23T20:04:23.692Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/04/1c59c888ae3dedf769b093c3eeae55590cde60b3007dfa6dd4c769529b31/urlman-2.0.4.tar.gz", hash = "sha256:a6956db5feb6bf4f251c6cae37e2ce4614aae6c561749fc49af5f7cc099a3975", size = 12925, upload-time = "2026-11-20T18:42:44.288Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/cd/5ab829b7c17c11e7654cd51fd6607b19cd03d5a81cb0985ae1c4000e9deb/urlman-2.0.3-py2.py3-none-any.whl", hash = "sha256:9712a0be2893b3032ab29478a15a7af19fec02fdb2ed33dd13fde478958b7fc0", size = 11578, upload-time = "2025-12-23T20:04:22.468Z" },
+    { url = "https://files.pythonhosted.org/packages/71/3d/5c50f74e07178bfa2071c8b98740d637f8d5f76fd9fe9d7b5993006d6584/urlman-2.0.4-py2.py3-none-any.whl", hash = "sha256:1f625bd906beb49b6bac1c0699208c8c9bcbd595697a7a87eda79105414c4800", size = 11663, upload-time = "2026-11-20T18:42:43.291Z" },
 ]
 
 [[package]]
