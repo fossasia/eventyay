@@ -81,27 +81,28 @@
 				@changeDay="setCurrentDay($event)",
 				@fav="fav($event)",
 				@unfav="unfav($event)")
-			linear-schedule(v-if="pendingGridSessions.length",
-				:sessions="pendingGridSessions",
-				:rooms="rooms",
-				:currentDay="currentDay",
-				:now="now",
-				:hasAmPm="hasAmPm",
-				:timezone="currentTimezone",
-				:locale="locale",
-				:scrollParent="scrollParent",
-				:favs="favs",
-				:showFavCount="showPopularityOnSchedule",
-				:sortBy="effectiveSortBy",
-				:includeRoomSortKey="false",
-				:includeDateSortKey="true",
-				:includePopularitySortKey="sortIncludePopularity",
-				:onHomeServer="onHomeServer",
-				:disableAutoScroll="true",
-				:showBreaks="false",
-				:density="'default'",
-				@fav="fav($event)",
-				@unfav="unfav($event)")
+			.pending-sessions-section(v-if="pendingGridSessions.length")
+				linear-schedule(
+					:sessions="pendingGridSessions",
+					:rooms="rooms",
+					:currentDay="currentDay",
+					:now="now",
+					:hasAmPm="hasAmPm",
+					:timezone="currentTimezone",
+					:locale="locale",
+					:scrollParent="scrollParent",
+					:favs="favs",
+					:showFavCount="showPopularityOnSchedule",
+					:sortBy="effectiveSortBy",
+					:includeRoomSortKey="false",
+					:includeDateSortKey="true",
+					:includePopularitySortKey="sortIncludePopularity",
+					:onHomeServer="onHomeServer",
+					:disableAutoScroll="true",
+					:showBreaks="false",
+					:density="'default'",
+					@fav="fav($event)",
+					@unfav="unfav($event)")
 		linear-schedule(ref="scheduleDisplay", v-else,
 			:sessions="sessionsMode ? properSessions : sessions",
 			:rooms="rooms",
@@ -1999,6 +2000,11 @@ export default {
 
 .pretalx-schedule, dialog.pretalx-modal
 	color: rgb(13 15 16)
+
+.pretalx-schedule .pending-sessions-section
+	margin-top: 24px
+	padding-top: 16px
+	border-top: 1px solid $clr-dividers-light
 
 :host(:fullscreen)
 	background: #fff

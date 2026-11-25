@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-linear-schedule(v-scrollbar.y="", :class="'density-' + density")
-	.bucket(v-for="({date, sessions, isPending}, index) of sessionBuckets")
+	.bucket(v-for="({date, sessions, isPending}, index) of sessionBuckets", :class="{'pending-bucket': isPending, 'has-preceding-bucket': isPending && index > 0}")
 		.bucket-label(:ref="isPending ? 'pending' : getBucketName(date)", :data-date="isPending ? null : date.toISOString()")
 			.day(v-if="showDayHeaders && (isPending || index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0)") {{ isPending ? pendingHeaderLabel : date.clone().tz(timezone).format('dddd, D MMMM') }}
 			template(v-for="session of sessions")
@@ -385,6 +385,14 @@ export default {
 	min-height: 0
 	.bucket
 		padding-top: 8px
+		&.pending-bucket.has-preceding-bucket
+			margin-top: 20px
+			padding-top: 16px
+			border-top: 1px solid $clr-dividers-light
+		&.pending-bucket .bucket-label .day
+			text-transform: uppercase
+			letter-spacing: 0.04em
+			font-size: 13px
 		.bucket-label
 			font-size: 14px
 			font-weight: 500

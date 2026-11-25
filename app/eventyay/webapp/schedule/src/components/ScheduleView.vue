@@ -45,24 +45,45 @@
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		.schedule-content(ref="scrollParent")
-			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
-				ref="scheduleDisplay",
-				:sessions="filteredSessions",
-				:rooms="computedRooms",
-				:days="computedDays",
-				:currentDay="currentDay",
-				:now="resolvedNow",
-				:hasAmPm="resolvedHasAmPm",
-				:timezone="currentTimezone",
-				:locale="locale",
-				:scrollParent="$refs.scrollParent",
-				:favs="resolvedFavs",
-				:showFavCount="showFavCountOnSchedule",
-				:density="'default'",
-				:timeDensityMinutes="timeDensityMinutes",
-				@changeDay="setCurrentDay",
-				@fav="onFav",
-				@unfav="onUnfav")
+			template(v-if="showGrid && !sessionsMode")
+				grid-schedule-wrapper(
+					ref="scheduleDisplay",
+					:sessions="filteredSessions",
+					:rooms="computedRooms",
+					:days="computedDays",
+					:currentDay="currentDay",
+					:now="resolvedNow",
+					:hasAmPm="resolvedHasAmPm",
+					:timezone="currentTimezone",
+					:locale="locale",
+					:scrollParent="$refs.scrollParent",
+					:favs="resolvedFavs",
+					:showFavCount="showFavCountOnSchedule",
+					:density="'default'",
+					:timeDensityMinutes="timeDensityMinutes",
+					@changeDay="setCurrentDay",
+					@fav="onFav",
+					@unfav="onUnfav")
+				.pending-sessions-section(v-if="pendingGridSessions.length")
+					linear-schedule(
+						:sessions="pendingGridSessions",
+						:rooms="computedRooms",
+						:currentDay="currentDay",
+						:now="resolvedNow",
+						:hasAmPm="resolvedHasAmPm",
+						:timezone="currentTimezone",
+						:locale="locale",
+						:scrollParent="$refs.scrollParent",
+						:favs="resolvedFavs",
+						:showFavCount="showFavCountOnSchedule",
+						:sortBy="effectiveSortBy",
+						:includeRoomSortKey="false",
+						:includeDateSortKey="true",
+						:includePopularitySortKey="sortIncludePopularity",
+						:showBreaks="false",
+						:density="'default'",
+						@fav="onFav",
+						@unfav="onUnfav")
 			linear-schedule(v-else,
 				ref="scheduleDisplay",
 				:sessions="filteredSessions",
@@ -426,6 +447,10 @@ export default {
 			if (this.computedDays && !this.computedDays.length) return false
 			return !this.linearOnly && this.scrollParentWidth > 710
 		},
+		pendingGridSessions() {
+			if (!this.filteredSessions) return []
+			return this.filteredSessions.filter(s => s && s.id && !s.start)
+		},
 		linearScheduleGroupByDay() {
 			return !this.showGrid && this.computedDays.length > 1
 		},
@@ -753,6 +778,10 @@ export default {
 	font-size: 14px
 	color: rgb(13, 15, 16)
 	--pretalx-clr-text: rgb(13, 15, 16)
+	.pending-sessions-section
+		margin-top: 24px
+		padding-top: 16px
+		border-top: 1px solid $clr-dividers-light
 	overflow: hidden
 	&:fullscreen
 		background: #fff
