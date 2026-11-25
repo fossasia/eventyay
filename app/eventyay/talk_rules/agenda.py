@@ -425,7 +425,10 @@ PUBLIC_ACCEPTED_SCHEDULE_URLS = frozenset(
 
 def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kwargs=None):
     if url_name in PUBLIC_ACCEPTED_SCHEDULE_URLS:
-        return bool(event.current_schedule and accepted_sessions_publicly_visible(event))
+        if not accepted_sessions_publicly_visible(event):
+            return False
+        with scope(event=event):
+            return bool(event.current_schedule)
     if url_name not in AGENDA_PAGES_WITHOUT_TALKS_PUBLISHED:
         return False
     if user is None:
@@ -433,7 +436,10 @@ def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kw
     if url_name == 'speakers':
         return agenda_speakers_page_reachable(user, event)
     if url_name in ('public-stars', 'public-stars-json'):
-        return bool(event.current_schedule and not event.private_testmode_talks_enabled)
+        if event.private_testmode_talks_enabled:
+            return False
+        with scope(event=event):
+            return bool(event.current_schedule)
     if url_name in ('talk.detail', 'talk.starrers', 'feedback', 'feedback.react', 'feedback.public_action'):
         slug = (url_kwargs or {}).get('slug')
         if not slug:

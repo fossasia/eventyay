@@ -25,6 +25,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from django_context_decorator import context
+from django_scopes import scope
 
 from eventyay.agenda.views.utils import (
     CACHE_TTL,
@@ -224,10 +225,10 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             return True
         # Accepted sessions can appear on the schedule once a release exists.
         # The WIP preview URL stays on the organiser permission above.
-        return bool(
-            self.request.event.current_schedule
-            and accepted_sessions_publicly_visible(self.request.event)
-        )
+        if not accepted_sessions_publicly_visible(self.request.event):
+            return False
+        with scope(event=self.request.event):
+            return bool(self.request.event.current_schedule)
 
     def get_text(self, request, **kwargs):
         data = ScheduleData(

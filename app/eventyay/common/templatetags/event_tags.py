@@ -7,7 +7,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import QueryDict
 from django.urls import reverse
 
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Order, OrderPosition
@@ -214,7 +214,12 @@ def can_list_schedule(context, event=None):
         and event.current_schedule
         and not event.private_testmode_talks_enabled
     )
-    return timetable_public or bool(event.current_schedule and accepted_sessions_publicly_visible(event))
+    if timetable_public:
+        return True
+    if not accepted_sessions_publicly_visible(event):
+        return False
+    with scope(event=event):
+        return bool(event.current_schedule)
 
 
 @register.simple_tag(takes_context=True)
