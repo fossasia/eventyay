@@ -250,8 +250,9 @@ export default {
 					class: 'chat-prosemirror',
 				},
 			},
-			onUpdate: () => {
-				this.sendError = null
+			onUpdate: ({ transaction }) => {
+				// only real draft changes hide the last error, not e.g. an editability change
+				if (transaction.docChanged) this.sendError = null
 				window.clearTimeout(this.autocompleteUpdateTimeout)
 				this.autocompleteUpdateTimeout = window.setTimeout(this.updateAutocomplete, 0)
 			},
@@ -461,7 +462,8 @@ export default {
 			// lock the draft while the request runs, so clearing it on success cannot drop newer input
 			this.sending = true
 			this.sendError = null
-			this.editor?.setEditable(false)
+			// emitUpdate false: locking is not a draft change
+			this.editor?.setEditable(false, false)
 			try {
 				await this.submit(content)
 			} catch (error) {
@@ -472,7 +474,7 @@ export default {
 			} finally {
 				this.sending = false
 				// a successful edit can unmount this input before the request settles here
-				if (this.editor && !this.editor.isDestroyed) this.editor.setEditable(true)
+				if (this.editor && !this.editor.isDestroyed) this.editor.setEditable(true, false)
 			}
 			if (this.message) return // the parent closes the editor
 			this.files = []
