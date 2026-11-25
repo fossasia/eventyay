@@ -62,3 +62,20 @@
     }
   }
 }
+
+@media (max-width: 768px) {
+  .pretalx-tabbed .pretalx-tab-content {
+    margin: 12px 0 0;
+  }
+  /* Wrap day tabs onto new rows rather than squeezing them until words split. */
+  .pretalx-tabs {
+    flex-wrap: wrap;
+    .pretalx-tab {
+      flex: 1 1 auto;
+      min-width: min-content;
+      padding: 8px 12px;
+      font-size: 1rem;
+      text-align: center;
+    }
+  }
+}

@@ -255,6 +255,15 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
   margin: 0 auto;
 }
 
+@media (max-width: 768px) {
+  /* main already provides the page inset on phones; fill it instead of forcing 360px. */
+  #fahrplan noscript,
+  .pretalx-tabbed {
+    max-width: none;
+    min-width: 0;
+  }
+}
+
 .btn-sm .fa:not(:only-child) {
   padding-right: 5px;
 }
@@ -372,6 +381,24 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
       .room {
         text-align: right;
         color: rgb(0 0 0 / 0.54);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .pretalx-session {
+    min-width: 0;
+    margin: 8px 0;
+    .pretalx-session-info .bottom-info {
+      flex-wrap: wrap;
+      column-gap: 8px;
+      /* Wrap track and room onto their own lines instead of truncating them. */
+      .room,
+      .track {
+        flex: 1 1 auto;
+        margin-right: 0;
+        white-space: normal;
       }
     }
   }
