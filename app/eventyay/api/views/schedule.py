@@ -40,6 +40,7 @@ from eventyay.api.serializers.schedule import (
     TalkSlotOrgaSerializer,
     TalkSlotSerializer,
 )
+from eventyay.base.models import TeamAPIToken
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.submission import SubmissionStates
@@ -230,11 +231,6 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['POST'])
     def release(self, request, event, organizer=None):
         """Validate permissions and release the current draft schedule."""
-        if not self.has_perm('release', self.event):
-            raise PermissionDenied(
-                'You do not have permission to release schedules for this event.'
-            )
-
         serializer = ScheduleReleaseSerializer(
             data=request.data,
             context=self.get_serializer_context(),
@@ -428,6 +424,14 @@ class TalkSlotViewSet(
             queryset = apply_track_limit_to_slots(queryset, self.event, self.request.user)
 
         return queryset
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.schedule.version:
+            raise PermissionDenied(
+                _('Released schedule slots cannot be edited. Reload the draft schedule.')
+            )
+        return super().update(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
         if self.is_orga or not self.event:

@@ -3,7 +3,7 @@ import json
 import pytest
 from django_scopes import scope
 
-from eventyay.base.models import Schedule, Team
+from eventyay.base.models import Schedule, Team, TeamAPIToken
 
 
 @pytest.fixture
@@ -988,3 +988,37 @@ def test_private_testmode_without_private_talks_cannot_release(
         headers={"Authorization": f"Token {orga_user_write_token.token}"},
     )
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_team_token_can_release_schedule(client, event, team):
+    event.talks_published = True
+    event.save()
+    token = TeamAPIToken.objects.create(team=team, name='Schedule release token')
+
+    response = client.post(
+        event.api_urls.schedules + 'release/',
+        data=json.dumps({'version': 'team_release', 'comment': 'Team release'}),
+        content_type='application/json',
+        headers={'Authorization': f'Token {token.token}'},
+    )
+
+    assert response.status_code == 201, response.text
+
+
+@pytest.mark.django_db
+def test_team_token_without_submission_permission_cannot_release_schedule(client, event, team):
+    team.can_change_submissions = False
+    team.save(update_fields=['can_change_submissions'])
+    event.talks_published = True
+    event.save()
+    token = TeamAPIToken.objects.create(team=team, name='Restricted schedule token')
+
+    response = client.post(
+        event.api_urls.schedules + 'release/',
+        data=json.dumps({'version': 'team_release_denied', 'comment': 'Team release'}),
+        content_type='application/json',
+        headers={'Authorization': f'Token {token.token}'},
+    )
+
+    assert response.status_code == 403, response.text
