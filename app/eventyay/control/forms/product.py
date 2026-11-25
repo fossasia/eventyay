@@ -976,9 +976,29 @@ class ProductVariationsFormSet(I18nFormSet):
             return False
         return form.cleaned_data.get(DELETION_FIELD_NAME, False)
 
+    def _product_for_summary(self):
+        """Resolve the parent product for inherit-summary labels.
+
+        This formset is built via ``inlineformset_factory`` but inherits from
+        ``I18nFormSet`` (not an inline formset), and the view passes a filtered
+        queryset instead of ``instance=``, so ``self.instance`` is unavailable.
+        """
+        for form in getattr(self, 'forms', []):
+            product = getattr(getattr(form, 'instance', None), 'product', None)
+            if product is not None and getattr(product, 'pk', None):
+                return product
+        qs = getattr(self, 'queryset', None)
+        if qs is not None:
+            variation = qs.select_related('product').first()
+            if variation is not None:
+                return variation.product
+        return None
+
     def _attach_product(self, form):
-        if not getattr(form.instance, 'product_id', None) and self.instance and self.instance.pk:
-            form.instance.product = self.instance
+        if not getattr(form.instance, 'product_id', None):
+            product = self._product_for_summary()
+            if product is not None:
+                form.instance.product = product
         return form
 
     def _construct_form(self, i, **kwargs):
