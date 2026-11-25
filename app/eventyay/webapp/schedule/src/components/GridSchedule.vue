@@ -50,38 +50,39 @@
 	.print-grids
 		template(v-for="(chunk, chunkIdx) of printRoomChunks", :key="chunkIdx")
 			.print-chunk
-				.print-rooms-bar(:style="{'--total-rooms': chunk.length}")
+				.print-rooms-bar(:style="getPrintRoomsBarStyle(chunk)")
 					.room
-					.room(v-for="(room, index) of chunk", :key="room.id || index")
+					.room(v-for="(room, index) of chunk", :key="room.id || index", :style="getPrintRoomHeaderStyle(room, chunk)")
 						span.room-name {{ getLocalizedString(room.name) }}
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 						.timeline(:class="getSliceClasses(slice)", :style="getTimelineStyle(slice)")
-					template(v-for="session of getChunkSessions(chunk)")
+					template(v-for="item of getChunkItems(chunk)", :key="item.key")
 						component(
 							:is="SessionComponent",
-							v-if="isProperSession(session)",
-							:session="session",
+							v-if="isProperSession(item.session)",
+							v-bind="item.props",
+							:session="item.session",
 							:now="now",
 							:locale="locale",
 							:timezone="timezone",
-							:style="getChunkSessionStyle(session, chunk)",
+							:style="item.style",
 							:showAbstract="false", :showRoom="false",
 							:showSessionType="true",
 							:showFavCount="showFavCount",
-							:faved="favSet.has(session.id)",
+							:faved="favSet.has(item.session.id)",
 							:hasAmPm="hasAmPm",
 							:onHomeServer="onHomeServer",
-							@fav="$emit('fav', session.id)",
-							@unfav="$emit('unfav', session.id)"
+							@fav="$emit('fav', item.session.id)",
+							@unfav="$emit('unfav', item.session.id)"
 						)
 						grid-break(
 							v-else,
-							:session="session",
+							:session="item.session",
 							:timezone="timezone",
 							:hasAmPm="hasAmPm",
-							:style="getChunkSessionStyle(session, chunk)"
+							:style="item.style"
 						)
 </template>
 <script>
@@ -540,6 +541,35 @@ export default {
 				return chunkSet.has(s.room)
 			})
 		},
+		getChunkLayout (chunk) {
+			if (!this.isShiftMode) return null
+			const chunkSessions = this.getChunkSessions(chunk)
+			return computeShiftColumnLayout(chunk, chunkSessions)
+		},
+		getPrintRoomsBarStyle (chunk) {
+			if (!this.isShiftMode) {
+				return { '--total-rooms': chunk.length }
+			}
+			const layout = this.getChunkLayout(chunk)
+			let totalCols = 0
+			for (const room of chunk) {
+				const l = layout?.get(room?.id ?? room)
+				totalCols += l ? l.colSpan : 1
+			}
+			return {
+				'--total-rooms': totalCols,
+				'grid-template-columns': `78px repeat(${totalCols}, 1fr) auto`
+			}
+		},
+		getPrintRoomHeaderStyle (room, chunk) {
+			if (!this.isShiftMode) return {}
+			const layout = this.getChunkLayout(chunk)
+			const l = layout?.get(room?.id ?? room)
+			if (!l) return {}
+			return {
+				'grid-column': `${l.colStart} / ${l.colStart + l.colSpan}`
+			}
+		},
 		getChunkSessionStyle (session, chunkRooms) {
 			const roomIndex = chunkRooms.indexOf(session.room)
 			const gridRow = `${getSliceName(session.start)} / ${getSliceName(session.end)}`
@@ -561,10 +591,46 @@ export default {
 				}
 				return `[${slice.name}] minmax(${height}px, auto)`
 			}).join(' ')
-			return {
+			const style = {
 				'--total-rooms': chunk.length,
 				'grid-template-rows': rows
 			}
+			if (this.isShiftMode) {
+				const layout = this.getChunkLayout(chunk)
+				let totalCols = 0
+				for (const room of chunk) {
+					const l = layout?.get(room?.id ?? room)
+					totalCols += l ? l.colSpan : 1
+				}
+				style['--total-rooms'] = totalCols
+				style['grid-template-columns'] = `78px repeat(${totalCols}, 1fr) auto`
+			}
+			return style
+		},
+		getChunkItems (chunk) {
+			const sessions = this.getChunkSessions(chunk)
+			if (!this.isShiftMode) {
+				return sessions.map((session, index) => ({
+					key: session.id ?? `break-${index}`,
+					session,
+					style: this.getChunkSessionStyle(session, chunk),
+					props: {}
+				}))
+			}
+			const layout = this.getChunkLayout(chunk)
+			const items = []
+			sessions.forEach((session, index) => {
+				const base = session.id ?? `break-${index}`
+				const placements = session.id
+					? computeShiftPlacements(session, sessions, layout)
+					: null
+				if (!placements) {
+					items.push({ key: base, session, style: this.getChunkSessionStyle(session, chunk), props: {} })
+					return
+				}
+				items.push(...placementGridItems(base, session, placements))
+			})
+			return items
 		},
 		getSessionStyle (session) {
 			const roomIndex = this.roomIndexLookup.has(session.room) ? this.roomIndexLookup.get(session.room) : -1
@@ -1081,6 +1147,14 @@ export default {
 	.rooms-inner
 		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 
+.c-grid-schedule.is-shift-mode
+	&, &.density-compact, &.density-comfortable
+		.grid-viewport .grid .c-linear-schedule-session
+			&.has-continuation-after
+				margin-bottom: 0
+			&.has-continuation-before
+				margin-top: 0
+
 @media (max-width: 900px)
 	.c-grid-schedule
 		--room-col-min: 260px
@@ -1121,6 +1195,11 @@ export default {
 					display: grid
 					grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
 					position: relative
+					.c-linear-schedule-session
+						&.has-continuation-after
+							margin-bottom: 0
+						&.has-continuation-before
+							margin-top: 0
 					.c-grid-schedule-break
 						.time-box
 							-webkit-print-color-adjust: exact

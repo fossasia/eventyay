@@ -4,7 +4,12 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { computeShiftColumnLayout, computeShiftPlacements, placementGridItems } from './index.js'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { computeShiftColumnLayout, computeShiftPlacements, computeShiftOverlapPlacement, placementGridItems } from './index.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const pad = n => String(n).padStart(2, '0')
 
@@ -15,7 +20,10 @@ function at (hours, minutes = 0, day = 0) {
 		valueOf: () => date.getTime(),
 		diff: other => date.getTime() - other.valueOf(),
 		isBefore: other => date.getTime() < other.valueOf(),
-		format: () => `${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}-${pad(date.getUTCHours())}-${pad(date.getUTCMinutes())}`,
+		format: (pattern) => {
+			assert.equal(pattern, 'MM-DD-HH-mm')
+			return `${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}-${pad(date.getUTCHours())}-${pad(date.getUTCMinutes())}`
+		},
 	}
 }
 
@@ -192,4 +200,37 @@ test('grid items carry the continuation flags, a unique key and the grid placeme
 	])
 	assert.ok(items.every(item => item.session === sessions[0]))
 	assert.equal(new Set(items.map(item => item.key)).size, items.length)
+})
+
+test('computeShiftOverlapPlacement preserves legacy whole-shift single placement for existing callers', () => {
+	const sessions = [
+		shift('afternoon', at(18), at(23)),
+		shift('evening', at(22, 30), at(2, 30, 1)),
+	]
+	const layout = computeShiftColumnLayout([room], sessions)
+	const legacyPlacement = computeShiftOverlapPlacement(sessions[0], sessions, layout)
+	assert.deepEqual(legacyPlacement, {
+		gridRow: 'slice-11-29-18-00 / slice-11-29-23-00',
+		gridColumn: '2 / 3',
+	})
+})
+
+test('continuation margin overrides are defined for all densities and print styles without !important', () => {
+	const gridSchedulePath = path.resolve(__dirname, '../components/GridSchedule.vue')
+	const content = fs.readFileSync(gridSchedulePath, 'utf-8')
+	// Verify .is-shift-mode overrides continuation margins for default, density-compact, and density-comfortable
+	assert.match(content, /\.c-grid-schedule\.is-shift-mode[\s\S]*?&, &\.density-compact, &\.density-comfortable[\s\S]*?margin-bottom: 0[\s\S]*?margin-top: 0/)
+	// Verify print grid styles also suppress continuation margins
+	assert.match(content, /\.print-grids[\s\S]*?\.c-linear-schedule-session[\s\S]*?margin-bottom: 0[\s\S]*?margin-top: 0/)
+	// Verify no !important tag is used for these overrides (satisfies Rule 1)
+	const continuationBlock = content.match(/\.c-grid-schedule\.is-shift-mode[\s\S]*?margin-top: 0/)?.[0]
+	assert.ok(continuationBlock && !continuationBlock.includes('!important'))
+})
+
+test('hover state preserves seamless border removal at continuation seams', () => {
+	const sessionVuePath = path.resolve(__dirname, 'Session.vue')
+	const content = fs.readFileSync(sessionVuePath, 'utf-8')
+	// Verify hover rule suppresses border-bottom and border-top on continuation pieces
+	assert.match(content, /&:hover[\s\S]*?has-continuation-after[\s\S]*?border-bottom: none/)
+	assert.match(content, /&:hover[\s\S]*?has-continuation-before[\s\S]*?border-top: none/)
 })

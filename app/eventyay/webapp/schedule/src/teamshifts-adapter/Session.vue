@@ -22,16 +22,17 @@ div.c-linear-schedule-session.is-shift-session(
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 	.info
-		.title-row
-			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-			.organizer-actions(v-if="canManageShifts && !continuation")
-				button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openEditDialog", :title="$t('Edit shift')", :aria-label="$t('Edit shift')")
-					svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
-						path(fill="currentColor", d="M6.58 20.57 l1.22 -1.22 l-3.15 -3.15 l-1.22 1.22 v1.43 h1.71 v1.71 h1.43 z M13.58 8.14 q0 -0.29 -0.29 -0.29 q-0.13 0 -0.23 0.09 l-7.26 7.26 q-0.09 0.09 -0.09 0.23 q0 0.29 0.29 0.29 q0.13 0 0.23 -0.09 l7.26 -7.26 q0.09 -0.09 0.09 -0.23 z M12.86 5.57 l5.57 5.57 l-11.14 11.14 h-5.57 v-5.57 z M22 6.86 q0 0.71 -0.5 1.21 l-2.22 2.22 l-5.57 -5.57 l2.22 -2.21 q0.48 -0.51 1.21 -0.51 q0.71 0 1.22 0.51 l3.15 3.13 q0.5 0.52 0.5 1.22 z")
-				button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openDeleteConfirm", :title="$t('Delete shift')", :aria-label="$t('Delete shift')")
-					svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
-						path(fill="currentColor", d="M9.43 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M12.86 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M16.29 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M9 5.14 h6 l-0.64 -1.57 q-0.09 -0.12 -0.23 -0.15 h-4.25 q-0.13 0.03 -0.23 0.15 z M21.43 5.57 v0.86 q0 0.19 -0.12 0.31 t-0.31 0.12 h-1.29 v12.7 q0 1.11 -0.63 1.92 t-1.51 0.81 h-11.14 q-0.88 0 -1.51 -0.78 t-0.63 -1.9 v-12.75 h-1.29 q-0.19 0 -0.31 -0.12 t-0.12 -0.31 v-0.86 q0 -0.19 0.12 -0.31 t0.31 -0.12 h4.14 l0.94 -2.24 q0.2 -0.5 0.72 -0.84 t1.06 -0.35 h4.29 q0.54 0 1.06 0.35 t0.72 0.84 l0.94 2.24 h4.14 q0.19 0 0.31 0.12 t0.12 0.31 z")
-		.continuation-range(v-if="continuation") {{ shiftRangeLabel }}
+		.title-range-wrapper
+			.title-row
+				.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+				.organizer-actions(v-if="canManageShifts && !continuation")
+					button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openEditDialog", :title="$t('Edit shift')", :aria-label="$t('Edit shift')")
+						svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
+							path(fill="currentColor", d="M6.58 20.57 l1.22 -1.22 l-3.15 -3.15 l-1.22 1.22 v1.43 h1.71 v1.71 h1.43 z M13.58 8.14 q0 -0.29 -0.29 -0.29 q-0.13 0 -0.23 0.09 l-7.26 7.26 q-0.09 0.09 -0.09 0.23 q0 0.29 0.29 0.29 q0.13 0 0.23 -0.09 l7.26 -7.26 q0.09 -0.09 0.09 -0.23 z M12.86 5.57 l5.57 5.57 l-11.14 11.14 h-5.57 v-5.57 z M22 6.86 q0 0.71 -0.5 1.21 l-2.22 2.22 l-5.57 -5.57 l2.22 -2.21 q0.48 -0.51 1.21 -0.51 q0.71 0 1.22 0.51 l3.15 3.13 q0.5 0.52 0.5 1.22 z")
+					button.organizer-action-btn(type="button", @pointerdown.stop, @click.stop="openDeleteConfirm", :title="$t('Delete shift')", :aria-label="$t('Delete shift')")
+						svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
+							path(fill="currentColor", d="M9.43 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M12.86 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M16.29 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M9 5.14 h6 l-0.64 -1.57 q-0.09 -0.12 -0.23 -0.15 h-4.25 q-0.13 0.03 -0.23 0.15 z M21.43 5.57 v0.86 q0 0.19 -0.12 0.31 t-0.31 0.12 h-1.29 v12.7 q0 1.11 -0.63 1.92 t-1.51 0.81 h-11.14 q-0.88 0 -1.51 -0.78 t-0.63 -1.9 v-12.75 h-1.29 q-0.19 0 -0.31 -0.12 t-0.12 -0.31 v-0.86 q0 -0.19 0.12 -0.31 t0.31 -0.12 h4.14 l0.94 -2.24 q0.2 -0.5 0.72 -0.84 t1.06 -0.35 h4.29 q0.54 0 1.06 0.35 t0.72 0.84 l0.94 2.24 h4.14 q0.19 0 0.31 0.12 t0.12 0.31 z")
+			.continuation-range(v-if="continuation || continuationBefore || continuationAfter") {{ shiftRangeLabel }}
 		.roles-list(v-if="!continuation && session.roles && session.roles.length")
 			.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
 				.role-content
@@ -695,6 +696,26 @@ export default {
 		.info
 			border-top-right-radius: 0
 			border-top: none
+	&.is-continuation
+		min-height: 0
+		overflow: hidden
+		.time-box
+			min-height: 0
+		.info
+			min-height: 0
+			overflow: hidden
+			padding: 4px 8px
+			.title
+				font-size: 13px
+				line-height: 1.2
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
+			.continuation-range
+				font-size: 11px
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
 	color: rgb(13 15 16)
 	position: relative
 	font-size: 14px
@@ -717,6 +738,9 @@ export default {
 			align-items: center
 			text-align: center
 			width: 100%
+			position: sticky
+			top: 0
+			z-index: 2
 			&.has-ampm
 				align-self: stretch
 			.date
@@ -784,12 +808,17 @@ export default {
 		border-radius: 0 6px 6px 0
 		background-color: $clr-white
 		min-width: 0
+		.title-range-wrapper
+			position: sticky
+			top: 0
+			background-color: $clr-white
+			z-index: 2
+			margin-bottom: 4px
 		.title-row
 			display: flex
 			align-items: flex-start
 			justify-content: space-between
 			gap: 8px
-			margin-bottom: 4px
 		.title
 			font-size: 16px
 			font-weight: 500
@@ -930,6 +959,10 @@ export default {
 			border-left: none
 			.title
 				color: var(--pretalx-clr-primary)
+		&.has-continuation-after .info
+			border-bottom: none
+		&.has-continuation-before .info
+			border-top: none
 
 @media (max-width: 900px)
 	.c-linear-schedule-session.is-shift-session

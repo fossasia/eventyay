@@ -277,7 +277,8 @@ export function computeShiftColumnLayout (rooms, sessions) {
 	for (const room of rooms) {
 		const rid = roomId(room)
 		const span = computeRoomMaxOverlap(room, sessions)
-		layout.set(rid, { colStart: col, colSpan: span })
+		const trackMap = assignRoomTracks(room, sessions)
+		layout.set(rid, { colStart: col, colSpan: span, trackMap })
 		col += span
 	}
 	return layout
@@ -300,7 +301,7 @@ export function computeShiftPlacements (session, allSessions, columnLayout) {
 	const roomLayout = columnLayout ? columnLayout.get(rid) : null
 	if (!roomLayout || roomLayout.colSpan <= 1) return null
 
-	const trackMap = assignRoomTracks(session.room, allSessions)
+	const trackMap = (roomLayout && roomLayout.trackMap) || assignRoomTracks(session.room, allSessions)
 	const track = trackMap.get(session.id)
 	if (track == null) return null
 
@@ -382,8 +383,21 @@ export function placementGridItems (base, session, placements) {
 }
 
 export function computeShiftOverlapPlacement (session, allSessions, columnLayout) {
-	const placements = computeShiftPlacements(session, allSessions, columnLayout)
-	return placements ? placements[0] : null
+	if (!session.start || !session.end || !session.room) return null
+
+	const rid = roomId(session.room)
+	const roomLayout = columnLayout ? columnLayout.get(rid) : null
+	if (!roomLayout || roomLayout.colSpan <= 1) return null
+
+	const trackMap = (roomLayout && roomLayout.trackMap) || assignRoomTracks(session.room, allSessions)
+	const track = trackMap.get(session.id)
+	if (track == null) return null
+
+	const subCol = roomLayout.colStart + track
+	return {
+		gridRow: `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
+		gridColumn: `${subCol} / ${subCol + 1}`,
+	}
 }
 
 function getSliceName (date) {
