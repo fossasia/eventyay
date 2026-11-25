@@ -6,7 +6,21 @@
   <h1>{% translate 'Ticketing data retention' %}</h1>
   <form method="post" class="form-horizontal">
     {% csrf_token %}
-    {% bootstrap_form form layout='control' %}
-    <button class="btn btn-primary" type="submit">{% translate 'Save' %}</button>
+    {% bootstrap_form_errors form %}
+    <fieldset>
+      <legend>{% translate 'Anonymization schedule' %}</legend>
+      {% bootstrap_field form.ticketing_retention_manual_min_days layout='control' %}
+      {% bootstrap_field form.ticketing_retention_periods layout='control' %}
+      {% bootstrap_field form.ticketing_retention_warning_days layout='control' %}
+      {% bootstrap_field form.ticketing_retention_postpone_cap_days layout='control' %}
+    </fieldset>
+    <fieldset>
+      <legend>{% translate 'Trash and recovery' %}</legend>
+      {% bootstrap_field form.ticketing_retention_allow_trash layout='control' %}
+      {% bootstrap_field form.ticketing_retention_trash_days layout='control' %}
+    </fieldset>
+    <div class="form-group submit-group">
+      <button type="submit" class="btn btn-primary btn-save">{% translate 'Save' %}</button>
+    </div>
   </form>
 {% endblock %}
