@@ -1242,70 +1242,71 @@ class CartManager:
                 # Create a CartPosition for as much products as we can
                 requested_count = quota_available_count = voucher_available_count = op.count
 
-                if op.seat:
-                    if op.seat in seats_seen:
-                        err = err or error_messages['seat_multiple']
-                    seats_seen.add(op.seat)
-
-                if op.quotas:
-                    quota_available_count = min(requested_count, min(quotas_ok[q] for q in op.quotas))
-
-                if op.voucher:
-                    voucher_available_count = min(voucher_available_count, vouchers_ok[op.voucher])
-
-                if quota_available_count < 1:
-                    err = err or error_messages['unavailable']
-                elif quota_available_count < requested_count:
-                    err = err or error_messages['in_part']
-
-                if voucher_available_count < 1:
-                    if op.voucher in self._voucher_depend_on_cart:
-                        err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get('reservation_time', default='30')
-                    else:
-                        err = err or error_messages['voucher_redeemed']
-                elif voucher_available_count < requested_count:
-                    err = err or error_messages['voucher_redeemed_partial'] % voucher_available_count
-
-                available_count = min(quota_available_count, voucher_available_count)
-
-                if isinstance(op, self.AddOperation):
-                    for b in op.bundled:
-                        b_quotas = list(b.quotas)
-                        if not b_quotas:
-                            if not op.voucher or not op.voucher.allow_ignore_quota:
-                                err = err or error_messages['unavailable']
-                                available_count = 0
-                            continue
-                        b_quota_available_count = min(
-                            available_count * b.count,
-                            min(quotas_ok[q] for q in b_quotas),
-                        )
-                        if b_quota_available_count < b.count:
-                            err = err or error_messages['unavailable']
-                            available_count = 0
-                        elif b_quota_available_count < available_count * b.count:
-                            err = err or error_messages['in_part']
-                            available_count = b_quota_available_count // b.count
-                        for q in b_quotas:
-                            quotas_ok[q] -= available_count * b.count
-                            # TODO: is this correct?
-
-                for q in op.quotas:
-                    quotas_ok[q] -= available_count
-                if op.voucher:
-                    vouchers_ok[op.voucher] -= available_count
-
-                if any(qa < 0 for qa in quotas_ok.values()):
-                    # Safeguard, shouldn't happen
+                # Reject expired/upcoming products before deducting shared quota/voucher
+                # allowance so a later valid operation is not starved.
+                if not op.product.is_available() or (
+                    op.variation and not op.variation.is_available(subevent=op.subevent)
+                ):
                     err = err or error_messages['unavailable']
                     available_count = 0
+                else:
+                    if op.seat:
+                        if op.seat in seats_seen:
+                            err = err or error_messages['seat_multiple']
+                        seats_seen.add(op.seat)
 
-                if isinstance(op, (self.AddOperation, self.ExtendOperation)):
-                    if not op.product.is_available() or (
-                        op.variation and not op.variation.is_available(subevent=op.subevent)
-                    ):
-                        available_count = 0
+                    if op.quotas:
+                        quota_available_count = min(requested_count, min(quotas_ok[q] for q in op.quotas))
+
+                    if op.voucher:
+                        voucher_available_count = min(voucher_available_count, vouchers_ok[op.voucher])
+
+                    if quota_available_count < 1:
                         err = err or error_messages['unavailable']
+                    elif quota_available_count < requested_count:
+                        err = err or error_messages['in_part']
+
+                    if voucher_available_count < 1:
+                        if op.voucher in self._voucher_depend_on_cart:
+                            err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get('reservation_time', default='30')
+                        else:
+                            err = err or error_messages['voucher_redeemed']
+                    elif voucher_available_count < requested_count:
+                        err = err or error_messages['voucher_redeemed_partial'] % voucher_available_count
+
+                    available_count = min(quota_available_count, voucher_available_count)
+
+                    if isinstance(op, self.AddOperation):
+                        for b in op.bundled:
+                            b_quotas = list(b.quotas)
+                            if not b_quotas:
+                                if not op.voucher or not op.voucher.allow_ignore_quota:
+                                    err = err or error_messages['unavailable']
+                                    available_count = 0
+                                continue
+                            b_quota_available_count = min(
+                                available_count * b.count,
+                                min(quotas_ok[q] for q in b_quotas),
+                            )
+                            if b_quota_available_count < b.count:
+                                err = err or error_messages['unavailable']
+                                available_count = 0
+                            elif b_quota_available_count < available_count * b.count:
+                                err = err or error_messages['in_part']
+                                available_count = b_quota_available_count // b.count
+                            for q in b_quotas:
+                                quotas_ok[q] -= available_count * b.count
+                                # TODO: is this correct?
+
+                    for q in op.quotas:
+                        quotas_ok[q] -= available_count
+                    if op.voucher:
+                        vouchers_ok[op.voucher] -= available_count
+
+                    if any(qa < 0 for qa in quotas_ok.values()):
+                        # Safeguard, shouldn't happen
+                        err = err or error_messages['unavailable']
+                        available_count = 0
 
                 if isinstance(op, self.AddOperation):
                     if op.seat and not op.seat.is_available(
