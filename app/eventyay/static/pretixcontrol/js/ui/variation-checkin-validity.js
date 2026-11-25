@@ -22,6 +22,32 @@ function setExpanded(root, expanded) {
     toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 }
 
+function updateSummary(block) {
+    const select = block.querySelector('select[name$="-admission_validity_mode"]');
+    const summary = block.querySelector('.variation-checkin-summary-text');
+    if (!select || !summary) {
+        return;
+    }
+    const option = select.options[select.selectedIndex];
+    if (!option) {
+        return;
+    }
+    if (option.value === 'inherit') {
+        summary.textContent = block.dataset.inheritSummary || option.textContent.trim();
+    } else {
+        summary.textContent = option.textContent.trim();
+    }
+}
+
+function fieldsHaveErrors(fields) {
+    if (!fields) {
+        return false;
+    }
+    return Boolean(
+        fields.querySelector('.has-error, .is-invalid, .alert-danger, [aria-invalid="true"]')
+    );
+}
+
 function initVariationCheckinValidity(root = document) {
     root.querySelectorAll('.variation-checkin-validity').forEach((block) => {
         if (block.dataset.checkinToggleBound === '1') {
@@ -29,16 +55,30 @@ function initVariationCheckinValidity(root = document) {
         }
         block.dataset.checkinToggleBound = '1';
         const toggle = block.querySelector('.variation-checkin-toggle');
+        const fields = block.querySelector('.variation-checkin-fields');
+        const modeSelect = block.querySelector('select[name$="-admission_validity_mode"]');
         if (!toggle) {
             return;
         }
         toggle.setAttribute('role', 'button');
-        toggle.setAttribute('aria-expanded', 'false');
+        if (fieldsHaveErrors(fields) || (fields && !fields.hidden)) {
+            setExpanded(block, true);
+        } else {
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+        updateSummary(block);
         toggle.addEventListener('click', (event) => {
             event.preventDefault();
-            const fields = block.querySelector('.variation-checkin-fields');
-            setExpanded(block, Boolean(fields && fields.hidden));
+            const panel = block.querySelector('.variation-checkin-fields');
+            const expanding = Boolean(panel && panel.hidden);
+            if (!expanding) {
+                updateSummary(block);
+            }
+            setExpanded(block, expanding);
         });
+        if (modeSelect) {
+            modeSelect.addEventListener('change', () => updateSummary(block));
+        }
     });
 }
 

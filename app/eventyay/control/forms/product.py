@@ -976,9 +976,14 @@ class ProductVariationsFormSet(I18nFormSet):
             return False
         return form.cleaned_data.get(DELETION_FIELD_NAME, False)
 
+    def _attach_product(self, form):
+        if not getattr(form.instance, 'product_id', None) and self.instance and self.instance.pk:
+            form.instance.product = self.instance
+        return form
+
     def _construct_form(self, i, **kwargs):
         kwargs['event'] = self.event
-        return super()._construct_form(i, **kwargs)
+        return self._attach_product(super()._construct_form(i, **kwargs))
 
     @property
     def empty_form(self):
@@ -992,7 +997,7 @@ class ProductVariationsFormSet(I18nFormSet):
             event=self.event,
         )
         self.add_fields(form, None)
-        return form
+        return self._attach_product(form)
 
 
 class ProductVariationForm(I18nModelForm):
@@ -1014,15 +1019,32 @@ class ProductVariationForm(I18nModelForm):
             'After this time the variation can no longer be bought. Event time zone (%(tz)s).'
         ) % {'tz': tzname}
 
+    def _inherit_checkin_summary(self):
+        inherit_label = dict(ProductVariation.ADMISSION_VALIDITY_MODE_CHOICES).get(
+            ProductVariation.ADMISSION_VALIDITY_MODE_INHERIT
+        )
+        product = getattr(self.instance, 'product', None)
+        if product is None or not getattr(product, 'pk', None):
+            product = getattr(self, 'product', None)
+        if product is not None and getattr(product, 'pk', None):
+            product_mode = product.admission_validity_mode or Product.ADMISSION_VALIDITY_MODE_NONE
+            product_label = dict(Product.ADMISSION_VALIDITY_MODE_CHOICES).get(product_mode, product_mode)
+            return f'{inherit_label} · {product_label}'
+        return str(inherit_label)
+
     @property
     def checkin_validity_summary(self):
         if self.instance and self.instance.pk:
             return self.instance.get_checkin_validity_summary()
-        return str(
-            dict(ProductVariation.ADMISSION_VALIDITY_MODE_CHOICES).get(
-                ProductVariation.ADMISSION_VALIDITY_MODE_INHERIT
-            )
-        )
+        return self._inherit_checkin_summary()
+
+    @property
+    def checkin_inherit_summary(self):
+        return self._inherit_checkin_summary()
+
+    @property
+    def checkin_fields_have_errors(self):
+        return any(name in self.errors for name in ADMISSION_VALIDITY_FIELD_NAMES)
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))

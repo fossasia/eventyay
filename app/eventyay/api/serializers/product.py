@@ -47,6 +47,17 @@ class InlineProductVariationSerializer(I18nAwareModelSerializer):
         model = ProductVariation
         fields = _VARIATION_SERIALIZER_FIELDS
 
+    def validate(self, data):
+        data = super().validate(data)
+        full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
+        full_data.update(data)
+        event = self.context.get('event')
+        if event is None and self.instance is not None:
+            event = self.instance.product.event
+        Product.clean_available(full_data.get('available_from'), full_data.get('available_until'))
+        Product.clean_admission_validity_data(full_data, event=event)
+        return data
+
 
 class ProductVariationSerializer(I18nAwareModelSerializer):
     price = serializers.DecimalField(read_only=True, decimal_places=2, max_digits=10, coerce_to_string=True)

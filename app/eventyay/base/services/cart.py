@@ -1300,6 +1300,13 @@ class CartManager:
                     err = err or error_messages['unavailable']
                     available_count = 0
 
+                if isinstance(op, (self.AddOperation, self.ExtendOperation)):
+                    if not op.product.is_available() or (
+                        op.variation and not op.variation.is_available(subevent=op.subevent)
+                    ):
+                        available_count = 0
+                        err = err or error_messages['unavailable']
+
                 if isinstance(op, self.AddOperation):
                     if op.seat and not op.seat.is_available(
                         ignore_voucher_id=op.voucher.id if op.voucher else None,

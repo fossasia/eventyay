@@ -622,9 +622,11 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
         return True
 
     for se, se_vouchers, p, var in items_to_check:
+        if var is not None and not var.is_available(subevent=se, _quota_cache=quota_cache):
+            continue
         quotas = var.quotas.all() if var else p.quotas.all()
         is_normally_available = check_item_avail(quotas, se, False)
-        
+
         for v in se_vouchers:
             if voucher_applies_to(v, p, var):
                 if p.hide_without_voucher and not v.show_hidden_products:

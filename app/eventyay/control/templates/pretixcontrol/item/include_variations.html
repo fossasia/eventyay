@@ -59,7 +59,9 @@
                     {% bootstrap_field variation_form.available_from layout="control" %}
                     {% bootstrap_field variation_form.available_until layout="control" %}
                     {% bootstrap_field variation_form.description layout="control" %}
-                    <div class="variation-checkin-validity" {% if not form.admission.value %}style="display: none;"{% endif %}>
+                    <div class="variation-checkin-validity"
+                         data-inherit-summary="{{ variation_form.checkin_inherit_summary }}"
+                         {% if not form.admission.value %}style="display: none;"{% endif %}>
                         <div class="form-group">
                             <label class="col-md-3 control-label">
                                 {% trans "Check-in validity" %}
@@ -71,9 +73,10 @@
                                     <a href="#"
                                        class="variation-checkin-toggle pull-right text-danger"
                                        data-label-show="{% trans 'Edit check-in settings' %}"
-                                       data-label-hide="{% trans 'Hide check-in settings' %}">
-                                        <span class="variation-checkin-label">{% trans "Edit check-in settings" %}</span>
-                                        <span class="variation-checkin-caret">▼</span>
+                                       data-label-hide="{% trans 'Hide check-in settings' %}"
+                                       aria-expanded="{% if variation_form.checkin_fields_have_errors %}true{% else %}false{% endif %}">
+                                        <span class="variation-checkin-label">{% if variation_form.checkin_fields_have_errors %}{% trans "Hide check-in settings" %}{% else %}{% trans "Edit check-in settings" %}{% endif %}</span>
+                                        <span class="variation-checkin-caret">{% if variation_form.checkin_fields_have_errors %}▲{% else %}▼{% endif %}</span>
                                     </a>
                                     <div class="clearfix"></div>
                                 </div>
@@ -85,7 +88,7 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="variation-checkin-fields" hidden>
+                        <div class="variation-checkin-fields"{% if not variation_form.checkin_fields_have_errors %} hidden{% endif %}>
                             {% bootstrap_field variation_form.admission_validity_mode layout="control" %}
                             {% bootstrap_field variation_form.admission_valid_from layout="control" %}
                             {% bootstrap_field variation_form.admission_valid_until layout="control" %}
@@ -129,7 +132,9 @@
                     {% bootstrap_field formset.empty_form.available_from layout="control" %}
                     {% bootstrap_field formset.empty_form.available_until layout="control" %}
                     {% bootstrap_field formset.empty_form.description layout="control" %}
-                    <div class="variation-checkin-validity" {% if not form.admission.value %}style="display: none;"{% endif %}>
+                    <div class="variation-checkin-validity"
+                         data-inherit-summary="{{ formset.empty_form.checkin_inherit_summary }}"
+                         {% if not form.admission.value %}style="display: none;"{% endif %}>
                         <div class="form-group">
                             <label class="col-md-3 control-label">
                                 {% trans "Check-in validity" %}
@@ -141,7 +146,8 @@
                                     <a href="#"
                                        class="variation-checkin-toggle pull-right text-danger"
                                        data-label-show="{% trans 'Edit check-in settings' %}"
-                                       data-label-hide="{% trans 'Hide check-in settings' %}">
+                                       data-label-hide="{% trans 'Hide check-in settings' %}"
+                                       aria-expanded="false">
                                         <span class="variation-checkin-label">{% trans "Edit check-in settings" %}</span>
                                         <span class="variation-checkin-caret">▼</span>
                                     </a>

@@ -1079,7 +1079,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
     def get_checkin_validity_summary(self) -> str:
         """One-line summary of check-in validity for the organizer variation form."""
         mode = self.admission_validity_mode
-        if mode == '' or mode is None:
+        if mode is None:
             mode = self.ADMISSION_VALIDITY_MODE_INHERIT
         mode_label = dict(self.ADMISSION_VALIDITY_MODE_CHOICES).get(mode, mode)
         if mode == self.ADMISSION_VALIDITY_MODE_INHERIT:
@@ -1089,23 +1089,24 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
         return str(mode_label)
 
     @staticmethod
-    def filter_available_q(now_dt: datetime = None) -> Q:
+    def filter_available_q(now_dt: datetime = None, *, allow_sellout_override: bool = True) -> Q:
         """
         Q object matching variations that are active and inside their sales period.
 
-        When ``start_next_variation_on_sellout`` is enabled on the product, variations
-        before ``available_from`` are still included so Python can apply the sellout
-        override. Keep in sync with :meth:`is_available_by_time` where possible.
+        When ``allow_sellout_override`` is True and the product has
+        ``start_next_variation_on_sellout``, variations before ``available_from`` are
+        still included so Python can apply the sellout override. Pass False for SQL-only
+        consumers (e.g. event availability annotations) that cannot evaluate sellout.
+        Keep in sync with :meth:`is_available_by_time` where possible.
         """
         now_dt = now_dt or now()
+        available_from_q = Q(available_from__isnull=True) | Q(available_from__lte=now_dt)
+        if allow_sellout_override:
+            available_from_q |= Q(product__start_next_variation_on_sellout=True)
         return (
             Q(active=True)
             & Q(Q(available_until__isnull=True) | Q(available_until__gte=now_dt))
-            & Q(
-                Q(product__start_next_variation_on_sellout=True)
-                | Q(available_from__isnull=True)
-                | Q(available_from__lte=now_dt)
-            )
+            & available_from_q
         )
 
     def delete(self, *args, **kwargs):
