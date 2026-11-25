@@ -404,16 +404,19 @@ class EventMixin:
             return set()
         from .product import ProductVariation
 
-        variations = (
-            ProductVariation.objects.filter(pk__in=ids)
-            .select_related('product', 'product__event')
-            .prefetch_related('product__variations', 'quotas')
-        )
+        event = getattr(self, 'event', self)
         subevent = self if getattr(self, 'event_id', None) else None
         available = set()
-        for variation in variations:
-            if variation.is_available(subevent=subevent, _quota_cache=quota_cache):
-                available.add(str(variation.pk))
+        # ProductVariation.objects is scoped on organizer=product__event__organizer.
+        with scope(organizer=event.organizer):
+            variations = (
+                ProductVariation.objects.filter(pk__in=ids)
+                .select_related('product', 'product__event')
+                .prefetch_related('product__variations', 'quotas')
+            )
+            for variation in variations:
+                if variation.is_available(subevent=subevent, _quota_cache=quota_cache):
+                    available.add(str(variation.pk))
         return available
 
     @cached_property
@@ -449,10 +452,14 @@ class EventMixin:
                 if q.active_variations:
                     vars_gone.update(q.active_variations.split(','))
 
-        # Apply sellout / sales-period gate that SQL cannot express precisely.
-        vars_available = self._filter_variation_ids_by_sales_period(vars_available, r)
-        vars_reserved = self._filter_variation_ids_by_sales_period(vars_reserved, r)
-        vars_gone = self._filter_variation_ids_by_sales_period(vars_gone, r)
+        # One eligibility pass so a variation cannot stay in vars_available while
+        # dropping from vars_gone if available_until flips between checks.
+        eligible = self._filter_variation_ids_by_sales_period(
+            vars_available | vars_reserved | vars_gone, r
+        )
+        vars_available &= eligible
+        vars_reserved &= eligible
+        vars_gone &= eligible
 
         if not self.active_quotas:
             return None

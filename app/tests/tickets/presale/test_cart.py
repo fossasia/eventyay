@@ -1272,6 +1272,37 @@ class CartTest(CartTestMixin, TestCase):
                 0,
             )
 
+    @classscope(attr='orga')
+    def test_extend_expired_removes_unavailable_variation(self):
+        """Expired cart lines past variation available_until are removed, not aborting commit."""
+        self.shirt_red.available_until = now() - timedelta(days=2)
+        self.shirt_red.save()
+        CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            item=self.shirt,
+            variation=self.shirt_red,
+            price=Decimal('14.00'),
+            event=self.event,
+            cart_id=self.session_key,
+        )
+        ticket_cp = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            item=self.ticket,
+            price=Decimal('23.00'),
+            event=self.event,
+            cart_id=self.session_key,
+        )
+        cm = CartManager(event=self.event, cart_id=self.session_key)
+        try:
+            cm.commit()
+        except CartError:
+            pass
+        assert not CartPosition.objects.filter(
+            cart_id=self.session_key, variation=self.shirt_red
+        ).exists()
+        ticket_cp.refresh_from_db()
+        assert ticket_cp.expires > now()
+
     def test_max_items(self):
         with scopes_disabled():
             CartPosition.objects.create(

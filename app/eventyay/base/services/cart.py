@@ -596,6 +596,15 @@ class CartManager:
                 err = error_messages['unavailable']
                 continue
 
+            # Variation past available_until (or inactive) must not abort commit —
+            # remove the position so queued additions can still proceed.
+            if not cp.product.is_available() or (
+                cp.variation and not cp.variation.is_available(subevent=cp.subevent)
+            ):
+                self._operations.append(self.RemoveOperation(position=cp))
+                err = error_messages['unavailable']
+                continue
+
             if not cp.voucher or (not cp.voucher.allow_ignore_quota and not cp.voucher.block_quota):
                 for quota in quotas:
                     self._quota_diff[quota] += 1
