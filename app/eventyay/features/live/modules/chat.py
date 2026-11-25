@@ -526,9 +526,8 @@ class ChatModule(BaseModule):
                 )
                 if body["content"]["type"] != "deleted" or not is_moderator:
                     raise ConsumerException("chat.denied")
-            await self.service.update_event(
-                other_message, new_content=content, by_user=self.consumer.user
-            )
+        else:
+            other_message = None
 
         if content.get("type") == "text" and not content.get("body"):
             raise ConsumerException("chat.empty")
@@ -542,6 +541,13 @@ class ChatModule(BaseModule):
         if self.consumer.user.is_silenced:
             # In regular channels, this is already prevented by room permissions, but we need to check for DMs
             raise ConsumerException("chat.denied")
+
+        # Only store an edit once every check above has passed, so a rejected
+        # edit leaves the original message unchanged.
+        if other_message is not None:
+            await self.service.update_event(
+                other_message, new_content=content, by_user=self.consumer.user
+            )
 
         # Re-open direct messages. If a user hid a direct message channel, it should re-appear once they get a message
         if not self.channel.room:
