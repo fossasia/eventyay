@@ -60,26 +60,48 @@
 			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
 			@goToNow="goToNow")
 		bunt-progress-circular(v-if="dayLoading", size="huge")
-		grid-schedule-wrapper(ref="scheduleDisplay", v-else-if="showGrid && !sessionsMode",
-			:sessions="gridDisplaySessions",
-			:rooms="rooms",
-			:days="days",
-			:currentDay="currentDay",
-			:now="now",
-			:hasAmPm="hasAmPm",
-			:timezone="currentTimezone",
-			:locale="locale",
-			:scrollParent="scrollParent",
-			:favs="favs",
-			:showFavCount="showPopularityOnSchedule",
-			:onHomeServer="onHomeServer",
-			:disableAutoScroll="disableAutoScroll",
-			:forceScrollDay="forceScrollDay",
-			:density="'default'",
-			:timeDensityMinutes="timeDensityMinutes",
-			@changeDay="setCurrentDay($event)",
-			@fav="fav($event)",
-			@unfav="unfav($event)")
+		template(v-else-if="showGrid && !sessionsMode")
+			grid-schedule-wrapper(ref="scheduleDisplay",
+				:sessions="gridDisplaySessions",
+				:rooms="rooms",
+				:days="days",
+				:currentDay="currentDay",
+				:now="now",
+				:hasAmPm="hasAmPm",
+				:timezone="currentTimezone",
+				:locale="locale",
+				:scrollParent="scrollParent",
+				:favs="favs",
+				:showFavCount="showPopularityOnSchedule",
+				:onHomeServer="onHomeServer",
+				:disableAutoScroll="disableAutoScroll",
+				:forceScrollDay="forceScrollDay",
+				:density="'default'",
+				:timeDensityMinutes="timeDensityMinutes",
+				@changeDay="setCurrentDay($event)",
+				@fav="fav($event)",
+				@unfav="unfav($event)")
+			linear-schedule(v-if="pendingGridSessions.length",
+				:sessions="pendingGridSessions",
+				:rooms="rooms",
+				:currentDay="currentDay",
+				:now="now",
+				:hasAmPm="hasAmPm",
+				:timezone="currentTimezone",
+				:locale="locale",
+				:scrollParent="scrollParent",
+				:favs="favs",
+				:showFavCount="showPopularityOnSchedule",
+				:sortBy="effectiveSortBy",
+				:includeRoomSortKey="false",
+				:includeDateSortKey="true",
+				:includePopularitySortKey="sortIncludePopularity",
+				:onHomeServer="onHomeServer",
+				:disableAutoScroll="true",
+				:showBreaks="false",
+				:density="'default'",
+				@fav="fav($event)",
+				@unfav="unfav($event)")
 		linear-schedule(ref="scheduleDisplay", v-else,
 			:sessions="sessionsMode ? properSessions : sessions",
 			:rooms="rooms",
@@ -390,8 +412,15 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + (this.schedule.rooms?.length || 0) * 365) : this.scrollParentWidth
 		},
 		showGrid () {
-			// Always allow a distinct calendar grid view when not explicitly in list format
-			return this.format !== 'list'
+			// Always allow a distinct calendar grid view when not explicitly in list format,
+			// unless there are no timed days (e.g. only pending accepted sessions).
+			if (this.format === 'list') return false
+			if (this.days && !this.days.length) return false
+			return true
+		},
+		pendingGridSessions () {
+			if (!this.sessions) return []
+			return this.sessions.filter(s => isProperSession(s) && !s.start)
 		},
 		exportsDisabled () {
 			return areScheduleExportsDisabled({

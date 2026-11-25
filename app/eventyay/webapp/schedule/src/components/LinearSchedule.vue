@@ -1,8 +1,8 @@
 <template lang="pug">
 .c-linear-schedule(v-scrollbar.y="", :class="'density-' + density")
-	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
-		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
-			.day(v-if="showDayHeaders && (index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0)")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
+	.bucket(v-for="({date, sessions, isPending}, index) of sessionBuckets")
+		.bucket-label(:ref="isPending ? 'pending' : getBucketName(date)", :data-date="isPending ? null : date.toISOString()")
+			.day(v-if="showDayHeaders && (isPending || index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0)") {{ isPending ? pendingHeaderLabel : date.clone().tz(timezone).format('dddd, D MMMM') }}
 			template(v-for="session of sessions")
 				component(
 					:is="SessionComponent",
@@ -103,10 +103,15 @@ export default {
 		showsMultiDay () {
 			return !this.includeDateSortKey
 		},
+		pendingHeaderLabel () {
+			const m = (typeof window !== 'undefined' && window.PRETALX_MESSAGES) || {}
+			return m.schedule_pending_secondary || this.$t('To be announced')
+		},
 		/** First session bucket per calendar day (for toolbar day jump without scanning all buckets). */
 		bucketFirstByDay () {
 			const map = Object.create(null)
 			for (const b of this.sessionBuckets) {
+				if (!b.date) continue
 				const k = b.date.format('YYYY-MM-DD')
 				if (map[k] === undefined) map[k] = b
 			}
@@ -178,7 +183,8 @@ export default {
 			if (pendingSessions.length) {
 				const sortedPending = this.sortBucketSessions(pendingSessions)
 				groupedBuckets.push({
-					date: moment(),
+					date: null,
+					isPending: true,
 					sessions: sortedPending,
 				})
 			}
@@ -312,7 +318,7 @@ export default {
 			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
 		},
 		scrollToNow() {
-			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
+			const nowIndex = this.sessionBuckets.findIndex(bucket => bucket.date && this.now < bucket.date)
 			if (nowIndex < 0) return
 			const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
 			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
