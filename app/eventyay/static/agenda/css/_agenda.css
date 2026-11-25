@@ -390,6 +390,10 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
   .pretalx-session {
     min-width: 0;
     margin: 8px 0;
+    /* Show the whole abstract; three lines hold too little text at phone widths. */
+    .pretalx-session-info .abstract {
+      display: block;
+    }
     .pretalx-session-info .bottom-info {
       flex-wrap: wrap;
       column-gap: 8px;
@@ -399,10 +403,12 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
         flex: 1 1 auto;
         margin-right: 0;
         white-space: normal;
+        overflow-wrap: anywhere;
       }
     }
   }
 }
+
 article .pretalx-session .pretalx-session-info .abstract {
   display: block;
 }
