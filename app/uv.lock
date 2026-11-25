@@ -3813,11 +3813,11 @@ wheels = [
 
 [[package]]
 name = "tlds"
-version = "2026102900"
+version = "2026112100"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/85/bb/bd85adea96f4755346a24cf2b239651c22b506be5d4482a15b8f627fdf16/tlds-2026102900.tar.gz", hash = "sha256:296525821ee8fa076a908c0024a23de79fb60147e302869c76226fe315a50842", size = 7867, upload-time = "2026-10-30T10:54:35.244Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/42/c6/e8b4ae743b92d6ad022a264f1e64b41108e79542f604d1afb1ae0da4dec6/tlds-2026112100.tar.gz", hash = "sha256:1fa0b14fbe7c995b7d5277cd68736e12b32bea259967bab9c961f14e47408c4f", size = 7872, upload-time = "2026-11-22T12:40:14.459Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/e3/19ed1be1aa9aec3dd75e8ede0e2a29f53808305aca24ffe5282581f30fea/tlds-2026102900-py2.py3-none-any.whl", hash = "sha256:3413bd6b7067f5e25392a32575030b0796cbac4dba6ceef5b13f3c8745b05cb8", size = 8060, upload-time = "2026-10-30T10:54:33.39Z" },
+    { url = "https://files.pythonhosted.org/packages/81/48/ac08b428ce796ba8f31d391f736a536951d091787fcfb6389c2c81c8ee37/tlds-2026112100-py2.py3-none-any.whl", hash = "sha256:a0b5049e4854457400d2dd357ab2aa581017a58e2eae35cf01834a87ef862df7", size = 8055, upload-time = "2026-11-22T12:40:12.677Z" },
 ]
 
 [[package]]
