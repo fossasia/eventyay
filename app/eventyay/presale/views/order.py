@@ -992,7 +992,6 @@ class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, O
                     return self.get(request, *args, **kwargs)
         try:
             with transaction.atomic():
-                self.request.event.orders.select_for_update().filter(pk=self.order.pk).first()
                 self.save()
                 self.save_invoice_form()
                 self.order.log_action(

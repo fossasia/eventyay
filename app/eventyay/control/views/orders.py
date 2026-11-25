@@ -2304,7 +2304,6 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
         notify = self.other_form.cleaned_data['notify']
         try:
             with transaction.atomic():
-                self.request.event.orders.select_for_update().filter(pk=self.order.pk).first()
                 self.save()
                 self.save_invoice_form()
                 self.order.log_action(

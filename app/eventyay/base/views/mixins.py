@@ -153,16 +153,14 @@ class BaseQuestionsViewMixin:
 
                 group[0].pos.show_copy_answers_main_button = any(
                     set(form.fields.keys()) & set(first_group[addonidx].fields.keys())
-                    for addonidx, form in enumerate(group) if addonidx < len(first_group)
+                    for addonidx, form in enumerate(group)
+                    if addonidx < len(first_group)
                 )
 
         return storage
 
     def is_valid(self):
         return all([f.is_valid() for f in self.forms])
-
-    def questions_are_valid(self):
-        return self.is_valid()
 
     def cleanup_staged_uploads(self):
         staged = getattr(self, '_staged_uploads', [])
@@ -181,15 +179,8 @@ class BaseQuestionsViewMixin:
             if not form.is_valid():
                 failed = True
             else:
-                if isinstance(form.pos, OrderPosition) and form.pos.pk:
-                    form.pos.refresh_from_db()
-                    fields_to_update = [k for k in form.changed_data if k in form.cleaned_data]
-                else:
-                    fields_to_update = list(form.cleaned_data.keys())
-
                 meta_info = form.pos.meta_info_data
-                for k in fields_to_update:
-                    v = form.cleaned_data[k]
+                for k, v in form.cleaned_data.items():
                     if k == 'attendee_name_parts':
                         form.pos.attendee_name_parts = v if v else None
                     elif k == 'attendee_email':
@@ -223,9 +214,7 @@ class BaseQuestionsViewMixin:
                                     old_storage = field.answer.file.storage
                                     old_name = field.answer.file.name
                                     field.answer.file = None
-                                    transaction.on_commit(
-                                        lambda s=old_storage, n=old_name: s.delete(n)
-                                    )
+                                    transaction.on_commit(lambda s=old_storage, n=old_name: s.delete(n))
                                 field.answer.delete()
                             else:
                                 self._save_to_answer(field, field.answer, v)
@@ -272,9 +261,8 @@ class BaseQuestionsViewMixin:
 
                             invalidate_badge_cache_for_position(get_badge_config_position(form.pos))
 
-                if fields_to_update:
-                    form.pos.meta_info = json.dumps(meta_info)
-                    form.pos.save()
+                form.pos.meta_info = json.dumps(meta_info)
+                form.pos.save()
         if hasattr(self, '_staged_uploads'):
             transaction.on_commit(lambda: getattr(self, '_staged_uploads', []).clear())
         return not failed
@@ -307,9 +295,7 @@ class BaseQuestionsViewMixin:
                     self._staged_uploads = []
                 self._staged_uploads.append((answer.file.storage, answer.file.name))
                 if old_name and old_name != answer.file.name:
-                    transaction.on_commit(
-                        lambda s=old_storage, n=old_name: s.delete(n)
-                    )
+                    transaction.on_commit(lambda s=old_storage, n=old_name: s.delete(n))
         else:
             answer.answer = value
 
@@ -416,54 +402,9 @@ class OrderQuestionsViewMixin(BaseQuestionsViewMixin):
 
         return f
 
-    @staticmethod
-    def _is_invoice_order_unique_violation(err):
-        cause = getattr(err, '__cause__', None)
-        diag = getattr(cause, 'diag', None)
-        if diag is not None:
-            return getattr(diag, 'constraint_name', None) == 'base_invoiceaddress_order_id_key'
-
-        err_msg = str(err).lower().replace('"', '').replace('`', '')
-        return err_msg.strip() == 'unique constraint failed: base_invoiceaddress.order_id'
-
     def save_invoice_form(self):
-        if not hasattr(self.invoice_form, 'save'):
-            return
-
-        def _apply_and_save(target):
-            self.invoice_form.instance = target
-            self.__dict__['invoice_address'] = target
-            with suppress(Exception):
-                self.order.invoice_address = target
-            if self.invoice_form.has_changed():
-                for k in self.invoice_form.changed_data:
-                    if k in self.invoice_form.cleaned_data:
-                        setattr(target, k, self.invoice_form.cleaned_data[k])
-                target.save()
-
-        instance = getattr(self.invoice_form, 'instance', None)
-        if instance and instance.pk:
-            if self.invoice_form.has_changed():
-                instance.refresh_from_db()
-                _apply_and_save(instance)
-        else:
-            existing = InvoiceAddress.objects.filter(order=self.order).first()
-            if existing:
-                _apply_and_save(existing)
-            else:
-                try:
-                    with transaction.atomic():
-                        self.invoice_form.save()
-                        self.__dict__['invoice_address'] = self.invoice_form.instance
-                        with suppress(Exception):
-                            self.order.invoice_address = self.invoice_form.instance
-                except IntegrityError as err:
-                    if not self._is_invoice_order_unique_violation(err):
-                        raise
-                    existing = InvoiceAddress.objects.filter(order=self.order).first()
-                    if not existing:
-                        raise
-                    _apply_and_save(existing)
+        if hasattr(self.invoice_form, 'save'):
+            self.invoice_form.save()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
