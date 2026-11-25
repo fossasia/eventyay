@@ -1,5 +1,6 @@
 import json
 from collections import OrderedDict
+from contextlib import suppress
 from decimal import Decimal
 
 from django import forms
@@ -163,19 +164,32 @@ class BaseQuestionsViewMixin:
     def questions_are_valid(self):
         return self.is_valid()
 
+    def cleanup_staged_uploads(self):
+        staged = getattr(self, '_staged_uploads', [])
+        for storage, name in staged:
+            with suppress(Exception):
+                storage.delete(name)
+        if hasattr(self, '_staged_uploads'):
+            self._staged_uploads.clear()
+
     def save(self):
         failed = False
         if not self.is_valid():
             return False
         for form in self.forms:
-            meta_info = form.pos.meta_info_data
             # Every form represents a CartPosition or OrderPosition with questions attached
             if not form.is_valid():
                 failed = True
             else:
-                # This form was correctly filled, so we store the data as
-                # answers to the questions / in the CartPosition object
-                for k, v in form.cleaned_data.items():
+                if isinstance(form.pos, OrderPosition) and form.pos.pk:
+                    form.pos.refresh_from_db()
+                    fields_to_update = [k for k in form.changed_data if k in form.cleaned_data]
+                else:
+                    fields_to_update = list(form.cleaned_data.keys())
+
+                meta_info = form.pos.meta_info_data
+                for k in fields_to_update:
+                    v = form.cleaned_data[k]
                     if k == 'attendee_name_parts':
                         form.pos.attendee_name_parts = v if v else None
                     elif k == 'attendee_email':
@@ -206,7 +220,12 @@ class BaseQuestionsViewMixin:
                                 or (isinstance(v, QuerySet) and not v.exists())
                             ):
                                 if field.answer.file:
-                                    field.answer.file.delete()
+                                    old_storage = field.answer.file.storage
+                                    old_name = field.answer.file.name
+                                    field.answer.file = None
+                                    transaction.on_commit(
+                                        lambda s=old_storage, n=old_name: s.delete(n)
+                                    )
                                 field.answer.delete()
                             else:
                                 self._save_to_answer(field, field.answer, v)
@@ -253,8 +272,11 @@ class BaseQuestionsViewMixin:
 
                             invalidate_badge_cache_for_position(get_badge_config_position(form.pos))
 
-            form.pos.meta_info = json.dumps(meta_info)
-            form.pos.save()
+                if fields_to_update:
+                    form.pos.meta_info = json.dumps(meta_info)
+                    form.pos.save()
+        if hasattr(self, '_staged_uploads'):
+            transaction.on_commit(lambda: getattr(self, '_staged_uploads', []).clear())
         return not failed
 
     def _save_to_answer(self, field, answer, value):
@@ -276,8 +298,18 @@ class BaseQuestionsViewMixin:
         elif isinstance(field, forms.FileField):
             if isinstance(value, UploadedFile):
                 upload = optimize_question_image(value)
+                old_file = answer.file
+                old_storage = old_file.storage if old_file else None
+                old_name = old_file.name if old_file else None
                 answer.file.save(upload.name, upload)
                 answer.answer = f'file://{answer.file.name}'
+                if not hasattr(self, '_staged_uploads'):
+                    self._staged_uploads = []
+                self._staged_uploads.append((answer.file.storage, answer.file.name))
+                if old_name and old_name != answer.file.name:
+                    transaction.on_commit(
+                        lambda s=old_storage, n=old_name: s.delete(n)
+                    )
         else:
             answer.answer = value
 
@@ -383,6 +415,55 @@ class OrderQuestionsViewMixin(BaseQuestionsViewMixin):
                     f.fields[fname].disabled = val['disabled']
 
         return f
+
+    @staticmethod
+    def _is_invoice_order_unique_violation(err):
+        cause = getattr(err, '__cause__', None)
+        diag = getattr(cause, 'diag', None)
+        if diag is not None:
+            return getattr(diag, 'constraint_name', None) == 'base_invoiceaddress_order_id_key'
+
+        err_msg = str(err).lower().replace('"', '').replace('`', '')
+        return err_msg.strip() == 'unique constraint failed: base_invoiceaddress.order_id'
+
+    def save_invoice_form(self):
+        if not hasattr(self.invoice_form, 'save'):
+            return
+
+        def _apply_and_save(target):
+            self.invoice_form.instance = target
+            self.__dict__['invoice_address'] = target
+            with suppress(Exception):
+                self.order.invoice_address = target
+            if self.invoice_form.has_changed():
+                for k in self.invoice_form.changed_data:
+                    if k in self.invoice_form.cleaned_data:
+                        setattr(target, k, self.invoice_form.cleaned_data[k])
+                target.save()
+
+        instance = getattr(self.invoice_form, 'instance', None)
+        if instance and instance.pk:
+            if self.invoice_form.has_changed():
+                instance.refresh_from_db()
+                _apply_and_save(instance)
+        else:
+            existing = InvoiceAddress.objects.filter(order=self.order).first()
+            if existing:
+                _apply_and_save(existing)
+            else:
+                try:
+                    with transaction.atomic():
+                        self.invoice_form.save()
+                        self.__dict__['invoice_address'] = self.invoice_form.instance
+                        with suppress(Exception):
+                            self.order.invoice_address = self.invoice_form.instance
+                except IntegrityError as err:
+                    if not self._is_invoice_order_unique_violation(err):
+                        raise
+                    existing = InvoiceAddress.objects.filter(order=self.order).first()
+                    if not existing:
+                        raise
+                    _apply_and_save(existing)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

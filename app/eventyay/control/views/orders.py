@@ -2302,33 +2302,37 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
             return self.get(request, *args, **kwargs)
 
         notify = self.other_form.cleaned_data['notify']
-        with transaction.atomic():
-            self.save()
-            if hasattr(self.invoice_form, 'save'):
-                self.invoice_form.save()
-            self.order.log_action(
-                'eventyay.event.order.modified',
-                {
-                    'invoice_data': self.invoice_form.cleaned_data,
-                    'data': [
-                        dict(
-                            position=f.orderpos.pk,
-                            **{
-                                k: (
-                                    f.cleaned_data.get(k).name
-                                    if isinstance(f.cleaned_data.get(k), File)
-                                    else f.cleaned_data.get(k)
-                                )
-                                for k in f.changed_data
-                            },
-                        )
-                        for f in self.forms
-                    ],
-                },
-                user=request.user,
-            )
-            if notify:
-                transaction.on_commit(lambda: notify_user_changed_order(self.order))
+        try:
+            with transaction.atomic():
+                self.request.event.orders.select_for_update().filter(pk=self.order.pk).first()
+                self.save()
+                self.save_invoice_form()
+                self.order.log_action(
+                    'eventyay.event.order.modified',
+                    {
+                        'invoice_data': self.invoice_form.cleaned_data,
+                        'data': [
+                            dict(
+                                position=f.orderpos.pk,
+                                **{
+                                    k: (
+                                        f.cleaned_data.get(k).name
+                                        if isinstance(f.cleaned_data.get(k), File)
+                                        else f.cleaned_data.get(k)
+                                    )
+                                    for k in f.changed_data
+                                },
+                            )
+                            for f in self.forms
+                        ],
+                    },
+                    user=request.user,
+                )
+                if notify:
+                    transaction.on_commit(lambda: notify_user_changed_order(self.order))
+        except Exception:
+            self.cleanup_staged_uploads()
+            raise
 
         if self.invoice_form.has_changed():
             success_message = (
