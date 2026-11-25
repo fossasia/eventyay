@@ -95,7 +95,8 @@ urlpatterns = [
     url(r'^global/settings/$', global_settings.GlobalSettingsView.as_view(), name='admin.global.settings'),
     path('global/business-legacy/', global_settings.LegacyBusinessSettingsRedirectView.as_view(), name='admin.global.business'),
     path(
-        'global/ticketing/retention/', global_settings.TicketingRetentionSettingsView.as_view(),
+        'global/ticketing/retention/',
+        global_settings.TicketingRetentionRedirectView.as_view(),
         name='admin.global.ticketing.retention',
     ),
     path('global/ticketing/', global_settings.GlobalTicketingSettingsView.as_view(), name='admin.global.ticketing'),

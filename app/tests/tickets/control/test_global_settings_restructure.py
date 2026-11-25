@@ -22,6 +22,15 @@ from eventyay.control.forms.global_settings import (
 )
 
 
+RETENTION_POST_DEFAULTS = {
+    'ticketing_retention_manual_min_days': '14',
+    'ticketing_retention_periods': '30, 60, 90, 180, 365',
+    'ticketing_retention_warning_days': '14',
+    'ticketing_retention_allow_trash': 'on',
+    'ticketing_retention_trash_days': '30',
+}
+
+
 @pytest.fixture
 def admin_user():
     return User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
@@ -205,7 +214,7 @@ class TestGlobalTicketingSettings:
         resp_non_staff = client.get(url)
         assert resp_non_staff.status_code == 403
 
-    def test_ticketing_page_renders_payment_gateways_and_cart(self, staff_client):
+    def test_ticketing_page_renders_tabs(self, staff_client):
         url = reverse('eventyay_admin:admin.global.ticketing')
         response = staff_client.get(url)
         assert response.status_code == 200
@@ -215,6 +224,7 @@ class TestGlobalTicketingSettings:
         assert '<h1>Ticketing Settings</h1>' in content
         assert 'id="tab-payment-gateways"' in content
         assert 'id="tab-cart"' in content
+        assert 'id="tab-data-retention"' in content
 
         # Payment gateway providers
         assert 'PayPal — Ticket Payments' in content
@@ -306,6 +316,7 @@ class TestGlobalTicketingSettings:
                 'payment_stripe_connect_client_id': 'ca_test_client_id',
                 'payment_stripe_connect_publishable_key': 'pk_live_ticket_stripe_key',
                 'payment_paypal_connect_endpoint': 'live',
+                **RETENTION_POST_DEFAULTS,
                 'reservation_time': '30',
                 'max_products_per_order': '0',
             })
@@ -322,6 +333,7 @@ class TestGlobalTicketingSettings:
         post_data = {
             'payment_paypal_connect_client_id': 'paypal_client_123',
             'payment_paypal_connect_endpoint': 'sandbox',
+            **RETENTION_POST_DEFAULTS,
             'reservation_time': '45',
             'max_products_per_order': '10',
         }
@@ -353,6 +365,7 @@ class TestGlobalTicketingSettings:
         form = GlobalTicketingSettingsForm(
             data={
                 'payment_paypal_connect_endpoint': 'https://api.sandbox.paypal.com',
+                **RETENTION_POST_DEFAULTS,
                 'reservation_time': '30',
                 'max_products_per_order': '0',
             }
@@ -493,6 +506,7 @@ class TestPluginProvidedPaymentSettingsRegression:
             # Verify saving via GlobalTicketingSettingsForm persists the value
             post_data = {
                 'payment_customplugin_api_key': 'test_secret_token_123',
+                **RETENTION_POST_DEFAULTS,
                 'reservation_time': '30',
                 'max_products_per_order': '5',
             }
@@ -518,9 +532,11 @@ def test_paypal_connect_endpoint_choice_maps_legacy_urls():
 
 @pytest.mark.django_db
 def test_ticketing_retention_settings(staff_client):
-    url = reverse('eventyay_admin:admin.global.ticketing.retention')
+    url = reverse('eventyay_admin:admin.global.ticketing')
     page = staff_client.get(url)
     assert page.status_code == 200
+    old_url = reverse('eventyay_admin:admin.global.ticketing.retention')
+    assert staff_client.get(old_url).url == url + '#tab-data-retention'
     defaults = page.context['form'].initial
     assert defaults['ticketing_retention_manual_min_days'] == 14
     assert defaults['ticketing_retention_periods'] == '30, 60, 90, 180, 365'
@@ -529,6 +545,8 @@ def test_ticketing_retention_settings(staff_client):
     assert defaults['ticketing_retention_postpone_cap_days'] is None
     assert defaults['ticketing_retention_allow_trash']
     data = {
+        'reservation_time': '30',
+        'max_products_per_order': '0',
         'ticketing_retention_manual_min_days': '21',
         'ticketing_retention_warning_days': '7',
         'ticketing_retention_periods': '60, 30, 60',
@@ -551,6 +569,6 @@ def test_ticketing_retention_settings(staff_client):
 @pytest.mark.django_db
 def test_ticketing_retention_requires_staff_session(client, admin_user):
     client.force_login(admin_user)
-    url = reverse('eventyay_admin:admin.global.ticketing.retention')
+    url = reverse('eventyay_admin:admin.global.ticketing')
     assert client.get(url).status_code in (302, 403)
     assert client.post(url, {}).status_code in (302, 403)

@@ -32,7 +32,6 @@ from eventyay.common.sanitizers import sanitize_rich_text
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     GlobalTicketingSettingsForm,
-    TicketingRetentionSettingsForm,
     SSOConfigForm,
     PrivacySettingsForm,
 )
@@ -129,12 +128,9 @@ class GlobalTicketingSettingsView(AdministratorPermissionRequiredMixin, FormView
         return reverse('eventyay_admin:admin.global.ticketing')
 
 
-class TicketingRetentionSettingsView(GlobalTicketingSettingsView):
-    template_name = 'pretixcontrol/admin/ticketing_retention.html'
-    form_class = TicketingRetentionSettingsForm
-
-    def get_success_url(self):
-        return reverse('eventyay_admin:admin.global.ticketing.retention')
+class TicketingRetentionRedirectView(AdministratorPermissionRequiredMixin, RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse('eventyay_admin:admin.global.ticketing') + '#tab-data-retention'
 
 
 class LegacyBusinessSettingsRedirectView(AdministratorPermissionRequiredMixin, RedirectView):

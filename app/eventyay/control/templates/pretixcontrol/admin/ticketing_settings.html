@@ -8,7 +8,6 @@
 
 {% block content %}
     <h1>{% trans "Ticketing Settings" %}</h1>
-    <p><a href="{% url 'eventyay_admin:admin.global.ticketing.retention' %}">{% translate 'Ticketing data retention' %}</a></p>
     {% block inner %}
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
         {% csrf_token %}
@@ -89,6 +88,22 @@
                 <legend>{% translate "Cart" %}</legend>
                 {% bootstrap_field form.reservation_time layout='control' %}
                 {% bootstrap_field form.max_products_per_order layout='control' %}
+            </fieldset>
+
+            <fieldset id="tab-data-retention">
+                <legend>{% translate 'Ticketing data retention' %}</legend>
+                <fieldset>
+                  <legend>{% translate 'Anonymization schedule' %}</legend>
+                    {% bootstrap_field form.ticketing_retention_manual_min_days layout='control' %}
+                    {% bootstrap_field form.ticketing_retention_periods layout='control' %}
+                    {% bootstrap_field form.ticketing_retention_warning_days layout='control' %}
+                    {% bootstrap_field form.ticketing_retention_postpone_cap_days layout='control' %}
+                </fieldset>
+                <fieldset>
+                  <legend>{% translate 'Trash and recovery' %}</legend>
+                    {% bootstrap_field form.ticketing_retention_allow_trash layout='control' %}
+                    {% bootstrap_field form.ticketing_retention_trash_days layout='control' %}
+                </fieldset>
             </fieldset>
         </div>
 
