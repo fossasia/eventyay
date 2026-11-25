@@ -3179,14 +3179,14 @@ class Event(
         This checks whether the current schedule has any visible, scheduled talks
         or breaks (not just an empty published schedule).
         """
+        if not self.current_schedule:
+            return False
         if self.get_feature_flag('show_accepted_publicly') and not self.private_testmode_talks_enabled:
             from eventyay.base.models import SubmissionStates
 
             with scope(event=self):
                 if self.submissions.filter(state__in=SubmissionStates.accepted_states).exists():
                     return True
-        if not self.current_schedule:
-            return False
         schedule = self.current_schedule
         if schedule.scheduled_talks.exists():
             return True

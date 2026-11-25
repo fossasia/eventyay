@@ -214,7 +214,7 @@ def can_list_schedule(context, event=None):
         and event.current_schedule
         and not event.private_testmode_talks_enabled
     )
-    return timetable_public or accepted_sessions_publicly_visible(event)
+    return timetable_public or bool(event.current_schedule and accepted_sessions_publicly_visible(event))
 
 
 @register.simple_tag(takes_context=True)

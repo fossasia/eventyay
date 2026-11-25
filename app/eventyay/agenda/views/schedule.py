@@ -222,9 +222,12 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             return super().has_permission()
         if super().has_permission():
             return True
-        # Accepted sessions can be public before a timetable release.
+        # Accepted sessions can appear on the schedule once a release exists.
         # The WIP preview URL stays on the organiser permission above.
-        return accepted_sessions_publicly_visible(self.request.event)
+        return bool(
+            self.request.event.current_schedule
+            and accepted_sessions_publicly_visible(self.request.event)
+        )
 
     def get_text(self, request, **kwargs):
         data = ScheduleData(
@@ -304,10 +307,6 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         schedule = super().get_object()
         if schedule:
             return schedule
-        if self.version:
-            raise Http404()
-        if accepted_sessions_publicly_visible(self.request.event):
-            return self.request.event.wip_schedule
         raise Http404()
 
     def get_permission_object(self):

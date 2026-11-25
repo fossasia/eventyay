@@ -423,7 +423,7 @@ PUBLIC_ACCEPTED_SCHEDULE_URLS = frozenset(
 
 def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kwargs=None):
     if url_name in PUBLIC_ACCEPTED_SCHEDULE_URLS:
-        return accepted_sessions_publicly_visible(event)
+        return bool(event.current_schedule and accepted_sessions_publicly_visible(event))
     if url_name not in AGENDA_PAGES_WITHOUT_TALKS_PUBLISHED:
         return False
     if user is None:

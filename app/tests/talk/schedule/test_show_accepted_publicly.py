@@ -396,11 +396,7 @@ class TestShowAcceptedPubliclyVisibility:
         assert 'Secret Break' in json.dumps(preview)
 
         widget = client.get(event.urls.schedule + 'widgets/schedule.json')
-        assert widget.status_code == 200
-        assert 'Secret Break' not in widget.content.decode()
-        widget_talk = next(item for item in widget.json()['talks'] if item.get('code') == accepted.code)
-        assert widget_talk['room'] == room.pk
-        assert widget_talk['state'] is None
+        assert widget.status_code == 404
 
     @pytest.mark.django_db
     def test_pending_cards_include_favourite_counts(self, event, user):
@@ -585,6 +581,14 @@ class TestShowAcceptedPubliclyEndToEnd:
         event.feature_flags["show_accepted_publicly"] = True
         event.save()
 
+        # Before a schedule version is released, /schedule/ and /sessions/ stay closed.
+        assert client.get(event.urls.schedule, HTTP_ACCEPT="text/html").status_code == 404
+        assert client.get(event.urls.talks).status_code == 404
+        assert client.get(event.urls.schedule + "widgets/schedule.json").status_code == 404
+
+        with scope(event=event):
+            event.release_schedule("v1")
+
         page = client.get(event.urls.schedule, HTTP_ACCEPT="text/html")
         assert page.status_code == 200
         assert "Accepted Coming Soon" in page.content.decode()
@@ -593,16 +597,13 @@ class TestShowAcceptedPubliclyEndToEnd:
         assert "Hidden Withdrawn Talk" not in page.content.decode()
         payload = _inline_schedule_payload(page.text)
         talk = next(item for item in payload["talks"] if item.get("code") == accepted.code)
-        assert talk["start"] is not None
-        assert talk["end"] is not None
-        assert talk["room"] == room.pk
-        assert talk.get("schedule_pending") is not True
-        assert str(room.name) in page.text
+        assert talk["start"] is None
+        assert talk["room"] is None
+        assert talk["schedule_pending"] is True
         confirmed_talk = next(item for item in payload["talks"] if item.get("code") == confirmed.code)
-        assert confirmed_talk["start"] is not None
-        assert confirmed_talk["end"] is not None
-        assert confirmed_talk["room"] == room.pk
-        assert confirmed_talk.get("schedule_pending") is not True
+        assert confirmed_talk["start"] is None
+        assert confirmed_talk["room"] is None
+        assert confirmed_talk["schedule_pending"] is True
         pending = next(item for item in payload["talks"] if item.get("code") == unplaced.code)
         assert pending["start"] is None
         assert pending["room"] is None
@@ -610,15 +611,12 @@ class TestShowAcceptedPubliclyEndToEnd:
 
         widget = client.get(event.urls.schedule + "widgets/schedule.json")
         assert widget.status_code == 200
-        widget_talk = next(item for item in widget.json()["talks"] if item.get("code") == accepted.code)
-        assert widget_talk["start"] is not None
-        assert widget_talk["room"] == room.pk
         widget_pending = next(item for item in widget.json()["talks"] if item.get("code") == unplaced.code)
         assert widget_pending["start"] is None
         assert widget_pending["room"] is None
 
         # /sessions/ redirects to the schedule. The middleware must allow it
-        # while talk pages are still unpublished.
+        # while talk pages are still unpublished once a schedule is released.
         sessions = client.get(event.urls.talks, follow=True, HTTP_ACCEPT="text/html")
         assert sessions.redirect_chain
         assert sessions.redirect_chain[0][1] == 301
@@ -630,13 +628,12 @@ class TestShowAcceptedPubliclyEndToEnd:
         speaker_page = client.get(profile.urls.public)
         assert speaker_page.status_code == 200
 
-        # The organiser preview stays closed. Plain text includes the placement.
+        # The organiser preview stays closed. Room names stay hidden until timetable is published.
         assert client.get(event.urls.schedule + "v/wip/", HTTP_ACCEPT="text/html").status_code == 404
         plain = client.get(event.urls.schedule + "?format=list", HTTP_ACCEPT="text/plain")
         plain_body = plain.content.decode()
         assert "Accepted Coming Soon" in plain_body
-        assert str(room.name) in plain_body
-        assert "Accepted Not Placed" not in plain_body
+        assert str(room.name) not in plain_body
         assert "Hidden Rejected Talk" not in plain_body
 
         # Public talk test mode does not hide accepted sessions.
@@ -833,11 +830,7 @@ class TestShowAcceptedPubliclyEndToEnd:
             unplaced_code = unplaced.code
 
         before = client.get(event.urls.schedule, HTTP_ACCEPT="text/html")
-        assert before.status_code == 200
-        before_payload = _inline_schedule_payload(before.text)
-        before_placed = next(item for item in before_payload["talks"] if item.get("code") == placed_code)
-        assert before_placed["room"] == room.pk
-        assert before_placed["start"] is not None
+        assert before.status_code == 404
 
         with scope(event=event):
             event.talks_published = True
