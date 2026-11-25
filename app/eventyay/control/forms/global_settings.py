@@ -721,6 +721,36 @@ class GlobalSettingsForm(SettingsForm):
         return super().save()
 
 
+class TicketingRetentionSettingsForm(SettingsForm):
+    ticketing_retention_manual_min_days = forms.IntegerField(
+        label=_('Minimum days after the event before manual anonymization'), min_value=0
+    )
+    ticketing_retention_periods = forms.CharField(
+        label=_('Retention periods offered to organizers'),
+        help_text=_('Enter a comma-separated list of days after the event.'),
+    )
+    ticketing_retention_warning_days = forms.IntegerField(
+        label=_('First reminder (days before anonymization)'), min_value=1
+    )
+    ticketing_retention_allow_trash = forms.BooleanField(
+        label=_('Offer the option to keep original data in trash'), required=False
+    )
+    ticketing_retention_trash_days = forms.IntegerField(label=_('Days to keep original data in trash'), min_value=1)
+    ticketing_retention_postpone_cap_days = forms.IntegerField(
+        label=_('Maximum postponement in days'), min_value=0, required=False,
+        help_text=_('Leave blank for no cap. Enter zero to disable postponement.'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, obj=GlobalSettingsObject(), **kwargs)
+        self.initial['ticketing_retention_periods'] = ', '.join(map(str, self.initial['ticketing_retention_periods']))
+
+    def clean_ticketing_retention_periods(self) -> list[int]:
+        parts = [part.strip() for part in self.cleaned_data['ticketing_retention_periods'].split(',')]
+        field = forms.IntegerField(min_value=1)
+        return sorted({field.clean(part) for part in parts})
+
+
 class GlobalTicketingSettingsForm(SettingsForm):
     def _setting_default(self):
         global_settings = self.obj.settings

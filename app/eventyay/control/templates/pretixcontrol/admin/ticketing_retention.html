@@ -1,0 +1,12 @@
+{% extends 'pretixcontrol/global_settings_base.html' %}
+{% load i18n bootstrap3 %}
+
+{% block title %}{% translate 'Ticketing data retention' %}{% endblock %}
+{% block content %}
+  <h1>{% translate 'Ticketing data retention' %}</h1>
+  <form method="post" class="form-horizontal">
+    {% csrf_token %}
+    {% bootstrap_form form layout='control' %}
+    <button class="btn btn-primary" type="submit">{% translate 'Save' %}</button>
+  </form>
+{% endblock %}

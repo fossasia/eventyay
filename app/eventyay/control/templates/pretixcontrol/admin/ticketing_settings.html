@@ -8,6 +8,7 @@
 
 {% block content %}
     <h1>{% trans "Ticketing Settings" %}</h1>
+    <p><a href="{% url 'eventyay_admin:admin.global.ticketing.retention' %}">{% translate 'Ticketing data retention' %}</a></p>
     {% block inner %}
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
         {% csrf_token %}
