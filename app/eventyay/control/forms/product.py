@@ -982,11 +982,10 @@ class ProductVariationsFormSet(I18nFormSet):
         This formset is built via ``inlineformset_factory`` but inherits from
         ``I18nFormSet`` (not an inline formset), and the view passes a filtered
         queryset instead of ``instance=``, so ``self.instance`` is unavailable.
+
+        Do not read ``self.forms`` here: ``_construct_form`` calls this while
+        Django is still building that list, which would recurse forever.
         """
-        for form in getattr(self, 'forms', []):
-            product = getattr(getattr(form, 'instance', None), 'product', None)
-            if product is not None and getattr(product, 'pk', None):
-                return product
         qs = getattr(self, 'queryset', None)
         if qs is not None:
             variation = qs.select_related('product').first()

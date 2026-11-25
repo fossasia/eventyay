@@ -813,6 +813,38 @@ class ItemsTest(ItemFormTest):
         assert self.var1.available_until.astimezone(self.event1.timezone).date() == datetime.date(2026, 12, 15)
         assert self.item2.start_next_variation_on_sellout
 
+    def test_add_variation_with_existing_does_not_recurse(self):
+        """Regression: constructing a new variation must not read self.forms."""
+        self.item2.admission = True
+        self.item2.save()
+        doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id))
+        d = extract_form_fields(doc.select('.container-fluid form')[0])
+        d.update(
+            {
+                'variations-TOTAL_FORMS': '3',
+                'variations-INITIAL_FORMS': '2',
+                'variations-MIN_NUM_FORMS': '0',
+                'variations-MAX_NUM_FORMS': '1000',
+                'variations-0-id': str(self.var1.pk),
+                'variations-0-value_0': 'Silver',
+                'variations-0-active': 'yes',
+                'variations-1-id': str(self.var2.pk),
+                'variations-1-value_0': 'Gold',
+                'variations-1-active': 'yes',
+                'variations-2-id': '',
+                'variations-2-value_0': 'Platinum',
+                'variations-2-active': 'yes',
+                'admission': 'on',
+            }
+        )
+        response = self.client.post(
+            '/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id),
+            d,
+        )
+        assert response.status_code in (200, 302)
+        with scopes_disabled():
+            assert self.item2.variations.filter(value='Platinum').exists()
+
     def test_delete_variation(self):
         doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id))
         d = extract_form_fields(doc.select('.container-fluid form')[0])
