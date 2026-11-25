@@ -3240,7 +3240,11 @@ def test_invoice_download_forms(client, env):
     event, user, _, _ = env
     client.force_login(user)
     kwargs = {'event': event.slug, 'organizer': event.organizer.slug}
-    page = client.get(reverse('control:event.orders.invoice_downloads', kwargs=kwargs))
+    download_url = reverse('control:event.orders.invoice_downloads', kwargs=kwargs)
+    exports = client.get(reverse('control:event.orders.import_export', kwargs=kwargs))
+    link = BeautifulSoup(exports.content, 'html.parser').find('a', href=download_url)
+    assert link and link.get_text(strip=True) == 'Download invoices'
+    page = client.get(download_url)
     assert page.status_code == 200
     target = reverse('control:event.orders.import_export.export_do', kwargs=kwargs)
     forms = BeautifulSoup(page.content, 'html.parser').find_all('form', action=target)
