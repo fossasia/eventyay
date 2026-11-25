@@ -446,7 +446,8 @@ export default {
 		},
 
 		async send () {
-			if (this.sending) return
+			// wait for running uploads, otherwise their files would be dropped from the message
+			if (this.sending || this.uploading) return
 			const text = this.serializeContent()
 			const files = this.files.filter(file => file)
 			if (!text && files.length === 0) {
@@ -457,8 +458,10 @@ export default {
 			const content = files.length > 0
 				? { type: 'files', files, body: text }
 				: { type: 'text', body: text }
+			// lock the draft while the request runs, so clearing it on success cannot drop newer input
 			this.sending = true
 			this.sendError = null
+			this.editor?.setEditable(false)
 			try {
 				await this.submit(content)
 			} catch (error) {
@@ -468,6 +471,8 @@ export default {
 				return
 			} finally {
 				this.sending = false
+				// a successful edit can unmount this input before the request settles here
+				if (this.editor && !this.editor.isDestroyed) this.editor.setEditable(true)
 			}
 			if (this.message) return // the parent closes the editor
 			this.files = []
@@ -481,7 +486,10 @@ export default {
 
 		async attachFiles (event) {
 			const files = Array.from(event.target.files)
-			if (files.length === 0) return
+			if (files.length === 0 || this.sending) {
+				event.target.value = ''
+				return
+			}
 
 			this.uploading = true
 			const requests = files.map(file => api.uploadFilePromise(file, file.name))
@@ -502,6 +510,7 @@ export default {
 		},
 
 		addEmoji (emoji) {
+			if (this.sending) return
 			this.editor?.chain().focus().insertContent({
 				type: 'emoji',
 				attrs: { native: emoji.native },
@@ -509,6 +518,7 @@ export default {
 		},
 
 		removeFile (file) {
+			if (this.sending) return
 			const index = this.files.indexOf(file)
 			if (index > -1) {
 				this.files.splice(index, 1)

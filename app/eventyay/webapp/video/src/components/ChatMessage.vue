@@ -58,14 +58,14 @@
 				.timestamp {{ timestamp }}
 				span {{ $t('New poll:') }}
 			Poll(:poll="poll")
-	prompt.delete-message-prompt(v-if="showDeletePrompt", @close="showDeletePrompt = false")
+	prompt.delete-message-prompt(v-if="showDeletePrompt", @close="closeDeletePrompt")
 		.prompt-content
 			h2 {{ $t('Delete this message?') }}
 			.message-to-delete-wrapper
 				chat-message(:message="message", mode="standalone", :readonly="true")
 			.delete-error(v-if="deleteError", role="alert") {{ deleteError }}
 			.actions
-				bunt-button#btn-cancel(:disabled="deleting", @click="showDeletePrompt = false") {{ $t('cancel') }}
+				bunt-button#btn-cancel(:disabled="deleting", @click="closeDeletePrompt") {{ $t('cancel') }}
 				bunt-button#btn-delete-message(:disabled="deleting", @click="deleteMessage") {{ $t('delete message') }}
 </template>
 <script>
@@ -216,6 +216,11 @@ export default {
 		openDeletePrompt() {
 			this.deleteError = null
 			this.showDeletePrompt = true
+		},
+		closeDeletePrompt() {
+			// stay open while the request runs, so a failure can still be shown
+			if (this.deleting) return
+			this.showDeletePrompt = false
 		},
 		async deleteMessage() {
 			if (this.deleting) return
