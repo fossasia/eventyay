@@ -531,6 +531,7 @@ class ProductCreateForm(I18nModelForm):
                 'require_approval',
                 'allow_waitinglist',
                 'allow_user_variation_change',
+                'start_next_variation_on_sellout',
                 'show_quota_left',
                 'hidden_if_available',
                 'require_bundling',
@@ -608,6 +609,13 @@ class ProductCreateForm(I18nModelForm):
                         default_price=variation.default_price,
                         description=variation.description,
                         original_price=variation.original_price,
+                        available_from=variation.available_from,
+                        available_until=variation.available_until,
+                        admission_validity_mode=variation.admission_validity_mode,
+                        admission_valid_from=variation.admission_valid_from,
+                        admission_valid_until=variation.admission_valid_until,
+                        admission_valid_from_offset_minutes=variation.admission_valid_from_offset_minutes,
+                        admission_valid_until_offset_minutes=variation.admission_valid_until_offset_minutes,
                     )
             else:
                 ProductVariation.objects.create(product=instance, value=__('Standard'))
@@ -817,6 +825,7 @@ class ProductUpdateForm(I18nModelForm):
         self.fields['category'].widget.choices = self.fields['category'].choices
         if not self.instance.has_variations:
             self.fields.pop('allow_user_variation_change', None)
+            self.fields.pop('start_next_variation_on_sellout', None)
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))
@@ -919,6 +928,7 @@ class ProductUpdateForm(I18nModelForm):
             'hidden_if_available',
             'issue_giftcard',
             'allow_user_variation_change',
+            'start_next_variation_on_sellout',
         ]
         field_classes = {
             'available_from': SplitDateTimeField,
@@ -992,16 +1002,34 @@ class ProductVariationForm(I18nModelForm):
         for f in ADMISSION_VALIDITY_FIELD_NAMES:
             if f in self.fields and f != 'admission_validity_mode':
                 self.fields[f].required = False
-        
+
         self.fields['default_price'].error_messages['invalid'] = _('Please enter a valid price.')
         if 'original_price' in self.fields:
             self.fields['original_price'].error_messages['invalid'] = _('Please enter a valid price.')
+
+        tzname = self.event.settings.timezone
+        self.fields['available_from'].required = False
+        self.fields['available_until'].required = False
+        self.fields['available_until'].help_text = _(
+            'After this time the variation can no longer be bought. Event time zone (%(tz)s).'
+        ) % {'tz': tzname}
+
+    @property
+    def checkin_validity_summary(self):
+        if self.instance and self.instance.pk:
+            return self.instance.get_checkin_validity_summary()
+        return str(
+            dict(ProductVariation.ADMISSION_VALIDITY_MODE_CHOICES).get(
+                ProductVariation.ADMISSION_VALIDITY_MODE_INHERIT
+            )
+        )
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))
 
     def clean(self):
         cleaned_data = super().clean()
+        Product.clean_available(cleaned_data.get('available_from'), cleaned_data.get('available_until'))
         Product.clean_admission_validity_data(cleaned_data, event=self.event)
         return cleaned_data
 
@@ -1013,14 +1041,20 @@ class ProductVariationForm(I18nModelForm):
             'active',
             'default_price',
             'original_price',
+            'available_from',
+            'available_until',
             'description',
             *ADMISSION_VALIDITY_FIELD_NAMES,
         ]
         field_classes = {
+            'available_from': SplitDateTimeField,
+            'available_until': SplitDateTimeField,
             'admission_valid_from': SplitDateTimeField,
             'admission_valid_until': SplitDateTimeField,
         }
         widgets = {
+            'available_from': SplitDateTimePickerWidget(),
+            'available_until': SplitDateTimePickerWidget(),
             'admission_valid_from': SplitDateTimePickerWidget(),
             'admission_valid_until': SplitDateTimePickerWidget(),
         }

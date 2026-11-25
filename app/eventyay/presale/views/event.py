@@ -191,7 +191,7 @@ def get_grouped_products(
                         )
                     ),
                 )
-                .filter(active=True, quotas__isnull=False, subevent_disabled=False)
+                .filter(ProductVariation.filter_available_q(), quotas__isnull=False, subevent_disabled=False)
                 .prefetch_related(
                     Prefetch(
                         'quotas',
@@ -427,7 +427,9 @@ def get_grouped_products(
             product.available_variations = [
                 v
                 for v in product.available_variations
-                if v._subevent_quotas and (not voucher or not voucher.quota_id or v in restrict_vars)
+                if v._subevent_quotas
+                and (not voucher or not voucher.quota_id or v in restrict_vars)
+                and v.is_available(subevent=subevent, _quota_cache=quota_cache)
             ]
 
             if event.settings.hide_sold_out:
@@ -531,8 +533,8 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
         return False
 
     variations_qs = ProductVariation.objects.filter(
+        ProductVariation.filter_available_q(),
         product__event=event,
-        active=True
     ).prefetch_related('quotas')
 
     variations_list = list(variations_qs)

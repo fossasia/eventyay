@@ -35,6 +35,8 @@ _VARIATION_SERIALIZER_FIELDS = (
     'default_price',
     'price',
     'original_price',
+    'available_from',
+    'available_until',
 ) + ADMISSION_VALIDITY_FIELD_NAMES
 
 
@@ -60,6 +62,7 @@ class ProductVariationSerializer(I18nAwareModelSerializer):
         event = self.context.get('event')
         if event is None and self.instance is not None:
             event = self.instance.product.event
+        Product.clean_available(full_data.get('available_from'), full_data.get('available_until'))
         Product.clean_admission_validity_data(full_data, event=event)
         return data
 
@@ -206,6 +209,7 @@ class ProductSerializer(I18nAwareModelSerializer):
             'hide_without_voucher',
             'allow_cancel',
             'allow_user_variation_change',
+            'start_next_variation_on_sellout',
             'require_bundling',
             'min_per_order',
             'max_per_order',

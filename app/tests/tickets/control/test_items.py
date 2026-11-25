@@ -404,8 +404,8 @@ class QuotaTest(ItemFormTest):
             c = Quota.objects.create(event=self.event1, name='Full house', size=500)
             item1 = Item.objects.create(event=self.event1, name='Standard', default_price=0)
             item2 = Item.objects.create(event=self.event1, name='Business', default_price=0)
-            ItemVariation.objects.create(item=item2, value='Silver')
-            ItemVariation.objects.create(item=item2, value='Gold')
+            ItemVariation.objects.create(product=item2, value='Silver')
+            ItemVariation.objects.create(product=item2, value='Gold')
         doc = self.get_doc('/control/event/%s/%s/quotas/%s/change' % (self.orga1.slug, self.event1.slug, c.id))
         [i for i in doc.select('[name=itemvars]') if i.get('value') == str(item1.id)][0]['checked'] = 'checked'
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
@@ -504,8 +504,8 @@ class ItemsTest(ItemFormTest):
             require_voucher=True,
             allow_cancel=False,
         )
-        self.var1 = ItemVariation.objects.create(item=self.item2, value='Silver')
-        self.var2 = ItemVariation.objects.create(item=self.item2, value='Gold')
+        self.var1 = ItemVariation.objects.create(product=self.item2, value='Silver')
+        self.var2 = ItemVariation.objects.create(product=self.item2, value='Gold')
         self.addoncat = ItemCategory.objects.create(event=self.event1, name='Item category')
 
     def test_move(self):
@@ -776,6 +776,42 @@ class ItemsTest(ItemFormTest):
         )
         self.var1.refresh_from_db()
         assert str(self.var1.value) == 'Bronze'
+
+    def test_update_variation_sales_period(self):
+        self.item2.admission = True
+        self.item2.save()
+        doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id))
+        assert 'Available from' in doc.text
+        assert 'Check-in validity' in doc.text
+        assert 'Edit check-in settings' in doc.text
+        d = extract_form_fields(doc.select('.container-fluid form')[0])
+        d.update(
+            {
+                'variations-TOTAL_FORMS': '2',
+                'variations-INITIAL_FORMS': '2',
+                'variations-MIN_NUM_FORMS': '0',
+                'variations-MAX_NUM_FORMS': '1000',
+                'variations-0-id': str(self.var1.pk),
+                'variations-0-value_0': 'Bronze',
+                'variations-0-active': 'yes',
+                'variations-0-available_until_0': '2026-12-15',
+                'variations-0-available_until_1': '23:59:00',
+                'variations-1-id': str(self.var2.pk),
+                'variations-1-value_0': 'Gold',
+                'variations-1-active': 'yes',
+                'start_next_variation_on_sellout': 'on',
+                'admission': 'on',
+            }
+        )
+        self.client.post(
+            '/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id),
+            d,
+        )
+        self.var1.refresh_from_db()
+        self.item2.refresh_from_db()
+        assert self.var1.available_until is not None
+        assert self.var1.available_until.astimezone(self.event1.timezone).date() == datetime.date(2026, 12, 15)
+        assert self.item2.start_next_variation_on_sellout
 
     def test_delete_variation(self):
         doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id))

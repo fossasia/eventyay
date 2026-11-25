@@ -1229,6 +1229,49 @@ class CartTest(CartTestMixin, TestCase):
                 0,
             )
 
+    def test_variation_in_time_available(self):
+        self.shirt_red.available_from = now() - timedelta(days=2)
+        self.shirt_red.available_until = now() + timedelta(days=2)
+        self.shirt_red.save()
+        self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
+            follow=True,
+        )
+        with scopes_disabled():
+            self.assertEqual(
+                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
+                1,
+            )
+
+    def test_variation_no_longer_available(self):
+        self.shirt_red.available_until = now() - timedelta(days=2)
+        self.shirt_red.save()
+        self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
+            follow=True,
+        )
+        with scopes_disabled():
+            self.assertEqual(
+                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
+                0,
+            )
+
+    def test_variation_not_yet_available(self):
+        self.shirt_red.available_from = now() + timedelta(days=2)
+        self.shirt_red.save()
+        self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
+            follow=True,
+        )
+        with scopes_disabled():
+            self.assertEqual(
+                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
+                0,
+            )
+
     def test_max_items(self):
         with scopes_disabled():
             CartPosition.objects.create(

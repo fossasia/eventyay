@@ -350,7 +350,9 @@ class CartManager:
                 if op.product.hide_without_voucher and (op.voucher is None or not op.voucher.show_hidden_products):
                     raise CartError(error_messages['voucher_required'])
 
-            if not op.product.is_available() or (op.variation and not op.variation.active):
+            if not op.product.is_available() or (
+                op.variation and not op.variation.is_available(subevent=op.subevent)
+            ):
                 raise CartError(error_messages['unavailable'])
 
             if self._sales_channel not in op.product.sales_channels:

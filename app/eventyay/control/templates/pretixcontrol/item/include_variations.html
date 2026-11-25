@@ -1,10 +1,16 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load formset_tags %}
+{% load static %}
 <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
     {% if form.allow_user_variation_change %}
         <div class="form-horizontal">
             {% bootstrap_field form.allow_user_variation_change layout='control' %}
+        </div>
+    {% endif %}
+    {% if form.start_next_variation_on_sellout %}
+        <div class="form-horizontal">
+            {% bootstrap_field form.start_next_variation_on_sellout layout='control' %}
         </div>
     {% endif %}
     {{ formset.management_form }}
@@ -50,13 +56,42 @@
                     {% bootstrap_field variation_form.active layout="control" %}
                     {% bootstrap_field variation_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.original_price addon_after=request.event.currency layout="control" %}
+                    {% bootstrap_field variation_form.available_from layout="control" %}
+                    {% bootstrap_field variation_form.available_until layout="control" %}
                     {% bootstrap_field variation_form.description layout="control" %}
-                    <div {% if not form.admission.value %}style="display: none;"{% endif %}>
-                        {% bootstrap_field variation_form.admission_validity_mode layout="control" %}
-                        {% bootstrap_field variation_form.admission_valid_from layout="control" %}
-                        {% bootstrap_field variation_form.admission_valid_until layout="control" %}
-                        {% bootstrap_field variation_form.admission_valid_from_offset_minutes layout="control" %}
-                        {% bootstrap_field variation_form.admission_valid_until_offset_minutes layout="control" %}
+                    <div class="variation-checkin-validity" {% if not form.admission.value %}style="display: none;"{% endif %}>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {% trans "Check-in validity" %}
+                                <br><span class="label label-default">{% trans "Advanced" %}</span>
+                            </label>
+                            <div class="col-md-9">
+                                <div class="well well-sm variation-checkin-summary">
+                                    <span class="variation-checkin-summary-text">{{ variation_form.checkin_validity_summary }}</span>
+                                    <a href="#"
+                                       class="variation-checkin-toggle pull-right text-danger"
+                                       data-label-show="{% trans 'Edit check-in settings' %}"
+                                       data-label-hide="{% trans 'Hide check-in settings' %}">
+                                        <span class="variation-checkin-label">{% trans "Edit check-in settings" %}</span>
+                                        <span class="variation-checkin-caret">▼</span>
+                                    </a>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <p class="help-block">
+                                    {% blocktrans trimmed %}
+                                        When this ticket is accepted at the door. This does not control when it can be bought.
+                                        Use “Available from / until” above for Early Bird and other sales phases.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="variation-checkin-fields" hidden>
+                            {% bootstrap_field variation_form.admission_validity_mode layout="control" %}
+                            {% bootstrap_field variation_form.admission_valid_from layout="control" %}
+                            {% bootstrap_field variation_form.admission_valid_until layout="control" %}
+                            {% bootstrap_field variation_form.admission_valid_from_offset_minutes layout="control" %}
+                            {% bootstrap_field variation_form.admission_valid_until_offset_minutes layout="control" %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -91,13 +126,42 @@
                     {% bootstrap_field formset.empty_form.active layout="control" %}
                     {% bootstrap_field formset.empty_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.original_price addon_after=request.event.currency layout="control" %}
+                    {% bootstrap_field formset.empty_form.available_from layout="control" %}
+                    {% bootstrap_field formset.empty_form.available_until layout="control" %}
                     {% bootstrap_field formset.empty_form.description layout="control" %}
-                    <div {% if not form.admission.value %}style="display: none;"{% endif %}>
-                        {% bootstrap_field formset.empty_form.admission_validity_mode layout="control" %}
-                        {% bootstrap_field formset.empty_form.admission_valid_from layout="control" %}
-                        {% bootstrap_field formset.empty_form.admission_valid_until layout="control" %}
-                        {% bootstrap_field formset.empty_form.admission_valid_from_offset_minutes layout="control" %}
-                        {% bootstrap_field formset.empty_form.admission_valid_until_offset_minutes layout="control" %}
+                    <div class="variation-checkin-validity" {% if not form.admission.value %}style="display: none;"{% endif %}>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                {% trans "Check-in validity" %}
+                                <br><span class="label label-default">{% trans "Advanced" %}</span>
+                            </label>
+                            <div class="col-md-9">
+                                <div class="well well-sm variation-checkin-summary">
+                                    <span class="variation-checkin-summary-text">{{ formset.empty_form.checkin_validity_summary }}</span>
+                                    <a href="#"
+                                       class="variation-checkin-toggle pull-right text-danger"
+                                       data-label-show="{% trans 'Edit check-in settings' %}"
+                                       data-label-hide="{% trans 'Hide check-in settings' %}">
+                                        <span class="variation-checkin-label">{% trans "Edit check-in settings" %}</span>
+                                        <span class="variation-checkin-caret">▼</span>
+                                    </a>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <p class="help-block">
+                                    {% blocktrans trimmed %}
+                                        When this ticket is accepted at the door. This does not control when it can be bought.
+                                        Use “Available from / until” above for Early Bird and other sales phases.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="variation-checkin-fields" hidden>
+                            {% bootstrap_field formset.empty_form.admission_validity_mode layout="control" %}
+                            {% bootstrap_field formset.empty_form.admission_valid_from layout="control" %}
+                            {% bootstrap_field formset.empty_form.admission_valid_until layout="control" %}
+                            {% bootstrap_field formset.empty_form.admission_valid_from_offset_minutes layout="control" %}
+                            {% bootstrap_field formset.empty_form.admission_valid_until_offset_minutes layout="control" %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -108,3 +172,4 @@
             <i class="fa fa-plus"></i> {% trans "Add a new variation" %}</button>
     </p>
 </div>
+<script src="{% static 'pretixcontrol/js/ui/variation-checkin-validity.js' %}" type="module"></script>
