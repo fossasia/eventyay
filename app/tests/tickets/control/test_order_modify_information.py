@@ -320,7 +320,7 @@ def test_simultaneous_attendee_and_invoice_errors_both_rendered(client, modify_e
     assert 'We had difficulties processing your input' in content
 
     # Invoice error is present
-    assert 'This field is required' in content
+    assert 'state' in response.context['invoice_form'].errors
     # Attendee email errors are present
     assert 'Enter a valid email address' in content
 
