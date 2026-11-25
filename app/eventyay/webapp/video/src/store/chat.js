@@ -182,15 +182,16 @@ export default {
 				state.usersLookup[user.id] = user
 			}
 		},
+		// these return the call so callers can keep the draft and show an error if the server rejects it
 		sendMessage({state}, {content}) {
-			api.call('chat.send', {
+			return api.call('chat.send', {
 				channel: state.channel,
 				event_type: 'channel.message',
 				content
 			})
 		},
 		deleteMessage({state}, message) {
-			api.call('chat.send', {
+			return api.call('chat.send', {
 				channel: state.channel,
 				event_type: 'channel.message',
 				replaces: message.event_id,
@@ -200,7 +201,7 @@ export default {
 			})
 		},
 		editMessage({state}, {message, content}) {
-			api.call('chat.send', {
+			return api.call('chat.send', {
 				channel: state.channel,
 				event_type: 'channel.message',
 				replaces: message.event_id,
@@ -331,6 +332,8 @@ export default {
 				const original = state.timeline.find(msg => msg.event_id === event.replaces)
 				if (original) {
 					original.content = event.content
+					// the server stores the time of the replacing event as `edited`
+					original.edited = event.timestamp
 				}
 			}
 			// always push event, even when it is a modifying event => consistent with what server returns on fetch

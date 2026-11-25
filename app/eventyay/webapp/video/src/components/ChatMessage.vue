@@ -13,9 +13,10 @@
 					.ui-badge(v-for="badge in sender.badges") {{ badge }}
 				.timestamp {{ timestamp }}
 			template(v-if="['text', 'files'].includes(message.content.type)")
-				chat-input(v-if="editing", :message="message", @send="editMessage")
-				.content
+				chat-input(v-if="editing", :message="message", :submit="editMessage", @cancel="editing = false", @empty="openDeletePrompt")
+				.content(v-else)
 					ChatContent(v-if="message.content.body", :content="message.content.body", @clickMention="handleMentionClick")
+					span.edited-marker(v-if="message.edited", :title="editedTitle") {{ $t('(edited)') }}
 					.files(v-for="file in message.content.files")
 						a(v-if="file.mimeType.startsWith('image/')", :href="file.url", target="_blank")
 							img.chat-image(:src="file.url")
@@ -48,7 +49,7 @@
 					bunt-icon-button(@click="toggle") dots-vertical
 				template(#menu)
 					.edit-message(v-if="canEditMessage", @click="startEditingMessage") {{ $t('edit message') }}
-					.delete-message(v-if="canDeleteMessage", @click="selected = false, showDeletePrompt = true") {{ $t('delete message') }}
+					.delete-message(v-if="canDeleteMessage", @click="selected = false, openDeletePrompt()") {{ $t('delete message') }}
 	template(v-else-if="message.event_type === 'channel.member'")
 		.system-content {{ senderDisplayName }} {{ message.content.membership === 'join' ? $t('joined') : $t('left') }}
 	template(v-else-if="message.event_type === 'channel.poll' && poll")
@@ -62,18 +63,17 @@
 			h2 {{ $t('Delete this message?') }}
 			.message-to-delete-wrapper
 				chat-message(:message="message", mode="standalone", :readonly="true")
+			.delete-error(v-if="deleteError", role="alert") {{ deleteError }}
 			.actions
-				bunt-button#btn-cancel(@click="showDeletePrompt = false") {{ $t('cancel') }}
-				bunt-button#btn-delete-message(@click="deleteMessage") {{ $t('delete message') }}
+				bunt-button#btn-cancel(:disabled="deleting", @click="showDeletePrompt = false") {{ $t('cancel') }}
+				bunt-button#btn-delete-message(:disabled="deleting", @click="deleteMessage") {{ $t('delete message') }}
 </template>
 <script>
-// TODO
-// - cancel editing
-// - handle editing error
 import moment from 'moment'
 import { mapState, mapGetters } from 'vuex'
 import { nativeToUrl as nativeEmojiToUrl, getEmojiDataFromNative } from 'lib/emoji'
 import { getUserName } from 'lib/profile'
+import { chatErrorMessage } from 'lib/chatErrors'
 import Avatar from 'components/Avatar'
 import ChatContent from 'components/ChatContent'
 import ChatInput from 'components/ChatInput'
@@ -105,6 +105,8 @@ export default {
 			selected: false,
 			editing: false,
 			showDeletePrompt: false,
+			deleting: false,
+			deleteError: null,
 			nativeEmojiToUrl
 		}
 	},
@@ -145,6 +147,9 @@ export default {
 			if (timestamp.isSame(moment(), 'day')) return this.$t('Today')
 			if (timestamp.isSame(moment().subtract(1, 'day'), 'day')) return this.$t('Yesterday')
 			return timestamp.format(DAY_FORMAT)
+		},
+		editedTitle() {
+			return this.$t('Edited {{time}}', {time: moment(this.message.edited).format(`${DAY_FORMAT} ${TIME_FORMAT}`)})
 		},
 		timestamp() {
 			return moment(this.message.timestamp).format(TIME_FORMAT)
@@ -203,13 +208,29 @@ export default {
 			this.selected = false
 			this.editing = true
 		},
-		editMessage(content) {
+		async editMessage(content) {
+			// a rejected edit throws, so ChatInput stays open with the draft and shows the error
+			await this.$store.dispatch('chat/editMessage', {message: this.message, content})
 			this.editing = false
-			this.$store.dispatch('chat/editMessage', {message: this.message, content})
 		},
-		deleteMessage() {
-			this.$store.dispatch('chat/deleteMessage', this.message)
-			this.showDeletePrompt = false
+		openDeletePrompt() {
+			this.deleteError = null
+			this.showDeletePrompt = true
+		},
+		async deleteMessage() {
+			if (this.deleting) return
+			this.deleting = true
+			this.deleteError = null
+			try {
+				await this.$store.dispatch('chat/deleteMessage', this.message)
+				this.showDeletePrompt = false
+				this.editing = false
+			} catch (error) {
+				console.error('Failed to delete chat message', error)
+				this.deleteError = chatErrorMessage(error, key => this.$t(key), 'delete')
+			} finally {
+				this.deleting = false
+			}
 		},
 		handleMentionClick(event, user, placement) {
 			this.$emit('showUserCard', event, user, placement)
@@ -276,6 +297,10 @@ export default {
 		.content
 			white-space: pre-wrap
 			line-height: 1.4
+			.edited-marker
+				margin-left: 4px
+				color: $clr-secondary-text-light
+				font-size: 12px
 			.files
 				margin-top: 8px
 			.chat-image
@@ -433,6 +458,10 @@ export default {
 			border: border-separator()
 			border-radius: 4px
 			padding: 8px
+		.delete-error
+			margin-top: 8px
+			color: $clr-danger
+			font-size: 14px
 		.actions
 			display: flex
 			align-self: flex-end

@@ -14,7 +14,7 @@
 				.no-permission(v-if="room && room.permissions && !room.permissions.includes('room:chat.join')") {{ $t("Sorry, you can't join this channel.") }}
 				bunt-button(v-else-if="!activeJoinedChannel", @click="join", :tooltip="$t('Join this chat')") {{ $t('join chat') }}
 				.no-permission(v-else-if="room && room.permissions && !room.permissions.includes('room:chat.send')") {{ $t('This channel is readonly.') }}
-				chat-input(v-else, @send="send")
+				chat-input(v-else, :submit="send")
 		.user-list(v-if="mode === 'standalone' && showUserlist && $mq.above['m']")
 			.user-list-info(v-if="sortedMembers.length > 2")
 				span {{ $t('Channel members') }}
@@ -186,7 +186,7 @@ function join() {
 }
 
 function send(content) {
-	store.dispatch('chat/sendMessage', { content })
+	return store.dispatch('chat/sendMessage', { content })
 }
 
 async function showUserCard(event, user, placement = 'left-start') {

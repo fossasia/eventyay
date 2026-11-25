@@ -23,6 +23,11 @@
 						| {{ file.name }}
 					bunt-icon-button#btn-remove-attachment(@click="removeFile(file)") close-circle
 		bunt-progress-circular(size="small", v-if="uploading")
+	.send-error(v-if="sendError", role="alert") {{ sendError }}
+	.edit-hint(v-if="message")
+		span {{ $t('Press Escape to cancel or Enter to save.') }}
+		button.edit-hint-action#btn-cancel-edit(type="button", :disabled="sending", @click="cancel") {{ $t('cancel') }}
+		button.edit-hint-action#btn-save-edit(type="button", :disabled="sending", @click="send") {{ $t('save') }}
 	.ui-background-blocker(v-if="autocompleteCoordinates", @click="closeAutocomplete")
 		.autocomplete-dropdown(:style="autocompleteCoordinates")
 			template(v-if="autocomplete.options")
@@ -49,6 +54,7 @@ import { Placeholder, UndoRedo } from '@tiptap/extensions'
 import EmojiRegex from 'emoji-regex'
 import api from 'lib/api'
 import { nativeToUrl } from 'lib/emoji'
+import { chatErrorMessage } from 'lib/chatErrors'
 import Avatar from 'components/Avatar'
 import EmojiPickerButton from 'components/EmojiPickerButton'
 import UploadButton from 'components/UploadButton'
@@ -129,9 +135,14 @@ function getMentionMatch (text) {
 
 export default {
 	components: { Avatar, EmojiPickerButton, UploadButton },
-	emits: ['send'],
+	emits: ['cancel', 'empty'],
 	props: {
 		message: Object, // initialize with existing message to edit
+		// called with the new content; must return a promise. The draft is only cleared once it resolves.
+		submit: {
+			type: Function,
+			required: true,
+		},
 	},
 	data () {
 		return {
@@ -142,6 +153,8 @@ export default {
 			autocompleteSearchTimeout: null,
 			autocompleteUpdateTimeout: null,
 			composerFocused: false,
+			sending: false,
+			sendError: null,
 		}
 	},
 	computed: {
@@ -204,9 +217,15 @@ export default {
 						return true
 					},
 					'Escape': () => {
-						if (!vm.autocomplete) return false
-						vm.closeAutocomplete()
-						return true
+						if (vm.autocomplete) {
+							vm.closeAutocomplete()
+							return true
+						}
+						if (vm.message) {
+							vm.cancel()
+							return true
+						}
+						return false
 					},
 				}
 			},
@@ -232,6 +251,7 @@ export default {
 				},
 			},
 			onUpdate: () => {
+				this.sendError = null
 				window.clearTimeout(this.autocompleteUpdateTimeout)
 				this.autocompleteUpdateTimeout = window.setTimeout(this.updateAutocomplete, 0)
 			},
@@ -253,8 +273,10 @@ export default {
 				this.editor.commands.setContent(this.parseMessageBody(body), { emitUpdate: false })
 			}
 			if (this.message.content?.files?.length > 0) {
-				this.files = this.message.content.files
+				// copy, so removing a file while editing does not change the original message
+				this.files = [...this.message.content.files]
 			}
+			this.editor.commands.focus('end')
 		}
 	},
 	unmounted () {
@@ -423,23 +445,38 @@ export default {
 			this.autocomplete = null
 		},
 
-		send () {
+		async send () {
+			if (this.sending) return
 			const text = this.serializeContent()
-			if (!text && this.files.length === 0) return
-			if (this.files.length > 0) {
-				this.$emit('send', {
-					type: 'files',
-					files: this.files.filter(file => file),
-					body: text,
-				})
-				this.files = []
-			} else {
-				this.$emit('send', {
-					type: 'text',
-					body: text,
-				})
+			const files = this.files.filter(file => file)
+			if (!text && files.length === 0) {
+				// an emptied edit is a request to delete the message, the parent asks for confirmation
+				if (this.message) this.$emit('empty')
+				return
 			}
+			const content = files.length > 0
+				? { type: 'files', files, body: text }
+				: { type: 'text', body: text }
+			this.sending = true
+			this.sendError = null
+			try {
+				await this.submit(content)
+			} catch (error) {
+				// keep the draft so the user can retry or copy it
+				console.error('Failed to send chat message', error)
+				this.sendError = chatErrorMessage(error, key => this.$t(key), this.message ? 'edit' : 'send')
+				return
+			} finally {
+				this.sending = false
+			}
+			if (this.message) return // the parent closes the editor
+			this.files = []
 			this.editor?.commands.clearContent()
+		},
+
+		cancel () {
+			if (this.sending) return
+			this.$emit('cancel')
 		},
 
 		async attachFiles (event) {
@@ -488,6 +525,35 @@ export default {
 	width: 100%
 	box-sizing: border-box
 	gap: 8px
+
+	.send-error
+		padding: 0 16px
+		color: $clr-danger
+		font-size: 13px
+
+	.edit-hint
+		display: flex
+		flex-wrap: wrap
+		align-items: baseline
+		gap: 4px 12px
+		padding: 0 16px
+		color: $clr-secondary-text-light
+		font-size: 12px
+
+		.edit-hint-action
+			padding: 0
+			border: none
+			background: none
+			color: var(--clr-primary, #2185d0)
+			font: inherit
+			cursor: pointer
+
+			&:hover
+				text-decoration: underline
+
+			&:disabled
+				cursor: default
+				opacity: 0.6
 
 	.composer
 		display: flex
