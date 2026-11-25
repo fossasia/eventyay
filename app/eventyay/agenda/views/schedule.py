@@ -313,6 +313,15 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return self.object
 
     @context
+    def hide_visibility_warning(self):
+        if self.version == 'wip':
+            return False
+        return bool(
+            self.request.event.current_schedule
+            and accepted_sessions_publicly_visible(self.request.event)
+        )
+
+    @context
     def exporters(self):
         exporters = [exporter for exporter in get_schedule_exporters(self.request, public=True) if exporter.show_public]
 

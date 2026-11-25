@@ -400,6 +400,8 @@ AGENDA_PAGES_WITHOUT_TALKS_PUBLISHED = frozenset(
         'featured',
         'speakers',
         'speaker',
+        'public-stars',
+        'public-stars-json',
         'talk.detail',
         'talk.starrers',
         'feedback',
@@ -430,6 +432,8 @@ def agenda_page_allowed_without_talks_published(url_name, user, event, *, url_kw
         return False
     if url_name == 'speakers':
         return agenda_speakers_page_reachable(user, event)
+    if url_name in ('public-stars', 'public-stars-json'):
+        return bool(event.current_schedule and not event.private_testmode_talks_enabled)
     if url_name in ('talk.detail', 'talk.starrers', 'feedback', 'feedback.react', 'feedback.public_action'):
         slug = (url_kwargs or {}).get('slug')
         if not slug:

@@ -719,7 +719,7 @@ class TestShowAcceptedPubliclyEndToEnd:
             user.show_publicly = True
             user.fullname = "Starred User"
             user.save(update_fields=["code", "show_publicly", "fullname"])
-            event.talks_published = True
+            event.talks_published = False
             event.feature_flags["show_schedule"] = False
             event.feature_flags["show_accepted_publicly"] = False
             event.save()
