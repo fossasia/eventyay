@@ -70,6 +70,7 @@ from eventyay.base.templatetags.rich_text import (
 from eventyay.celery_app import app
 from eventyay.common.mail import get_reply_to_address
 from eventyay.consts import SizeKey
+from eventyay.helpers.anonymization import is_anonymized_email, without_anonymized_emails
 from eventyay.helpers.http import smtp_reachable
 from eventyay.helpers.placeholders import escape_stray_braces
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -169,6 +170,14 @@ def mail(
     """
     if email == INVALID_ADDRESS:
         return
+    if isinstance(email, str):
+        if is_anonymized_email(email):
+            return
+    else:
+        recipients = without_anonymized_emails(email)
+        if email and not recipients:
+            return
+        email = recipients
 
     headers = headers or {}
     if auto_email:
@@ -425,6 +434,15 @@ def mail_send_task(
     attach_file_base64: str = None,
     attach_file_name: str = None,
 ) -> bool:
+    # Anonymized orders and attendees keep placeholder addresses that must never receive mail. A message
+    # that was addressed only to such recipients is dropped, while one that is sent by BCC only is kept.
+    addressed_to, blind_copied = to, bcc
+    to = without_anonymized_emails(to)
+    bcc = without_anonymized_emails(bcc) if bcc is not None else None
+    if addressed_to and not to:
+        return False
+    if blind_copied and not to and not bcc:
+        return False
     email = CustomEmail(subject, body, sender, to=to, bcc=bcc, headers=headers)
     if html is not None:
         html_with_cid, cid_images = replace_images_with_cid_paths(html)
