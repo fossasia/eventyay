@@ -3859,6 +3859,33 @@ class CartBundleTest(CartTestMixin, TestCase):
         assert a.price == 1.5
 
     @classscope(attr='orga')
+    def test_extend_expired_removes_bundle_when_child_unavailable(self):
+        """Unavailable bundled child must drop the whole expired bundle, not renew the parent alone."""
+        self.trans.available_until = now() - timedelta(days=2)
+        self.trans.save()
+        cp = CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            item=self.ticket,
+            price=Decimal('21.50'),
+            event=self.event,
+            cart_id=self.session_key,
+        )
+        CartPosition.objects.create(
+            expires=now() - timedelta(minutes=10),
+            item=self.trans,
+            price=Decimal('1.50'),
+            event=self.event,
+            cart_id=self.session_key,
+            addon_to=cp,
+            is_bundled=True,
+        )
+        try:
+            self.cm.commit()
+        except CartError:
+            pass
+        assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    @classscope(attr='orga')
     def test_simple_bundle_main_enforce_free_price_minimum(self):
         self.ticket.free_price = True
         self.ticket.save()

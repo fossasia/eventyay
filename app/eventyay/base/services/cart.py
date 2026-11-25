@@ -592,7 +592,7 @@ class CartManager:
 
             quotas = list(cp.quotas)
             if not quotas:
-                self._operations.append(self.RemoveOperation(position=cp))
+                self._queue_unavailable_removal(cp)
                 err = error_messages['unavailable']
                 continue
 
@@ -601,7 +601,7 @@ class CartManager:
             if not cp.product.is_available() or (
                 cp.variation and not cp.variation.is_available(subevent=cp.subevent)
             ):
-                self._operations.append(self.RemoveOperation(position=cp))
+                self._queue_unavailable_removal(cp)
                 err = error_messages['unavailable']
                 continue
 
@@ -630,6 +630,34 @@ class CartManager:
 
             self._operations.append(op)
         return err
+
+    def _queue_unavailable_removal(self, cp):
+        """Remove an unavailable expired position; drop the whole bundle if needed."""
+        removed_roots = {cp.pk}
+        self._operations.append(self.RemoveOperation(position=cp))
+        # Bundles are all-or-nothing on create; keep the same rule on renew.
+        if cp.is_bundled and cp.addon_to_id:
+            already = {op.position.pk for op in self._operations if isinstance(op, self.RemoveOperation)}
+            if cp.addon_to_id not in already:
+                self._operations.append(self.RemoveOperation(position=cp.addon_to))
+            removed_roots.add(cp.addon_to_id)
+        self._drop_extends_for_removed(removed_roots)
+
+    def _drop_extends_for_removed(self, removed_roots):
+        """Cancel ExtendOperations voided by a removal and restore quota/voucher diffs."""
+        kept = []
+        for op in self._operations:
+            if isinstance(op, self.ExtendOperation) and (
+                op.position.pk in removed_roots
+                or (op.position.addon_to_id and op.position.addon_to_id in removed_roots)
+            ):
+                for q in op.quotas:
+                    self._quota_diff[q] -= op.count
+                if op.voucher:
+                    self._voucher_use_diff[op.voucher] -= op.count
+                continue
+            kept.append(op)
+        self._operations = kept
 
     @staticmethod
     def _apply_included_addon_prices(position, voucher):
@@ -1238,9 +1266,13 @@ class CartManager:
 
         self._operations.sort(key=lambda a: self.order[type(a)])
         seats_seen = set()
+        removed_pks = set()
 
         for iop, op in enumerate(self._operations):
             if isinstance(op, self.RemoveOperation):
+                removed_pks.add(op.position.pk)
+                for addon in op.position.addons.all():
+                    removed_pks.add(addon.pk)
                 if op.position.expires > self.now_dt:
                     for q in op.position.quotas:
                         quotas_ok[q] += 1
@@ -1248,6 +1280,11 @@ class CartManager:
                 op.position.delete()
 
             elif isinstance(op, (self.AddOperation, self.ExtendOperation)):
+                # A parent RemoveOperation may already have deleted this row (and its
+                # addons). Do not deduct quota for a renewal that cannot succeed.
+                if isinstance(op, self.ExtendOperation) and op.position.pk in removed_pks:
+                    continue
+
                 # Create a CartPosition for as much products as we can
                 requested_count = quota_available_count = voucher_available_count = op.count
 
@@ -1480,7 +1517,9 @@ class CartManager:
             with transaction.atomic():
                 self.now_dt = now_dt
                 self._extend_expiry_of_valid_existing_positions()
-                err, warning = self._perform_operations()
+                op_err, warning = self._perform_operations()
+            # Keep cleanup messages from extend/timeframe after successful renewals.
+            err = op_err or err
             if err:
                 raise CartError(err)
             # Store warning for later retrieval if needed
