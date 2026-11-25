@@ -2188,6 +2188,22 @@ class Event(
         tsgs = self.ticket_secret_generators
         return tsgs.get(self.settings.ticket_secret_generator, tsgs.get('random'))
 
+    def get_ticketing_anonymizers(self) -> dict:
+        """
+        Returns a dictionary of initialized ticketing anonymizers mapped by their identifiers, in the order
+        they were registered.
+        """
+        from ..signals import register_ticketing_anonymizers
+
+        anonymizers = {}
+        for receiver, response in register_ticketing_anonymizers.send(self):
+            if not isinstance(response, list):
+                response = [response]
+            for cls in response:
+                anonymizer = cls(self)
+                anonymizers[anonymizer.identifier] = anonymizer
+        return anonymizers
+
     def get_data_shredders(self) -> dict:
         """
         Returns a dictionary of initialized data shredders mapped by their identifiers.
