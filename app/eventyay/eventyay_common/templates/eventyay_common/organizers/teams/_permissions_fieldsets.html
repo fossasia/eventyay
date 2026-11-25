@@ -7,6 +7,10 @@
     {% bootstrap_field form.name layout="control" %}
 </fieldset>
 
+{% if form.instance.is_core_team %}
+    <p class="help-block">{% translate 'Core Organizing Team permissions cannot be changed.' %}</p>
+{% endif %}
+
 <fieldset class="team-permissions-section"{% if form.instance.is_core_team %} disabled{% endif %}>
     <legend><i class="fa fa-group team-permissions-legend-icon" aria-hidden="true"></i>{% translate "Organizer permissions" %}</legend>
     {% bootstrap_field form.can_create_events layout="control" %}
