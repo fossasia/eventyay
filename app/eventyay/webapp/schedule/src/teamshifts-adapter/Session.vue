@@ -125,6 +125,7 @@ import {
 	membersUrl,
 	getErrorMessage,
 } from './index'
+import { registerStickyLabels } from './stickyLabels'
 
 export default {
 	name: 'TeamshiftsSession',
@@ -189,6 +190,12 @@ export default {
 			members: [],
 			sendEmail: true,
 		}
+	},
+	mounted () {
+		this.stopStickyLabels = registerStickyLabels(this.$el)
+	},
+	beforeUnmount () {
+		if (this.stopStickyLabels) this.stopStickyLabels()
 	},
 	computed: {
 		effectiveTimezone () {
@@ -738,8 +745,7 @@ export default {
 			align-items: center
 			text-align: center
 			width: 100%
-			position: sticky
-			top: 0
+			position: relative
 			z-index: 2
 			&.has-ampm
 				align-self: stretch
@@ -809,12 +815,14 @@ export default {
 		background-color: $clr-white
 		min-width: 0
 		.title-range-wrapper
-			position: sticky
-			top: 0
+			position: relative
+			z-index: 1
 			background-color: $clr-white
-			z-index: 2
 			margin-bottom: 4px
 		.title-row
+			position: relative
+			z-index: 1
+			background-color: $clr-white
 			display: flex
 			align-items: flex-start
 			justify-content: space-between
