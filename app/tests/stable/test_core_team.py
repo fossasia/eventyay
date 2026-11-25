@@ -10,7 +10,7 @@ from rest_framework.test import APIClient
 
 from eventyay.base.models import Event, Organizer, Team, TeamInvite, User
 from eventyay.base.models.auth import StaffSession
-from eventyay.base.models.organizer import TeamAPIToken
+from eventyay.base.models.organizer import TeamAPIToken, TeamPermissionError
 from eventyay.base.services.organizer_creation import (
     can_manage_team_members,
     create_core_team,
@@ -75,14 +75,20 @@ def test_inactive_core_member_fails(core_team, owner, event):
 
 
 @pytest.mark.django_db
-def test_core_team_limited_to_other_event_fails(organizer, event):
-    other_event = Event.objects.create(organizer=organizer, name='Other', slug='other', date_from=now())
-    user = User.objects.create_user('limited@example.com', 'x')
-    team = Team.objects.create(organizer=organizer, name='Limited core', is_core_team=True, all_events=False)
-    team.limit_events.add(other_event)
-    team.members.add(user)
-    assert not is_event_core_team_member(user, event)
-    assert is_event_core_team_member(user, other_event)
+def test_core_team_permissions_are_permanent(organizer, core_team):
+    assert all(getattr(core_team, field) for field in Team._permission_field_names())
+    core_team.all_events = core_team.can_view_event_info = False
+    core_team.save()
+    core_team.refresh_from_db()
+    assert core_team.all_events and core_team.can_view_event_info
+    for form_type in (ControlTeamForm, TalkTeamForm):
+        form = form_type(instance=core_team, organizer=organizer)
+        assert all(field.disabled for name, field in form.fields.items() if name != 'name')
+    with pytest.raises(TeamPermissionError):
+        core_team.delete()
+    core_team.is_core_team = False
+    with pytest.raises(TeamPermissionError):
+        core_team.save()
 
 
 @pytest.mark.django_db
@@ -423,3 +429,27 @@ def test_organizer_api_keeps_the_last_active_core_member(core_team, owner, organ
     assert response.status_code == 400
     assert 'last active member' in str(response.data)
     assert list(core_team.members.all()) == [owner]
+
+
+@pytest.mark.django_db
+def test_core_team_api_protects_permissions_and_deletion(core_team, organizer, allow_all_entitlements):
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION='Token ' + TeamAPIToken.objects.create(team=core_team, name='Core').token)
+    url = f'/api/v1/organizers/{organizer.slug}/teams/{core_team.pk}/'
+    assert client.patch(url, {'name': 'Organizers'}, format='json').status_code == 200
+    assert client.patch(url, {'can_view_orders': False}, format='json').status_code == 400
+    assert client.delete(url).status_code == 403
+    core_team.refresh_from_db()
+    assert core_team.can_view_orders
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_owner_cannot_delete_core_team_with_another_manager(client, core_team, owner, manager):
+    client.force_login(owner)
+    url = reverse('eventyay_common:organizer.team.delete', kwargs={
+        'organizer': core_team.organizer.slug, 'team': core_team.pk,
+    })
+    assert client.get(url).context['possible'] is False
+    assert client.post(url).status_code == 302
+    assert Team.objects.filter(pk=core_team.pk).exists()

@@ -45,7 +45,7 @@
                         <div class="team-heading-main">
                             <h3 class="panel-title">
                                 {{ panel.team.name }}
-                                {% if panel.team.is_core_team %}<span class="label label-primary" title="{% translate "Owners of this organizer account. Only platform administrators can change which team is the core team." %}">{% translate "Core team" %}</span>{% endif %}
+                                {% if panel.team.is_core_team %}<span class="label label-primary" title="{% translate 'Owners of this organizer account with permanent access to all events and permissions.' %}">{% translate "Core team" %}</span>{% endif %}
                             </h3>
                             <div class="text-muted team-meta">
                                 <span class="team-meta-item">
@@ -114,7 +114,7 @@
                                         <i class="fa fa-trash"></i> {% translate "Delete" %}
                                     </a>
                                 </div>
-                            {% else %}
+                            {% elif not panel.team.is_core_team %}
                                 {% translate "Cannot be deleted as only team left with management privileges" as team_delete_disabled_help %}
                                 <div class="btn-group btn-group-sm team-delete-disabled"
                                      role="group"

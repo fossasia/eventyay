@@ -409,6 +409,8 @@ class TeamViewSet(viewsets.ModelViewSet):
         return inst
 
     def perform_destroy(self, instance):
+        if instance.is_core_team:
+            raise PermissionDenied(_('The Core Organizing Team cannot be deleted.'))
         instance.log_action('eventyay.team.deleted', user=self.request.user, auth=self.request.auth)
         instance.delete()
 

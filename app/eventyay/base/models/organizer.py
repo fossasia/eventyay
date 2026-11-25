@@ -380,11 +380,12 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     all_events = models.BooleanField(default=False, verbose_name=_('All events (including newly created ones)'))
     limit_events = models.ManyToManyField('Event', verbose_name=_('Limit to events'), blank=True)
     is_core_team = models.BooleanField(
+        editable=False,
         default=False,
         verbose_name=_('Core Organizing Team'),
         help_text=_(
             'Members of the core team are the owners of the organizer account and can perform owner-only '
-            'actions such as anonymizing event data. Only platform administrators can change this.'
+            'actions such as anonymizing event data. This designation is permanent.'
         ),
     )
 
@@ -484,6 +485,29 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             cls._permission_field_names_cache = cached
         return cached
 
+    def save(self, *args, **kwargs):
+        if self.pk and not self._state.adding:
+            previous = Team.objects.values('is_core_team', 'organizer_id').get(pk=self.pk)
+            if previous['is_core_team'] != self.is_core_team or (
+                self.is_core_team and previous['organizer_id'] != self.organizer_id
+            ):
+                raise TeamPermissionError(_('The Core Organizing Team designation is permanent.'))
+        if self.is_core_team:
+            for field in self._permission_field_names():
+                setattr(self, field, True)
+            self.all_events = True
+            self.all_teamshifts_roles = True
+            self.teamshifts_role = 'coordinator'
+            self.limit_teamshifts_roles = []
+            self.force_hide_speaker_names = self.force_hide_speaker_emails = False
+            self.hide_exhibition_applicant_emails = self.hide_teamshifts_emails = False
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.is_core_team:
+            raise TeamPermissionError(_('The Core Organizing Team cannot be deleted.'))
+        return super().delete(*args, **kwargs)
+
     def _granted_permissions(self) -> set:
         return {name for name in self._permission_field_names() if getattr(self, name) is True}
 
@@ -540,6 +564,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     class Meta:
         verbose_name = _('Team')
         verbose_name_plural = _('Teams')
+        constraints = [
+            models.UniqueConstraint(fields=['organizer'], condition=models.Q(is_core_team=True), name='unique_core_team_per_organizer'),
+        ]
         rules_permissions = TEAM_PERMISSIONS
 
     # From Talk

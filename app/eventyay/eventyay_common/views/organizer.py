@@ -646,6 +646,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         return self._redirect_to_team_permissions(team.pk)
 
     def _can_delete_team(self, team: Team) -> bool:
+        if team.is_core_team:
+            return False
         return (
             self.request.organizer.teams.exclude(pk=team.pk)
             .filter(can_change_teams=True, members__isnull=False)
