@@ -38,7 +38,7 @@ from .janus import JanusServer
 from .jitsi import JitsiServer
 from .log import ActivityLog, LogEntry
 from .admin_mail import AdminEmailQueue, AdminEmailQueueFilter, AdminEmailQueueRecipient, AdminEmailStatus, AdminRecipientGroup
-from .loungemesh import LoungeMeshAccessToken, LoungeMeshServer
+from .loungemesh import LoungeMeshServer
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
 from .mixins import FileCleanupMixin, GenerateCode, LogMixin, OrderedModel, PretalxModel, TimestampedModel
 from .organizer_request import (

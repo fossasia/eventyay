@@ -1,6 +1,12 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load bootstrap3 %}
+
+{% block custom_header %}
+    {{ block.super }}
+    <script type="module" src="{% static 'pretixcontrol/js/admin-loungemesh-test.js' %}"></script>
+{% endblock %}
 
 {% block video_admin_content %}
 <div class="video-form-container">
@@ -15,8 +21,32 @@
             </div>
             <div class="video-form-header-text">
                 <h2>{% if object.pk %}{% trans "Edit LoungeMesh Server" %}{% else %}{% trans "Add LoungeMesh Server" %}{% endif %}</h2>
-                <p>{% trans "Configure host URL, token authentication, and WebRTC credentials for this LoungeMesh spatial lounge server." %}</p>
+                <p>{% trans "Configure host URL and Eventyay service secret pairing for this LoungeMesh spatial lounge server." %}</p>
             </div>
+        </div>
+
+        <div class="alert alert-info">
+            <h4><span class="fa fa-info-circle"></span> {% trans "How to pair a LoungeMesh server with Eventyay" %}</h4>
+            <ol>
+                <li>
+                    <strong>{% trans "Service Secret" %}:</strong>
+                    {% blocktrans trimmed %}
+                        On your LoungeMesh deployment, configure <code>EVENTYAY_SERVICE_SECRET=&lt;secret&gt;</code> in its <code>.env</code> file (or docker-compose environment). Enter that matching secret in the <em>Service Secret</em> field below.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    <strong>{% trans "Iframe & Origin Embedding" %}:</strong>
+                    {% blocktrans trimmed %}
+                        In LoungeMesh's <code>.env</code>, set <code>NGINX_ALLOW_IFRAME_FROM="https://your-eventyay-domain"</code> and <code>VITE_ALLOW_IFRAME_FROM="https://your-eventyay-domain"</code> so video rooms can be embedded in Eventyay schedules and pages.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    <strong>{% trans "Verification" %}:</strong>
+                    {% blocktrans trimmed %}
+                        Click <em>Test Connection</em> before saving to confirm that Eventyay can reach LoungeMesh and authenticate using the shared service secret.
+                    {% endblocktrans %}
+                </li>
+            </ol>
         </div>
 
         <form method="post" class="form-horizontal">
@@ -28,20 +58,30 @@
                     <h3 class="video-form-section-title">
                         <span class="fa fa-link"></span> {% trans "Server Connection" %}
                     </h3>
-                    {% bootstrap_field form.url layout="control" placeholder="http://localhost:8780 or https://loungemesh.example" help_text="The fully qualified domain or URL of the LoungeMesh frontend." %}
+                    {% bootstrap_field form.url layout="control" placeholder="http://localhost:8780 or https://loungemesh.example.com" help_text="The fully qualified domain or URL of the LoungeMesh frontend." %}
                     {% bootstrap_field form.active layout="control" %}
                 </div>
 
                 <div class="video-form-section">
                     <h3 class="video-form-section-title">
-                        <span class="fa fa-key"></span> {% trans "Token Exchange & WebRTC Credentials" %}
+                        <span class="fa fa-key"></span> {% trans "Authentication & Service Secret" %}
                     </h3>
-                    <p class="text-muted small">
-                        {% trans "API secret for validating join tokens and Jitsi credentials for embedded audio/video mesh." %}
-                    </p>
-                    {% bootstrap_field form.api_secret layout="control" placeholder="API Secret" help_text="Secret key for signing and exchanging join tokens with LoungeMesh." %}
-                    {% bootstrap_field form.jitsi_app_id layout="control" placeholder="e.g. eventyay" help_text="Application ID for LoungeMesh Jitsi WebRTC signaling." %}
-                    {% bootstrap_field form.jitsi_app_secret layout="control" placeholder="Jitsi App Secret" help_text="Shared secret for signing Jitsi WebRTC JWT tokens." %}
+                    {% bootstrap_field form.api_secret layout="control" placeholder="EVENTYAY_SERVICE_SECRET" %}
+                    
+                    <div class="form-group">
+                        <div class="col-md-9 col-md-offset-3">
+                            <button
+                                type="button"
+                                class="btn btn-info btn-sm"
+                                data-loungemesh-test-btn
+                                data-test-url="{% url 'eventyay_admin:video_admin:loungemeshserver.test' %}"
+                                data-server-id="{{ object.pk|default:'' }}"
+                            >
+                                <span class="fa fa-plug"></span> {% trans "Test Connection" %}
+                            </button>
+                            <div data-loungemesh-test-result class="alert hidden" role="alert" style="margin-top: 10px; margin-bottom: 0;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="video-form-section">

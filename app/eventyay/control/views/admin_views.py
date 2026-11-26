@@ -8,7 +8,7 @@ import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
@@ -41,6 +41,7 @@ from eventyay.base.models import (
 
 from eventyay.base.models.event import EventPlannedUsage as PlannedUsage
 from eventyay.base.services.bbb import get_url
+from eventyay.base.services.loungemesh import normalize_server_url, test_loungemesh_server_connection
 from eventyay.control.forms.server_management import (
     BBBMoveRoomForm,
     BBBServerForm,
@@ -945,9 +946,46 @@ class TurnServerDelete(AdministratorPermissionRequiredMixin, CompatDeleteView):
 
 def _redact_loungemesh_server_log_data(data):
     return {
-        key: "*****" if key in ("api_secret", "jitsi_app_secret") and value else str(value)
+        key: "*****" if key == "api_secret" and value else str(value)
         for key, value in data.items()
     }
+
+
+class LoungeMeshServerTestView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        try:
+            body = json.loads(request.body.decode("utf-8") or "{}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({"ok": False, "message": str(_("Invalid JSON payload."))}, status=400)
+
+        url = str(body.get("url") or "").strip()
+        api_secret = str(body.get("api_secret") or "").strip()
+        use_stored_secret = bool(body.get("use_stored_secret", False))
+
+        server_id = body.get("server_id")
+        if (use_stored_secret or not api_secret or api_secret == "*****") and server_id:
+            try:
+                server = LoungeMeshServer.objects.get(pk=server_id)
+                if url:
+                    try:
+                        if normalize_server_url(url) != normalize_server_url(server.url):
+                            return JsonResponse(
+                                {"ok": False, "message": str(_("Target URL does not match stored server URL."))},
+                                status=400,
+                            )
+                    except ValueError:
+                        return JsonResponse(
+                            {"ok": False, "message": str(_("Invalid server URL."))},
+                            status=400,
+                        )
+                else:
+                    url = server.url
+                api_secret = server.api_secret
+            except (LoungeMeshServer.DoesNotExist, ValueError, ValidationError):
+                return JsonResponse({"ok": False, "message": str(_("Server not found."))}, status=404)
+
+        ok, msg = test_loungemesh_server_connection(url, api_secret)
+        return JsonResponse({"ok": ok, "message": str(msg)})
 
 
 class LoungeMeshServerCreate(AdministratorPermissionRequiredMixin, CreateView):
