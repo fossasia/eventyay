@@ -360,6 +360,9 @@ class SubmissionViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelView
     def speaker_profiles_for_user(self):
         if not self.event:
             return
+        if get_request_team(self.request) is not None and can_list_submissions(self.request, self.event):
+            # Team API tokens authenticate as AnonymousUser, so derive speakers from what the token can list.
+            return speaker_profiles_for_user(self.event, self.request.user, submissions=self._visible_submissions())
         return speaker_profiles_for_user(self.event, self.request.user)
 
     def get_serializer_context(self):
