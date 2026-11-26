@@ -41,7 +41,7 @@ from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_countries.fields import Country
-from django_scopes import ScopedManager, scopes_disabled
+from django_scopes import ScopedManager, scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 from phonenumber_field.modelfields import PhoneNumberField
 from phonenumber_field.phonenumber import PhoneNumber
@@ -567,8 +567,16 @@ class Order(LockModel, LoggedModel):
             self.event.settings.cancel_allow_user_paid_keep_fees,
         ]
 
+    def user_cancellation_fee_components(self) -> tuple[dict[int, Decimal], list[list[int | str]]]:
+        with scope(organizer=self.event.organizer):
+            fees = list(self.fees.order_by('pk').values_list('pk', 'fee_type', 'value'))
+        return (
+            {pk: value for pk, fee_type, value in fees if fee_type == OrderFee.FEE_TYPE_CANCELLATION},
+            [[pk, fee_type, str(value)] for pk, fee_type, value in fees if fee_type != OrderFee.FEE_TYPE_CANCELLATION],
+        )
+
     def user_cancellation_fee_basis(self) -> tuple[Decimal, Decimal] | None:
-        fees = dict(self.fees.filter(fee_type=OrderFee.FEE_TYPE_CANCELLATION).values_list('pk', 'value'))
+        fees, fee_components = self.user_cancellation_fee_components()
         groups = {}
         totals = set()
         canceled_total = Decimal('0.00')
@@ -585,6 +593,8 @@ class Order(LockModel, LoggedModel):
             if not isinstance(cancellation, dict) or cancellation.get('price') != str(position.price):
                 return None
             if cancellation.get('settings') != self.user_cancellation_fee_settings():
+                return None
+            if cancellation.get('fees') != fee_components:
                 return None
             if not isinstance(cancellation.get('basis'), str):
                 return None
@@ -627,7 +637,10 @@ class Order(LockModel, LoggedModel):
             fee = flat_fee
         else:
             percentage_base = previously_canceled + canceled_total
-            fee = flat_fee * percentage_base / total if total > Decimal('0.00') else Decimal('0.00')
+            fee = (
+                flat_fee * percentage_base / total
+                if flat_fee > Decimal('0.00') and total > Decimal('0.00') else Decimal('0.00')
+            )
         fee += self.event.settings.cancel_allow_user_paid_keep_percentage / Decimal('100.0') * percentage_base
         fee = round_decimal(fee, self.event.currency)
         if canceled_total is not None:
@@ -2523,6 +2536,8 @@ class OrderPosition(AbstractPosition):
         ]
 
     def clear_user_cancellation(self):
+        """Requires the caller's atomic block and an existing position UPDATE lock."""
+        self.refresh_from_db(fields=['meta_info'])
         try:
             metadata = self.meta_info_data
         except (TypeError, ValueError):
@@ -2530,6 +2545,7 @@ class OrderPosition(AbstractPosition):
         if isinstance(metadata, dict) and self.USER_CANCELLATION_KEY in metadata:
             del metadata[self.USER_CANCELLATION_KEY]
             self.meta_info_data = metadata
+            self.save(update_fields=['meta_info'])
 
     @cached_property
     def sort_key(self):

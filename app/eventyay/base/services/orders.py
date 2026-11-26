@@ -27,7 +27,7 @@ from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay import consts
 from eventyay.api.models import OAuthApplication
@@ -2219,8 +2219,8 @@ class OrderChangeManager:
                         force_invalidate=False,
                         save=False,
                     )
+                    opa.save(update_fields=['canceled', 'secret'])
                     opa.clear_user_cancellation()
-                    opa.save(update_fields=['canceled', 'secret', 'meta_info'])
                 self.order.log_action(
                     'eventyay.event.order.changed.cancel',
                     user=self.user,
@@ -2244,8 +2244,8 @@ class OrderChangeManager:
                     force_invalidate=False,
                     save=False,
                 )
+                op.position.save(update_fields=['canceled', 'secret'])
                 op.position.clear_user_cancellation()
-                op.position.save(update_fields=['canceled', 'secret', 'meta_info'])
             elif isinstance(op, self.ReinstateOperation):
                 for pos_to_check in [op.position] + list(op.position.addons.filter(canceled=True)):
                     if pos_to_check.voucher_id:
@@ -2279,8 +2279,8 @@ class OrderChangeManager:
                         force_invalidate=True,
                         save=False,
                     )
+                    opa.save(update_fields=['canceled', 'secret'])
                     opa.clear_user_cancellation()
-                    opa.save(update_fields=['canceled', 'secret', 'meta_info'])
                 self.order.log_action(
                     'eventyay.event.order.changed.reinstate',
                     user=self.user,
@@ -2303,8 +2303,8 @@ class OrderChangeManager:
                     force_invalidate=True,
                     save=False,
                 )
+                op.position.save(update_fields=['canceled', 'secret'])
                 op.position.clear_user_cancellation()
-                op.position.save(update_fields=['canceled', 'secret', 'meta_info'])
             elif isinstance(op, self.AddOperation):
                 pos = OrderPosition.objects.create(
                     product=op.product,
@@ -2900,10 +2900,14 @@ def _cancel_order_positions(
         for position in positions_to_cancel:
             ocm.cancel(position)
 
-        cancellation_basis = order.user_cancellation_fee_basis()
+        cancellation_basis = (
+            order.user_cancellation_fee_basis()
+            if order.status == Order.STATUS_PAID and order.total > Decimal('0.00') else None
+        )
         basis_total = (
             str(order.total - cancellation_basis[1] + cancellation_basis[0]) if cancellation_basis is not None else None
         )
+        fee_components = order.user_cancellation_fee_components()[1] if cancellation_basis is not None else None
         cancellation_fee = order.user_partial_cancel_fee(canceled_total)
         fee = None
         if cancellation_fee:
@@ -2917,21 +2921,26 @@ def _cancel_order_positions(
 
         ocm.commit()
         if cancellation_basis is not None:
-            for position_id in canceled_ids:
-                position = cancelable_positions[position_id]
-                metadata = position.meta_info_data
-                metadata[OrderPosition.USER_CANCELLATION_KEY] = {
-                    'price': str(position.price),
-                    'fee': fee.pk if fee else None,
-                    'fee_value': str(cancellation_fee),
-                    'total': str(canceled_total),
-                    'basis': basis_total,
-                    'settings': order.user_cancellation_fee_settings(),
-                }
-                position.meta_info_data = metadata
-            order.all_positions.bulk_update(
-                [cancelable_positions[position_id] for position_id in canceled_ids], ['meta_info']
-            )
+            with scope(organizer=order.event.organizer):
+                positions = list(order.all_positions.filter(pk__in=canceled_ids).only('order_id', 'price', 'meta_info'))
+                for position in positions:
+                    try:
+                        metadata = position.meta_info_data
+                    except (TypeError, ValueError):
+                        return order
+                    if not isinstance(metadata, dict):
+                        return order
+                    metadata[OrderPosition.USER_CANCELLATION_KEY] = {
+                        'price': str(position.price),
+                        'fee': fee.pk if fee else None,
+                        'fee_value': str(cancellation_fee),
+                        'total': str(canceled_total),
+                        'basis': basis_total,
+                        'fees': fee_components,
+                        'settings': order.user_cancellation_fee_settings(),
+                    }
+                    position.meta_info_data = metadata
+                order.all_positions.bulk_update(positions, ['meta_info'])
         return order
 
 

@@ -28,6 +28,7 @@ from eventyay.base.models.orders import OrderFee, OrderPayment, OrderRefund
 from eventyay.base.models.product import SubEventProduct as SubEventItem
 from eventyay.base.payment import FreeOrderProvider
 from eventyay.base.reldate import RelativeDate, RelativeDateWrapper
+from eventyay.base.services.anonymize import anonymize_order
 from eventyay.base.services.invoices import generate_invoice
 from eventyay.base.services.orders import (
     OrderChangeManager,
@@ -1258,6 +1259,166 @@ def test_cancellation_followup_malformed_metadata_fallback(paid_cancellation_ord
     assert order.total == Decimal('3.20')
     assert order.pending_sum == Decimal('-16.80')
     assert all(position.meta_info == raw_metadata for position in order.all_positions.all())
+
+
+@pytest.fixture
+def cancellation_review_order_factory(event, cancellation_order_factory, monkeypatch):
+    event.settings.invoice_generate = 'False'
+    monkeypatch.setattr('eventyay.base.services.orders.notify_user_changed_order', lambda *args, **kwargs: None)
+    return cancellation_order_factory
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('operation', ['cancel', 'reinstate'])
+@pytest.mark.parametrize('customer_canceled', [False, True], ids=['unmarked', 'customer-marked'])
+def test_cancellation_review_stale_position_after_anonymization(
+    cancellation_review_order_factory, operation, customer_canceled
+):
+    order = cancellation_review_order_factory()
+    position = order.positions.first()
+    metadata = {
+        'attendee_form_data': {'name': 'Alex'},
+        'external_reference': {'id': 'ticket-17', 'flags': ['keep']},
+    }
+    position.meta_info = json.dumps(metadata)
+    position.save(update_fields=['meta_info'])
+    if customer_canceled:
+        cancel_order_positions(order.pk, [position.pk])
+    elif operation == 'reinstate':
+        manager = OrderChangeManager(order, None, notify=False)
+        manager.cancel(position)
+        manager.commit()
+    order = Order.objects.get(pk=order.pk)
+    stale_position = order.all_positions.get(pk=position.pk)
+    if customer_canceled and operation == 'cancel':
+        manager = OrderChangeManager(order, None, notify=False)
+        manager.reinstate(order.all_positions.get(pk=position.pk))
+        manager.commit()
+
+    order.event.date_from = now() - timedelta(days=2)
+    order.event.date_to = now() - timedelta(days=1)
+    order.event.save(update_fields=['date_from', 'date_to'])
+    anonymize_order(order)
+    assert 'attendee_form_data' not in order.all_positions.get(pk=position.pk).meta_info_data
+    assert stale_position.meta_info_data['attendee_form_data'] == {'name': 'Alex'}
+
+    manager = OrderChangeManager(order, None, notify=False)
+    if operation == 'cancel':
+        manager.cancel(stale_position)
+    else:
+        manager.reinstate(stale_position)
+    manager.commit()
+    position = order.all_positions.get(pk=position.pk)
+    assert position.canceled is (operation == 'cancel')
+    assert position.meta_info_data['external_reference'] == metadata['external_reference']
+    assert 'attendee_form_data' not in position.meta_info_data
+
+
+@pytest.mark.django_db
+def test_cancellation_review_unpaid_partial_then_payment(cancellation_review_order_factory):
+    order = cancellation_review_order_factory()
+    order.event.settings.cancel_allow_user = True
+    order.status = Order.STATUS_PENDING
+    order.expires = now() + timedelta(days=2)
+    order.save(update_fields=['status', 'expires'])
+    payment = order.payments.get()
+    payment.state = OrderPayment.PAYMENT_STATE_CREATED
+    payment.save(update_fields=['state'])
+    assert order.total == Decimal('20.00')
+    assert order.pending_sum == Decimal('20.00')
+    assert order.user_partial_cancel_fee(Decimal('10.00')) == Decimal('0.00')
+    assert not order.refunds.exists()
+
+    cancel_order_positions(order.pk, [order.positions.first().pk])
+    order = Order.objects.get(pk=order.pk)
+    assert order.status == Order.STATUS_PENDING
+    assert order.total == Decimal('10.00')
+    assert order.pending_sum == Decimal('10.00')
+    assert not order.fees.exists()
+    assert not order.refunds.exists()
+    payment.refresh_from_db()
+    payment.amount = Decimal('10.00')
+    payment.save(update_fields=['amount'])
+    payment.confirm(send_mail=False)
+    order = Order.objects.get(pk=order.pk)
+    assert order.status == Order.STATUS_PAID
+    assert order.payment_refund_sum == Decimal('10.00')
+    assert order.pending_sum == Decimal('0.00')
+    assert not order.refunds.exists()
+
+    fee = order.user_cancel_fee
+    cancel_order(order.pk, cancellation_fee=fee, send_mail=False)
+    order = Order.objects.get(pk=order.pk)
+    assert order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION).value == Decimal('3.00')
+    assert fee == order.total == Decimal('3.00')
+    assert order.status == Order.STATUS_PAID
+    assert order.cancellation_date is not None
+    assert order.pending_sum == Decimal('-7.00')
+    assert not order.positions.exists()
+    assert not order.refunds.exists()
+
+
+@pytest.mark.django_db
+def test_cancellation_review_paid_zero_charge_partial(cancellation_review_order_factory):
+    order = cancellation_review_order_factory(prices=('0.01', '0.04', '0.95'), fixed='0.00')
+    assert order.user_partial_cancel_fee(Decimal('0.01')) == Decimal('0.00')
+    cancel_order_positions(order.pk, [order.positions.order_by('positionid').first().pk])
+    order = Order.objects.get(pk=order.pk)
+    assert order.status == Order.STATUS_PAID
+    assert order.total == Decimal('0.99')
+    assert not order.fees.exists()
+    assert order.user_partial_cancel_fee(Decimal('0.04')) == Decimal('0.01')
+
+    cancel_order_positions(order.pk, [order.positions.order_by('positionid').first().pk])
+    order = Order.objects.get(pk=order.pk)
+    assert order.total == Decimal('0.96')
+    assert order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION).value == Decimal('0.01')
+    assert order.user_cancel_fee == Decimal('0.10')
+    cancel_order(order.pk, cancellation_fee=order.user_cancel_fee, send_mail=False)
+    order = Order.objects.get(pk=order.pk)
+    assert order.total == Decimal('0.10')
+    assert order.pending_sum == Decimal('-0.90')
+
+
+@pytest.mark.django_db
+def test_cancellation_review_offsetting_ticket_and_shipping_edits(cancellation_review_order_factory):
+    order = cancellation_review_order_factory(extra_fees=((OrderFee.FEE_TYPE_SHIPPING, '6.00'),))
+    order.event.settings.cancel_allow_user_paid_keep_fees = True
+    assert order.user_cancel_fee == Decimal('10.00')
+    assert order.user_partial_cancel_fee(Decimal('10.00')) == Decimal('4.08')
+    cancel_order_positions(order.pk, [order.positions.first().pk])
+    order = Order.objects.get(pk=order.pk)
+    assert order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION).value == Decimal('4.08')
+    assert order.total == Decimal('20.08')
+    assert order.user_cancel_fee == Decimal('10.00')
+
+    manager = OrderChangeManager(order, None, notify=False)
+    manager.change_price(order.positions.get(), Decimal('15.00'))
+    manager.change_fee(order.fees.get(fee_type=OrderFee.FEE_TYPE_SHIPPING), Decimal('1.00'))
+    manager.commit()
+    order = Order.objects.get(pk=order.pk)
+    assert order.total == Decimal('20.08')
+    assert order.positions.get().price == Decimal('15.00')
+    assert order.fees.get(fee_type=OrderFee.FEE_TYPE_SHIPPING).value == Decimal('1.00')
+    fee = order.user_cancel_fee
+    cancel_order(order.pk, cancellation_fee=fee, send_mail=False)
+    order = Order.objects.get(pk=order.pk)
+    assert order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION).value == Decimal('8.58')
+    assert fee == order.total == Decimal('8.58')
+    assert order.pending_sum == Decimal('-17.42')
+    assert not order.refunds.exists()
+
+
+@pytest.mark.django_db
+def test_cancellation_review_negative_fixed_partial_fee(cancellation_review_order_factory):
+    order = cancellation_review_order_factory(percentage='20.00', fixed='-2.00')
+    fee = order.user_partial_cancel_fee(Decimal('10.00'))
+    cancel_order_positions(order.pk, [order.positions.first().pk])
+    order = Order.objects.get(pk=order.pk)
+    assert order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION).value == Decimal('2.00')
+    assert fee == Decimal('2.00')
+    assert order.total == Decimal('12.00')
+    assert order.pending_sum == Decimal('-8.00')
 
 
 class OrderCancelTests(TestCase):
