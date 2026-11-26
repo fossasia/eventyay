@@ -136,30 +136,6 @@ header .header-row-right {
     margin-inline: 0;
 }
 
-.alert.alert-success,
-.alert.alert-info,
-.alert.alert-warning,
-.alert.alert-danger,
-.alert.alert-legal {
-    padding-left: 65px;
-}
-
-@media (max-width: 767px) {
-    .alert.info-download {
-        flex-wrap: wrap;
-    }
-
-    .alert.info-download .download-btn-form {
-        display: block;
-        flex-basis: 100%;
-    }
-
-    .alert.info-download .download-btn-form .btn {
-        width: 100%;
-        white-space: normal;
-    }
-}
-
 #main-card summary.product-row {
     color: var(--color-text);
 }
