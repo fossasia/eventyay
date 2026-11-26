@@ -165,7 +165,7 @@ class OrderAnonymizeTest(SoupTest):
         )
 
     def test_anonymize_order_service(self):
-        """The anonymize_order service should scrub all PII from order, positions, invoices, answers, payments, and logs."""
+        """The anonymize_order service should remove identity from order, positions, invoices, payments and logs, and keep answers."""
         with scopes_disabled():
             anonymize_order(self.order, user=self.user)
             self.order.refresh_from_db()
@@ -183,7 +183,8 @@ class OrderAnonymizeTest(SoupTest):
             assert self.customer.email == 'customer@example.com'
 
             # Order fields
-            assert self.order.email == 'anonymized-order-ANON1@eventyay.local'
+            assert self.order.email.startswith('order.')
+            assert self.order.email.endswith('@eventyay.invalid')
             assert self.order.phone is None
             assert self.order.comment == 'Anonymized order ticketing data'
             # Financial fields are preserved
@@ -191,7 +192,8 @@ class OrderAnonymizeTest(SoupTest):
             assert self.order.status == Order.STATUS_PAID
 
             # Attendee fields on OrderPosition
-            assert self.position.attendee_email == f'anonymized-ticket-{self.position.pk}@eventyay.local'
+            assert self.position.attendee_email.endswith('@eventyay.invalid')
+            # The fixture has no name parts, so save() never stored a name for this attendee
             assert self.position.attendee_name_cached is None
             assert self.position.attendee_name_parts == {}
             assert self.position.company is None
@@ -208,18 +210,18 @@ class OrderAnonymizeTest(SoupTest):
             assert str(self.invoice_addr.country) == ''
             assert self.invoice_addr.name_parts == {}
 
-            # QuestionAnswer content & choice options cleared
-            assert self.qa.answer == '█'
-            assert self.qa_choice.answer == '█'
-            assert self.qa_choice.options.count() == 0
+            # Answers are kept and stay linked to the anonymous attendee
+            assert self.qa.answer == 'Vegan'
+            assert self.qa_choice.answer == 'L'
+            assert self.qa_choice.options.count() == 1
 
-            # Invoices shredded
-            assert self.invoice.shredded is True
+            # Invoices are kept without buyer details; the PDF is generated again
+            assert self.invoice.shredded is False
             assert bool(self.invoice.file) is False
-            assert self.invoice.invoice_to == '█'
-            assert self.invoice.introductory_text == '█'
-            assert self.invoice.additional_text == '█'
-            assert self.invoice.payment_provider_text == '█'
+            assert self.invoice.invoice_to == 'Anonymized'
+            assert self.invoice.introductory_text == 'Hello John'
+            assert self.invoice.additional_text == 'Thank you'
+            assert self.invoice.payment_provider_text == 'Paid via bank transfer'
             assert self.invoice.invoice_no == '1001'
             assert self.invoice_line.gross_value == Decimal('23.00')
 
@@ -248,7 +250,7 @@ class OrderAnonymizeTest(SoupTest):
 
         with scopes_disabled():
             self.order.refresh_from_db()
-            assert self.order.email == 'anonymized-order-ANON1@eventyay.local'
+            assert self.order.email.endswith('@eventyay.invalid')
 
     def test_order_detail_view_toolbar_button(self):
         """Order detail view toolbar displays enabled link when event ended and disabled button with tooltip when ongoing."""
