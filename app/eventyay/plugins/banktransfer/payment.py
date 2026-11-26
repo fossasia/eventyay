@@ -59,7 +59,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                         required=False,
@@ -73,7 +72,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                     ),
@@ -85,7 +83,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                         required=False,
@@ -98,7 +95,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                         required=False,
@@ -240,7 +236,7 @@ class BankTransfer(BasePaymentProvider):
         else:
             if not cleaned_data.get('payment_banktransfer_bank_details'):
                 raise ValidationError(
-                    {'payment_banktransfer_bank_details': _('Please fill out your bank account details.')}
+                    {'payment_banktransfer_bank_details': _('Please enter your bank account details.')}
                 )
         return cleaned_data
 

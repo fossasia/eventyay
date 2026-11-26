@@ -1,12 +1,12 @@
 /**
- * Quick setup wizard: keep the required/optional hints of the bank transfer
- * fields in sync with the backend validation (BankTransfer.settings_form_clean).
+ * Keep bank transfer required/optional hints in sync with backend
+ * validation in both the quickstart wizard and payment settings.
  *
- * The server renders every one of these labels with its translated "Optional"
- * hint (see render_label in control/forms/renderers.py). This script only hides
- * or shows that hint and adds a "*" marker, so it never needs its own
- * translations. Only the hint is changed, not the HTML "required" attribute,
- * so "Save draft" keeps working.
+ * Reuse the server-rendered, translated "Optional" hints and add
+ * required indicators according to the selected bank account type.
+ *
+ * Do not set the HTML "required" attribute, so saving incomplete
+ * quickstart drafts remains possible.
  */
 
 function setBankTransferHint(selector, required) {

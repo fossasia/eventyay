@@ -1158,7 +1158,9 @@ class ProviderForm(SettingsForm):
         cleaned_data = super().clean()
         enabled = cleaned_data.get(self.settingspref + '_enabled')
         if not enabled:
-            return
+            if isinstance(self.provider, BankTransfer):
+                return self.provider.settings_form_clean(cleaned_data)
+            return cleaned_data
         if cleaned_data.get(self.settingspref + '_hidden_url', None):
             cleaned_data[self.settingspref + '_hidden_url'] = None
         for k, v in self.fields.items():
