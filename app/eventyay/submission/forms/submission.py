@@ -607,7 +607,7 @@ class SubmissionFilterForm(forms.Form):
 
         if self.event.tags.all().exists() or show_all_filters:
             self.fields['tags'].queryset = event.tags.prefetch_related('submissions').annotate(
-                submission_count=Count(
+                count=Count(
                     'submissions',
                     distinct=True,
                     filter=Q(
