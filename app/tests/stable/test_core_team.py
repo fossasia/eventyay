@@ -133,7 +133,7 @@ OWNER_ACCESS = {'all_events': True, 'can_change_teams': True, 'can_change_organi
 
 
 def run_backfill():
-    migration = importlib.import_module('eventyay.base.migrations.0094_team_is_core_team')
+    migration = importlib.import_module('eventyay.base.migrations.0096_team_is_core_team')
     migration.flag_core_teams(apps, None)
 
 
