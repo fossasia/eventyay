@@ -349,6 +349,9 @@ class BankTransfer(BasePaymentProvider):
         d = obj.info_data
         d['reference'] = '█'
         d['payer'] = '█'
+        for key in ('iban', 'bic'):
+            if d.get(key):
+                d[key] = '█'
         d['_shredded'] = True
         obj.info = json.dumps(d)
         obj.save(update_fields=['info'])
