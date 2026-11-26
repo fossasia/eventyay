@@ -440,6 +440,22 @@ class VoucherGroupForm(VoucherForm):
         }
 
 
+def recipient_csv_has_consistent_rows(raw: str, delimiter: str, skipinitialspace: bool) -> bool:
+    """Check whether the double-quote dialect produces plausible recipient rows."""
+    reader = csv.DictReader(StringIO(raw), delimiter=delimiter, skipinitialspace=skipinitialspace, strict=True)
+    validate_email = EmailValidator()
+    try:
+        if 'email' not in (reader.fieldnames or []):
+            return False
+        for row in reader:
+            if None in row or None in row.values():
+                return False
+            validate_email(row['email'])
+    except (csv.Error, ValidationError):
+        return False
+    return True
+
+
 class VoucherBulkForm(VoucherForm):
     codes = forms.CharField(
         widget=forms.Textarea,
@@ -579,18 +595,28 @@ class VoucherBulkForm(VoucherForm):
                     skipinitialspace = True
                 quotechar = dialect.quotechar
                 if quotechar != "'":
-                    # Sniffer also returns double quotes by default when it sees no quoting.
-                    # Only try apostrophes if the sample has no complete double-quoted field.
                     opening_quote = re.search(rf"""(?:\A|[{delimiter}\r\n]) *+(?P<quote>['"])""", raw)
-                    double_quoted_field = re.search(
-                        rf'(?:\A|[{delimiter}\r\n]) *+"(?:[^"]|"")*+"(?=[{delimiter}\r\n]|\Z)', sample
-                    )
-                    if opening_quote and opening_quote['quote'] == "'" and not double_quoted_field:
+                    if opening_quote and opening_quote['quote'] == "'":
                         apostrophe_field = re.compile(rf"'(?:[^']|'')*+'(?=[{delimiter}\r\n]|\Z)")
                         field_match = apostrophe_field.match(raw, opening_quote.start('quote'))
                         if field_match and field_match.end() > len(sample):
-                            quotechar = "'"
-                            skipinitialspace = True
+                            # A literal apostrophe can look like an opening quote spanning other rows.
+                            double_quoted_field = re.search(
+                                rf'(?:\A|[{delimiter}\r\n])(?P<spaces> *+)"(?:[^"]|"")*+"(?=[{delimiter}\r\n]|\Z)',
+                                raw,
+                            )
+                            double_skipinitialspace = skipinitialspace or bool(
+                                double_quoted_field and double_quoted_field['spaces']
+                            )
+                            preserve_double_quotes = double_quoted_field and (
+                                double_quoted_field.end() <= len(sample)
+                                or recipient_csv_has_consistent_rows(raw, delimiter, double_skipinitialspace)
+                            )
+                            if preserve_double_quotes:
+                                skipinitialspace = double_skipinitialspace
+                            else:
+                                quotechar = "'"
+                                skipinitialspace = True
                 reader = csv.DictReader(
                     StringIO(raw), dialect=dialect, delimiter=delimiter,
                     quotechar=quotechar, doublequote=True, skipinitialspace=skipinitialspace, strict=True,

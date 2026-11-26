@@ -1175,6 +1175,12 @@ class VoucherRecipientCsvValidationTest(TestCase):
             'email,number\nrecipient@example.org,1,extra',
             'email,name\nrecipient@example.org,"Unclosed',
             'email,email\nrecipient@example.org,other@example.org',
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"Doe, John"\n'
+                'third@example.org,Extra,Cell\n'
+                'last@example.org,' + 'A' * 1024 + "'"
+            ),
         ):
             with self.subTest(recipients=recipients):
                 response = self.post_bulk_voucher(recipients)
@@ -1227,6 +1233,8 @@ class VoucherRecipientCsvValidationTest(TestCase):
         """Keep supported recipient formats and quoted CSV field values intact."""
         name = 'A' * 1024 + ', "Example"\nNext line'
         long_apostrophe_name = 'A' * 1024 + ", O'Name\nNext line"
+        name_with_both_quotes = 'A' * 1024 + ',"Example", O\'Name'
+        multiline_name_with_both_quotes = 'A' * 1024 + '\n"Example", O\'Name'
         for recipients, expected in (
             ('email,number\nrecipient@example.org,2', [('recipient@example.org', 2, '', None)]),
             ('email;number;name\r\nrecipient@example.org;2;Name', [('recipient@example.org', 2, 'Name', None)]),
@@ -1243,6 +1251,26 @@ class VoucherRecipientCsvValidationTest(TestCase):
                     ('last@example.org', 1, 'A' * 1024 + "'", None),
                 ],
             ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"' + 'A' * 1024 + ', Doe"\n'
+                "last@example.org,Name'",
+                [
+                    ('first@example.org', 1, "'Twas", None),
+                    ('second@example.org', 1, 'A' * 1024 + ', Doe', None),
+                    ('last@example.org', 1, "Name'", None),
+                ],
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org, "' + 'A' * 1024 + ', Doe"\n'
+                "last@example.org,Name'",
+                [
+                    ('first@example.org', 1, "'Twas", None),
+                    ('second@example.org', 1, 'A' * 1024 + ', Doe', None),
+                    ('last@example.org', 1, "Name'", None),
+                ],
+            ),
             ('email,name\nrecipient@example.org,John "Example"', [
                 ('recipient@example.org', 1, 'John "Example"', None),
             ]),
@@ -1253,6 +1281,14 @@ class VoucherRecipientCsvValidationTest(TestCase):
             (
                 "email,name\nrecipient@example.org, '" + long_apostrophe_name.replace("'", "''") + "'",
                 [('recipient@example.org', 1, long_apostrophe_name, None)],
+            ),
+            (
+                "email,name\nrecipient@example.org,'" + name_with_both_quotes.replace("'", "''") + "'",
+                [('recipient@example.org', 1, name_with_both_quotes, None)],
+            ),
+            (
+                "email,name\nrecipient@example.org,'" + multiline_name_with_both_quotes.replace("'", "''") + "'",
+                [('recipient@example.org', 1, multiline_name_with_both_quotes, None)],
             ),
             (
                 "email,name\nrecipient@example.org," + 'A' * 1024 + "\nother@example.org,'Doe, John'",
