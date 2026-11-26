@@ -17,7 +17,7 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 - Core stack: Django 5.2+, PostgreSQL, Redis, Celery, Channels, Vue 3.
 - Primary development paths:
   - `app/eventyay/` for product code
-  - `app/tests/` for tests
+  - `app/tests/` for tests (`app/tests/stable/` is the suite executed in CI; `app/tests/talk/` and `app/tests/tickets/` are only validated with `--collect-only` and are not executed in CI — add new CI-verified tests under `app/tests/stable/`)
   - `doc/` for documentation
 - Legacy product names (`pretix`, `pretalx`, `venueless`) are historical references only.
 - If top-level legacy directories such as `talk/`, `video/`, or `src/` appear in a branch, treat them as reference-only unless explicitly requested.
@@ -62,13 +62,13 @@ Run from `app/` unless noted:
 - Run Celery worker: `celery -A eventyay worker -l info`
 - Build assets (dev): `make staticfiles`
 - Build assets (prod): `make production`
-- Test suite: `pytest tests/`
+- Test suite (CI-executed): `pytest tests/stable` (`tests/talk/` and `tests/tickets/` are only validated with `--collect-only` and are not executed in CI)
 
 ## Agent Checklist
 
 Before submitting changes:
 
-1. Confirm edited files are in the intended path (`app/eventyay/`, `app/tests/`, or explicitly requested paths).
+1. Confirm edited files are in the intended path (`app/eventyay/`, `app/tests/stable/` for new CI-run tests, or explicitly requested paths).
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
