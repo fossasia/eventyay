@@ -15,7 +15,6 @@ ACTION = '.panel-primary>.panel-heading .pull-right a'
 
 
 def event_stylesheet():
-    """The stylesheet an event gets, compiled from the sources like presale.style.compile_scss does."""
     return sass.compile(
         filename=finders.find('pretixpresale/scss/main.scss'),
         output_style='expanded',
@@ -24,7 +23,6 @@ def event_stylesheet():
 
 
 def custom_stylesheet():
-    """custom.css is loaded next to the event stylesheet and colours the section headers."""
     return Path(finders.find('pretixpresale/scss/custom.css')).read_text(encoding='utf-8')
 
 
@@ -34,7 +32,6 @@ def css(request):
 
 
 def declarations(css, selector):
-    """The declarations of all rules for the selector, e.g. {'color': '#0d0f10'}."""
     found = {}
     css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
     for selectors, body in re.findall(r'([^{}]+)\{([^{}]*)\}', css):
