@@ -440,20 +440,36 @@ class VoucherGroupForm(VoucherForm):
         }
 
 
-def recipient_csv_has_consistent_rows(raw: str, delimiter: str, skipinitialspace: bool) -> bool:
-    """Check whether the double-quote dialect produces plausible recipient rows."""
-    reader = csv.DictReader(StringIO(raw), delimiter=delimiter, skipinitialspace=skipinitialspace, strict=True)
+def recipient_csv_has_double_quoted_row(
+    raw: str, delimiter: str, skipinitialspace: bool, double_quoted_pattern: re.Pattern[str],
+) -> bool:
+    """Find a double-quoted recipient row even if validation will reject another row."""
+    source = StringIO(raw)
+    reader = csv.DictReader(source, delimiter=delimiter, skipinitialspace=skipinitialspace, strict=True)
     validate_email = EmailValidator()
     try:
         if 'email' not in (reader.fieldnames or []):
             return False
-        for row in reader:
-            if None in row or None in row.values():
-                return False
-            validate_email(row['email'])
-    except (csv.Error, ValidationError):
+    except csv.Error:
         return False
-    return True
+
+    while True:
+        start = source.tell()
+        try:
+            row = next(reader, None)
+            if row is None:
+                return False
+            if None in row or None in row.values():
+                continue
+            if not any(
+                skipinitialspace or not match['spaces']
+                for match in double_quoted_pattern.finditer(raw[start:source.tell()])
+            ):
+                continue
+            validate_email(row['email'])
+        except (csv.Error, ValidationError):
+            continue
+        return True
 
 
 class VoucherBulkForm(VoucherForm):
@@ -601,17 +617,25 @@ class VoucherBulkForm(VoucherForm):
                         field_match = apostrophe_field.match(raw, opening_quote.start('quote'))
                         if field_match and field_match.end() > len(sample):
                             # A literal apostrophe can look like an opening quote spanning other rows.
-                            double_quoted_field = re.search(
+                            double_quoted_pattern = re.compile(
                                 rf'(?:\A|[{delimiter}\r\n])(?P<spaces> *+)"(?:[^"]|"")*+"(?=[{delimiter}\r\n]|\Z)',
-                                raw,
                             )
+                            double_quoted_field = double_quoted_pattern.search(raw)
                             double_skipinitialspace = skipinitialspace or bool(
                                 double_quoted_field and double_quoted_field['spaces']
                             )
                             preserve_double_quotes = double_quoted_field and (
                                 double_quoted_field.end() <= len(sample)
-                                or recipient_csv_has_consistent_rows(raw, delimiter, double_skipinitialspace)
+                                or recipient_csv_has_double_quoted_row(
+                                    raw, delimiter, double_skipinitialspace, double_quoted_pattern,
+                                )
                             )
+                            if double_quoted_field and not preserve_double_quotes and not double_skipinitialspace:
+                                # A malformed earlier row can hide a valid quoted field preceded by spaces.
+                                preserve_double_quotes = recipient_csv_has_double_quoted_row(
+                                    raw, delimiter, True, double_quoted_pattern,
+                                )
+                                double_skipinitialspace = preserve_double_quotes
                             if preserve_double_quotes:
                                 skipinitialspace = double_skipinitialspace
                             else:

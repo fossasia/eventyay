@@ -1181,6 +1181,24 @@ class VoucherRecipientCsvValidationTest(TestCase):
                 'third@example.org,Extra,Cell\n'
                 'last@example.org,' + 'A' * 1024 + "'"
             ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"' + 'A' * 1024 + ', Doe"\n'
+                'third@example.org,Extra,Cell\n'
+                "last@example.org,Name'"
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,Extra,Cell\n'
+                'third@example.org, "' + 'A' * 1024 + ', Doe"\n'
+                "last@example.org,Name'"
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"' + 'A' * 1024 + '",Extra\n'
+                'third@example.org, "' + 'B' * 1024 + ', Doe"\n'
+                "last@example.org,Name'"
+            ),
         ):
             with self.subTest(recipients=recipients):
                 response = self.post_bulk_voucher(recipients)
