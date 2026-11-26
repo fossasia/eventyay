@@ -18,6 +18,14 @@ class GiftCardCreateForm(forms.ModelForm):
         initial['expires'] = self.organizer.default_gift_card_expiry
         kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
+        if 'currency' in self.fields:
+            self.fields['currency'].widget.attrs.update(
+                {
+                    'data-searchable-select': '',
+                    'data-search-placeholder': _('Search'),
+                    'data-empty-text': _('No results'),
+                }
+            )
 
     def clean_secret(self):
         secret = self.cleaned_data.get('secret')
