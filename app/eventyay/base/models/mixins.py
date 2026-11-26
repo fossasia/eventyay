@@ -191,10 +191,11 @@ class FileCleanupMixin:
             # otherwise see the old field value and skip cleanup.
             cleanup_jobs.append(
                 {
-                    'model': str(self._meta.model_name.capitalize()),
+                    'model': self._meta.label,
                     'pk': self.pk,
                     'field': field,
                     'path': old_path,
+                    'file_name': old_name,
                 }
             )
         result = super().save(*args, **kwargs)

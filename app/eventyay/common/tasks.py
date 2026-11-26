@@ -2,12 +2,14 @@ import logging
 from pathlib import Path
 
 from celery.exceptions import MaxRetriesExceededError
+from django.apps import apps
+from django.core.exceptions import FieldDoesNotExist
 from django.core.files.storage import default_storage
-from django.db import transaction
+from django.db import models, transaction
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Submission, User
+from eventyay.base.models import Event, FileCleanupMixin, Submission, User
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.signals import periodic_task
 from eventyay.celery_app import app
@@ -41,17 +43,40 @@ def task_process_image(*, model: str, pk: int, field: str, generate_thumbnail: b
 
 
 @app.task(name='pretalx.cleanup_file')
-def task_cleanup_file(*, model: str, pk: int, field: str, path: str):
-    models = {
-        'Event': Event,
-        'Submission': Submission,
-        'User': User,
-    }
-    if model not in models:
+def task_cleanup_file(*, model: str, pk: int, field: str, path: str, file_name: str = ''):
+    # Jobs queued before file_name was added: skip them so a file another row still uses isn't deleted.
+    if not file_name:
+        return
+
+    try:
+        model_class = apps.get_model(model)
+    except (LookupError, ValueError):
+        logger.warning('Model %s not found', model)
+        return
+
+    if not issubclass(model_class, FileCleanupMixin):
+        logger.warning('Model %s is not a subclass of FileCleanupMixin', model)
+        return
+
+    try:
+        file_field = model_class._meta.get_field(field)
+    except FieldDoesNotExist:
+        logger.warning('The field %s does not exist for the model %s', field, model)
+        return
+
+    if not isinstance(file_field, models.FileField):
+        logger.warning('The field %s is not a valid FileField', field)
+        return
+
+    if default_storage.path(file_name) != path:
+        logger.warning('The given file name %s and the given path %s are different', file_name, path)
         return
 
     with scopes_disabled():
-        instance = models[model].objects.filter(pk=pk).first()
+        if model_class.objects.filter(**{field: file_name}).exists():
+            return
+        instance = model_class.objects.filter(pk=pk).first()
+
         if not instance:
             return
 
