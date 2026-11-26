@@ -102,9 +102,20 @@
     padding-left: 65px;
 }
 
-.alert.info-download {
-    flex-wrap: wrap;
-    column-gap: 16px;
+@media (max-width: 767px) {
+    .alert.info-download {
+        flex-wrap: wrap;
+    }
+
+    .alert.info-download .download-btn-form {
+        display: block;
+        flex-basis: 100%;
+    }
+
+    .alert.info-download .download-btn-form .btn {
+        width: 100%;
+        white-space: normal;
+    }
 }
 
 #main-card summary.product-row {
