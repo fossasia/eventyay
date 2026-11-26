@@ -3940,6 +3940,7 @@ class EventAnonymizationRun(models.Model):
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.RUNNING)
     counts = models.JSONField(default=dict)
     last_order_id = models.PositiveBigIntegerField(default=0)
+    pending_file_deletions = models.JSONField(default=list)
     started = models.DateTimeField(auto_now_add=True)
     finished = models.DateTimeField(null=True)
     error = models.TextField(blank=True)

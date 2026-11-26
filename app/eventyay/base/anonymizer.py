@@ -97,6 +97,7 @@ class BaseTicketingAnonymizer:
 
     def __init__(self, event: Event):
         self.event = event
+        self.pending_file_deletions: list[str] | None = None
 
     def __str__(self) -> str:
         return self.identifier
@@ -261,8 +262,11 @@ class InvoiceAnonymizer(BaseTicketingAnonymizer):
                 ]
             )
             if old_pdf and not invoice.shredded:
-                invoice_file = invoice.file
-                transaction.on_commit(lambda name=old_pdf, storage=invoice_file.storage: storage.delete(name))
+                if self.pending_file_deletions is not None:
+                    self.pending_file_deletions.append(old_pdf)
+                else:
+                    invoice_file = invoice.file
+                    transaction.on_commit(lambda name=old_pdf, storage=invoice_file.storage: storage.delete(name))
                 invoice_pdf(invoice.pk)
 
 

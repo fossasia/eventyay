@@ -54,4 +54,6 @@ def anonymize_order(order: Order, user=None, auth=None) -> None:
         for anonymizer in order.event.get_ticketing_anonymizers().values():
             anonymizer.anonymize_order(order)
 
+        order.is_anonymized = True
+        order.save(update_fields=['is_anonymized'])
         order.log_action('eventyay.event.order.anonymized', user=user, auth=auth)

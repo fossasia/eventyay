@@ -212,6 +212,7 @@ class Order(LockModel, LoggedModel):
     require_approval = models.BooleanField(default=False)
     sales_channel = models.CharField(max_length=190, default='web')
     email_known_to_work = models.BooleanField(default=False, verbose_name=_('E-mail address verified'))
+    is_anonymized = models.BooleanField(default=False)
 
     objects = ScopedManager(SecureOrderQuerySet.as_manager().__class__, organizer='event__organizer')
 

@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -8,9 +9,11 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 
-from eventyay.base.models import CartPosition, Event, EventAnonymizationRun, Order, User, WaitingListEntry
+from eventyay.base.anonymizer import BaseTicketingAnonymizer
+from eventyay.base.models import CartPosition, Event, EventAnonymizationRun, Invoice, Order, User, WaitingListEntry
 from eventyay.base.services.tasks import EventTask
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.shredder import shred_log_fields
 from eventyay.celery_app import app
 from eventyay.core.permissions import ORGANIZER_ROLES
 from eventyay.helpers.anonymization import ANONYMIZED_NAME, anonymized_email
@@ -28,6 +31,19 @@ def check_event_end(event: Event) -> None:
         raise ValidationError(_('The waiting period after this event has not ended.'))
 
 
+def clean_cart_meta_info(raw_meta: str | None) -> str | None:
+    if not raw_meta:
+        return raw_meta
+    try:
+        meta = json.loads(raw_meta)
+    except ValueError:
+        return '{}'
+    if not isinstance(meta, dict):
+        return '{}'
+    meta.pop('attendee_form_data', None)
+    return json.dumps(meta)
+
+
 def anonymize_event_records(event: Event) -> dict[str, int]:
     organizers = User.objects.filter(event_grants__event=event, event_grants__role__in=ORGANIZER_ROLES)
     users = (
@@ -36,23 +52,31 @@ def anonymize_event_records(event: Event) -> dict[str, int]:
         .exclude(teams__isnull=False)
         .exclude(pk__in=organizers)
     )
-    video_count = users.update(profile={}, token_id=None, client_id=None)
-    waiting = WaitingListEntry.objects.filter(event=event)
+    video_count = users.update(profile={}, token_id=None, client_id=None, fullname=None, email=None)
+    waiting = WaitingListEntry.objects.filter(event=event).select_related('voucher')
     waiting_count = 0
-    for pk in waiting.values_list('pk', flat=True).iterator():
-        waiting.filter(pk=pk).update(
+    for entry in waiting.iterator():
+        original_email = entry.email
+        WaitingListEntry.objects.filter(pk=entry.pk).update(
             name_parts={'_legacy': ANONYMIZED_NAME},
             name_cached=ANONYMIZED_NAME,
             email=anonymized_email('waiting'),
             phone=None,
         )
+        if entry.voucher_id and entry.voucher.comment:
+            comment = entry.voucher.comment
+            if original_email and original_email in comment:
+                entry.voucher.comment = comment.replace(original_email, ANONYMIZED_NAME)
+                entry.voucher.save(update_fields=['comment'])
+            elif '@' in comment:
+                entry.voucher.comment = '█'
+                entry.voucher.save(update_fields=['comment'])
         waiting_count += 1
+    for log_entry in event.logentry_set.filter(action_type='eventyay.voucher.added.waitinglist').exclude(data=''):
+        shred_log_fields(log_entry, banlist=['email', 'name', 'name_parts', 'phone'])
     carts = CartPosition.objects.filter(event=event, expires__lte=now())
     cart_count = 0
     for cart in carts.iterator():
-        meta = cart.meta_info_data
-        meta.pop('attendee_form_data', None)
-        cart.meta_info_data = meta
         carts.filter(pk=cart.pk).update(
             attendee_name_parts={},
             attendee_name_cached=None,
@@ -64,7 +88,7 @@ def anonymize_event_records(event: Event) -> dict[str, int]:
             state=None,
             country=None,
             cart_id=None,
-            meta_info=cart.meta_info,
+            meta_info=clean_cart_meta_info(cart.meta_info),
         )
         cart_count += 1
     messages = EmailQueue.objects.filter(event=event, composing_for=ComposingFor.ATTENDEES)
@@ -75,6 +99,50 @@ def anonymize_event_records(event: Event) -> dict[str, int]:
         recipients.filter(pk=pk).update(email=anonymized_email('recipient'), error=None)
         mail_count += 1
     return {'video_users': video_count, 'waiting_list': waiting_count, 'carts': cart_count, 'recipients': mail_count}
+
+
+def flush_pending_file_deletions(run: EventAnonymizationRun) -> None:
+    if not run.pending_file_deletions:
+        return
+    storage = Invoice._meta.get_field('file').storage
+    remaining = list(run.pending_file_deletions)
+    for path in list(remaining):
+        storage.delete(path)
+        remaining.remove(path)
+        EventAnonymizationRun.objects.filter(pk=run.pk).update(pending_file_deletions=remaining)
+    run.pending_file_deletions = remaining
+
+
+def process_order_ids(
+    event: Event,
+    run: EventAnonymizationRun,
+    anonymizers: dict[str, BaseTicketingAnonymizer],
+    order_ids: list[int],
+) -> tuple[EventAnonymizationRun, bool]:
+    for pk in order_ids:
+        with transaction.atomic():
+            run = EventAnonymizationRun.objects.select_for_update().get(pk=run.pk)
+            if run.status == run.Status.COMPLETED:
+                return run, True
+            order = Order.objects.select_for_update().filter(event=event, pk=pk).first()
+            if order and not order.is_anonymized:
+                pending_deletions: list[str] = []
+                for identifier, handler in anonymizers.items():
+                    handler.pending_file_deletions = pending_deletions
+                    handler.anonymize_order(order)
+                    run.counts[identifier] = run.counts.get(identifier, 0) + 1
+                order.is_anonymized = True
+                order.save(update_fields=['is_anonymized'])
+                if pending_deletions:
+                    run.pending_file_deletions = [*run.pending_file_deletions, *pending_deletions]
+            if pk > run.last_order_id:
+                run.last_order_id = pk
+            run.status = run.Status.RUNNING
+            run.error = ''
+            run.finished = None
+            run.save()
+        flush_pending_file_deletions(run)
+    return run, False
 
 
 class AnonymizationTask(EventTask):
@@ -96,38 +164,35 @@ def anonymize_event(event: Event, trigger: str, user: int | None = None) -> int:
             event=event, defaults={'trigger': trigger, 'requested_by_id': user}
         )
         anonymizers = event.get_ticketing_anonymizers()
+        flush_pending_file_deletions(run)
         while True:
             ids = list(
                 Order.objects.filter(event=event, pk__gt=run.last_order_id)
                 .order_by('pk')
                 .values_list('pk', flat=True)[:100]
             )
-            for pk in ids:
-                with transaction.atomic():
-                    run = EventAnonymizationRun.objects.select_for_update().get(pk=run.pk)
-                    if run.status == run.Status.COMPLETED:
-                        return run.pk
-                    if pk <= run.last_order_id:
-                        continue
-                    order = Order.objects.select_for_update().filter(event=event, pk=pk).first()
-                    if order:
-                        for identifier, handler in anonymizers.items():
-                            handler.anonymize_order(order)
-                            run.counts[identifier] = run.counts.get(identifier, 0) + 1
-                    run.last_order_id = pk
-                    run.status = run.Status.RUNNING
-                    run.error = ''
-                    run.finished = None
-                    run.save()
             if not ids:
-                break
-        with transaction.atomic():
-            run = EventAnonymizationRun.objects.select_for_update().get(pk=run.pk)
-            if run.status != run.Status.COMPLETED:
+                ids = list(
+                    Order.objects.filter(event=event, pk__lte=run.last_order_id, is_anonymized=False)
+                    .order_by('pk')
+                    .values_list('pk', flat=True)[:100]
+                )
+            if ids:
+                run, completed = process_order_ids(event, run, anonymizers, ids)
+                if completed:
+                    return run.pk
+                continue
+            flush_pending_file_deletions(run)
+            with transaction.atomic():
+                run = EventAnonymizationRun.objects.select_for_update().get(pk=run.pk)
+                if run.status == run.Status.COMPLETED:
+                    return run.pk
+                if Order.objects.filter(event=event, is_anonymized=False).exists() or run.pending_file_deletions:
+                    continue
                 run.counts.update(anonymize_event_records(event))
                 run.status = run.Status.COMPLETED
                 run.finished = now()
                 run.error = ''
                 run.save()
                 event.log_action('eventyay.event.ticketing_data.anonymized', data=run.counts, user=run.requested_by)
-        return run.pk
+                return run.pk

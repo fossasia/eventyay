@@ -20,11 +20,17 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('running', 'Running'), ('failed', 'Failed'), ('completed', 'Completed')], default='running', max_length=12)),
                 ('counts', models.JSONField(default=dict)),
                 ('last_order_id', models.PositiveBigIntegerField(default=0)),
+                ('pending_file_deletions', models.JSONField(default=list)),
                 ('started', models.DateTimeField(auto_now_add=True)),
                 ('finished', models.DateTimeField(null=True)),
                 ('error', models.TextField(blank=True)),
                 ('event', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='ticketing_anonymization_run', to='base.event')),
                 ('requested_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
+        ),
+        migrations.AddField(
+            model_name='order',
+            name='is_anonymized',
+            field=models.BooleanField(default=False),
         ),
     ]
