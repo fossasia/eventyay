@@ -1698,7 +1698,7 @@ def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
     pos.attendee_email = 'rachit@example.com'
     pos.save()
 
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         queue = EmailQueue.objects.create(
             event=event,
             composing_for=ComposingFor.ATTENDEES,
@@ -1730,7 +1730,7 @@ def test_outbox_mail_form_keeps_attendee_name_placeholder(event, order, pos):
     pos.attendee_email = 'rachit@example.com'
     pos.save()
 
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         queue = EmailQueue.objects.create(
             event=event,
             composing_for=ComposingFor.ATTENDEES,
@@ -1785,7 +1785,7 @@ def test_placeholder_context_does_not_record_recipient_errors(event, order, pos,
     pos.attendee_email = 'rachit@example.com'
     pos.save()
 
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         queue = EmailQueue.objects.create(
             event=event,
             composing_for=ComposingFor.ATTENDEES,
@@ -1826,7 +1826,7 @@ def test_queued_mail_uses_position_matching_recipient_email(event, order, item):
         attendee_email='second@example.com',
     )
 
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         queue = EmailQueue.objects.create(
             event=event,
             composing_for=ComposingFor.ATTENDEES,
@@ -1888,7 +1888,7 @@ def test_queued_mail_pairs_matching_position_with_its_order(event, item):
         attendee_email='shared@example.com',
     )
 
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         queue = EmailQueue.objects.create(
             event=event,
             composing_for=ComposingFor.ATTENDEES,
@@ -1930,7 +1930,7 @@ def test_placeholder_context_uses_override_email(event, order, item):
         attendee_email='second@example.com',
     )
 
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         queue = EmailQueue.objects.create(
             event=event,
             composing_for=ComposingFor.ATTENDEES,
