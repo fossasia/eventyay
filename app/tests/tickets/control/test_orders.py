@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
+from django.db import connection
+from django.db.models.query import QuerySet
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
@@ -3230,3 +3232,378 @@ def test_approve_cancellation_request(client, env):
     doc = BeautifulSoup(response.content.decode(), 'lxml')
     assert doc.select('input[name=refund-new-giftcard]')[0]['value'] == '10.00'
     assert not env[2].cancellation_requests.exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_recheck_rejects_over_refund(client, env, monkeypatch):
+    """
+    Test that when a payment row is locked with select_for_update, the view rechecks
+    the available refundable balance against the payment's latest state. If another
+    transaction reduced available_amount below the requested amount, the over-refund
+    is rejected and no additional refund is created.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update on OrderPayment and simulate concurrent refund."""
+        if self.model is OrderPayment:
+            locked_models.append(self.model)
+            with scopes_disabled():
+                env[2].refunds.create(
+                    order=env[2],
+                    payment=p,
+                    source=OrderRefund.REFUND_SOURCE_ADMIN,
+                    state=OrderRefund.REFUND_STATE_CREATED,
+                    amount=Decimal('10.00'),
+                    provider=p.provider,
+                )
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            f'refund-{p.pk}': '14.00',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert OrderPayment in locked_models
+    assert b'alert-danger' in resp.content
+    assert (
+        b'You can not refund more than the amount of a payment that is not yet refunded.'
+        in resp.content
+    )
+    with scopes_disabled():
+        assert list(env[2].refunds.values_list('amount', flat=True)) == [Decimal('10.00')]
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_payment_locking_success(client, env, monkeypatch):
+    """
+    Test that when a valid refund is performed under row locks, Order and OrderPayment
+    are locked inside an atomic block and the refund record is successfully persisted.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update to track locked models inside atomic transaction."""
+        assert connection.in_atomic_block
+        if self.model in (Order, OrderPayment):
+            locked_models.append(self.model)
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            f'refund-{p.pk}': '14.00',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert Order in locked_models
+    assert OrderPayment in locked_models
+    assert resp.status_code == 200
+    with scopes_disabled():
+        assert env[2].refunds.filter(payment=p, amount=Decimal('14.00')).exists()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_recheck_does_not_leave_giftcard_on_rejection(
+    client, env, monkeypatch
+):
+    """
+    Test that when a combined refund (gift card + payment refund) is rejected due to
+    concurrent payment balance reduction, no orphan gift card is created on the organizer.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update on OrderPayment and simulate concurrent refund."""
+        if self.model is OrderPayment:
+            locked_models.append(self.model)
+            with scopes_disabled():
+                env[2].refunds.create(
+                    order=env[2],
+                    payment=p,
+                    source=OrderRefund.REFUND_SOURCE_ADMIN,
+                    state=OrderRefund.REFUND_STATE_CREATED,
+                    amount=Decimal('10.00'),
+                    provider=p.provider,
+                )
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    with scopes_disabled():
+        assert env[0].organizer.issued_gift_cards.count() == 0
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            'refund-new-giftcard': '4.00',
+            f'refund-{p.pk}': '10.00',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert OrderPayment in locked_models
+    assert b'alert-danger' in resp.content
+    assert (
+        b'You can not refund more than the amount of a payment that is not yet refunded.'
+        in resp.content
+    )
+    with scopes_disabled():
+        assert env[0].organizer.issued_gift_cards.count() == 0
+        assert list(env[2].refunds.values_list('amount', flat=True)) == [Decimal('10.00')]
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_recheck_giftcard_created_on_success(client, env, monkeypatch):
+    """
+    Test that when a combined refund request (gift card and payment refund) passes locked
+    validation, the gift card is created within the transaction and saved with the refund.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update to track locked models inside atomic transaction."""
+        assert connection.in_atomic_block
+        if self.model in (Order, OrderPayment):
+            locked_models.append(self.model)
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    with scopes_disabled():
+        assert env[0].organizer.issued_gift_cards.count() == 0
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            'refund-new-giftcard': '4.00',
+            f'refund-{p.pk}': '10.00',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert Order in locked_models
+    assert OrderPayment in locked_models
+    assert resp.status_code == 200
+    with scopes_disabled():
+        assert env[0].organizer.issued_gift_cards.count() == 1
+        refund_amounts = sorted(env[2].refunds.values_list('amount', flat=True))
+        assert refund_amounts == [Decimal('4.00'), Decimal('10.00')]
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_external_refund_deducted_from_order_wide_balance(client, env, monkeypatch):
+    """
+    Test that existing refunds in REFUND_STATE_EXTERNAL are deducted from order-wide available
+    funds during choose_form validation, preventing paymentless refunds from over-refunding.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+        env[2].refunds.create(
+            order=env[2],
+            payment=p,
+            source=OrderRefund.REFUND_SOURCE_EXTERNAL,
+            state=OrderRefund.REFUND_STATE_EXTERNAL,
+            amount=Decimal('4.00'),
+            provider=p.provider,
+        )
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update to track locked models."""
+        assert connection.in_atomic_block
+        if self.model in (Order, OrderPayment):
+            locked_models.append(self.model)
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            'refund-manual': '14.00',
+            'manual_state': 'done',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert Order in locked_models
+    assert b'alert-danger' in resp.content
+    assert (
+        b'You can not refund more than the amount of a payment that is not yet refunded.'
+        in resp.content
+    )
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_paymentless_refund_rejects_over_refund(
+    client, env, monkeypatch
+):
+    """
+    Test that paymentless refunds serialize under order lock and recheck order-wide
+    refundable balance. If another transaction reduced order balance below requested
+    amount, the excess paymentless refund is rejected.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update on Order and simulate concurrent paymentless refund."""
+        if self.model is Order:
+            locked_models.append(self.model)
+            with scopes_disabled():
+                env[2].refunds.create(
+                    order=env[2],
+                    payment=None,
+                    source=OrderRefund.REFUND_SOURCE_ADMIN,
+                    state=OrderRefund.REFUND_STATE_DONE,
+                    amount=Decimal('10.00'),
+                    provider='manual',
+                )
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            'refund-manual': '14.00',
+            'manual_state': 'done',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert Order in locked_models
+    assert b'alert-danger' in resp.content
+    assert (
+        b'You can not refund more than the amount of a payment that is not yet refunded.'
+        in resp.content
+    )
+    with scopes_disabled():
+        assert list(env[2].refunds.values_list('amount', flat=True)) == [Decimal('10.00')]
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_unconfirmed_payment_rejects_refund(client, env, monkeypatch):
+    """
+    Test that if a payment transitions to a non-confirmed state (e.g. CANCELED) before
+    lock acquisition, the view rejects the refund under lock and displays the standard error.
+    """
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+    client.login(email='dummy@dummy.dummy', password='dummy')
+
+    original_select_for_update = QuerySet.select_for_update
+    locked_models = []
+
+    def mock_select_for_update(self, *args, **kwargs):
+        """Intercept select_for_update on OrderPayment and change state to CANCELED."""
+        if self.model is OrderPayment:
+            locked_models.append(self.model)
+            with scopes_disabled():
+                p.state = OrderPayment.PAYMENT_STATE_CANCELED
+                p.save(update_fields=['state'])
+        return original_select_for_update(self, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
+
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '14.00',
+            'start-mode': 'full',
+            'start-action': 'mark_pending',
+            f'refund-{p.pk}': '14.00',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+    assert OrderPayment in locked_models
+    assert b'alert-danger' in resp.content
+    assert (
+        b'You can not refund more than the amount of a payment that is not yet refunded.'
+        in resp.content
+    )
+    with scopes_disabled():
+        assert env[2].refunds.count() == 0
