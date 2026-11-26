@@ -1143,6 +1143,30 @@ class OrderRefundView(OrderView):
     permission = 'can_change_orders'
 
     @cached_property
+    def available_order_balance(self):
+        order_payments_sum = (
+            self.order.payments.filter(
+                state__in=(
+                    OrderPayment.PAYMENT_STATE_CONFIRMED,
+                    OrderPayment.PAYMENT_STATE_REFUNDED,
+                )
+            ).aggregate(s=Sum('amount'))['s']
+            or Decimal('0.00')
+        )
+        order_refunds_sum = (
+            self.order.refunds.filter(
+                state__in=(
+                    OrderRefund.REFUND_STATE_DONE,
+                    OrderRefund.REFUND_STATE_TRANSIT,
+                    OrderRefund.REFUND_STATE_CREATED,
+                    OrderRefund.REFUND_STATE_EXTERNAL,
+                )
+            ).aggregate(s=Sum('amount'))['s']
+            or Decimal('0.00')
+        )
+        return max(Decimal('0.00'), order_payments_sum - order_refunds_sum)
+
+    @cached_property
     def start_form(self):
         return OrderRefundForm(
             order=self.order,
@@ -1151,7 +1175,7 @@ class OrderRefundView(OrderView):
             else (self.request.GET if 'start-action' in self.request.GET else None),
             prefix='start',
             initial={
-                'partial_amount': self.order.payment_refund_sum,
+                'partial_amount': self.available_order_balance,
                 'action': ('mark_pending' if self.order.status == Order.STATUS_PAID else 'do_nothing'),
             },
         )
@@ -1167,7 +1191,7 @@ class OrderRefundView(OrderView):
         payments = list(self.order.payments.filter(state=OrderPayment.PAYMENT_STATE_CONFIRMED))
         comment = self.request.POST.get('comment') or self.request.GET.get('comment') or None
         if self.start_form.cleaned_data.get('mode') == 'full':
-            full_refund = self.order.payment_refund_sum
+            full_refund = self.available_order_balance
         else:
             full_refund = self.start_form.cleaned_data.get('partial_amount')
         full_refund = round_decimal(full_refund, self.request.event.currency)
@@ -1338,9 +1362,22 @@ class OrderRefundView(OrderView):
             any_success = False
             refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
-                payment_ids = [r.payment_id for r in refunds if r.payment_id]
+                payment_ids = sorted(list({r.payment_id for r in refunds if r.payment_id}))
                 with transaction.atomic():
-                    with scope(event=self.request.event):
+                    with scope(organizer=self.request.organizer):
+                        if payment_ids:
+                            locked_payments = {
+                                p.pk: p
+                                for p in OrderPayment.objects.filter(
+                                    order=self.order,
+                                    pk__in=payment_ids,
+                                )
+                                .select_for_update(of=OF_SELF)
+                                .order_by('pk')
+                            }
+                        else:
+                            locked_payments = {}
+
                         locked_order = (
                             self.request.event.orders.select_for_update(of=OF_SELF).get(pk=self.order.pk)
                         )
@@ -1376,12 +1413,6 @@ class OrderRefundView(OrderView):
                             is_valid = False
 
                         if is_valid and payment_ids:
-                            locked_payments = {
-                                p.pk: p
-                                for p in locked_order.payments.select_for_update(of=OF_SELF).filter(
-                                    pk__in=payment_ids
-                                )
-                            }
                             refund_sums = {
                                 item['payment']: item['s']
                                 for item in locked_order.refunds.filter(
@@ -1404,16 +1435,18 @@ class OrderRefundView(OrderView):
                                 if r.payment_id:
                                     lp = locked_payments.get(r.payment_id)
                                     available = payment_available.get(r.payment_id, Decimal('0.00'))
-                                    try:
-                                        full_refund_possible = (
-                                            lp.payment_provider.payment_refund_supported(lp) if lp else False
-                                        )
-                                        partial_refund_possible = (
-                                            lp.payment_provider.payment_partial_refund_supported(lp)
-                                            if lp
-                                            else False
-                                        )
-                                    except Exception:
+                                    if lp and lp.payment_provider:
+                                        try:
+                                            full_refund_possible = (
+                                                lp.payment_provider.payment_refund_supported(lp)
+                                            )
+                                            partial_refund_possible = (
+                                                lp.payment_provider.payment_partial_refund_supported(lp)
+                                            )
+                                        except (PaymentException, ValidationError):
+                                            full_refund_possible = False
+                                            partial_refund_possible = False
+                                    else:
                                         full_refund_possible = False
                                         partial_refund_possible = False
 
@@ -1563,7 +1596,7 @@ class OrderRefundView(OrderView):
                                 )
                             )
                 return redirect(self.get_order_url())
-            elif refund_selected != full_refund and is_valid:
+            elif refund_selected != full_refund:
                 messages.error(
                     self.request,
                     _('The refunds you selected do not match the selected total refund amount.'),
