@@ -2,7 +2,7 @@ import json
 import mimetypes
 import os
 from decimal import Decimal
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 from django.conf import settings
 from django.contrib import messages
@@ -467,6 +467,12 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
                 url += '{}cart_id={}'.format(separator, quote(cart_id, safe=''))
             return url
         elif isinstance(value, dict) and value.get('info'):
+            next_url = self.request.GET.get('next', '')
+            if not is_safe_url(next_url, allowed_hosts=None):
+                return self.get_next_url()
+            redeem_url = eventreverse(self.request.event, 'presale:event.redeem', kwargs=kwargs.copy())
+            if urlsplit(next_url).path != urlsplit(redeem_url).path:
+                return self.get_next_url()
             url = eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
             disclose_cart_id = (
                 'iframe' in self.request.GET or settings.SESSION_COOKIE_NAME not in self.request.COOKIES

@@ -2,7 +2,7 @@ import datetime
 import json
 from datetime import timedelta
 from decimal import Decimal
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
@@ -2736,6 +2736,28 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         assert 'Voucher applied to 3 tickets.' in doc.select_one('.alert-info').text
         assert 'currently locked since it is already contained in a cart' not in doc.get_text()
+
+    def test_voucher_partial_keeps_widget_checkout_url(self):
+        with scopes_disabled():
+            voucher = Voucher.objects.create(
+                event=self.event, product=self.ticket, price_mode='set', value=Decimal('10.00'), max_usages=3
+            )
+        widget_url = f'/{self.orga.slug}/{self.event.slug}/widget/testCart12345678'
+        checkout_url = f'{widget_url}/checkout/start'
+        response = self.client.post(
+            f'{widget_url}/cart/add?iframe=1&ajax=1&next={quote(checkout_url, safe="")}',
+            {'item_%d' % self.ticket.id: '5', '_voucher_code': voucher.code},
+        )
+        data = response.json()
+        assert data['success'], data['message']
+        location = urlsplit(data['redirect'])
+        assert location.path == checkout_url
+        params = parse_qs(location.query)
+        assert params['require_cookie'] == ['true']
+        with scopes_disabled():
+            positions = CartPosition.objects.filter(event=self.event, cart_id=params['cart_id'][0])
+            assert positions.filter(voucher=voucher, price=Decimal('10.00')).count() == 3
+            assert positions.filter(voucher__isnull=True, price=Decimal('23.00')).count() == 2
 
     def test_voucher_partial_remainder_ajax_notice(self):
         with scopes_disabled():

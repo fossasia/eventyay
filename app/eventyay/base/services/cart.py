@@ -227,6 +227,9 @@ class CartManager:
         """Get the last warning message from cart operations."""
         return self._last_warning
 
+    def get_voucher_split(self) -> tuple[int, int] | None:
+        return self._voucher_split
+
     @property
     def positions(self):
         return CartPosition.objects.filter(Q(cart_id=self.cart_id) & Q(event=self.event)).select_related(
@@ -849,6 +852,10 @@ class CartManager:
                     widget_data=self._widget_data,
                     sales_channel=self._sales_channel,
                 )
+                regular_manager._products_cache = self._products_cache
+                regular_manager._variations_cache = self._variations_cache
+                regular_manager._subevents_cache = self._subevents_cache
+                regular_manager._seated_cache = self._seated_cache
                 regular_input = dict(i)
                 regular_input.pop('voucher', None)
                 if op.fallback_if_exhausted:
@@ -1077,7 +1084,6 @@ class CartManager:
 
     def _get_voucher_availability(self):
         vouchers_ok = {}
-        self._voucher_depend_on_cart = set()
         for voucher, count in self._voucher_use_diff.items():
             # Use pessimistic locking to prevent race conditions
             # This ensures only one thread can check and modify voucher availability at a time
@@ -1101,8 +1107,6 @@ class CartManager:
                     raise CartError(error_messages['voucher_redeemed'])
                 v_avail = 0
 
-            if cart_count > 0:
-                self._voucher_depend_on_cart.add(voucher)
             vouchers_ok[voucher] = v_avail
 
         return vouchers_ok
@@ -1667,8 +1671,9 @@ def add_products_to_cart(
                 warning = cm.get_last_warning()
                 if warning:
                     return {'success': True, 'warning': str(warning)}
-                if cm._voucher_split:
-                    discounted, regular = cm._voucher_split
+                voucher_split = cm.get_voucher_split()
+                if voucher_split:
+                    discounted, regular = voucher_split
                     if not discounted:
                         return {'success': True, 'info': ngettext(
                             'The voucher has no uses left. One ticket was added at regular price.',
