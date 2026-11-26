@@ -262,6 +262,34 @@ header .header-row-right {
     color: #fff;
 }
 
+/* "Add or remove tickets", "Modify" and "Change details" on the coloured section headers of the checkout
+   review and order pages. As white buttons with dark text they can be read on any event colour and are
+   easy to tap. _event.scss has the same rules for pages that are styled without this file. */
+.panel-primary>.panel-heading .pull-right a {
+    display: inline-block;
+    margin: -4px 0;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #0d0f10;
+    font-size: 14px;
+    line-height: 22px;
+    text-decoration: none;
+    vertical-align: top;
+}
+
+.panel-primary>.panel-heading .pull-right a:hover,
+.panel-primary>.panel-heading .pull-right a:focus {
+    background-color: #e8e8e8;
+    color: #0d0f10;
+    text-decoration: underline;
+}
+
+.panel-primary>.panel-heading .pull-right a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
 .thank-you.thank-you-pending .fa {
     color: #ffb419;
 }

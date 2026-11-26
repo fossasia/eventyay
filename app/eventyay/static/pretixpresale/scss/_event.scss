@@ -147,6 +147,34 @@
     color: white;
 }
 
+// "Add or remove tickets", "Modify" and "Change details" on the section headers of the checkout review and
+// order pages. White on the event colour can be too faint, so they are white buttons with dark text.
+// custom.css has the same rules, so they also apply when this stylesheet is not loaded.
+.panel-primary > .panel-heading .pull-right a {
+    display: inline-block;
+    margin: -4px 0;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #0d0f10;
+    font-size: 14px;
+    line-height: 22px;
+    text-decoration: none;
+    vertical-align: top;
+
+    &:hover,
+    &:focus {
+        background-color: #e8e8e8;
+        color: #0d0f10;
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+    }
+}
+
 .checkout-action-row {
     padding-top: 15px;
 }
