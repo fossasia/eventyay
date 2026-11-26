@@ -3922,3 +3922,26 @@ class EventView(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['start'])]
+
+
+class EventAnonymizationRun(models.Model):
+    class Trigger(models.TextChoices):
+        MANUAL = 'manual', _('Manual')
+        AUTOMATIC = 'automatic', _('Automatic')
+
+    class Status(models.TextChoices):
+        RUNNING = 'running', _('Running')
+        FAILED = 'failed', _('Failed')
+        COMPLETED = 'completed', _('Completed')
+
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name='ticketing_anonymization_run')
+    trigger = models.CharField(max_length=12, choices=Trigger.choices)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.RUNNING)
+    counts = models.JSONField(default=dict)
+    last_order_id = models.PositiveBigIntegerField(default=0)
+    started = models.DateTimeField(auto_now_add=True)
+    finished = models.DateTimeField(null=True)
+    error = models.TextField(blank=True)
+
+    objects = ScopedManager(event='event')

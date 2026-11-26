@@ -6,6 +6,7 @@ registered with the Celery worker via autodiscover_tasks().
 """
 
 from eventyay.base.services import (  # noqa: F401
+    event_anonymization,
     auth,
     cancelevent,
     cart,
