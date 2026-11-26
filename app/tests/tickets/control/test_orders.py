@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import datetime
 import threading
 from datetime import timedelta
@@ -104,18 +105,22 @@ def env():
     return event, user, o, ticket
 
 
-original_execute_sql_flush = DatabaseOperations.execute_sql_flush
+@pytest.fixture
+def cascade_execute_sql_flush():
+    original_execute_sql_flush = DatabaseOperations.execute_sql_flush
 
+    def custom_execute_sql_flush(self, sql_list):
+        try:
+            cascade_sql = [
+                sql.replace(';', ' CASCADE;') if 'CASCADE' not in sql else sql
+                for sql in sql_list
+            ]
+            return original_execute_sql_flush(self, cascade_sql)
+        finally:
+            DatabaseOperations.execute_sql_flush = original_execute_sql_flush
 
-def cascade_execute_sql_flush(self, sql_list):
-    cascade_sql = [
-        sql.replace(';', ' CASCADE;') if 'CASCADE' not in sql else sql
-        for sql in sql_list
-    ]
-    return original_execute_sql_flush(self, cascade_sql)
-
-
-DatabaseOperations.execute_sql_flush = cascade_execute_sql_flush
+    DatabaseOperations.execute_sql_flush = custom_execute_sql_flush
+    yield
 
 
 @pytest.fixture(autouse=True)
@@ -3265,7 +3270,7 @@ def test_refund_paid_order_concurrent_recheck_rejects_over_refund(client, env, m
     transaction reduced available_amount below the requested amount, the over-refund
     is rejected and no additional refund is created.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3279,7 +3284,7 @@ def test_refund_paid_order_concurrent_recheck_rejects_over_refund(client, env, m
         """Intercept select_for_update on OrderPayment and simulate concurrent refund."""
         if self.model is OrderPayment:
             locked_models.append(self.model)
-            with scope(organizer=env[0].organizer):
+            with scope(event=env[0], organizer=env[0].organizer):
                 env[2].refunds.create(
                     order=env[2],
                     payment=p,
@@ -3309,7 +3314,7 @@ def test_refund_paid_order_concurrent_recheck_rejects_over_refund(client, env, m
         b'You can not refund more than the amount of a payment that is not yet refunded.'
         in resp.content
     )
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert list(env[2].refunds.values_list('amount', flat=True)) == [Decimal('10.00')]
 
 
@@ -3320,7 +3325,7 @@ def test_refund_paid_order_concurrent_payment_locking_success(client, env, monke
     Test that when a valid refund is performed under row locks, Order and OrderPayment
     are locked inside an atomic block and execute_refund runs outside the atomic block.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3380,7 +3385,7 @@ def test_refund_paid_order_concurrent_payment_locking_success(client, env, monke
     assert OrderPayment in locked_models
     assert executed_outside_atomic and all(executed_outside_atomic)
     assert resp.status_code == 200
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert env[2].refunds.filter(payment=p, amount=Decimal('14.00')).exists()
 
 
@@ -3393,7 +3398,7 @@ def test_refund_paid_order_concurrent_recheck_does_not_leave_giftcard_on_rejecti
     Test that when a combined refund (gift card + payment refund) is rejected due to
     concurrent payment balance reduction, no orphan gift card is created on the organizer.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3407,7 +3412,7 @@ def test_refund_paid_order_concurrent_recheck_does_not_leave_giftcard_on_rejecti
         """Intercept select_for_update on OrderPayment and simulate concurrent refund."""
         if self.model is OrderPayment:
             locked_models.append(self.model)
-            with scope(organizer=env[0].organizer):
+            with scope(event=env[0], organizer=env[0].organizer):
                 env[2].refunds.create(
                     order=env[2],
                     payment=p,
@@ -3420,7 +3425,7 @@ def test_refund_paid_order_concurrent_recheck_does_not_leave_giftcard_on_rejecti
 
     monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
 
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert env[0].organizer.issued_gift_cards.count() == 0
 
     resp = client.post(
@@ -3441,7 +3446,7 @@ def test_refund_paid_order_concurrent_recheck_does_not_leave_giftcard_on_rejecti
         b'You can not refund more than the amount of a payment that is not yet refunded.'
         in resp.content
     )
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert env[0].organizer.issued_gift_cards.count() == 0
         assert list(env[2].refunds.values_list('amount', flat=True)) == [Decimal('10.00')]
 
@@ -3453,7 +3458,7 @@ def test_refund_paid_order_concurrent_recheck_giftcard_created_on_success(client
     Test that when a combined refund request (gift card and payment refund) passes locked
     validation, the gift card is created within the transaction and saved with the refund.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3498,7 +3503,7 @@ def test_refund_paid_order_concurrent_recheck_giftcard_created_on_success(client
 
     monkeypatch.setattr(QuerySet, 'select_for_update', mock_select_for_update)
 
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert env[0].organizer.issued_gift_cards.count() == 0
 
     resp = client.post(
@@ -3517,7 +3522,7 @@ def test_refund_paid_order_concurrent_recheck_giftcard_created_on_success(client
     assert OrderPayment in locked_models
     assert executed_outside_atomic and all(executed_outside_atomic)
     assert resp.status_code == 200
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert env[0].organizer.issued_gift_cards.count() == 1
         refund_amounts = sorted(env[2].refunds.values_list('amount', flat=True))
         assert refund_amounts == [Decimal('4.00'), Decimal('10.00')]
@@ -3530,7 +3535,7 @@ def test_refund_paid_order_external_refund_deducted_from_order_wide_balance(clie
     Test that existing refunds in REFUND_STATE_EXTERNAL are deducted from order-wide available
     funds during choose_form validation, preventing paymentless refunds from over-refunding.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3584,7 +3589,7 @@ def test_refund_paid_order_full_mode_with_external_refund_succeeds(client, env):
     available balance (payment amount minus external refund) and allows a full refund
     of the remaining balance.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3611,7 +3616,7 @@ def test_refund_paid_order_full_mode_with_external_refund_succeeds(client, env):
         follow=True,
     )
     assert resp.status_code == 200
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         refund_amounts = sorted(env[2].refunds.values_list('amount', flat=True))
         assert refund_amounts == [Decimal('4.00'), Decimal('10.00')]
 
@@ -3626,7 +3631,7 @@ def test_refund_paid_order_concurrent_paymentless_refund_rejects_over_refund(
     refundable balance. If another transaction reduced order balance below requested
     amount, the excess paymentless refund is rejected.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3640,7 +3645,7 @@ def test_refund_paid_order_concurrent_paymentless_refund_rejects_over_refund(
         """Intercept select_for_update on Order and simulate concurrent paymentless refund."""
         if self.model is Order:
             locked_models.append(self.model)
-            with scope(organizer=env[0].organizer):
+            with scope(event=env[0], organizer=env[0].organizer):
                 env[2].refunds.create(
                     order=env[2],
                     payment=None,
@@ -3671,7 +3676,7 @@ def test_refund_paid_order_concurrent_paymentless_refund_rejects_over_refund(
         b'You can not refund more than the amount of a payment that is not yet refunded.'
         in resp.content
     )
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert list(env[2].refunds.values_list('amount', flat=True)) == [Decimal('10.00')]
 
 
@@ -3682,7 +3687,7 @@ def test_refund_paid_order_concurrent_unconfirmed_payment_rejects_refund(client,
     Test that if a payment transitions to a non-confirmed state (e.g. CANCELED) before
     lock acquisition, the view rejects the refund under lock and displays the standard error.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3696,7 +3701,7 @@ def test_refund_paid_order_concurrent_unconfirmed_payment_rejects_refund(client,
         """Intercept select_for_update on OrderPayment and change state to CANCELED."""
         if self.model is OrderPayment:
             locked_models.append(self.model)
-            with scope(organizer=env[0].organizer):
+            with scope(event=env[0], organizer=env[0].organizer):
                 p.state = OrderPayment.PAYMENT_STATE_CANCELED
                 p.save(update_fields=['state'])
         return original_select_for_update(self, *args, **kwargs)
@@ -3720,14 +3725,14 @@ def test_refund_paid_order_concurrent_unconfirmed_payment_rejects_refund(client,
         b'You can not refund more than the amount of a payment that is not yet refunded.'
         in resp.content
     )
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         assert env[2].refunds.count() == 0
 
 
 @pytest.mark.django_db(transaction=True)
 @override_settings(SITE_URL='https://testserver')
 def test_refund_paid_order_concurrent_threads_serialize_and_prevent_over_refund(
-    env, monkeypatch
+    env, monkeypatch, cascade_execute_sql_flush
 ):
     """
     Test that when two competing control-panel refund requests run concurrently on two
@@ -3735,7 +3740,7 @@ def test_refund_paid_order_concurrent_threads_serialize_and_prevent_over_refund(
     them. One request succeeds and the competing request is rejected under lock,
     guaranteeing that persisted refunds do not exceed the payment amount.
     """
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         p = env[2].payments.last()
         p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
         p.save()
@@ -3765,14 +3770,11 @@ def test_refund_paid_order_concurrent_threads_serialize_and_prevent_over_refund(
 
     monkeypatch.setattr(QuerySet, 'select_for_update', sync_select_for_update)
 
-    results = []
-    errors = []
-
     def submit_refund():
         try:
             c = Client()
             c.force_login(env[1])
-            resp = c.post(
+            return c.post(
                 '/control/event/dummy/dummy/orders/FOO/refund',
                 {
                     'start-partial_amount': '14.00',
@@ -3783,27 +3785,21 @@ def test_refund_paid_order_concurrent_threads_serialize_and_prevent_over_refund(
                 },
                 follow=True,
             )
-            results.append(resp)
-        except Exception as exc:
-            errors.append(exc)
         finally:
             connections.close_all()
 
-    t1 = threading.Thread(target=submit_refund, name='Refund-Thread-1')
-    t2 = threading.Thread(
-        target=lambda: (first_lock_acquired.wait(timeout=5), submit_refund()),
-        name='Refund-Thread-2',
-    )
+    def submit_refund_delayed():
+        first_lock_acquired.wait(timeout=5)
+        return submit_refund()
 
-    t1.start()
-    t2.start()
-    t1.join(timeout=15)
-    t2.join(timeout=15)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        f1 = executor.submit(submit_refund)
+        f2 = executor.submit(submit_refund_delayed)
+        results = [f1.result(timeout=15), f2.result(timeout=15)]
 
-    assert not errors, f'Thread encountered an error: {errors}'
     assert len(results) == 2
 
-    with scope(organizer=env[0].organizer):
+    with scope(event=env[0], organizer=env[0].organizer):
         refunds = list(env[2].refunds.values_list('amount', flat=True))
 
     assert sum(refunds) <= Decimal('14.00'), f'Over-refund occurred: {sum(refunds)}'
