@@ -72,17 +72,18 @@ def test_header_actions_have_a_focus_ring_for_light_and_dark_headers(css):
 
 
 @pytest.mark.parametrize(
-    'template_name,labels',
+    'template_name,label',
     [
-        ('pretixpresale/event/checkout_confirm.html', ['Add or remove tickets', 'Modify']),
-        ('pretixpresale/event/order.html', ['Change details']),
+        ('pretixpresale/event/checkout_confirm.html', 'Add or remove tickets'),
+        ('pretixpresale/event/checkout_confirm.html', 'Modify'),
+        ('pretixpresale/event/order.html', 'Change details'),
     ],
 )
-def test_header_actions_match_the_stylesheet_selector(template_name, labels):
+def test_header_actions_match_the_stylesheet_selector(template_name, label):
     source = Path(get_template(template_name).origin.name).read_text(encoding='utf-8')
     soup = BeautifulSoup(source, 'html.parser')
-    links = [a for a in soup.find_all('a') if any(f'"{label}"' in a.get_text() for label in labels)]
-    assert links
+    links = [a for a in soup.find_all('a') if f'"{label}"' in a.get_text()]
+    assert links, f'No "{label}" link in {template_name}'
     for link in links:
         heading = link.find_parent(class_='panel-heading')
         assert link.find_parent(class_='pull-right') in heading.find_all(class_='pull-right')
