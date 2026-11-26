@@ -11,7 +11,7 @@ from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
 from django.dispatch import receiver
 from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
-from django.utils.translation import pgettext_lazy
+from django.utils.translation import ngettext, pgettext_lazy
 from django_scopes import scopes_disabled
 
 from eventyay.base.channels import get_all_sales_channels
@@ -168,7 +168,11 @@ class CartManager:
             'bundled',
             'seat',
             'price_before_voucher',
+            'regular_operation',
+            'regular_error',
+            'fallback_if_exhausted',
         ),
+        defaults=(None, None, False),
     )
     RemoveOperation = namedtuple('RemoveOperation', ('position',))
     VoucherOperation = namedtuple('VoucherOperation', ('position', 'voucher', 'price'))
@@ -217,10 +221,14 @@ class CartManager:
         self._widget_data = widget_data or {}
         self._sales_channel = sales_channel
         self._last_warning = None
+        self._voucher_split = None
 
     def get_last_warning(self):
         """Get the last warning message from cart operations."""
         return self._last_warning
+
+    def get_voucher_split(self) -> tuple[int, int] | None:
+        return self._voucher_split
 
     @property
     def positions(self):
@@ -694,6 +702,7 @@ class CartManager:
         operations = []
 
         for i in products:
+            previous_quota_diff = quota_diff.copy()
             if self.event.has_subevents:
                 if not i.get('subevent') or int(i.get('subevent')) not in self._subevents_cache:
                     raise CartError(error_messages['subevent_required'])
@@ -832,8 +841,34 @@ class CartManager:
                 bundled=bundled,
                 seat=seat,
                 price_before_voucher=pbv,
+                fallback_if_exhausted=bool(i.get('fallback_if_exhausted')),
             )
             self._check_product_constraints(op, operations)
+            if voucher:
+                regular_manager = CartManager(
+                    event=self.event,
+                    cart_id=self.cart_id,
+                    invoice_address=self.invoice_address,
+                    widget_data=self._widget_data,
+                    sales_channel=self._sales_channel,
+                )
+                regular_manager._products_cache = self._products_cache
+                regular_manager._variations_cache = self._variations_cache
+                regular_manager._subevents_cache = self._subevents_cache
+                regular_manager._seated_cache = self._seated_cache
+                regular_input = dict(i)
+                regular_input.pop('voucher', None)
+                if op.fallback_if_exhausted:
+                    regular_input['price'] = ''
+                try:
+                    regular_manager.add_new_products([regular_input])
+                except CartError as exc:
+                    op = op._replace(regular_error=str(exc))
+                else:
+                    op = op._replace(regular_operation=regular_manager._operations[0])
+                    for quota, demand in regular_manager._quota_diff.items():
+                        existing = quota_diff[quota] - previous_quota_diff[quota]
+                        quota_diff[quota] += max(0, demand - existing)
             operations.append(op)
 
         self._quota_diff.update(quota_diff)
@@ -1049,7 +1084,6 @@ class CartManager:
 
     def _get_voucher_availability(self):
         vouchers_ok = {}
-        self._voucher_depend_on_cart = set()
         for voucher, count in self._voucher_use_diff.items():
             # Use pessimistic locking to prevent race conditions
             # This ensures only one thread can check and modify voucher availability at a time
@@ -1065,11 +1099,14 @@ class CartManager:
             v_avail = voucher.max_usages - voucher.redeemed - cart_count
             
             # Validate availability after acquiring lock to prevent over-redemption
-            if v_avail < count:
-                raise CartError(error_messages['voucher_redeemed'])
-            
-            if cart_count > 0:
-                self._voucher_depend_on_cart.add(voucher)
+            if v_avail < 1:
+                voucher_ops = [op for op in self._operations if getattr(op, 'voucher', None) == voucher]
+                if not voucher_ops or not all(
+                    isinstance(op, self.AddOperation) and op.fallback_if_exhausted for op in voucher_ops
+                ):
+                    raise CartError(error_messages['voucher_redeemed'])
+                v_avail = 0
+
             vouchers_ok[voucher] = v_avail
 
         return vouchers_ok
@@ -1213,6 +1250,7 @@ class CartManager:
 
     def _perform_operations(self):
         vouchers_ok = self._get_voucher_availability()
+        vouchers_used = Counter()
         quotas_ok = self._get_quota_availability()
         err = None
         warning = None
@@ -1227,8 +1265,25 @@ class CartManager:
 
         self._operations.sort(key=lambda a: self.order[type(a)])
         seats_seen = set()
+        regular_operations = {}
+        regular_used = Counter()
 
         for iop, op in enumerate(self._operations):
+            if isinstance(op, self.AddOperation) and op.voucher and op.count > vouchers_ok[op.voucher]:
+                voucher_count = max(0, vouchers_ok[op.voucher])
+                if op.regular_operation and (
+                    op.fallback_if_exhausted or voucher_count or vouchers_used[self.AddOperation, op.voucher]
+                ):
+                    regular = op.regular_operation._replace(count=op.count - voucher_count)
+                    regular_operations[id(regular)] = op.voucher
+                    self._operations.insert(iop + 1, regular)
+                    if not voucher_count:
+                        continue
+                    op = op._replace(count=voucher_count)
+                elif op.regular_error and (
+                    op.fallback_if_exhausted or voucher_count or vouchers_used[self.AddOperation, op.voucher]
+                ):
+                    err = err or op.regular_error
             if isinstance(op, self.RemoveOperation):
                 if op.position.expires > self.now_dt:
                     for q in op.position.quotas:
@@ -1256,13 +1311,12 @@ class CartManager:
                 elif quota_available_count < requested_count:
                     err = err or error_messages['in_part']
 
-                if voucher_available_count < 1:
-                    if op.voucher in self._voucher_depend_on_cart:
-                        err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get('reservation_time', default='30')
-                    else:
+                if voucher_available_count < requested_count:
+                    voucher_left = vouchers_ok[op.voucher] or vouchers_used[type(op), op.voucher]
+                    if voucher_left < 1:
                         err = err or error_messages['voucher_redeemed']
-                elif voucher_available_count < requested_count:
-                    err = err or error_messages['voucher_redeemed_partial'] % voucher_available_count
+                    else:
+                        err = err or error_messages['voucher_redeemed_partial'] % voucher_left
 
                 available_count = min(quota_available_count, voucher_available_count)
 
@@ -1381,6 +1435,10 @@ class CartManager:
                                     )
 
                         new_cart_positions.append(cp)
+                    if op.voucher:
+                        vouchers_used[type(op), op.voucher] += available_count
+                    elif id(op) in regular_operations:
+                        regular_used[regular_operations[id(op)]] += available_count
                 elif isinstance(op, self.ExtendOperation):
                     if op.seat and not op.seat.is_available(
                         ignore_cart=op.position,
@@ -1400,6 +1458,9 @@ class CartManager:
                         except DatabaseError:
                             # Best effort... The position might have been deleted in the meantime!
                             pass
+                        else:
+                            if op.voucher:
+                                vouchers_used[type(op), op.voucher] += 1
                     elif available_count == 0:
                         op.position.addons.all().delete()
                         op.position.delete()
@@ -1429,6 +1490,11 @@ class CartManager:
         CartPosition.objects.bulk_create(
             [p for p in new_cart_positions if not getattr(p, '_answers', None) and not p.pk]
         )
+        if not err and not warning and regular_used:
+            self._voucher_split = (
+                sum(vouchers_used[self.AddOperation, voucher] for voucher in regular_used),
+                sum(regular_used.values()),
+            )
         return err, warning
 
     def _require_locking(self):
@@ -1602,12 +1668,30 @@ def add_products_to_cart(
                 cm.add_new_products(products)
                 cm.commit()
                 
-                # Check if there was a warning about quantity adjustment
                 warning = cm.get_last_warning()
                 if warning:
                     return {'success': True, 'warning': str(warning)}
-                else:
-                    return {'success': True}
+                voucher_split = cm.get_voucher_split()
+                if voucher_split:
+                    discounted, regular = voucher_split
+                    if not discounted:
+                        return {'success': True, 'info': ngettext(
+                            'The voucher has no uses left. One ticket was added at regular price.',
+                            'The voucher has no uses left. %(count)d tickets were added at regular price.',
+                            regular,
+                        ) % {'count': regular}}
+                    first = ngettext(
+                        'Voucher applied to %(count)d ticket.',
+                        'Voucher applied to %(count)d tickets.',
+                        discounted,
+                    ) % {'count': discounted}
+                    second = ngettext(
+                        'The other %(count)d ticket was added at regular price.',
+                        'The other %(count)d tickets were added at regular price.',
+                        regular,
+                    ) % {'count': regular}
+                    return {'success': True, 'info': f'{first} {second}'}
+                return {'success': True}
                     
             except LockTimeoutException:
                 self.retry()
