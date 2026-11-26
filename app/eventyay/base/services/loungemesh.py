@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import jwt
 import requests
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from requests.adapters import HTTPAdapter
 
@@ -313,6 +314,116 @@ def loungemesh_is_available(event=None) -> bool:
     return LoungeMeshServer.objects.filter(active=True).exists()
 
 
+def _resolve_platform_principal(user, platform_user=None):
+    """
+    Resolve the verified platform User account for team permission evaluation.
+
+    Only accepts an explicitly authenticated platform account (e.g. from the live
+    WebSocket session), a verified platform_user reference attached to ``user``,
+    or a platform User instance itself (``event_id is None``). Never resolves
+    accounts via email matching, profile contact_email, or short token hashes.
+    """
+    if platform_user is not None:
+        if not getattr(platform_user, "is_authenticated", True):
+            return None
+        if getattr(platform_user, "event_id", None) is None and hasattr(platform_user, "has_event_permission"):
+            return platform_user
+        return None
+
+    if not user:
+        return None
+
+    bound_platform_user = getattr(user, "platform_user", None)
+    if (
+        bound_platform_user is not None
+        and getattr(bound_platform_user, "is_authenticated", True)
+        and getattr(bound_platform_user, "event_id", None) is None
+        and hasattr(bound_platform_user, "has_event_permission")
+    ):
+        return bound_platform_user
+
+    if getattr(user, "event_id", None) is None and hasattr(user, "has_event_permission"):
+        return user
+
+    return None
+
+
+def resolve_loungemesh_role(
+    event,
+    user,
+    is_organizer_area: bool = False,
+    *,
+    platform_user=None,
+    session_key: str | None = None,
+) -> str:
+    """
+    Resolve LoungeMesh permission level:
+    - Host: In organizer area with active session-bound platform staff session
+      (admin mode), superuser status (without moderator-only restriction), or
+      'can_video_manage_content' permission.
+    - Moderator: In organizer area with 'can_video_moderate' permission.
+    - Attendee: Public view, missing verified platform account binding, or
+      if neither host nor moderator permissions are present.
+    """
+    if not user or not getattr(user, "is_authenticated", False):
+        return "attendee"
+
+    # Public video view must always join LoungeMesh as attendee
+    if not is_organizer_area:
+        return "attendee"
+
+    token_id = getattr(user, "token_id", None)
+    if token_id and not str(token_id).lower().endswith(":orga"):
+        return "attendee"
+
+    principal = _resolve_platform_principal(user, platform_user=platform_user)
+    if not principal or not getattr(principal, "is_authenticated", True):
+        return "attendee"
+
+    if hasattr(principal, "has_event_permission") and event and getattr(event, "organizer", None):
+        has_manage_content = principal.has_event_permission(event.organizer, event, "can_video_manage_content")
+        has_moderate = principal.has_event_permission(event.organizer, event, "can_video_moderate")
+
+        if has_manage_content:
+            return "host"
+
+        if has_moderate:
+            from eventyay.eventyay_common.video.traits_sync import check_has_active_staff_session
+
+            if check_has_active_staff_session(principal, session_key=session_key, require_session_key=True):
+                return "host"
+            return "moderator"
+
+    from eventyay.eventyay_common.video.traits_sync import is_platform_event_admin
+
+    if is_platform_event_admin(principal, session_key=session_key, require_session_key=True):
+        return "host"
+
+    return "attendee"
+
+
+def is_event_accessible_for_role(event, role: str, now=None) -> tuple[bool, str | None]:
+    """
+    Check whether the event is accessible for the specified role at the given time.
+    Only the host can access outside scheduled event duration (before start or after end).
+    Attendees and moderators can only access during the scheduled event window.
+    Returns (True, None) if access is permitted.
+    Returns (False, 'not_started') if current time is before event.date_from.
+    Returns (False, 'ended') if current time is after event.date_to.
+    """
+    if role == "host":
+        return True, None
+    if not event:
+        return True, None
+
+    current_time = now or timezone.now()
+    if getattr(event, "date_from", None) and current_time < event.date_from:
+        return False, "not_started"
+    if getattr(event, "date_to", None) and current_time > event.date_to:
+        return False, "ended"
+    return True, None
+
+
 def issue_signed_grant(
     event,
     room,
@@ -386,6 +497,12 @@ def issue_signed_grant(
 
     exp_ts = now_ts + expires_in_seconds
     nbf_ts = now_ts - 10
+    if role != "host" and event:
+        if getattr(event, "date_to", None):
+            event_end_ts = int(event.date_to.timestamp())
+            exp_ts = min(exp_ts, max(now_ts + 60, event_end_ts))
+        if getattr(event, "date_from", None) and now_ts < int(event.date_from.timestamp()):
+            nbf_ts = int(event.date_from.timestamp())
 
     is_privileged = role in ("host", "moderator")
     single_user = not is_privileged
@@ -416,10 +533,13 @@ def issue_join_url(
     event,
     room,
     user,
-    moderator: bool = False,
-    server: LoungeMeshServer | None = None,
     role: str | None = None,
+    server: LoungeMeshServer | None = None,
     features: dict | None = None,
+    is_organizer_area: bool = False,
+    *,
+    platform_user=None,
+    session_key: str | None = None,
 ) -> str | None:
     """Generate LoungeMesh join URL carrying a signed grant."""
     server_obj = server or get_loungemesh_server(event)
@@ -434,7 +554,27 @@ def issue_join_url(
     if not has_loungemesh:
         return None
 
-    assigned_role = role or ("moderator" if moderator else "attendee")
+    assigned_role = role or resolve_loungemesh_role(
+        event,
+        user,
+        is_organizer_area=is_organizer_area,
+        platform_user=platform_user,
+        session_key=session_key,
+    )
+    is_host_user = (
+        resolve_loungemesh_role(
+            event,
+            user,
+            is_organizer_area=True,
+            platform_user=platform_user,
+            session_key=session_key,
+        )
+        == "host"
+    )
+    check_role = "host" if is_host_user else assigned_role
+    accessible, _ = is_event_accessible_for_role(event, check_role)
+    if not accessible:
+        return None
 
     grant = issue_signed_grant(
         event,

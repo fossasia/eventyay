@@ -4,15 +4,17 @@ from channels.db import database_sync_to_async
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import DatabaseError
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 
-from eventyay.base.models import LoungeMeshServer
+from eventyay.base.models import LoungeMeshServer, User
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.services.loungemesh import (
     get_available_loungemesh_servers,
     get_loungemesh_server,
+    is_event_accessible_for_role,
     issue_join_url,
     normalize_server_url,
+    resolve_loungemesh_role,
     serialize_loungemesh_server,
     test_loungemesh_server_connection,
 )
@@ -32,7 +34,79 @@ class LoungeMeshModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _get_join_url_sync(self, is_moderator):
+    def _resolve_platform_user_and_session_sync(self):
+        platform_user = None
+        platform_user_id = getattr(self.consumer, "platform_user_id", None)
+        if platform_user_id:
+            with scopes_disabled():
+                platform_user = (
+                    User.objects.filter(
+                        pk=platform_user_id,
+                        event__isnull=True,
+                        is_active=True,
+                        is_spam=False,
+                    )
+                    .first()
+                )
+        else:
+            explicit_platform_user = getattr(self.consumer, "platform_user", None)
+            if explicit_platform_user is not None:
+                platform_user = explicit_platform_user
+            elif not getattr(self.consumer, "platform_auth_checked", False):
+                scope_data = getattr(self.consumer, "scope", None)
+                if isinstance(scope_data, dict):
+                    scope_user = scope_data.get("user")
+                    if scope_user is not None and getattr(scope_user, "is_authenticated", False):
+                        pk = getattr(scope_user, "pk", None)
+                        if pk and getattr(scope_user, "event_id", None) is None:
+                            with scopes_disabled():
+                                platform_user = (
+                                    User.objects.filter(
+                                        pk=pk,
+                                        event__isnull=True,
+                                        is_active=True,
+                                        is_spam=False,
+                                    )
+                                    .first()
+                                )
+                        else:
+                            platform_user = scope_user
+
+        session_key = getattr(self.consumer, "session_key", None)
+        if not session_key and not getattr(self.consumer, "platform_auth_checked", False):
+            scope_data = getattr(self.consumer, "scope", None)
+            if isinstance(scope_data, dict):
+                session = scope_data.get("session")
+                session_key = getattr(session, "session_key", None)
+
+        return platform_user, session_key
+
+    def _resolve_role_and_access_sync(self, is_organizer_area: bool):
+        platform_user, session_key = self._resolve_platform_user_and_session_sync()
+        role = resolve_loungemesh_role(
+            self.consumer.event,
+            self.consumer.user,
+            is_organizer_area=is_organizer_area,
+            platform_user=platform_user,
+            session_key=session_key,
+        )
+        is_host_user = (
+            resolve_loungemesh_role(
+                self.consumer.event,
+                self.consumer.user,
+                is_organizer_area=True,
+                platform_user=platform_user,
+                session_key=session_key,
+            )
+            == "host"
+        )
+        accessible, reason = is_event_accessible_for_role(
+            self.consumer.event,
+            "host" if is_host_user else role,
+        )
+        return role, accessible, reason
+
+    def _get_join_url_sync(self, role):
         with scope(event=self.consumer.event):
             room = getattr(self, "room", None)
             if not room:
@@ -52,29 +126,19 @@ class LoungeMeshModule(BaseModule):
             server = get_loungemesh_server(self.consumer.event, prefer_server=prefer_server)
             if not server:
                 return None
+            platform_user, session_key = self._resolve_platform_user_and_session_sync()
             return issue_join_url(
                 self.consumer.event,
                 room,
                 self.consumer.user,
-                moderator=is_moderator,
+                role=role,
                 server=server,
+                platform_user=platform_user,
+                session_key=session_key,
             )
 
-    async def _get_join_url(self, is_moderator):
-        return await database_sync_to_async(self._get_join_url_sync)(is_moderator)
-
-    async def can_moderate_room(self) -> bool:
-        return bool(
-            await self.consumer.event.has_permission_async(
-                user=self.consumer.user,
-                permission=[
-                    Permission.ROOM_LOUNGEMESH_MODERATE,
-                    Permission.ROOM_UPDATE,
-                    Permission.EVENT_UPDATE,
-                ],
-                room=self.room,
-            )
-        )
+    async def _get_join_url(self, role):
+        return await database_sync_to_async(self._get_join_url_sync)(role)
 
     @command("room_url")
     @room_action(
@@ -86,8 +150,31 @@ class LoungeMeshModule(BaseModule):
         module_required=("call.loungemesh", "channel.loungemesh"),
     )
     async def room_url(self, body):
-        is_moderator = await self.can_moderate_room()
-        url = await self._get_join_url(is_moderator)
+        is_organizer_area = bool(getattr(self.consumer, "is_organizer", False))
+        role, accessible, reason = await database_sync_to_async(self._resolve_role_and_access_sync)(
+            is_organizer_area
+        )
+        if not accessible:
+            log_event(
+                'video',
+                'connection.room_url',
+                OUTCOME_FAILURE,
+                error_code=f'event_{reason}',
+                event_id=getattr(self.consumer.event, 'pk', None),
+                backend='loungemesh',
+            )
+            if reason == "not_started":
+                raise ConsumerException(
+                    "loungemesh.event_not_started",
+                    "This event has not started yet. Attendees may only join during scheduled event hours.",
+                )
+            else:
+                raise ConsumerException(
+                    "loungemesh.event_ended",
+                    "This event has ended.",
+                )
+
+        url = await self._get_join_url(role)
         if not url:
             log_event(
                 'video',
@@ -105,7 +192,12 @@ class LoungeMeshModule(BaseModule):
             event_id=getattr(self.consumer.event, 'pk', None),
             backend='loungemesh',
         )
-        await self.consumer.send_success({"url": url, "moderator": is_moderator})
+        is_moderator = role in ("host", "moderator")
+        await self.consumer.send_success({
+            "url": url,
+            "role": role,
+            "moderator": is_moderator,
+        })
 
     @command("servers")
     async def servers(self, body):

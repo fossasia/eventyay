@@ -16,11 +16,13 @@ from eventyay.base.services.loungemesh import (
     apply_loungemesh_embed_headers,
     get_available_loungemesh_servers,
     get_loungemesh_server,
+    is_event_accessible_for_role,
     issue_join_url,
     issue_signed_grant,
     loungemesh_embed_origins,
     loungemesh_is_available,
     loungemesh_permissions_policy,
+    resolve_loungemesh_role,
     serialize_loungemesh_server,
     validate_loungemesh_server_url,
 )
@@ -281,6 +283,155 @@ def test_get_available_and_serialize_servers(test_setup):
 
 
 @pytest.mark.django_db
+def test_resolve_loungemesh_role(test_setup):
+    event = test_setup["event"]
+    user = test_setup["user"]
+
+    # Unprivileged user -> attendee
+    assert resolve_loungemesh_role(event, user) == "attendee"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+
+    # Stored traits without verified permissions/session must NOT elevate to host or moderator
+    user.traits = ["admin"]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+    user.traits = []
+
+    # Attendee tokens (not ending in :orga) must always resolve to attendee
+    user.token_id = "B4CE158"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+    user.token_id = None
+
+    # can_video_manage_content in organizer area -> host, public view -> attendee
+    def host_content_check(org, ev, perm):
+        return perm == "can_video_manage_content"
+
+    with patch.object(user, "has_event_permission", side_effect=host_content_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "host"
+
+    # can_change_config -> attendee (config is for themes/defaults, not host)
+    def host_config_check(org, ev, perm):
+        return perm == "can_change_config"
+
+    with patch.object(user, "has_event_permission", side_effect=host_config_check):
+        assert resolve_loungemesh_role(event, user) == "attendee"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+
+    # can_video_moderate in organizer area -> moderator, public view -> attendee
+    def mod_check(org, ev, perm):
+        return perm == "can_video_moderate"
+
+    with patch.object(user, "has_event_permission", side_effect=mod_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
+
+    # Stored video traits without platform permission must NOT elevate role
+    content_trait = f"eventyay-video-event-{event.slug}-video-content-manager"
+    user.traits = [content_trait]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+    user.traits = []
+
+    config_trait = f"eventyay-video-event-{event.slug}-video-config-manager"
+    user.traits = [config_trait]
+    assert resolve_loungemesh_role(event, user) == "attendee"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+    user.traits = []
+
+    moderator_trait = f"eventyay-video-event-{event.slug}-video-moderator"
+    user.traits = [moderator_trait]
+    assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+    assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+    user.traits = []
+
+    # Non-video permissions (including can_change_event_settings) -> attendee
+    def other_check(org, ev, perm):
+        return perm in ("can_change_items", "can_change_submissions", "can_change_event_settings")
+
+    with patch.object(user, "has_event_permission", side_effect=other_check):
+        assert resolve_loungemesh_role(event, user) == "attendee"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "attendee"
+
+    # User with only moderator permission must resolve to moderator, even if stale content trait is present
+    user.traits = [content_trait]
+    with patch.object(user, "has_event_permission", side_effect=mod_check):
+        assert resolve_loungemesh_role(event, user, is_organizer_area=False) == "attendee"
+        assert resolve_loungemesh_role(event, user, is_organizer_area=True) == "moderator"
+    user.traits = []
+
+    # Staff user without active admin mode and with moderator permissions syncs without 'admin' trait
+    from eventyay.base.services.user import create_user, encode_email
+    from eventyay.eventyay_common.video.traits_sync import sync_video_traits_for_platform_users
+    staff_user = test_setup["admin_user"]
+    staff_user.is_staff = True
+    staff_token = f"{encode_email(staff_user.email).upper()}:ORGA"
+    with scope(event=event):
+        vuser = create_user(
+            event_id=event.id,
+            token_id=staff_token,
+            traits=["admin", f"eventyay-video-event-{event.slug}-organizer"],
+            profile={"contact_email": staff_user.email},
+        )
+    with patch.object(staff_user, "has_active_staff_session", return_value=False), \
+         patch.object(staff_user, "get_event_permission_set", return_value={"can_video_moderate"}):
+        sync_video_traits_for_platform_users(event.organizer, [staff_user], force_reload=False)
+        vuser.refresh_from_db()
+        assert "admin" not in vuser.traits
+        assert f"eventyay-video-event-{event.slug}-video-moderator" in vuser.traits
+
+    # Without verified platform_user binding, event-scoped vuser resolves to attendee even with organizer token/email
+    assert resolve_loungemesh_role(event, vuser, is_organizer_area=True) == "attendee"
+    with patch.object(staff_user, "has_event_permission", side_effect=mod_check):
+        assert resolve_loungemesh_role(event, vuser, is_organizer_area=True, platform_user=staff_user) == "moderator"
+
+    # Superuser with team moderator permission resolves to moderator unless current session has active StaffSession
+    superuser = User.objects.create(
+        email="supermod@example.com",
+        is_staff=True,
+        is_superuser=True,
+    )
+    super_token = f"{encode_email(superuser.email).upper()}:ORGA"
+    with scope(event=event):
+        super_vuser = create_user(
+            event_id=event.id,
+            token_id=super_token,
+            traits=["attendee", f"eventyay-video-event-{event.slug}-organizer"],
+            profile={"contact_email": superuser.email},
+        )
+    with patch.object(User, "has_active_staff_session", return_value=False), \
+         patch.object(User, "has_event_permission", side_effect=lambda org, ev, perm: perm == "can_video_moderate"):
+        assert resolve_loungemesh_role(event, superuser, is_organizer_area=True, session_key="sess-1") == "moderator"
+        assert (
+            resolve_loungemesh_role(
+                event, super_vuser, is_organizer_area=True, platform_user=superuser, session_key="sess-1"
+            )
+            == "moderator"
+        )
+
+    # Even if has_active_staff_session is True, missing session_key must NOT elevate to host
+    with patch.object(User, "has_active_staff_session", return_value=True), \
+         patch.object(User, "has_event_permission", side_effect=lambda org, ev, perm: perm == "can_video_moderate"):
+        assert resolve_loungemesh_role(event, superuser, is_organizer_area=True) == "moderator"
+        assert resolve_loungemesh_role(event, superuser, is_organizer_area=True, session_key="sess-1") == "host"
+        assert (
+            resolve_loungemesh_role(
+                event, super_vuser, is_organizer_area=True, platform_user=superuser, session_key="sess-1"
+            )
+            == "host"
+        )
+
+    # Superuser without team permissions still resolves to host via is_platform_event_admin
+    with patch.object(User, "has_active_staff_session", return_value=False), \
+         patch.object(User, "has_event_permission", return_value=False):
+        assert resolve_loungemesh_role(event, superuser, is_organizer_area=True) == "host"
+        assert (
+            resolve_loungemesh_role(event, super_vuser, is_organizer_area=True, platform_user=superuser) == "host"
+        )
+
+
+@pytest.mark.django_db
 def test_issue_signed_grant_and_join_url(test_setup):
     server = test_setup["server"]
     event = test_setup["event"]
@@ -421,26 +572,38 @@ def test_loungemesh_websocket_module(test_setup, monkeypatch):
             assert len(servers_res["servers"]) >= 1
             assert servers_res["servers"][0]["url"] == server.url
 
-            # 2. room_url command (attendee vs moderator)
-            async def attendee_has_perm(*, user, permission, room=None):
-                perms = permission if isinstance(permission, (list, set, tuple)) else [permission]
-                return Permission.ROOM_LOUNGEMESH_JOIN in perms
-
-            consumer.event.has_permission_async = attendee_has_perm
+            # 2. room_url command (public view: always attendee)
             await module.room_url({"room": str(room.id)})
 
             res = consumer.sent_data
             assert res is not None
             assert "url" in res
             assert "grant=" in res["url"]
+            # Unprivileged user -> attendee
+            assert res["role"] == "attendee"
             assert res["moderator"] is False
 
-            consumer.event.has_permission_async = AsyncMock(return_value=True)
+            # With active StaffSession on current session key in public view, attendee role is still enforced
+            from eventyay.base.models.auth import StaffSession
+
+            admin_user = test_setup["admin_user"]
+            consumer.platform_user = admin_user
+            consumer.session_key = "ws-module-session"
+            StaffSession.objects.create(user=admin_user, session_key="ws-module-session")
             await module.room_url({"room": str(room.id)})
-            mod_res = consumer.sent_data
-            assert mod_res is not None
-            assert "grant=" in mod_res["url"]
-            assert mod_res["moderator"] is True
+            assert consumer.sent_data["role"] == "attendee"
+            assert consumer.sent_data["moderator"] is False
+
+            # In organizer area with matching session-bound StaffSession, host role is resolved
+            consumer.is_organizer = True
+            await module.room_url({"room": str(room.id)})
+            assert consumer.sent_data["role"] == "host"
+            assert consumer.sent_data["moderator"] is True
+
+            # Reset back to public view for remaining tests
+            consumer.is_organizer = False
+            consumer.platform_user = None
+            consumer.session_key = None
 
             # 3. test_server command
             class MockSuccessResponse:
@@ -497,7 +660,7 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
 
     import jwt
 
-    from eventyay.base.services.loungemesh import issue_signed_grant
+    from eventyay.base.services.loungemesh import _resolve_platform_principal, issue_signed_grant
 
     event = test_setup["event"]
     server = test_setup["server"]
@@ -511,7 +674,22 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
     assert "features" in claims
     assert claims["features"] == features_dict
 
-    # 2. Destination binding in LoungeMeshServerTestView
+    # 2. _resolve_platform_principal requires verified platform binding (never email fallback)
+    class MockEventUser:
+        event_id = event.pk
+        email = user.email
+        profile = {"contact_email": user.email}
+
+    assert _resolve_platform_principal(MockEventUser()) is None
+    assert _resolve_platform_principal(MockEventUser(), platform_user=user) == user
+
+    class BoundEventUser:
+        event_id = event.pk
+        platform_user = user
+
+    assert _resolve_platform_principal(BoundEventUser()) == user
+
+    # 3. Destination binding in LoungeMeshServerTestView
     client.force_login(admin_user)
     with patch.object(admin_user.__class__, "has_active_staff_session", return_value=True):
         # Mismatched URL when reusing stored secret
@@ -586,6 +764,133 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
             assert resp.status_code == 200
             assert resp.json()["ok"] is True
             assert mock_conn.call_args[0][1] == "replacement*****"
+
+
+@pytest.mark.django_db
+def test_event_duration_access_control(test_setup):
+    event = test_setup["event"]
+    user = test_setup["user"]
+    room = test_setup["room"]
+    server = test_setup["server"]
+
+    now = timezone.now()
+
+    # 1. Past event: Host allowed, attendee blocked with 'ended'
+    event.date_from = now - timedelta(days=5)
+    event.date_to = now - timedelta(days=1)
+    event.save()
+
+    assert is_event_accessible_for_role(event, "host")[0] is True
+    acc, reason = is_event_accessible_for_role(event, "attendee")
+    assert acc is False
+    assert reason == "ended"
+
+    assert issue_join_url(event, room, user, role="attendee", server=server) is None
+    assert issue_join_url(event, room, user, role="host", server=server) is not None
+
+    # 2. Future event: Host allowed, attendee blocked with 'not_started'
+    event.date_from = now + timedelta(days=1)
+    event.date_to = now + timedelta(days=2)
+    event.save()
+
+    assert is_event_accessible_for_role(event, "host")[0] is True
+    acc, reason = is_event_accessible_for_role(event, "attendee")
+    assert acc is False
+    assert reason == "not_started"
+
+    assert issue_join_url(event, room, user, role="attendee", server=server) is None
+    assert issue_join_url(event, room, user, role="host", server=server) is not None
+
+    # 3. Ongoing event: Host and attendee both allowed
+    event.date_from = now - timedelta(hours=1)
+    event.date_to = now + timedelta(hours=2)
+    event.save()
+
+    assert is_event_accessible_for_role(event, "host")[0] is True
+    assert is_event_accessible_for_role(event, "attendee")[0] is True
+
+    assert issue_join_url(event, room, user, role="attendee", server=server) is not None
+    assert issue_join_url(event, room, user, role="host", server=server) is not None
+
+    # 4. Grant exp bounding for attendee
+    grant = issue_signed_grant(event, room, user, role="attendee", server=server, expires_in_seconds=86400)
+    payload = jwt.decode(grant, server.api_secret, algorithms=["HS256"], audience="loungemesh")
+    assert payload["exp"] == int(event.date_to.timestamp())
+
+
+@pytest.mark.django_db
+def test_websocket_room_url_duration_checks(test_setup, monkeypatch):
+    monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
+    event = test_setup["event"]
+    user = test_setup["user"]
+    room = test_setup["room"]
+
+    room_cache = {str(room.id): room}
+    consumer = DummyConsumer(
+        user=user,
+        world=event,
+        permissions=[
+            Permission.ROOM_LOUNGEMESH_JOIN.value,
+            Permission.ROOM_UPDATE.value,
+            Permission.EVENT_UPDATE.value,
+        ],
+        room_cache=room_cache,
+    )
+    consumer.event.has_permission_async = AsyncMock(return_value=True)
+    module = LoungeMeshModule(consumer)
+
+    def sync_to_async_mock(fn):
+        async def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapper
+
+    from django.db import connections
+    main_conn = connections["default"]
+
+    now = timezone.now()
+
+    with (
+        patch.object(connections.__class__, "__getitem__", return_value=main_conn),
+        patch("channels.db.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.decorators.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.modules.loungemesh.database_sync_to_async", sync_to_async_mock),
+        patch.object(room, "refresh_from_db_if_outdated", new_callable=AsyncMock),
+    ):
+        async def run_checks():
+            # Future event: attendee gets ConsumerException loungemesh.event_not_started
+            event.date_from = now + timedelta(days=1)
+            event.date_to = now + timedelta(days=2)
+            event.save()
+
+            consumer.is_organizer = False
+            with pytest.raises(ConsumerException) as exc_info:
+                await module.room_url({"room": str(room.id)})
+            assert exc_info.value.code == "loungemesh.event_not_started"
+
+            # Past event: attendee gets ConsumerException loungemesh.event_ended
+            event.date_from = now - timedelta(days=2)
+            event.date_to = now - timedelta(days=1)
+            event.save()
+
+            with pytest.raises(ConsumerException) as exc_info:
+                await module.room_url({"room": str(room.id)})
+            assert exc_info.value.code == "loungemesh.event_ended"
+
+            # Host in organizer area with active session-bound StaffSession can access past event
+            from eventyay.base.models.auth import StaffSession
+
+            admin_user = test_setup["admin_user"]
+            consumer.is_organizer = True
+            consumer.platform_user = admin_user
+            consumer.session_key = "duration-host-session"
+            StaffSession.objects.create(user=admin_user, session_key="duration-host-session")
+            fake_url = f"http://localhost:8780/join/lms-{event.slug}-{room.id}?grant=hostgrant"
+            with patch.object(module, "_get_join_url", new_callable=AsyncMock, return_value=fake_url):
+                await module.room_url({"room": str(room.id)})
+                assert consumer.sent_data["role"] == "host"
+                assert consumer.sent_data["url"] == fake_url
+
+        asyncio.run(run_checks())
 
 
 @pytest.mark.django_db
@@ -695,4 +1000,271 @@ def test_loungemesh_security_improvements(test_setup):
         cap_res = module._check_server_limit_and_duplicate("https://brand-new.example.com")
         assert cap_res is not None
         assert cap_res[0] == "loungemesh.limit_reached"
+
+
+@pytest.mark.django_db
+def test_loungemesh_room_settings_host_only(test_setup):
+    import jwt
+
+    from eventyay.base.services.loungemesh import issue_signed_grant
+    from eventyay.base.services.room import MODERATED_CALL_MODULE_PERMISSIONS
+
+    event = test_setup["event"]
+    server = test_setup["server"]
+    user = test_setup["user"]
+
+    # LoungeMesh call modules are not in MODERATED_CALL_MODULE_PERMISSIONS:
+    # only hosts with ROOM_UPDATE or EVENT_UPDATE can modify room settings
+    assert "call.loungemesh" not in MODERATED_CALL_MODULE_PERMISSIONS
+    assert "channel.loungemesh" not in MODERATED_CALL_MODULE_PERMISSIONS
+
+    # When feature flags are toggled off in room_cfg, grant accurately reflects them
+    class MockRoom:
+        pk = 99
+        module_config = [
+            {
+                "type": "call.loungemesh",
+                "config": {
+                    "enable_notes": False,
+                    "enable_whiteboard": False,
+                    "enable_spatial_chat": False,
+                },
+            }
+        ]
+
+    token = issue_signed_grant(event, MockRoom(), user, "host", server=server)
+    claims = jwt.decode(token, server.api_secret, algorithms=["HS256"], audience="loungemesh")
+    assert claims["features"] == {
+        "notes": False,
+        "whiteboard": False,
+        "spatial_chat": False,
+    }
+
+
+@pytest.mark.django_db
+def test_loungemesh_session_bound_host_and_verified_identity(test_setup, monkeypatch):
+    from types import SimpleNamespace
+    from urllib.parse import parse_qs, urlparse
+
+    import jwt
+
+    from eventyay.base.models import Team
+    from eventyay.base.models.auth import StaffSession
+    from eventyay.base.services.user import encode_email
+    from eventyay.features.live.modules.auth import AuthModule
+
+    monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
+
+    organizer = test_setup["organizer"]
+    event = test_setup["event"]
+    room = test_setup["room"]
+    server = test_setup["server"]
+    server.active = True
+    server.save()
+
+    # Ensure event has live trait_grants so AuthModule login succeeds cleanly
+    if not event.trait_grants:
+        event.trait_grants = {}
+    event.save()
+
+    staff_mod = User.objects.create(
+        email="staffmod@example.com",
+        fullname="Staff Moderator",
+        is_staff=True,
+        is_superuser=False,
+    )
+    mod_team = Team.objects.create(
+        organizer=organizer,
+        name="Video Moderators",
+        all_events=True,
+        can_video_moderate=True,
+        can_video_manage_content=False,
+    )
+    mod_team.members.add(staff_mod)
+
+    staff_other = User.objects.create(
+        email="staffother@example.com",
+        fullname="Staff Non-Video",
+        is_staff=True,
+        is_superuser=False,
+    )
+    other_team = Team.objects.create(
+        organizer=organizer,
+        name="Items Team",
+        all_events=True,
+        can_change_items=True,
+    )
+    other_team.members.add(staff_other)
+
+    admin_session = StaffSession.objects.create(
+        user=staff_mod,
+        session_key="sess-admin-active",
+    )
+    other_admin_session = StaffSession.objects.create(
+        user=staff_other,
+        session_key="sess-other-admin",
+    )
+
+    class LiveSessionConsumer:
+        def __init__(self, platform_user, session_key, query_string=b"organizer=1"):
+            self.event = event
+            self.user = None
+            self.platform_user = None
+            self.platform_user_id = None
+            self.session_key = None
+            self.is_organizer = False
+            self.socket_id = f"sock-{session_key or 'anon'}"
+            self.channel_name = f"chan-{session_key or 'anon'}"
+            self.room_cache = {str(room.id): room}
+            self.channel_cache = {}
+            self.known_room_id_cache = set()
+            self.scope = {
+                "user": platform_user,
+                "session": SimpleNamespace(session_key=session_key),
+                "query_string": query_string,
+            }
+            self.channel_layer = SimpleNamespace(
+                group_add=AsyncMock(),
+                send=AsyncMock(),
+            )
+            self.sent_data = None
+            self.sent_messages = []
+
+        async def send_json(self, payload):
+            self.sent_messages.append(payload)
+
+        async def send_error(self, code=None, message=None):
+            raise AssertionError(f"Unexpected consumer error: {code} - {message}")
+
+        async def send_success(self, data):
+            self.sent_data = data
+            return data
+
+    def sync_to_async_mock(fn):
+        async def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapper
+
+    def extract_grant_claims(url_str):
+        qs = parse_qs(urlparse(url_str).query)
+        return jwt.decode(qs["grant"][0], server.api_secret, algorithms=["HS256"], audience="loungemesh")
+
+    from django.db import connections
+    main_conn = connections["default"]
+
+    class DummyRedis:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def hgetall(self, key):
+            return {}
+
+        async def eval(self, *args):
+            return []
+
+    with (
+        patch.object(connections.__class__, "__getitem__", return_value=main_conn),
+        patch("channels.db.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.base.models.event.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.base.models.auth.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.base.models.cache.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.decorators.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.modules.auth.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.modules.loungemesh.database_sync_to_async", sync_to_async_mock),
+        patch("eventyay.features.live.modules.auth.aredis", return_value=DummyRedis()),
+        patch("eventyay.features.live.modules.auth.register_user_connection", new_callable=AsyncMock),
+        patch("eventyay.features.live.modules.auth.get_user_connection_count", new_callable=AsyncMock, return_value=1),
+        patch("eventyay.base.services.chat.ChatService.enforce_forced_joins", new_callable=AsyncMock),
+        patch.object(room, "refresh_from_db_if_outdated", new_callable=AsyncMock),
+    ):
+        async def run_scenarios():
+            # --- Scenario A: Two sessions for the same staff moderator ---
+            # 1. Authenticate Session 1 (admin mode active)
+            c_admin = LiveSessionConsumer(staff_mod, "sess-admin-active")
+            await AuthModule(c_admin).login({"is_organizer": True})
+            assert c_admin.platform_user_id == staff_mod.pk
+            assert c_admin.session_key == "sess-admin-active"
+            assert "admin" in c_admin.user.traits
+
+            # 2. Authenticate Session 2 (regular browser session, no StaffSession)
+            c_regular = LiveSessionConsumer(staff_mod, "sess-regular-browser")
+            await AuthModule(c_regular).login({"is_organizer": True})
+            assert c_regular.platform_user_id == staff_mod.pk
+            assert c_regular.session_key == "sess-regular-browser"
+
+            # Force stale 'admin' trait onto DB video user row to simulate cross-session / pre-stop trait state
+            with scope(event=event):
+                vuser = User.objects.get(pk=c_admin.user.pk)
+                if "admin" not in (vuser.traits or []):
+                    vuser.traits = list(vuser.traits or []) + ["admin"]
+                    vuser.save(update_fields=["traits"])
+                c_admin.user.refresh_from_db()
+                c_regular.user.refresh_from_db()
+
+            # Session 1 receives host grant while admin mode is active
+            await LoungeMeshModule(c_admin).room_url({"room": str(room.id)})
+            assert c_admin.sent_data["role"] == "host"
+            assert extract_grant_claims(c_admin.sent_data["url"])["role"] == "host"
+
+            # Session 2 MUST remain moderator (never elevated to host by Session 1 or stored 'admin' trait)
+            await LoungeMeshModule(c_regular).room_url({"room": str(room.id)})
+            assert c_regular.sent_data["role"] == "moderator"
+            assert extract_grant_claims(c_regular.sent_data["url"])["role"] == "moderator"
+
+            # End admin mode in Session 1 (DB video user still has 'admin' trait)
+            admin_session.date_end = timezone.now()
+            admin_session.save(update_fields=["date_end"])
+
+            # Subsequent grant issuance on Session 1's existing connection MUST drop back to moderator
+            await LoungeMeshModule(c_admin).room_url({"room": str(room.id)})
+            assert c_admin.sent_data["role"] == "moderator"
+            assert extract_grant_claims(c_admin.sent_data["url"])["role"] == "moderator"
+
+            # --- Scenario B: Non-moderator staff account across two sessions ---
+            c_other_admin = LiveSessionConsumer(staff_other, "sess-other-admin")
+            await AuthModule(c_other_admin).login({"is_organizer": True})
+            await LoungeMeshModule(c_other_admin).room_url({"room": str(room.id)})
+            assert c_other_admin.sent_data["role"] == "host"
+
+            c_other_regular = LiveSessionConsumer(staff_other, "sess-other-regular")
+            await AuthModule(c_other_regular).login({"is_organizer": True})
+            assert c_other_regular.is_organizer is True
+            assert "admin" not in c_other_regular.user.traits
+            await LoungeMeshModule(c_other_regular).room_url({"room": str(room.id)})
+            assert c_other_regular.sent_data["role"] == "attendee"
+
+            other_admin_session.date_end = timezone.now()
+            other_admin_session.save(update_fields=["date_end"])
+            await LoungeMeshModule(c_other_admin).room_url({"room": str(room.id)})
+            assert c_other_admin.sent_data["role"] == "attendee"
+
+            # --- Scenario C: Token login without verified platform account binding ---
+            # Even with an :orga token whose uid matches staff_mod's email hash and admin trait,
+            # and even if an unrelated Django session exists on the WebSocket scope,
+            # token-authenticated connections must NOT fall back to scope user/session and must withhold elevation.
+            uid = encode_email(staff_mod.email)
+            decoded_token = {
+                "uid": uid,
+                "traits": ["admin", f"eventyay-video-event-{event.slug}-organizer"],
+            }
+            StaffSession.objects.create(user=staff_other, session_key="sess-active-token-scope")
+            c_token = LiveSessionConsumer(staff_other, "sess-active-token-scope")
+            with patch.object(event, "decode_token", return_value=decoded_token):
+                await AuthModule(c_token).login({"token": "fake.jwt.token", "is_organizer": True})
+            assert c_token.platform_user_id is None
+            assert c_token.session_key is None
+            assert c_token.platform_auth_checked is True
+            assert c_token.is_organizer is True
+            # Note: token-authenticated :orga consumer may pass room_action via traits,
+            # but LoungeMesh grant issuer must strictly withhold host/moderator elevation!
+            c_token.event = event
+            with patch.object(event, "has_permission_async", new_callable=AsyncMock, return_value=True):
+                await LoungeMeshModule(c_token).room_url({"room": str(room.id)})
+            assert c_token.sent_data["role"] == "attendee"
+            assert extract_grant_claims(c_token.sent_data["url"])["role"] == "attendee"
+
+        asyncio.run(run_scenarios())
 

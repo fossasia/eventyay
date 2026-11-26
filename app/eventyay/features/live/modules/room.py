@@ -650,7 +650,6 @@ class RoomModule(BaseModule):
             Permission.ROOM_JITSI_MODERATE,
             Permission.ROOM_JANUSCALL_MODERATE,
             Permission.ROOM_BBB_MODERATE,
-            Permission.ROOM_LOUNGEMESH_MODERATE,
         ]
     )
     async def config_get(self, body):
@@ -686,7 +685,6 @@ class RoomModule(BaseModule):
             Permission.ROOM_JITSI_MODERATE,
             Permission.ROOM_JANUSCALL_MODERATE,
             Permission.ROOM_BBB_MODERATE,
-            Permission.ROOM_LOUNGEMESH_MODERATE,
         ]
     )
     async def config_patch(self, body):
