@@ -241,9 +241,10 @@ KOMBU_ALLOWED_QUERY_KEYS = frozenset({
     'connect_timeout',
     'login_method',
     'heartbeat',
-    'transport_options',
     'insist',
     'credential_provider',
+    'username',
+    'password',
 })
 
 
@@ -257,22 +258,25 @@ def increase_redis_db(url: str, increment: int, sanitize_broker: bool = True) ->
     """
     parsed = urlparse(url)
     query_params = parse_qsl(parsed.query, keep_blank_values=True)
-    query_dict = dict(query_params)
 
-    query_db = query_dict.get('db')
-    path_db = parsed.path.lstrip('/')
-    if query_db:
+    # Select the first non-empty 'db' query parameter (matching redis-py precedence)
+    first_db_val = next((v for k, v in query_params if k == 'db' and v.strip()), None)
+    db_number = None
+    if first_db_val is not None:
         try:
-            db_number = int(query_db)
+            db_number = int(first_db_val)
         except ValueError:
+            db_number = None
+
+    if db_number is None:
+        path_db = parsed.path.lstrip('/')
+        if path_db:
+            try:
+                db_number = int(path_db)
+            except ValueError:
+                db_number = 0
+        else:
             db_number = 0
-    elif path_db:
-        try:
-            db_number = int(path_db)
-        except ValueError:
-            db_number = 0
-    else:
-        db_number = 0
 
     new_db = db_number + increment
     new_path = f'/{new_db}'
