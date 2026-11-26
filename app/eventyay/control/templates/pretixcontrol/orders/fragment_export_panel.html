@@ -1,0 +1,30 @@
+{% load i18n %}
+{% load bootstrap3 %}
+<details class="panel panel-default export-panel" {% if "identifier" in request.GET or "exporter" in request.POST %}open{% endif %}>
+    <summary class="panel-heading export-panel-heading">
+        <span class="export-panel-text">
+            <h3 class="panel-title export-panel-name">{{ e.verbose_name }}</h3>
+            {% if e.description %}
+                <span class="export-panel-description">{{ e.description }}</span>
+            {% endif %}
+        </span>
+        {% if e.file_type %}
+            <span class="export-panel-file-type">{{ e.file_type }}</span>
+        {% endif %}
+        <i class="fa fa-angle-down collapse-indicator" aria-hidden="true"></i>
+    </summary>
+    <div id="{{ e.identifier }}">
+        <div class="panel-body">
+            <form action="{% url 'control:event.orders.import_export.export_do' event=request.event.slug organizer=request.organizer.slug %}"
+                    method="post" class="form-horizontal" data-asynctask data-asynctask-download
+                    data-asynctask-long>
+                {% csrf_token %}
+                <input type="hidden" name="exporter" value="{{ e.identifier }}" />
+                {% bootstrap_form e.form layout='control' %}
+                <button class="btn btn-primary pull-right flip" type="submit">
+                    <span class="icon icon-upload"></span> {% trans "Start export" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</details>

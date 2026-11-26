@@ -16,7 +16,10 @@ from ..signals import (
 
 class MailExporter(BaseExporter):
     identifier = 'mailaddrs'
-    verbose_name = _('Email addresses (text file)')
+    verbose_name = _('Email addresses')
+    category = 'attendees_orders'
+    description = _('All buyer and attendee email addresses, one per line.')
+    file_type = 'TXT'
 
     def render(self, form_data: dict):
         qs = Order.objects.filter(event__in=self.events, status__in=form_data['status']).prefetch_related('event')
