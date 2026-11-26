@@ -84,6 +84,16 @@
         font-weight: bold;
         text-decoration: none;
     }
+    &.variation-compact .price del,
+    &.variation-compact .price ins {
+        display: inline;
+        font-size: inherit;
+        margin-right: 0.35em;
+        vertical-align: baseline;
+    }
+    &.variation-compact .price .variation-price-inline {
+        white-space: nowrap;
+    }
 }
 
 .radio .variation-description {

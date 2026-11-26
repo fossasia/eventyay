@@ -181,6 +181,9 @@ def get_grouped_products(
             Prefetch(
                 'variations',
                 to_attr='available_variations',
+                # Include upcoming/ended active variations so the ticket page can
+                # show them as compact non-buyable rows (#7674). Buyability is
+                # decided later via sales_state / order_max.
                 queryset=ProductVariation.objects.using(settings.DATABASE_REPLICA)
                 .annotate(
                     subevent_disabled=Exists(
@@ -191,7 +194,7 @@ def get_grouped_products(
                         )
                     ),
                 )
-                .filter(ProductVariation.filter_available_q(), quotas__isnull=False, subevent_disabled=False)
+                .filter(active=True, quotas__isnull=False, subevent_disabled=False)
                 .prefetch_related(
                     Prefetch(
                         'quotas',
@@ -361,11 +364,22 @@ def get_grouped_products(
             if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
                 product.min_per_order = 1
 
+            now_dt = now()
             for var in product.available_variations:
                 var.description = str(var.description)
                 for recv, resp in product_description.send(sender=event, product=product, variation=var):
                     if resp:
                         var.description += ('<br/>' if var.description else '') + resp
+
+                if var.available_until and var.available_until < now_dt:
+                    var.sales_state = 'expired'
+                elif var.available_from and var.available_from > now_dt:
+                    if var._opened_early_by_sellout(subevent=subevent, _quota_cache=quota_cache):
+                        var.sales_state = 'active'
+                    else:
+                        var.sales_state = 'upcoming'
+                else:
+                    var.sales_state = 'active'
 
                 if voucher and (voucher.allow_ignore_quota or voucher.block_quota):
                     var.cached_availability = (
@@ -377,15 +391,25 @@ def get_grouped_products(
                         var.check_quotas(subevent=subevent, _cache=quota_cache, include_bundled=True)
                     )
 
-                var.order_max = min(
-                    var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
-                    max_per_order,
-                )
+                if var.sales_state != 'active':
+                    var.order_max = 0
+                else:
+                    var.order_max = min(
+                        var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
+                        max_per_order,
+                    )
 
                 if product.limit_one_per_user:
                     var.order_max = min(var.order_max, 1)
                     if hasattr(var, 'min_per_order') and var.min_per_order and var.min_per_order > 1:
                         var.min_per_order = 1
+
+                if (
+                    var.sales_state == 'active'
+                    and var.cached_availability[0] < Quota.AVAILABILITY_RESERVED
+                ):
+                    var.sales_state = 'sold_out'
+                    var.order_max = 0
 
                 original_price = var_price_override.get(var.pk, var.price)
                 if voucher:
@@ -429,13 +453,13 @@ def get_grouped_products(
                 for v in product.available_variations
                 if v._subevent_quotas
                 and (not voucher or not voucher.quota_id or v in restrict_vars)
-                and v.is_available(subevent=subevent, _quota_cache=quota_cache)
             ]
 
-            if event.settings.hide_sold_out:
-                product.available_variations = [
-                    v for v in product.available_variations if v.cached_availability[0] >= Quota.AVAILABILITY_RESERVED
-                ]
+            if event.settings.hide_sold_out and product.available_variations:
+                # Keep sold-out rows in the compact list when other phases remain
+                # visible; hide the product only if every variation is sold out.
+                if all(v.sales_state == 'sold_out' for v in product.available_variations):
+                    product.available_variations = []
 
             if voucher and voucher.variation_id:
                 product.available_variations = [v for v in product.available_variations if v.pk == voucher.variation_id]

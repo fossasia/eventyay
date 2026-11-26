@@ -445,3 +445,29 @@ def test_extend_expired_removes_bundle_when_child_unavailable(event, variation_c
         except CartError:
             pass
         assert not CartPosition.objects.filter(cart_id=cart_id, event=event).exists()
+
+
+@pytest.mark.django_db
+def test_ticket_page_shows_compact_upcoming_and_buyable_variants(client, event, variation_cart_setup):
+    """Upcoming variants appear without a quantity field; buyable ones keep one."""
+    with scope(organizer=event.organizer, event=event):
+        variation_cart_setup.shirt_red.available_from = now() - timedelta(days=1)
+        variation_cart_setup.shirt_red.available_until = now() + timedelta(days=5)
+        variation_cart_setup.shirt_red.save()
+        variation_cart_setup.shirt_blue.available_from = now() + timedelta(days=6)
+        variation_cart_setup.shirt_blue.available_until = None
+        variation_cart_setup.shirt_blue.save()
+        red_id = variation_cart_setup.shirt_red.id
+        blue_id = variation_cart_setup.shirt_blue.id
+        shirt_id = variation_cart_setup.shirt.id
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert f'name="variation_{shirt_id}_{red_id}"' in html
+    assert f'name="variation_{shirt_id}_{blue_id}"' not in html
+    assert 'variation-upcoming' in html
+    assert 'variation-compact' in html
+    assert 'variation-sales-date--active' in html
+    assert 'input-product-count--compact' in html
+    assert 'variation-toggle' in html
