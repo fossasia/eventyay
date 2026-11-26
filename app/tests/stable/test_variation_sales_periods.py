@@ -2,6 +2,7 @@ import datetime
 from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import pytest
 from bs4 import BeautifulSoup
@@ -246,13 +247,14 @@ def test_update_variation_sales_period(organizer_client, organizer, event, setti
         }
     )
     post_resp = organizer_client.post(url, data, secure=True)
-    assert post_resp.status_code in (200, 302)
+    assert post_resp.status_code == 302
 
     with scope(organizer=organizer, event=event):
         var1.refresh_from_db()
         product.refresh_from_db()
+        assert str(var1.value) == 'Bronze'
         assert var1.available_until is not None
-        assert var1.available_until.astimezone(event.timezone).date() == datetime.date(2026, 12, 15)
+        assert var1.available_until.astimezone(ZoneInfo(event.settings.timezone)).date() == datetime.date(2026, 12, 15)
         assert product.start_next_variation_on_sellout
 
 
@@ -299,9 +301,10 @@ def test_add_variation_with_existing_does_not_recurse(organizer_client, organize
         }
     )
     response = organizer_client.post(url, data, secure=True)
-    assert response.status_code in (200, 302)
+    assert response.status_code == 302
     with scope(organizer=organizer, event=event):
-        assert product.variations.filter(value='Platinum').exists()
+        assert product.variations.count() == 3
+        assert any(str(v.value) == 'Platinum' for v in product.variations.all())
 
 
 @pytest.mark.django_db
