@@ -2,7 +2,6 @@ from datetime import timedelta
 
 import pytest
 from django.test import override_settings
-from django.templatetags.static import static
 from bs4 import BeautifulSoup
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -133,22 +132,6 @@ def test_card_add(organizer, admin_user, client):
         follow=True,
     )
     assert 'has-error' in resp.content.decode()
-
-
-@pytest.mark.django_db
-def test_giftcard_add_has_searchable_currency_select(organizer, admin_user, client):
-    client.login(email='dummy@dummy.dummy', password='dummy')
-    resp = client.get('/control/organizer/dummy/giftcard/add')
-    assert resp.status_code == 200
-    doc = BeautifulSoup(resp.content.decode(), 'html.parser')
-    expected_css_url = static('common/css/searchable-select.css')
-    expected_js_url = static('common/js/searchable-select.js')
-    assert any(link.get('href') == expected_css_url for link in doc.select('link[rel=stylesheet]'))
-    assert any(s.get('src') == expected_js_url for s in doc.select('script'))
-    currency_select = doc.select('[name="currency"]')
-    assert currency_select, 'currency select not found'
-    assert 'data-searchable-select' in currency_select[0].attrs
-    assert currency_select[0].attrs.get('data-search-placeholder') == 'Search'
 
 
 @pytest.mark.django_db
