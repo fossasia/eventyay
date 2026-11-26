@@ -134,17 +134,18 @@ class WaitingListEntry(LoggedModel):
             with self.event.lock():
                 self._reserve_voucher(quota_cache, user, auth, eligible)
                 reserved = True
-        except (LockTimeoutException, LockReleaseException) as exc:
+        except (LockTimeoutException, LockReleaseException, OperationalError) as exc:
             if not reserved:
+                if isinstance(exc, OperationalError):
+                    cause = exc.__cause__ or exc
+                    sqlstate = getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)
+                    if sqlstate not in {
+                        '08000', '08001', '08003', '08006', '40001', '40P01', '53300', '55P03', '57P03',
+                    }:
+                        raise
                 raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
-        except OperationalError as exc:
-            if not reserved:
-                cause = exc.__cause__ or exc
-                sqlstate = getattr(cause, 'sqlstate', None) or getattr(cause, 'pgcode', None)
-                if sqlstate not in {'08000', '08001', '08003', '08006', '40001', '40P01', '53300', '55P03', '57P03'}:
-                    raise
-                raise WaitingListBusy(_('The event is busy. Please try again.')) from exc
-            logger.exception('Booking lock release failed after waiting-list reservation')
+            if isinstance(exc, OperationalError):
+                logger.exception('Booking lock release failed after waiting-list reservation')
 
         with language(self.locale, self.event.settings.region):
             mail(

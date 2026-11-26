@@ -21,6 +21,8 @@ from eventyay.base.models import (
     Product as Item,
     ProductVariation as ItemVariation,
     Organizer,
+    Order,
+    OrderPosition,
     Quota,
     SubEvent,
     Voucher,
@@ -30,9 +32,47 @@ from eventyay.base.models.waitinglist import WaitingListBusy, WaitingListExcepti
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.waitinglist import (
     assign_automatically,
+    on_order_canceled,
+    on_order_changed,
     process_waitinglist,
 )
 from tests.testutils.scope import classscope
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('handler', [on_order_canceled, on_order_changed])
+@pytest.mark.parametrize('scenario', ['disabled', 'manual', 'closed', 'single', 'series', 'empty series'])
+def test_order_changes_queue_waitinglist_once_per_date(handler, scenario, monkeypatch):
+    """Both order handlers preserve eligibility and schedule each affected date once."""
+    organizer = Organizer.objects.create(name='Waiting list', slug='waiting-list')
+    event = Event.objects.create(
+        organizer=organizer, name='Waiting list', slug='waiting-list', date_from=now(), live=True,
+        has_subevents=scenario in {'series', 'empty series'},
+        presale_end=now() - timedelta(days=1) if scenario == 'closed' else None,
+    )
+    event.settings.set('waiting_list_enabled', scenario != 'disabled')
+    event.settings.set('waiting_list_auto', scenario != 'manual')
+    queued = []
+    monkeypatch.setattr(assign_automatically, 'apply_async', lambda *, args: queued.append(args))
+    with scope(event=event, organizer=organizer):
+        order = Order.objects.create(event=event, status=Order.STATUS_PENDING, total=0, locale='en')
+        product = Item.objects.create(event=event, name='Ticket', default_price=0)
+        dates = [None]
+        if scenario == 'series':
+            first, second = [
+                SubEvent.objects.create(event=event, name=name, date_from=now(), date_to=now())
+                for name in ('First', 'Second')
+            ]
+            dates = [None, first, first, second]
+        for positionid, date in enumerate(dates, start=1):
+            OrderPosition.objects.create(order=order, product=product, price=0, positionid=positionid, subevent=date)
+    handler(sender=event, order=order)
+    expected = [(event.pk,)]
+    if scenario in {'disabled', 'manual', 'closed'}:
+        expected = []
+    elif scenario == 'series':
+        expected = [(event.pk, None, first.pk), (event.pk, None, second.pk)]
+    assert sorted(queued) == sorted(expected)
 
 
 @pytest.mark.django_db
