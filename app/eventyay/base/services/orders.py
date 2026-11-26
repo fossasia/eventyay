@@ -71,6 +71,7 @@ from eventyay.base.payment import BasePaymentProvider, PaymentException
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.secrets import assign_ticket_secret
 from eventyay.base.services import tickets
+from eventyay.base.services.anonymize import ANONYMIZED_ORDER_EDIT_ERROR, lock_order_for_identity_edit
 from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
@@ -2584,6 +2585,9 @@ class OrderChangeManager:
 
         with transaction.atomic():
             with self.order.event.lock():
+                locked_order = lock_order_for_identity_edit(self.order)
+                if locked_order.is_anonymized and not self.order.is_anonymized:
+                    raise OrderError(ANONYMIZED_ORDER_EDIT_ERROR)
                 if self.order.status not in (Order.STATUS_PENDING, Order.STATUS_PAID):
                     raise OrderError(self.error_messages['not_pending_or_paid'])
                 if check_quotas:

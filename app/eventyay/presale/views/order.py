@@ -55,6 +55,7 @@ from eventyay.base.models.orders import (
 )
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.payment import PaymentException
+from eventyay.base.services.anonymize import lock_order_for_identity_edit
 from eventyay.base.services.checkin import CheckInError, perform_checkin
 from eventyay.base.services.invoices import (
     generate_cancellation,
@@ -972,7 +973,11 @@ class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, O
                 override[k].pop('initial', None)
         return override_sets
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
+        if lock_order_for_identity_edit(self.order).is_anonymized:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+
         failed = not self.save() or not self.invoice_form.is_valid()
         if failed:
             messages.error(

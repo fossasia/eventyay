@@ -524,6 +524,81 @@ def test_api_anonymizes(data, client, rendered_invoices, allow_all_entitlements)
     assert response.data['phone'] is None
 
 
+@pytest.mark.parametrize('identity_edit', ['email', 'phone', 'invoice_address', 'comment'])
+def test_api_rejects_identity_edits_after_anonymization(event, team, client, identity_edit, allow_all_entitlements):
+    with event_scope(event):
+        order = Order.objects.create(
+            event=event,
+            email='anonymous@eventyay.invalid',
+            total=0,
+            expires=now(),
+            is_anonymized=True,
+        )
+    token = TeamAPIToken.objects.create(team=team, name='Token')
+    url = f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/orders/{order.code}/'
+    values = {
+        'email': 'new@example.com',
+        'phone': '+12025550123',
+        'invoice_address': {'name': 'New Buyer'},
+        'comment': 'New Buyer',
+    }
+    response = client.patch(
+        url,
+        {identity_edit: values[identity_edit]},
+        content_type='application/json',
+        HTTP_AUTHORIZATION=f'Token {token.token}',
+    )
+    assert response.status_code == 400
+    assert 'Personal data cannot be edited' in str(response.json())
+
+    response = client.patch(
+        url,
+        {'checkin_attention': True},
+        content_type='application/json',
+        HTTP_AUTHORIZATION=f'Token {token.token}',
+    )
+    assert response.status_code == 200
+    refresh(event, order)
+    assert order.is_anonymized and order.checkin_attention
+    assert order.email == 'anonymous@eventyay.invalid' and not order.phone
+
+
+@override_settings(SITE_URL='https://testserver')
+def test_control_rejects_contact_edits_after_anonymization(event, team, authenticated_client, allow_all_entitlements):
+    with event_scope(event):
+        order = Order.objects.create(
+            event=event,
+            email='anonymous@eventyay.invalid',
+            total=0,
+            expires=now(),
+            is_anonymized=True,
+        )
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/contact'
+    response = authenticated_client.post(url, {'email': 'new@example.com', 'phone': '+12025550123'})
+    assert response.status_code == 302
+    refresh(event, order)
+    assert order.email == 'anonymous@eventyay.invalid' and not order.phone
+    assert order.is_anonymized
+
+
+@pytest.mark.django_db
+def test_api_rejects_attendee_edits_after_anonymization(data, client, rendered_invoices, allow_all_entitlements):
+    event, order, position = data['event'], data['order'], data['position']
+    anonymize_order(order)
+    team = Team.objects.create(organizer=event.organizer, name='API', all_events=True, can_change_orders=True)
+    token = TeamAPIToken.objects.create(team=team, name='Token')
+    response = client.patch(
+        f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/orderpositions/{position.pk}/',
+        {'attendee_email': 'new@example.com'},
+        content_type='application/json',
+        HTTP_AUTHORIZATION=f'Token {token.token}',
+    )
+    assert response.status_code == 400
+    assert 'Personal data cannot be edited' in str(response.json())
+    refresh(event, position)
+    assert position.attendee_email.endswith('@eventyay.invalid')
+
+
 def test_line_description_keeps_product_text_that_contains_the_attendee_name():
     description = 'Annual pass<br />Attendee: Ann<br />Dietary needs: Ann is vegan'
     result = anonymize_line_description(description, 'Ann')

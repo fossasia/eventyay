@@ -7,6 +7,14 @@ from django_scopes import scope
 from eventyay.base.models import Order
 
 
+ANONYMIZED_ORDER_EDIT_ERROR = _('Personal data cannot be edited on an anonymized order.')
+
+
+def lock_order_for_identity_edit(order: Order) -> Order:
+    with scope(event=order.event_id):
+        return Order.objects.select_for_update().get(event_id=order.event_id, pk=order.pk)
+
+
 def is_order_event_ended(order: Order, current_time=None) -> bool:
     """
     Returns True if the event (and any subevent associated with the order's positions)
@@ -51,6 +59,7 @@ def anonymize_order(order: Order, user=None, auth=None) -> None:
         if not is_order_event_ended(order):
             raise ValidationError(_('Order ticketing data cannot be anonymized before the associated event has ended.'))
 
+        order.refresh_from_db(from_queryset=Order.objects.select_for_update())
         for anonymizer in order.event.get_ticketing_anonymizers().values():
             anonymizer.anonymize_order(order)
 

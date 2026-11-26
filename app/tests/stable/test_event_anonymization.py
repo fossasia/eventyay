@@ -18,7 +18,7 @@ from eventyay.base.models import (
     User,
     WaitingListEntry,
 )
-from eventyay.base.services.event_anonymization import anonymize_event
+from eventyay.base.services.event_anonymization import anonymize_event, flush_pending_file_deletions
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.helpers.anonymization import ANONYMIZED_NAME, is_anonymized_email
 from eventyay.plugins.sendmail.models import EmailQueue, EmailQueueToUser
@@ -275,3 +275,26 @@ def test_pending_invoice_pdf_deletion_retries_until_deleted(event, monkeypatch):
         assert run.status == run.Status.COMPLETED
         assert run.pending_file_deletions == []
         assert not storage.exists(old_name)
+
+
+def test_file_deletion_preserves_paths_appended_during_flush(event, monkeypatch):
+    with scope(event=event):
+        run = EventAnonymizationRun.objects.create(
+            event=event,
+            trigger=EventAnonymizationRun.Trigger.MANUAL,
+            pending_file_deletions=['first.pdf'],
+        )
+        storage = Invoice._meta.get_field('file').storage
+
+        def delete(path):
+            assert path == 'first.pdf'
+            EventAnonymizationRun.objects.filter(pk=run.pk).update(
+                pending_file_deletions=['first.pdf', 'concurrent.pdf'],
+            )
+
+        monkeypatch.setattr(storage, 'delete', delete)
+        flush_pending_file_deletions(run)
+
+        assert run.pending_file_deletions == ['concurrent.pdf']
+        run.refresh_from_db()
+        assert run.pending_file_deletions == ['concurrent.pdf']

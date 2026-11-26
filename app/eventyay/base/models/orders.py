@@ -949,7 +949,7 @@ class Order(LockModel, LoggedModel):
         Returns True if a user with this email is allowed to modify the order,
         based on the event's 'allow_modifications' setting.
         """
-        if not self.can_modify_answers or not email:
+        if self.is_anonymized or not self.can_modify_answers or not email:
             return False
 
         setting = self.event.settings.allow_modifications

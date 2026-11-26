@@ -105,12 +105,15 @@ def flush_pending_file_deletions(run: EventAnonymizationRun) -> None:
     if not run.pending_file_deletions:
         return
     storage = Invoice._meta.get_field('file').storage
-    remaining = list(run.pending_file_deletions)
-    for path in list(remaining):
+    for path in tuple(run.pending_file_deletions):
         storage.delete(path)
-        remaining.remove(path)
-        EventAnonymizationRun.objects.filter(pk=run.pk).update(pending_file_deletions=remaining)
-    run.pending_file_deletions = remaining
+        with transaction.atomic():
+            locked_run = EventAnonymizationRun.objects.select_for_update().get(pk=run.pk)
+            locked_run.pending_file_deletions = [
+                pending for pending in locked_run.pending_file_deletions if pending != path
+            ]
+            locked_run.save(update_fields=['pending_file_deletions'])
+            run.pending_file_deletions = locked_run.pending_file_deletions
 
 
 def process_order_ids(
