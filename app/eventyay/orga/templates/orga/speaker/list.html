@@ -187,6 +187,10 @@
                                             <span class="speaker-voucher-badge speaker-voucher-badge--sent">{% translate "Sent — not claimed" %}</span>
                                             {% include "orga/speaker/fragment_voucher_sent_date.html" with assignment=assignment %}
                                         </div>
+                                    {% elif profile.voucher_row_state == 'sending' %}
+                                        <div class="speaker-voucher-status">
+                                            <span class="speaker-voucher-badge speaker-voucher-badge--default">{% translate "Sending…" %}</span>
+                                        </div>
                                     {% elif profile.voucher_row_state == 'withdrawn' %}
                                         <div class="speaker-voucher-status">
                                             <div class="speaker-voucher-status-main">
@@ -194,7 +198,9 @@
                                                 {% if can_update_speaker %}
                                                     <form method="post" action="{{ profile.orga_urls.voucher_cancel }}?next={{ request.get_full_path|urlencode }}" class="speaker-voucher-action-form">
                                                         {% csrf_token %}
-                                                        <button type="submit" class="btn btn-sm btn-warning">
+                                                        <button type="submit"
+                                                                class="btn btn-sm btn-warning"
+                                                                data-confirm-text="{% translate "Cancel this speaker voucher? The code will no longer work." %}">
                                                             {% translate "Cancel voucher" %}
                                                         </button>
                                                     </form>

@@ -484,7 +484,7 @@ def speaker_voucher_needs_new_code(profile: SpeakerProfile) -> bool:
 def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
     """Return the Speakers-list voucher display state for a profile.
 
-    One of: ``dash``, ``not_sent``, ``sent``, ``claimed``, ``withdrawn``, ``cancelled``.
+    One of: ``dash``, ``not_sent``, ``sending``, ``sent``, ``claimed``, ``withdrawn``, ``cancelled``.
 
     Uses already-loaded ``voucher_assignment`` / ``voucher`` fields (via
     ``select_related``) so the Speakers list stays O(1) queries per page.
@@ -507,7 +507,9 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
         if assignment_needs_replacement(assignment):
             # Expired/cancelled code: confirmed speakers can receive a replacement.
             return 'not_sent' if confirmed_count else 'cancelled'
-        if assignment.status in (SpeakerVoucherStatus.NOT_SENT, SpeakerVoucherStatus.SENDING):
+        if assignment.status == SpeakerVoucherStatus.SENDING:
+            return 'sending' if confirmed_count else 'withdrawn'
+        if assignment.status == SpeakerVoucherStatus.NOT_SENT:
             return 'not_sent' if confirmed_count else 'withdrawn'
         if confirmed_count:
             return 'sent'

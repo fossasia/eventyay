@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
@@ -883,11 +884,24 @@ def test_voucher_sort_ignored_when_vouchers_disabled(
 
 @pytest.mark.django_db
 def test_voucher_sort_works_when_enabled(
-    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch, other_speaker
 ):
+    with scope(event=event):
+        SpeakerProfile.objects.get_or_create(event=event, user=other_speaker)
+        confirmed_submission.speakers.add(other_speaker)
+        sent_profile = speaker.event_profile(event)
+        not_sent_profile = other_speaker.event_profile(event)
+        allocate_and_send_vouchers(event, speaker_voucher_settings, [sent_profile])
+        assert SpeakerVoucher.objects.get(speaker_profile=sent_profile).status == SpeakerVoucherStatus.SENT
+
     response = orga_client.get(f'{event.orga_urls.speakers}?sort=voucher_sort', follow=True)
     assert response.status_code == 200
     assert 'speaker-voucher-cell' in response.text
+    # Display order: Sent before Not sent (raw status strings would put not_sent first).
+    profile_ids = re.findall(r'data-profile-id="(\d+)"', response.text)
+    assert str(sent_profile.pk) in profile_ids
+    assert str(not_sent_profile.pk) in profile_ids
+    assert profile_ids.index(str(sent_profile.pk)) < profile_ids.index(str(not_sent_profile.pk))
 
 
 @pytest.mark.django_db

@@ -34,6 +34,25 @@ const selectedCount = document.getElementById("speakers-selected-count")
 const currentCheckboxes = () => document.querySelectorAll(".speaker-checkbox")
 const currentSelectAll = () => document.getElementById("select-all-speakers")
 const selectedCheckboxes = () => Array.from(currentCheckboxes()).filter((cb) => cb.checked)
+// Keep selections across AJAX sort/filter/pagination replaces of the table.
+const selectedProfileIds = new Set()
+
+const syncSelectedFromDom = () => {
+    currentCheckboxes().forEach((cb) => {
+        const id = cb.dataset.profileId
+        if (!id) return
+        if (cb.checked) selectedProfileIds.add(id)
+        else selectedProfileIds.delete(id)
+    })
+}
+
+const restoreSelectedToDom = () => {
+    currentCheckboxes().forEach((cb) => {
+        const id = cb.dataset.profileId
+        if (!id) return
+        cb.checked = selectedProfileIds.has(id)
+    })
+}
 
 const refreshSelectionUi = () => {
     const checkboxes = currentCheckboxes()
@@ -61,18 +80,34 @@ document.addEventListener("change", (event) => {
     if (target.id === "select-all-speakers") {
         currentCheckboxes().forEach((cb) => {
             cb.checked = target.checked
+            const id = cb.dataset.profileId
+            if (!id) return
+            if (target.checked) selectedProfileIds.add(id)
+            else selectedProfileIds.delete(id)
         })
         refreshSelectionUi()
         return
     }
     if (target.classList.contains("speaker-checkbox")) {
+        syncSelectedFromDom()
         refreshSelectionUi()
     }
 })
 
+document.addEventListener("click", (event) => {
+    const button = event.target.closest?.(".speaker-voucher-action-form button[data-confirm-text]")
+    if (!button) return
+    const text = button.dataset.confirmText
+    if (text && !window.confirm(text)) {
+        event.preventDefault()
+    }
+})
+
+syncSelectedFromDom()
 refreshSelectionUi()
 
 document.addEventListener("eventyay:ajax-results-replaced", () => {
+    restoreSelectedToDom()
     refreshSelectionUi()
 })
 

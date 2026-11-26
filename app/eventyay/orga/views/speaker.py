@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
+from django.db.models import Case, Count, Exists, F, IntegerField, OuterRef, Prefetch, Q, Value, When
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -23,7 +23,11 @@ from eventyay.base.models import Answer, SpeakerProfile, User, Voucher
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.mail import MailTemplateRoles
-from eventyay.base.models.speaker_voucher import SpeakerVoucher, SpeakerVoucherSettings
+from eventyay.base.models.speaker_voucher import (
+    SpeakerVoucher,
+    SpeakerVoucherSettings,
+    SpeakerVoucherStatus,
+)
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.speaker_vouchers import (
@@ -166,8 +170,36 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                 )
             )
             if self.speaker_vouchers_enabled:
+                # Sort by display state, not the raw status string (which puts
+                # "not_sent" between "claimed" and "sending" alphabetically).
                 qs = qs.select_related('voucher_assignment', 'voucher_assignment__voucher').annotate(
-                    voucher_sort=F('voucher_assignment__status'),
+                    voucher_sort=Case(
+                        When(
+                            Q(voucher_assignment__status=SpeakerVoucherStatus.CLAIMED)
+                            | Q(voucher_assignment__voucher__redeemed__gt=0),
+                            then=Value(0),
+                        ),
+                        When(
+                            voucher_assignment__status=SpeakerVoucherStatus.SENT,
+                            then=Value(1),
+                        ),
+                        When(
+                            voucher_assignment__status=SpeakerVoucherStatus.SENDING,
+                            then=Value(2),
+                        ),
+                        When(
+                            voucher_assignment__status=SpeakerVoucherStatus.NOT_SENT,
+                            then=Value(3),
+                        ),
+                        When(
+                            voucher_assignment__isnull=True,
+                            confirmed_submission_count__gt=0,
+                            then=Value(3),
+                        ),
+                        When(voucher_assignment__isnull=False, then=Value(4)),
+                        default=Value(5),
+                        output_field=IntegerField(),
+                    ),
                 )
 
             qs = self.filter_queryset(qs)
