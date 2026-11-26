@@ -335,6 +335,19 @@ subclass of pretix.base.shredder.BaseDataShredder or a list of these
 As with all event-plugin signals, the ``sender`` keyword argument will contain the event.
 """
 
+register_ticketing_anonymizers = django.dispatch.Signal()
+"""
+This signal is sent out to get all known ticketing anonymizers. Receivers should return a
+subclass of ``eventyay.base.anonymizer.BaseTicketingAnonymizer`` or a list of these.
+
+Anonymizers replace the identity of buyers and attendees in data they own. They never delete
+records.
+
+Unlike most event plugin signals, this one reaches every receiver whether or not the plugin is
+enabled for the event, because the data a plugin stored stays in the database after the plugin
+has been disabled. The ``sender`` keyword argument contains the event.
+"""
+
 register_ticket_outputs = EventPluginSignal()
 """
 This signal is sent out to get all known ticket outputs. Receivers should return a
@@ -626,11 +639,15 @@ copy to, the ``source`` keyword argument will contain the product to **copy from
 
 periodic_task = django.dispatch.Signal()
 """
-This is a regular django signal (no pretix event signal) that we send out every
-time the periodic task cronjob runs. This interval is not sharply defined, it can
-be everything between a minute and a day. The actions you perform should be
-idempotent, i.e. it should not make a difference if this is sent out more often
-than expected.
+Sent whenever the periodic task runner executes (Celery beat or ``runperiodic``).
+
+This is a regular Django signal, not an ``EventPluginSignal``. The interval is
+not sharply defined; it can be anything between a minute and a day. Receivers
+must be idempotent, so extra sends do not change the result.
+
+This is the canonical periodic-task signal. Import it from
+``eventyay.base.signals``. ``eventyay.common.signals.periodic_task`` is a
+deprecated alias of this same object.
 """
 
 register_global_settings = django.dispatch.Signal()
