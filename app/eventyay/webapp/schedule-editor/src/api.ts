@@ -146,11 +146,13 @@ const api = {
     return json as T
   },
 
-  async fetchTalks(options?: { since?: string; warnings?: boolean }): Promise<Schedule> {
+  async fetchTalks(options?: { since?: string; warnings?: boolean; full?: boolean }): Promise<Schedule> {
     const config = getApiConfig()
     let url = `${config.baseUrl}${config.endpoints.talks}`
 
     const params = new URLSearchParams(window.location.search)
+    // `full` asks for every shift, even if the page URL has a `since` filter
+    if (options?.full) params.delete('since')
     if (options?.since) params.append('since', options.since)
     if (options?.warnings) params.append('warnings', 'true')
     const paramsString = params.toString()

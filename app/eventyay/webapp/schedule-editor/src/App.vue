@@ -1094,7 +1094,7 @@ const dateFormat = computed<string>(() => {
   return 'ddd D MMM'
 })
 
-async function fetchSchedule(options?: { since?: string; warnings?: boolean }): Promise<Schedule> {
+async function fetchSchedule(options?: { since?: string; warnings?: boolean; full?: boolean }): Promise<Schedule> {
   const sched = await api.fetchTalks(options) as unknown as Schedule
   return sched
 }
@@ -1440,7 +1440,7 @@ async function deleteShiftById(id: number): Promise<boolean> {
         // A 404 can mean an earlier attempt deleted the shift but its response was lost, or that
         // the shift API is unavailable. Only treat it as deleted if the schedule no longer has it.
         if (!isNotFound(error)) throw error
-        const current = await fetchSchedule().catch((fetchError) => {
+        const current = await fetchSchedule({ full: true }).catch((fetchError) => {
           console.error('Failed to check whether the shift still exists', { id, error: fetchError })
           return null
         })
