@@ -94,6 +94,19 @@
     margin-inline: 0;
 }
 
+.alert.alert-success,
+.alert.alert-info,
+.alert.alert-warning,
+.alert.alert-danger,
+.alert.alert-legal {
+    padding-left: 65px;
+}
+
+.alert.info-download {
+    flex-wrap: wrap;
+    column-gap: 16px;
+}
+
 #main-card summary.product-row {
     color: var(--color-text);
 
