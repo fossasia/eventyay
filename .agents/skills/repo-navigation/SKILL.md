@@ -78,4 +78,4 @@ Contains extended project documentation written in reStructuredText or Markdown.
 - **Add an API endpoint** → `app/eventyay/api/`
 - **Add a form** → `app/eventyay/<sub-app>/forms.py` or `app/eventyay/<sub-app>/forms/`
 - **Add a migration** → run `python manage.py makemigrations` from `app/`
-- **Add a test** → `app/tests/`
+- **Add a test** → `app/tests/stable/` (`tests/talk/` and `tests/tickets/` are only collected via `--collect-only` and are not executed in CI)
