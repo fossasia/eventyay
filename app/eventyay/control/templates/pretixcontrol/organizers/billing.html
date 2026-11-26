@@ -9,6 +9,7 @@
     {{ block.super }}
     <link type="text/css" rel="stylesheet" href="{% url "control:pdf.css" %}">
     <link rel="stylesheet" type="text/css" href="{% static "billing/css/billing.css" %}" />
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
 {% endblock %}
 
 {% block inside %}

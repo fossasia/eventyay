@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from django.db import transaction
+from django.templatetags.static import static
 from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scopes_disabled
@@ -146,6 +147,30 @@ class OrganizerTest(SoupTest):
         assert doc.select('[name=name]')[0]['value'] == 'CCC e.V.'
         self.orga1.refresh_from_db()
         assert self.orga1.name == 'CCC e.V.'
+
+    def test_organizer_settings_region_has_searchable_select(self):
+        url = reverse('eventyay_common:organizer.edit', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
+        expected_css_url = static('common/css/searchable-select.css')
+        expected_js_url = static('common/js/searchable-select.js')
+        assert any(link.get('href') == expected_css_url for link in doc.select('link[rel=stylesheet]'))
+        assert any(s.get('src') == expected_js_url for s in doc.select('script'))
+        region_select = doc.select('[name="settings-region"]')
+        assert region_select, 'settings-region select not found'
+        assert 'data-searchable-select' in region_select[0].attrs
+        assert region_select[0].attrs.get('data-search-placeholder') == 'Search'
+
+    def test_organizer_billing_country_has_searchable_select(self):
+        url = reverse('eventyay_common:organizer.billing', kwargs={'organizer': self.orga1.slug})
+        doc = self.get_doc(url)
+        expected_css_url = static('common/css/searchable-select.css')
+        expected_js_url = static('common/js/searchable-select.js')
+        assert any(link.get('href') == expected_css_url for link in doc.select('link[rel=stylesheet]'))
+        assert any(s.get('src') == expected_js_url for s in doc.select('script'))
+        country_select = doc.select('[name="country"]')
+        assert country_select, 'country select not found'
+        assert 'data-searchable-select' in country_select[0].attrs
+        assert country_select[0].attrs.get('data-search-placeholder') == 'Search'
 
     def test_saving_payment_information_signals_automatic_billing_consent(self):
         url = reverse(
