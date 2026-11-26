@@ -90,7 +90,6 @@
         {% endcomment %}
         {% block scripts %}{% endblock scripts %}
         {{ html_head|safe }}
-        {% include 'common/includes/external_links.html' %}
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
@@ -361,7 +360,10 @@
                                         <span>{{ phrases.schedule.speakers }}</span>
                                     </a>
                                     {% if can_see_orga_exclusive %}
-                                        <a href="{{ request.event.orga_urls.information }}" class="nav-link nav-link-second-level{% if "speakers.information" in url_name %} active{% endif %}">
+                                        <a href="{{ request.event.orga_urls.speaker_vouchers }}" class="nav-link nav-link-second-level{% if 'speakers.vouchers' in url_name %} active{% endif %}">
+                                            <span>{% translate "Speaker Vouchers" %}</span>
+                                        </a>
+                                        <a href="{{ request.event.orga_urls.information }}" class="nav-link nav-link-second-level{% if 'speakers.information' in url_name %} active{% endif %}">
                                             <span>{% translate "Speaker Information" %}</span>
                                         </a>
                                     {% endif %}

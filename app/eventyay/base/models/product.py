@@ -517,6 +517,15 @@ class Product(AdmissionValidityBoundMixin, LoggedModel):
             'If this is checked, customers can switch between variations of this product in their order details.'
         ),
     )
+    start_next_variation_on_sellout = models.BooleanField(
+        verbose_name=_('Start the next variation as soon as the current one sells out'),
+        default=False,
+        help_text=_(
+            'If this is checked and variations have sales periods, the next variation '
+            '(by position) goes on sale immediately when the previous one is sold out, '
+            'even before its "Available from" date.'
+        ),
+    )
     min_per_order = models.IntegerField(
         verbose_name=_('Minimum amount per order'),
         null=True,
@@ -863,6 +872,10 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
     :type default_price: decimal.Decimal
     :param original_price: The product's "original" price. Will not be used for any calculations, will just be shown.
     :type original_price: decimal.Decimal
+    :param available_from: The date this variation goes on sale. Empty means the product's sales start applies.
+    :type available_from: datetime.datetime
+    :param available_until: The date until when this variation is on sale. Empty means the product's sales end applies.
+    :type available_until: datetime.datetime
     """
 
     product = models.ForeignKey(Product, related_name='variations', on_delete=models.CASCADE)
@@ -896,6 +909,18 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
             'If set, this will be displayed next to the current price to show that the current price is a '
             'discounted one. This is just a cosmetic setting and will not actually impact pricing.'
         ),
+    )
+    available_from = models.DateTimeField(
+        verbose_name=_('Available from'),
+        null=True,
+        blank=True,
+        help_text=_("When this variation goes on sale. Leave empty to use the ticket's sales start."),
+    )
+    available_until = models.DateTimeField(
+        verbose_name=_('Available until'),
+        null=True,
+        blank=True,
+        help_text=_("After this time the variation can no longer be bought. Leave empty to use the ticket's sales end."),
     )
     ADMISSION_VALIDITY_MODE_INHERIT = 'inherit'
     ADMISSION_VALIDITY_MODE_CHOICES = (
@@ -988,6 +1013,101 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
                     t.name = 'MIXED!'
 
         return t
+
+    def is_available_by_time(self, now_dt: datetime = None, *, subevent=None, _quota_cache=None) -> bool:
+        """
+        Returns whether this variation is inside its sales period.
+
+        Empty ``available_from`` / ``available_until`` mean the variation follows the
+        product's sales window (already enforced on the product). If the product has
+        ``start_next_variation_on_sellout`` enabled and the previous active variation
+        is sold out, ``available_from`` may be ignored.
+        """
+        now_dt = now_dt or now()
+        if self.available_until and self.available_until < now_dt:
+            return False
+        if self.available_from and self.available_from > now_dt:
+            if self._opened_early_by_sellout(subevent=subevent, _quota_cache=_quota_cache):
+                return True
+            return False
+        return True
+
+    def is_available(self, now_dt: datetime = None, *, subevent=None, _quota_cache=None) -> bool:
+        """
+        Returns whether this variation is available according to its ``active`` flag
+        and its ``available_from`` / ``available_until`` sales period.
+        """
+        now_dt = now_dt or now()
+        if not self.active:
+            return False
+        return self.is_available_by_time(now_dt, subevent=subevent, _quota_cache=_quota_cache)
+
+    def _previous_active_variation(self):
+        """Return the previous active variation of the same product by position, if any."""
+        siblings = getattr(self.product, '_prefetched_objects_cache', {}).get('variations')
+        if siblings is not None:
+            previous = None
+            for variation in sorted(siblings, key=lambda v: (v.position, v.pk or 0)):
+                if variation.pk == self.pk:
+                    return previous
+                if variation.active:
+                    previous = variation
+            return None
+        return (
+            self.product.variations.filter(active=True)
+            .filter(Q(position__lt=self.position) | Q(position=self.position, pk__lt=self.pk))
+            .order_by('-position', '-pk')
+            .first()
+        )
+
+    def _opened_early_by_sellout(self, *, subevent=None, _quota_cache=None) -> bool:
+        if not self.product.start_next_variation_on_sellout:
+            return False
+        if self.product.event.has_subevents and subevent is None:
+            return False
+        previous = self._previous_active_variation()
+        if previous is None:
+            return False
+        avail = previous.check_quotas(
+            subevent=subevent,
+            _cache=_quota_cache,
+            fail_on_no_quotas=True,
+            trust_parameters=True,
+        )
+        return avail[0] < Quota.AVAILABILITY_RESERVED
+
+    def get_checkin_validity_summary(self) -> str:
+        """One-line summary of check-in validity for the organizer variation form."""
+        mode = self.admission_validity_mode
+        if mode is None:
+            mode = self.ADMISSION_VALIDITY_MODE_INHERIT
+        mode_label = dict(self.ADMISSION_VALIDITY_MODE_CHOICES).get(mode, mode)
+        if mode == self.ADMISSION_VALIDITY_MODE_INHERIT:
+            product_mode = self.product.admission_validity_mode or Product.ADMISSION_VALIDITY_MODE_NONE
+            product_label = dict(Product.ADMISSION_VALIDITY_MODE_CHOICES).get(product_mode, product_mode)
+            return f'{mode_label} · {product_label}'
+        return str(mode_label)
+
+    @staticmethod
+    def filter_available_q(now_dt: datetime = None, *, allow_sellout_override: bool = True) -> Q:
+        """
+        Q object matching variations that are active and inside their sales period.
+
+        When ``allow_sellout_override`` is True and the product has
+        ``start_next_variation_on_sellout``, variations before ``available_from`` are
+        still included so Python can apply the sellout override. Pass False for SQL-only
+        consumers (e.g. event availability annotations) that cannot evaluate sellout.
+        Keep in sync with :meth:`is_available_by_time` where possible.
+        """
+        now_dt = now_dt or now()
+        available_from_q = Q(available_from__isnull=True) | Q(available_from__lte=now_dt)
+        if allow_sellout_override:
+            available_from_q |= Q(product__start_next_variation_on_sellout=True)
+        return (
+            Q(active=True)
+            & Q(Q(available_until__isnull=True) | Q(available_until__gte=now_dt))
+            & available_from_q
+        )
 
     def delete(self, *args, **kwargs):
         self.vouchers.update(product=None, variation=None, quota=None)
@@ -1226,6 +1346,9 @@ class ProductBundle(models.Model):
 
     @staticmethod
     def clean_productvar(event, bundled_product, bundled_variation):
+        """Validate that bundled product belongs to the event and matches any supplied variation."""
+        if not bundled_product:
+            raise ValidationError(_('A product needs to be set for this bundle.'))
         if event != bundled_product.event:
             raise ValidationError(_('The bundled product must belong to the same event as the product.'))
         if bundled_product.has_variations and not bundled_variation:
@@ -1235,6 +1358,16 @@ class ProductBundle(models.Model):
 
     @staticmethod
     def clean_count(count):
+        """
+        Validate that the bundle count is a non-negative integer.
+
+        :param count: The bundle count to validate.
+        :raises ValidationError: If count is None, not an int, a boolean, or negative.
+        """
+        if count is None:
+            raise ValidationError(_('The count cannot be empty.'))
+        if isinstance(count, bool) or not isinstance(count, int):
+            raise ValidationError(_('The count must be an integer.'))
         if count < 0:
             raise ValidationError(_('The count needs to be equal to or greater than zero.'))
 

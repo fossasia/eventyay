@@ -350,7 +350,9 @@ class CartManager:
                 if op.product.hide_without_voucher and (op.voucher is None or not op.voucher.show_hidden_products):
                     raise CartError(error_messages['voucher_required'])
 
-            if not op.product.is_available() or (op.variation and not op.variation.active):
+            if not op.product.is_available() or (
+                op.variation and not op.variation.is_available(subevent=op.subevent)
+            ):
                 raise CartError(error_messages['unavailable'])
 
             if self._sales_channel not in op.product.sales_channels:
@@ -590,7 +592,16 @@ class CartManager:
 
             quotas = list(cp.quotas)
             if not quotas:
-                self._operations.append(self.RemoveOperation(position=cp))
+                self._queue_unavailable_removal(cp)
+                err = error_messages['unavailable']
+                continue
+
+            # Variation past available_until (or inactive) must not abort commit —
+            # remove the position so queued additions can still proceed.
+            if not cp.product.is_available() or (
+                cp.variation and not cp.variation.is_available(subevent=cp.subevent)
+            ):
+                self._queue_unavailable_removal(cp)
                 err = error_messages['unavailable']
                 continue
 
@@ -619,6 +630,34 @@ class CartManager:
 
             self._operations.append(op)
         return err
+
+    def _queue_unavailable_removal(self, cp):
+        """Remove an unavailable expired position; drop the whole bundle if needed."""
+        removed_roots = {cp.pk}
+        self._operations.append(self.RemoveOperation(position=cp))
+        # Bundles are all-or-nothing on create; keep the same rule on renew.
+        if cp.is_bundled and cp.addon_to_id:
+            already = {op.position.pk for op in self._operations if isinstance(op, self.RemoveOperation)}
+            if cp.addon_to_id not in already:
+                self._operations.append(self.RemoveOperation(position=cp.addon_to))
+            removed_roots.add(cp.addon_to_id)
+        self._drop_extends_for_removed(removed_roots)
+
+    def _drop_extends_for_removed(self, removed_roots):
+        """Cancel ExtendOperations voided by a removal and restore quota/voucher diffs."""
+        kept = []
+        for op in self._operations:
+            if isinstance(op, self.ExtendOperation) and (
+                op.position.pk in removed_roots
+                or (op.position.addon_to_id and op.position.addon_to_id in removed_roots)
+            ):
+                for q in op.quotas:
+                    self._quota_diff[q] -= op.count
+                if op.voucher:
+                    self._voucher_use_diff[op.voucher] -= op.count
+                continue
+            kept.append(op)
+        self._operations = kept
 
     @staticmethod
     def _apply_included_addon_prices(position, voucher):
@@ -1227,9 +1266,13 @@ class CartManager:
 
         self._operations.sort(key=lambda a: self.order[type(a)])
         seats_seen = set()
+        removed_pks = set()
 
         for iop, op in enumerate(self._operations):
             if isinstance(op, self.RemoveOperation):
+                removed_pks.add(op.position.pk)
+                for addon in op.position.addons.all():
+                    removed_pks.add(addon.pk)
                 if op.position.expires > self.now_dt:
                     for q in op.position.quotas:
                         quotas_ok[q] += 1
@@ -1237,66 +1280,79 @@ class CartManager:
                 op.position.delete()
 
             elif isinstance(op, (self.AddOperation, self.ExtendOperation)):
+                # A parent RemoveOperation may already have deleted this row (and its
+                # addons). Do not deduct quota for a renewal that cannot succeed.
+                if isinstance(op, self.ExtendOperation) and op.position.pk in removed_pks:
+                    continue
+
                 # Create a CartPosition for as much products as we can
                 requested_count = quota_available_count = voucher_available_count = op.count
 
-                if op.seat:
-                    if op.seat in seats_seen:
-                        err = err or error_messages['seat_multiple']
-                    seats_seen.add(op.seat)
-
-                if op.quotas:
-                    quota_available_count = min(requested_count, min(quotas_ok[q] for q in op.quotas))
-
-                if op.voucher:
-                    voucher_available_count = min(voucher_available_count, vouchers_ok[op.voucher])
-
-                if quota_available_count < 1:
-                    err = err or error_messages['unavailable']
-                elif quota_available_count < requested_count:
-                    err = err or error_messages['in_part']
-
-                if voucher_available_count < 1:
-                    if op.voucher in self._voucher_depend_on_cart:
-                        err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get('reservation_time', default='30')
-                    else:
-                        err = err or error_messages['voucher_redeemed']
-                elif voucher_available_count < requested_count:
-                    err = err or error_messages['voucher_redeemed_partial'] % voucher_available_count
-
-                available_count = min(quota_available_count, voucher_available_count)
-
-                if isinstance(op, self.AddOperation):
-                    for b in op.bundled:
-                        b_quotas = list(b.quotas)
-                        if not b_quotas:
-                            if not op.voucher or not op.voucher.allow_ignore_quota:
-                                err = err or error_messages['unavailable']
-                                available_count = 0
-                            continue
-                        b_quota_available_count = min(
-                            available_count * b.count,
-                            min(quotas_ok[q] for q in b_quotas),
-                        )
-                        if b_quota_available_count < b.count:
-                            err = err or error_messages['unavailable']
-                            available_count = 0
-                        elif b_quota_available_count < available_count * b.count:
-                            err = err or error_messages['in_part']
-                            available_count = b_quota_available_count // b.count
-                        for q in b_quotas:
-                            quotas_ok[q] -= available_count * b.count
-                            # TODO: is this correct?
-
-                for q in op.quotas:
-                    quotas_ok[q] -= available_count
-                if op.voucher:
-                    vouchers_ok[op.voucher] -= available_count
-
-                if any(qa < 0 for qa in quotas_ok.values()):
-                    # Safeguard, shouldn't happen
+                # Reject expired/upcoming products before deducting shared quota/voucher
+                # allowance so a later valid operation is not starved.
+                if not op.product.is_available() or (
+                    op.variation and not op.variation.is_available(subevent=op.subevent)
+                ):
                     err = err or error_messages['unavailable']
                     available_count = 0
+                else:
+                    if op.seat:
+                        if op.seat in seats_seen:
+                            err = err or error_messages['seat_multiple']
+                        seats_seen.add(op.seat)
+
+                    if op.quotas:
+                        quota_available_count = min(requested_count, min(quotas_ok[q] for q in op.quotas))
+
+                    if op.voucher:
+                        voucher_available_count = min(voucher_available_count, vouchers_ok[op.voucher])
+
+                    if quota_available_count < 1:
+                        err = err or error_messages['unavailable']
+                    elif quota_available_count < requested_count:
+                        err = err or error_messages['in_part']
+
+                    if voucher_available_count < 1:
+                        if op.voucher in self._voucher_depend_on_cart:
+                            err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get('reservation_time', default='30')
+                        else:
+                            err = err or error_messages['voucher_redeemed']
+                    elif voucher_available_count < requested_count:
+                        err = err or error_messages['voucher_redeemed_partial'] % voucher_available_count
+
+                    available_count = min(quota_available_count, voucher_available_count)
+
+                    if isinstance(op, self.AddOperation):
+                        for b in op.bundled:
+                            b_quotas = list(b.quotas)
+                            if not b_quotas:
+                                if not op.voucher or not op.voucher.allow_ignore_quota:
+                                    err = err or error_messages['unavailable']
+                                    available_count = 0
+                                continue
+                            b_quota_available_count = min(
+                                available_count * b.count,
+                                min(quotas_ok[q] for q in b_quotas),
+                            )
+                            if b_quota_available_count < b.count:
+                                err = err or error_messages['unavailable']
+                                available_count = 0
+                            elif b_quota_available_count < available_count * b.count:
+                                err = err or error_messages['in_part']
+                                available_count = b_quota_available_count // b.count
+                            for q in b_quotas:
+                                quotas_ok[q] -= available_count * b.count
+                                # TODO: is this correct?
+
+                    for q in op.quotas:
+                        quotas_ok[q] -= available_count
+                    if op.voucher:
+                        vouchers_ok[op.voucher] -= available_count
+
+                    if any(qa < 0 for qa in quotas_ok.values()):
+                        # Safeguard, shouldn't happen
+                        err = err or error_messages['unavailable']
+                        available_count = 0
 
                 if isinstance(op, self.AddOperation):
                     if op.seat and not op.seat.is_available(
@@ -1461,7 +1517,9 @@ class CartManager:
             with transaction.atomic():
                 self.now_dt = now_dt
                 self._extend_expiry_of_valid_existing_positions()
-                err, warning = self._perform_operations()
+                op_err, warning = self._perform_operations()
+            # Keep cleanup messages from extend/timeframe after successful renewals.
+            err = op_err or err
             if err:
                 raise CartError(err)
             # Store warning for later retrieval if needed
@@ -1508,12 +1566,14 @@ def get_fees(event, request, total, invoice_address, provider, positions):
     cs = cart_session(request)
     effective_testmode = event.testmode or event.private_testmode_tickets_enabled
     if cs.get('gift_cards'):
-        gcs = cs['gift_cards']
+        # Rebuild the list from cards that are still usable, so IDs the organizer no longer
+        # accepts (e.g. other organizers' cards from an older session) cannot block checkout.
+        gcs = []
         gc_qs = event.organizer.accepted_gift_cards.filter(pk__in=cs.get('gift_cards'), currency=event.currency)
         for gc in gc_qs:
             if gc.testmode != effective_testmode:
-                gcs.remove(gc.pk)
                 continue
+            gcs.append(gc.pk)
             fval = Decimal(gc.value)  # TODO: don't require an extra query
             fval = min(fval, total)
             if fval > 0:

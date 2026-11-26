@@ -129,6 +129,7 @@ var editor = {
     _history_pos: 0,
     _history_modification_in_progress: false,
     _toolbox_update_in_progress: false,
+    _color_picker_open: false,
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
@@ -471,7 +472,7 @@ var editor = {
                     bottom: editor._px2mm(bottom).toFixed(2),
                     fontsize: editor._get_text_max_font_pt(o).toFixed(1),
                     color: col,
-                    //lineheight: o.lineHeight,
+                    lineheight: Number(o.lineHeight) !== 1 ? o.lineHeight : undefined,
                     fontfamily: o.fontFamily,
                     bold: o.fontWeight === 'bold',
                     italic: o.fontStyle === 'italic',
@@ -480,6 +481,7 @@ var editor = {
                     autofit_width: editor._parse_autofit_width(o.autofit_width),
                     content: o.content,
                     text: o.content === "other" ? (o.placeholder_text || o.text) : o.text,
+                    text_i18n: o.text_i18n,
                     rotation: o.angle,
                     align: o.textAlign,
                 });
@@ -579,12 +581,18 @@ var editor = {
     },
 
     load: function(data) {
-        editor.fabric.clear();
-        for (var i in data) {
-            var d = data[i], o;
-            editor._add_from_data(d);
+        var historyChangeInProgress = editor._history_modification_in_progress;
+        editor._history_modification_in_progress = true;
+        try {
+            editor.fabric.clear();
+            for (var i in data) {
+                var d = data[i], o;
+                editor._add_from_data(d);
+            }
+            editor.fabric.renderAll();
+        } finally {
+            editor._history_modification_in_progress = historyChangeInProgress;
         }
-        editor.fabric.renderAll();
         editor._update_toolbox_values();
     },
 
@@ -826,6 +834,7 @@ var editor = {
             }
         }
         editor.history = [];
+        editor._history_pos = 0;
         editor._create_savepoint();
         editor.dirty = !!dump;
 
@@ -1013,8 +1022,13 @@ var editor = {
             if ($("#toolbox-poweredby-style").val() !== o.content) {
                 var data = editor.dump([o]);
                 data[0].content = $("#toolbox-poweredby-style").val();
-                var newo = editor._add_from_data(data[0]);
-                editor.fabric.remove(o);
+                editor._history_modification_in_progress = true;
+                try {
+                    var newo = editor._add_from_data(data[0]);
+                    editor.fabric.remove(o);
+                } finally {
+                    editor._history_modification_in_progress = false;
+                }
                 editor.fabric.discardActiveObject();
                 editor.fabric.setActiveObject(newo);
             }
@@ -1426,20 +1440,6 @@ var editor = {
                 editor._select_all();
                 handled = true;
                 break;
-            case 89:  /* Y */
-                if (!cmd) {
-                    return;
-                }
-                editor._redo();
-                handled = true;
-                break;
-            case 90:  /* Z */
-                if (!cmd) {
-                    return;
-                }
-                editor._undo();
-                handled = true;
-                break;
             case 88:  /* X */
                 if (!cmd || !thing) {
                     return;
@@ -1471,37 +1471,89 @@ var editor = {
         }
     },
 
+    _on_history_keydown: function (e) {
+        if (!editor.fabric || !editor._is_hotkey_target() || editor._color_picker_open || document.body.classList.contains('modal-open')) {
+            return;
+        }
+        var target = e.target;
+        var canvasPanel = editor.$cva.get(0).closest('.panel');
+        if (target !== document.body && !(canvasPanel && canvasPanel.contains(target)) && !target.closest('#editor-toolbox-area')) {
+            return;
+        }
+        if (target.closest('input, textarea, select, [contenteditable]')) {
+            return;
+        }
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) {
+            return;
+        }
+        var key = (e.key || '').toLowerCase();
+        if (key !== 'z' && key !== 'y') {
+            return;
+        }
+        e.preventDefault();
+        if (key === 'y' || e.shiftKey) {
+            editor._redo();
+        } else {
+            editor._undo();
+        }
+    },
+
     _create_savepoint: function () {
-        if (editor._history_modification_in_progress) {
+        // Toolbox syncs and open color pickers fire change events that are not edits of their own.
+        if (editor._history_modification_in_progress || editor._toolbox_update_in_progress || editor._color_picker_open) {
             return;
         }
         var state = editor.dump();
+        var current = editor.history[editor.history.length - 1 - editor._history_pos];
+        if (current && JSON.stringify(current) === JSON.stringify(state)) {
+            return;
+        }
         if (editor._history_pos > 0) {
             editor.history.splice(-1 * editor._history_pos, editor._history_pos);
             editor._history_pos = 0;
         }
         editor.history.push(state);
         editor.dirty = true;
+        editor._update_history_buttons();
+    },
+
+    _update_history_buttons: function () {
+        var undo = document.getElementById('toolbox-undo');
+        var redo = document.getElementById('toolbox-redo');
+        if (undo) {
+            undo.disabled = editor._history_pos >= editor.history.length - 1;
+        }
+        if (redo) {
+            redo.disabled = editor._history_pos <= 0;
+        }
+    },
+
+    _restore_history: function (pos) {
+        editor._history_modification_in_progress = true;
+        try {
+            editor.load(editor.history[editor.history.length - 1 - pos]);
+            editor._history_pos = pos;
+        } finally {
+            editor._history_modification_in_progress = false;
+        }
+        // load() re-adds text objects through _add_text(), which selects each one.
+        editor.fabric.discardActiveObject();
+        editor.fabric.renderAll();
+        editor._last_active_object = null;
+        editor._update_toolbox();
+        editor._update_history_buttons();
+        editor.dirty = true;
     },
 
     _undo: function undo() {
         if (editor._history_pos < editor.history.length - 1) {
-            editor._history_modification_in_progress = true;
-            editor._history_pos += 1;
-            editor.fabric.clear().renderAll();
-            editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
-            editor._history_modification_in_progress = false;
-            editor.dirty = true;
+            editor._restore_history(editor._history_pos + 1);
         }
     },
 
     _redo: function redo() {
         if (editor._history_pos > 0) {
-            editor._history_modification_in_progress = true;
-            editor._history_pos -= 1;
-            editor.load(editor.history[editor.history.length - 1 - editor._history_pos]);
-            editor._history_modification_in_progress = false;
-            editor.dirty = true;
+            editor._restore_history(editor._history_pos - 1);
         }
     },
 
@@ -1581,7 +1633,26 @@ var editor = {
     },
 
     _source_save: function () {
-        editor.load(JSON.parse($("#source-textarea").val()));
+        var failed = function (err) {
+            console.error('Could not apply the layout code', err);
+            alert(gettext('The layout code could not be applied. Please check it and try again.'));
+        };
+        var data;
+        try {
+            data = JSON.parse($("#source-textarea").val());
+        } catch (err) {
+            failed(err);
+            return;
+        }
+        var previous = editor.dump();
+        try {
+            editor.load(data);
+        } catch (err) {
+            editor.load(previous);
+            failed(err);
+            return;
+        }
+        editor._create_savepoint();
         $("#source-container").hide();
     },
 
@@ -1616,6 +1687,7 @@ var editor = {
         $("#editor-add-poweredby").click(function() {editor._add_poweredby("dark")});
         editor.$cva.get(0).tabIndex = 1000;
         editor.$cva.on("keydown", editor._on_keydown);
+        document.addEventListener('keydown', editor._on_history_keydown);
         $("#editor-save").on("click", editor._save);
         $("#editor-preview").on("click", editor._preview);
         $("#preview-modal").on("hidden.bs.modal", editor._revoke_preview_blob);
@@ -1667,8 +1739,8 @@ var editor = {
         $("#toolbox-object-align").on('click', 'button[data-align]', function () {
             editor._align_selection($(this).attr('data-align'));
         });
-        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
         $("#toolbox-autofit-width").bind('change', editor._update_values_from_toolbox);
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._create_savepoint);
@@ -1686,6 +1758,13 @@ var editor = {
             editor._create_savepoint();
         });
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
+        $("#toolbox .colorpickerfield").on('showPicker', function () {
+            editor._color_picker_open = true;
+        });
+        $("#toolbox .colorpickerfield").on('hidePicker', function () {
+            editor._color_picker_open = false;
+            editor._create_savepoint();
+        });
         $("#toolbox-copy").bind('click', editor._copy);
         $("#toolbox-cut").bind('click', editor._cut);
         $("#toolbox-delete").bind('click', editor._delete);
