@@ -1,4 +1,5 @@
 import datetime
+import threading
 from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
@@ -7,9 +8,10 @@ from zoneinfo import ZoneInfo
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
-from django.db import transaction
+from django.db import connections, transaction
+from django.db.backends.postgresql.operations import DatabaseOperations
 from django.db.models.query import QuerySet
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 from django_countries.fields import Country
@@ -100,6 +102,26 @@ def env():
         attendee_name_parts={'full_name': 'Lukas Gelöscht', '_scheme': 'full'},
     )
     return event, user, o, ticket
+
+
+original_execute_sql_flush = DatabaseOperations.execute_sql_flush
+
+
+def cascade_execute_sql_flush(self, sql_list):
+    cascade_sql = [
+        sql.replace(';', ' CASCADE;') if 'CASCADE' not in sql else sql
+        for sql in sql_list
+    ]
+    return original_execute_sql_flush(self, cascade_sql)
+
+
+DatabaseOperations.execute_sql_flush = cascade_execute_sql_flush
+
+
+@pytest.fixture(autouse=True)
+def disable_video_cache_updates():
+    with mock.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync'):
+        yield
 
 
 @pytest.mark.django_db
@@ -3700,3 +3722,97 @@ def test_refund_paid_order_concurrent_unconfirmed_payment_rejects_refund(client,
     )
     with scope(organizer=env[0].organizer):
         assert env[2].refunds.count() == 0
+
+
+@pytest.mark.django_db(transaction=True)
+@override_settings(SITE_URL='https://testserver')
+def test_refund_paid_order_concurrent_threads_serialize_and_prevent_over_refund(
+    env, monkeypatch
+):
+    """
+    Test that when two competing control-panel refund requests run concurrently on two
+    separate database connections in separate threads, database row locks serialize
+    them. One request succeeds and the competing request is rejected under lock,
+    guaranteeing that persisted refunds do not exceed the payment amount.
+    """
+    with scope(organizer=env[0].organizer):
+        p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
+        p.confirm()
+
+    first_lock_acquired = threading.Event()
+    second_lock_attempted = threading.Event()
+    lock_calls = []
+    thread_lock = threading.Lock()
+
+    original_select_for_update = QuerySet.select_for_update
+
+    def sync_select_for_update(self, *args, **kwargs):
+        qs = original_select_for_update(self, *args, **kwargs)
+        if self.model is OrderPayment:
+            with thread_lock:
+                lock_calls.append(threading.current_thread().name)
+                call_count = len(lock_calls)
+            if call_count == 1:
+                first_lock_acquired.set()
+                # Hold the first thread inside its locked transaction until the second
+                # thread attempts to acquire the lock and blocks in PostgreSQL.
+                second_lock_attempted.wait(timeout=5)
+            elif call_count == 2:
+                second_lock_attempted.set()
+        return qs
+
+    monkeypatch.setattr(QuerySet, 'select_for_update', sync_select_for_update)
+
+    results = []
+    errors = []
+
+    def submit_refund():
+        try:
+            c = Client()
+            c.force_login(env[1])
+            resp = c.post(
+                '/control/event/dummy/dummy/orders/FOO/refund',
+                {
+                    'start-partial_amount': '14.00',
+                    'start-mode': 'full',
+                    'start-action': 'mark_pending',
+                    f'refund-{p.pk}': '14.00',
+                    'perform': 'on',
+                },
+                follow=True,
+            )
+            results.append(resp)
+        except Exception as exc:
+            errors.append(exc)
+        finally:
+            connections.close_all()
+
+    t1 = threading.Thread(target=submit_refund, name='Refund-Thread-1')
+    t2 = threading.Thread(
+        target=lambda: (first_lock_acquired.wait(timeout=5), submit_refund()),
+        name='Refund-Thread-2',
+    )
+
+    t1.start()
+    t2.start()
+    t1.join(timeout=15)
+    t2.join(timeout=15)
+
+    assert not errors, f'Thread encountered an error: {errors}'
+    assert len(results) == 2
+
+    with scope(organizer=env[0].organizer):
+        refunds = list(env[2].refunds.values_list('amount', flat=True))
+
+    assert sum(refunds) <= Decimal('14.00'), f'Over-refund occurred: {sum(refunds)}'
+    assert refunds == [Decimal('14.00')]
+
+    assert all(r.status_code == 200 for r in results)
+    danger_results = [r for r in results if b'alert-danger' in r.content]
+    assert len(danger_results) == 1
+    assert (
+        b'You can not refund more than the amount of a payment that is not yet refunded.'
+        in danger_results[0].content
+    )
