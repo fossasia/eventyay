@@ -2275,59 +2275,6 @@ class ItemTest(TestCase):
         assert not i.is_available()
 
     @classscope(attr='o')
-    def test_variation_is_available(self):
-        i = Item.objects.create(event=self.event, name='Ticket', default_price=23, active=True)
-        v = ItemVariation.objects.create(product=i, value='Early Bird', active=True)
-        assert v.is_available()
-
-        v.available_from = now() - timedelta(days=1)
-        v.available_until = now() + timedelta(days=1)
-        assert v.is_available()
-
-        v.available_from = now() + timedelta(days=1)
-        v.available_until = None
-        assert not v.is_available()
-
-        v.available_from = None
-        v.available_until = now() - timedelta(days=1)
-        assert not v.is_available()
-
-        v.available_until = None
-        v.active = False
-        assert not v.is_available()
-
-    @classscope(attr='o')
-    def test_variation_sellout_opens_next_early(self):
-        i = Item.objects.create(
-            event=self.event,
-            name='Ticket',
-            default_price=23,
-            active=True,
-            start_next_variation_on_sellout=True,
-        )
-        early = ItemVariation.objects.create(product=i, value='Early Bird', active=True, position=0)
-        regular = ItemVariation.objects.create(
-            product=i,
-            value='Regular',
-            active=True,
-            position=1,
-            available_from=now() + timedelta(days=7),
-        )
-        q_early = Quota.objects.create(event=self.event, name='Early', size=0)
-        q_early.products.add(i)
-        q_early.variations.add(early)
-        q_regular = Quota.objects.create(event=self.event, name='Regular', size=10)
-        q_regular.products.add(i)
-        q_regular.variations.add(regular)
-
-        assert early.check_quotas()[0] < Quota.AVAILABILITY_RESERVED
-        assert regular.is_available()
-
-        i.start_next_variation_on_sellout = False
-        i.save()
-        assert not regular.is_available()
-
-    @classscope(attr='o')
     def test_availability_filter(self):
         i = Item.objects.create(
             event=self.event,

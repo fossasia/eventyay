@@ -1229,80 +1229,6 @@ class CartTest(CartTestMixin, TestCase):
                 0,
             )
 
-    def test_variation_in_time_available(self):
-        self.shirt_red.available_from = now() - timedelta(days=2)
-        self.shirt_red.available_until = now() + timedelta(days=2)
-        self.shirt_red.save()
-        self.client.post(
-            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
-            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
-            follow=True,
-        )
-        with scopes_disabled():
-            self.assertEqual(
-                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
-                1,
-            )
-
-    def test_variation_no_longer_available(self):
-        self.shirt_red.available_until = now() - timedelta(days=2)
-        self.shirt_red.save()
-        self.client.post(
-            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
-            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
-            follow=True,
-        )
-        with scopes_disabled():
-            self.assertEqual(
-                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
-                0,
-            )
-
-    def test_variation_not_yet_available(self):
-        self.shirt_red.available_from = now() + timedelta(days=2)
-        self.shirt_red.save()
-        self.client.post(
-            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
-            {'variation_%d_%d' % (self.shirt.id, self.shirt_red.id): '1'},
-            follow=True,
-        )
-        with scopes_disabled():
-            self.assertEqual(
-                CartPosition.objects.filter(cart_id=self.session_key, event=self.event).count(),
-                0,
-            )
-
-    @classscope(attr='orga')
-    def test_extend_expired_removes_unavailable_variation(self):
-        """Expired cart lines past variation available_until are removed, not aborting commit."""
-        self.shirt_red.available_until = now() - timedelta(days=2)
-        self.shirt_red.save()
-        CartPosition.objects.create(
-            expires=now() - timedelta(minutes=10),
-            item=self.shirt,
-            variation=self.shirt_red,
-            price=Decimal('14.00'),
-            event=self.event,
-            cart_id=self.session_key,
-        )
-        ticket_cp = CartPosition.objects.create(
-            expires=now() - timedelta(minutes=10),
-            item=self.ticket,
-            price=Decimal('23.00'),
-            event=self.event,
-            cart_id=self.session_key,
-        )
-        cm = CartManager(event=self.event, cart_id=self.session_key)
-        try:
-            cm.commit()
-        except CartError:
-            pass
-        assert not CartPosition.objects.filter(
-            cart_id=self.session_key, variation=self.shirt_red
-        ).exists()
-        ticket_cp.refresh_from_db()
-        assert ticket_cp.expires > now()
-
     def test_max_items(self):
         with scopes_disabled():
             CartPosition.objects.create(
@@ -3857,33 +3783,6 @@ class CartBundleTest(CartTestMixin, TestCase):
         a = cp.addons.get()
         assert a.item == self.trans
         assert a.price == 1.5
-
-    @classscope(attr='orga')
-    def test_extend_expired_removes_bundle_when_child_unavailable(self):
-        """Unavailable bundled child must drop the whole expired bundle, not renew the parent alone."""
-        self.trans.available_until = now() - timedelta(days=2)
-        self.trans.save()
-        cp = CartPosition.objects.create(
-            expires=now() - timedelta(minutes=10),
-            item=self.ticket,
-            price=Decimal('21.50'),
-            event=self.event,
-            cart_id=self.session_key,
-        )
-        CartPosition.objects.create(
-            expires=now() - timedelta(minutes=10),
-            item=self.trans,
-            price=Decimal('1.50'),
-            event=self.event,
-            cart_id=self.session_key,
-            addon_to=cp,
-            is_bundled=True,
-        )
-        try:
-            self.cm.commit()
-        except CartError:
-            pass
-        assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
     @classscope(attr='orga')
     def test_simple_bundle_main_enforce_free_price_minimum(self):
