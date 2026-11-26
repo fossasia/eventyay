@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import stripe
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -12,7 +13,8 @@ from eventyay.base.models import Order, OrderPayment, OrderRefund
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.orders import mark_order_refunded
 from eventyay.eventyay_common.tasks import update_billing_invoice_information
-from eventyay.helpers.stripe_utils import get_stripe_webhook_secret_key
+from eventyay.helpers.database import OF_SELF
+from eventyay.helpers.stripe_utils import get_stripe_webhook_secret_key, stripe_object_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +49,15 @@ def stripe_webhook_view(request):
         log_event('plugins', 'webhook.inbound', OUTCOME_FAILURE, error_code='invalid_payload', backend='stripe')
         logger.error('Error parsing payload: %s', e)
         return HttpResponse('Invalid payload', status=400)
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.SignatureVerificationError as e:
         log_event('plugins', 'webhook.inbound', OUTCOME_FAILURE, error_code='invalid_signature', backend='stripe')
         logger.error('Error verifying webhook signature: %s', e)
         return HttpResponse('Invalid signature', status=400)
 
+    data_object = stripe_object_to_dict(event.data.object)
+
     if event.type == 'payment_intent.succeeded':
-        invoice_id = event.data.object.get('metadata', {}).get('invoice_id')
+        invoice_id = data_object.get('metadata', {}).get('invoice_id')
         # Non-billing PaymentIntents (and Stripe dashboard test events) omit
         # invoice_id; skip the Celery task instead of enqueueing a no-op.
         if invoice_id:
@@ -62,7 +66,7 @@ def stripe_webhook_view(request):
             logger.info('Ignoring payment_intent.succeeded without invoice_id metadata (event %s)', getattr(event, 'id', None))
 
     elif event.type == 'charge.refunded':
-        charge = event.data.object
+        charge = data_object
         metadata = charge.get('metadata', {})
         order_code = metadata.get('order')
         payment_id = metadata.get('payment')
@@ -76,25 +80,26 @@ def stripe_webhook_view(request):
             payment = OrderPayment.objects.filter(info__contains=charge_id).first()
 
         if payment:
-            order = payment.order
-            # Process each refund in the charge
-            stripe_refunds = charge.get('refunds', {}).get('data', [])
+            with transaction.atomic():
+                # Lock the order so concurrent deliveries of the same event cannot record a refund twice.
+                order = Order.objects.select_for_update(of=OF_SELF).get(pk=payment.order_id)
+                stripe_refunds = charge.get('refunds', {}).get('data', [])
 
-            for sr in stripe_refunds:
-                amount = Decimal(sr.get('amount')) / 100
-                stripe_refund_id = sr.get('id')
+                for sr in stripe_refunds:
+                    amount = Decimal(sr.get('amount')) / 100
+                    stripe_refund_id = sr.get('id')
 
-                # Check if we already recorded this refund
-                if not order.refunds.filter(info__contains=stripe_refund_id).exists():
-                    order.refunds.create(
-                        payment=payment,
-                        source=OrderRefund.REFUND_SOURCE_EXTERNAL,
-                        state=OrderRefund.REFUND_STATE_DONE,
-                        amount=amount,
-                        provider='stripe',
-                        info=json.dumps({'id': stripe_refund_id, 'full_data': sr}),
-                    )
-                    logger.info('Recorded refund of %s for order %s via Stripe webhook.', amount, order.code)
+                    # Check if we already recorded this refund
+                    if not order.refunds.filter(info__contains=stripe_refund_id).exists():
+                        order.refunds.create(
+                            payment=payment,
+                            source=OrderRefund.REFUND_SOURCE_EXTERNAL,
+                            state=OrderRefund.REFUND_STATE_DONE,
+                            amount=amount,
+                            provider='stripe',
+                            info=json.dumps({'id': stripe_refund_id, 'full_data': sr}),
+                        )
+                        logger.info('Recorded refund of %s for order %s via Stripe webhook.', amount, order.code)
 
             # If the charge is fully refunded, mark the order as refunded (canceled)
             if charge.get('refunded'):
