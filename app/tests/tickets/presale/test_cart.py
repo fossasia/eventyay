@@ -1,5 +1,6 @@
 import datetime
 import json
+import re
 from datetime import timedelta
 from decimal import Decimal
 
@@ -38,6 +39,27 @@ from eventyay.base.services.cart import (
 )
 from tests.testutils.scope import classscope
 from tests.testutils.sessions import get_cart_session_key
+
+_AMOUNT_RE = re.compile(r'\d+(?:[.,]\d+)?')
+
+
+def assert_price(cell, expected):
+    """Assert a rendered price cell shows exactly ``expected``, not a number containing it.
+
+    ``assertIn('24', ...)`` also accepts a wrong amount that merely contains the
+    expected digits, so 124 for 24 passes; the cell renders one amount, so parse it
+    and compare the value.
+    """
+    text = cell.text.strip()
+    amounts = _AMOUNT_RE.findall(text)
+    assert amounts, f'no amount rendered in {text!r}'
+    # The cell renders the price first and the tax line after it ("incl. 19% taxes"),
+    # so the first amount is the price. A wrong amount is still caught: 124.00 for 24
+    # no longer contains the expected digits as a whole number, and it is parsed here.
+    assert Decimal(amounts[0].replace(',', '.')) == Decimal(str(expected)), (
+        f'expected {expected} rendered, got {text!r}'
+    )
+
 from tests.tickets.testdummy.signals import FoobarSalesChannel
 
 
@@ -179,8 +201,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '23')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '23')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -706,8 +728,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('24', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('24', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '24')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '24')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -731,8 +753,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '23')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '23')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -756,8 +778,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '23')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '23')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -894,8 +916,8 @@ class CartTest(CartTestMixin, TestCase):
         self.assertIn('Shirt', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('Red', doc.select('.cart .cart-row')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('14', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('14', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '14')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '14')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -923,8 +945,8 @@ class CartTest(CartTestMixin, TestCase):
         self.assertIn('Shirt', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('Red', doc.select('.cart .cart-row')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('16', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('16', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '16')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '16')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -990,8 +1012,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('2', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('46', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '23')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '46')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 2)
@@ -1557,8 +1579,8 @@ class CartTest(CartTestMixin, TestCase):
         self.assertIn('no longer available', doc.select('.alert-danger')[0].text)
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('23', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '23')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '23')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -2166,8 +2188,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('21', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('21', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '21')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '21')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -2203,8 +2225,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('41', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('41', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '41')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '41')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
@@ -2240,8 +2262,8 @@ class CartTest(CartTestMixin, TestCase):
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('Early-bird', doc.select('.cart .cart-row')[0].select('strong')[0].text)
         self.assertIn('1', doc.select('.cart .cart-row')[0].select('.count')[0].text)
-        self.assertIn('20.70', doc.select('.cart .cart-row')[0].select('.price')[0].text)
-        self.assertIn('20.70', doc.select('.cart .cart-row')[0].select('.price')[1].text)
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[0], '20.70')
+        assert_price(doc.select('.cart .cart-row')[0].select('.price')[1], '20.70')
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
