@@ -668,7 +668,7 @@ def test_loungemesh_grant_features_and_destination_binding(test_setup, client):
     admin_user = test_setup["admin_user"]
 
     # 1. Grant includes features
-    features_dict = {"notes": True, "whiteboard": False, "spatial_chat": True}
+    features_dict = {"notes": True, "whiteboard": False, "spatial_chat": True, "chat": False, "poll": False}
     token = issue_signed_grant(event, "hallway", user, "host", server=server, features=features_dict)
     claims = jwt.decode(token, server.api_secret, algorithms=["HS256"], audience="loungemesh")
     assert "features" in claims
@@ -1038,6 +1038,8 @@ def test_loungemesh_room_settings_host_only(test_setup):
         "notes": False,
         "whiteboard": False,
         "spatial_chat": False,
+        "chat": False,
+        "poll": False,
     }
 
 

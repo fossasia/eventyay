@@ -23,6 +23,8 @@ DEFAULT_FEATURES = {
     "notes": True,
     "whiteboard": True,
     "spatial_chat": True,
+    "chat": False,
+    "poll": False,
 }
 
 
@@ -487,12 +489,16 @@ def issue_signed_grant(
             "notes": bool(enable_notes),
             "whiteboard": bool(enable_whiteboard),
             "spatial_chat": bool(enable_spatial_chat),
+            "chat": False,
+            "poll": False,
         }
     elif isinstance(features, dict):
         features = {
             "notes": bool(features.get("notes", True)),
             "whiteboard": bool(features.get("whiteboard", True)),
             "spatial_chat": bool(features.get("spatial_chat", True)),
+            "chat": bool(features.get("chat", False)),
+            "poll": bool(features.get("poll", False)),
         }
 
     exp_ts = now_ts + expires_in_seconds
