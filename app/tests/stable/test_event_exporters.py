@@ -35,6 +35,30 @@ PLUGINS = (
     'eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf,eventyay.plugins.badges,'
     'eventyay.plugins.checkinlists,eventyay.plugins.reports'
 )
+# Every export an event has with the plugins above, so a test fails when one of them is no longer registered.
+BUILT_IN_EXPORTERS = [
+    'answerfiles',
+    'badges',
+    'checkinlist',
+    'checkinlistpdf',
+    'checkinlog',
+    'dekodi_nrei',
+    'giftcardredemptionlist',
+    'invoicedata',
+    'invoices',
+    'json',
+    'mailaddrs',
+    'orderlist',
+    'orderpositionlist',
+    'ordertaxes',
+    'ordertaxeslist',
+    'paymentlist',
+    'pdfoutput_all_tickets',
+    'pdfreport',
+    'quotalist',
+    'voucherattendees',
+    'waitinglist',
+]
 # dekodi is the only built-in export for an external tool, so it is listed under "Advanced / integrations".
 ADVANCED_EXPORTERS = {'dekodi_nrei'}
 
@@ -84,11 +108,16 @@ def form_data(field):
     """The value a visitor would submit for the field without changing it."""
     value = field.initial() if callable(field.initial) else field.initial
     if isinstance(field, forms.ModelMultipleChoiceField):
-        return [obj.pk for obj in (value or field.queryset)]
+        if value:
+            return [obj.pk if isinstance(obj, models.Model) else obj for obj in value]
+        # An optional field is submitted without a selection. A required one needs a selection to be valid.
+        return list(field.queryset.values_list('pk', flat=True)) if field.required else []
     if isinstance(field, forms.ModelChoiceField):
         if isinstance(value, models.Model):
             return value.pk
-        return value if value is not None else field.queryset.values_list('pk', flat=True).first()
+        if value is not None:
+            return value
+        return field.queryset.values_list('pk', flat=True).first() if field.required else ''
     if isinstance(field, forms.MultipleChoiceField):
         return value if value is not None else []
     if isinstance(field, forms.ChoiceField) and isinstance(value, (list, tuple)):
@@ -110,31 +139,28 @@ def render_export(exporter):
     return exporter.render(form.cleaned_data)
 
 
+def registered_exporters(event):
+    return {exporter.identifier: exporter for exporter in (r(event) for _, r in register_data_exporters.send(event))}
+
+
 @pytest.mark.django_db
-def test_every_export_runs_on_a_sample_event(sample_event):
-    # Runs every export with its default options the way the export task does, so a broken export
-    # fails here instead of when an organizer downloads it.
-    failures = {}
+@pytest.mark.parametrize('identifier', BUILT_IN_EXPORTERS)
+def test_export_runs_on_a_sample_event(sample_event, identifier):
+    # Runs the export with its default options the way the export task does, which only activates the
+    # organizer scope, so a broken export fails here instead of when an organizer downloads it.
     with scope(organizer=sample_event.organizer), language('en'):
-        exporters = [response(sample_event) for _, response in register_data_exporters.send(sample_event)]
-        assert len(exporters) >= 20
-        for exporter in exporters:
-            try:
-                filename, content_type, data = render_export(exporter)
-            except Exception as e:  # noqa: BLE001
-                failures[exporter.identifier] = repr(e)
-                continue
-            if not filename or not data:
-                failures[exporter.identifier] = 'returned an empty file'
-    assert not failures, '\n'.join(f'{identifier}: {error}' for identifier, error in sorted(failures.items()))
+        exporters = registered_exporters(sample_event)
+        assert identifier in exporters, f'{identifier} is not registered'
+        filename, content_type, data = render_export(exporters[identifier])
+    assert filename
+    assert data
 
 
 @pytest.mark.django_db
 def test_built_in_exports_have_a_group_help_text_and_file_type(sample_event):
     categories = {key for key, label in EXPORTER_CATEGORIES}
     with scope(organizer=sample_event.organizer):
-        for _, response in register_data_exporters.send(sample_event):
-            exporter = response(sample_event)
+        for exporter in registered_exporters(sample_event).values():
             assert exporter.description, exporter.identifier
             assert exporter.file_type, exporter.identifier
             if exporter.identifier in ADVANCED_EXPORTERS:

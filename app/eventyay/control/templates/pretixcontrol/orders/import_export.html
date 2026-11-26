@@ -40,19 +40,19 @@
         <!-- Export Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == "export" %}active{% endif %}" id="tab-export">
             {% for group in exporter_groups %}
-                {% if group.exporters or group.category == "payments_accounting" and show_banktransfer_refunds %}
+                {% if group.exporters or group.category == 'payments_accounting' and show_banktransfer_refunds %}
                     <section class="export-group">
                         <h2 class="export-group-heading">{{ group.label }}</h2>
                         {% for e in group.exporters %}
-                            {% include "pretixcontrol/orders/fragment_export_panel.html" %}
+                            {% include 'pretixcontrol/orders/fragment_export_panel.html' %}
                         {% endfor %}
-                        {% if group.category == "payments_accounting" and show_banktransfer_refunds %}
+                        {% if group.category == 'payments_accounting' and show_banktransfer_refunds %}
                             <details class="panel panel-default export-panel">
                                 <summary class="panel-heading export-panel-heading">
                                     <span class="export-panel-text">
-                                        <h3 class="panel-title export-panel-name">{% trans "Bank transfer refunds" %}</h3>
+                                        <h3 class="panel-title export-panel-name">{% trans 'Bank transfer refunds' %}</h3>
                                         <span class="export-panel-description">
-                                            {% trans "Refunds you still need to pay out by bank transfer. Only shown when bank transfer is enabled." %}
+                                            {% trans 'Refunds you still need to pay out by bank transfer. Only shown when bank transfer is enabled.' %}
                                         </span>
                                     </span>
                                     <span class="export-panel-file-type">CSV / SEPA XML</span>
@@ -65,7 +65,7 @@
                                         {% endblocktrans %}
                                     </p>
                                     <a href="{% url 'plugins:banktransfer:refunds.list' event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
-                                        <span class="fa fa-university"></span> {% trans "Go to bank transfer refunds export" %}
+                                        <span class="fa fa-university"></span> {% trans 'Go to bank transfer refunds export' %}
                                     </a>
                                 </div>
                             </details>
@@ -75,16 +75,16 @@
             {% endfor %}
 
             {% if advanced_exporters %}
-                <details class="export-group export-group-advanced" {% if "identifier" in request.GET or "exporter" in request.POST %}open{% endif %}>
+                <details class="export-group export-group-advanced" {% if 'identifier' in request.GET or 'exporter' in request.POST %}open{% endif %}>
                     <summary class="export-group-summary">
                         <h2 class="export-group-heading">
-                            {% trans "Advanced / integrations" %} ({{ advanced_exporters|length }})
+                            {% trans 'Advanced / integrations' %} ({{ advanced_exporters|length }})
                             <i class="fa fa-caret-right collapse-indicator" aria-hidden="true"></i>
                         </h2>
                     </summary>
                     <div>
                         {% for e in advanced_exporters %}
-                            {% include "pretixcontrol/orders/fragment_export_panel.html" %}
+                            {% include 'pretixcontrol/orders/fragment_export_panel.html' %}
                         {% endfor %}
                     </div>
                 </details>

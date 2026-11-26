@@ -15,7 +15,7 @@ class JSONExporter(BaseExporter):
     identifier = 'json'
     verbose_name = _('Full event data')
     category = 'attendees_orders'
-    description = _('All orders, products and settings in one file, for developers and other tools.')
+    description = _('All orders, products and questions in one file, for developers and other tools.')
     file_type = 'JSON'
 
     def render(self, form_data):

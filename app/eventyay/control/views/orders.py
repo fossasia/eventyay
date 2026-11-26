@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
+from typing import TypedDict
 from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
 
@@ -2768,7 +2769,13 @@ EXPORTER_ORDER = (
 )
 
 
-def group_exporters(exporters: list[BaseExporter]) -> tuple[list[dict], list[BaseExporter]]:
+class ExporterGroup(TypedDict):
+    category: str
+    label: str
+    exporters: list[BaseExporter]
+
+
+def group_exporters(exporters: list[BaseExporter]) -> tuple[list[ExporterGroup], list[BaseExporter]]:
     """
     Sort the exporters into the groups of the export page. Returns the groups in the order of
     ``EXPORTER_CATEGORIES`` and the exporters without a known category, shown as "Advanced / integrations".
@@ -2779,7 +2786,7 @@ def group_exporters(exporters: list[BaseExporter]) -> tuple[list[dict], list[Bas
             return EXPORTER_ORDER.index(exporter.identifier), ''
         return len(EXPORTER_ORDER), str(exporter.verbose_name)
 
-    groups = [{'category': key, 'label': label, 'exporters': []} for key, label in EXPORTER_CATEGORIES]
+    groups = [ExporterGroup(category=key, label=label, exporters=[]) for key, label in EXPORTER_CATEGORIES]
     exporters_by_category = {group['category']: group['exporters'] for group in groups}
     advanced = []
     for exporter in sorted(exporters, key=sort_key):
