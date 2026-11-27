@@ -17,12 +17,11 @@ const hasAjaxResultsRegion = function(root = document) {
     return !!root.querySelector('[data-ajax-results-region]');
 };
 
-let activeRequestController = null;
-let loadingStatusTimer = null;
+const REQUEST_TIMEOUT_MS = 15000;
 
-const translate = function(text) {
-    return typeof window.gettext === 'function' ? window.gettext(text) : text;
-};
+let activeRequestController = null;
+let activeResultsContainer = null;
+let loadingStatusTimer = null;
 
 const cancelLoadingStatusTimer = function() {
     if (loadingStatusTimer !== null) {
@@ -68,7 +67,9 @@ const finishLoadingStatus = function(statusEl) {
     }
 
     // Announce completion only if the loading message was actually spoken.
-    statusEl.textContent = statusEl.textContent ? translate('Events updated.') : '';
+    statusEl.textContent = statusEl.textContent
+        ? (typeof window.gettext === 'function' ? window.gettext('Events updated.') : 'Events updated.')
+        : '';
 };
 
 const enterLoadingState = function(resultsContainer) {
@@ -82,7 +83,7 @@ const enterLoadingState = function(resultsContainer) {
         loadingStatusTimer = window.setTimeout(function() {
             loadingStatusTimer = null;
             if (resultsContainer.getAttribute('aria-busy') === 'true') {
-                statusEl.textContent = translate('Loading…');
+                statusEl.textContent = typeof window.gettext === 'function' ? window.gettext('Loading…') : 'Loading…';
             }
         }, 0);
     }
@@ -282,30 +283,81 @@ const syncFormControls = function(oldContext, newContext) {
     });
 };
 
+const readResponseTextWithSignal = function(response, signal) {
+    if (!signal) {
+        return response.text();
+    }
+    if (signal.aborted) {
+        return Promise.reject(new DOMException('The operation was aborted.', 'AbortError'));
+    }
+
+    return new Promise(function(resolve, reject) {
+        const onAbort = function() {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+
+        Promise.resolve(response.text()).then(
+            function(text) {
+                signal.removeEventListener('abort', onAbort);
+                resolve(text);
+            },
+            function(error) {
+                signal.removeEventListener('abort', onAbort);
+                reject(error);
+            }
+        );
+    });
+};
+
 const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingState = false) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
     let requestController = null;
+    let requestTimeoutId = null;
+    let timedOut = false;
     let loadingStatus = null;
     if (!resultsContainer) {
         window.location.href = url;
         return;
     }
 
+    const previousContainer = activeResultsContainer;
+    if (activeRequestController) {
+        activeRequestController.abort();
+    }
+    if (previousContainer && previousContainer !== resultsContainer) {
+        clearLoadingStatus(previousContainer);
+        previousContainer.style.opacity = '1';
+    }
+
+    const preserveLoadingState = (
+        !showLoadingState
+        && previousContainer === resultsContainer
+        && resultsContainer.getAttribute('aria-busy') === 'true'
+    );
+
     if (showLoadingState) {
         loadingStatus = enterLoadingState(resultsContainer);
+    } else if (preserveLoadingState) {
+        loadingStatus = getLoadingStatusRegion(resultsContainer);
     } else {
-        clearLoadingStatus(resultsContainer);
         resultsContainer.style.opacity = '0.5';
     }
 
     try {
-        if (activeRequestController) {
-            activeRequestController.abort();
-        }
-
         requestController = new AbortController();
         activeRequestController = requestController;
+        activeResultsContainer = resultsContainer;
+
+        requestTimeoutId = window.setTimeout(function() {
+            requestTimeoutId = null;
+            if (activeRequestController !== requestController) {
+                return;
+            }
+            timedOut = true;
+            requestController.abort();
+        }, REQUEST_TIMEOUT_MS);
 
         const response = await fetch(url, {
             method: 'GET',
@@ -321,7 +373,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingS
             throw new Error('Unexpected response status: ' + response.status);
         }
 
-        const data = await response.text();
+        const data = await readResponseTextWithSignal(response, requestController.signal);
         // A newer request may have superseded this one while reading the body.
         if (activeRequestController !== requestController) {
             return;
@@ -333,6 +385,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingS
 
         if (!newResultsContainer) {
             clearLoadingStatus(resultsContainer);
+            resultsContainer.style.opacity = '1';
             window.location.href = url;
             return;
         }
@@ -357,7 +410,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingS
 
         updateNextInputs(url, tabContext.tabId);
     } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
+        if (error instanceof DOMException && error.name === 'AbortError' && !timedOut) {
             return;
         }
 
@@ -366,14 +419,20 @@ const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingS
         }
 
         clearLoadingStatus(resultsContainer);
+        resultsContainer.style.opacity = '1';
         console.error('AJAX filter update failed', {
             url: url,
             error: error,
         });
         window.location.href = url;
     } finally {
+        if (requestTimeoutId !== null) {
+            window.clearTimeout(requestTimeoutId);
+            requestTimeoutId = null;
+        }
         if (requestController && activeRequestController === requestController) {
             activeRequestController = null;
+            activeResultsContainer = null;
         }
     }
 };

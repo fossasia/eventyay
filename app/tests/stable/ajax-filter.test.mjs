@@ -13,18 +13,24 @@ function createTimerQueue() {
     const timers = new Map();
 
     return {
-        setTimeout(callback) {
+        setTimeout(callback, delay = 0) {
             const id = ++nextId;
-            timers.set(id, callback);
+            timers.set(id, { callback, delay });
             return id;
         },
         clearTimeout(id) {
             timers.delete(id);
         },
-        flush() {
-            const callbacks = Array.from(timers.values());
-            timers.clear();
-            callbacks.forEach(fn => fn());
+        flush(targetDelay) {
+            const entries = Array.from(timers.entries()).filter(
+                ([, entry]) => targetDelay === undefined || entry.delay === targetDelay
+            );
+            entries.forEach(([id]) => timers.delete(id));
+            entries.forEach(([, entry]) => entry.callback());
+        },
+        count(targetDelay) {
+            if (targetDelay === undefined) return timers.size;
+            return Array.from(timers.values()).filter(entry => entry.delay === targetDelay).length;
         },
         get size() {
             return timers.size;
@@ -56,6 +62,9 @@ function createMockElement(tagName, { classes = [], attrs = {} } = {}) {
         style: {},
         parentElement: null,
         textContent: '',
+        get id() {
+            return this.getAttribute('id') || '';
+        },
         get nextSibling() {
             if (!this.parentElement) return null;
             const idx = this.parentElement.children.indexOf(this);
@@ -199,8 +208,8 @@ function createTestEnv({ fetch, DOMParser, isEventsOverview = true } = {}) {
         createElement(tag) {
             return createMockElement(tag);
         },
-        getElementById() {
-            return null;
+        getElementById(id) {
+            return root.querySelectorAll('div').find(el => el.getAttribute('id') === id) || null;
         },
         querySelector(selector) {
             return root.querySelector(selector);
@@ -249,7 +258,7 @@ function createTestEnv({ fetch, DOMParser, isEventsOverview = true } = {}) {
     };
 
     runInNewContext(
-        `${source}\n;globalThis.__hooks = { fetchAndReplace, handleTabClick, handlePopState, getActiveController: () => activeRequestController };`,
+        `${source}\n;globalThis.__hooks = { fetchAndReplace, handleTabClick, handlePopState, getActiveController: () => activeRequestController, getActiveResultsContainer: () => activeResultsContainer, REQUEST_TIMEOUT_MS };`,
         context
     );
 
@@ -262,6 +271,7 @@ function createTestEnv({ fetch, DOMParser, isEventsOverview = true } = {}) {
         navigationUrls,
         pushedUrls,
         window,
+        createMockElement,
     };
 }
 
@@ -305,6 +315,7 @@ test('real AbortController cancellation does not clear newer loading state', asy
     // Spinner replaced old table immediately
     assert.equal(env.resultsContainer.getAttribute('aria-busy'), 'true');
     assert.equal(env.resultsContainer.children[0].getAttribute('aria-hidden'), 'true');
+    assert.equal(env.resultsContainer.children[0].children[0].className, 'fa fa-spinner fa-spin');
 
     const secondReq = env.fetchAndReplace('/events?tab=draft', true, null, true);
     // Let abort microtask settle while second request is still pending
@@ -314,8 +325,9 @@ test('real AbortController cancellation does not clear newer loading state', asy
     assert.deepEqual(firstSignalStates, [true]);
     // Newer request's busy state and pending announcement must still be intact
     assert.equal(env.resultsContainer.getAttribute('aria-busy'), 'true');
-    assert.equal(env.timers.size, 1);
-    env.timers.flush();
+    assert.equal(env.timers.count(0), 1);
+    assert.equal(env.timers.count(env.REQUEST_TIMEOUT_MS), 1);
+    env.timers.flush(0);
     const statusEl = env.root.querySelector('[data-ajax-loading-status]');
     assert.equal(statusEl.textContent, 'Loading…');
     assert.equal(env.resultsContainer.nextSibling, statusEl);
@@ -329,6 +341,7 @@ test('real AbortController cancellation does not clear newer loading state', asy
     assert.equal(env.root.children.includes(newerResults), true);
     assert.equal(statusEl.textContent, 'Events updated.');
     assert.equal(env.getActiveController(), null);
+    assert.equal(env.timers.size, 0);
 });
 
 test('ignores stale response.text() after newer request succeeds or fails', async () => {
@@ -466,4 +479,279 @@ test('scopes spinner to events-overview-tabs and preserves opacity fallback for 
     assert.equal(eventsEnv.resultsContainer.getAttribute('aria-busy'), 'true');
 
     response.resolve({ ok: true, text: () => Promise.resolve('<html>ok</html>') });
+});
+
+test('timeout aborts hanging fetch and falls back to full-page navigation', async () => {
+    const fetch = (_url, options) => new Promise((_resolve, reject) => {
+        options.signal.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+        });
+    });
+
+    const env = createTestEnv({ fetch, DOMParser: createHtmlParser(null) });
+    const req = env.fetchAndReplace('/events?tab=past', true, null, true);
+
+    assert.equal(env.resultsContainer.getAttribute('aria-busy'), 'true');
+    assert.equal(env.timers.count(env.REQUEST_TIMEOUT_MS), 1);
+
+    env.timers.flush(env.REQUEST_TIMEOUT_MS);
+    await req;
+
+    assert.equal(env.resultsContainer.getAttribute('aria-busy'), null);
+    assert.equal(env.resultsContainer.style.opacity, '1');
+    assert.deepEqual(env.navigationUrls, ['/events?tab=past']);
+    assert.equal(env.getActiveController(), null);
+    assert.equal(env.timers.size, 0);
+});
+
+test('timeout aborts hanging response.text() and falls back without unhandled rejection', async () => {
+    const neverBody = createDeferred();
+    const bodyStarted = createDeferred();
+    const fetch = () => Promise.resolve({
+        ok: true,
+        text() {
+            bodyStarted.resolve();
+            return neverBody.promise;
+        },
+    });
+
+    const env = createTestEnv({ fetch, DOMParser: createHtmlParser(null) });
+    const req = env.fetchAndReplace('/events?tab=past', true, null, true);
+    await bodyStarted.promise;
+
+    env.timers.flush(env.REQUEST_TIMEOUT_MS);
+    await req;
+
+    assert.equal(env.resultsContainer.getAttribute('aria-busy'), null);
+    assert.equal(env.resultsContainer.style.opacity, '1');
+    assert.deepEqual(env.navigationUrls, ['/events?tab=past']);
+    assert.equal(env.getActiveController(), null);
+    assert.equal(env.timers.size, 0);
+
+    // Late rejection of the abandoned body promise must not cause an unhandled rejection
+    neverBody.reject(new Error('late stream failure'));
+    await Promise.resolve();
+});
+
+test('timeout of old request does not affect a newer request', async () => {
+    const firstResponse = createDeferred();
+    const secondResponse = createDeferred();
+    let callCount = 0;
+
+    const fetch = (_url, options) => {
+        callCount += 1;
+        if (callCount === 1) {
+            return new Promise((_resolve, reject) => {
+                options.signal.addEventListener('abort', () => {
+                    reject(new DOMException('The operation was aborted.', 'AbortError'));
+                });
+                firstResponse.promise.catch(reject);
+            });
+        }
+        return secondResponse.promise;
+    };
+
+    const newerResults = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    const env = createTestEnv({ fetch, DOMParser: createHtmlParser(newerResults) });
+
+    const olderReq = env.fetchAndReplace('/events?tab=past', true, null, true);
+    const newerReq = env.fetchAndReplace('/events?tab=draft', true, null, true);
+
+    await olderReq;
+    assert.deepEqual(env.navigationUrls, []);
+    assert.equal(env.resultsContainer.getAttribute('aria-busy'), 'true');
+    assert.equal(env.timers.count(env.REQUEST_TIMEOUT_MS), 1);
+
+    secondResponse.resolve({
+        ok: true,
+        text: () => Promise.resolve('<html>draft</html>'),
+    });
+    await newerReq;
+
+    assert.equal(env.root.children.includes(newerResults), true);
+    assert.deepEqual(env.navigationUrls, []);
+    assert.equal(env.timers.size, 0);
+});
+
+test('normal successful request clears timeout and does not navigate', async () => {
+    const newerResults = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    const fetch = () => Promise.resolve({ ok: true, text: () => Promise.resolve('<html>ok</html>') });
+    const env = createTestEnv({ fetch, DOMParser: createHtmlParser(newerResults) });
+
+    await env.fetchAndReplace('/events?tab=past', true, null, true);
+
+    assert.deepEqual(env.navigationUrls, []);
+    assert.equal(env.timers.size, 0);
+    assert.equal(env.root.children.includes(newerResults), true);
+});
+
+test('preserves loading state when search or filter/clear starts during active tab transition', async () => {
+    const tabResponse = createDeferred();
+    const searchResponse = createDeferred();
+    let callCount = 0;
+
+    const fetch = (_url, options) => {
+        callCount += 1;
+        if (callCount === 1) {
+            return new Promise((_resolve, reject) => {
+                options.signal.addEventListener('abort', () => {
+                    reject(new DOMException('The operation was aborted.', 'AbortError'));
+                });
+                tabResponse.promise.catch(reject);
+            });
+        }
+        return searchResponse.promise;
+    };
+
+    const finalResults = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    const env = createTestEnv({ fetch, DOMParser: createHtmlParser(finalResults) });
+
+    // 1. Tab transition starts with spinner + aria-busy
+    const tabReq = env.fetchAndReplace('/events?tab=past', true, null, true);
+    env.timers.flush(0);
+    const statusEl = env.root.querySelector('[data-ajax-loading-status]');
+    assert.equal(statusEl.textContent, 'Loading…');
+
+    // 2. Search/filter/clear request starts on the same container while tab is still loading
+    const searchReq = env.fetchAndReplace('/events?tab=past&q=conf', true, null, false);
+    await tabReq;
+
+    // Busy state, spinner, opacity, and live region must all be preserved
+    assert.equal(env.resultsContainer.getAttribute('aria-busy'), 'true');
+    assert.equal(env.resultsContainer.style.opacity, '1');
+    assert.equal(env.resultsContainer.children[0].children[0].className, 'fa fa-spinner fa-spin');
+    assert.equal(statusEl.textContent, 'Loading…');
+
+    searchResponse.resolve({
+        ok: true,
+        text: () => Promise.resolve('<html>filtered</html>'),
+    });
+    await searchReq;
+
+    assert.equal(env.root.children.includes(finalResults), true);
+    assert.equal(finalResults.style.opacity, '1');
+    assert.equal(statusEl.textContent, 'Events updated.');
+    assert.equal(env.timers.size, 0);
+});
+
+test('generic request without active tab loading state dims container and preserves unrelated aria-busy', async () => {
+    const response = createDeferred();
+    const fetch = () => response.promise;
+    const newerResults = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    const env = createTestEnv({ fetch, DOMParser: createHtmlParser(newerResults) });
+    env.resultsContainer.setAttribute('aria-busy', 'false');
+
+    const req = env.fetchAndReplace('/events?q=test', true, null, false);
+
+    assert.equal(env.resultsContainer.style.opacity, '0.5');
+    assert.equal(env.resultsContainer.getAttribute('aria-busy'), 'false');
+    assert.equal(env.resultsContainer.children[0].tagName, 'TABLE');
+
+    response.resolve({
+        ok: true,
+        text: () => Promise.resolve('<html>ok</html>'),
+    });
+    await req;
+
+    assert.equal(newerResults.style.opacity, '1');
+    assert.equal(env.timers.size, 0);
+});
+
+test('same-container supersession keeps newer opacity while different-container supersession restores previous container', async () => {
+    const firstResponse = createDeferred();
+    const secondResponse = createDeferred();
+    const thirdResponse = createDeferred();
+    let callCount = 0;
+
+    const fetch = (_url, options) => {
+        callCount += 1;
+        const deferred = callCount === 1 ? firstResponse : callCount === 2 ? secondResponse : thirdResponse;
+        return new Promise((resolve, reject) => {
+            options.signal.addEventListener('abort', () => {
+                reject(new DOMException('The operation was aborted.', 'AbortError'));
+            });
+            deferred.promise.then(resolve, reject);
+        });
+    };
+
+    const tabA = createMockElement('div', { classes: ['tab-pane'], attrs: { id: 'live' } });
+    const containerA = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    containerA.appendChild(createMockElement('table'));
+    const formA = createMockElement('form', { classes: ['filter-form'] });
+    tabA.appendChild(formA);
+    tabA.appendChild(containerA);
+
+    const tabB = createMockElement('div', { classes: ['tab-pane'], attrs: { id: 'past' } });
+    const containerB = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    containerB.appendChild(createMockElement('table'));
+    const formB = createMockElement('form', { classes: ['filter-form'] });
+    tabB.appendChild(formB);
+    tabB.appendChild(containerB);
+
+    const newResultsA = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+    const newResultsB = createMockElement('div', { attrs: { 'data-ajax-results-region': '' } });
+
+    class MultiTabDOMParser {
+        parseFromString(html) {
+            return {
+                getElementById(id) {
+                    if (id === 'live' && html.includes('live')) {
+                        return {
+                            querySelector(sel) {
+                                return sel === '[data-ajax-results-region]' ? newResultsA : null;
+                            },
+                            querySelectorAll() {
+                                return [];
+                            },
+                        };
+                    }
+                    if (id === 'past' && html.includes('past')) {
+                        return {
+                            querySelector(sel) {
+                                return sel === '[data-ajax-results-region]' ? newResultsB : null;
+                            },
+                            querySelectorAll() {
+                                return [];
+                            },
+                        };
+                    }
+                    return null;
+                },
+                querySelector() {
+                    return null;
+                },
+                querySelectorAll() {
+                    return [];
+                },
+            };
+        }
+    }
+
+    const env = createTestEnv({ fetch, DOMParser: MultiTabDOMParser });
+    env.root.appendChild(tabA);
+    env.root.appendChild(tabB);
+
+    // 1. Same-container supersession on containerA: opacity must stay 0.5
+    const req1 = env.fetchAndReplace('/events?tab=live&q=1', true, formA, false);
+    assert.equal(containerA.style.opacity, '0.5');
+
+    const req2 = env.fetchAndReplace('/events?tab=live&q=2', true, formA, false);
+    await req1;
+    assert.equal(containerA.style.opacity, '0.5');
+
+    // 2. Different-container supersession from containerA to containerB: containerA must restore to 1
+    const req3 = env.fetchAndReplace('/events?tab=past', true, formB, true);
+    await req2;
+    assert.equal(containerA.style.opacity, '1');
+    assert.equal(containerB.getAttribute('aria-busy'), 'true');
+    assert.equal(containerB.style.opacity, '1');
+
+    thirdResponse.resolve({
+        ok: true,
+        text: () => Promise.resolve('<html>past</html>'),
+    });
+    await req3;
+
+    assert.equal(tabB.children.includes(newResultsB), true);
+    assert.equal(env.timers.size, 0);
 });
