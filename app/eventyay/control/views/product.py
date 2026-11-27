@@ -92,6 +92,22 @@ from . import ChartContainingView, CreateView, PaginationMixin, UpdateView
 
 logger = logging.getLogger(__name__)
 
+CUSTOMER_SYSTEM_ORDER_FIELDS: tuple[str, ...] = (
+    'order_email',
+    'order_phone',
+    'name_address',
+)
+ATTENDEE_SYSTEM_ORDER_FIELDS: tuple[str, ...] = (
+    'attendee_name_parts',
+    'attendee_email',
+    'company',
+    'job_title',
+    'street',
+    'zipcode',
+    'city',
+    'country',
+)
+
 
 class ProductList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = Product
@@ -412,6 +428,9 @@ def reorder_questions(request, organizer, event):
     except (JSONDecodeError, KeyError, ValueError):
         return HttpResponseBadRequest('expected JSON: {ids:[]}')
 
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        return HttpResponseBadRequest('expected JSON: {ids:[]}')
+
     digit_ids = [i for i in ids if i.isdigit()]
     input_questions = request.event.questions.none()
     if digit_ids:
@@ -429,24 +448,16 @@ def reorder_questions(request, organizer, event):
             q.position = pos
             q.save(update_fields=['position'])
 
-    system_question_order = {}
-    for s in (
-        'attendee_name_parts',
-        'attendee_email',
-        'company',
-        'job_title',
-        'street',
-        'zipcode',
-        'city',
-        'country',
-        'order_email',
-        'order_phone',
-        'name_address',
-    ):
-        if s in ids:
-            system_question_order[s] = ids.index(s)
-        else:
-            system_question_order[s] = -1
+    # Customer data and attendee data share this endpoint but submit only their own table's rows.
+    # Update only the system field group(s) present in `ids` so reordering one section does not
+    # overwrite the other section's saved positions with -1.
+    ids_set = set(ids)
+    existing_order = request.event.settings.system_question_order
+    system_question_order = dict(existing_order) if isinstance(existing_order, dict) else {}
+    for field_group in (ATTENDEE_SYSTEM_ORDER_FIELDS, CUSTOMER_SYSTEM_ORDER_FIELDS):
+        if ids_set.intersection(field_group):
+            for field_id in field_group:
+                system_question_order[field_id] = ids.index(field_id) if field_id in ids_set else -1
     request.event.settings.system_question_order = system_question_order
 
     return HttpResponse()
@@ -820,7 +831,10 @@ class QuestionCreate(EventPermissionRequiredMixin, QuestionMixin, CreateView):
                 return self.get(self.request, *self.args, **self.kwargs)
 
         system_question_order = self.request.event.settings.system_question_order or {}
-        max_system = max(system_question_order.values(), default=-1)
+        max_system = max(
+            (pos for key, pos in system_question_order.items() if key not in CUSTOMER_SYSTEM_ORDER_FIELDS),
+            default=-1,
+        )
         max_question = self.request.event.questions.aggregate(Max('position'))['position__max'] or -1
         form.instance.position = max(max_system, max_question) + 1
 
@@ -1823,9 +1837,8 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
             for field_id in SYSTEM_QUESTION_FIELDS
         }
 
-        customer_field_ids = ['order_email', 'order_phone', 'name_address']
         customer_field_order = []
-        for idx, field_id in enumerate(customer_field_ids):
+        for idx, field_id in enumerate(CUSTOMER_SYSTEM_ORDER_FIELDS):
             if system_question_order and field_id in system_question_order and system_question_order[field_id] >= 0:
                 position = system_question_order[field_id]
             else:
