@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -7,11 +8,15 @@ import stripe
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import override_settings
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django_scopes import scopes_disabled
 
+from eventyay.base.forms import SECRET_REDACTED
 from eventyay.base.meetup import (
+    PRIVACY_PUBLIC,
     get_rsvp_product_and_quota,
     provision_meetup_event,
 )
@@ -330,6 +335,172 @@ def test_settings_form_preserves_secret_key_when_empty_submitted(meetup_event):
     bound_form.save()
 
     assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_existing_secret'
+
+
+def _paid_meetup_form_data(meetup_event, secret_key):
+    form = EventCommonSettingsForm(obj=meetup_event)
+    data = form.initial.copy()
+    data['registration_fee'] = Decimal('10.00')
+    data['payment_stripe_publishable_key'] = 'pk_test_existing_pub'
+    data['payment_stripe_secret_key'] = secret_key
+    data['payment_stripe_merchant_country'] = 'US'
+    data.setdefault('timezone', 'UTC')
+    data.setdefault('locale', 'en')
+    data.setdefault('locales', ['en'])
+    return data
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_settings_form_keeps_stripe_secret_key_when_masked_value_is_submitted(meetup_event):
+    """Submitting the masked placeholder back leaves the saved key alone."""
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_existing_secret')
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+    meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+
+    bound_form = EventCommonSettingsForm(
+        data=_paid_meetup_form_data(meetup_event, SECRET_REDACTED), obj=meetup_event
+    )
+    assert bound_form.is_valid(), bound_form.errors
+    assert 'payment_stripe_secret_key' not in bound_form.changed_data
+    bound_form.save()
+
+    assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_existing_secret'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_settings_form_saves_new_stripe_secret_key(meetup_event):
+    """Typing a new key still replaces the saved one."""
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_existing_secret')
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+    meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+
+    bound_form = EventCommonSettingsForm(
+        data=_paid_meetup_form_data(meetup_event, 'sk_test_new_secret'), obj=meetup_event
+    )
+    assert bound_form.is_valid(), bound_form.errors
+    bound_form.save()
+
+    assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_new_secret'
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_settings_page_does_not_send_saved_stripe_secret_key_to_browser(organizer_client, meetup_event):
+    with scopes_disabled():
+        meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_should_stay_on_server')
+    url = reverse(
+        'eventyay_common:event.update',
+        kwargs={'organizer': meetup_event.organizer.slug, 'event': meetup_event.slug},
+    )
+
+    response = organizer_client.get(url)
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert 'sk_test_should_stay_on_server' not in content
+    secret_input = re.search(r'<input[^>]*name="settings-payment_stripe_secret_key"[^>]*>', content)
+    assert secret_input is not None
+    assert f'value="{SECRET_REDACTED}"' in secret_input.group(0)
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_settings_page_save_keeps_stripe_secret_key_shown_as_masked(organizer_client, meetup_event):
+    """Saving the page sends ***** back for the key; other changes still go through."""
+    with scopes_disabled():
+        meetup_event.settings.set('payment_stripe__enabled', True)
+        meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+        meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_existing_secret')
+        meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+    url = reverse(
+        'eventyay_common:event.update',
+        kwargs={'organizer': meetup_event.organizer.slug, 'event': meetup_event.slug},
+    )
+
+    response = organizer_client.post(
+        url,
+        {
+            'name_0': 'Meetup Event Test',
+            'slug': meetup_event.slug,
+            'date_from_0': f'{meetup_event.date_from:%Y-%m-%d}',
+            'date_from_1': f'{meetup_event.date_from:%H:%M:%S}',
+            'date_to_0': f'{meetup_event.date_to:%Y-%m-%d}',
+            'date_to_1': f'{meetup_event.date_to:%H:%M:%S}',
+            'settings-timezone': 'UTC',
+            'settings-locale': 'en',
+            'settings-locales': ['en'],
+            'settings-privacy_type': PRIVACY_PUBLIC,
+            'settings-registration_fee': '12.00',
+            'settings-payment_stripe_publishable_key': 'pk_test_existing_pub',
+            'settings-payment_stripe_secret_key': SECRET_REDACTED,
+            'settings-payment_stripe_merchant_country': 'US',
+            'header-links-TOTAL_FORMS': '0',
+            'header-links-INITIAL_FORMS': '0',
+            'footer-links-TOTAL_FORMS': '0',
+            'footer-links-INITIAL_FORMS': '0',
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    with scopes_disabled():
+        meetup_event.settings.flush()
+        product, quota = get_rsvp_product_and_quota(meetup_event)
+        assert product.default_price == Decimal('12.00')
+        assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_existing_secret'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_settings_form_rejects_masked_value_when_no_key_is_saved(meetup_event):
+    """***** only means "keep the saved key", so it cannot stand in for a missing key."""
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+    meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+
+    bound_form = EventCommonSettingsForm(
+        data=_paid_meetup_form_data(meetup_event, SECRET_REDACTED), obj=meetup_event
+    )
+
+    assert not bound_form.is_valid()
+    assert 'payment_stripe_secret_key' in bound_form.errors
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_settings_form_keeps_stripe_secret_key_when_free_meetup_submits_empty_field(meetup_event):
+    """An empty secret key field keeps the saved key on a free meetup too."""
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_existing_secret')
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+    meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+
+    data = _paid_meetup_form_data(meetup_event, '')
+    data['registration_fee'] = Decimal('0.00')
+    data['payment_stripe__enabled'] = False
+    bound_form = EventCommonSettingsForm(data=data, obj=meetup_event)
+    assert bound_form.is_valid(), bound_form.errors
+    bound_form.save()
+
+    assert meetup_event.settings.get('payment_stripe_secret_key') == 'sk_test_existing_secret'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_settings_form_shows_newly_typed_key_again_after_an_error(meetup_event):
+    """A key typed before a form error is shown again, so the retry saves it."""
+    meetup_event.settings.set('payment_stripe_secret_key', 'sk_test_existing_secret')
+    meetup_event.settings.set('payment_stripe_publishable_key', 'pk_test_existing_pub')
+    meetup_event.settings.set('payment_stripe_merchant_country', 'US')
+
+    data = _paid_meetup_form_data(meetup_event, 'sk_test_new_secret')
+    data['registration_limit'] = 0  # below the minimum of 1
+    bound_form = EventCommonSettingsForm(data=data, obj=meetup_event)
+    assert not bound_form.is_valid()
+
+    rendered = str(bound_form['payment_stripe_secret_key'])
+    assert 'value="sk_test_new_secret"' in rendered
+    assert 'sk_test_existing_secret' not in rendered
 
 
 @pytest.mark.django_db

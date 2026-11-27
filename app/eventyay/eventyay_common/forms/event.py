@@ -14,7 +14,13 @@ from django_scopes import scope
 
 from eventyay.timezones import common_timezones
 
-from eventyay.base.forms import I18nModelForm, SettingsForm
+from eventyay.base.forms import (
+    SECRET_REDACTED,
+    I18nModelForm,
+    SecretKeySettingsField,
+    SecretKeySettingsWidget,
+    SettingsForm,
+)
 from eventyay.base.meetup import (
     PRIVACY_CHOICES,
     PRIVACY_PRIVATE,
@@ -101,7 +107,7 @@ class EventCommonSettingsForm(SettingsForm):
             fee = data.get('registration_fee')
             if fee and fee > Decimal('0.00'):
                 pub_key = data.get('payment_stripe_publishable_key') or self.event.settings.get('payment_stripe_publishable_key')
-                sec_key = data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
+                sec_key = self._stripe_secret_key(data.get('payment_stripe_secret_key'))
                 country = data.get('payment_stripe_merchant_country') or self.event.settings.get('payment_stripe_merchant_country')
                 if not pub_key:
                     self.add_error('payment_stripe_publishable_key', _('Please enter your Stripe publishable key for paid registration.'))
@@ -111,6 +117,16 @@ class EventCommonSettingsForm(SettingsForm):
                     self.add_error('payment_stripe_merchant_country', _('Please select your Stripe merchant country.'))
 
         return data
+
+    def _stripe_secret_key(self, value):
+        """The key to use for a submitted secret key value.
+
+        ``*****`` (the masked saved key) and an empty field both mean "keep the key
+        that is saved right now"; anything else is a newly typed key.
+        """
+        if value and value != SECRET_REDACTED:
+            return value
+        return self.event.settings.get('payment_stripe_secret_key', default='')
 
     def save(self):
         for image_field in ('event_logo_image', 'logo_image', 'event_preview_image', 'og_image'):
@@ -142,6 +158,7 @@ class EventCommonSettingsForm(SettingsForm):
                 self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
 
         if is_meetup_event(self.event):
+            stripe_cleared = False
             if 'privacy_type' in self.cleaned_data:
                 is_priv = self.cleaned_data['privacy_type'] == PRIVACY_PRIVATE
                 set_meetup_privacy(self.event, is_private=is_priv)
@@ -169,7 +186,7 @@ class EventCommonSettingsForm(SettingsForm):
                         product.default_price = reg_fee
                         product.save(update_fields=['default_price'])
 
-                stripe_sec = self.cleaned_data.get('payment_stripe_secret_key') or self.event.settings.get('payment_stripe_secret_key')
+                stripe_sec = self._stripe_secret_key(self.cleaned_data.get('payment_stripe_secret_key'))
                 if reg_fee > Decimal('0.00') and stripe_sec:
                     self.cleaned_data['payment_stripe__enabled'] = True
                 elif reg_fee == Decimal('0.00') and not self.cleaned_data.get('payment_stripe_publishable_key'):
@@ -177,10 +194,14 @@ class EventCommonSettingsForm(SettingsForm):
                     self.cleaned_data['payment_stripe_publishable_key'] = ''
                     self.cleaned_data['payment_stripe_merchant_country'] = ''
                     self.cleaned_data['payment_stripe__enabled'] = False
+                    stripe_cleared = True
 
-            if 'payment_stripe_secret_key' in self.cleaned_data and not self.cleaned_data.get('payment_stripe_secret_key'):
-                if self.cleaned_data.get('registration_fee', Decimal('0.00')) > Decimal('0.00') or self.cleaned_data.get('payment_stripe__enabled'):
-                    self.cleaned_data['payment_stripe_secret_key'] = self.initial.get('payment_stripe_secret_key', '')
+            # Only the "free meetup without Stripe" case above removes the key. Otherwise
+            # ***** or an empty field keeps the key that is saved right now.
+            if 'payment_stripe_secret_key' in self.cleaned_data and not stripe_cleared:
+                self.cleaned_data['payment_stripe_secret_key'] = self._stripe_secret_key(
+                    self.cleaned_data['payment_stripe_secret_key']
+                )
 
         return super().save()
 
@@ -282,12 +303,23 @@ class EventCommonSettingsForm(SettingsForm):
                 validators=(StripeKeyValidator(['pk_live_', 'pk_test_']),),
                 widget=forms.TextInput(attrs={'placeholder': _('Publishable key')}),
             )
-            self.fields['payment_stripe_secret_key'] = forms.CharField(
+            # Show a saved key as ***** like the SMTP password on this page, so the
+            # real key never ends up in the page HTML.
+            self.fields['payment_stripe_secret_key'] = SecretKeySettingsField(
                 label=_('Secret key'),
                 required=False,
                 validators=(StripeKeyValidator(['sk_live_', 'sk_test_', 'rk_live_', 'rk_test_']),),
-                widget=forms.PasswordInput(render_value=True, attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'}),
+                widget=SecretKeySettingsWidget(attrs={'placeholder': _('Secret key')}),
             )
+            submitted_key = self.data.get(self.add_prefix('payment_stripe_secret_key')) if self.is_bound else None
+            if submitted_key and submitted_key != SECRET_REDACTED:
+                # If the page comes back with an error, show the key that was just typed
+                # instead of *****, so saving again does not quietly keep the old key.
+                # This is the organiser's own input; the saved key is still never sent.
+                self.fields['payment_stripe_secret_key'].widget = forms.PasswordInput(
+                    render_value=True,
+                    attrs={'placeholder': _('Secret key'), 'autocomplete': 'new-password'},
+                )
             self.fields['payment_stripe_merchant_country'] = forms.ChoiceField(
                 label=_('Merchant country'),
                 required=False,
