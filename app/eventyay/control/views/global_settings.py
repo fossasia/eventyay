@@ -128,6 +128,11 @@ class GlobalTicketingSettingsView(AdministratorPermissionRequiredMixin, FormView
         return reverse('eventyay_admin:admin.global.ticketing')
 
 
+class TicketingRetentionRedirectView(AdministratorPermissionRequiredMixin, RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse('eventyay_admin:admin.global.ticketing') + '#tab-data-retention'
+
+
 class LegacyBusinessSettingsRedirectView(AdministratorPermissionRequiredMixin, RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         return business_settings_url()

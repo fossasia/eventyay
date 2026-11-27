@@ -22,6 +22,15 @@ from eventyay.control.forms.global_settings import (
 )
 
 
+RETENTION_POST_DEFAULTS = {
+    'ticketing_retention_manual_min_days': '14',
+    'ticketing_retention_periods': '30, 60, 90, 180, 365',
+    'ticketing_retention_warning_days': '14',
+    'ticketing_retention_allow_trash': 'on',
+    'ticketing_retention_trash_days': '30',
+}
+
+
 @pytest.fixture
 def admin_user():
     return User.objects.create_user('admin@example.com', 'dummy', is_staff=True)
@@ -205,7 +214,7 @@ class TestGlobalTicketingSettings:
         resp_non_staff = client.get(url)
         assert resp_non_staff.status_code == 403
 
-    def test_ticketing_page_renders_payment_gateways_and_cart(self, staff_client):
+    def test_ticketing_page_renders_tabs(self, staff_client):
         url = reverse('eventyay_admin:admin.global.ticketing')
         response = staff_client.get(url)
         assert response.status_code == 200
@@ -215,6 +224,7 @@ class TestGlobalTicketingSettings:
         assert '<h1>Ticketing Settings</h1>' in content
         assert 'id="tab-payment-gateways"' in content
         assert 'id="tab-cart"' in content
+        assert 'id="tab-data-retention"' in content
 
         # Payment gateway providers
         assert 'PayPal — Ticket Payments' in content
@@ -306,6 +316,7 @@ class TestGlobalTicketingSettings:
                 'payment_stripe_connect_client_id': 'ca_test_client_id',
                 'payment_stripe_connect_publishable_key': 'pk_live_ticket_stripe_key',
                 'payment_paypal_connect_endpoint': 'live',
+                **RETENTION_POST_DEFAULTS,
                 'reservation_time': '30',
                 'max_products_per_order': '0',
             })
@@ -322,6 +333,7 @@ class TestGlobalTicketingSettings:
         post_data = {
             'payment_paypal_connect_client_id': 'paypal_client_123',
             'payment_paypal_connect_endpoint': 'sandbox',
+            **RETENTION_POST_DEFAULTS,
             'reservation_time': '45',
             'max_products_per_order': '10',
         }
@@ -353,6 +365,7 @@ class TestGlobalTicketingSettings:
         form = GlobalTicketingSettingsForm(
             data={
                 'payment_paypal_connect_endpoint': 'https://api.sandbox.paypal.com',
+                **RETENTION_POST_DEFAULTS,
                 'reservation_time': '30',
                 'max_products_per_order': '0',
             }
@@ -493,6 +506,7 @@ class TestPluginProvidedPaymentSettingsRegression:
             # Verify saving via GlobalTicketingSettingsForm persists the value
             post_data = {
                 'payment_customplugin_api_key': 'test_secret_token_123',
+                **RETENTION_POST_DEFAULTS,
                 'reservation_time': '30',
                 'max_products_per_order': '5',
             }
