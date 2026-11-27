@@ -2933,6 +2933,11 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
         )
 
 
+class InvoiceDownloadsView(EventPermissionRequiredMixin, TemplateView):
+    permission = 'can_view_orders'
+    template_name = 'pretixcontrol/orders/invoice_downloads.html'
+
+
 class ExportView(EventPermissionRequiredMixin, ExportMixin, TemplateView):
     permission = ('can_view_orders', 'can_change_orders', 'can_manage_bank_transfers')
     template_name = 'pretixcontrol/orders/import_export.html'
