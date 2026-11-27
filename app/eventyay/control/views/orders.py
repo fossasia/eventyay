@@ -1214,13 +1214,16 @@ class OrderRefundView(OrderView):
             manual_value = self.request.POST.get('refund-manual', '0') or '0'
             manual_value = formats.sanitize_separators(manual_value)
             try:
-                manual_value = Decimal(manual_value)
+                manual_value = round_decimal(Decimal(manual_value), self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                refund_selected += manual_value
-                if manual_value:
+                if manual_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                elif manual_value > Decimal('0.00'):
+                    refund_selected += manual_value
                     refunds.append(
                         OrderRefund(
                             order=self.order,
@@ -1241,12 +1244,15 @@ class OrderRefundView(OrderView):
             giftcard_value = self.request.POST.get('refund-new-giftcard', '0') or '0'
             giftcard_value = formats.sanitize_separators(giftcard_value)
             try:
-                giftcard_value = Decimal(giftcard_value)
+                giftcard_value = round_decimal(Decimal(giftcard_value), self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                if giftcard_value:
+                if giftcard_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                elif giftcard_value > Decimal('0.00'):
                     refund_selected += giftcard_value
                     refunds.append(
                         OrderRefund(
@@ -1264,12 +1270,15 @@ class OrderRefundView(OrderView):
             offsetting_value = self.request.POST.get('refund-offsetting', '0') or '0'
             offsetting_value = formats.sanitize_separators(offsetting_value)
             try:
-                offsetting_value = Decimal(offsetting_value)
+                offsetting_value = round_decimal(Decimal(offsetting_value), self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                if offsetting_value:
+                if offsetting_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                elif offsetting_value > Decimal('0.00'):
                     refund_selected += offsetting_value
                     try:
                         order = Order.objects.get(
@@ -1301,12 +1310,16 @@ class OrderRefundView(OrderView):
                 prof_value = self.request.POST.get(f'newrefund-{identifier}', '0') or '0'
                 prof_value = formats.sanitize_separators(prof_value)
                 try:
-                    prof_value = Decimal(prof_value)
+                    prof_value = round_decimal(Decimal(prof_value), self.request.event.currency)
                 except (DecimalException, TypeError):
                     messages.error(self.request, _('You entered an invalid number.'))
                     is_valid = False
                     continue
-                if prof_value > Decimal('0.00'):
+                if prof_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                    continue
+                elif prof_value > Decimal('0.00'):
                     try:
                         refund = prov.new_refund_control_form_process(self.request, prof_value, self.order)
                     except ValidationError as e:
@@ -1315,6 +1328,7 @@ class OrderRefundView(OrderView):
                         is_valid = False
                         continue
                     if refund:
+                        refund.amount = round_decimal(refund.amount, self.request.event.currency)
                         refund_selected += refund.amount
                         refund.comment = comment
                         refund.source = OrderRefund.REFUND_SOURCE_ADMIN
@@ -1324,13 +1338,17 @@ class OrderRefundView(OrderView):
                 value = self.request.POST.get('refund-{}'.format(p.pk), '0') or '0'
                 value = formats.sanitize_separators(value)
                 try:
-                    value = Decimal(value)
+                    value = round_decimal(Decimal(value), self.request.event.currency)
                 except (DecimalException, TypeError):
                     messages.error(self.request, _('You entered an invalid number.'))
                     is_valid = False
                 else:
                     if value == 0:
                         continue
+                    elif value < Decimal('0.00'):
+                        messages.error(self.request, _('You entered an invalid number.'))
+                        is_valid = False
+                        break
                     elif value > p.available_amount:
                         messages.error(
                             self.request,
@@ -1504,18 +1522,34 @@ class OrderRefundView(OrderView):
 
             if refund_selected == full_refund and is_valid:
                 for r in refunds:
-                    self.order.log_action(
-                        'eventyay.event.order.refund.created',
-                        {
-                            'local_id': r.local_id,
-                            'provider': r.provider,
-                        },
-                        user=self.request.user,
-                    )
+                    try:
+                        self.order.log_action(
+                            'eventyay.event.order.refund.created',
+                            {
+                                'local_id': r.local_id,
+                                'provider': r.provider,
+                            },
+                            user=self.request.user,
+                        )
+                    except Exception:
+                        logger.exception('Failed to log refund creation for refund %s', r.pk)
+
                     if r.provider != 'manual':
                         try:
                             r.payment_provider.execute_refund(r)
                         except PaymentException as e:
+                            r.state = OrderRefund.REFUND_STATE_FAILED
+                            r.save()
+                            messages.error(
+                                self.request,
+                                _(
+                                    'One of the refunds failed to be processed. You should '
+                                    'retry to refund in a different way. The error message '
+                                    'was: {}'
+                                ).format(str(e)),
+                            )
+                        except Exception as e:
+                            logger.exception('Unexpected error executing refund %s: %s', r.pk, e)
                             r.state = OrderRefund.REFUND_STATE_FAILED
                             r.save()
                             messages.error(

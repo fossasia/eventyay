@@ -2030,7 +2030,7 @@ class OrderPayment(models.Model):
     @property
     def refunded_amount(self):
         """
-        The sum of all refund amounts in ``done``, ``transit``, or ``created`` states associated
+        The sum of all refund amounts in ``done``, ``transit``, ``created``, or ``external`` states associated
         with this payment.
         """
         return self.refunds.filter(
@@ -2038,6 +2038,7 @@ class OrderPayment(models.Model):
                 OrderRefund.REFUND_STATE_DONE,
                 OrderRefund.REFUND_STATE_TRANSIT,
                 OrderRefund.REFUND_STATE_CREATED,
+                OrderRefund.REFUND_STATE_EXTERNAL,
             )
         ).aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
 
