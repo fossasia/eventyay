@@ -1,4 +1,5 @@
 import importlib.util
+import logging
 import os
 import sys
 from datetime import timedelta
@@ -1557,21 +1558,39 @@ SENTRY_ENABLED = bool(SENTRY_DSN)
 SENTRY_DATA_COLLECTION = {
     'user_info': False,
     'cookies': {'mode': 'off'},
-    'http_headers': {'request': {'mode': 'denylist', 'terms': ['forwarded', 'x-real-ip']}},
+    'http_headers': {
+        'request': {
+            'mode': 'denylist',
+            'terms': [
+                'authorization',
+                'cookie',
+                'x-csrftoken',
+                'x-forwarded-for',
+                'x-real-ip',
+                'forwarded',
+            ],
+        }
+    },
     'http_bodies': [],
-    'stack_frame_variables': {'mode': 'denylist'},
+    'database_query_data': False,
+    'queues': False,
+    'stack_frame_variables': False,
 }
 if SENTRY_DSN:
     import sentry_sdk
-    from sentry_sdk.integrations.celery import CeleryIntegration
-    from sentry_sdk.integrations.django import DjangoIntegration
-
     from django.core.exceptions import PermissionDenied
     from django.http import Http404
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[CeleryIntegration(), DjangoIntegration()],
+        integrations=[
+            CeleryIntegration(),
+            DjangoIntegration(),
+            LoggingIntegration(event_level=logging.ERROR),
+        ],
         data_collection=SENTRY_DATA_COLLECTION,
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,

@@ -1,4 +1,6 @@
 import asyncio
+import json
+import logging
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -7,18 +9,24 @@ import sentry_sdk
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from django.conf import settings as django_settings
+from django.core.handlers.wsgi import WSGIHandler
+from django.db import connection
 from django.test import RequestFactory
-from sentry_sdk.integrations._wsgi_common import _filter_headers
-from sentry_sdk.integrations.django import DjangoRequestExtractor
+from requests import RequestException
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.django import DjangoIntegration, DjangoRequestExtractor
+from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.transport import Transport
 
 from eventyay.base.models import User
+from eventyay.celery_app import app as celery_app
 from eventyay.config.asgi import PatchedSentryAsgiMiddleware
 from eventyay.features.live import routing
 from eventyay.features.live.consumers import MainConsumer
 from eventyay.features.live.modules.auth import AuthModule
 from eventyay.features.live.modules.chat import ChatModule
 from eventyay.features.live.modules.room import RoomModule
+from eventyay.features.live.tasks import send_chat_webhook
 
 
 class CollectingTransport(Transport):
@@ -55,6 +63,25 @@ def sentry_transport():
         data_collection=django_settings.SENTRY_DATA_COLLECTION,
         default_integrations=False,
         auto_enabling_integrations=False,
+    )
+    yield transport
+    sentry_sdk.get_client().close()
+    sentry_sdk.get_global_scope().set_client(previous_client)
+
+
+@pytest.fixture
+def sentry_integrations_transport():
+    transport = CollectingTransport()
+    previous_client = sentry_sdk.get_client()
+    sentry_sdk.init(
+        dsn='https://public@sentry.example.com/1',
+        transport=transport,
+        integrations=[
+            CeleryIntegration(),
+            DjangoIntegration(),
+            LoggingIntegration(event_level=logging.ERROR),
+        ],
+        data_collection=django_settings.SENTRY_DATA_COLLECTION,
     )
     yield transport
     sentry_sdk.get_client().close()
@@ -220,26 +247,143 @@ def test_request_body_and_cookies_are_not_collected(sentry_transport):
     assert 'cookies' not in event['request']
 
 
-def test_sensitive_request_headers_are_filtered(sentry_transport):
-    headers = _filter_headers(
-        {
-            'Authorization': 'Token abc123',
-            'Cookie': 'sessionid=xyz',
-            'X-CSRFToken': 'csrf',
-            'X-Forwarded-For': '203.0.113.7',
-            'X-Real-IP': '203.0.113.7',
-            'User-Agent': 'Mozilla/5.0',
-        }
-    )
+def _failing_header_view(_request):
+    raise RuntimeError('header check failure')
 
-    assert headers == {
-        'Authorization': '[Filtered]',
-        'Cookie': '[Filtered]',
-        'X-CSRFToken': '[Filtered]',
-        'X-Forwarded-For': '[Filtered]',
-        'X-Real-IP': '[Filtered]',
-        'User-Agent': 'Mozilla/5.0',
-    }
+
+def test_sensitive_request_headers_are_filtered(sentry_integrations_transport):
+    environ = (
+        RequestFactory()
+        .get(
+            '/sentry-header-test/',
+            HTTP_AUTHORIZATION='Token abc123',
+            HTTP_COOKIE='sessionid=xyz',
+            HTTP_X_CSRFTOKEN='csrf-secret-value',
+            HTTP_X_FORWARDED_FOR='203.0.113.7',
+            HTTP_X_REAL_IP='203.0.113.8',
+            HTTP_FORWARDED='for=203.0.113.9;proto=https',
+            HTTP_USER_AGENT='Mozilla/5.0',
+        )
+        .environ
+    )
+    with (
+        patch('django.core.handlers.wsgi.signals.request_started.send'),
+        patch.object(WSGIHandler, 'load_middleware'),
+        patch.object(WSGIHandler, 'get_response', side_effect=_failing_header_view),
+        pytest.raises(RuntimeError, match='header check failure'),
+    ):
+        WSGIHandler()(environ, lambda _status, _headers: None)
+
+    sentry_sdk.flush()
+    assert len(sentry_integrations_transport.events) == 1
+    event = sentry_integrations_transport.events[0]
+    headers = event['request']['headers']
+    serialized_request = json.dumps(event['request'])
+
+    for sensitive_header in (
+        'Authorization',
+        'Cookie',
+        'X-Csrftoken',
+        'X-Forwarded-For',
+        'X-Real-Ip',
+        'Forwarded',
+    ):
+        matched_key = next((k for k in headers if k.lower() == sensitive_header.lower()), None)
+        assert matched_key is not None
+        assert headers[matched_key] == '[Filtered]'
+
+    for secret_value in (
+        'Token abc123',
+        'sessionid=xyz',
+        'csrf-secret-value',
+        '203.0.113.7',
+        '203.0.113.8',
+        'for=203.0.113.9;proto=https',
+    ):
+        assert secret_value not in serialized_request
+
+    assert headers['User-Agent'] == 'Mozilla/5.0'
+
+
+def test_celery_task_payload_is_not_collected(sentry_integrations_transport):
+    recipient = '@'.join(('private-recipient', 'example.invalid'))
+    body_text = ' '.join(('confidential', 'message', 'body'))
+    subject_text = ' '.join(('private', 'subject'))
+
+    @celery_app.task(name='tests.sentry.failing_notification_task')
+    def failing_notification_task(recipient_email, message_body, subject=None):
+        raise RuntimeError('delivery failed')
+
+    result = failing_notification_task.apply(
+        args=(recipient, body_text),
+        kwargs={'subject': subject_text},
+    )
+    assert result.failed()
+
+    sentry_sdk.flush()
+    celery_events = [event for event in sentry_integrations_transport.events if 'celery-job' in event.get('extra', {})]
+    assert len(celery_events) == 1
+    event = celery_events[0]
+
+    celery_job = event['extra']['celery-job']
+    assert celery_job == {'task_name': 'tests.sentry.failing_notification_task'}
+    assert 'args' not in celery_job
+    assert 'kwargs' not in celery_job
+
+    serialized_extra = json.dumps(event['extra'])
+    assert recipient not in serialized_extra
+    assert body_text not in serialized_extra
+    assert subject_text not in serialized_extra
+
+    assert event['tags']['celery_task_id']
+    assert event['exception']['values'][-1]['type'] == 'RuntimeError'
+
+
+def _execute_sensitive_query():
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT %s', ['@'.join(('private-test-email', 'example.invalid'))])
+
+
+@pytest.mark.django_db
+def test_database_query_parameters_are_not_collected(sentry_integrations_transport):
+    _execute_sensitive_query()
+
+    try:
+        raise RuntimeError('after database query')
+    except RuntimeError as exc:
+        sentry_sdk.capture_exception(exc)
+
+    sentry_sdk.flush()
+    assert len(sentry_integrations_transport.events) == 1
+    event = sentry_integrations_transport.events[0]
+
+    query_breadcrumbs = [
+        crumb for crumb in event.get('breadcrumbs', {}).get('values', []) if crumb.get('category') == 'query'
+    ]
+    assert query_breadcrumbs
+    assert any('SELECT' in (crumb.get('message') or '') for crumb in query_breadcrumbs)
+    assert all('db.params' not in (crumb.get('data') or {}) for crumb in query_breadcrumbs)
+    assert '@'.join(('private-test-email', 'example.invalid')) not in json.dumps(event)
+
+
+def test_handled_logging_exception_is_captured(sentry_integrations_transport):
+    with (
+        patch('eventyay.features.live.tasks.post_webhook', side_effect=RequestException('webhook timeout')),
+        patch('eventyay.features.live.tasks.log_event'),
+    ):
+        result = send_chat_webhook.run(
+            {'event': 'chat.message'},
+            'https://example.invalid/webhook',
+            'test-hmac-secret',
+        )
+
+    assert result is None
+    sentry_sdk.flush()
+    assert len(sentry_integrations_transport.events) == 1
+    event = sentry_integrations_transport.events[0]
+    assert event['level'] == 'error'
+    assert event['logger'] == 'eventyay.features.live.tasks'
+    assert event['exception']['values'][-1]['type'] == 'RequestException'
 
 
 def test_sensitive_frame_variables_are_filtered(sentry_transport):
@@ -252,9 +396,41 @@ def test_sensitive_frame_variables_are_filtered(sentry_transport):
         sentry_sdk.capture_exception(exc)
 
     sentry_sdk.flush()
-    frame_vars = sentry_transport.events[-1]['exception']['values'][-1]['stacktrace']['frames'][-1]['vars']
-    assert frame_vars['token'] == "'[Filtered]'"
-    assert frame_vars['password'] == "'[Filtered]'"
-    assert frame_vars['secret'] == "'[Filtered]'"
-    assert frame_vars['api_key'] == "'[Filtered]'"
-    assert frame_vars['order_code'] == "'ABC12'"
+    frame = sentry_transport.events[-1]['exception']['values'][-1]['stacktrace']['frames'][-1]
+    assert 'vars' not in frame
+
+
+def _raise_with_sensitive_locals(env_val, arg_val, kwarg_val):
+    environ = {'HTTP_AUTHORIZATION': env_val}
+    args = (arg_val,)
+    kwargs = {'message_body': kwarg_val}
+    assert environ and args and kwargs
+    raise RuntimeError('stack frame check failure')
+
+
+def test_stack_frame_local_variables_are_not_collected(sentry_integrations_transport):
+    secret_env = '-'.join(('env', 'secret', '991'))
+    secret_arg = '-'.join(('arg', 'secret', '992'))
+    secret_kwarg = '-'.join(('kwarg', 'secret', '993'))
+
+    try:
+        _raise_with_sensitive_locals(secret_env, secret_arg, secret_kwarg)
+    except RuntimeError as exc:
+        sentry_sdk.capture_exception(exc)
+
+    sentry_sdk.flush()
+    assert len(sentry_integrations_transport.events) == 1
+    event = sentry_integrations_transport.events[0]
+    serialized = json.dumps(event)
+
+    assert secret_env not in serialized
+    assert secret_arg not in serialized
+    assert secret_kwarg not in serialized
+
+    exc_data = event['exception']['values'][-1]
+    assert exc_data['type'] == 'RuntimeError'
+    assert exc_data['value'] == 'stack frame check failure'
+    frames = exc_data['stacktrace']['frames']
+    assert frames
+    assert any(frame['function'] == '_raise_with_sensitive_locals' for frame in frames)
+    assert all('vars' not in frame for frame in frames)
