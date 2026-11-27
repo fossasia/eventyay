@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema_field
+from django_scopes import scope
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -171,7 +172,13 @@ class TeamSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         organizer = self.context.get('organizer')
         if organizer is not None:
-            self.fields['limit_tracks'].queryset = Track.objects.filter(event__organizer=organizer)
+            with scope(organizer=organizer, event=None):
+                self.fields['limit_tracks'].child_relation.queryset = Track.objects.filter(event__organizer=organizer)
+
+    def to_representation(self, instance):
+        # A team can include tracks from multiple events of this organizer.
+        with scope(organizer=instance.organizer, event=None):
+            return super().to_representation(instance)
 
     class Meta:
         model = Team
@@ -210,6 +217,15 @@ class TeamSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
+        if self.instance and self.instance.is_core_team:
+            for name, value in data.items():
+                if name == 'name':
+                    continue
+                current = getattr(self.instance, name)
+                if name in ('limit_events', 'limit_tracks'):
+                    current = []
+                if current != value:
+                    raise ValidationError({name: _('Core team permissions and event access are permanent.')})
         full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
         full_data.update(data)
         if full_data.get('limit_events') and full_data.get('all_events'):
