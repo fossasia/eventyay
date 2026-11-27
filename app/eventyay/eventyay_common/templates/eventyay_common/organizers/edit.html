@@ -45,7 +45,10 @@
                         <div class="team-heading-main">
                             <h3 class="panel-title">
                                 {{ panel.team.name }}
-                                {% if panel.team.is_core_team %}<span class="label label-primary" title="{% translate 'Owners of this organizer account with permanent access to all events and permissions.' %}">{% translate "Core team" %}</span>{% endif %}
+                                {% if panel.team.is_core_team %}
+                                    <span class="label label-primary" title="{% translate 'Owners of this organizer account with permanent access to all events and permissions.' %}">{% translate 'Core team' %}</span>
+                                    <small class="text-muted">{% translate 'Core team cannot be deleted.' %}</small>
+                                {% endif %}
                             </h3>
                             <div class="text-muted team-meta">
                                 <span class="team-meta-item">
