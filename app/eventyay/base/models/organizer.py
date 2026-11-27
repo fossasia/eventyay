@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models import Exists, OuterRef, Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
@@ -254,16 +253,14 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         return self.cache.get_or_set(
             key='has_gift_cards',
             timeout=15,
-            default=lambda: self.issued_gift_cards.exists() or self.gift_card_issuer_acceptance.exists(),
+            default=self.issued_gift_cards.exists,
         )
 
     @property
     def accepted_gift_cards(self):
-        from .giftcards import GiftCard, GiftCardAcceptance
-
-        return GiftCard.objects.annotate(
-            accepted=Exists(GiftCardAcceptance.objects.filter(issuer=OuterRef('issuer'), collector=self))
-        ).filter(Q(issuer=self) | Q(accepted=True))
+        # Gift cards are only valid within the organizer that issued them. Money paid for a card
+        # is held by the issuer's payment account, so redeeming it elsewhere would shift liability.
+        return self.issued_gift_cards.all()
 
     @property
     def default_gift_card_expiry(self):
@@ -355,6 +352,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     :type can_change_teams: bool
     :param can_change_organizer_settings: If ``True``, the members can change the settings of this organizer account.
     :type can_change_organizer_settings: bool
+    :param can_view_event_info: If ``True``, the members can read the public-facing setup of the associated
+                                events, e.g. for website integrations. It does not allow any changes.
+    :type can_view_event_info: bool
     :param can_change_event_settings: If ``True``, the members can change the settings of the associated events.
     :type can_change_event_settings: bool
     :param can_change_items: If ``True``, the members can change and add items and related objects
@@ -379,6 +379,15 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     members = models.ManyToManyField(User, related_name='teams', verbose_name=_('Team members'))
     all_events = models.BooleanField(default=False, verbose_name=_('All events (including newly created ones)'))
     limit_events = models.ManyToManyField('Event', verbose_name=_('Limit to events'), blank=True)
+    is_core_team = models.BooleanField(
+        editable=False,
+        default=False,
+        verbose_name=_('Core Organizing Team'),
+        help_text=_(
+            'Members of the core team are the owners of the organizer account and can perform owner-only '
+            'actions such as anonymizing event data. This designation is permanent.'
+        ),
+    )
 
     can_create_events = models.BooleanField(
         default=False,
@@ -398,6 +407,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
     can_manage_gift_cards = models.BooleanField(default=False, verbose_name=_('Can manage gift cards'))
 
+    can_view_event_info = models.BooleanField(
+        default=False,
+        verbose_name=_('Read-only access to event information'),
+        help_text=_('For website and other integrations that only display event information'),
+    )
     can_change_event_settings = models.BooleanField(default=False, verbose_name=_('Can change event settings'))
     can_change_config = models.BooleanField(
         default=False,
@@ -453,6 +467,10 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         'can_manage_bank_transfers': ('can_view_orders',),
     }
 
+    # Boolean ``is_*`` fields that describe the team rather than grant a permission. They must stay out of
+    # ``permission_set()`` so that API tokens and devices of the team never inherit them.
+    NON_PERMISSION_FLAGS = frozenset({'is_core_team'})
+
     @classmethod
     def _permission_field_names(cls) -> tuple:
         cached = cls.__dict__.get('_permission_field_names_cache')
@@ -462,9 +480,33 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
                 for field in cls._meta.get_fields()
                 if isinstance(field, models.BooleanField)
                 and (field.name.startswith('can_') or field.name.startswith('is_'))
+                and field.name not in cls.NON_PERMISSION_FLAGS
             )
             cls._permission_field_names_cache = cached
         return cached
+
+    def save(self, *args, **kwargs):
+        if self.pk and not self._state.adding:
+            previous = Team.objects.values('is_core_team', 'organizer_id').get(pk=self.pk)
+            if previous['is_core_team'] != self.is_core_team or (
+                self.is_core_team and previous['organizer_id'] != self.organizer_id
+            ):
+                raise TeamPermissionError(_('The Core Organizing Team designation is permanent.'))
+        if self.is_core_team:
+            for field in self._permission_field_names():
+                setattr(self, field, True)
+            self.all_events = True
+            self.all_teamshifts_roles = True
+            self.teamshifts_role = 'coordinator'
+            self.limit_teamshifts_roles = []
+            self.force_hide_speaker_names = self.force_hide_speaker_emails = False
+            self.hide_exhibition_applicant_emails = self.hide_teamshifts_emails = False
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.is_core_team:
+            raise TeamPermissionError(_('The Core Organizing Team cannot be deleted.'))
+        return super().delete(*args, **kwargs)
 
     def _granted_permissions(self) -> set:
         return {name for name in self._permission_field_names() if getattr(self, name) is True}
@@ -522,6 +564,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     class Meta:
         verbose_name = _('Team')
         verbose_name_plural = _('Teams')
+        constraints = [
+            models.UniqueConstraint(fields=['organizer'], condition=models.Q(is_core_team=True), name='unique_core_team_per_organizer'),
+        ]
         rules_permissions = TEAM_PERMISSIONS
 
     # From Talk

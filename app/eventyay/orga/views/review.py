@@ -18,6 +18,7 @@ from django_scopes import scope
 
 from eventyay.base.models import Review, ReviewScore, Submission, SubmissionStates
 from eventyay.common.forms.renderers import InlineFormRenderer
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView
 from eventyay.common.views.mixins import (
@@ -490,6 +491,10 @@ class ReviewViewMixin:
     def read_only(self):
         if self.request.user in self.submission.speakers.all():
             return True
+        if is_admin_mode_active(self.request):
+            # Admin mode grants organizer-level access, so admins can review
+            # without being on a reviewer team, but only while reviews are open.
+            return not can_be_reviewed(self.request.user, self.submission)
         if self.object and self.object.pk:
             return not self.request.user.has_perm('base.update_review', self.get_object())
         return not self.request.user.has_perm('base.review_submission', self.get_object() or self.submission)
@@ -847,7 +852,7 @@ class ReviewAssignment(EventPermissionRequired, FormView):
         rows = []
         for team in self.review_teams:
             delete_confirm_url = None
-            if can_manage_teams and bool(admin_team_ids - {team.pk}):
+            if can_manage_teams and not team.is_core_team and bool(admin_team_ids - {team.pk}):
                 delete_confirm_url = (
                     reverse(
                         'eventyay_common:organizer.team.delete',

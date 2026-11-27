@@ -21,6 +21,7 @@ from eventyay.base.models.room import (
     RoomConfigSerializer,
     RoomView,
     get_room_with_linked_sessions,
+    mask_room_config_secrets,
     partial_validated_update,
     validate_room_can_be_deleted,
 )
@@ -33,7 +34,11 @@ from eventyay.base.services.stale_cache import (
     get_stale_cached,
 )
 from eventyay.base.services.user import get_public_users
-from eventyay.base.services.video_entitlements import check_video_entitlements, filter_stream_by_entitlement
+from eventyay.base.services.video_entitlements import (
+    carry_jitsi_admission,
+    check_video_entitlements,
+    filter_stream_by_entitlement,
+)
 from eventyay.base.signals import periodic_task
 from eventyay.core.permissions import Permission
 from eventyay.features.live.channels import GROUP_ROOM
@@ -262,12 +267,14 @@ def start_view(room: Room, user: User, delete=False):
     # we only count unique users and the result "this user was present at the time" is still correct. Second,
     # the way ``end_view`` is implemented, the session from browser A will still be corrected with the accurate
     # time as soon as browser A leaves.
-    previous = RoomView.objects.filter(room=room, user=user, end__isnull=True)
-    if delete:
-        previous.delete()
-    else:
-        previous.update(end=now())
-    r = RoomView.objects.create(room=room, user=user)
+    with atomic():
+        previous = RoomView.objects.filter(room=room, user=user, end__isnull=True)
+        in_jitsi_call = carry_jitsi_admission(room, user, previous)
+        if delete:
+            previous.delete()
+        else:
+            previous.update(end=now())
+        r = RoomView.objects.create(room=room, user=user, jitsi_joined_at=now() if in_jitsi_call else None)
     c = RoomView.objects.filter(room=room, end__isnull=True).values("user_id").distinct().count()
     return r, c
 
@@ -406,8 +413,8 @@ def save_room(event, room, update_fields, old_data, by_user):
         type='event.room.updated',
         data={
             'object': str(room.id),
-            'old': old_data,
-            'new': new,
+            'old': mask_room_config_secrets(old_data),
+            'new': mask_room_config_secrets(new),
         },
     )
 
@@ -435,7 +442,7 @@ def soft_delete_room(event, room, by_user=None):
         type='event.room.deleted',
         data={
             'object': str(room.id),
-            'old': old,
+            'old': mask_room_config_secrets(old),
         },
     )
     return room

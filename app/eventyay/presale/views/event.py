@@ -191,7 +191,7 @@ def get_grouped_products(
                         )
                     ),
                 )
-                .filter(active=True, quotas__isnull=False, subevent_disabled=False)
+                .filter(ProductVariation.filter_available_q(), quotas__isnull=False, subevent_disabled=False)
                 .prefetch_related(
                     Prefetch(
                         'quotas',
@@ -427,7 +427,9 @@ def get_grouped_products(
             product.available_variations = [
                 v
                 for v in product.available_variations
-                if v._subevent_quotas and (not voucher or not voucher.quota_id or v in restrict_vars)
+                if v._subevent_quotas
+                and (not voucher or not voucher.quota_id or v in restrict_vars)
+                and v.is_available(subevent=subevent, _quota_cache=quota_cache)
             ]
 
             if event.settings.hide_sold_out:
@@ -531,8 +533,8 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
         return False
 
     variations_qs = ProductVariation.objects.filter(
+        ProductVariation.filter_available_q(),
         product__event=event,
-        active=True
     ).prefetch_related('quotas')
 
     variations_list = list(variations_qs)
@@ -620,9 +622,11 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
         return True
 
     for se, se_vouchers, p, var in items_to_check:
+        if var is not None and not var.is_available(subevent=se, _quota_cache=quota_cache):
+            continue
         quotas = var.quotas.all() if var else p.quotas.all()
         is_normally_available = check_item_avail(quotas, se, False)
-        
+
         for v in se_vouchers:
             if voucher_applies_to(v, p, var):
                 if p.hide_without_voucher and not v.show_hidden_products:
@@ -1158,7 +1162,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             raise PermissionDenied(_('Please go back and try again.'))
 
         redirect_url = self.generate_token_url(request, order_position, order)
-        logger.info('Redirecting to %s...', redirect_url)
+        logger.info('Redirecting to video for event %s', event.slug)
         return redirect_or_json_redirect(request, redirect_url)
 
     def validate_access(self, request, *args, **kwargs):

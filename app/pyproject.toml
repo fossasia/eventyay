@@ -190,7 +190,7 @@ dependencies = [
     "google-api-python-client>=2.160.0",
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.0",
-    "sentry-sdk>=2.68.0",
+    "sentry-sdk>=2.68.0,<3",
     "sepaxml>=2.7.0",
     "service-identity>=26.1.0",
     "sortedcontainers>=2.4.0",
@@ -312,6 +312,7 @@ EVY_RUNNING_ENVIRONMENT = "testing"
 environments = [
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'linux'",
     "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'darwin'",
+    "python_version == '3.12' and platform_python_implementation == 'CPython' and sys_platform == 'win32'",
 ]
 
 [tool.uv.sources]

@@ -1,3 +1,4 @@
+import copy
 import uuid
 from functools import cached_property
 
@@ -428,6 +429,17 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
         if self.is_unscheduled:
             validate_is_unscheduled_change(self)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'module_config' not in update_fields:
+            return
+        modules = self.module_config if isinstance(self.module_config, list) else []
+        if not any(isinstance(m, dict) and m.get('type') == 'call.jitsi' for m in modules):
+            RoomView.objects.filter(room=self, end__isnull=True, jitsi_joined_at__isnull=False).update(
+                jitsi_joined_at=None
+            )
+
     @property
     def log_parent(self):
         return self.event
@@ -520,6 +532,7 @@ class RoomView(models.Model):
         null=True, db_index=True
     )  # index required for control/ dashboard
     user = models.ForeignKey(to="user", related_name="views", on_delete=models.CASCADE)
+    jitsi_joined_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [
@@ -569,6 +582,38 @@ class RoomConfigSerializer(RoomLinkedSessionsSerializerMixin, I18nAwareModelSeri
             "is_unscheduled",
             "has_linked_sessions",
         )
+
+
+# Module settings whose name contains one of these are masked in audit log entries.
+SENSITIVE_MODULE_CONFIG_KEYS = ("password", "secret", "api_key")
+
+
+def mask_room_config_secrets(room_config):
+    """
+    Return a copy of a serialized room config with secret module settings masked.
+
+    Audit log entries keep a copy of the room config permanently, even after a secret
+    is changed or the room is deleted, so secrets such as ``webhook_hmac_secret`` or
+    Jitsi/Zoom credentials must not be stored there.
+    """
+    room_config = copy.deepcopy(room_config)
+    modules = room_config.get("module_config")
+    if modules is None:
+        return room_config
+    if not isinstance(modules, list):
+        # Not a valid module list, so its secrets cannot be found; keep none of it.
+        room_config["module_config"] = "********"
+        return room_config
+    for module in modules:
+        config = module.get("config") if isinstance(module, dict) else None
+        if not isinstance(config, dict):
+            continue
+        for key, value in config.items():
+            if not isinstance(value, str) or not value:
+                continue
+            if any(sensitive in key for sensitive in SENSITIVE_MODULE_CONFIG_KEYS):
+                config[key] = "********"
+    return room_config
 
 
 def approximate_view_number(actual_number):

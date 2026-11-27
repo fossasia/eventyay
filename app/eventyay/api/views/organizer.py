@@ -25,6 +25,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from eventyay.api.auth.permission import _TOKEN_AUTH_TYPES
+from eventyay.api.auth.team_members import ensure_can_manage_team_members, ensure_core_team_keeps_a_member
 from eventyay.api.models import OAuthAccessToken
 from eventyay.api.serializers.organizer import (
     DeviceSerializer,
@@ -295,11 +296,7 @@ class GiftCardViewSet(viewsets.ModelViewSet):
     filterset_class = GiftCardFilter
 
     def get_queryset(self):
-        if self.request.GET.get('include_accepted') == 'true':
-            qs = self.request.organizer.accepted_gift_cards
-        else:
-            qs = self.request.organizer.issued_gift_cards.all()
-        return qs
+        return self.request.organizer.issued_gift_cards.all()
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -320,8 +317,6 @@ class GiftCardViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic()
     def perform_update(self, serializer):
-        if 'include_accepted' in self.request.GET:
-            raise PermissionDenied('Accepted gift cards cannot be updated, use transact instead.')
         GiftCard.objects.select_for_update().get(pk=self.get_object().pk)
         old_value = serializer.instance.value
         value = serializer.validated_data.pop('value')
@@ -372,11 +367,7 @@ class GiftCardTransactionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @cached_property
     def giftcard(self):
-        if self.request.GET.get('include_accepted') == 'true':
-            qs = self.request.organizer.accepted_gift_cards
-        else:
-            qs = self.request.organizer.issued_gift_cards.all()
-        return get_object_or_404(qs, pk=self.kwargs.get('giftcard'))
+        return get_object_or_404(self.request.organizer.issued_gift_cards.all(), pk=self.kwargs.get('giftcard'))
 
     def get_queryset(self):
         return self.giftcard.transactions.select_related('order', 'order__event')
@@ -418,6 +409,8 @@ class TeamViewSet(viewsets.ModelViewSet):
         return inst
 
     def perform_destroy(self, instance):
+        if instance.is_core_team:
+            raise PermissionDenied(_('The Core Organizing Team cannot be deleted.'))
         instance.log_action('eventyay.team.deleted', user=self.request.user, auth=self.request.auth)
         instance.delete()
 
@@ -442,6 +435,8 @@ class TeamMemberViewSet(DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
 
     @transaction.atomic()
     def perform_destroy(self, instance):
+        ensure_can_manage_team_members(self.request, self.team)
+        ensure_core_team_keeps_a_member(self.team, instance)
         self.team.members.remove(instance)
         self.team.log_action(
             'eventyay.team.member.removed',
@@ -476,6 +471,7 @@ class TeamInviteViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyMo
 
     @transaction.atomic()
     def perform_destroy(self, instance):
+        ensure_can_manage_team_members(self.request, self.team)
         self.team.log_action(
             'eventyay.team.invite.deleted',
             user=self.request.user,
@@ -488,6 +484,7 @@ class TeamInviteViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyMo
 
     @transaction.atomic()
     def perform_create(self, serializer):
+        ensure_can_manage_team_members(self.request, self.team)
         serializer.save(team=self.team)
 
 
@@ -516,6 +513,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
 
     @transaction.atomic()
     def perform_destroy(self, instance):
+        ensure_can_manage_team_members(self.request, self.team)
         instance.active = False
         instance.save()
         self.team.log_action(
@@ -529,6 +527,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
 
     @transaction.atomic()
     def perform_create(self, serializer):
+        ensure_can_manage_team_members(self.request, self.team)
         instance = serializer.save(team=self.team)
         self.team.log_action(
             'eventyay.team.token.created',

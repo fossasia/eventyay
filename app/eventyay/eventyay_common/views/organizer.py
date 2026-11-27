@@ -17,6 +17,13 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
+from eventyay.base.services.organizer_creation import (
+    CORE_TEAM_LAST_MEMBER,
+    CORE_TEAM_MEMBERS_DENIED,
+    can_manage_team_members,
+    create_core_team,
+    removes_last_active_core_member,
+)
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
@@ -27,6 +34,7 @@ from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
+from eventyay.eventyay_common.utils import api_token_created_message
 from ..video.traits_sync import sync_video_traits_for_team
 
 
@@ -85,35 +93,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
         messages.success(self.request, _('New organizer is created.'))
         had_default = bool(self.request.user.get_default_organizer())
         response = super().form_valid(form)
-        team = Team.objects.create(
-            organizer=form.instance,
-            name=_('Core Organizing Team'),
-            all_events=True,
-            can_create_events=True,
-            can_change_teams=True,
-            can_manage_gift_cards=True,
-            can_change_organizer_settings=True,
-            can_change_event_settings=True,
-            can_change_config=True,
-            can_change_items=True,
-            can_view_orders=True,
-            can_change_orders=True,
-            can_manage_bank_transfers=True,
-            can_checkin_orders=True,
-            can_view_vouchers=True,
-            can_change_vouchers=True,
-            can_change_submissions=True,
-            is_reviewer=True,
-            can_change_exhibition_proposals=True,
-            is_exhibition_reviewer=True,
-            can_manage_social_media=True,
-            can_video_manage_content=True,
-            can_video_moderate=True,
-            can_video_manage_kiosks=True,
-            can_video_view_analytics=True,
-        )
-        # Trigger webhook in talk to create organiser in talk component
-        team.members.add(self.request.user)
+        create_core_team(form.instance, self.request.user)
         if form.cleaned_data.get('set_as_default') or not had_default:
             self.request.user.default_organizer = self.object
             self.request.user.save(update_fields=['default_organizer'])
@@ -481,6 +461,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_members(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        if not can_manage_team_members(
+            team, user=self.request.user, session_key=self.request.session.session_key
+        ):
+            messages.error(self.request, CORE_TEAM_MEMBERS_DENIED)
+            return self._redirect_to_team_permissions(team.pk)
         invite_form_prefix = self._invite_form_prefix(team)
         prefixed_user_field = f'{invite_form_prefix}-user'
         invite_form = InviteForm(
@@ -509,6 +494,10 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             user = team.members.get(pk=post.get('remove-member'))
         except (User.DoesNotExist, ValueError):
             return self._redirect_to_team_permissions(team.pk)
+
+        if removes_last_active_core_member(team, user):
+            messages.error(self.request, CORE_TEAM_LAST_MEMBER)
+            return self._redirect_to_team_members_panel(team.pk)
 
         other_admin_teams = (
             self.request.organizer.teams.exclude(pk=team.pk)
@@ -602,6 +591,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        if not can_manage_team_members(
+            team, user=self.request.user, session_key=self.request.session.session_key
+        ):
+            messages.error(self.request, CORE_TEAM_MEMBERS_DENIED)
+            return self._redirect_to_team_permissions(team.pk)
         token_form_prefix = self._token_form_prefix(team)
         prefixed_name_field = f'{token_form_prefix}-name'
         token_form = TokenForm(
@@ -648,17 +642,12 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             user=self.request.user,
             data={'name': token_form.cleaned_data['name'], 'id': token.pk},
         )
-        messages.success(
-            self.request,
-            _(
-                'A new API token has been created with the following secret: {}\n'
-                'Please copy this secret to a safe place. You will not be able to '
-                'view it again here.'
-            ).format(token.token),
-        )
+        messages.success(self.request, api_token_created_message(token))
         return self._redirect_to_team_permissions(team.pk)
 
     def _can_delete_team(self, team: Team) -> bool:
+        if team.is_core_team:
+            return False
         return (
             self.request.organizer.teams.exclude(pk=team.pk)
             .filter(can_change_teams=True, members__isnull=False)

@@ -14,6 +14,7 @@ from django.views.generic import TemplateView
 from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Team, UserApiToken
 from eventyay.base.models.organizer import TeamAPIToken
+from eventyay.base.services.organizer_creation import CORE_TEAM_MEMBERS_DENIED, can_manage_team_members
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsViewMixin
 from eventyay.control.views.organizer import TokenForm
@@ -22,12 +23,13 @@ from eventyay.eventyay_common.api_catalog import (
     access_levels,
     build_api_catalog,
     docs_urls,
-    event_has_tickets_component,
     event_has_talks_component,
+    event_has_tickets_component,
     permission_label,
-    tickets_api_base,
     talks_api_base,
+    tickets_api_base,
 )
+from eventyay.eventyay_common.utils import api_token_created_message
 
 
 class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, TemplateView):
@@ -141,11 +143,20 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
             return None
         return self.get_event_teams().filter(pk=team_id).first()
 
+    def _may_change_tokens(self, request, team: Team) -> bool:
+        if can_manage_team_members(team, user=request.user, session_key=request.session.session_key):
+            return True
+        messages.error(request, CORE_TEAM_MEMBERS_DENIED)
+        return False
+
     def _create_token(self, request):
         team = self._get_team(request)
         if not team:
             messages.error(request, _('Invalid team selected.'))
             return redirect(self.get_success_url())
+
+        if not self._may_change_tokens(request, team):
+            return redirect(self.get_success_url() + '#tokens')
 
         form = TokenForm(data=request.POST, prefix=f'token-{team.pk}')
         if not form.is_valid() or not form.cleaned_data.get('name'):
@@ -159,14 +170,7 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
                 user=request.user,
                 data={'name': token.name, 'id': token.pk, 'event': request.event.slug},
             )
-        messages.success(
-            request,
-            _(
-                'A new API token has been created with the following secret: {}\n'
-                'Please copy this secret to a safe place. You will not be able to '
-                'view it again here.'
-            ).format(token.token),
-        )
+        messages.success(request, api_token_created_message(token))
         return redirect(self.get_success_url() + '#tokens')
 
     def _revoke_token(self, request):
@@ -174,6 +178,9 @@ class EventAPIView(EventSettingsViewMixin, EventPermissionRequiredMixin, Templat
         if not team:
             messages.error(request, _('Invalid team selected.'))
             return redirect(self.get_success_url())
+
+        if not self._may_change_tokens(request, team):
+            return redirect(self.get_success_url() + '#tokens')
 
         try:
             token_id = int(request.POST.get('token_id', ''))

@@ -17,7 +17,7 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 - Core stack: Django 5.2+, PostgreSQL, Redis, Celery, Channels, Vue 3.
 - Primary development paths:
   - `app/eventyay/` for product code
-  - `app/tests/` for tests
+  - `app/tests/` for tests (`app/tests/stable/` is the suite executed in CI; `app/tests/talk/` and `app/tests/tickets/` are only validated with `--collect-only` and are not executed in CI — add new CI-verified tests under `app/tests/stable/`)
   - `doc/` for documentation
 - Legacy product names (`pretix`, `pretalx`, `venueless`) are historical references only.
 - If top-level legacy directories such as `talk/`, `video/`, or `src/` appear in a branch, treat them as reference-only unless explicitly requested.
@@ -30,6 +30,16 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 4. JavaScript: no jQuery and no inline scripts; use external ES modules.
 5. Namespaces: use `eventyay.*` imports for new code; do not introduce new `pretix.*`, `pretalx.*`, or `venueless.*` imports.
 6. ORM efficiency: prefer `select_related` and `prefetch_related` to avoid N+1 queries.
+
+## AI Attribution Rules
+
+1. **PR Authoring**: When creating or assisting a PR with AI, add one attribution line at the end of the author-written description, above any bot-generated summaries:
+   `Created with <Model> in <Harness/IDE>, run from <Environment>.`
+   (e.g., `Created with Claude Opus 4.6 in Claude Code` or `Created with Gemini in Antigravity`).
+   Name only the tools you used. Omit any model, harness, or environment details you do not know.
+2. **PR Reviews**: When reviewing a PR with AI (inline comments, review summaries, or change requests), include attribution at the end of the review comment or summary:
+   `Reviewed with <Model> in <Harness/IDE>, run from <Environment>.`
+   (e.g., `Reviewed with Claude Opus 4.6 in Claude Code` or `Reviewed with Gemini in Antigravity`).
 
 ## File-Scoped Standards
 
@@ -52,16 +62,18 @@ Run from `app/` unless noted:
 - Run Celery worker: `celery -A eventyay worker -l info`
 - Build assets (dev): `make staticfiles`
 - Build assets (prod): `make production`
-- Test suite: `pytest tests/`
+- Test suite (CI-executed): `pytest tests/stable` (`tests/talk/` and `tests/tickets/` are only validated with `--collect-only` and are not executed in CI)
 
 ## Agent Checklist
 
 Before submitting changes:
 
-1. Confirm edited files are in the intended path (`app/eventyay/`, `app/tests/`, or explicitly requested paths).
+1. Confirm edited files are in the intended path (`app/eventyay/`, `app/tests/stable/` for new CI-run tests, or explicitly requested paths).
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
+5. If AI helped author the PR, include attribution at the end of the author-written description.
+6. If reviewing a PR with AI, include attribution at the end of the review comment (`Reviewed with <Model> in <Harness/IDE>`).
 
 ## Context Index (`.agents/context/`)
 

@@ -8,7 +8,7 @@
     <div class="form-body">{{ form.as_p }}</div>
     <div class="video-admin-btn-row">
         <button type="submit" class="btn btn-primary"><span class="fa fa-save"></span> {% trans "Save" %}</button>
-        <a href="/control/multifactor/" class="btn btn-default">{% trans "MFA settings" %}</a>
+        <a href="{% url 'eventyay_common:account.2fa' %}" class="btn btn-default">{% trans "MFA settings" %}</a>
     </div>
 </form>
 {% endblock %}
