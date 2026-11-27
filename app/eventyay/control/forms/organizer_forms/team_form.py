@@ -128,6 +128,11 @@ class TeamForm(forms.ModelForm):
                 if f in self.fields:
                     del self.fields[f]
 
+        if self.instance.is_core_team:
+            for name, field in self.fields.items():
+                if name != 'name':
+                    field.disabled = True
+
     def _exhibition_applies_to_team(self, data):
         """Whether any event this team covers actually has the exhibition plugin enabled."""
         if not getattr(self, 'exhibition_plugin_enabled', False):
