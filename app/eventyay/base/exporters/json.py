@@ -5,6 +5,7 @@ import datetime
 from zoneinfo import ZoneInfo
 from django.core.serializers.json import DjangoJSONEncoder
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 from ..exporter import BaseExporter
 from ..signals import register_data_exporters
@@ -12,7 +13,10 @@ from ..signals import register_data_exporters
 
 class JSONExporter(BaseExporter):
     identifier = 'json'
-    verbose_name = 'Order data (JSON)'
+    verbose_name = _('Full event data')
+    category = 'attendees_orders'
+    description = _('All orders, products and settings in one file, for developers and other tools.')
+    file_type = 'JSON'
 
     def render(self, form_data):
         event_tz = ZoneInfo(self.event.settings.timezone)

@@ -1853,7 +1853,9 @@ class QuickSetupForm(I18nForm):
         self.locales = self.obj.settings.get('locales') if self.obj else kwargs.pop('locales', None)
         kwargs['locales'] = self.locales
         super().__init__(*args, **kwargs)
-        
+        if 'currency' in self.fields:
+            apply_searchable_select_attrs(self.fields['currency'])
+
         plugins_available = {
             p.module for p in get_all_plugins(self.obj)
             if getattr(p, 'visible', True) and not p.name.startswith('.')
