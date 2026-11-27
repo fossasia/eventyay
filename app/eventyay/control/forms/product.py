@@ -531,6 +531,7 @@ class ProductCreateForm(I18nModelForm):
                 'require_approval',
                 'allow_waitinglist',
                 'allow_user_variation_change',
+                'start_next_variation_on_sellout',
                 'show_quota_left',
                 'hidden_if_available',
                 'require_bundling',
@@ -608,6 +609,13 @@ class ProductCreateForm(I18nModelForm):
                         default_price=variation.default_price,
                         description=variation.description,
                         original_price=variation.original_price,
+                        available_from=variation.available_from,
+                        available_until=variation.available_until,
+                        admission_validity_mode=variation.admission_validity_mode,
+                        admission_valid_from=variation.admission_valid_from,
+                        admission_valid_until=variation.admission_valid_until,
+                        admission_valid_from_offset_minutes=variation.admission_valid_from_offset_minutes,
+                        admission_valid_until_offset_minutes=variation.admission_valid_until_offset_minutes,
                     )
             else:
                 ProductVariation.objects.create(product=instance, value=__('Standard'))
@@ -817,6 +825,7 @@ class ProductUpdateForm(I18nModelForm):
         self.fields['category'].widget.choices = self.fields['category'].choices
         if not self.instance.has_variations:
             self.fields.pop('allow_user_variation_change', None)
+            self.fields.pop('start_next_variation_on_sellout', None)
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))
@@ -919,6 +928,7 @@ class ProductUpdateForm(I18nModelForm):
             'hidden_if_available',
             'issue_giftcard',
             'allow_user_variation_change',
+            'start_next_variation_on_sellout',
         ]
         field_classes = {
             'available_from': SplitDateTimeField,
@@ -966,9 +976,33 @@ class ProductVariationsFormSet(I18nFormSet):
             return False
         return form.cleaned_data.get(DELETION_FIELD_NAME, False)
 
+    def _product_for_summary(self):
+        """Resolve the parent product for inherit-summary labels.
+
+        This formset is built via ``inlineformset_factory`` but inherits from
+        ``I18nFormSet`` (not an inline formset), and the view passes a filtered
+        queryset instead of ``instance=``, so ``self.instance`` is unavailable.
+
+        Do not read ``self.forms`` here: ``_construct_form`` calls this while
+        Django is still building that list, which would recurse forever.
+        """
+        qs = getattr(self, 'queryset', None)
+        if qs is not None:
+            variation = qs.select_related('product').first()
+            if variation is not None:
+                return variation.product
+        return None
+
+    def _attach_product(self, form):
+        if not getattr(form.instance, 'product_id', None):
+            product = self._product_for_summary()
+            if product is not None:
+                form.instance.product = product
+        return form
+
     def _construct_form(self, i, **kwargs):
         kwargs['event'] = self.event
-        return super()._construct_form(i, **kwargs)
+        return self._attach_product(super()._construct_form(i, **kwargs))
 
     @property
     def empty_form(self):
@@ -982,7 +1016,7 @@ class ProductVariationsFormSet(I18nFormSet):
             event=self.event,
         )
         self.add_fields(form, None)
-        return form
+        return self._attach_product(form)
 
 
 class ProductVariationForm(I18nModelForm):
@@ -992,16 +1026,51 @@ class ProductVariationForm(I18nModelForm):
         for f in ADMISSION_VALIDITY_FIELD_NAMES:
             if f in self.fields and f != 'admission_validity_mode':
                 self.fields[f].required = False
-        
+
         self.fields['default_price'].error_messages['invalid'] = _('Please enter a valid price.')
         if 'original_price' in self.fields:
             self.fields['original_price'].error_messages['invalid'] = _('Please enter a valid price.')
+
+        tzname = self.event.settings.timezone
+        self.fields['available_from'].required = False
+        self.fields['available_until'].required = False
+        self.fields['available_until'].help_text = _(
+            'After this time the variation can no longer be bought. Event time zone (%(tz)s).'
+        ) % {'tz': tzname}
+
+    def _inherit_checkin_summary(self):
+        inherit_label = dict(ProductVariation.ADMISSION_VALIDITY_MODE_CHOICES).get(
+            ProductVariation.ADMISSION_VALIDITY_MODE_INHERIT
+        )
+        product = getattr(self.instance, 'product', None)
+        if product is None or not getattr(product, 'pk', None):
+            product = getattr(self, 'product', None)
+        if product is not None and getattr(product, 'pk', None):
+            product_mode = product.admission_validity_mode or Product.ADMISSION_VALIDITY_MODE_NONE
+            product_label = dict(Product.ADMISSION_VALIDITY_MODE_CHOICES).get(product_mode, product_mode)
+            return f'{inherit_label} · {product_label}'
+        return str(inherit_label)
+
+    @property
+    def checkin_validity_summary(self):
+        if self.instance and self.instance.pk:
+            return self.instance.get_checkin_validity_summary()
+        return self._inherit_checkin_summary()
+
+    @property
+    def checkin_inherit_summary(self):
+        return self._inherit_checkin_summary()
+
+    @property
+    def checkin_fields_have_errors(self):
+        return any(name in self.errors for name in ADMISSION_VALIDITY_FIELD_NAMES)
 
     def clean_default_price(self):
         return clean_default_price(self.cleaned_data.get('default_price'))
 
     def clean(self):
         cleaned_data = super().clean()
+        Product.clean_available(cleaned_data.get('available_from'), cleaned_data.get('available_until'))
         Product.clean_admission_validity_data(cleaned_data, event=self.event)
         return cleaned_data
 
@@ -1013,14 +1082,20 @@ class ProductVariationForm(I18nModelForm):
             'active',
             'default_price',
             'original_price',
+            'available_from',
+            'available_until',
             'description',
             *ADMISSION_VALIDITY_FIELD_NAMES,
         ]
         field_classes = {
+            'available_from': SplitDateTimeField,
+            'available_until': SplitDateTimeField,
             'admission_valid_from': SplitDateTimeField,
             'admission_valid_until': SplitDateTimeField,
         }
         widgets = {
+            'available_from': SplitDateTimePickerWidget(),
+            'available_until': SplitDateTimePickerWidget(),
             'admission_valid_from': SplitDateTimePickerWidget(),
             'admission_valid_until': SplitDateTimePickerWidget(),
         }
