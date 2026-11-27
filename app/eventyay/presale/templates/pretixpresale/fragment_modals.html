@@ -43,7 +43,7 @@
                            class="btn btn-primary btn-block checkout-sso-btn login-option-primary"
                            rel="noopener noreferrer"
                            data-provider="{{ login_ctx.preferred_provider }}">
-                            {% with login_ctx.preferred_provider|capfirst as provider_capitalized %}
+                            {% with login_ctx.preferred_provider|provider_label:login_ctx.oidc_label as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                             {% endwith %}
                         </a>
@@ -122,7 +122,7 @@
                                        class="btn btn-primary btn-block checkout-sso-btn login-option-secondary"
                                        rel="noopener noreferrer"
                                        data-provider="{{ provider }}">
-                                        {% with provider|capfirst as provider_capitalized %}
+                                        {% with provider|provider_label:login_ctx.oidc_label as provider_capitalized %}
                                             {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                                         {% endwith %}
                                     </a>

@@ -66,3 +66,26 @@ Registration Steps
 After Approval
 ~~~~~~~~~~~~~~~
 Once approved, other users can log in to your eventyay instance using their MediaWiki account.
+
+
+IV. Generic OpenID Connect (OIDC)
+---------------------------------
+
+Eventyay supports OIDC-compatible identity providers (such as Keycloak) through
+Django Allauth's generic OpenID Connect provider.
+
+1. Register an OIDC client with the identity provider, allowing this callback:
+   ``https://your-eventyay-domain/accounts/oidc/openid_connect/login/callback/``
+2. In Eventyay's admin **Social login settings**, enable **Openid_connect**.
+3. Enter the issuer URL (for example, ``https://id.example.org/realms/example``),
+   client ID and secret, and save. Optionally customize the login button label
+   or make OIDC the preferred login method.
+
+Disabling the provider removes its Allauth configuration and blocks new OIDC
+logins. Native password login and other configured providers remain available.
+
+To replace the issuer, enter the new issuer and credentials, save, then register
+the callback URL shown in Social login settings with the new provider.
+Replacement removes the old OIDC links. Eventyay accounts remain, and returning
+users reconnect when the new provider verifies a matching account email.
+Changing credentials or the button label for the same issuer preserves links.

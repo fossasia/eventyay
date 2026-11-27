@@ -451,12 +451,15 @@ class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationReq
         gs = GlobalSettingsObject()
         login_providers = gs.settings.get('login_providers', as_type=dict) or {}
         active_providers = {
-            key for key, cfg in login_providers.items()
+            cfg.get('provider_id', key) for key, cfg in login_providers.items()
             if isinstance(cfg, dict) and cfg.get('state') and cfg.get('client_id') and cfg.get('secret')
         }
         ctx['sso_providers_active'] = bool(active_providers)
 
         provider_labels = dict(providers.registry.as_choices())
+        oidc = login_providers.get('openid_connect')
+        if isinstance(oidc, dict):
+            provider_labels[oidc.get('provider_id', 'openid_connect')] = oidc.get('display_name') or 'OpenID Connect'
         social_accounts = SocialAccount.objects.filter(user=self.object).order_by('provider')
         connected_accounts = []
         for sa in social_accounts:

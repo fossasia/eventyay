@@ -330,6 +330,7 @@ _LIBRARY_APPS = (
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.mediawiki',
+    'allauth.socialaccount.providers.openid_connect',
 )
 
 if DEBUG and importlib.util.find_spec('django_extensions'):

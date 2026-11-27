@@ -8,9 +8,16 @@ class ProviderConfig(BaseModel):
     is_preferred: bool = Field(description='Whether this provider is the preferred login method', default=False)
 
 
+class OIDCProviderConfig(ProviderConfig):
+    display_name: str = ''
+    issuer: str = ''
+    provider_id: str = 'openid_connect'
+
+
 class LoginProviders(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     mediawiki: ProviderConfig = Field(default_factory=ProviderConfig)
     github: ProviderConfig = Field(default_factory=ProviderConfig)
     google: ProviderConfig = Field(default_factory=ProviderConfig)
+    openid_connect: OIDCProviderConfig = Field(default_factory=OIDCProviderConfig)

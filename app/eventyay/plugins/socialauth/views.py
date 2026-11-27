@@ -1,11 +1,15 @@
 import logging
 from enum import StrEnum
 from urllib.parse import parse_qs, urljoin, urlparse
+from uuid import uuid4
 
 from allauth.socialaccount.adapter import get_adapter
-from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ValidationError as FormValidationError
+from django.core.validators import URLValidator
+from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -15,7 +19,7 @@ from django.views.generic import TemplateView, View
 from pydantic import ValidationError
 
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
-from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.settings import GlobalSettingsObject, GlobalSettingsObject_SettingsStore
 from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
@@ -38,7 +42,7 @@ class OAuthLoginView(View):
         known_providers = frozenset(LoginProviders.model_fields.keys())
         if (
             provider not in known_providers
-            or provider not in login_providers
+            or not isinstance(login_providers.get(provider), dict)
             or not login_providers[provider].get('state')
             or not login_providers[provider].get('client_id')
             or not login_providers[provider].get('secret')
@@ -53,7 +57,9 @@ class OAuthLoginView(View):
             request.session.pop(KEY_SOCIAL_KEEP_LOGGED_IN, None)
         client_id = provider_config.get('client_id')
         adapter = get_adapter()
-        provider_instance = adapter.get_provider(request, provider, client_id=client_id)
+        provider_instance = adapter.get_provider(
+            request, provider_config.get('provider_id', provider), client_id=client_id,
+        )
 
         login_url = provider_instance.get_login_url(request)
         return redirect(login_url)
@@ -94,6 +100,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         self.gs = GlobalSettingsObject()
         self.set_initial_state()
 
+    @transaction.atomic
     def set_initial_state(self):
         """
         Validate and normalize the login providers stored in global settings.
@@ -107,9 +114,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         unchanged rather than silently overwriting with all-disabled defaults,
         which would wipe out the admin's configuration.
         """
+        GlobalSettingsObject_SettingsStore.objects.select_for_update().get_or_create(
+            key='login_providers', defaults={'value': '{}'},
+        )
+        self.gs.settings.flush()
         raw = self.gs.settings.get('login_providers', as_type=dict)
         try:
-            validated = LoginProviders.model_validate(raw or {})
+            values = raw or {}
+            if isinstance(values, dict) and not isinstance(values.get('openid_connect', {}), dict):
+                values = {**values, 'openid_connect': {}}
+            validated = LoginProviders.model_validate(values)
         except ValidationError as e:
             logger.error(
                 'login_providers settings failed validation (not overwriting): %s', e
@@ -123,6 +137,10 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         context['login_providers'] = login_providers
+        oidc = login_providers['openid_connect']
+        context['oidc_callback'] = self.request.build_absolute_uri(
+            reverse('openid_connect_callback', args=[oidc['provider_id']])
+        )
         context['any_preferred'] = any(
             p.get('state', False) and p.get('is_preferred', False) for p in login_providers.values()
         )
@@ -130,6 +148,17 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
+        try:
+            self.save_login_providers(request)
+        except FormValidationError as exc:
+            messages.error(request, exc.messages[0])
+        return redirect(self.get_success_url())
+
+    @transaction.atomic
+    def save_login_providers(self, request):
+        # Read the latest settings under lock before removing links for a changed issuer.
+        GlobalSettingsObject_SettingsStore.objects.select_for_update().get(key='login_providers')
+        self.gs.settings.flush()
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         setting_state = request.POST.get('save_credentials', '').lower()
 
@@ -142,7 +171,6 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 self.update_provider_state(request, provider, login_providers)
 
         self.gs.settings.set('login_providers', login_providers)
-        return redirect(self.get_success_url())
 
     def _apply_preferred_provider(self, request, login_providers):
         preferred = request.POST.get('preferred_provider', '').strip().lower()
@@ -176,6 +204,15 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         secret_value = request.POST.get(f'{provider}_secret', '')
 
         if client_id_value and secret_value:
+            if provider == 'openid_connect':
+                config = login_providers[provider]
+                if not config.get('state'):
+                    return
+                expected = config['provider_id'] if config.get('issuer') else ''
+                if request.POST.get('previous_provider_id') != expected:
+                    raise FormValidationError(_('The issuer changed. Reload the form and try again.'))
+                if 'openid_connect_display_name' in request.POST:
+                    config['display_name'] = request.POST['openid_connect_display_name'].strip()
             login_providers[provider]['client_id'] = client_id_value
             login_providers[provider]['secret'] = secret_value
 
@@ -184,6 +221,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 defaults={
                     'client_id': client_id_value,
                     'secret': secret_value,
+                    **self.social_app_settings(
+                        provider, request.POST.get('openid_connect_issuer'), login_providers[provider],
+                    ),
                 },
             )
 
@@ -211,8 +251,36 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                         defaults={
                             'client_id': client_id,
                             'secret': secret,
+                            **self.social_app_settings(provider, None, provider_config),
                         },
                     )
+
+    def social_app_settings(self, provider, submitted_issuer, config):
+        if provider != 'openid_connect':
+            return {}
+
+        original = config.get('issuer', '')
+        issuer = original if submitted_issuer is None else submitted_issuer.strip().rstrip('/')
+        if not issuer:
+            raise FormValidationError(_('Enter the issuer URL before saving OpenID Connect credentials.'))
+        try:
+            URLValidator(schemes=['https'])(issuer)
+            parsed = urlparse(issuer)
+            parsed.port  # Reject ports outside the allowed range.
+            if parsed.username is not None or '?' in issuer or '#' in issuer:
+                raise ValueError
+        except (ValueError, FormValidationError):
+            raise FormValidationError(_('Enter a valid HTTPS issuer URL.')) from None
+
+        provider_id = config.get('provider_id', provider)
+        if original and original != issuer:
+            SocialAccount.objects.filter(provider=provider_id).delete()
+            provider_id = f'oidc-{uuid4().hex}'
+        elif not original and SocialAccount.objects.filter(provider=provider_id).exists():
+            raise FormValidationError(_('The issuer for the existing OIDC links is unknown.'))
+
+        config.update(issuer=issuer, provider_id=provider_id)
+        return {'provider_id': provider_id, 'settings': {'server_url': issuer}}
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
