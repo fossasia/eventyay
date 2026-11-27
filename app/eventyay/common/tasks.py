@@ -73,6 +73,7 @@ def task_cleanup_file(*, model: str, pk: int, field: str, path: str, file_name: 
         return
 
     with scopes_disabled():
+        # Check every event: a copied event's rooms share picture files with the original.
         if model_class.objects.filter(**{field: file_name}).exists():
             return
         instance = model_class.objects.filter(pk=pk).first()
