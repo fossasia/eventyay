@@ -1,13 +1,19 @@
 {% extends "pretixcontrol/admin/pages/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 
 {% block title %}{{ page.title }}{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'control/css/system-page.css' %}" />
+{% endblock %}
 {% block content %}
 
-    <h2>{{ page.title }}</h2>
-    <div class="ql-content">
-        {{ content|safe }}
+    <div class="system-page">
+        <h2>{{ page.title }}</h2>
+        <div class="ql-content">
+            {{ content|safe }}
+        </div>
     </div>
 
 {% endblock %}
