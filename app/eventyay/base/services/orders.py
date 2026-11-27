@@ -1898,11 +1898,11 @@ class OrderChangeManager:
                         id__in=self.order.positions.values_list('subevent_id', flat=True)
                     ),
                 )
-                self.order.save()
+                self.order.save(update_fields=['status', 'expires'])
         elif self.order.status in (Order.STATUS_PENDING, Order.STATUS_EXPIRED) and self._totaldiff < 0:
             if self.order.pending_sum <= Decimal('0.00') and not self.order.require_approval:
                 self.order.status = Order.STATUS_PAID
-                self.order.save()
+                self.order.save(update_fields=['status'])
             elif self.open_payment:
                 try:
                     with transaction.atomic():

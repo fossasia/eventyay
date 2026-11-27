@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
+from functools import partial
 from typing import TypedDict
 from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
@@ -2359,7 +2360,12 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
             )
             messages.success(self.request, _(success_message))
 
-        tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+        transaction.on_commit(
+            partial(
+                tickets.invalidate_cache.apply_async,
+                kwargs={'event': self.request.event.pk, 'order': self.order.pk},
+            )
+        )
         from eventyay.plugins.badges.utils import invalidate_badge_cache_for_order
 
         invalidate_badge_cache_for_order(self.order)
@@ -2428,7 +2434,12 @@ class OrderContactChange(OrderView):
                         force_invalidate=True,
                         save=True,
                     )
-                tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+                transaction.on_commit(
+                    partial(
+                        tickets.invalidate_cache.apply_async,
+                        kwargs={'event': self.request.event.pk, 'order': self.order.pk},
+                    )
+                )
                 self.order.log_action('eventyay.event.order.secret.changed', user=self.request.user)
 
             self.form.save()

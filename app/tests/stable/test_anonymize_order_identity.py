@@ -32,6 +32,7 @@ from eventyay.base.models import (
 from eventyay.base.models.organizer import TeamAPIToken
 from eventyay.base.services.anonymize import anonymize_order
 from eventyay.base.services.mail import mail, mail_send_task
+from eventyay.base.services.orders import OrderChangeManager
 from eventyay.helpers.anonymization import is_anonymized_email
 from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
 from eventyay.plugins.banktransfer.payment import BankTransfer
@@ -697,3 +698,35 @@ def test_bank_transactions_are_anonymized_after_the_plugin_was_disabled(data, re
     assert data['transaction'].amount == Decimal('23.00')
     assert json.loads(data['payment'].info)['payer'] == '█'
     assert json.loads(data['payment'].info)['iban'] == '█'
+
+
+
+@pytest.mark.parametrize('initial,total,difference,expected', [
+    (Order.STATUS_PAID, 10, 10, Order.STATUS_PENDING),
+    (Order.STATUS_PENDING, 0, -10, Order.STATUS_PAID),
+])
+def test_price_change_preserves_concurrently_anonymized_identity(event, initial, total, difference, expected):
+    with event_scope(event):
+        order = Order.objects.create(event=event, email=EMAIL, total=total, status=initial, expires=now())
+        manager = OrderChangeManager(order)
+        manager._totaldiff = difference
+        Order.objects.filter(pk=order.pk).update(email='anonymous@eventyay.invalid', is_anonymized=True)
+        manager._check_paid_price_change()
+        order.refresh_from_db()
+        assert order.status == expected
+        assert order.is_anonymized and order.email == 'anonymous@eventyay.invalid'
+
+
+@override_settings(SITE_URL='https://testserver')
+def test_regenerating_secrets_invalidates_cache_after_commit(
+    event, team, authenticated_client, allow_all_entitlements, mocker, django_capture_on_commit_callbacks
+):
+    with event_scope(event):
+        order = Order.objects.create(event=event, email=EMAIL, total=0, expires=now())
+    invalidate = mocker.patch('eventyay.control.views.orders.tickets.invalidate_cache.apply_async')
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/contact'
+    with django_capture_on_commit_callbacks(execute=True):
+        response = authenticated_client.post(url, {'email': EMAIL, 'regenerate_secrets': 'on'})
+        assert response.status_code == 302
+        invalidate.assert_not_called()
+    invalidate.assert_called_once_with(kwargs={'event': event.pk, 'order': order.pk})
