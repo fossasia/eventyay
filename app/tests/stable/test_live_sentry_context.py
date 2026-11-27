@@ -8,10 +8,13 @@ from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from sentry_sdk.transport import Transport
 
+from eventyay.base.models import User
 from eventyay.config.asgi import PatchedSentryAsgiMiddleware
 from eventyay.features.live import routing
 from eventyay.features.live.consumers import MainConsumer
+from eventyay.features.live.modules.auth import AuthModule
 from eventyay.features.live.modules.chat import ChatModule
+from eventyay.features.live.modules.room import RoomModule
 
 
 class CollectingTransport(Transport):
@@ -79,6 +82,85 @@ async def test_concurrent_connections_keep_their_own_event_context(sentry_transp
     sentry_sdk.flush()
     assert [event['extra']['event'] for event in sentry_transport.events] == [101, 202, 101]
     assert all(event['request']['method'] == 'WEBSOCKET' for event in sentry_transport.events)
+
+
+@asynccontextmanager
+async def _broken_redis():
+    raise RuntimeError('redis unavailable')
+    yield
+
+
+@pytest.mark.asyncio
+async def test_concurrent_logins_report_exceptions_with_their_own_user(sentry_transport, settings):
+    settings.SENTRY_DSN = 'https://public@sentry.example.com/1'
+    both_logged_in = asyncio.Barrier(2)
+
+    def make_module(user_id):
+        consumer = MagicMock()
+        consumer.scope = {'query_string': b''}
+        consumer.event.config = {}
+        module = AuthModule(consumer)
+        return module, MagicMock(user=MagicMock(id=user_id, type=User.UserType.PERSON), view=None)
+
+    async def login_and_report(user_id):
+        module, login_result = make_module(user_id)
+        with sentry_sdk.isolation_scope():
+            with patch('eventyay.features.live.modules.auth.login', return_value=login_result):
+                with pytest.raises(RuntimeError) as excinfo:
+                    await module.login({'client_id': f'client-{user_id}'})
+            await both_logged_in.wait()
+            sentry_sdk.capture_exception(excinfo.value)
+
+    with patch('eventyay.features.live.modules.auth.aredis', _broken_redis):
+        await asyncio.gather(login_and_report(11), login_and_report(22))
+
+    sentry_sdk.flush()
+    reported = sorted(
+        (event['user']['id'], event['exception']['values'][-1]['type']) for event in sentry_transport.events
+    )
+    assert reported == [('11', 'RuntimeError'), ('22', 'RuntimeError')]
+
+
+@pytest.mark.asyncio
+async def test_concurrent_room_entries_keep_their_own_room(sentry_transport, settings):
+    settings.SENTRY_DSN = 'https://public@sentry.example.com/1'
+    both_entered = asyncio.Barrier(2)
+    enter_room = RoomModule.enter_room.__wrapped__.__wrapped__
+
+    def make_module(room_id):
+        consumer = MagicMock()
+        consumer.event.config = {}
+        consumer.event.has_permission_async = AsyncMock(return_value=False)
+        consumer.channel_layer.group_add = AsyncMock()
+        consumer.send_success = AsyncMock()
+        module = RoomModule(consumer)
+        module.room = MagicMock(pk=room_id)
+        module.room.name = f'Room {room_id}'
+        return module
+
+    async def enter_and_report(room_id):
+        module = make_module(room_id)
+        with sentry_sdk.isolation_scope():
+            with patch.object(RoomModule, '_update_view_count', new=AsyncMock()):
+                await enter_room(module, {'room': room_id})
+            await both_entered.wait()
+            try:
+                raise RuntimeError('after room enter')
+            except RuntimeError as e:
+                sentry_sdk.capture_exception(e)
+
+    room_module = 'eventyay.features.live.modules.room'
+    with (
+        patch(f'{room_module}.is_room_visible_for_attendee_async', new=AsyncMock(return_value=True)),
+        patch(f'{room_module}.start_view', new=AsyncMock(return_value=(MagicMock(), 1))),
+        patch(f'{room_module}.get_channel_layer', return_value=MagicMock(group_send=AsyncMock())),
+    ):
+        await asyncio.gather(enter_and_report(1), enter_and_report(2))
+
+    sentry_sdk.flush()
+    rooms = sorted(event['extra']['last_room'] for event in sentry_transport.events)
+    assert rooms == ['1', '2']
+    assert all(event['breadcrumbs']['values'][-1]['category'] == 'room' for event in sentry_transport.events)
 
 
 @pytest.mark.asyncio
