@@ -12,7 +12,7 @@ div.c-linear-schedule-session.is-shift-session(
 				line(x1="3", y1="10", x2="21", y2="10")
 			.schedule-pending-label
 				span.schedule-pending-text {{ schedulePendingText }}
-		template(v-else)
+		template(v-else-if="!continuationBefore")
 			.start(:class="{'has-ampm': effectiveHasAmPm}")
 				.date(v-if="showDate")
 					.weekday {{ weekdayLabel }}
@@ -691,6 +691,7 @@ export default {
 	margin: 8px 0
 	margin-right: 8px
 	&.has-continuation-after
+		margin-top: 0
 		margin-bottom: 0
 		.time-box
 			border-bottom-left-radius: 0
@@ -704,29 +705,12 @@ export default {
 		.info
 			border-top-right-radius: 0
 			border-top: none
-	&.shift-continuation-hidden
-		.start, .title-range-wrapper, .roles-list
-			display: none
 	&.is-continuation
 		min-height: 0
-		overflow: hidden
 		.time-box
 			min-height: 0
 		.info
 			min-height: 0
-			overflow: hidden
-			padding: 4px 8px
-			.title
-				font-size: 13px
-				line-height: 1.2
-				white-space: nowrap
-				overflow: hidden
-				text-overflow: ellipsis
-			.continuation-range
-				font-size: 11px
-				white-space: nowrap
-				overflow: hidden
-				text-overflow: ellipsis
 	color: rgb(13 15 16)
 	position: relative
 	font-size: 14px
