@@ -1623,7 +1623,18 @@ class EventCloneView(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
 
         new_event.clone_from(old_event, new_secrets=True)
         new_event.copy_data_from(old_event, clone_options=clone_options)
-        
+
+        # Reset publication and test-mode states after copy_data_from, which
+        # unconditionally inherits these flags from the source event.  A cloned
+        # event must always start unpublished so that organizers make an explicit
+        # decision before the ticket shop or talk pages go live.  (issue #6928)
+        new_event.live = False
+        new_event.tickets_published = False
+        new_event.talks_published = False
+        new_event.testmode = False
+        new_event.private_testmode = False
+        new_event.save(update_fields=['live', 'tickets_published', 'talks_published', 'testmode', 'private_testmode'])
+
         new_event.settings.set('locales', form.cleaned_data['locales'])
         
         if clone_options.get('clone_talk_data') and clone_options.get('clone_cfp', True) and getattr(old_event, 'cfp', None):
