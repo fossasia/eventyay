@@ -543,6 +543,7 @@ urlpatterns = [
                     orderimport.ProcessView.as_view(),
                     name='event.orders.import.process',
                 ),
+                url(r'^orders/invoice-downloads/$', orders.InvoiceDownloadsView.as_view(), name='event.orders.invoice_downloads'),
                 url(r'^orders/export/$', orders.ExportView.as_view(), name='event.orders.export'),
                 url(r'^orders/export/do$', orders.ExportDoView.as_view(), name='event.orders.export.do'),
                 url(r'^orders/refunds/$', orders.RefundList.as_view(), name='event.orders.refunds'),
