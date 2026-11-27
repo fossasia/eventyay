@@ -294,6 +294,9 @@ class EventModule(BaseModule):
                 if not await is_video_provider_enabled_for_organizer_async(prov):
                     new.pop(def_key, None)
 
+            if not has_general_update:
+                new.pop("conftool_password", None)
+
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
 

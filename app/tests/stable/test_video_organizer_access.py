@@ -1,8 +1,14 @@
-from unittest.mock import MagicMock
+import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
+from django_scopes import scope
 import pytest
 
+from eventyay.base.models.audit import AuditLog
+from eventyay.base.services.event import mask_event_config_secrets, save_event
+from eventyay.core.permissions import Permission
+from eventyay.features.live.modules.event import EventModule
 from eventyay.multidomain.views import VideoAdminRedirectView, VideoSPAView
 
 
@@ -402,10 +408,6 @@ async def test_announcements_disabled_guard():
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_config_get_and_patch_granular_permissions():
-    from unittest.mock import AsyncMock, MagicMock, patch
-    from eventyay.core.permissions import Permission
-    from eventyay.features.live.modules.event import EventModule
-
     consumer = MagicMock()
     consumer.event = MagicMock()
     consumer.event.id = 1
@@ -414,24 +416,109 @@ async def test_config_get_and_patch_granular_permissions():
     consumer.send_success = AsyncMock()
     consumer.send_error = AsyncMock()
 
-    # When user only has EVENT_ROOMS_CREATE_STAGE, config.get strips conftool_password
+    # When user only has EVENT_ROOMS_CREATE_STAGE, config.get and config.patch strip conftool_password
     async def fake_has_perm(user, permission):
         if isinstance(permission, (list, tuple, set)):
             return Permission.EVENT_ROOMS_CREATE_STAGE in permission
         return permission == Permission.EVENT_ROOMS_CREATE_STAGE
 
     consumer.event.has_permission_async = fake_has_perm
+    module = EventModule(consumer)
 
     with patch('eventyay.features.live.modules.event._config_serializer') as mock_serializer:
         mock_serializer.return_value.data = {
             'video_player': {'auto_play': True},
             'conftool_password': 'secret_password',
         }
-        module = EventModule(consumer)
         await module.config_get({})
         sent_data = consumer.send_success.call_args[0][0]
         assert 'conftool_password' not in sent_data
         assert sent_data['video_player'] == {'auto_play': True}
+
+    with (
+        patch('eventyay.features.live.modules.event._validate_event_config', new_callable=AsyncMock) as mock_validate,
+        patch('eventyay.features.live.modules.event.save_event', new_callable=AsyncMock) as mock_save_event,
+        patch('eventyay.features.live.modules.event.notify_event_change', new_callable=AsyncMock),
+        patch(
+            'eventyay.features.live.modules.event.is_video_provider_enabled_for_organizer_async',
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+    ):
+        old_cfg = {'video_player': {'auto_play': True}, 'conftool_password': 'secret_password', 'pretalx': {}}
+        new_cfg = {'video_player': {'auto_play': False}, 'conftool_password': 'secret_password', 'pretalx': {}}
+        mock_validate.return_value = (old_cfg, True, {'video_player': {'auto_play': False}}, None)
+        mock_save_event.return_value = dict(new_cfg)
+
+        consumer.send_success.reset_mock()
+        await module.config_patch({'video_player': {'auto_play': False}})
+        patched_data = consumer.send_success.call_args[0][0]
+        assert 'conftool_password' not in patched_data
+        assert patched_data['video_player'] == {'auto_play': False}
+
+
+def test_mask_event_config_secrets_masks_copy_only():
+    config = {
+        'title': 'Conf',
+        'conftool_password': 'secret_password',
+        'zoom_defaults': {'client_id': 'id', 'client_secret': 'zoom_secret'},
+        'jitsi_defaults': {'app_id': 'app', 'app_secret': 'jitsi_secret'},
+    }
+    masked = mask_event_config_secrets(config)
+    assert masked == {
+        'title': 'Conf',
+        'conftool_password': '********',
+        'zoom_defaults': {'client_id': 'id', 'client_secret': '********'},
+        'jitsi_defaults': {'app_id': 'app', 'app_secret': '********'},
+    }
+    assert config['conftool_password'] == 'secret_password'
+    assert config['zoom_defaults']['client_secret'] == 'zoom_secret'
+    assert mask_event_config_secrets({'conftool_password': ''}) == {'conftool_password': ''}
+    assert mask_event_config_secrets({'conftool_password': None}) == {'conftool_password': None}
+
+
+def test_save_event_masks_conftool_password_in_audit_log():
+    fake_event = MagicMock()
+    fake_event.id = 1
+    fake_event.pk = 1
+    old_data = {
+        'title': 'Conf',
+        'conftool_password': 'old_secret',
+        'zoom_defaults': {'client_secret': 'old_zoom_secret'},
+    }
+    new_data = {
+        'title': 'Conf',
+        'conftool_password': 'new_secret',
+        'zoom_defaults': {'client_secret': 'new_zoom_secret'},
+    }
+
+    with (
+        patch('eventyay.base.services.event._config_serializer') as mock_serializer,
+        patch('eventyay.base.services.event.AuditLog.objects.create') as mock_audit_create,
+        scope(event=fake_event),
+    ):
+        mock_serializer.return_value.data = dict(new_data)
+        returned = save_event.func.__wrapped__(fake_event, ['config'], old_data=old_data, by_user=None)
+
+    assert returned['conftool_password'] == 'new_secret'
+    assert old_data['conftool_password'] == 'old_secret'
+    audit_payload = mock_audit_create.call_args.kwargs['data']
+    assert audit_payload['old']['conftool_password'] == '********'
+    assert audit_payload['old']['zoom_defaults']['client_secret'] == '********'
+    assert audit_payload['new']['conftool_password'] == '********'
+    assert audit_payload['new']['zoom_defaults']['client_secret'] == '********'
+
+    historical = AuditLog(
+        id=99,
+        timestamp=datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc),
+        type='event.updated',
+        data={'old': old_data, 'new': new_data},
+    )
+    serialized = historical.serialize_public()
+    assert serialized['data']['old']['conftool_password'] == '********'
+    assert serialized['data']['old']['zoom_defaults']['client_secret'] == '********'
+    assert serialized['data']['new']['conftool_password'] == '********'
+    assert serialized['data']['new']['zoom_defaults']['client_secret'] == '********'
 
 
 def test_ensure_video_configuration_preserves_existing_config():

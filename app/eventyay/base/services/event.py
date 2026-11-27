@@ -19,7 +19,7 @@ from django_scopes import scope
 from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
-from eventyay.base.models.audit import AuditLog
+from eventyay.base.models.audit import AuditLog, mask_event_config_secrets
 from eventyay.base.models.chat import Channel, ChatEvent, Membership
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView, mask_room_config_secrets
@@ -906,8 +906,8 @@ def save_event(event, update_fields, old_data, by_user):
             user=by_user,
             type="event.updated",
             data={
-                "old": old_data,
-                "new": new,
+                "old": mask_event_config_secrets(old_data),
+                "new": mask_event_config_secrets(new),
             },
         )
         if update_fields and 'feature_flags' in update_fields:
