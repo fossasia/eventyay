@@ -103,23 +103,25 @@ async def test_concurrent_logins_report_exceptions_with_their_own_user(sentry_tr
     settings.SENTRY_DSN = 'https://public@sentry.example.com/1'
     both_logged_in = asyncio.Barrier(2)
 
-    def make_module(user_id):
+    def login(client_id, **kwargs):
+        user_id = int(client_id.removeprefix('client-'))
+        return MagicMock(user=MagicMock(id=user_id, type=User.UserType.PERSON), view=None)
+
+    async def login_and_report(user_id):
         consumer = MagicMock()
         consumer.scope = {'query_string': b''}
         consumer.event.config = {}
         module = AuthModule(consumer)
-        return module, MagicMock(user=MagicMock(id=user_id, type=User.UserType.PERSON), view=None)
-
-    async def login_and_report(user_id):
-        module, login_result = make_module(user_id)
         with sentry_sdk.isolation_scope():
-            with patch('eventyay.features.live.modules.auth.login', return_value=login_result):
-                with pytest.raises(RuntimeError) as excinfo:
-                    await module.login({'client_id': f'client-{user_id}'})
+            with pytest.raises(RuntimeError) as excinfo:
+                await module.login({'client_id': f'client-{user_id}'})
             await both_logged_in.wait()
             sentry_sdk.capture_exception(excinfo.value)
 
-    with patch('eventyay.features.live.modules.auth.aredis', _broken_redis):
+    with (
+        patch('eventyay.features.live.modules.auth.login', side_effect=login),
+        patch('eventyay.features.live.modules.auth.aredis', _broken_redis),
+    ):
         await asyncio.gather(login_and_report(11), login_and_report(22))
 
     sentry_sdk.flush()
@@ -172,19 +174,24 @@ async def test_concurrent_room_entries_keep_their_own_room(sentry_transport, set
 
 
 @pytest.mark.asyncio
-async def test_chat_command_records_channel_on_isolation_scope(sentry_transport):
-    consumer = MagicMock()
-    module = ChatModule(consumer)
+async def test_concurrent_chat_commands_keep_their_own_channel(sentry_transport):
+    both_dispatched = asyncio.Barrier(2)
 
-    with (
-        sentry_sdk.isolation_scope(),
-        patch('eventyay.features.live.modules.base.BaseModule.dispatch_command', new=AsyncMock()),
-    ):
-        await module.dispatch_command(['chat.join', 1, {'channel': 'abc'}])
-        sentry_sdk.capture_message('chat')
+    async def dispatch(content):
+        await both_dispatched.wait()
+
+    async def dispatch_and_report(channel_id):
+        module = ChatModule(MagicMock())
+        with sentry_sdk.isolation_scope():
+            await module.dispatch_command(['chat.join', 1, {'channel': channel_id}])
+            sentry_sdk.capture_message('chat')
+
+    with patch('eventyay.features.live.modules.base.BaseModule.dispatch_command', side_effect=dispatch):
+        await asyncio.gather(dispatch_and_report('abc'), dispatch_and_report('def'))
 
     sentry_sdk.flush()
-    assert sentry_transport.events[-1]['extra']['last_channel'] == 'abc'
+    channels = sorted(event['extra']['last_channel'] for event in sentry_transport.events)
+    assert channels == ['abc', 'def']
 
 
 def test_request_body_and_cookies_are_not_collected(sentry_transport):
