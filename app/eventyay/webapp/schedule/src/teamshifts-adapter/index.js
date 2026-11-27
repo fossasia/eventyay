@@ -311,6 +311,75 @@ export function computeShiftOverlapPlacement (session, allSessions, columnLayout
 	}
 }
 
+/**
+ * Split a shift into per-segment placements so non-overlapping time ranges
+ * use the full room width instead of staying locked in one subcolumn.
+ *
+ * The session's [start, end) is cut at every other session's start/end
+ * boundary in the same room. Each maximal interval where the session runs
+ * alone spans the full room width; where it overlaps others it keeps its
+ * stable assigned track. Consecutive intervals with the same shape merge
+ * into one segment. The first segment renders the full card, later ones
+ * are continuations. Back-to-back sessions (one ends exactly when another
+ * starts) do not count as overlapping.
+ *
+ * @param {Object} session
+ * @param {Array} allSessions
+ * @param {Map} columnLayout
+ * @returns {Array|null} segments of {start, end, fullWidth, track, continuation, gridRow, gridColumn}
+ */
+export function computeShiftSegments (session, allSessions, columnLayout) {
+	if (!session.start || !session.end || !session.room) return null
+
+	const rid = roomId(session.room)
+	const roomLayout = columnLayout ? columnLayout.get(rid) : null
+	if (!roomLayout) return null
+
+	const roomSessions = allSessions.filter(s => roomId(s.room) === rid && s.start && s.end)
+	const trackMap = assignRoomTracks(session.room, allSessions)
+	const track = trackMap.get(session.id)
+	if (track == null) return null
+
+	const points = [session.start, session.end]
+	for (const other of roomSessions) {
+		if (other.id === session.id) continue
+		if (!other.start.isBefore(session.end) || !other.end.isAfter(session.start)) continue
+		if (other.start.isAfter(session.start)) points.push(other.start)
+		if (other.end.isBefore(session.end)) points.push(other.end)
+	}
+	points.sort((a, b) => a.diff(b))
+	const boundaries = points.filter((point, index) => index === 0 || point.diff(points[index - 1]) !== 0)
+
+	const segments = []
+	for (let i = 0; i < boundaries.length - 1; i++) {
+		const segStart = boundaries[i]
+		const segEnd = boundaries[i + 1]
+		if (!segEnd.isAfter(segStart)) continue
+		const overlapping = roomSessions.some(other =>
+			other.id !== session.id && other.start.isBefore(segEnd) && other.end.isAfter(segStart)
+		)
+		const fullWidth = !overlapping
+		const prev = segments[segments.length - 1]
+		if (prev && prev.fullWidth === fullWidth && prev.track === (fullWidth ? null : track)) {
+			prev.end = segEnd
+			prev.gridRow = `${getSliceName(prev.start)} / ${getSliceName(segEnd)}`
+			continue
+		}
+		segments.push({
+			start: segStart,
+			end: segEnd,
+			fullWidth,
+			track: fullWidth ? null : track,
+			continuation: segments.length > 0,
+			gridRow: `${getSliceName(segStart)} / ${getSliceName(segEnd)}`,
+			gridColumn: fullWidth
+				? `${roomLayout.colStart} / ${roomLayout.colStart + roomLayout.colSpan}`
+				: `${roomLayout.colStart + track} / ${roomLayout.colStart + track + 1}`,
+		})
+	}
+	return segments
+}
+
 function getSliceName (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
 }
