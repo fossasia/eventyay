@@ -293,6 +293,32 @@ export function buildShiftGridTemplateColumns (rooms, sessions, minColWidth, tim
 	return `${t} ${roomCols} auto`
 }
 
+/**
+ * Map a grid-column range from the full schedule grid into a print chunk
+ * that holds only some of the rooms.
+ *
+ * The full grid numbers columns from the time column (1), then each room
+ * in order with its subcolumn span. A chunk restarts numbering at 2 for
+ * its first room, so a range is shifted by the spans of the chunk rooms
+ * before this one, minus the room's own start in the full grid.
+ *
+ * @param {string} gridColumn range like "5 / 6" in full-grid columns
+ * @param {{ colStart: number, colSpan: number }} roomLayout the room's layout in the full grid
+ * @param {Array<{ colSpan: number }>} chunkRoomLayouts layouts of the chunk rooms, in order
+ * @param {number} roomChunkIndex index of the room inside the chunk
+ * @returns {string|null} the range in chunk columns, or null when it cannot be mapped
+ */
+export function mapGridColumnToChunk (gridColumn, roomLayout, chunkRoomLayouts, roomChunkIndex) {
+	if (!gridColumn || !roomLayout || !Array.isArray(chunkRoomLayouts) || roomChunkIndex < 0) return null
+	const parts = String(gridColumn).split('/').map(part => parseInt(part.trim(), 10))
+	if (parts.length !== 2 || parts.some(n => !Number.isFinite(n))) return null
+	let localStart = 2
+	for (let i = 0; i < roomChunkIndex; i++) {
+		localStart += chunkRoomLayouts[i]?.colSpan || 1
+	}
+	return `${localStart + (parts[0] - roomLayout.colStart)} / ${localStart + (parts[1] - roomLayout.colStart)}`
+}
+
 export function computeShiftOverlapPlacement (session, allSessions, columnLayout) {
 	if (!session.start || !session.end || !session.room) return null
 
@@ -340,24 +366,47 @@ export function computeShiftSegments (session, allSessions, columnLayout) {
 	const track = trackMap.get(session.id)
 	if (track == null) return null
 
+	const overlappingOthers = roomSessions.filter(other =>
+		other.id !== session.id && other.start.isBefore(session.end) && other.end.isAfter(session.start)
+	)
+
 	const points = [session.start, session.end]
-	for (const other of roomSessions) {
-		if (other.id === session.id) continue
-		if (!other.start.isBefore(session.end) || !other.end.isAfter(session.start)) continue
+	for (const other of overlappingOthers) {
 		if (other.start.isAfter(session.start)) points.push(other.start)
 		if (other.end.isBefore(session.end)) points.push(other.end)
 	}
 	points.sort((a, b) => a.diff(b))
 	const boundaries = points.filter((point, index) => index === 0 || point.diff(points[index - 1]) !== 0)
 
+	// One sweep over the overlapping sessions tells each interval whether
+	// another session covers it, instead of rescanning all room sessions
+	// for every segment. Events are clamped to this session's span and
+	// ends sort before starts at the same time, so a session ending
+	// exactly at a boundary does not count as overlapping the next interval.
+	const events = []
+	for (const other of overlappingOthers) {
+		const start = other.start.isAfter(session.start) ? other.start : session.start
+		const end = other.end.isBefore(session.end) ? other.end : session.end
+		events.push({ time: start, delta: 1 })
+		events.push({ time: end, delta: -1 })
+	}
+	events.sort((a, b) => {
+		const diff = a.time.diff(b.time)
+		return diff !== 0 ? diff : a.delta - b.delta
+	})
+
 	const segments = []
+	let activeOthers = 0
+	let eventIndex = 0
 	for (let i = 0; i < boundaries.length - 1; i++) {
 		const segStart = boundaries[i]
 		const segEnd = boundaries[i + 1]
+		while (eventIndex < events.length && !events[eventIndex].time.isAfter(segStart)) {
+			activeOthers += events[eventIndex].delta
+			eventIndex++
+		}
 		if (!segEnd.isAfter(segStart)) continue
-		const overlapping = roomSessions.some(other =>
-			other.id !== session.id && other.start.isBefore(segEnd) && other.end.isAfter(segStart)
-		)
+		const overlapping = activeOthers > 0
 		const fullWidth = !overlapping
 		const prev = segments[segments.length - 1]
 		if (prev && prev.fullWidth === fullWidth && prev.track === (fullWidth ? null : track)) {

@@ -191,9 +191,18 @@ export default {
 			return this.scheduleData?.hasAmPm ?? this.hasAmPm
 		},
 		style () {
-			return {
+			const style = {
 				'--track-color': getShiftTrackColor(this.session?.roles),
 			}
+			if (this.isContinuation) {
+				// A continuation is a thin band marking that the shift
+				// goes on, so it must not push its row taller than the
+				// time scale says. Its margins and height stay out of
+				// the grid sizing entirely.
+				style['margin-top'] = 0
+				style['margin-bottom'] = 0
+			}
+			return style
 		},
 		isSchedulePending () {
 			return Boolean(this.session.schedule_pending || !this.session.start)
@@ -748,8 +757,14 @@ export default {
 	&.is-continuation
 		background-color: var(--track-color)
 		border-radius: 6px
-		min-height: 20px
+		min-height: 0
+		overflow: hidden
 		.continuation-strip
+			position: absolute
+			top: 0
+			left: 0
+			right: 0
+			bottom: 0
 			display: flex
 			align-items: center
 			min-width: 0

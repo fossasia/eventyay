@@ -50,9 +50,9 @@
 	.print-grids
 		template(v-for="(chunk, chunkIdx) of printRoomChunks", :key="chunkIdx")
 			.print-chunk
-				.print-rooms-bar(:style="{'--total-rooms': chunk.length}")
+				.print-rooms-bar(:style="getPrintRoomsBarStyle(chunk)")
 					.room
-					.room(v-for="(room, index) of chunk", :key="room.id || index")
+					.room(v-for="(room, index) of chunk", :key="room.id || index", :style="getPrintRoomHeaderStyle(room, chunk)")
 						span.room-name {{ getLocalizedString(room.name) }}
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")
@@ -94,7 +94,7 @@ import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll } from '../utils'
-import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftSegments, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
+import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftSegments, computeShiftColumnLayout, buildShiftGridTemplateColumns, mapGridColumnToChunk } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
@@ -566,12 +566,58 @@ export default {
 			return items
 		},
 		getChunkSessionItemStyle (item, chunkRooms) {
-			const roomIndex = chunkRooms.indexOf(item.session.room)
 			const gridRow = item.segment ? item.segment.gridRow : `${getSliceName(item.session.start)} / ${getSliceName(item.session.end)}`
+			if (this.isShiftMode) {
+				// Print chunks renumber columns per chunk, so a segment's
+				// full-grid column must be mapped into the chunk, or
+				// overlapping shifts land in the same column and obscure
+				// each other on paper, as they do on screen.
+				const column = item.segment
+					? this.mapShiftGridColumnToChunk(item.segment.gridColumn, item.session.room, chunkRooms)
+					: this.mapShiftSessionColumnToChunk(item.session, chunkRooms)
+				if (column) return { 'grid-row': gridRow, 'grid-column': column }
+			}
+			const roomIndex = chunkRooms.indexOf(item.session.room)
 			if (roomIndex > -1) {
 				return { 'grid-row': gridRow, 'grid-column': roomIndex + 2 }
 			}
 			return { 'grid-row': gridRow, 'grid-column': `2 / ${chunkRooms.length + 2}` }
+		},
+		mapShiftGridColumnToChunk (gridColumn, room, chunkRooms) {
+			const roomLayout = this.shiftColumnLayout.get(room?.id ?? room)
+			if (!roomLayout) return null
+			const roomIndex = chunkRooms.indexOf(room)
+			if (roomIndex < 0) return null
+			const chunkLayouts = chunkRooms.map(chunkRoom => this.shiftColumnLayout.get(chunkRoom?.id ?? chunkRoom) || { colSpan: 1 })
+			return mapGridColumnToChunk(gridColumn, roomLayout, chunkLayouts, roomIndex)
+		},
+		mapShiftSessionColumnToChunk (session, chunkRooms) {
+			const placement = computeShiftOverlapPlacement(session, this.sessions, this.shiftColumnLayout)
+			if (placement) return this.mapShiftGridColumnToChunk(placement.gridColumn, session.room, chunkRooms)
+			const layout = this.shiftColumnLayout.get(session.room?.id ?? session.room)
+			if (!layout) return null
+			return this.mapShiftGridColumnToChunk(`${layout.colStart} / ${layout.colStart + layout.colSpan}`, session.room, chunkRooms)
+		},
+		getPrintChunkColumns (chunk) {
+			return chunk.map(room => {
+				const layout = this.shiftColumnLayout.get(room?.id ?? room)
+				const span = layout ? layout.colSpan : 1
+				return Array(span).fill('1fr').join(' ')
+			}).join(' ')
+		},
+		getPrintRoomsBarStyle (chunk) {
+			if (!this.isShiftMode) return { '--total-rooms': chunk.length }
+			return {
+				'--total-rooms': chunk.length,
+				'grid-template-columns': `78px ${this.getPrintChunkColumns(chunk)} auto`,
+			}
+		},
+		getPrintRoomHeaderStyle (room, chunk) {
+			if (!this.isShiftMode) return {}
+			const layout = this.shiftColumnLayout.get(room?.id ?? room)
+			if (!layout) return {}
+			const mapped = this.mapShiftGridColumnToChunk(`${layout.colStart} / ${layout.colStart + layout.colSpan}`, room, chunk)
+			return mapped ? { 'grid-column': mapped } : {}
 		},
 		getPrintChunkGridStyle (chunk) {
 			const rows = this.timeslices.map((slice, index) => {
@@ -586,6 +632,13 @@ export default {
 				}
 				return `[${slice.name}] minmax(${height}px, auto)`
 			}).join(' ')
+			if (this.isShiftMode) {
+				return {
+					'--total-rooms': chunk.length,
+					'grid-template-rows': rows,
+					'grid-template-columns': `78px ${this.getPrintChunkColumns(chunk)} auto`,
+				}
+			}
 			return {
 				'--total-rooms': chunk.length,
 				'grid-template-rows': rows

@@ -6,7 +6,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import moment from 'moment-timezone'
-import { computeShiftColumnLayout, computeShiftSegments } from './index.js'
+import { computeShiftColumnLayout, computeShiftSegments, mapGridColumnToChunk } from './index.js'
 
 const ROOM = { id: 1, name: 'Main Auditorium' }
 const OTHER_ROOM = { id: 2, name: 'Side Room' }
@@ -138,6 +138,70 @@ test('sessions in other rooms do not affect the segments', () => {
 	assert.equal(segments.length, 1)
 	assert.equal(segments[0].fullWidth, true)
 	assert.equal(segments[0].gridColumn, '2 / 3')
+})
+
+test('a shift crossed by many short shifts alternates narrow and wide', () => {
+	const long = shift('long', '2026-11-14 18:00', '2026-11-14 23:00')
+	const first = shift('first', '2026-11-14 19:00', '2026-11-14 19:30')
+	const second = shift('second', '2026-11-14 20:00', '2026-11-14 20:30')
+	const third = shift('third', '2026-11-14 21:00', '2026-11-14 21:30')
+	const sessions = [long, first, second, third]
+	const layout = layoutFor(sessions)
+
+	const segments = computeShiftSegments(long, sessions, layout)
+	assert.deepEqual(
+		segments.map(s => [s.gridRow, s.gridColumn, s.fullWidth, s.continuation]),
+		[
+			['slice-11-14-18-00 / slice-11-14-19-00', '2 / 4', true, false],
+			['slice-11-14-19-00 / slice-11-14-19-30', '2 / 3', false, true],
+			['slice-11-14-19-30 / slice-11-14-20-00', '2 / 4', true, true],
+			['slice-11-14-20-00 / slice-11-14-20-30', '2 / 3', false, true],
+			['slice-11-14-20-30 / slice-11-14-21-00', '2 / 4', true, true],
+			['slice-11-14-21-00 / slice-11-14-21-30', '2 / 3', false, true],
+			['slice-11-14-21-30 / slice-11-14-23-00', '2 / 4', true, true],
+		]
+	)
+})
+
+test('back-to-back crossing shifts keep the overlap covered across the join', () => {
+	const long = shift('long', '2026-11-14 18:00', '2026-11-14 23:00')
+	const first = shift('first', '2026-11-14 19:00', '2026-11-14 20:00')
+	const second = shift('second', '2026-11-14 20:00', '2026-11-14 21:00')
+	const sessions = [long, first, second]
+	const layout = layoutFor(sessions)
+
+	const segments = computeShiftSegments(long, sessions, layout)
+	assert.deepEqual(
+		segments.map(s => [s.gridRow, s.gridColumn, s.fullWidth, s.continuation]),
+		[
+			['slice-11-14-18-00 / slice-11-14-19-00', '2 / 4', true, false],
+			['slice-11-14-19-00 / slice-11-14-21-00', '2 / 3', false, true],
+			['slice-11-14-21-00 / slice-11-14-23-00', '2 / 4', true, true],
+		]
+	)
+})
+
+test('print chunk mapping keeps segment columns apart', () => {
+	// Room A spans columns 2-4 in the full grid, room B is column 4-5.
+	const layoutA = { colStart: 2, colSpan: 2 }
+	const layoutB = { colStart: 4, colSpan: 1 }
+	const chunkAB = [layoutA, layoutB]
+
+	// Full-width and narrow segments in the first room keep their columns.
+	assert.equal(mapGridColumnToChunk('2 / 4', layoutA, chunkAB, 0), '2 / 4')
+	assert.equal(mapGridColumnToChunk('2 / 3', layoutA, chunkAB, 0), '2 / 3')
+	assert.equal(mapGridColumnToChunk('3 / 4', layoutA, chunkAB, 0), '3 / 4')
+
+	// The second room in the chunk starts after room A's span.
+	assert.equal(mapGridColumnToChunk('4 / 5', layoutB, chunkAB, 1), '4 / 5')
+
+	// A chunk holding only room B renumbers it to start at column 2.
+	assert.equal(mapGridColumnToChunk('4 / 5', layoutB, [layoutB], 0), '2 / 3')
+
+	// Bad input maps to nothing instead of a wrong column.
+	assert.equal(mapGridColumnToChunk('bogus', layoutA, chunkAB, 0), null)
+	assert.equal(mapGridColumnToChunk('2 / 4', null, chunkAB, 0), null)
+	assert.equal(mapGridColumnToChunk('2 / 4', layoutA, chunkAB, -1), null)
 })
 
 test('returns null without start, end, room, or layout entry', () => {
