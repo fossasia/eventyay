@@ -7,7 +7,7 @@ from eventyay.base.models import CachedFile
 
 SAMPLE_EXPORTER_CONFIG = {
     'identifier': 'orderlist',
-    'verbose_name': 'Order data',
+    'verbose_name': 'Orders',
     'input_parameters': [
         {
             'name': '_format',

@@ -384,6 +384,8 @@ class TeamDeleteView(
         return context
 
     def can_deleted(self) -> bool:
+        if self.object.is_core_team:
+            return False
         return (
             self.request.organizer.teams.exclude(pk=self.kwargs.get('team'))
             .filter(can_change_teams=True, members__isnull=False)
