@@ -10,7 +10,7 @@ from eventyay.base.models import (
     Checkin,
     Event,
     InvoiceAddress,
-    Product as Item,
+    Product,
     Order,
     OrderPosition,
     Organizer,
@@ -46,10 +46,10 @@ def event():
             total=33,
             locale='en',
         )
-        item_ticket = Item.objects.create(event=event, name='Ticket', default_price=23, admission=True)
+        item_ticket = Product.objects.create(event=event, name='Ticket', default_price=23, admission=True)
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={
@@ -62,7 +62,7 @@ def event():
         )
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('13'),
             attendee_name_parts={
@@ -174,7 +174,7 @@ def test_csv_order_by_inherited_name_parts(event):  # noqa
         )
         OrderPosition.objects.create(
             order=order2,
-            item=event.items.first(),
+            product=event.products.first(),
             variation=None,
             company='BARCORP',
             price=Decimal('23'),
@@ -290,7 +290,7 @@ def test_csv_includes_all_checkins(event):
             'questions': [],
         }
     )
-    rows = [line for line in clean(content.decode()).split('\n') if line.startswith('"FOO"')]
+    rows = [line for line in content.decode().splitlines() if 'Peter A Jones' in line]
     assert len(rows) == 2
     assert '2019-02-22' in rows[0]
     assert '2019-02-22' in rows[1]
@@ -299,6 +299,7 @@ def test_csv_includes_all_checkins(event):
 
 @pytest.mark.django_db
 def test_checkinlog_includes_all_checkins(event):
+    event.settings.set('timezone', 'Asia/Kolkata')
     cl = event.checkin_lists.first()
     with scope(organizer=event.organizer):
         op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
@@ -308,20 +309,27 @@ def test_checkinlog_includes_all_checkins(event):
             type=Checkin.TYPE_ENTRY,
             datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=datetime.timezone.utc),
         )
+        # 23:30 UTC crosses midnight to 05:00 next day in Asia/Kolkata (UTC+5:30)
         Checkin.objects.create(
             position=op,
             list=cl,
             type=Checkin.TYPE_ENTRY,
-            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=datetime.timezone.utc),
+            datetime=datetime.datetime(2019, 2, 22, 23, 30, 0, tzinfo=datetime.timezone.utc),
         )
 
     exporter = CheckinLogList(event)
     _, _, content = exporter.render(
         {
             'list': cl.pk,
-            'products': [event.items.first().pk],
+            'products': [event.products.first().pk],
             '_format': 'default',
         }
     )
-    rows = [line for line in clean(content.decode()).split('\n') if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
+    rows = [line for line in content.decode().splitlines() if 'Peter A Jones' in line]
     assert len(rows) == 2
+    # In Asia/Kolkata: 15:00 UTC -> 20:30 on 2019-02-22
+    assert '2019-02-22' in rows[0]
+    assert '20:30' in rows[0]
+    # 23:30 UTC -> 05:00 on next day 2019-02-23
+    assert '2019-02-23' in rows[1]
+    assert '05:00' in rows[1]

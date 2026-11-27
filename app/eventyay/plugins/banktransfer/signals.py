@@ -3,15 +3,21 @@ from django.template.loader import get_template
 from django.urls import resolve, reverse
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.signals import register_payment_providers
+from eventyay.base.signals import register_payment_providers, register_ticketing_anonymizers
 from eventyay.control.signals import html_head, nav_event, nav_organizer
 
+from .anonymizer import BankTransactionAnonymizer
 from .payment import BankTransfer
 
 
 @receiver(register_payment_providers, dispatch_uid='payment_banktransfer')
 def register_payment_provider(sender, **kwargs):
     return BankTransfer
+
+
+@receiver(register_ticketing_anonymizers, dispatch_uid='anonymizer_banktransfer')
+def register_anonymizer(sender, **kwargs):
+    return BankTransactionAnonymizer
 
 
 
