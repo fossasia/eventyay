@@ -1,5 +1,6 @@
 <template lang="pug">
 div.c-linear-schedule-session.is-shift-session(
+	:data-shift-id="session.id",
 	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'is-continuation': continuation, 'has-continuation-before': continuationBefore, 'has-continuation-after': continuationAfter}",
 	:style="style")
 	.time-box
@@ -11,7 +12,7 @@ div.c-linear-schedule-session.is-shift-session(
 				line(x1="3", y1="10", x2="21", y2="10")
 			.schedule-pending-label
 				span.schedule-pending-text {{ schedulePendingText }}
-		template(v-else-if="!continuationBefore")
+		template(v-else)
 			.start(:class="{'has-ampm': effectiveHasAmPm}")
 				.date(v-if="showDate")
 					.weekday {{ weekdayLabel }}
@@ -22,7 +23,7 @@ div.c-linear-schedule-session.is-shift-session(
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 	.info
-		.title-range-wrapper(v-if="!continuationBefore")
+		.title-range-wrapper
 			.title-row
 				.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 				.organizer-actions(v-if="canManageShifts")
@@ -33,7 +34,7 @@ div.c-linear-schedule-session.is-shift-session(
 						svg.organizer-action-icon(viewBox="0 0 24 24", aria-hidden="true")
 							path(fill="currentColor", d="M9.43 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M12.86 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M16.29 18.43 v-9.43 q0 -0.19 -0.12 -0.31 t-0.31 -0.12 h-0.86 q-0.19 0 -0.31 0.12 t-0.12 0.31 v9.43 q0 0.19 0.12 0.31 t0.31 0.12 h0.86 q0.19 0 0.31 -0.12 t0.12 -0.31 z M9 5.14 h6 l-0.64 -1.57 q-0.09 -0.12 -0.23 -0.15 h-4.25 q-0.13 0.03 -0.23 0.15 z M21.43 5.57 v0.86 q0 0.19 -0.12 0.31 t-0.31 0.12 h-1.29 v12.7 q0 1.11 -0.63 1.92 t-1.51 0.81 h-11.14 q-0.88 0 -1.51 -0.78 t-0.63 -1.9 v-12.75 h-1.29 q-0.19 0 -0.31 -0.12 t-0.12 -0.31 v-0.86 q0 -0.19 0.12 -0.31 t0.31 -0.12 h4.14 l0.94 -2.24 q0.2 -0.5 0.72 -0.84 t1.06 -0.35 h4.29 q0.54 0 1.06 0.35 t0.72 0.84 l0.94 2.24 h4.14 q0.19 0 0.31 0.12 t0.12 0.31 z")
 			.continuation-range(v-if="continuation || continuationBefore || continuationAfter") {{ shiftRangeLabel }}
-		.roles-list(v-if="!continuationBefore && session.roles && session.roles.length")
+		.roles-list(v-if="session.roles && session.roles.length")
 			.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
 				.role-content
 					.role-name-group
@@ -192,9 +193,7 @@ export default {
 		}
 	},
 	mounted () {
-		if (!this.continuationBefore) {
-			this.stopStickyLabels = registerStickyLabels(this.$el)
-		}
+		this.stopStickyLabels = registerStickyLabels(this.$el)
 	},
 	beforeUnmount () {
 		if (this.stopStickyLabels) this.stopStickyLabels()
@@ -705,6 +704,9 @@ export default {
 		.info
 			border-top-right-radius: 0
 			border-top: none
+	&.shift-continuation-hidden
+		.start, .title-range-wrapper, .roles-list
+			display: none
 	&.is-continuation
 		min-height: 0
 		overflow: hidden
