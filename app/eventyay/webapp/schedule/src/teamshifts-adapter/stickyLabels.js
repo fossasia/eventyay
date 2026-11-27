@@ -10,7 +10,7 @@
  * How far to move an element down so its top sits at `stickyBottom`, without leaving its card.
  *
  * All values are viewport coordinates in pixels. `naturalTop` is where the element would be with no offset.
- * The result is never negative and never moves the element's bottom past the card's bottom.
+ * The result is never negative and never moves the element's bottom past the shift's bottom.
  */
 export function computeStickyOffset ({ stickyBottom, cardTop, cardHeight, naturalTop, height }) {
 	const wanted = stickyBottom - naturalTop
@@ -30,7 +30,6 @@ function getLabelElements (card) {
 
 const entries = new Set()
 const applied = new WeakMap()
-let frame = 0
 let listening = false
 
 function stickyBottomFor (card) {
@@ -42,11 +41,10 @@ function setOffset (el, offset) {
 	const rounded = Math.round(offset)
 	if ((applied.get(el) || 0) === rounded) return
 	applied.set(el, rounded)
-	el.style.transform = rounded ? `translateY(${rounded}px)` : ''
+	el.style.transform = rounded ? `translate3d(0, ${rounded}px, 0)` : ''
 }
 
 function update () {
-	frame = 0
 	const viewportHeight = window.innerHeight || document.documentElement.clientHeight
 	const updates = []
 	for (const card of entries) {
@@ -73,36 +71,27 @@ function update () {
 	}
 }
 
-function schedule () {
-	if (!frame) frame = requestAnimationFrame(update)
-}
-
 /**
  * Starts keeping the labels of one shift card in view. Returns a function that stops it.
- * One shared, throttled scroll listener serves every card.
+ * One shared, synchronous scroll listener serves every card without animation frame lag.
  */
 export function registerStickyLabels (card) {
 	entries.add(card)
 	if (!listening) {
-		// Capture, because scroll events do not bubble and the page may scroll inside any ancestor.
-		window.addEventListener('scroll', schedule, { passive: true, capture: true })
-		window.addEventListener('resize', schedule, { passive: true })
+		window.addEventListener('scroll', update, { passive: true, capture: true })
+		window.addEventListener('resize', update, { passive: true })
 		listening = true
 	}
-	schedule()
+	update()
 	return () => {
 		entries.delete(card)
 		for (const el of getLabelElements(card)) {
 			setOffset(el, 0)
 		}
 		if (!entries.size && listening) {
-			window.removeEventListener('scroll', schedule, { capture: true })
-			window.removeEventListener('resize', schedule)
+			window.removeEventListener('scroll', update, { capture: true })
+			window.removeEventListener('resize', update)
 			listening = false
-			if (frame) {
-				cancelAnimationFrame(frame)
-				frame = 0
-			}
 		}
 	}
 }
