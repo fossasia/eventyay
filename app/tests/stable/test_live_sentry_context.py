@@ -40,14 +40,17 @@ async def _noop_statsd():
 @pytest.fixture
 def sentry_transport():
     transport = CollectingTransport()
+    previous_client = sentry_sdk.get_client()
     sentry_sdk.init(
         dsn='https://public@sentry.example.com/1',
         transport=transport,
         data_collection=django_settings.SENTRY_DATA_COLLECTION,
+        default_integrations=False,
+        auto_enabling_integrations=False,
     )
     yield transport
     sentry_sdk.get_client().close()
-    sentry_sdk.init()
+    sentry_sdk.get_global_scope().set_client(previous_client)
 
 
 @pytest.fixture
