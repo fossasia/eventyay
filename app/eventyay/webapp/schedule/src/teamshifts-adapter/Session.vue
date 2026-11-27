@@ -11,7 +11,7 @@ div.c-linear-schedule-session.is-shift-session(
 				line(x1="3", y1="10", x2="21", y2="10")
 			.schedule-pending-label
 				span.schedule-pending-text {{ schedulePendingText }}
-		template(v-else-if="!continuation")
+		template(v-else-if="!continuationBefore")
 			.start(:class="{'has-ampm': effectiveHasAmPm}")
 				.date(v-if="showDate")
 					.weekday {{ weekdayLabel }}

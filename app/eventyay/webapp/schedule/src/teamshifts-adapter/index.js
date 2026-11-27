@@ -355,9 +355,11 @@ export function computeShiftPlacements (session, allSessions, columnLayout) {
 	}
 
 	let main = 0
-	segments.forEach((seg, i) => {
-		if (seg.endMs - seg.startMs > segments[main].endMs - segments[main].startMs) main = i
-	})
+	if (segments[0].endMs - segments[0].startMs < 45 * 60 * 1000) {
+		segments.forEach((seg, i) => {
+			if (seg.endMs - seg.startMs > segments[main].endMs - segments[main].startMs) main = i
+		})
+	}
 	return segments.map((seg, i) => ({
 		gridRow: `${getSliceName(seg.start)} / ${getSliceName(seg.end)}`,
 		gridColumn: `${roomLayout.colStart + seg.first} / ${roomLayout.colStart + seg.last + 1}`,

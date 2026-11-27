@@ -56,6 +56,19 @@ test('splits the handover from the issue into full-width and half-width pieces',
 	])
 })
 
+test('initial segment of long shift remains main when substantial', () => {
+	const sessions = [
+		shift('longShift', at(18), at(23, 0, 1)),
+		shift('shortOverlap', at(22, 30), at(2, 30, 1)),
+	]
+	const result = placementsFor(sessions)
+	assert.deepEqual(summary(result.longShift), [
+		'slice-11-29-18-00 / slice-11-29-22-30 | 2 / 4 | main',
+		'slice-11-29-22-30 / slice-11-30-02-30 | 2 / 3 | continued',
+		'slice-11-30-02-30 / slice-11-30-23-00 | 2 / 4 | continued',
+	])
+})
+
 test('a shift that overlaps nothing uses the whole room width in one piece', () => {
 	const sessions = [
 		shift('afternoon', at(18), at(23)),
