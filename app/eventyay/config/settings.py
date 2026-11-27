@@ -1562,7 +1562,11 @@ if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration(), DjangoIntegration()],
-        send_default_pii=False,
+        data_collection={
+            'user_info': False,
+            'cookies': {'mode': 'off'},
+            'http_headers': {'request': {'mode': 'denylist', 'terms': ['forwarded', 'x-real-ip']}},
+        },
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,
         environment=active_environment.value,

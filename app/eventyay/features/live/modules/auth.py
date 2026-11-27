@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.signing import dumps
 from django.db import DatabaseError
 from django.urls import reverse
-from sentry_sdk import configure_scope
+from sentry_sdk import set_user
 
 from eventyay.base.models import User
 from eventyay.base.models.auth import ShortToken
@@ -185,8 +185,7 @@ class AuthModule(BaseModule):
             await self.consumer.send_error(code="kiosks.disabled", message="Kiosks are currently disabled.")
             return
         if settings.SENTRY_DSN:
-            with configure_scope() as scope:
-                scope.user = {"id": str(self.consumer.user.id)}
+            set_user({"id": str(self.consumer.user.id)})
 
         async with aredis() as redis:
             redis_read = await redis.hgetall(f"chat:read:{self.consumer.user.id}")
