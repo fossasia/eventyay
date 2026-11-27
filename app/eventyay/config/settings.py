@@ -1589,7 +1589,7 @@ if SENTRY_DSN:
         integrations=[
             CeleryIntegration(),
             DjangoIntegration(),
-            LoggingIntegration(event_level=logging.ERROR),
+            LoggingIntegration(level=None, event_level=logging.ERROR),
         ],
         data_collection=SENTRY_DATA_COLLECTION,
         debug=DEBUG,

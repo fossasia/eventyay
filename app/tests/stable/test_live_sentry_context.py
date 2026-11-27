@@ -35,8 +35,18 @@ class CollectingTransport(Transport):
     def __init__(self):
         super().__init__()
         self.events = []
+        self.item_types = []
+        self.log_payloads = []
 
     def capture_envelope(self, envelope):
+        for item in envelope:
+            self.item_types.append(item.type)
+            if item.type == 'log':
+                payload = item.payload.json
+                if payload is None:
+                    payload = json.loads(item.get_bytes().decode('utf-8'))
+                self.log_payloads.append(payload)
+
         event = envelope.get_event()
         if event is not None:
             self.events.append(event)
@@ -79,7 +89,7 @@ def sentry_integrations_transport():
         integrations=[
             CeleryIntegration(),
             DjangoIntegration(),
-            LoggingIntegration(event_level=logging.ERROR),
+            LoggingIntegration(level=None, event_level=logging.ERROR),
         ],
         data_collection=django_settings.SENTRY_DATA_COLLECTION,
     )
@@ -380,10 +390,52 @@ def test_handled_logging_exception_is_captured(sentry_integrations_transport):
     assert result is None
     sentry_sdk.flush()
     assert len(sentry_integrations_transport.events) == 1
+    assert sentry_integrations_transport.item_types == ['event']
+    assert sentry_integrations_transport.log_payloads == []
     event = sentry_integrations_transport.events[0]
     assert event['level'] == 'error'
     assert event['logger'] == 'eventyay.features.live.tasks'
     assert event['exception']['values'][-1]['type'] == 'RequestException'
+
+
+def test_info_logs_do_not_send_sentry_log_envelopes(sentry_integrations_transport):
+    marker = 'operation=processing'
+    logger = logging.getLogger('eventyay.tests.sentry_logging')
+    previous_level = logger.level
+    logger.setLevel(logging.INFO)
+    try:
+        logger.info('Processing request (%s)', marker)
+        sentry_sdk.flush()
+
+        assert sentry_integrations_transport.events == []
+        assert 'log' not in sentry_integrations_transport.item_types
+        assert sentry_integrations_transport.log_payloads == []
+
+        try:
+            raise RuntimeError('downstream error after info log')
+        except RuntimeError:
+            logger.error('Handled error after info log', exc_info=True)
+    finally:
+        logger.setLevel(previous_level)
+
+    sentry_sdk.flush()
+    assert len(sentry_integrations_transport.events) == 1
+    assert sentry_integrations_transport.item_types == ['event']
+    assert sentry_integrations_transport.log_payloads == []
+
+    event = sentry_integrations_transport.events[0]
+    assert event['level'] == 'error'
+    assert event['logger'] == 'eventyay.tests.sentry_logging'
+    assert event['exception']['values'][-1]['type'] == 'RuntimeError'
+
+    breadcrumbs = event.get('breadcrumbs', {}).get('values', [])
+    info_crumbs = [
+        crumb
+        for crumb in breadcrumbs
+        if crumb.get('category') == 'eventyay.tests.sentry_logging' and crumb.get('level') == 'info'
+    ]
+    assert len(info_crumbs) == 1
+    assert marker in info_crumbs[0]['message']
 
 
 def test_sensitive_frame_variables_are_filtered(sentry_transport):
