@@ -117,19 +117,20 @@
             pill.appendChild(removeBtn);
         });
 
-        const addSelect = switcher.querySelector('.page-language-add');
-        if (addSelect) {
-            addSelect.addEventListener('change', () => {
-                const locale = normalize(addSelect.value);
-                if (!locale) return;
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'page_locales';
-                input.value = locale;
-                switcher.appendChild(input);
-                form.submit();
+        const addLanguage = (locale) => {
+            if (!locale) return;
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'page_locales';
+            input.value = locale;
+            switcher.appendChild(input);
+            form.submit();
+        };
+        switcher.querySelectorAll('.page-language-add-option').forEach((option) => {
+            option.addEventListener('click', () => {
+                addLanguage(normalize(option.getAttribute('data-locale')));
             });
-        }
+        });
 
         refreshIndicators();
         refreshRemoveButtons();
