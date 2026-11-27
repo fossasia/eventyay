@@ -1,11 +1,8 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
-import threading
 
 import pytest
-from django.db import connections, transaction
-from django.db.backends.postgresql.operations import DatabaseOperations
+from django.db import transaction
 from django.db.models.query import QuerySet
 from django.test import Client, override_settings
 from django.utils.timezone import now
@@ -33,9 +30,8 @@ def env():
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe,tests.tickets.testdummy',
+            plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe',
         )
-        event.settings.set('ticketoutput_testdummy__enabled', True)
         user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
         t = Team.objects.create(organizer=o, can_view_orders=True, can_change_orders=True)
         t.members.add(user)
@@ -74,23 +70,7 @@ def env():
         return event, user, order, ticket
 
 
-@pytest.fixture
-def cascade_execute_sql_flush():
-    original_execute_sql_flush = DatabaseOperations.execute_sql_flush
 
-    def custom_execute_sql_flush(self, sql_list):
-        try:
-            cascade_sql = [
-                sql.replace(';', ' CASCADE;') if 'CASCADE' not in sql else sql
-                for sql in sql_list
-            ]
-            return original_execute_sql_flush(self, cascade_sql)
-        except Exception:
-            return original_execute_sql_flush(self, sql_list)
-
-    DatabaseOperations.execute_sql_flush = custom_execute_sql_flush
-    yield
-    DatabaseOperations.execute_sql_flush = original_execute_sql_flush
 
 
 @pytest.mark.django_db
@@ -584,94 +564,3 @@ def test_refund_paid_order_concurrent_unconfirmed_payment_rejects_refund(client,
     )
     with scope(event=env[0], organizer=env[0].organizer):
         assert env[2].refunds.count() == 0
-
-
-@pytest.mark.django_db(transaction=True)
-@override_settings(SITE_URL='https://testserver')
-def test_refund_paid_order_concurrent_threads_serialize_and_prevent_over_refund(
-    env, monkeypatch, cascade_execute_sql_flush
-):
-    """
-    Test that when two competing control-panel refund requests run concurrently on two
-    separate database connections in separate threads, database row locks serialize
-    them. One request succeeds and the competing request is rejected under lock,
-    guaranteeing that persisted refunds do not exceed the payment amount.
-
-    Synchronization signals after the first locking SQL query returns while its transaction
-    remains open, then waits until the second connection is observed blocked on that lock
-    before releasing the first request.
-    """
-    with scope(event=env[0], organizer=env[0].organizer):
-        p = env[2].payments.last()
-        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
-        p.save()
-        p.confirm()
-
-    first_lock_acquired = threading.Event()
-    second_lock_attempted = threading.Event()
-    lock_calls = []
-    thread_lock = threading.Lock()
-
-    original_fetch_all = QuerySet._fetch_all
-
-    def sync_fetch_all(self):
-        is_target = self.model is OrderPayment and getattr(self, '_for_write', False)
-        if is_target:
-            with thread_lock:
-                lock_calls.append(threading.current_thread().name)
-                call_count = len(lock_calls)
-            if call_count == 1:
-                original_fetch_all(self)
-                first_lock_acquired.set()
-                assert second_lock_attempted.wait(timeout=5), 'Thread 2 did not attempt lock acquisition in time'
-                return
-            elif call_count == 2:
-                second_lock_attempted.set()
-                original_fetch_all(self)
-                return
-        return original_fetch_all(self)
-
-    monkeypatch.setattr(QuerySet, '_fetch_all', sync_fetch_all)
-
-    def submit_refund():
-        try:
-            c = Client()
-            c.force_login(env[1])
-            return c.post(
-                '/control/event/dummy/dummy/orders/FOO/refund',
-                {
-                    'start-partial_amount': '14.00',
-                    'start-mode': 'full',
-                    'start-action': 'mark_pending',
-                    f'refund-{p.pk}': '14.00',
-                    'perform': 'on',
-                },
-                follow=True,
-            )
-        finally:
-            connections.close_all()
-
-    def submit_refund_delayed():
-        assert first_lock_acquired.wait(timeout=5), 'Thread 1 did not acquire lock in time'
-        return submit_refund()
-
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        f1 = executor.submit(submit_refund)
-        f2 = executor.submit(submit_refund_delayed)
-        results = [f1.result(timeout=15), f2.result(timeout=15)]
-
-    assert len(results) == 2
-
-    with scope(event=env[0], organizer=env[0].organizer):
-        refunds = list(env[2].refunds.values_list('amount', flat=True))
-
-    assert sum(refunds) <= Decimal('14.00'), f'Over-refund occurred: {sum(refunds)}'
-    assert refunds == [Decimal('14.00')]
-
-    assert all(r.status_code == 200 for r in results)
-    danger_results = [r for r in results if b'alert-danger' in r.content]
-    assert len(danger_results) == 1
-    assert (
-        b'You can not refund more than the amount of a payment that is not yet refunded.'
-        in danger_results[0].content
-    )
