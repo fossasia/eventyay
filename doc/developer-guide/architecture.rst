@@ -205,13 +205,47 @@ Eventyay can be deployed in several configurations:
 Environment Variables
 ---------------------
 
-Unified environment variables (replacing component-specific ones):
+Settings are read by ``app/eventyay/config/settings.py``. The settings loader
+(``BaseSettings``) only reads environment variables that start with ``EVY_``.
+Common ones:
 
-* ``EVENTYAY_DB_URL`` - Database connection
-* ``EVENTYAY_REDIS_URL`` - Redis connection
-* ``EVENTYAY_CONFIG_FILE`` - Configuration file path
-* ``EVENTYAY_DATA_DIR`` - Data directory
-* ``EVENTYAY_DEBUG`` - Debug mode (development only)
+* ``EVY_POSTGRES_DB``, ``EVY_POSTGRES_USER``, ``EVY_POSTGRES_PASSWORD``,
+  ``EVY_POSTGRES_HOST``, ``EVY_POSTGRES_PORT`` - Database connection
+* ``EVY_REDIS_URL`` - Redis connection
+* ``EVY_SITE_URL`` - Public URL of the site
+* ``EVY_SECRET_KEY`` - Django secret key
+* ``EVY_DEBUG`` - Debug mode. Use it only for development: running in
+  ``production`` does not switch it off for you.
+
+These loader settings can also go in a ``.env`` file (same ``EVY_`` names) or in
+``eventyay.local.toml``. The ``.env`` file is read from the directory the app is
+started in, so for the usual development commands it is ``app/.env``. The TOML
+file is looked up from ``app/eventyay/config/`` up to ``app/``, for example
+``app/eventyay.local.toml``. In the TOML file, use the field name without the prefix,
+for example ``redis_url = "redis://localhost/0"``; an ``EVY_`` key there stops the
+app from starting. Secrets can be stored as files in ``app/.secrets/``, named like
+the variable (for example ``.secrets/EVY_SECRET_KEY``).
+
+Do not copy ``deployment/env.sample`` to the app's own ``.env``. That file is for
+Docker Compose and the deployment scripts, and it has entries such as ``TAG`` that
+the loader rejects. A minimal ``.env`` for the loader looks like this:
+
+.. code-block:: bash
+
+   EVY_POSTGRES_DB=eventyay-db
+   EVY_POSTGRES_USER=eventyay
+   EVY_POSTGRES_PASSWORD=change-me
+   EVY_POSTGRES_HOST=localhost
+   EVY_REDIS_URL=redis://localhost/0
+
+A few variables are read directly from the process environment instead. Set them
+in the shell or in Docker Compose's ``env_file`` before the app starts; the
+``.env`` and TOML files that the app loads itself do not apply to them:
+
+* ``EVY_RUNNING_ENVIRONMENT`` - ``development`` (default), ``testing`` or
+  ``production``. It picks the config file ``eventyay.<environment>.toml``.
+* ``EVENTYAY_COMMIT_SHA`` and ``EVENTYAY_ENVIRONMENT`` - Build and environment
+  labels (default ``unknown``).
 
 Migration from Legacy Systems
 -----------------------------
@@ -219,7 +253,9 @@ Migration from Legacy Systems
 If migrating from standalone Pretix, Pretalx, or Venueless:
 
 1. **Database Migration:** Use the provided migration scripts in ``app/eventyay/base/migrations/``
-2. **Configuration:** Update environment variables to use ``EVENTYAY_`` prefix
+2. **Configuration:** Move your settings to the ``EVY_`` names listed above. There
+   is no single database URL setting: split an old ``EVENTYAY_DB_URL`` into the
+   ``EVY_POSTGRES_*`` values.
 3. **Plugins:** Update plugin entry points to use ``eventyay.plugin``
 4. **Custom Code:** Update imports from ``pretix.*`` to ``eventyay.*``
 
