@@ -315,6 +315,9 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
     name = 'overview'
     identifier = 'checkinlistpdf'
     verbose_name = gettext_lazy('Check-in list (PDF)')
+    category = 'checkin'
+    description = gettext_lazy('The same, printable.')
+    file_type = 'PDF'
 
     @property
     def export_form_fields(self):
@@ -625,6 +628,8 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
     name = 'overview'
     identifier = 'checkinlist'
     verbose_name = gettext_lazy('Check-in list')
+    category = 'checkin'
+    description = gettext_lazy('Attendees of one check-in list, to tick off by hand.')
 
     @property
     def additional_form_fields(self):
@@ -904,7 +909,9 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
 class CheckinLogList(ListExporter):
     name = 'checkinlog'
     identifier = 'checkinlog'
-    verbose_name = gettext_lazy('Check-in log (all successful scans)')
+    verbose_name = gettext_lazy('Check-in log')
+    category = 'checkin'
+    description = gettext_lazy('Every successful scan with time and device.')
 
     @property
     def additional_form_fields(self):
