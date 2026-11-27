@@ -18,6 +18,8 @@ from ..signals import register_data_exporters
 class DekodiNREIExporter(BaseExporter):
     identifier = 'dekodi_nrei'
     verbose_name = 'dekodi NREI (JSON)'
+    description = gettext_lazy('Invoice data for the dekodi accounting software (Germany).')
+    file_type = 'JSON'
 
     # Specification: http://manuals.dekodi.de/nexuspub/schnittstellenbuch/
 

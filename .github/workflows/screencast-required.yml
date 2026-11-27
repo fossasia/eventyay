@@ -1,30 +1,29 @@
 # .github/workflows/screencast-required.yml
 #
-# Enforces the "screencast required" rule on pull requests.
+# Enforces the "screencast required" rule on pull requests for all contributors.
 #
-# How maintainers use it:
-#   1. Add the label "needs-screencast" to a PR.
-#      -> The bot immediately posts the screencast request to the author.
-#   2. Nothing else. Every hour the bot checks every PR with that label:
-#      - The PR author posted a video (in a comment after the request, or in the PR description)
-#        -> "needs-screencast" is removed and the PR is back with the maintainers to review.
-#      - Comments or commits WITHOUT a video do not count and do not stop the clock.
+# How it works:
+#   1. When any PR is opened, reopened, marked ready for review, or manually labeled:
+#      - If the PR already contains a video in its description or comments, no label is added.
+#      - If no video is present, the bot posts a screencast request and adds "needs-screencast".
+#      - Draft PRs are skipped until they are marked "Ready for review".
+#      - Maintainers can also manually add the "needs-screencast" label at any time.
+#   2. When a PR description is edited, new commits are pushed, or a comment is posted:
+#      - If "needs-screencast" is present and a video is now detected (in description or comments),
+#        "needs-screencast" is immediately removed and a confirmation comment is posted.
+#   3. Every hour the bot checks every open PR with "needs-screencast":
+#      - If a video was added -> "needs-screencast" is removed.
 #      - No video after REMIND_AFTER_HOURS -> one reminder is posted.
 #      - No video after CLOSE_AFTER_HOURS  -> closing message is posted and the PR is closed.
-#   A maintainer can remove the label by hand at any time to stop the process
-#   (e.g. for backend-only changes where a video makes no sense).
-#   Re-adding the label restarts the clock.
-#   When the bot closes a PR it also removes the label. If the PR is reopened,
-#   a reviewer checks it and adds the label again if a video is still needed.
-#
-# Setup: create a label named exactly "needs-screencast" in the repo.
-# To change the label name, edit it in the two places marked LABEL below.
+#   Maintainers can remove the label by hand at any time to bypass the requirement.
 
 name: Screencast required
 
 on:
   pull_request_target:
-    types: [labeled]
+    types: [opened, reopened, ready_for_review, labeled, edited, synchronize]
+  issue_comment:
+    types: [created, edited]
   schedule:
     - cron: "17 * * * *" # hourly, so closing happens close to the deadline
   workflow_dispatch:
@@ -32,42 +31,172 @@ on:
       dry_run:
         description: "Only log what would happen, do not comment or close"
         type: boolean
-        default: true
+        default: false
 
 permissions:
   pull-requests: write # enough to comment on, label and close PRs
+  issues: write
 
 env:
-  LABEL: needs-screencast # LABEL (1/2)
+  LABEL: needs-screencast
   REMIND_AFTER_HOURS: "48"
   CLOSE_AFTER_HOURS: "72"
 
 jobs:
-  # Posts the request as soon as a maintainer adds the label.
-  request:
-    if: github.event_name == 'pull_request_target' && github.event.label.name == 'needs-screencast' # LABEL (2/2)
+  # Real-time sync: requests screencast when missing, or immediately removes label when video is added.
+  sync:
+    if: (github.event_name == 'pull_request_target' && github.event.pull_request.user.type != 'Bot') || (github.event_name == 'issue_comment' && github.event.issue.pull_request != null && github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v9
         with:
           script: |
-            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const LABEL = process.env.LABEL;
             const hours = process.env.CLOSE_AFTER_HOURS;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: pr.number,
-              body: [
-                `Hi @${pr.user.login}, thanks for your contribution!`,
-                ``,
-                `Before we can review this PR, please add a **short screencast video** showing the change working (before/after where relevant).`,
-                ``,
-                `If no video is added within **${hours} hours**, this PR will be closed automatically. You are welcome to reopen it or submit a new PR once you have the screencast.`,
-              ].join('\n'),
+            const APPROVED_MARKER = '<!-- screencast-approved -->';
+
+            // Video detection helper
+            const ASSET_RE = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/gi;
+            const LINK_RE = /https:\/\/[^\s)"'<>]+\.(mp4|mov|webm|mkv|avi|flv|m4v)\b|https:\/\/[^\s)"'<>]*(?:screencast|screen[-_]?recording|demo|preview)[^\s)"'<>]*\.gif\b|https:\/\/(www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com|streamable\.com|asciinema\.org|cleanshot\.cloud|drive\.google\.com\/(?:file\/d|open))\/\S+/i;
+
+            const hasVideoText = body => {
+              body = body ?? '';
+              if (LINK_RE.test(body)) return true;
+              for (const m of body.matchAll(ASSET_RE)) {
+                const before = body.slice(Math.max(0, m.index - 500), m.index);
+                if (/!\[[^\]]*\]\(\s*$/.test(before)) continue; // markdown image
+                if (/<img\b[^>]*$/i.test(before)) continue;     // html image
+                return true;
+              }
+              return false;
+            };
+
+            const isPrEvent = context.eventName === 'pull_request_target';
+            const issueNumber = isPrEvent ? context.payload.pull_request.number : context.payload.issue.number;
+
+            // Fetch live PR details to avoid cached or stale data
+            const { data: currentPr } = await github.rest.pulls.get({
+              owner, repo, pull_number: issueNumber,
             });
+
+            if (currentPr.state === 'closed') {
+              core.info(`#${issueNumber}: PR is closed, skipping`);
+              return;
+            }
+
+            const author = currentPr.user.login;
+            const labelsOnPr = (currentPr.labels ?? []).map(l => l.name);
+            const hasScreencastLabel = labelsOnPr.includes(LABEL);
+
+            // Fetch all comments on the PR to check for video links
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: issueNumber, per_page: 100,
+            });
+
+            const hasVideoInDescription = hasVideoText(currentPr.body);
+            const hasVideoInComments = comments.some(c =>
+              !c.user?.type?.includes('Bot') && !c.user?.login?.endsWith('[bot]') && hasVideoText(c.body)
+            );
+            const videoPresent = hasVideoInDescription || hasVideoInComments;
+
+            // 1. If PR currently has the needs-screencast label AND a video is now present:
+            // Remove the label immediately and confirm!
+            if (hasScreencastLabel && videoPresent) {
+              await github.rest.issues.removeLabel({
+                owner, repo, issue_number: issueNumber, name: LABEL,
+              });
+              const alreadyConfirmed = comments.some(c => c.body && c.body.includes(APPROVED_MARKER));
+              if (!alreadyConfirmed) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: issueNumber,
+                  body: [
+                    APPROVED_MARKER,
+                    `Thank you @${author} for adding a screencast! The \`${LABEL}\` label has been removed and this PR is ready for maintainer review.`,
+                  ].join('\n'),
+                });
+              }
+              core.info(`#${issueNumber}: video detected, removed ${LABEL} label`);
+              return;
+            }
+
+            // 2. If PR does NOT have needs-screencast label, check if we need to request one:
+            if (!hasScreencastLabel && isPrEvent) {
+              const action = context.payload.action;
+
+              // Case A: Maintainer manually added the needs-screencast label
+              if (action === 'labeled') {
+                if (context.payload.label?.name !== LABEL) return;
+                if (videoPresent) {
+                  // Video already present, undo the label immediately
+                  await github.rest.issues.removeLabel({
+                    owner, repo, issue_number: issueNumber, name: LABEL,
+                  });
+                  return;
+                }
+                const alreadyRequested = comments.some(c =>
+                  c.body && c.body.includes('please add a **short screencast video**')
+                );
+                if (!alreadyRequested) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issueNumber,
+                    body: [
+                      `Hi @${author}, thanks for your contribution!`,
+                      ``,
+                      `Before we can review this PR, please add a **short screencast video** showing the change working (before/after where relevant).`,
+                      ``,
+                      `If no video is added within **${hours} hours**, this PR will be closed automatically. You are welcome to reopen it or submit a new PR once you have the screencast.`,
+                    ].join('\n'),
+                  });
+                  core.info(`#${issueNumber}: screencast request comment posted after label added`);
+                }
+                return;
+              }
+
+              // Case B: PR opened, reopened, or marked ready for review
+              if (['opened', 'reopened', 'ready_for_review'].includes(action)) {
+                if (currentPr.draft) {
+                  core.info(`#${issueNumber}: draft PR, screencast will be requested when marked ready for review`);
+                  return;
+                }
+                if (labelsOnPr.includes('pr-limit-reached')) {
+                  core.info(`#${issueNumber}: pr-limit-reached, skipping screencast request`);
+                  return;
+                }
+                if (videoPresent) {
+                  core.info(`#${issueNumber}: description or comments already contain a video, no screencast request needed`);
+                  return;
+                }
+                const events = await github.paginate(github.rest.issues.listEventsForTimeline, {
+                  owner, repo, issue_number: issueNumber, per_page: 100,
+                });
+                const hadScreencastLabel = events.some(e => e.event === 'labeled' && e.label?.name === LABEL);
+                if (hadScreencastLabel) {
+                  core.info(`#${issueNumber}: screencast was already requested on this PR before, leaving it to reviewers`);
+                  return;
+                }
+
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: issueNumber,
+                  body: [
+                    `Hi @${author}, thanks for your contribution!`,
+                    ``,
+                    `Before we can review this PR, please add a **short screencast video** showing the change working (before/after where relevant).`,
+                    ``,
+                    `If no video is added within **${hours} hours**, this PR will be closed automatically. You are welcome to reopen it or submit a new PR once you have the screencast.`,
+                  ].join('\n'),
+                });
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: issueNumber,
+                  labels: [LABEL],
+                });
+                core.info(`#${issueNumber}: screencast requested and label added`);
+              }
+            }
 
   # Hourly check: remind, release or close.
   enforce:
-    if: github.event_name != 'pull_request_target'
+    if: github.event_name != 'pull_request_target' && github.event_name != 'issue_comment'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v9
@@ -79,18 +208,15 @@ jobs:
             const DRY_RUN = String(context.payload.inputs?.dry_run ?? 'false') === 'true';
             const REMIND_MARKER = '<!-- screencast-reminder -->';
             const CLOSE_MARKER = '<!-- screencast-closed -->';
+            const APPROVED_MARKER = '<!-- screencast-approved -->';
             const HOUR = 60 * 60 * 1000;
             const { owner, repo } = context.repo;
             const now = Date.now();
 
-            // Does a comment/description contain a video?
-            // - Any file uploaded to GitHub (user-attachments/assets URL) counts, whether it is shown
-            //   as a bare URL, inside a <video src> tag or as a [name.webm](...) link, EXCEPT when it is
-            //   embedded as an image (![alt](url) or <img src="url">).
-            // - Links to .mp4/.mov/.webm/.mkv files and YouTube/Loom/Vimeo links also count.
-            // - An empty <video> tag without a real source does NOT count.
+            // Video detection helper
             const ASSET_RE = /https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/gi;
-            const LINK_RE = /https:\/\/[^\s)"'<>]+\.(mp4|mov|webm|mkv)\b|https:\/\/(www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com)\/\S+/i;
+            const LINK_RE = /https:\/\/[^\s)"'<>]+\.(mp4|mov|webm|mkv|avi|flv|m4v)\b|https:\/\/[^\s)"'<>]*(?:screencast|screen[-_]?recording|demo|preview)[^\s)"'<>]*\.gif\b|https:\/\/(www\.)?(youtube\.com|youtu\.be|loom\.com|vimeo\.com|streamable\.com|asciinema\.org|cleanshot\.cloud|drive\.google\.com\/(?:file\/d|open))\/\S+/i;
+
             const hasVideoText = body => {
               body = body ?? '';
               if (LINK_RE.test(body)) return true;
@@ -111,52 +237,60 @@ jobs:
             const prs = await github.paginate(github.rest.pulls.list, {
               owner, repo, state: 'open', per_page: 100,
             });
-            const targets = prs.filter(pr => pr.labels.some(l => l.name === LABEL));
+            const targets = prs.filter(pr => (pr.labels ?? []).some(l => l.name === LABEL));
             core.info(`${targets.length} open PR(s) labelled "${LABEL}"`);
 
-            // Process each PR separately, so a problem with one PR does not stop the others.
+            // Process each PR separately
             const failed = [];
-            for (const pr of targets) {
+            for (const item of targets) {
               try {
-                const n = pr.number;
+                const n = item.number;
+                // Fetch live PR data to ensure fresh body and details
+                const { data: pr } = await github.rest.pulls.get({
+                  owner, repo, pull_number: n,
+                });
                 const author = pr.user.login;
+
                 const events = await github.paginate(github.rest.issues.listEventsForTimeline, {
                   owner, repo, issue_number: n, per_page: 100,
                 });
 
-                // When was the screencast requested (latest time the label was added)?
+                // Latest time the label was added
                 const labelled = events.filter(e => e.event === 'labeled' && e.label?.name === LABEL);
                 if (!labelled.length) continue;
                 const requestedAt = new Date(labelled[labelled.length - 1].created_at).getTime();
                 const after = ts => ts && new Date(ts).getTime() > requestedAt;
 
-                // Did the PR author post a video since the request?
-                // Only the author's own comments count; comments without a video are ignored.
-                const videoInComments = events.some(e => {
-                  switch (e.event) {
-                    case 'commented':
-                      return (e.user?.login ?? e.actor?.login) === author && after(e.created_at) && hasVideoText(e.body);
-                    case 'reviewed':
-                      return e.user?.login === author && after(e.submitted_at) && hasVideoText(e.body);
-                    case 'line-commented':
-                      return (e.comments ?? []).some(c => c.user?.login === author && after(c.created_at) && hasVideoText(c.body));
-                    default:
-                      return false;
-                  }
+                const comments = await github.paginate(github.rest.issues.listComments, {
+                  owner, repo, issue_number: n, per_page: 100,
                 });
+
+                // Check whether video exists in PR description or any non-bot comment
+                const videoInComments = comments.some(c =>
+                  !c.user?.type?.includes('Bot') && !c.user?.login?.endsWith('[bot]') && hasVideoText(c.body)
+                );
                 const videoInDescription = hasVideoText(pr.body);
 
                 if (videoInComments || videoInDescription) {
-                  await act(`#${n}: video found ${videoInComments ? 'in author comment' : 'in PR description'}, removing label`, () =>
-                    github.rest.issues.removeLabel({ owner, repo, issue_number: n, name: LABEL }));
+                  await act(`#${n}: video found ${videoInComments ? 'in comment' : 'in PR description'}, removing label`, async () => {
+                    await github.rest.issues.removeLabel({ owner, repo, issue_number: n, name: LABEL });
+                    const alreadyConfirmed = comments.some(c => c.body && c.body.includes(APPROVED_MARKER));
+                    if (!alreadyConfirmed) {
+                      await github.rest.issues.createComment({
+                        owner, repo, issue_number: n,
+                        body: [
+                          APPROVED_MARKER,
+                          `Thank you @${author} for adding a screencast! The \`${LABEL}\` label has been removed and this PR is ready for maintainer review.`,
+                        ].join('\n'),
+                      });
+                    }
+                  });
                   continue;
                 }
 
                 const hoursWaiting = (now - requestedAt) / HOUR;
 
                 if (hoursWaiting >= CLOSE_HOURS) {
-                  // If an earlier run already posted the closing message but closing failed,
-                  // do not post the message again, just retry closing.
                   const alreadyNotified = events.some(e =>
                     e.event === 'commented' && after(e.created_at) && (e.body ?? '').includes(CLOSE_MARKER));
                   await act(`#${n}: no response for ${hoursWaiting.toFixed(1)} hours, closing`, async () => {
@@ -191,8 +325,8 @@ jobs:
 
                 core.info(`#${n}: waiting (${hoursWaiting.toFixed(1)} of ${CLOSE_HOURS} hours)`);
               } catch (err) {
-                failed.push(pr.number);
-                core.warning(`#${pr.number}: skipped because of an error: ${err.message}`);
+                failed.push(item.number);
+                core.warning(`#${item.number}: skipped because of an error: ${err.message}`);
               }
             }
             if (failed.length) {

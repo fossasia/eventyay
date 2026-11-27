@@ -33,6 +33,8 @@ def get_position_product(position: OrderPosition) -> str:
 class VoucherAttendeeListExporter(ListExporter):
     identifier = 'voucherattendees'
     verbose_name = _('Voucher attendees')
+    category = 'vouchers_availability'
+    description = _('Who used which voucher.')
 
     status_choices = (
         ('', _('All vouchers')),
