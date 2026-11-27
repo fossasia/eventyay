@@ -76,6 +76,23 @@ The exporter class
 
       This is an abstract attribute, you **must** override this!
 
+   .. py:attribute:: category
+
+      The group your exporter is listed under on the event's export page. Use one of the keys of
+      ``eventyay.base.exporter.EXPORTER_CATEGORIES``: ``attendees_orders``, ``payments_accounting``,
+      ``checkin`` or ``vouchers_availability``. Exporters without a category are listed in the collapsed
+      "Advanced / integrations" group.
+
+   .. py:attribute:: description
+
+      One sentence shown under the exporter's name on the export page that says what the file contains,
+      e.g. "One row per ticket, with attendee name, email, product and answers."
+
+   .. py:attribute:: file_type
+
+      The type of file the exporter creates, shown next to its name on the export page, e.g. ``'PDF'``.
+      Exporters based on ``ListExporter`` show "Excel / CSV" by default.
+
    .. py:attribute:: export_form_fields
 
       When the event's administrator visits the export page, this property is called to return
