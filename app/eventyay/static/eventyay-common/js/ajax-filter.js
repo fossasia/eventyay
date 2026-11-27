@@ -17,7 +17,89 @@ const hasAjaxResultsRegion = function(root = document) {
     return !!root.querySelector('[data-ajax-results-region]');
 };
 
+const REQUEST_TIMEOUT_MS = 15000;
+
 let activeRequestController = null;
+let activeResultsContainer = null;
+let loadingStatusTimer = null;
+
+const cancelLoadingStatusTimer = function() {
+    if (loadingStatusTimer !== null) {
+        window.clearTimeout(loadingStatusTimer);
+        loadingStatusTimer = null;
+    }
+};
+
+const getLoadingStatusRegion = function(resultsContainer) {
+    const parent = resultsContainer.parentElement;
+    if (!parent) {
+        return null;
+    }
+
+    let statusEl = parent.querySelector('[data-ajax-loading-status]');
+    if (!statusEl) {
+        statusEl = document.createElement('span');
+        statusEl.className = 'sr-only';
+        statusEl.setAttribute('data-ajax-loading-status', '');
+        statusEl.setAttribute('role', 'status');
+        statusEl.setAttribute('aria-live', 'polite');
+        statusEl.setAttribute('aria-atomic', 'true');
+        parent.insertBefore(statusEl, resultsContainer.nextSibling);
+    }
+
+    return statusEl;
+};
+
+const clearLoadingStatus = function(resultsContainer) {
+    cancelLoadingStatusTimer();
+    resultsContainer.removeAttribute('aria-busy');
+    const parent = resultsContainer.parentElement;
+    const statusEl = parent ? parent.querySelector('[data-ajax-loading-status]') : null;
+    if (statusEl) {
+        statusEl.textContent = '';
+    }
+};
+
+const finishLoadingStatus = function(statusEl) {
+    cancelLoadingStatusTimer();
+    if (!statusEl) {
+        return;
+    }
+
+    // Announce completion only if the loading message was actually spoken.
+    statusEl.textContent = statusEl.textContent
+        ? (typeof window.gettext === 'function' ? window.gettext('Events updated.') : 'Events updated.')
+        : '';
+};
+
+const enterLoadingState = function(resultsContainer) {
+    cancelLoadingStatusTimer();
+    resultsContainer.setAttribute('aria-busy', 'true');
+    resultsContainer.style.opacity = '1';
+
+    const statusEl = getLoadingStatusRegion(resultsContainer);
+    if (statusEl) {
+        statusEl.textContent = '';
+        loadingStatusTimer = window.setTimeout(function() {
+            loadingStatusTimer = null;
+            if (resultsContainer.getAttribute('aria-busy') === 'true') {
+                statusEl.textContent = typeof window.gettext === 'function' ? window.gettext('Loading…') : 'Loading…';
+            }
+        }, 0);
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'text-center text-muted';
+    wrapper.style.padding = '2rem 0';
+    wrapper.setAttribute('aria-hidden', 'true');
+
+    const spinner = document.createElement('span');
+    spinner.className = 'fa fa-spinner fa-spin';
+    wrapper.appendChild(spinner);
+
+    resultsContainer.replaceChildren(wrapper);
+    return statusEl;
+};
 
 const getTableContainer = function(context) {
     return context.querySelector('.table-responsive') || context.querySelector('table.table') || context.querySelector('.empty-collection');
@@ -201,24 +283,81 @@ const syncFormControls = function(oldContext, newContext) {
     });
 };
 
-const fetchAndReplace = async function(url, replaceUrlParams, form) {
+const readResponseTextWithSignal = function(response, signal) {
+    if (!signal) {
+        return response.text();
+    }
+    if (signal.aborted) {
+        return Promise.reject(new DOMException('The operation was aborted.', 'AbortError'));
+    }
+
+    return new Promise(function(resolve, reject) {
+        const onAbort = function() {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+
+        Promise.resolve(response.text()).then(
+            function(text) {
+                signal.removeEventListener('abort', onAbort);
+                resolve(text);
+            },
+            function(error) {
+                signal.removeEventListener('abort', onAbort);
+                reject(error);
+            }
+        );
+    });
+};
+
+const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingState = false) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
     let requestController = null;
+    let requestTimeoutId = null;
+    let timedOut = false;
+    let loadingStatus = null;
     if (!resultsContainer) {
         window.location.href = url;
         return;
     }
 
-    resultsContainer.style.opacity = '0.5';
+    const previousContainer = activeResultsContainer;
+    if (activeRequestController) {
+        activeRequestController.abort();
+    }
+    if (previousContainer && previousContainer !== resultsContainer) {
+        clearLoadingStatus(previousContainer);
+        previousContainer.style.opacity = '1';
+    }
+
+    const preserveLoadingState = (
+        !showLoadingState
+        && previousContainer === resultsContainer
+        && resultsContainer.getAttribute('aria-busy') === 'true'
+    );
+
+    if (showLoadingState) {
+        loadingStatus = enterLoadingState(resultsContainer);
+    } else if (preserveLoadingState) {
+        loadingStatus = getLoadingStatusRegion(resultsContainer);
+    } else {
+        resultsContainer.style.opacity = '0.5';
+    }
 
     try {
-        if (activeRequestController) {
-            activeRequestController.abort();
-        }
-
         requestController = new AbortController();
         activeRequestController = requestController;
+        activeResultsContainer = resultsContainer;
+
+        requestTimeoutId = window.setTimeout(function() {
+            requestTimeoutId = null;
+            if (activeRequestController !== requestController) {
+                return;
+            }
+            timedOut = true;
+            requestController.abort();
+        }, REQUEST_TIMEOUT_MS);
 
         const response = await fetch(url, {
             method: 'GET',
@@ -234,12 +373,19 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
             throw new Error('Unexpected response status: ' + response.status);
         }
 
-        const data = await response.text();
+        const data = await readResponseTextWithSignal(response, requestController.signal);
+        // A newer request may have superseded this one while reading the body.
+        if (activeRequestController !== requestController) {
+            return;
+        }
+
         const doc = new DOMParser().parseFromString(data, 'text/html');
         const newContext = tabContext.tabId ? doc.getElementById(tabContext.tabId) : doc;
         const newResultsContainer = newContext ? getResultsContainer(newContext) : null;
 
         if (!newResultsContainer) {
+            clearLoadingStatus(resultsContainer);
+            resultsContainer.style.opacity = '1';
             window.location.href = url;
             return;
         }
@@ -247,6 +393,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         resultsContainer.replaceWith(newResultsContainer);
         resultsContainer = newResultsContainer;
         resultsContainer.style.opacity = '1';
+        finishLoadingStatus(loadingStatus);
 
         syncFilterBadge(tabContext.context, newContext); 
         syncMarkedRegions(tabContext.context, newContext);
@@ -263,19 +410,29 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
 
         updateNextInputs(url, tabContext.tabId);
     } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-            resultsContainer.style.opacity = '1';
+        if (error instanceof DOMException && error.name === 'AbortError' && !timedOut) {
             return;
         }
 
+        if (activeRequestController !== requestController) {
+            return;
+        }
+
+        clearLoadingStatus(resultsContainer);
+        resultsContainer.style.opacity = '1';
         console.error('AJAX filter update failed', {
             url: url,
             error: error,
         });
         window.location.href = url;
     } finally {
+        if (requestTimeoutId !== null) {
+            window.clearTimeout(requestTimeoutId);
+            requestTimeoutId = null;
+        }
         if (requestController && activeRequestController === requestController) {
             activeRequestController = null;
+            activeResultsContainer = null;
         }
     }
 };
@@ -473,20 +630,22 @@ const handleTabClick = function(event) {
     event.preventDefault();
 
     setActiveTabUI(tabParam);
-    if (tabLink.closest('.events-overview-tabs')) {
+    const isEventsOverviewTab = !!tabLink.closest('.events-overview-tabs');
+    if (isEventsOverviewTab) {
         syncSelectedEventTab(tabParam);
     }
 
     const activeTab = document.getElementById(tabParam);
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || null;
 
-    fetchAndReplace(url, true, targetElement);
+    fetchAndReplace(url, true, targetElement, isEventsOverviewTab);
 };
 
 const handlePopState = function() {
     const url = new URL(window.location.href, window.location.origin);
     const tabParam = url.searchParams.get('tab');
-    if (document.querySelector('.events-overview-tabs')) {
+    const isEventsOverview = !!document.querySelector('.events-overview-tabs');
+    if (isEventsOverview) {
         const status = url.searchParams.get('status');
         const resolvedTab = tabParam || (status === 'draft' || status === 'past' || status === 'live' ? status : 'live');
         setActiveTabUI(resolvedTab);
@@ -498,7 +657,7 @@ const handlePopState = function() {
     const activeTab = tabPane || document.querySelector('.tab-pane.active');
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || getFilterForms()[0] || null;
 
-    fetchAndReplace(window.location.href, false, targetElement);
+    fetchAndReplace(window.location.href, false, targetElement, isEventsOverview);
 };
 
 const initAjaxFilter = function() {

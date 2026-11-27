@@ -46,6 +46,14 @@ msgstr ""
 msgid "Preview could not be loaded."
 msgstr ""
 
+#: eventyay/static/eventyay-common/js/ajax-filter.js:71
+msgid "Events updated."
+msgstr ""
+
+#: eventyay/static/eventyay-common/js/ajax-filter.js:86
+msgid "Loading…"
+msgstr ""
+
 #: eventyay/static/eventyay-common/js/asynctask.js:105
 msgid "Task completed"
 msgstr ""
