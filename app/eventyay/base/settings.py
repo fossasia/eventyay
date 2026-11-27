@@ -65,6 +65,14 @@ settings_hierarkey.add_default('etherpad_pad_name_pattern', '{event}-{submission
 # Talks organizer dashboard internal note (separate from tickets Event.comment)
 settings_hierarkey.add_default('orga_internal_note', '', str)
 
+# Platform defaults for ticketing data retention
+settings_hierarkey.add_default('ticketing_retention_manual_min_days', 14, int)
+settings_hierarkey.add_default('ticketing_retention_periods', '[30, 60, 90, 180, 365]', list)
+settings_hierarkey.add_default('ticketing_retention_warning_days', 14, int)
+settings_hierarkey.add_default('ticketing_retention_trash_days', 30, int)
+settings_hierarkey.add_default('ticketing_retention_allow_trash', True, bool)
+settings_hierarkey.add_default('ticketing_retention_postpone_cap_days', None, int)
+
 # Telemetry settings for anonymous usage data collection
 # These are used by GlobalSettingsObject via settings_hierarkey
 settings_hierarkey.add_default('telemetry_enabled', False, bool)
