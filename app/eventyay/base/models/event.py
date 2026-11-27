@@ -361,9 +361,12 @@ class EventMixin:
             .annotate(products=GroupConcat('pk', delimiter=','))
             .values('products')
         )
+        # Include sellout candidates (allow_sellout_override=True); best_availability_state
+        # applies ProductVariation.is_available() so future variations whose predecessor
+        # has not sold out do not inflate availability.
         sq_active_variation = (
             ProductVariation.objects.filter(
-                Q(active=True)
+                ProductVariation.filter_available_q(allow_sellout_override=True)
                 & Q(product__active=True)
                 & Q(Q(product__available_from__isnull=True) | Q(product__available_from__lte=now()))
                 & Q(Q(product__available_until__isnull=True) | Q(product__available_until__gte=now()))
@@ -393,6 +396,28 @@ class EventMixin:
                 .select_related('event', 'subevent'),
             )
         )
+
+    def _filter_variation_ids_by_sales_period(self, variation_ids, quota_cache):
+        """Drop variation IDs that fail runtime sales-period / sellout checks."""
+        ids = {int(vid) for vid in variation_ids if vid}
+        if not ids:
+            return set()
+        from .product import ProductVariation
+
+        event = getattr(self, 'event', self)
+        subevent = self if getattr(self, 'event_id', None) else None
+        available = set()
+        # ProductVariation.objects is scoped on organizer=product__event__organizer.
+        with scope(organizer=event.organizer):
+            variations = (
+                ProductVariation.objects.filter(pk__in=ids)
+                .select_related('product', 'product__event')
+                .prefetch_related('product__variations', 'quotas')
+            )
+            for variation in variations:
+                if variation.is_available(subevent=subevent, _quota_cache=quota_cache):
+                    available.add(str(variation.pk))
+        return available
 
     @cached_property
     def best_availability_state(self):
@@ -426,6 +451,16 @@ class EventMixin:
                     products_gone.update(q.active_products.split(','))
                 if q.active_variations:
                     vars_gone.update(q.active_variations.split(','))
+
+        # One eligibility pass so a variation cannot stay in vars_available while
+        # dropping from vars_gone if available_until flips between checks.
+        eligible = self._filter_variation_ids_by_sales_period(
+            vars_available | vars_reserved | vars_gone, r
+        )
+        vars_available &= eligible
+        vars_reserved &= eligible
+        vars_gone &= eligible
+
         if not self.active_quotas:
             return None
         if products_available - products_reserved - products_gone or vars_available - vars_reserved - vars_gone:
