@@ -61,6 +61,7 @@ const loadPreview = async (wrapper, previewPanel, locale) => {
             },
             credentials: "same-origin",
             body: JSON.stringify({
+                ...JSON.parse(wrapper.dataset.emailPreviewExtra || "{}"),
                 html: getMessageHtml(locale),
                 locale: locale || undefined,
             }),

@@ -981,6 +981,31 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
 
     permission = ('can_change_orders', 'can_change_event_settings', 'can_change_vouchers')
 
+    def link_list_sample(self, request, link_list_id, sample):
+        """Sample values for link list placeholders: a saved list's next row, or a row sent for an unsaved file."""
+        from eventyay.plugins.sendmail.models import LINK_LIST_PLACEHOLDER_PREFIX, MailLinkList
+
+        link_list_id = str(link_list_id or '')
+        if link_list_id.isdigit():
+            if not request.user.has_event_permission(
+                request.organizer, request.event, 'can_change_orders', request=request
+            ):
+                return {}
+            link_list = MailLinkList.objects.filter(event=request.event, pk=link_list_id).first()
+            return link_list.sample_values() if link_list else {}
+        if isinstance(sample, str):
+            try:
+                sample = json.loads(sample or '{}')
+            except json.JSONDecodeError:
+                return {}
+        if not isinstance(sample, dict):
+            return {}
+        return {
+            key: str(value)
+            for key, value in sample.items()
+            if isinstance(key, str) and key.startswith(LINK_LIST_PLACEHOLDER_PREFIX) and isinstance(value, (str, int))
+        }
+
     def post(self, request, *args, **kwargs):
         content_type = request.content_type or ''
 
@@ -1008,12 +1033,16 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             request.event,
             locale=locale or None,
             preview_context=request.GET.get('context'),
+            extra_context=self.link_list_sample(request, payload.get('link_list'), payload.get('link_list_sample')),
         )
         return JsonResponse({'html': preview_html})
 
     def _handle_form(self, request):
         event = request.event
         previews = {}
+        extra_context = self.link_list_sample(
+            request, request.POST.get('link_list'), request.POST.get('link_list_sample')
+        )
 
         for key, values in request.POST.lists():
             if not key.startswith('body_') or not values:
@@ -1028,6 +1057,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
                 event,
                 locale=locale,
                 preview_context=request.GET.get('context'),
+            extra_context=extra_context,
             )
 
         if not previews:
@@ -1039,6 +1069,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
                     safe_html,
                     event,
                     preview_context=request.GET.get('context'),
+            extra_context=extra_context,
                 )
 
         return JsonResponse({'previews': previews})

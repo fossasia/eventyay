@@ -737,3 +737,59 @@ form.mail-templates-info-dialog__card {
     display: none;
   }
 }
+
+[data-link-list-manage][hidden] {
+    display: none !important;
+}
+
+.link-list-dialog {
+    width: min(400px, calc(100vw - 32px));
+}
+
+.link-list-dialog-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.link-list-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.link-list-counts {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.link-list-dialog .link-list-add-label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.link-list-dialog .link-list-add-file {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    font-size: 1rem;
+}
+
+.link-list-hint {
+    font-size: 0.875em;
+    margin: 6px 0 0;
+}
+
+.link-list-status {
+    font-size: 0.875em;
+    min-height: 1.2em;
+    margin: 8px 0;
+}
+
+.link-list-actions {
+    display: flex;
+    justify-content: flex-end;
+}
