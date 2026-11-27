@@ -55,6 +55,30 @@ def test_replacing_speaker_information_resource_deletes_old_file(event, media_ro
 
 
 @pytest.mark.django_db
+def test_cleanup_deletes_old_file_when_row_was_deleted(
+    event, media_root, monkeypatch, django_capture_on_commit_callbacks
+):
+    queued_jobs = []
+    monkeypatch.setattr(
+        tasks.task_cleanup_file, 'apply_async', lambda kwargs=None, **options: queued_jobs.append(kwargs)
+    )
+    with scope(event=event):
+        info = SpeakerInformation.objects.create(event=event, title='Info', text='Text', target_group='accepted')
+        info.resource.save('old.pdf', ContentFile(b'old'))
+        old_name = info.resource.name
+
+        with django_capture_on_commit_callbacks(execute=True):
+            info.resource.save('new.pdf', ContentFile(b'new'))
+        info.delete()
+
+    assert queued_jobs
+    for job in queued_jobs:
+        task_cleanup_file(**job)
+
+    assert not default_storage.exists(old_name)
+
+
+@pytest.mark.django_db
 def test_replacing_room_picture_deletes_old_file(room, media_root, run_cleanup_now):
     with scope(event=room.event):
         room.picture.save('old.png', ContentFile(b'old'))

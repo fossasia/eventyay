@@ -77,15 +77,12 @@ def task_cleanup_file(*, model: str, pk: int, field: str, path: str, file_name: 
         if model_class.objects.filter(**{field: file_name}).exists():
             return
         instance = model_class.objects.filter(pk=pk).first()
-
-        if not instance:
-            return
-
-        file = getattr(instance, field, None)
-        if file and file.path == path:
-            # The save action that triggered this task did not go through and the file
-            # is still in use, so we should not delete it.
-            return
+        if instance:
+            file = getattr(instance, field, None)
+            if file and file.path == path:
+                # The save action that triggered this task did not go through and the file
+                # is still in use, so we should not delete it.
+                return
 
         real_path = Path(path)
         if real_path.exists():
