@@ -247,3 +247,21 @@ test('hover state preserves seamless border removal at continuation seams', () =
 	assert.match(content, /&:hover[\s\S]*?has-continuation-after[\s\S]*?border-bottom: none/)
 	assert.match(content, /&:hover[\s\S]*?has-continuation-before[\s\S]*?border-top: none/)
 })
+
+test('idless breaks do not split overlapping shifts into subcolumns', () => {
+	const realShift = shift('shift-1', at(10), at(14))
+	const idlessBreak = { room, start: at(12), end: at(13) }
+	const sessions = [realShift, idlessBreak]
+
+	const layout = computeShiftColumnLayout([room], sessions)
+	assert.equal(layout.get(room.id).colSpan, 1)
+
+	const placements = computeShiftPlacements(realShift, sessions, layout)
+	assert.equal(placements, null)
+})
+
+test('fallback print chunk styling uses expanded room layout coordinates and spans totalCols for breaks', () => {
+	const gridSchedulePath = path.resolve(__dirname, '../components/GridSchedule.vue')
+	const content = fs.readFileSync(gridSchedulePath, 'utf-8')
+	assert.match(content, /getChunkSessionStyle\s*\(session,\s*chunkRooms\)\s*\{[\s\S]*?if\s*\(this\.isShiftMode\)[\s\S]*?\$\{l\.colStart\}\s*\/\s*\$\{l\.colStart\s*\+\s*l\.colSpan\}[\s\S]*?2\s*\/\s*\$\{totalCols\s*\+\s*2\}/)
+})

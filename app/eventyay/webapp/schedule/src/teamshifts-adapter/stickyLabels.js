@@ -31,9 +31,24 @@ function getLabelElements (card) {
 const entries = new Set()
 const applied = new WeakMap()
 let listening = false
+let updateScheduled = false
+
+function scheduleUpdate () {
+	if (updateScheduled) return
+	updateScheduled = true
+	const run = () => {
+		updateScheduled = false
+		if (entries.size) update()
+	}
+	if (typeof queueMicrotask === 'function') {
+		queueMicrotask(run)
+	} else {
+		setTimeout(run, 0)
+	}
+}
 
 function stickyBottomFor (card) {
-	const header = card.closest('.c-grid-schedule')?.querySelector('.sticky-header')
+	const header = card.closest?.('.c-grid-schedule')?.querySelector('.sticky-header')
 	return header ? header.getBoundingClientRect().bottom : 0
 }
 
@@ -75,11 +90,15 @@ function update () {
 		}
 
 		const onScreen = cardRect.bottom > stickyBottom && cardRect.top < viewportHeight
-		for (const el of getLabelElements(card)) {
-			if (!onScreen) {
-				updates.push([el, 0])
-				continue
+		if (!onScreen) {
+			for (const el of getLabelElements(card)) {
+				if (applied.get(el)) {
+					updates.push([el, 0])
+				}
 			}
+			continue
+		}
+		for (const el of getLabelElements(card)) {
 			const rect = el.getBoundingClientRect()
 			updates.push([el, computeStickyOffset({
 				stickyBottom,
@@ -100,13 +119,17 @@ function update () {
  * One shared, synchronous scroll listener serves every card without animation frame lag.
  */
 export function registerStickyLabels (card) {
+	const grid = card?.closest?.('.c-grid-schedule')
+	if (!grid || !grid.querySelector('.sticky-header') || card.closest?.('.is-print')) {
+		return () => {}
+	}
 	entries.add(card)
 	if (!listening) {
 		window.addEventListener('scroll', update, { passive: true, capture: true })
 		window.addEventListener('resize', update, { passive: true })
 		listening = true
 	}
-	update()
+	scheduleUpdate()
 	return () => {
 		entries.delete(card)
 		for (const el of getLabelElements(card)) {

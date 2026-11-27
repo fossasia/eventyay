@@ -4,7 +4,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { computeStickyOffset, shouldHideContinuation } from './stickyLabels.js'
+import { computeStickyOffset, shouldHideContinuation, registerStickyLabels } from './stickyLabels.js'
 
 // A 600px card whose title is 24px tall and sits 9px below the card's top edge.
 const card = { cardHeight: 600, height: 24 }
@@ -77,4 +77,18 @@ test('shouldHideContinuation reveals continuation piece once previous piece scro
 		}),
 	}
 	assert.equal(shouldHideContinuation(continuationCard, 70), false)
+})
+
+test('registerStickyLabels ignores cards outside grid schedule or inside print container', () => {
+	const linearCard = { closest: () => null }
+	const stopLinear = registerStickyLabels(linearCard)
+	assert.equal(typeof stopLinear, 'function')
+	stopLinear()
+
+	const printCard = {
+		closest: (sel) => sel === '.c-grid-schedule' ? { querySelector: () => ({}) } : sel === '.is-print' ? {} : null,
+	}
+	const stopPrint = registerStickyLabels(printCard)
+	assert.equal(typeof stopPrint, 'function')
+	stopPrint()
 })

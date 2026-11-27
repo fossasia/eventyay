@@ -571,8 +571,22 @@ export default {
 			}
 		},
 		getChunkSessionStyle (session, chunkRooms) {
-			const roomIndex = chunkRooms.indexOf(session.room)
 			const gridRow = `${getSliceName(session.start)} / ${getSliceName(session.end)}`
+			if (this.isShiftMode) {
+				const layout = this.getChunkLayout(chunkRooms)
+				const rid = session.room?.id ?? session.room
+				const l = layout?.get(rid)
+				if (l) {
+					return { 'grid-row': gridRow, 'grid-column': `${l.colStart} / ${l.colStart + l.colSpan}` }
+				}
+				let totalCols = 0
+				for (const room of chunkRooms) {
+					const rl = layout?.get(room?.id ?? room)
+					totalCols += rl ? rl.colSpan : 1
+				}
+				return { 'grid-row': gridRow, 'grid-column': `2 / ${totalCols + 2}` }
+			}
+			const roomIndex = chunkRooms.indexOf(session.room)
 			if (roomIndex > -1) {
 				return { 'grid-row': gridRow, 'grid-column': roomIndex + 2 }
 			}

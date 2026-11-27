@@ -224,7 +224,7 @@ export function computeRoomMaxOverlap (room, allSessions) {
 	const rid = roomId(room)
 	const events = []
 	for (const s of allSessions) {
-		if (roomId(s.room) !== rid || !s.start || !s.end) continue
+		if (s.id == null || roomId(s.room) !== rid || !s.start || !s.end) continue
 		events.push({ time: s.start, delta: 1 })
 		events.push({ time: s.end, delta: -1 })
 	}
@@ -244,7 +244,7 @@ export function computeRoomMaxOverlap (room, allSessions) {
 function assignRoomTracks (room, allSessions) {
 	const rid = roomId(room)
 	const roomSessions = allSessions
-		.filter(s => roomId(s.room) === rid && s.start && s.end)
+		.filter(s => s.id != null && roomId(s.room) === rid && s.start && s.end)
 		.sort((a, b) => {
 			const diff = a.start.diff(b.start)
 			if (diff !== 0) return diff
@@ -295,7 +295,7 @@ export function buildShiftGridTemplateColumns (rooms, sessions, minColWidth, tim
 }
 
 export function computeShiftPlacements (session, allSessions, columnLayout) {
-	if (!session.start || !session.end || !session.room) return null
+	if (!session.start || !session.end || !session.room || session.id == null) return null
 
 	const rid = roomId(session.room)
 	const roomLayout = columnLayout ? columnLayout.get(rid) : null
@@ -308,7 +308,7 @@ export function computeShiftPlacements (session, allSessions, columnLayout) {
 	const startMs = session.start.valueOf()
 	const endMs = session.end.valueOf()
 	const others = allSessions.filter(other =>
-		other.id !== session.id && roomId(other.room) === rid && other.start && other.end &&
+		other.id != null && other.id !== session.id && roomId(other.room) === rid && other.start && other.end &&
 		other.start.valueOf() < endMs && startMs < other.end.valueOf() &&
 		trackMap.get(other.id) != null)
 
