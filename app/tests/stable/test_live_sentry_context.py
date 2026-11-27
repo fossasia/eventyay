@@ -6,6 +6,10 @@ import pytest
 import sentry_sdk
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
+from django.conf import settings as django_settings
+from django.test import RequestFactory
+from sentry_sdk.integrations._wsgi_common import _filter_headers
+from sentry_sdk.integrations.django import DjangoRequestExtractor
 from sentry_sdk.transport import Transport
 
 from eventyay.base.models import User
@@ -36,7 +40,11 @@ async def _noop_statsd():
 @pytest.fixture
 def sentry_transport():
     transport = CollectingTransport()
-    sentry_sdk.init(dsn='https://public@sentry.example.com/1', transport=transport)
+    sentry_sdk.init(
+        dsn='https://public@sentry.example.com/1',
+        transport=transport,
+        data_collection=django_settings.SENTRY_DATA_COLLECTION,
+    )
     yield transport
     sentry_sdk.get_client().close()
     sentry_sdk.init()
@@ -177,3 +185,54 @@ async def test_chat_command_records_channel_on_isolation_scope(sentry_transport)
 
     sentry_sdk.flush()
     assert sentry_transport.events[-1]['extra']['last_channel'] == 'abc'
+
+
+def test_request_body_and_cookies_are_not_collected(sentry_transport):
+    request = RequestFactory().post(
+        '/control/login',
+        data={'email': 'ada@example.com', 'password': 'hunter2'},
+        HTTP_COOKIE='sessionid=xyz',
+    )
+    event = {}
+    DjangoRequestExtractor(request).extract_into_event(event)
+
+    assert 'data' not in event['request']
+    assert 'cookies' not in event['request']
+
+
+def test_sensitive_request_headers_are_filtered(sentry_transport):
+    headers = _filter_headers(
+        {
+            'Authorization': 'Token abc123',
+            'Cookie': 'sessionid=xyz',
+            'X-CSRFToken': 'csrf',
+            'X-Forwarded-For': '203.0.113.7',
+            'X-Real-IP': '203.0.113.7',
+            'User-Agent': 'Mozilla/5.0',
+        }
+    )
+
+    assert headers == {
+        'Authorization': '[Filtered]',
+        'Cookie': '[Filtered]',
+        'X-CSRFToken': '[Filtered]',
+        'X-Forwarded-For': '[Filtered]',
+        'X-Real-IP': '[Filtered]',
+        'User-Agent': 'Mozilla/5.0',
+    }
+
+
+def test_sensitive_frame_variables_are_filtered(sentry_transport):
+    def save_token(token, password, order_code):
+        raise RuntimeError(f'could not save {order_code}')
+
+    try:
+        save_token('eyJhbGciOiJIUzI1NiJ9.payload.signature', 'hunter2', 'ABC12')
+    except RuntimeError as e:
+        sentry_sdk.capture_exception(e)
+
+    sentry_sdk.flush()
+    frame_vars = sentry_transport.events[-1]['exception']['values'][-1]['stacktrace']['frames'][-1]['vars']
+    assert frame_vars['token'] == "'[Filtered]'"
+    assert frame_vars['password'] == "'[Filtered]'"
+    assert frame_vars['order_code'] == "'ABC12'"

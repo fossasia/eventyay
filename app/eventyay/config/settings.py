@@ -1551,6 +1551,13 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 # Sentry configuration
 SENTRY_DSN = conf.sentry_dsn
 SENTRY_ENABLED = bool(SENTRY_DSN)
+SENTRY_DATA_COLLECTION = {
+    'user_info': False,
+    'cookies': {'mode': 'off'},
+    'http_headers': {'request': {'mode': 'denylist', 'terms': ['forwarded', 'x-real-ip']}},
+    'http_bodies': [],
+    'stack_frame_variables': {'mode': 'denylist'},
+}
 if SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
@@ -1562,11 +1569,7 @@ if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration(), DjangoIntegration()],
-        data_collection={
-            'user_info': False,
-            'cookies': {'mode': 'off'},
-            'http_headers': {'request': {'mode': 'denylist', 'terms': ['forwarded', 'x-real-ip']}},
-        },
+        data_collection=SENTRY_DATA_COLLECTION,
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,
         environment=active_environment.value,
