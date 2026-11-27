@@ -5,7 +5,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django_scopes import scope
 
-from eventyay.base.models import Room, SpeakerInformation
+from eventyay.base.models import CachedFile, Room, SpeakerInformation
 from eventyay.common import tasks
 from eventyay.common.tasks import task_cleanup_file
 
@@ -100,8 +100,8 @@ def test_cleanup_skips_job_without_file_name(room, media_root):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('model', ['Room', 'base.DoesNotExist', 'base.CachedFile'])
-def test_cleanup_ignores_unknown_and_unsupported_models(room, media_root, model):
+@pytest.mark.parametrize('model', ['Room', 'base.DoesNotExist'])
+def test_cleanup_ignores_unknown_models(room, media_root, model):
     with scope(event=room.event):
         room.picture.save('old.png', ContentFile(b'old'))
         old_name = room.picture.name
@@ -109,6 +109,25 @@ def test_cleanup_ignores_unknown_and_unsupported_models(room, media_root, model)
         Room.objects.filter(pk=room.pk).update(picture='new.png')
 
     task_cleanup_file(model=model, pk=room.pk, field='picture', path=old_path, file_name=old_name)
+
+    assert default_storage.exists(old_name)
+
+
+@pytest.mark.django_db
+def test_cleanup_ignores_models_without_the_mixin(media_root):
+    # CachedFile has a real file field but doesn't use FileCleanupMixin, so only the
+    # mixin check stops this job from deleting the file.
+    cached_file = CachedFile.objects.create(filename='current.txt', type='text/plain')
+    cached_file.file.save('current.txt', ContentFile(b'current'))
+    old_name = default_storage.save('old.txt', ContentFile(b'old'))
+
+    task_cleanup_file(
+        model='base.CachedFile',
+        pk=cached_file.pk,
+        field='file',
+        path=default_storage.path(old_name),
+        file_name=old_name,
+    )
 
     assert default_storage.exists(old_name)
 
