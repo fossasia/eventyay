@@ -196,11 +196,25 @@ const timesliceRefs = ref<HTMLElement[]>([])
 const stretchingBreak = ref<{
   session: SessionDatum
   direction: 'left' | 'right'
-  originRoomIndex: number
+  originRoomId: string | number
   pointerId: number
   isRtl?: boolean
 } | null>(null)
-const stretchTargetRoomIndex = ref<number | null>(null)
+const stretchTargetRoomId = ref<string | number | null>(null)
+
+const stretchOriginRoomIndex = computed(() => {
+  if (!stretchingBreak.value) return -1
+  return visibleRooms.value.findIndex(
+    (r) => String(r.id) === String(stretchingBreak.value?.originRoomId)
+  )
+})
+
+const stretchTargetRoomIndex = computed(() => {
+  if (stretchTargetRoomId.value === null) return -1
+  return visibleRooms.value.findIndex(
+    (r) => String(r.id) === String(stretchTargetRoomId.value)
+  )
+})
 const getIsRtl = (): boolean => {
   if (typeof document === 'undefined') return false
   return document.documentElement.dir === 'rtl' || document.documentElement.classList.contains('rtl')
@@ -484,13 +498,14 @@ const gridStyle = computed(() => {
 
 const stretchConflicted = computed(() => {
   if (props.allowOverlap) return false
-  if (!stretchingBreak.value || stretchTargetRoomIndex.value === null) return false
+  if (!stretchingBreak.value || stretchTargetRoomId.value === null) return false
   const s = stretchingBreak.value.session
   if (!s.start || !s.end) return false
   const startMs = moment(s.start).valueOf()
   const endMs = moment(s.end).valueOf()
-  const origin = stretchingBreak.value.originRoomIndex
+  const origin = stretchOriginRoomIndex.value
   const target = stretchTargetRoomIndex.value
+  if (origin === -1 || target === -1) return false
   const minIdx = Math.min(origin, target)
   const maxIdx = Math.max(origin, target)
 
@@ -509,10 +524,12 @@ const stretchConflicted = computed(() => {
 })
 
 const stretchConflictIndicatorStyle = computed<Record<string, string | number>>(() => {
-  if (!stretchingBreak.value || stretchTargetRoomIndex.value === null) return {}
+  if (!stretchingBreak.value || stretchTargetRoomId.value === null) return {}
   const s = stretchingBreak.value.session
   if (!s.start || !s.end) return {}
-  const targetCol = stretchTargetRoomIndex.value + 2
+  const targetIndex = stretchTargetRoomIndex.value
+  if (targetIndex === -1) return {}
+  const targetCol = targetIndex + 2
   return {
     'grid-row': gridRowSpan(moment(s.start), moment(s.end)),
     'grid-column': `${targetCol} / ${targetCol + 1}`,
@@ -633,17 +650,17 @@ const startStretchingBreak = ({
   direction: 'left' | 'right'
 }) => {
   const roomId = typeof session.room === 'object' && session.room !== null ? session.room.id : session.room
-  const originRoomIndex = visibleRooms.value.findIndex((r) => r.id === roomId)
-  if (originRoomIndex === -1) return
+  const originRoom = visibleRooms.value.find((r) => String(r.id) === String(roomId))
+  if (!originRoom) return
   refreshGridOffset()
   stretchingBreak.value = {
     session,
     direction,
-    originRoomIndex,
+    originRoomId: originRoom.id,
     pointerId: event.pointerId,
     isRtl: getIsRtl(),
   }
-  stretchTargetRoomIndex.value = originRoomIndex
+  stretchTargetRoomId.value = originRoom.id
 }
 
 const updateStretchRoom = (clientX: number, clientY: number) => {
@@ -654,15 +671,21 @@ const updateStretchRoom = (clientX: number, clientY: number) => {
     const r = cachedGrid.rooms.find((room) => clientX >= room.left && clientX < room.right)
     if (r) {
       const rtl = stretchingBreak.value.isRtl ?? getIsRtl()
-      const origin = stretchingBreak.value.originRoomIndex
+      const origin = stretchOriginRoomIndex.value
+      if (origin === -1) return
+      const currentTargetIndex = visibleRooms.value.findIndex(
+        (room) => String(room.id) === String(r.room.id)
+      )
+      if (currentTargetIndex === -1) return
+
       if (stretchingBreak.value.direction === 'left') {
-        const isDisallowed = rtl ? r.roomIndex < origin : r.roomIndex > origin
-        stretchTargetRoomIndex.value = isDisallowed ? origin : r.roomIndex
+        const isDisallowed = rtl ? currentTargetIndex < origin : currentTargetIndex > origin
+        stretchTargetRoomId.value = isDisallowed ? stretchingBreak.value.originRoomId : r.room.id
       } else if (stretchingBreak.value.direction === 'right') {
-        const isDisallowed = rtl ? r.roomIndex > origin : r.roomIndex < origin
-        stretchTargetRoomIndex.value = isDisallowed ? origin : r.roomIndex
+        const isDisallowed = rtl ? currentTargetIndex > origin : currentTargetIndex < origin
+        stretchTargetRoomId.value = isDisallowed ? stretchingBreak.value.originRoomId : r.room.id
       } else {
-        stretchTargetRoomIndex.value = r.roomIndex
+        stretchTargetRoomId.value = r.room.id
       }
     }
   }
@@ -673,29 +696,38 @@ const stopStretching = (event?: PointerEvent) => {
   if (event && event.pointerId !== undefined && event.pointerId !== stretchingBreak.value.pointerId) {
     return
   }
-  const { session, originRoomIndex } = stretchingBreak.value
+  const { session } = stretchingBreak.value
+  const originIndex = stretchOriginRoomIndex.value
   const targetIndex = stretchTargetRoomIndex.value
   const conflicted = stretchConflicted.value
 
   const targetRooms: Room[] = []
-  if (targetIndex !== null && targetIndex !== originRoomIndex && !conflicted) {
-    const minIdx = Math.min(originRoomIndex, targetIndex)
-    const maxIdx = Math.max(originRoomIndex, targetIndex)
+  if (
+    originIndex !== -1 &&
+    targetIndex !== -1 &&
+    targetIndex !== originIndex &&
+    !conflicted
+  ) {
+    const minIdx = Math.min(originIndex, targetIndex)
+    const maxIdx = Math.max(originIndex, targetIndex)
     for (let i = minIdx; i <= maxIdx; i++) {
-      if (i !== originRoomIndex && visibleRooms.value[i]) {
+      if (i !== originIndex && visibleRooms.value[i]) {
         targetRooms.push(visibleRooms.value[i])
       }
     }
   }
 
+  const hasStretchedToDifferentRoom =
+    originIndex !== -1 && targetIndex !== -1 && targetIndex !== originIndex
+
   emit('stretchBreakDrop', {
     session,
     targetRooms,
-    conflicted: conflicted && targetIndex !== null && targetIndex !== originRoomIndex,
+    conflicted: conflicted && hasStretchedToDifferentRoom,
   })
 
   stretchingBreak.value = null
-  stretchTargetRoomIndex.value = null
+  stretchTargetRoomId.value = null
   cachedGrid = null
 }
 
@@ -705,7 +737,7 @@ const cancelStretching = (event?: PointerEvent) => {
     return
   }
   stretchingBreak.value = null
-  stretchTargetRoomIndex.value = null
+  stretchTargetRoomId.value = null
   cachedGrid = null
 }
 
@@ -1053,17 +1085,23 @@ const getRoomHeaderStyle = (room: { id: number | string }, fallbackIndex: number
 
 const sessionStyles = computed(() => {
   const map = new Map<number | string, Record<string, string | number>>()
+  const originIndex = stretchOriginRoomIndex.value
+  const targetIndex = stretchTargetRoomIndex.value
+  const isStretching =
+    stretchingBreak.value &&
+    originIndex !== -1 &&
+    targetIndex !== -1
+  const originCol = originIndex + 2
+  const targetCol = targetIndex + 2
+  const colStart = Math.min(originCol, targetCol)
+  const colEnd = Math.max(originCol, targetCol) + 1
+
   for (const session of visibleSessions.value) {
     const base = getSessionStyle(session)
     if (
-      stretchingBreak.value &&
-      String(session.id) === String(stretchingBreak.value.session.id) &&
-      stretchTargetRoomIndex.value !== null
+      isStretching &&
+      String(session.id) === String(stretchingBreak.value?.session.id)
     ) {
-      const originCol = stretchingBreak.value.originRoomIndex + 2
-      const targetCol = stretchTargetRoomIndex.value + 2
-      const colStart = Math.min(originCol, targetCol)
-      const colEnd = Math.max(originCol, targetCol) + 1
       map.set(session.id, {
         ...base,
         'grid-column': `${colStart} / ${colEnd}`,
