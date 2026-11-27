@@ -120,7 +120,7 @@ function update () {
  */
 export function registerStickyLabels (card) {
 	const grid = card?.closest?.('.c-grid-schedule')
-	if (!grid || !grid.querySelector('.sticky-header') || card.closest?.('.is-print')) {
+	if (!grid || !grid.querySelector('.sticky-header') || card.closest?.('.print-grids') || card.closest?.('.is-print')) {
 		return () => {}
 	}
 	entries.add(card)

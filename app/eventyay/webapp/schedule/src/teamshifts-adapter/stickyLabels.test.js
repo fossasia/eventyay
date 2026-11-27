@@ -86,7 +86,7 @@ test('registerStickyLabels ignores cards outside grid schedule or inside print c
 	stopLinear()
 
 	const printCard = {
-		closest: (sel) => sel === '.c-grid-schedule' ? { querySelector: () => ({}) } : sel === '.is-print' ? {} : null,
+		closest: (sel) => sel === '.c-grid-schedule' ? { querySelector: () => ({}) } : (sel === '.print-grids' || sel === '.is-print') ? {} : null,
 	}
 	const stopPrint = registerStickyLabels(printCard)
 	assert.equal(typeof stopPrint, 'function')
