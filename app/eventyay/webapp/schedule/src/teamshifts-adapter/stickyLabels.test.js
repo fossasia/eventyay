@@ -4,7 +4,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { computeStickyOffset } from './stickyLabels.js'
+import { computeStickyOffset, shouldHideContinuation } from './stickyLabels.js'
 
 // A 600px card whose title is 24px tall and sits 9px below the card's top edge.
 const card = { cardHeight: 600, height: 24 }
@@ -44,4 +44,37 @@ test('never returns a negative or non-finite offset', () => {
 	assert.equal(computeStickyOffset({ stickyBottom: NaN, cardTop: 0, cardHeight: 10, naturalTop: 0, height: 5 }), 0)
 	// A label taller than its card has no room to move.
 	assert.equal(computeStickyOffset({ stickyBottom: 100, cardTop: 0, cardHeight: 20, naturalTop: 0, height: 40 }), 0)
+})
+
+test('shouldHideContinuation returns false for primary non-continuation cards', () => {
+	const card = { classList: { contains: () => false } }
+	assert.equal(shouldHideContinuation(card, 70), false)
+})
+
+test('shouldHideContinuation hides continuation piece while previous piece is on screen', () => {
+	const prevPiece = {
+		getBoundingClientRect: () => ({ bottom: 250 }),
+	}
+	const continuationCard = {
+		classList: { contains: (cls) => cls === 'has-continuation-before' },
+		dataset: { shiftId: '42' },
+		closest: () => ({
+			querySelectorAll: () => [prevPiece, continuationCard],
+		}),
+	}
+	assert.equal(shouldHideContinuation(continuationCard, 70), true)
+})
+
+test('shouldHideContinuation reveals continuation piece once previous piece scrolls off', () => {
+	const prevPiece = {
+		getBoundingClientRect: () => ({ bottom: 50 }), // Scrolled past stickyBottom (70)
+	}
+	const continuationCard = {
+		classList: { contains: (cls) => cls === 'has-continuation-before' },
+		dataset: { shiftId: '42' },
+		closest: () => ({
+			querySelectorAll: () => [prevPiece, continuationCard],
+		}),
+	}
+	assert.equal(shouldHideContinuation(continuationCard, 70), false)
 })

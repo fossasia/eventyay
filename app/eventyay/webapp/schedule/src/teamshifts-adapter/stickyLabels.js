@@ -44,12 +44,36 @@ function setOffset (el, offset) {
 	el.style.transform = rounded ? `translate3d(0, ${rounded}px, 0)` : ''
 }
 
+export function shouldHideContinuation (card, stickyBottom) {
+	if (!card?.classList?.contains('has-continuation-before')) return false
+	const shiftId = card.dataset?.shiftId
+	const grid = card.closest ? card.closest('.grid') : null
+	const pieces = grid && shiftId ? Array.from(grid.querySelectorAll(`.is-shift-session[data-shift-id="${shiftId}"]`)) : []
+	const myIndex = pieces.indexOf(card)
+	const prevPiece = myIndex > 0 ? pieces[myIndex - 1] : null
+	if (prevPiece && prevPiece.getBoundingClientRect().bottom > stickyBottom) {
+		return true
+	}
+	return false
+}
+
 function update () {
 	const viewportHeight = window.innerHeight || document.documentElement.clientHeight
 	const updates = []
 	for (const card of entries) {
 		const cardRect = card.getBoundingClientRect()
 		const stickyBottom = stickyBottomFor(card)
+
+		if (shouldHideContinuation(card, stickyBottom)) {
+			card.classList.add('shift-continuation-hidden')
+			for (const el of getLabelElements(card)) {
+				updates.push([el, 0])
+			}
+			continue
+		} else if (card.classList.contains('shift-continuation-hidden')) {
+			card.classList.remove('shift-continuation-hidden')
+		}
+
 		const onScreen = cardRect.bottom > stickyBottom && cardRect.top < viewportHeight
 		for (const el of getLabelElements(card)) {
 			if (!onScreen) {
@@ -88,6 +112,7 @@ export function registerStickyLabels (card) {
 		for (const el of getLabelElements(card)) {
 			setOffset(el, 0)
 		}
+		card.classList.remove('shift-continuation-hidden')
 		if (!entries.size && listening) {
 			window.removeEventListener('scroll', update, { capture: true })
 			window.removeEventListener('resize', update)

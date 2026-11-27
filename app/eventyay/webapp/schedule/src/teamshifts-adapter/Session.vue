@@ -705,6 +705,9 @@ export default {
 		.info
 			border-top-right-radius: 0
 			border-top: none
+	&.shift-continuation-hidden
+		.start, .title-range-wrapper, .roles-list
+			display: none
 	&.is-continuation
 		min-height: 0
 		.time-box
