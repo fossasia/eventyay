@@ -4,7 +4,11 @@
 {% block inner %}
     <h1>{% trans "Delete team:" %} {{ team.name }}</h1>
     {% if not possible %}
+        {% if team.is_core_team %}
+            <p>{% translate "The Core Organizing Team cannot be deleted." %}</p>
+        {% else %}
         <p>{% blocktrans %}You cannot delete the team because there would be no one left who could change team permissions afterwards.{% endblocktrans %}</p>
+        {% endif %}
         <div class="form-group submit-group">
             <a href="{{ cancel_url }}" class="btn btn-default btn-cancel">
                 {% trans "Cancel" %}
