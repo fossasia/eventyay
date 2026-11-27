@@ -27,10 +27,27 @@ def excel_safe(val):
     return val
 
 
+#: The groups of the event export page, in the order they are shown. An exporter picks one with its
+#: ``category``; exporters without one are shown in a collapsed "Advanced / integrations" group.
+EXPORTER_CATEGORIES = (
+    ('attendees_orders', _('Attendees & orders')),
+    ('payments_accounting', _('Payments & accounting')),
+    ('checkin', _('Check-in & on-site')),
+    ('vouchers_availability', _('Vouchers, waiting list & availability')),
+)
+
+
 class BaseExporter:
     """
     This is the base class for all data exporters
     """
+
+    #: The key of the group in ``EXPORTER_CATEGORIES`` this exporter is listed under on the export page.
+    category = None
+    #: One line under the exporter's name on the export page that says what the file contains.
+    description = ''
+    #: The type of file the exporter creates, shown next to its name on the export page, e.g. ``'PDF'``.
+    file_type = ''
 
     def __init__(self, event, progress_callback=lambda v: None):
         self.event = event
@@ -108,6 +125,7 @@ class BaseExporter:
 
 class ListExporter(BaseExporter):
     ProgressSetTotal = namedtuple('ProgressSetTotal', 'total')
+    file_type = 'Excel / CSV'
 
     @property
     def export_form_fields(self) -> dict:
