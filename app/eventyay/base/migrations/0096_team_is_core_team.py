@@ -72,8 +72,6 @@ class Migration(migrations.Migration):
                 verbose_name='Core Organizing Team',
             ),
         ),
-        migrations.RunPython(flag_core_teams, migrations.RunPython.noop),
-        migrations.RunPython(grant_core_team_access, migrations.RunPython.noop),
         migrations.AddConstraint(
             model_name='team',
             constraint=models.UniqueConstraint(
@@ -82,4 +80,6 @@ class Migration(migrations.Migration):
                 name='unique_core_team_per_organizer',
             ),
         ),
+        migrations.RunPython(flag_core_teams, migrations.RunPython.noop),
+        migrations.RunPython(grant_core_team_access, migrations.RunPython.noop),
     ]
