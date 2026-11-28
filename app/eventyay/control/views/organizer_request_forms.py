@@ -1,16 +1,19 @@
 import json
 
 from django.contrib import messages
+from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DeleteView, UpdateView, View
 
-from eventyay.base.forms.organizer_request import OrganizerRequestQuestionForm
+from eventyay.base.forms.organizer_request import OrganizerRequestFieldSettingsForm, OrganizerRequestQuestionForm
 from eventyay.base.models.organizer_request import OrganizerRequestFieldSetting, OrganizerRequestQuestion
 from eventyay.base.organizer_request_fields import (
     REQUEST_FIELDS,
+    ensure_request_field_settings,
     next_form_position,
     organiser_form_rows,
     organizer_request_enabled,
@@ -18,6 +21,11 @@ from eventyay.base.organizer_request_fields import (
 )
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
+
+
+STALE_FIELD_MESSAGE = gettext_lazy(
+    'Someone else changed this while you had the page open. Reload the page to see the current text.'
+)
 
 
 def organizer_form_tab_context() -> dict:
@@ -85,6 +93,67 @@ class OrganizerRequestFieldUpdate(AdministratorPermissionRequiredMixin, View):
             return JsonResponse({'error': _('Could not read that change.')}, status=400)
         setting.save(update_fields=['active', 'required'])
         return JsonResponse({'ok': True})
+
+
+class OrganizerRequestFieldSettings(AdministratorPermissionRequiredMixin, UpdateView):
+    model = OrganizerRequestFieldSetting
+    form_class = OrganizerRequestFieldSettingsForm
+    template_name = 'pretixcontrol/admin/organizer_requests/field_settings.html'
+    success_url = reverse_lazy('eventyay_admin:admin.organizer_forms')
+
+    def get_object(self, queryset=None):
+        key = self.kwargs['key']
+        if not any(field['key'] == key for field in REQUEST_FIELDS):
+            raise Http404
+        ensure_request_field_settings()
+        return get_object_or_404(OrganizerRequestFieldSetting, key=key)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        spec = next(field for field in REQUEST_FIELDS if field['key'] == self.object.key)
+        context['title'] = _('Field settings: {field}').format(field=spec['label'])
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('action') == 'reset':
+            setting = self.get_object()
+            # Only reset if the text still matches what this admin saw when the page was opened. A page without those
+            # values resets unconditionally.
+            loaded = {
+                name: request.POST[f'initial-{name}']
+                for name in ('label', 'help_text')
+                if f'initial-{name}' in request.POST
+            }
+            reset = OrganizerRequestFieldSetting.objects.filter(pk=setting.pk, **loaded).update(label='', help_text='')
+            if not reset:
+                messages.error(request, STALE_FIELD_MESSAGE)
+                return redirect(request.path)
+            messages.success(request, _('The field has been reset to its defaults.'))
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        # Write only the text fields this admin changed, and only if they still hold the value this admin saw when the
+        # form was opened. A stale form then cannot overwrite a concurrent edit of the same text, or a change to
+        # active, required or position made on the list page.
+        loaded = form.loaded_values
+        stale = []
+        with transaction.atomic():
+            for name in form.changed_fields():
+                updated = OrganizerRequestFieldSetting.objects.filter(
+                    pk=form.instance.pk, **{name: loaded[name]}
+                ).update(**{name: form.cleaned_data[name]})
+                if not updated:
+                    stale.append(name)
+            if stale:
+                transaction.set_rollback(True)
+        if stale:
+            for name in stale:
+                form.add_error(name, STALE_FIELD_MESSAGE)
+            return self.form_invalid(form)
+        self.object = form.instance
+        messages.success(self.request, _('The field settings have been saved.'))
+        return redirect(self.get_success_url())
 
 
 class OrganizerRequestQuestionToggle(AdministratorPermissionRequiredMixin, View):

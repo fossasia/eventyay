@@ -679,3 +679,160 @@ def test_organizer_request_form_order_ajax(client, admin):
     )
     assert invalid_response.status_code == 400
     assert 'error' in invalid_response.json()
+
+
+def test_every_default_field_has_a_settings_button(client, admin):
+    page = client.get(reverse('eventyay_admin:admin.organizer_forms')).content.decode()
+    rows = re.findall(r'<tr.*?</tr>', page, flags=re.DOTALL)
+    expected = {
+        'name': 'Your name',
+        'email': 'Email',
+        'organizer_name': 'Organiser name on Eventyay',
+        'slug': 'Short form',
+        'affiliation': 'Organisation',
+        'events': 'Events you organise',
+    }
+    for key, label in expected.items():
+        url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=[key])
+        row = next(row for row in rows if f"href='{url}'" in row)
+        # The button sits in its own field's row, and its accessible name is that field's label.
+        assert f"aria-label='Settings for {label}'" in row
+        assert row.count('/settings/') == 1
+    assert page.count("aria-label='Settings for ") == 6
+
+
+def test_field_settings_override_label_and_help_text(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    page = client.get(url)
+    assert page.status_code == 200
+    response = client.post(url, {'label': '  Your group  ', 'help_text': 'Tell us who you organise with.'})
+    assert response.status_code == 302
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    assert setting.label == 'Your group'
+    assert setting.help_text == 'Tell us who you organise with.'
+    public = client.get('/invite').content.decode()
+    assert 'Your group' in public
+    assert 'Tell us who you organise with.' in public
+    assert 'Your group' in client.get(reverse('eventyay_admin:admin.organizer_forms')).content.decode()
+
+
+def test_field_settings_can_change_a_locked_field_text(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['name'])
+    assert client.post(url, {'label': 'Full name', 'help_text': ''}).status_code == 302
+    assert 'Full name' in client.get('/invite').content.decode()
+    assert OrganizerRequestFieldSetting.objects.get(key='name').active is True
+
+
+def test_field_settings_reset_restores_defaults(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
+    client.post(url, {'label': 'Our events', 'help_text': 'Custom help.'})
+    assert client.post(url, {'action': 'reset'}).status_code == 302
+    setting = OrganizerRequestFieldSetting.objects.get(key='events')
+    assert (setting.label, setting.help_text) == ('', '')
+    assert 'Events you organise' in client.get('/invite').content.decode()
+
+
+def test_field_settings_unknown_key_is_404(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['nope'])
+    assert client.get(url).status_code == 404
+
+
+def test_field_settings_require_admin(client, application):
+    client.force_login(User.objects.create_user('other@example.com'))
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
+    assert client.get(url).status_code == 403
+    assert client.post(url, {'label': 'X', 'help_text': ''}).status_code == 403
+    assert OrganizerRequestFieldSetting.objects.filter(key='events', label='X').count() == 0
+
+
+def test_field_settings_reset_button_is_not_part_of_the_save_form(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['events'])
+    html = client.get(url).content.decode()
+    save_form = html.split("<form method='post' class='form-horizontal'>", 1)[1].split('</form>', 1)[0]
+    assert "value='reset'" not in save_form
+    assert "form='field-reset-form'" in save_form
+    assert "id='field-reset-form'" in html
+    assert "name='action' value='reset'" in html
+
+
+def test_field_settings_save_only_writes_the_two_text_columns(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    with CaptureQueriesContext(connection) as queries:
+        assert client.post(url, {'label': 'Group', 'help_text': ''}).status_code == 302
+    updates = [q['sql'] for q in queries if q['sql'].startswith('UPDATE "base_organizerrequestfieldsetting"')]
+    assert len(updates) == 1
+    assert '"label"' in updates[0]
+    for column in ('"help_text"', '"active"', '"required"', '"position"'):
+        assert column not in updates[0].split(' WHERE ')[0]
+
+
+def test_field_settings_stale_form_does_not_overwrite_a_concurrent_text_edit(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    html = client.get(url).content.decode()
+    assert "name='initial-label'" in html
+    assert "name='initial-help_text'" in html
+    # Another admin saves a new label after this form was opened.
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    # This admin only edits the help text. The form still carries the old, empty label.
+    response = client.post(url, {'label': '', 'initial-label': '', 'help_text': 'New help', 'initial-help_text': ''})
+    assert response.status_code == 302
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    assert setting.label == 'Newer label'
+    assert setting.help_text == 'New help'
+
+
+def test_field_settings_stale_form_cannot_overwrite_the_same_text(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    # This form was opened before the label was changed, and it edits the same label.
+    response = client.post(
+        url, {'label': 'Mine', 'initial-label': '', 'help_text': 'New help', 'initial-help_text': ''}
+    )
+    assert response.status_code == 200
+    assert 'Someone else changed this' in response.content.decode()
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    # Nothing from the stale save is written, not even the other field.
+    assert (setting.label, setting.help_text) == ('Newer label', '')
+
+
+def test_field_settings_stale_reset_does_not_erase_a_newer_edit(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    response = client.post(url, {'action': 'reset', 'initial-label': '', 'initial-help_text': ''})
+    assert response.status_code == 302
+    assert response.url == url
+    assert OrganizerRequestFieldSetting.objects.get(key='affiliation').label == 'Newer label'
+
+
+def test_field_settings_reset_works_when_the_page_is_current(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Our group', help_text='Custom help.')
+    response = client.post(url, {'action': 'reset', 'initial-label': 'Our group', 'initial-help_text': 'Custom help.'})
+    assert response.status_code == 302
+    assert response.url != url
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    assert (setting.label, setting.help_text) == ('', '')
+
+
+def test_field_settings_error_page_keeps_the_values_it_was_opened_with(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    # The label is too long, so the form is shown again. It must still carry the label it was first opened with.
+    response = client.post(url, {'label': 'x' * 201, 'initial-label': '', 'help_text': '', 'initial-help_text': ''})
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert "name='initial-label' value=''" in html
+    assert 'Newer label' not in html
+
+
+def test_admin_list_defaults_match_the_public_form(client, admin):
+    from eventyay.base.forms.organizer_request import OrganizerRequestForm
+    from eventyay.base.organizer_request_fields import organiser_form_rows
+
+    rows = {row['sort_id']: row for row in organiser_form_rows() if not row['is_custom']}
+    for key, field in OrganizerRequestForm.base_fields.items():
+        row = rows.get(f'field:{key}')
+        if row is None:
+            continue
+        assert row['label'] == str(field.label)
+        assert row['help_text'] == str(field.help_text or '')

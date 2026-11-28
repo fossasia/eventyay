@@ -51,6 +51,8 @@ class OrganizerRequestFieldSetting(models.Model):
     active = models.BooleanField(default=True)
     required = models.BooleanField(default=True)
     position = models.PositiveIntegerField(default=0)
+    label = models.CharField(max_length=200, blank=True, default='')
+    help_text = models.CharField(max_length=500, blank=True, default='')
 
     class Meta:
         ordering = ('position', 'key')
