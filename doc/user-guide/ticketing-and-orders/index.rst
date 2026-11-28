@@ -11,3 +11,4 @@ Ticketing and orders
    payments
    refunds-and-cancellations
    attendee-tickets
+   anonymizing-ticketing-data

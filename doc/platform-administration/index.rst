@@ -13,4 +13,5 @@ and troubleshooting for the unified platform.
    configuration
    platform-runtime
    operations
+   ticketing-data-retention
    troubleshooting
