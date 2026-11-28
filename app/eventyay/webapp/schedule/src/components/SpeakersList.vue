@@ -1389,6 +1389,28 @@ export default {
 
 @media (max-width: 600px)
 	.c-speakers-list
+		box-sizing: border-box
+		&.is-embedded
+			padding: 0 0.1rem
+		.speakers-details
+			padding-left: 0
+			padding-right: 0
+		.speakers-details .featured-speakers-grid
+			width: 100%
+			min-width: 0
+			max-width: 100%
+			justify-content: center
+			gap: 12px
+		.speakers-details .featured-speaker-stack
+			min-width: 0
+			max-width: 100%
+		&:not(.is-embedded) .speakers-details .featured-speaker-stack
+			max-width: 100%
+		.speakers-details .featured-speaker-column
+			min-width: 0
+		.speakers-details .featured-speaker-card
+			min-width: 0
+			max-width: 100%
 		.speakers-toolbar
 			padding: 6px 0 0
 			gap: 6px
