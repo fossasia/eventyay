@@ -656,6 +656,20 @@ All plugins that are installed may send fields for the global settings form, as
 an OrderedDict of (setting name, form field).
 """
 
+register_image_backfill_targets = django.dispatch.Signal()
+"""
+This is a regular django signal (not an event plugin signal) that the ``backfill_images``
+management command sends out to collect image fields from installed plugins, so their
+stored uploads are compressed by the same pipeline as core's.
+
+Receivers should return a dict mapping a target name to a tuple of
+``(model, field_name, generate_thumbnail)``, optionally followed by ``raster_only``,
+in the same format as ``IMAGE_TARGETS`` in that command. Set ``raster_only`` for file
+fields that may hold non-image uploads, such as question answers. The target names
+become choices of the command's ``--model`` option, so prefix them with your plugin
+name. A name that core or another plugin already uses is ignored.
+"""
+
 order_fee_calculation = EventPluginSignal()
 """
 Arguments: ``positions``, ``invoice_address``, ``meta_info``, ``total``, ``gift_cards``
