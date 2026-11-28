@@ -7,6 +7,9 @@
 .modern-dashboard #event-nav {
   margin-bottom: 0
 }
+.modern-dashboard .navigation-title h2 {
+  color: #222222;
+}
 .dashboard-header-extra {
   font-size: 16px;
   margin-top: 8px;
@@ -206,7 +209,7 @@
   --td-purple: #7c3aed;
   --td-purple-soft: #f5f3ff;
   --td-border: #e5e7eb;
-  --td-text: var(--color-text);
+  --td-text: #222222;
   --td-muted: var(--color-text-muted);
   --td-bg: #f4f6f9;
   --td-radius: 4px;
@@ -1176,7 +1179,7 @@ body:has(.td-dashboard) #page-content {
   border-radius: 3px;
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--td-text);
   cursor: pointer;
   white-space: nowrap;
   transition: background-color .12s ease,color .12s ease;
@@ -1815,12 +1818,13 @@ body:has(.td-dashboard) #page-content {
   height: 100%
 }
 .common-dashboard {
+  --cd-text: #222222;
   --cd-radius: 0.4rem;
   --cd-border: #c8ced6;
   --cd-border-strong: #aeb6c2;
   --cd-surface: #fff;
   --cd-surface-hover: #f1f5f9;
-  --cd-muted: var(--color-text, #0d0f10);
+  --cd-muted: var(--cd-text);
   --cd-gap: 3rem;
   --cd-primary: var(--color-primary, #2185d0);
   --cd-warning: var(--color-warning, #f9a557);
@@ -1864,7 +1868,7 @@ body:has(.td-dashboard) #page-content {
   margin: 0;
   font-size: clamp(2.3rem, 2.8vw, 2.75rem);
   font-weight: 700;
-  color: var(--color-text,#0d0f10);
+  color: var(--cd-text);
   line-height: 1.15;
   letter-spacing: -.025em
 }
@@ -1900,7 +1904,7 @@ body:has(.td-dashboard) #page-content {
 .common-dashboard__view-all:focus,
 .common-dashboard__view-all:hover {
   text-decoration: underline;
-  color: color-mix(in srgb,var(--cd-primary) 80%,#000)
+  color: color-mix(in srgb,var(--cd-primary) 80%,#222222)
 }
 .cd-welcome {
   display: grid;
@@ -1930,7 +1934,7 @@ body:has(.td-dashboard) #page-content {
   height: 6.75rem;
   border-radius: .4rem;
   background: var(--cd-primary);
-  border: 1.5px solid color-mix(in srgb,var(--cd-primary) 70%,#000);
+  border: 1.5px solid color-mix(in srgb,var(--cd-primary) 70%,#222222);
   box-shadow: 0 8px 18px rgb(33 133 208 / .28);
   display: flex;
   align-items: center;
@@ -1949,11 +1953,11 @@ body:has(.td-dashboard) #page-content {
   font-size: clamp(1.75rem, 2.2vw, 2.05rem);
   font-weight: 700;
   letter-spacing: -.02em;
-  color: var(--color-text,#0d0f10)
+  color: var(--cd-text)
 }
 .cd-welcome__body p {
   margin: 0 0 1.5rem;
-  color: var(--color-text,#0d0f10);
+  color: var(--cd-text);
   font-size: 1.15rem;
   line-height: 1.6;
   max-width: 58rem
@@ -1978,7 +1982,7 @@ body:has(.td-dashboard) #page-content {
   border-width: 1.5px;
   border-color: var(--cd-border-strong);
   background: #fff;
-  color: var(--color-text,#0d0f10)
+  color: var(--cd-text)
 }
 .cd-btn.btn-default:focus,
 .cd-btn.btn-default:hover {
@@ -2067,7 +2071,7 @@ body:has(.td-dashboard) #page-content {
   padding: .5rem 0;
   border-radius: .5rem;
   box-shadow: 0 10px 30px rgb(15 23 42 / .2);
-  border: 1px solid color-mix(in srgb,var(--cd-border) 80%,#000);
+  border: 1px solid color-mix(in srgb,var(--cd-border) 80%,#222222);
   background: var(--cd-surface);
   max-height: 22rem;
   overflow-y: auto;
@@ -2080,7 +2084,7 @@ body:has(.td-dashboard) #page-content {
 .cd-search .event-dropdown li a {
   display: block;
   padding: .85rem 1.25rem;
-  color: var(--color-text,#0d0f10);
+  color: var(--cd-text);
   border-bottom: 1px solid color-mix(in srgb,var(--cd-border) 60%,transparent);
   border-left: 3px solid transparent;
   transition: all var(--cd-ease);
@@ -2215,7 +2219,7 @@ body:has(.td-dashboard) #page-content {
 }
 .cd-action-card__icon--accent,
 .cd-action-card__icon--organise {
-  color: color-mix(in srgb,var(--cd-warning) 75%,#000);
+  color: color-mix(in srgb,var(--cd-warning) 69%,#222222);
   background: color-mix(in srgb,var(--cd-warning) 22%,#fff)
 }
 .cd-action-card h3 {
@@ -2250,7 +2254,7 @@ body:has(.td-dashboard) #page-content {
 .cd-action-card__link:hover {
   text-decoration: underline;
   gap: .6rem;
-  color: color-mix(in srgb,var(--cd-primary) 80%,#000)
+  color: color-mix(in srgb,var(--cd-primary) 80%,#222222)
 }
 
 .cd-event-card {
@@ -2298,17 +2302,17 @@ body:has(.td-dashboard) #page-content {
 .cd-event-kind--primary {
   color: #fff;
   background: var(--cd-primary);
-  border-color: color-mix(in srgb,var(--cd-primary) 70%,#000)
+  border-color: color-mix(in srgb,var(--cd-primary) 70%,#222222)
 }
 .cd-event-kind--warning {
-  color: color-mix(in srgb,var(--cd-warning) 35%,#000);
+  color: color-mix(in srgb,var(--cd-warning) 26%,#222222);
   background: var(--cd-warning);
-  border-color: color-mix(in srgb,var(--cd-warning) 70%,#000)
+  border-color: color-mix(in srgb,var(--cd-warning) 70%,#222222)
 }
 .cd-event-kind--success {
   color: #fff;
   background: var(--cd-positive);
-  border-color: color-mix(in srgb,var(--cd-positive) 70%,#000)
+  border-color: color-mix(in srgb,var(--cd-positive) 70%,#222222)
 }
 .cd-event-card__media img {
   width: 100%;
@@ -2402,7 +2406,7 @@ body:has(.td-dashboard) #page-content {
   border-color: color-mix(in srgb,var(--cd-positive) 28%,#fff)
 }
 .cd-badge--accent {
-  color: color-mix(in srgb,var(--cd-warning) 55%,#000);
+  color: color-mix(in srgb,var(--cd-warning) 50%,#222222);
   background: color-mix(in srgb,var(--cd-warning) 18%,#fff);
   border-color: color-mix(in srgb,var(--cd-warning) 35%,#fff)
 }
@@ -2427,7 +2431,7 @@ body:has(.td-dashboard) #page-content {
 .cd-event-card__action:hover {
   text-decoration: underline;
   gap: .65rem;
-  color: color-mix(in srgb,var(--cd-primary) 80%,#000)
+  color: color-mix(in srgb,var(--cd-primary) 80%,#222222)
 }
 .cd-event-card__modules {
   display: grid;
@@ -2495,7 +2499,7 @@ body:has(.td-dashboard) #page-content {
 }
 .cd-info:hover,
 .cd-info:focus {
-  color: color-mix(in srgb, var(--cd-primary) 75%, #000);
+  color: color-mix(in srgb, var(--cd-primary) 75%, #222222);
   background: color-mix(in srgb, var(--cd-primary) 12%, #fff);
   outline: none;
   transform: scale(1.06);
@@ -2617,7 +2621,7 @@ body:has(.td-dashboard) #page-content {
 }
 .personal-empty-state p {
   margin: 0;
-  color: var(--color-text,#0d0f10);
+  color: var(--color-text,#222222);
   font-size: 1.08rem;
   line-height: 1.55;
   max-width: 52rem
