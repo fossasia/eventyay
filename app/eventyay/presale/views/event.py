@@ -115,6 +115,29 @@ def product_group_by_category(products):
     )
 
 
+def _headline_price_variations(variations):
+    """Pick variations whose prices feed the product headline min/max range.
+
+    Prefer currently buyable variations plus upcoming phases (so a price-phase
+    product still shows a range while Early Bird is on sale). Never mix in
+    expired prices. When nothing is buyable yet, fall back to upcoming, then
+    non-expired, then the full visible list.
+    """
+    variations = list(variations)
+    if not variations:
+        return variations
+
+    buyable = [v for v in variations if getattr(v, 'order_max', 0) > 0]
+    upcoming = [v for v in variations if getattr(v, 'sales_state', None) == 'upcoming']
+    if buyable:
+        seen = {id(v) for v in buyable}
+        return buyable + [v for v in upcoming if id(v) not in seen]
+    if upcoming:
+        return upcoming
+    current = [v for v in variations if getattr(v, 'sales_state', None) != 'expired']
+    return current or variations
+
+
 def get_grouped_products(
     event,
     subevent=None,
@@ -181,6 +204,9 @@ def get_grouped_products(
             Prefetch(
                 'variations',
                 to_attr='available_variations',
+                # Include upcoming/ended active variations so the ticket page can
+                # show them as compact non-buyable rows (#7674). Buyability is
+                # decided later via sales_state / order_max.
                 queryset=ProductVariation.objects.using(settings.DATABASE_REPLICA)
                 .annotate(
                     subevent_disabled=Exists(
@@ -191,7 +217,7 @@ def get_grouped_products(
                         )
                     ),
                 )
-                .filter(ProductVariation.filter_available_q(), quotas__isnull=False, subevent_disabled=False)
+                .filter(active=True, quotas__isnull=False, subevent_disabled=False)
                 .prefetch_related(
                     Prefetch(
                         'quotas',
@@ -361,11 +387,22 @@ def get_grouped_products(
             if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
                 product.min_per_order = 1
 
+            now_dt = now()
             for var in product.available_variations:
                 var.description = str(var.description)
                 for recv, resp in product_description.send(sender=event, product=product, variation=var):
                     if resp:
                         var.description += ('<br/>' if var.description else '') + resp
+
+                if var.available_until and var.available_until < now_dt:
+                    var.sales_state = 'expired'
+                elif var.available_from and var.available_from > now_dt:
+                    if var._opened_early_by_sellout(subevent=subevent, _quota_cache=quota_cache):
+                        var.sales_state = 'active'
+                    else:
+                        var.sales_state = 'upcoming'
+                else:
+                    var.sales_state = 'active'
 
                 if voucher and (voucher.allow_ignore_quota or voucher.block_quota):
                     var.cached_availability = (
@@ -377,15 +414,25 @@ def get_grouped_products(
                         var.check_quotas(subevent=subevent, _cache=quota_cache, include_bundled=True)
                     )
 
-                var.order_max = min(
-                    var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
-                    max_per_order,
-                )
+                if var.sales_state != 'active':
+                    var.order_max = 0
+                else:
+                    var.order_max = min(
+                        var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
+                        max_per_order,
+                    )
 
                 if product.limit_one_per_user:
                     var.order_max = min(var.order_max, 1)
                     if hasattr(var, 'min_per_order') and var.min_per_order and var.min_per_order > 1:
                         var.min_per_order = 1
+
+                if (
+                    var.sales_state == 'active'
+                    and var.cached_availability[0] < Quota.AVAILABILITY_RESERVED
+                ):
+                    var.sales_state = 'sold_out'
+                    var.order_max = 0
 
                 original_price = var_price_override.get(var.pk, var.price)
                 if voucher:
@@ -429,30 +476,28 @@ def get_grouped_products(
                 for v in product.available_variations
                 if v._subevent_quotas
                 and (not voucher or not voucher.quota_id or v in restrict_vars)
-                and v.is_available(subevent=subevent, _quota_cache=quota_cache)
             ]
 
-            if event.settings.hide_sold_out:
-                product.available_variations = [
-                    v for v in product.available_variations if v.cached_availability[0] >= Quota.AVAILABILITY_RESERVED
-                ]
+            # Do not apply hide_sold_out to variation rows: sold-out phases stay
+            # visible as compact non-buyable lines (#7674). Simple products still
+            # honor hide_sold_out earlier in this function.
 
             if voucher and voucher.variation_id:
                 product.available_variations = [v for v in product.available_variations if v.pk == voucher.variation_id]
 
             if len(product.available_variations) > 0:
-                product.min_price = min(
-                    [
-                        v.display_price.net if event.settings.display_net_prices else v.display_price.gross
-                        for v in product.available_variations
-                    ]
-                )
-                product.max_price = max(
-                    [
-                        v.display_price.net if event.settings.display_net_prices else v.display_price.gross
-                        for v in product.available_variations
-                    ]
-                )
+                # Headline range uses buyable + upcoming prices so Early Bird /
+                # Regular / Late still shows e.g. "$50 – $150" while one phase is
+                # on sale. Expired (and sold-out-only) prices stay out so a past
+                # $10 Early Bird cannot widen the range. When nothing is buyable
+                # yet, prefer upcoming, then non-expired, then all visible.
+                price_vars = _headline_price_variations(product.available_variations)
+                price_values = [
+                    v.display_price.net if event.settings.display_net_prices else v.display_price.gross
+                    for v in price_vars
+                ]
+                product.min_price = min(price_values)
+                product.max_price = max(price_values)
 
             product._remove = not bool(product.available_variations)
 
@@ -805,10 +850,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 channel=self.request.sales_channel.identifier,
             )
             context['productnum'] = len(products)
+            # allfree drives "Register" vs "Order now". Only purchasable
+            # variations count so an expired paid phase does not flip the CTA
+            # when every buyable variation is free.
             context['allfree'] = all(
                 product.display_price.gross == Decimal('0.00') for product in products if not product.has_variations
             ) and all(
-                all(var.display_price.gross == Decimal('0.00') for var in product.available_variations)
+                all(
+                    var.display_price.gross == Decimal('0.00')
+                    for var in product.available_variations
+                    if var.order_max > 0
+                )
                 for product in products
                 if product.has_variations
             )

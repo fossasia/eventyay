@@ -98,23 +98,43 @@
                     </summary>
                     <div id="item-{{ product.id }}-variations" class="variations variation-list {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
                         {% for var in product.available_variations %}
-                            <article class="row-fluid product-row variation variation-option">
+                            <article class="row-fluid product-row variation variation-option variation-compact{% if var.sales_state == 'upcoming' %} variation-upcoming{% elif var.sales_state == 'expired' %} variation-expired{% elif var.sales_state == 'sold_out' %} variation-sold-out{% endif %}">
                                 <div class="col-md-8 col-xs-12">
-                                    <h5>
-                                        <label for="variation_{{ product.pk }}_{{ var.pk }}">
-                                            {{ var.value|event_localize }}
-                                        </label>
-                                    </h5>
-                                    {% if var.description %}
+                                    <div class="variation-heading">
+                                        <h5>
+                                            {% if var.order_max > 0 %}
+                                                <label for="variation_{{ product.pk }}_{{ var.pk }}">
+                                                    {{ var.value|event_localize }}
+                                                </label>
+                                            {% else %}
+                                                <span>{{ var.value|event_localize }}</span>
+                                            {% endif %}
+                                        </h5>
+                                        {% if var.sales_state == 'active' and var.available_until %}
+                                            <span class="variation-sales-date variation-sales-date--active">
+                                                {% blocktrans trimmed with date=var.available_until|date:"j N, H:i" %}On sale until {{ date }}{% endblocktrans %}
+                                            </span>
+                                        {% elif var.sales_state == 'upcoming' and var.available_from %}
+                                            <span class="variation-sales-date">
+                                                {% blocktrans trimmed with date=var.available_from|date:"j N" %}From {{ date }}{% endblocktrans %}
+                                            </span>
+                                        {% elif var.sales_state == 'expired' and var.available_until %}
+                                            <span class="variation-sales-date">
+                                                {% blocktrans trimmed with date=var.available_until|date:"j N" %}Ended {{ date }}{% endblocktrans %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    {% if var.order_max > 0 and var.description %}
                                         <div class="variation-description">
                                             {{ var.description|event_localize|rich_text }}
                                         </div>
                                     {% endif %}
-                                    {% if product.do_show_quota_left %}
+                                    {% if product.do_show_quota_left and var.order_max > 0 %}
                                         {% include "pretixpresale/event/fragment_quota_left.html" with avail=var.cached_availability %}
                                     {% endif %}
                                 </div>
                                 <div class="col-md-2 col-xs-6 price">
+                                    <span class="variation-price-inline">
                                     {% if var.original_price %}
                                         {% if event.settings.display_net_prices %}
                                             <del>{{ var.original_price.net|money:event.currency }}</del>
@@ -123,7 +143,7 @@
                                         {% endif %}
                                         <ins>
                                     {% endif %}
-                                    {% if product.free_price %}
+                                    {% if product.free_price and var.order_max > 0 %}
                                         <label class="sr-only" for="price-variation-{{ product.pk }}-{{ var.pk }}">{% blocktrans trimmed with product=var.value|event_localize %}Modify price for {{ product }}{% endblocktrans %}</label>
                                         <div class="input-group input-group-price">
                                             <span class="input-group-addon">{{ event.currency }}</span>
@@ -140,7 +160,7 @@
                                         </div>
                                     {% elif not var.display_price.gross %}
                                         {% trans "FREE" context "price" %}
-                                        {% elif event.settings.display_net_prices %}
+                                    {% elif event.settings.display_net_prices %}
                                         {{ var.display_price.net|money:event.currency }}
                                     {% else %}
                                         {{ var.display_price.gross|money:event.currency }}
@@ -148,6 +168,7 @@
                                     {% if product.original_price or var.original_price %}
                                         </ins>
                                     {% endif %}
+                                    </span>
                                     {% if product.includes_mixed_tax_rate %}
                                         {% if event.settings.display_net_prices %}
                                             <small>{% trans "plus taxes" %}</small>
@@ -164,35 +185,37 @@
                                         {% endblocktrans %}</small>
                                     {% endif %}
                                 </div>
-                                {% if product.require_voucher %}
-                                    <div class="col-md-2 col-xs-6 availability-box unavailable">
-                                        <small>
-                                            <a href="#voucher">{% trans "Enter a voucher code below to buy this ticket." %}</a>
-                                        </small>
-                                    </div>
-                                    {% elif var.cached_availability.0 == 100 %}
-                                    <div class="col-md-2 col-xs-6 availability-box available">
-                                        {% if var.order_max == 1 %}
-                                            <label class="item-checkbox-label variation-selector-label">
-                                                <input type="checkbox" value="1"
+                                {% if var.sales_state != 'upcoming' and var.sales_state != 'expired' %}
+                                    {% if product.require_voucher %}
+                                        <div class="col-md-2 col-xs-6 availability-box unavailable">
+                                            <small>
+                                                <a href="#voucher">{% trans "Enter a voucher code below to buy this ticket." %}</a>
+                                            </small>
+                                        </div>
+                                    {% elif var.order_max > 0 and var.cached_availability.0 == 100 %}
+                                        <div class="col-md-2 col-xs-6 availability-box available">
+                                            {% if var.order_max == 1 %}
+                                                <label class="item-checkbox-label variation-selector-label">
+                                                    <input type="checkbox" value="1"
+                                                           {% if not ev.presale_is_running %}disabled{% endif %}
+                                                           id="variation_{{ product.id }}_{{ var.id }}"
+                                                           name="variation_{{ product.id }}_{{ var.id }}"
+                                                           {% if product.single_variation_selection %}data-exclusive-prefix="variation_{{ product.id }}_"{% endif %}
+                                                           title="{% blocktrans with product=product.name|event_localize var=var.value|event_localize %}Amount of {{ product }} – {{ var }} to order{% endblocktrans %}">
+                                                    </label>
+                                            {% else %}
+                                                <input type="number" class="form-control input-product-count input-product-count--compact" placeholder="0" min="0"
                                                        {% if not ev.presale_is_running %}disabled{% endif %}
+                                                       max="{{ var.order_max }}"
+                                                       pattern="\d*"
                                                        id="variation_{{ product.id }}_{{ var.id }}"
                                                        name="variation_{{ product.id }}_{{ var.id }}"
-                                                       {% if product.single_variation_selection %}data-exclusive-prefix="variation_{{ product.id }}_"{% endif %}
-                                                       title="{% blocktrans with product=product.name|event_localize var=var.value|event_localize %}Amount of {{ product }} – {{ var }} to order{% endblocktrans %}">
-                                                </label>
-                                        {% else %}
-                                            <input type="number" class="form-control input-product-count" placeholder="0" min="0"
-                                                   {% if not ev.presale_is_running %}disabled{% endif %}
-                                                   max="{{ var.order_max }}"
-                                                   pattern="\d*"
-                                                   id="variation_{{ product.id }}_{{ var.id }}"
-                                                   name="variation_{{ product.id }}_{{ var.id }}"
-                                                   {% if product.single_variation_selection %}data-exclusive-prefix="variation_{{ product.id }}_"{% endif %}>
-                                        {% endif %}
-                                    </div>
-                                {% else %}
-                                    {% include "pretixpresale/event/fragment_availability.html" with price=var.display_price.gross avail=var.cached_availability.0 event=event product=product var=var %}
+                                                       {% if product.single_variation_selection %}data-exclusive-prefix="variation_{{ product.id }}_"{% endif %}>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        {% include "pretixpresale/event/fragment_availability.html" with price=var.display_price.gross avail=var.cached_availability.0 event=event product=product var=var compact=True %}
+                                    {% endif %}
                                 {% endif %}
                                 <div class="clearfix"></div>
                             </article>
