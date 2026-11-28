@@ -7,6 +7,7 @@ from eventyay.base.models import User
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.services.organizer_creation import create_core_team
 
+
 pytestmark = pytest.mark.django_db
 
 
