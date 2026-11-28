@@ -18,6 +18,17 @@ const hasAjaxResultsRegion = function(root = document) {
 };
 
 let activeRequestController = null;
+let pendingResultsLoadingAnnouncement = null;
+let pendingResultsLoadingAnnouncementTimeout = null;
+
+const cancelPendingResultsLoadingAnnouncement = function() {
+    if (pendingResultsLoadingAnnouncementTimeout !== null) {
+        window.clearTimeout(pendingResultsLoadingAnnouncementTimeout);
+        pendingResultsLoadingAnnouncementTimeout = null;
+    }
+
+    pendingResultsLoadingAnnouncement = null;
+};
 
 const getTableContainer = function(context) {
     return context.querySelector('.table-responsive') || context.querySelector('table.table') || context.querySelector('.empty-collection');
@@ -89,6 +100,78 @@ const reinitializeBehaviors = function(resultsContainer) {
             container: resultsContainer,
         },
     }));
+};
+
+const getResultsLoadingAnnouncement = function(resultsContainer) {
+    const parent = resultsContainer.parentElement;
+    if (!parent) {
+        return null;
+    }
+
+    let announcement = parent.querySelector('[data-ajax-loading-announcement]');
+    if (!announcement) {
+        announcement = document.createElement('span');
+        announcement.className = 'sr-only';
+        announcement.setAttribute('data-ajax-loading-announcement', '');
+        announcement.setAttribute('role', 'status');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        parent.insertBefore(announcement, resultsContainer.nextSibling);
+    }
+
+    return announcement;
+};
+
+const clearResultsLoadingAnnouncement = function(announcement) {
+    if (!announcement) {
+        return;
+    }
+
+    if (pendingResultsLoadingAnnouncement === announcement) {
+        cancelPendingResultsLoadingAnnouncement();
+    }
+
+    announcement.textContent = '';
+};
+
+const showResultsLoadingState = function(resultsContainer) {
+    resultsContainer.setAttribute('aria-busy', 'true');
+    resultsContainer.style.opacity = '1';
+
+    const loadingText = typeof window.gettext === 'function'
+        ? window.gettext('Loading…')
+        : 'Loading…';
+    cancelPendingResultsLoadingAnnouncement();
+    const announcement = getResultsLoadingAnnouncement(resultsContainer);
+    if (announcement) {
+        announcement.textContent = '';
+        pendingResultsLoadingAnnouncement = announcement;
+        pendingResultsLoadingAnnouncementTimeout = window.setTimeout(function() {
+            if (
+                pendingResultsLoadingAnnouncement === announcement
+                && resultsContainer.getAttribute('aria-busy') === 'true'
+            ) {
+                announcement.textContent = loadingText;
+            }
+
+            if (pendingResultsLoadingAnnouncement === announcement) {
+                pendingResultsLoadingAnnouncement = null;
+                pendingResultsLoadingAnnouncementTimeout = null;
+            }
+        }, 0);
+    }
+
+    const loadingStatus = document.createElement('div');
+    loadingStatus.className = 'text-center text-muted';
+    loadingStatus.style.padding = '2rem 0';
+    loadingStatus.setAttribute('aria-hidden', 'true');
+
+    const spinner = document.createElement('span');
+    spinner.className = 'fa fa-spinner fa-spin';
+    loadingStatus.appendChild(spinner);
+
+    resultsContainer.replaceChildren(loadingStatus);
+    return announcement;
 };
 
 const updateNextInputs = function(url, tabId) {
@@ -201,16 +284,25 @@ const syncFormControls = function(oldContext, newContext) {
     });
 };
 
-const fetchAndReplace = async function(url, replaceUrlParams, form) {
+const fetchAndReplace = async function(url, replaceUrlParams, form, showLoadingIndicator = false) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
     let requestController = null;
+    let loadingAnnouncement = null;
     if (!resultsContainer) {
         window.location.href = url;
         return;
     }
 
-    resultsContainer.style.opacity = '0.5';
+    if (showLoadingIndicator) {
+        loadingAnnouncement = showResultsLoadingState(resultsContainer);
+    } else {
+        const parent = resultsContainer.parentElement;
+        const announcement = parent ? parent.querySelector('[data-ajax-loading-announcement]') : null;
+        clearResultsLoadingAnnouncement(announcement);
+        resultsContainer.removeAttribute('aria-busy');
+        resultsContainer.style.opacity = '0.5';
+    }
 
     try {
         if (activeRequestController) {
@@ -235,11 +327,18 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         }
 
         const data = await response.text();
+
+        // A newer tab selection may have started while the response body was being read.
+        if (activeRequestController !== requestController) {
+            return;
+        }
         const doc = new DOMParser().parseFromString(data, 'text/html');
         const newContext = tabContext.tabId ? doc.getElementById(tabContext.tabId) : doc;
         const newResultsContainer = newContext ? getResultsContainer(newContext) : null;
 
         if (!newResultsContainer) {
+            clearResultsLoadingAnnouncement(loadingAnnouncement);
+            resultsContainer.removeAttribute('aria-busy');
             window.location.href = url;
             return;
         }
@@ -247,6 +346,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         resultsContainer.replaceWith(newResultsContainer);
         resultsContainer = newResultsContainer;
         resultsContainer.style.opacity = '1';
+        clearResultsLoadingAnnouncement(loadingAnnouncement);
 
         syncFilterBadge(tabContext.context, newContext); 
         syncMarkedRegions(tabContext.context, newContext);
@@ -264,10 +364,15 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         updateNextInputs(url, tabContext.tabId);
     } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
-            resultsContainer.style.opacity = '1';
             return;
         }
 
+        if (activeRequestController !== requestController) {
+            return;
+        }
+
+        clearResultsLoadingAnnouncement(loadingAnnouncement);
+        resultsContainer.removeAttribute('aria-busy');
         console.error('AJAX filter update failed', {
             url: url,
             error: error,
@@ -473,20 +578,22 @@ const handleTabClick = function(event) {
     event.preventDefault();
 
     setActiveTabUI(tabParam);
-    if (tabLink.closest('.events-overview-tabs')) {
+    const isEventsOverviewTab = !!tabLink.closest('.events-overview-tabs');
+    if (isEventsOverviewTab) {
         syncSelectedEventTab(tabParam);
     }
 
     const activeTab = document.getElementById(tabParam);
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || null;
 
-    fetchAndReplace(url, true, targetElement);
+    fetchAndReplace(url, true, targetElement, isEventsOverviewTab);
 };
 
 const handlePopState = function() {
     const url = new URL(window.location.href, window.location.origin);
     const tabParam = url.searchParams.get('tab');
-    if (document.querySelector('.events-overview-tabs')) {
+    const isEventsOverview = !!document.querySelector('.events-overview-tabs');
+    if (isEventsOverview) {
         const status = url.searchParams.get('status');
         const resolvedTab = tabParam || (status === 'draft' || status === 'past' || status === 'live' ? status : 'live');
         setActiveTabUI(resolvedTab);
@@ -498,7 +605,7 @@ const handlePopState = function() {
     const activeTab = tabPane || document.querySelector('.tab-pane.active');
     const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || getFilterForms()[0] || null;
 
-    fetchAndReplace(window.location.href, false, targetElement);
+    fetchAndReplace(window.location.href, false, targetElement, isEventsOverview);
 };
 
 const initAjaxFilter = function() {
