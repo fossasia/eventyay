@@ -23,6 +23,8 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
+from eventyay.config.sentry import SENTRY_DATA_COLLECTION as SENTRY_DATA_COLLECTION
+from eventyay.config.sentry import initialize_sentry
 from eventyay.consts import DEFAULT_PLUGINS, SizeKey
 
 
@@ -1555,21 +1557,11 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 SENTRY_DSN = conf.sentry_dsn
 SENTRY_ENABLED = bool(SENTRY_DSN)
 if SENTRY_DSN:
-    import sentry_sdk
-    from sentry_sdk.integrations.celery import CeleryIntegration
-    from sentry_sdk.integrations.django import DjangoIntegration
-
-    from django.core.exceptions import PermissionDenied
-    from django.http import Http404
-
-    sentry_sdk.init(
+    initialize_sentry(
         dsn=SENTRY_DSN,
-        integrations=[CeleryIntegration(), DjangoIntegration()],
-        send_default_pii=False,
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,
         environment=active_environment.value,
-        ignore_errors=[Http404, PermissionDenied],
     )
 
 # Multifactor authentication configuration

@@ -9,7 +9,7 @@ from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
 from django.db import OperationalError
-from sentry_sdk import capture_exception, configure_scope
+from sentry_sdk import capture_exception, set_extra
 from websockets import ConnectionClosed
 
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
@@ -108,8 +108,7 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             return
 
         if settings.SENTRY_DSN:
-            with configure_scope() as scope:
-                scope.set_extra("event", self.event.id)
+            set_extra("event", self.event.id)
 
         async with statsd() as s:
             s.increment(f"connection.established,event={self.event.pk}")
