@@ -915,6 +915,24 @@ class Event(
         self.settings.ticket_download = True
         self.settings.private_testmode_tickets = False
         self.settings.private_testmode_talks = False
+        self.settings.talks_testmode = False
+
+    def reset_publishing_and_testmode_state(self):
+        """
+        Consolidate draft status initialization: ensure the event is in an
+        unpublished draft state with all public ticketing, talks, and testmode
+        flags disabled.
+        """
+        self.live = False
+        self.testmode = False
+        self.private_testmode = False
+        self.tickets_published = False
+        self.talks_published = False
+        if self.pk:
+            self.settings.flush()
+            self.settings.set('private_testmode_tickets', False)
+            self.settings.set('private_testmode_talks', False)
+            self.settings.set('talks_testmode', False)
 
     @property
     def social_image(self):
@@ -1212,10 +1230,7 @@ class Event(
 
         if other.date_admission:
             self.date_admission = self.date_from + (other.date_admission - other.date_from)
-        self.testmode = other.testmode
-        self.private_testmode = other.private_testmode
-        self.tickets_published = other.tickets_published
-        self.talks_published = other.talks_published
+        self.reset_publishing_and_testmode_state()
         self.save()
         self.log_action('eventyay.object.cloned', data={'source': other.slug, 'source_id': other.pk})
 
@@ -1425,6 +1440,9 @@ class Event(
             'ticket_secrets_eventyay_sig1_pubkey',
             'ticket_secrets_eventyay_sig1_privkey',
             'frontpage_text',
+            'private_testmode_tickets',
+            'private_testmode_talks',
+            'talks_testmode',
         )
         def is_email_key(k):
             return k.startswith('mail_') or k.startswith('smtp_')
@@ -1482,7 +1500,7 @@ class Event(
                     s.save()
 
             self.settings.flush()
-            
+
         if clone_talks:
             from eventyay.base.models.type import SubmissionType
             from eventyay.base.models.track import Track
