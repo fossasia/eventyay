@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -9,8 +10,10 @@ import sentry_sdk
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from django.conf import settings as django_settings
+from django.core.exceptions import PermissionDenied
 from django.core.handlers.wsgi import WSGIHandler
 from django.db import connection
+from django.http import Http404
 from django.test import RequestFactory
 from requests import RequestException
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -20,6 +23,7 @@ from sentry_sdk.transport import Transport
 
 from eventyay.base.models import User
 from eventyay.celery_app import app as celery_app
+from eventyay.config import sentry as sentry_config
 from eventyay.config.asgi import PatchedSentryAsgiMiddleware
 from eventyay.features.live import routing
 from eventyay.features.live.consumers import MainConsumer
@@ -486,3 +490,41 @@ def test_stack_frame_local_variables_are_not_collected(sentry_integrations_trans
     assert frames
     assert any(frame['function'] == '_raise_with_sensitive_locals' for frame in frames)
     assert all('vars' not in frame for frame in frames)
+
+
+def test_importing_sentry_module_does_not_initialize_sentry():
+    with patch('sentry_sdk.init') as mock_init:
+        reloaded = importlib.reload(sentry_config)
+
+    mock_init.assert_not_called()
+    assert django_settings.SENTRY_DATA_COLLECTION == reloaded.SENTRY_DATA_COLLECTION
+
+
+def test_initialize_sentry_configures_sdk_and_integrations():
+    with patch('sentry_sdk.init') as mock_init:
+        sentry_config.initialize_sentry(
+            dsn='https://public@sentry.example.com/1',
+            debug=True,
+            release='abc1234',
+            environment='production',
+        )
+
+    mock_init.assert_called_once()
+    kwargs = mock_init.call_args.kwargs
+    assert kwargs['dsn'] == 'https://public@sentry.example.com/1'
+    assert kwargs['debug'] is True
+    assert kwargs['release'] == 'abc1234'
+    assert kwargs['environment'] == 'production'
+    assert kwargs['data_collection'] is sentry_config.SENTRY_DATA_COLLECTION
+    assert kwargs['ignore_errors'] == [Http404, PermissionDenied]
+
+    integrations = kwargs['integrations']
+    assert [type(integration) for integration in integrations] == [
+        CeleryIntegration,
+        DjangoIntegration,
+        LoggingIntegration,
+    ]
+    logging_integration = integrations[2]
+    assert logging_integration._logs_handler is None
+    assert logging_integration._event_handler.level == logging.ERROR
+    assert logging_integration._breadcrumb_handler.level == logging.INFO
