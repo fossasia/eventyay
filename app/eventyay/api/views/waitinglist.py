@@ -1,15 +1,17 @@
 import django_filters
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
-from django_scopes import scopes_disabled
-from rest_framework import viewsets
+from django_scopes import scope, scopes_disabled
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from eventyay.api.serializers.waitinglist import WaitingListSerializer
 from eventyay.base.models import WaitingListEntry
-from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.models.waitinglist import WaitingListBusy, WaitingListException
 
 with scopes_disabled():
 
@@ -51,14 +53,23 @@ class WaitingListViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        if serializer.instance.voucher:
-            raise PermissionDenied('This entry can not be changed as it has already been assigned a voucher.')
-        serializer.save(event=self.request.event)
-        serializer.instance.log_action(
-            'eventyay.event.orders.waitinglist.changed',
-            user=self.request.user,
-            auth=self.request.auth,
-        )
+        """Revalidate API edits and assignment state on the locked entry."""
+        with scope(event=self.request.event, organizer=self.request.event.organizer), transaction.atomic():
+            instance = get_object_or_404(
+                self.get_queryset().select_for_update(of=('self',)), pk=serializer.instance.pk,
+            )
+            if instance.voucher_id:
+                raise PermissionDenied('This entry can not be changed as it has already been assigned a voucher.')
+            current = self.get_serializer(instance, data=serializer.initial_data, partial=serializer.partial)
+            current.is_valid(raise_exception=True)
+            serializer.instance = current.save(event=self.request.event)
+            if hasattr(serializer, '_data'):
+                del serializer._data
+            serializer.instance.log_action(
+                'eventyay.event.orders.waitinglist.changed',
+                user=self.request.user,
+                auth=self.request.auth,
+            )
 
     def perform_destroy(self, instance):
         if instance.voucher:
@@ -78,6 +89,8 @@ class WaitingListViewSet(viewsets.ModelViewSet):
                 user=self.request.user,
                 auth=self.request.auth,
             )
+        except WaitingListBusy as e:
+            return Response({'detail': str(e)}, status=status.HTTP_409_CONFLICT, headers={'Retry-After': '5'})
         except WaitingListException as e:
             raise ValidationError(str(e))
         else:
