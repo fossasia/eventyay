@@ -423,6 +423,7 @@ export default {
 			return groups
 		},
 		showGrid() {
+			if (this.computedDays && !this.computedDays.length) return false
 			return !this.linearOnly && this.scrollParentWidth > 710
 		},
 		linearScheduleGroupByDay() {

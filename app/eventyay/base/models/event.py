@@ -120,6 +120,7 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
+        'show_accepted_publicly': False,
         'show_featured': 'never',
         'show_featured_speakers': 'never',
         'show_widget_if_not_public': False,
@@ -839,6 +840,7 @@ class Event(
         release_schedule = '{schedule}release'
         reset_schedule = '{schedule}reset'
         toggle_schedule = '{schedule}toggle'
+        toggle_show_accepted_publicly = '{schedule}toggle-accepted'
         reviews = '{base}reviews/'
         review_assignments = '{reviews}assign/'
         schedule_api = '{base}schedule/api/'
@@ -3230,6 +3232,12 @@ class Event(
         """
         if not self.current_schedule:
             return False
+        if self.get_feature_flag('show_accepted_publicly') and not self.private_testmode_talks_enabled:
+            from eventyay.base.models import SubmissionStates
+
+            with scope(event=self):
+                if self.submissions.filter(state__in=SubmissionStates.accepted_states).exists():
+                    return True
         schedule = self.current_schedule
         if schedule.scheduled_talks.exists():
             return True

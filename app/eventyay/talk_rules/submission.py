@@ -140,11 +140,14 @@ def _after_schedule_featured_speakers_visible(event):
 def schedule_widget_featured_cache_key_part(event):
     """Vary schedule JSON cache when featured rules, popularity, or release state change."""
     popularity_enabled = bool(event.get_feature_flag('session_popularity_enabled'))
+    show_schedule = bool(event.get_feature_flag('show_schedule'))
+    show_accepted = bool(event.get_feature_flag('show_accepted_publicly'))
     return (
         f'sess={_show_featured_setting(event)}|'
         f'spk={_show_featured_speakers_setting(event)}|'
         f'rel={int(_event_has_published_schedule(event))}|'
-        f'pub={int(bool(event.get_feature_flag("show_schedule")))}|'
+        f'pub={int(show_schedule)}|'
+        f'acc={int(show_accepted)}|'
         f'pop={int(popularity_enabled)}|'
         f'popshow={int(event.session_popularity_show_on_schedule())}'
     )

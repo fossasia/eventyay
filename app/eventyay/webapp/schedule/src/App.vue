@@ -390,8 +390,11 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + (this.schedule.rooms?.length || 0) * 365) : this.scrollParentWidth
 		},
 		showGrid () {
-			// Always allow a distinct calendar grid view when not explicitly in list format
-			return this.format !== 'list'
+			// Always allow a distinct calendar grid view when not explicitly in list format,
+			// unless there are no timed days (e.g. only pending accepted sessions).
+			if (this.format === 'list') return false
+			if (this.days && !this.days.length) return false
+			return true
 		},
 		exportsDisabled () {
 			return areScheduleExportsDisabled({

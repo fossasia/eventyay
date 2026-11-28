@@ -26,6 +26,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
+from eventyay.agenda.views.utils import clear_schedule_caches
 from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.base.models.room import (
     ROOM_DELETE_LINKED_SESSIONS_MESSAGE,
@@ -234,6 +235,29 @@ class ScheduleToggleView(EventPermissionRequired, View):
         except Exception:
             log_event('talk', 'connection.schedule_public', OUTCOME_FAILURE, error_code='enqueue_failed', event_id=getattr(self.request.event, 'pk', None), backend='tickets_api')
             logger.exception('Unexpected error enqueueing schedule visibility sync')
+        return redirect(request.event.orga_urls.schedule)
+
+
+class ScheduleToggleAcceptedView(EventPermissionRequired, View):
+    permission_required = 'base.update_event'
+
+    @staticmethod
+    def _set_show_accepted_publicly(event, is_shown):
+        """Persist whether accepted sessions are publicly visible."""
+        flags = dict(event.feature_flags_as_mapping())
+        flags['show_accepted_publicly'] = is_shown
+        event.feature_flags = flags
+        event.save(update_fields=['feature_flags'])
+        clear_schedule_caches(event)
+        log_event('talk', 'feature_flag', OUTCOME_SUCCESS, event_id=event.pk, flag_name='show_accepted_publicly')
+
+    def post(self, request, *args, **kwargs):
+        is_shown = not request.event.get_feature_flag('show_accepted_publicly')
+        self._set_show_accepted_publicly(request.event, is_shown)
+        if is_shown:
+            messages.success(request, _('Accepted sessions are now publicly visible.'))
+        else:
+            messages.success(request, _('Unscheduled accepted sessions are now hidden from the public.'))
         return redirect(request.event.orga_urls.schedule)
 
 
