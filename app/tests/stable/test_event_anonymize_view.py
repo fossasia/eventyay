@@ -156,9 +156,10 @@ def test_request_that_lost_the_race_does_not_queue_a_second_task(
         response = client.post(url(ended_event), valid_post(ended_event))
     assert response.status_code == 302
     start.assert_not_called()
-    assert not ended_event.logentry_set.filter(
-        action_type='eventyay.event.ticketing_data.anonymization.requested'
-    ).exists()
+    with scope(event=ended_event, organizer=ended_event.organizer):
+        assert not ended_event.logentry_set.filter(
+            action_type='eventyay.event.ticketing_data.anonymization.requested'
+        ).exists()
 
 
 def test_run_can_be_resumed_when_the_broker_is_down(

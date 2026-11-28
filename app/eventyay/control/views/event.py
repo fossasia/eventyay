@@ -1369,13 +1369,13 @@ class EventAnonymize(RecentAuthenticationRequiredMixin, EventPermissionRequiredM
                 run.save(update_fields=['status', 'error', 'finished'])
             event.log_action('eventyay.event.ticketing_data.anonymization.requested', user=self.request.user)
             transaction.on_commit(partial(self._queue_run, run.pk, self.request.user.pk))
-        messages.success(self.request, _('The ticketing data of this event is being anonymized.'))
         return redirect(self.get_success_url())
 
     def _queue_run(self, run_pk: int, user_pk: int) -> None:
         event = self.request.event
         try:
             anonymize_event.apply_async(args=(event.pk, EventAnonymizationRun.Trigger.MANUAL, user_pk))
+            messages.success(self.request, _('The ticketing data of this event is being anonymized.'))
         except BrokerOperationalError:
             logger.exception('Could not queue the anonymization of event %s', event.pk)
             # The task never started, so leave the run in a state the page offers to resume.
