@@ -655,7 +655,9 @@ def _check_positions(
         if cp.pk in deleted_positions:
             continue
 
-        if not cp.product.is_available() or (cp.variation and not cp.variation.active):
+        if not cp.product.is_available() or (
+            cp.variation and not cp.variation.is_available(subevent=cp.subevent)
+        ):
             err = err or error_messages['unavailable']
             delete(cp)
             continue

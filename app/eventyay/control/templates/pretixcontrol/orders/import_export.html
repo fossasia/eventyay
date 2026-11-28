@@ -39,48 +39,53 @@
         {% if "can_view_orders" in request.eventpermset %}
         <!-- Export Tab -->
         <div role="tabpanel" class="tab-pane {% if active_tab == "export" %}active{% endif %}" id="tab-export">
-            {% for e in exporters %}
-                <details class="panel panel-default" {% if "identifier" in request.GET or "exporter" in request.POST %}open{% endif %}>
-                    <summary class="panel-heading">
-                        <h3 class="panel-title">
-                            {{ e.verbose_name }}
-                            <i class="fa fa-angle-down collapse-indicator"></i>
-                        </h3>
-                    </summary>
-                    <div id="{{ e.identifier }}">
-                        <div class="panel-body">
-                            <form action="{% url 'control:event.orders.import_export.export_do' event=request.event.slug organizer=request.organizer.slug %}"
-                                    method="post" class="form-horizontal" data-asynctask data-asynctask-download
-                                    data-asynctask-long>
-                                {% csrf_token %}
-                                <input type="hidden" name="exporter" value="{{ e.identifier }}" />
-                                {% bootstrap_form e.form layout='control' %}
-                                <button class="btn btn-primary pull-right flip" type="submit">
-                                    <span class="icon icon-upload"></span> {% trans "Start export" %}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </details>
+            {% for group in exporter_groups %}
+                {% if group.exporters or group.category == 'payments_accounting' and show_banktransfer_refunds %}
+                    <section class="export-group">
+                        <h2 class="export-group-heading">{{ group.label }}</h2>
+                        {% for e in group.exporters %}
+                            {% include 'pretixcontrol/orders/fragment_export_panel.html' %}
+                        {% endfor %}
+                        {% if group.category == 'payments_accounting' and show_banktransfer_refunds %}
+                            <details class="panel panel-default export-panel">
+                                <summary class="panel-heading export-panel-heading">
+                                    <span class="export-panel-text">
+                                        <h3 class="panel-title export-panel-name">{% trans 'Bank transfer refunds' %}</h3>
+                                        <span class="export-panel-description">
+                                            {% trans 'Refunds you still need to pay out by bank transfer. Only shown when bank transfer is enabled.' %}
+                                        </span>
+                                    </span>
+                                    <span class="export-panel-file-type">CSV / SEPA XML</span>
+                                    <i class="fa fa-angle-down collapse-indicator" aria-hidden="true"></i>
+                                </summary>
+                                <div class="panel-body">
+                                    <p>
+                                        {% blocktrans trimmed %}
+                                            Export placed refunds that have not yet been transferred.
+                                        {% endblocktrans %}
+                                    </p>
+                                    <a href="{% url 'plugins:banktransfer:refunds.list' event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
+                                        <span class="fa fa-university"></span> {% trans 'Go to bank transfer refunds export' %}
+                                    </a>
+                                </div>
+                            </details>
+                        {% endif %}
+                    </section>
+                {% endif %}
             {% endfor %}
 
-            {% if banktransfer_active and "identifier" not in request.GET and "exporter" not in request.POST %}
-                <details class="panel panel-default">
-                    <summary class="panel-heading">
-                        <h3 class="panel-title">
-                            {% trans "Export bank transfer refunds" %}
-                            <i class="fa fa-angle-down collapse-indicator"></i>
-                        </h3>
+            {% if advanced_exporters %}
+                <details class="export-group export-group-advanced" {% if 'identifier' in request.GET or 'exporter' in request.POST %}open{% endif %}>
+                    <summary class="export-group-summary">
+                        <h2 class="export-group-heading">
+                            {% trans 'Advanced / integrations' %} ({{ advanced_exporters|length }})
+                            <i class="fa fa-caret-right collapse-indicator" aria-hidden="true"></i>
+                        </h2>
                     </summary>
-                    <div class="panel-body">
-                        <p>
-                            {% blocktrans trimmed %}
-                                Export placed refunds that have not yet been transferred.
-                            {% endblocktrans %}
-                        </p>
-                        <a href="{% url 'plugins:banktransfer:refunds.list' event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
-                            <span class="fa fa-university"></span> {% trans "Go to bank transfer refunds export" %}
-                        </a>
+                    <div>
+                        {% for e in advanced_exporters %}
+                            {% include 'pretixcontrol/orders/fragment_export_panel.html' %}
+                        {% endfor %}
                     </div>
                 </details>
             {% endif %}

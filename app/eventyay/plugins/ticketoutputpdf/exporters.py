@@ -26,6 +26,9 @@ class AllTicketsPDF(BaseExporter):
     name = 'alltickets'
     verbose_name = gettext_lazy('All PDF tickets in one file')
     identifier = 'pdfoutput_all_tickets'
+    category = 'checkin'
+    description = gettext_lazy('All paid tickets in one PDF, e.g. for printing at the entrance.')
+    file_type = 'PDF'
 
     @property
     def export_form_fields(self):
