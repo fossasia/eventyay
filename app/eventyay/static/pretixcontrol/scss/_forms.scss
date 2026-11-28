@@ -2,6 +2,12 @@
   color: $text-muted;
 }
 
+// Keep the field hint in help-text colour when the field has an error, so only
+// the error message itself turns red.
+.has-error .help-block.help-block-hint {
+  color: $text-muted;
+}
+
 td > .form-group {
   margin-bottom: 0;
 }

@@ -60,6 +60,16 @@ class ConsentProvider(models.TextChoices):
     EXTERNAL = 'external', _('External CMP script')
 
 
+class DPAStatus(models.TextChoices):
+    """Whether a data processing agreement is in place with the provider."""
+
+    # The default, so that nothing is recorded as exempt until someone checks.
+    UNKNOWN = 'unknown', _('Not assessed')
+    NOT_REQUIRED = 'not_required', _('Not required')
+    PENDING = 'pending', _('Pending')
+    SIGNED = 'signed', _('Signed')
+
+
 class ThirdPartyService(models.Model):
     """
     Admin-managed registry of third-party services and the consent category
@@ -94,7 +104,8 @@ class ThirdPartyService(models.Model):
     privacy_policy_url = models.CharField(
         max_length=500,
         blank=True,
-        validators=[URLValidator()],
+        # The default URLValidator also accepts ftp:// and ftps://.
+        validators=[URLValidator(schemes=['http', 'https'])],
         verbose_name=_('Privacy policy URL'),
     )
     cookie_names = models.TextField(
@@ -106,6 +117,23 @@ class ThirdPartyService(models.Model):
             'e.g. ^_ga_ for Google Analytics; otherwise those cookies are not '
             'cleared when consent is withdrawn.'
         ),
+    )
+    data_processed = models.TextField(
+        blank=True,
+        verbose_name=_('Data processed'),
+        help_text=_('What personal data the service receives, e.g. IP address, email address.'),
+    )
+    region = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_('Country / region'),
+        help_text=_('Where the provider processes the data.'),
+    )
+    dpa_status = models.CharField(
+        max_length=20,
+        choices=DPAStatus.choices,
+        default=DPAStatus.UNKNOWN,
+        verbose_name=_('DPA status'),
     )
 
     class Meta:
