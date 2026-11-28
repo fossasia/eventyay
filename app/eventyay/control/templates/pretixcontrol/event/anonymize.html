@@ -1,0 +1,93 @@
+{% extends "pretixcontrol/event/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block title %}{% trans "Anonymize ticketing data" %}{% endblock %}
+{% block content %}
+    <h1>{% trans "Anonymize ticketing data" %}</h1>
+    {% if run %}
+        <div class="panel panel-default">
+            <div class="panel-heading"><h2 class="panel-title">{% trans "Anonymization status" %}</h2></div>
+            <div class="panel-body">
+                {% if finished %}
+                    <p class="text-success">
+                        <span class="fa fa-check" aria-hidden="true"></span>
+                        {% blocktrans trimmed with date=run.finished|date:"SHORT_DATETIME_FORMAT" %}
+                            The ticketing data of this event was anonymized on {{ date }}.
+                        {% endblocktrans %}
+                    </p>
+                {% elif running %}
+                    <p>
+                        <span class="fa fa-cog fa-spin" aria-hidden="true"></span>
+                        {% blocktrans trimmed %}
+                            Anonymization is running. {{ remaining_order_count }} of {{ order_count }} orders are still waiting.
+                        {% endblocktrans %}
+                    </p>
+                    <p><a href="" class="btn btn-default">{% trans "Refresh" %}</a></p>
+                {% else %}
+                    <p class="text-danger">
+                        <span class="fa fa-exclamation-triangle" aria-hidden="true"></span>
+                        {% trans "The last run stopped before it finished. You can start it again; orders that are already anonymized are skipped." %}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    {% if not finished and not running %}
+        {% if not waiting_period_over %}
+            <div class="alert alert-info">
+                {% if available_from %}
+                    {% blocktrans trimmed with date=available_from|date:"SHORT_DATETIME_FORMAT" %}
+                        Ticketing data can only be anonymized after the event is over and a waiting period has passed.
+                        This event can be anonymized from {{ date }}.
+                    {% endblocktrans %}
+                {% else %}
+                    {% trans "This event has no end date yet, so its ticketing data cannot be anonymized." %}
+                {% endif %}
+            </div>
+        {% else %}
+            <p>
+                {% blocktrans trimmed %}
+                    This replaces the names, email addresses, phone numbers and addresses of buyers and attendees with
+                    anonymous placeholders. Orders, totals, payments, check-ins and answers to questions are kept, but
+                    they can no longer be linked to a person.
+                {% endblocktrans %}
+            </p>
+            <ul>
+                <li>{% blocktrans trimmed count counter=remaining_order_count %}{{ counter }} order{% plural %}{{ counter }} orders{% endblocktrans %}</li>
+                <li>{% blocktrans trimmed count counter=position_count %}{{ counter }} attendee{% plural %}{{ counter }} attendees{% endblocktrans %}</li>
+                <li>{% blocktrans trimmed count counter=invoice_count %}{{ counter }} invoice{% plural %}{{ counter }} invoices{% endblocktrans %}</li>
+            </ul>
+            <div class="alert alert-warning">
+                <strong>{% trans "Tax law" %}</strong><br>
+                {% blocktrans trimmed %}
+                    Anonymizing removes buyer and attendee identity from orders and invoices. Tax law in your country
+                    may require you to keep complete invoices for several years. Download them first. You are
+                    responsible for meeting these requirements.
+                {% endblocktrans %}
+            </div>
+            <p>
+                <a class="btn btn-default" target="_blank" rel="noopener"
+                   href="{% url 'control:event.orders.invoice_downloads' event=request.event.slug organizer=request.organizer.slug %}">
+                    <span class="fa fa-download" aria-hidden="true"></span> {% trans "Download invoices" %}
+                </a>
+            </p>
+            <p><strong>{% trans "This cannot be undone." %}</strong></p>
+            <form action="" method="post">
+                {% csrf_token %}
+                {% bootstrap_form_errors form layout="inline" %}
+                {% bootstrap_field form.invoices_downloaded layout="inline" %}
+                <p>
+                    {% blocktrans trimmed with name=request.event.name %}
+                        To confirm you really want this, please type out the event's name ("{{ name }}") here:
+                    {% endblocktrans %}
+                </p>
+                {% bootstrap_field form.name layout="inline" %}
+                <div class="form-group submit-group">
+                    <button type="submit" class="btn btn-danger btn-save">
+                        {% if run %}{% trans "Resume anonymization" %}{% else %}{% trans "Anonymize ticketing data" %}{% endif %}
+                    </button>
+                </div>
+            </form>
+        {% endif %}
+    {% endif %}
+{% endblock %}

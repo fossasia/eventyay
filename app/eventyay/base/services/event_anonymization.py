@@ -20,14 +20,22 @@ from eventyay.helpers.anonymization import ANONYMIZED_NAME, anonymized_email
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
 
 
-def check_event_end(event: Event) -> None:
+def anonymization_available_from(event: Event):
+    """When ticketing data of ``event`` may be anonymized, or None if the event has no end date."""
     end = event.date_to or event.date_from
     if event.has_subevents:
         last = event.subevents.aggregate(last=Max(Coalesce('date_to', 'date_from')))['last']
         if last:
             end = max(end, last) if end else last
+    if end is None:
+        return None
     days = GlobalSettingsObject().settings.get('ticketing_retention_manual_min_days', default='14', as_type=int)
-    if end is None or now() < end + timedelta(days=days):
+    return end + timedelta(days=days)
+
+
+def check_event_end(event: Event) -> None:
+    available_from = anonymization_available_from(event)
+    if available_from is None or now() < available_from:
         raise ValidationError(_('The waiting period after this event has not ended.'))
 
 

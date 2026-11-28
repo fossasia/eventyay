@@ -2203,3 +2203,10 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         cleaned_data['privacy_type'] = cleaned_data.get('privacy_type') or PRIVACY_PUBLIC
 
         return cleaned_data
+
+
+class EventAnonymizeForm(EventDeleteForm):
+    invoices_downloaded = forms.BooleanField(
+        label=_('I have downloaded the invoices I need'),
+        error_messages={'required': _('Please confirm that you have downloaded the invoices you need.')},
+    )

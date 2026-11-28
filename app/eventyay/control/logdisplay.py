@@ -586,6 +586,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             'An email with a link to the order detail page has been resent to the user.'
         ),
         'eventyay.event.order.anonymized': _('The order ticketing data has been anonymized.'),
+        'eventyay.event.ticketing_data.anonymization.requested': _(
+            'Anonymization of the ticketing data of this event has been requested.'
+        ),
         'eventyay.event.ticketing_data.anonymized': _('The event ticketing data has been anonymized.'),
         'eventyay.event.order.payment.confirmed': _('Payment {local_id} has been confirmed.'),
         'eventyay.event.order.payment.canceled': _('Payment {local_id} has been canceled.'),
