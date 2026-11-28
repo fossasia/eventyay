@@ -1,7 +1,6 @@
 import collections
 import datetime as dt
 import json
-import logging
 
 from asgiref.sync import async_to_sync
 import dateutil.parser
@@ -49,8 +48,6 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, 
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.services.room import soft_delete_room
 from eventyay.talk_rules.tracks import apply_track_limit_to_slots, filter_schedule_talk_data, get_allowed_tracks
-
-logger = logging.getLogger(__name__)
 
 
 class ScheduleView(EventPermissionRequired, TemplateView):
