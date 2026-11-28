@@ -103,28 +103,55 @@ def test_sendmail_view(logged_in_client, sendmail_url, expected=200):
 
 @pytest.mark.django_db
 def test_attendees_select2_search_and_labels(logged_in_client, event, order, pos):
+    order.code = 'ABCDE'
+    order.save(update_fields=['code'])
     url = reverse(
         'control:event.mail.attendees.select2',
         kwargs={'event': event.slug, 'organizer': event.organizer.slug},
     )
-    pos.attendee_name_cached = 'Ada Lovelace'
+    pos.attendee_name_parts = {'_legacy': 'Ada Lovelace'}
     pos.attendee_email = 'ada@example.test'
-    pos.save(update_fields=['attendee_name_cached', 'attendee_email'])
+    pos.save(update_fields=['attendee_name_parts', 'attendee_email'])
     no_attendee_email = OrderPosition.objects.create(order=order, product=pos.product, price=13)
 
     response = logged_in_client.get(url, {'query': 'ada@example.test'})
     assert response.status_code == 200
-    assert response.json()['results'] == [{'id': pos.pk, 'text': 'ada@example.test {DUMMY}'}]
+    assert response.json()['results'] == [{'id': pos.pk, 'text': 'ada@example.test {ABCDE}'}]
 
     response = logged_in_client.get(url, {'query': 'Lovelace'})
     assert [result['id'] for result in response.json()['results']] == [pos.pk]
 
-    response = logged_in_client.get(url, {'query': 'DUMMY'})
+    response = logged_in_client.get(url, {'query': 'ABCDE'})
     assert {result['id'] for result in response.json()['results']} == {pos.pk, no_attendee_email.pk}
 
     response = logged_in_client.get(url, {'query': order.email})
     results = {result['id']: result['text'] for result in response.json()['results']}
-    assert results[no_attendee_email.pk] == 'dummy@dummy.test {DUMMY}'
+    assert results[no_attendee_email.pk] == 'dummy@dummy.test {ABCDE}'
+
+
+@pytest.mark.django_db
+def test_attendees_select2_deduplicates_shared_order_email(logged_in_client, event, order, pos):
+    order.code = 'ABCDE'
+    order.save(update_fields=['code'])
+    url = reverse(
+        'control:event.mail.attendees.select2',
+        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+    )
+    pos.attendee_name_parts = {'_legacy': 'Taylor One'}
+    pos.save(update_fields=['attendee_name_parts'])
+    second_position = OrderPosition.objects.create(
+        order=order,
+        product=pos.product,
+        price=13,
+        attendee_name_parts={'_legacy': 'Taylor Two'},
+    )
+
+    response = logged_in_client.get(url, {'query': 'Taylor'})
+
+    assert response.status_code == 200
+    assert response.json()['results'] == [
+        {'id': min(pos.pk, second_position.pk), 'text': 'dummy@dummy.test {ABCDE}'},
+    ]
 
 
 @pytest.mark.django_db
@@ -138,7 +165,7 @@ def test_specific_attendee_selection_is_saved_to_outbox(logged_in_client, sendma
             'recipients': 'individual',
             'individual_attendees': [pos.pk],
             'subject_0': 'Selected attendee',
-            'message_0': 'Hello attendee',
+            'text_0': 'Hello attendee',
         },
     )
 

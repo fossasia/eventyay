@@ -5,7 +5,8 @@ import nh3
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import Min, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -96,6 +97,18 @@ def attendees_select2(request, **kwargs):
                 Q(order__code__icontains=query)
             )
 
+        unique_position_ids = (
+            qs.order_by()
+            .annotate(recipient_email=Coalesce('attendee_email', 'order__email'))
+            .values('order_id', 'recipient_email')
+            .annotate(first_position_id=Min('pk'))
+            .values('first_position_id')
+        )
+        qs = OrderPosition.objects.filter(
+            pk__in=Subquery(unique_position_ids),
+            order__event=request.event,
+            canceled=False,
+        ).select_related('order')
         qs = qs.order_by('attendee_name_cached', 'order__code')
 
         total = qs.count()
