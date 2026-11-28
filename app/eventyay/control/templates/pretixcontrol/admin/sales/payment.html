@@ -1,0 +1,20 @@
+{% extends 'pretixcontrol/admin/base.html' %}
+{% load i18n money %}
+{% block title %}{% translate 'Invoice payment details' %}{% endblock %}
+{% block content %}
+  <h1>{% blocktranslate with number=invoice.pk %}Payment for invoice #{{ number }}{% endblocktranslate %}</h1>
+  <a href='{% url "eventyay_admin:admin.sales.invoices" %}'>{% translate 'Back to invoices' %}</a>
+  <dl class='dl-horizontal'>
+    <dt>{% translate 'Event' %}</dt><dd>{{ invoice.event.name }}</dd>
+    <dt>{% translate 'Organizer' %}</dt><dd>{{ invoice.organizer.name }}</dd>
+    <dt>{% translate 'Billing period' %}</dt><dd>{{ invoice.monthly_bill|date:'YEAR_MONTH_FORMAT' }}</dd>
+    <dt>{% translate 'Amount' %}</dt><dd>{{ invoice.final_ticket_fee|money:invoice.currency }} {{ invoice.currency }}</dd>
+    <dt>{% translate 'Status' %}</dt><dd>{{ invoice_status }}</dd>
+    <dt>{% translate 'Due Date' %}</dt><dd>{{ invoice.due_date|date:'SHORT_DATE_FORMAT' }}</dd>
+    <dt>{% translate 'Sent to Email' %}</dt><dd>{{ invoice.sent_to_email|default:_('Not recorded') }}</dd>
+    <dt>{% translate 'Payment method' %}</dt><dd>{{ invoice.payment_method|default:_('Not recorded') }}</dd>
+    <dt>{% translate 'Paid at' %}</dt><dd>{{ invoice.paid_datetime|default:_('Not recorded') }}</dd>
+    <dt>{% translate 'Payment reference' %}</dt><dd>{{ invoice.stripe_payment_intent_id|default:_('Payment details are not available for this invoice.') }}</dd>
+    <dt>{% translate 'Note' %}</dt><dd>{{ invoice.note|default:_('None')|linebreaksbr }}</dd>
+  </dl>
+{% endblock %}

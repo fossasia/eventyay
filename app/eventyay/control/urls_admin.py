@@ -6,6 +6,7 @@ from django.views.generic.base import RedirectView
 from eventyay.control.views import (
     admin,
     admin_messages,
+    admin_sales,
     gmail_oauth,
     global_settings,
     organizer_request_forms,
@@ -20,6 +21,10 @@ from eventyay.control.views import (
 app_name = 'eventyay_admin'
 
 urlpatterns = [
+    path('sales/', admin_sales.SalesOverview.as_view(), name='admin.sales'),
+    path('sales/invoices/', admin_sales.SalesOverview.as_view(invoices=True), name='admin.sales.invoices'),
+    path('sales/invoices/<int:pk>/status/', admin_sales.InvoiceStatusUpdate.as_view(), name='admin.sales.status'),
+    path('sales/invoices/<int:pk>/payment/', admin_sales.InvoicePaymentDetail.as_view(), name='admin.sales.payment'),
     path(
         'organizer-requests/',
         admin.OrganizerList.as_view(initial_organizer_tab='tab-organizer-requests'),
