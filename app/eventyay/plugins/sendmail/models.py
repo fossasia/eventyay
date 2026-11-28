@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
-from eventyay.base.email import get_email_context
+from eventyay.base.email import get_email_context, shared_event_placeholder_names
 from eventyay.mail.context import get_mail_context
 from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
@@ -319,8 +319,9 @@ class EmailQueue(models.Model):
         try:
             if self.composing_for != ComposingFor.ATTENDEES:
                 user_obj = User.objects.filter(email__iexact=recipient.email).first()
-                ctx = get_email_context(event=self.event, user=user_obj)
-                ctx.update(get_mail_context(event=self.event, user=user_obj))
+                base_ctx = get_email_context(event=self.event, user=user_obj)
+                ctx = {**base_ctx, **get_mail_context(event=self.event, user=user_obj)}
+                ctx.update({key: base_ctx[key] for key in shared_event_placeholder_names() if key in base_ctx})
                 return ctx
 
             # Only pass keys that are present. ``position=None`` still counts as

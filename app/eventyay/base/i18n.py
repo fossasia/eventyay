@@ -31,6 +31,32 @@ class LazyDate:
         return date_format(self.value, 'SHORT_DATE_FORMAT')
 
 
+class LazyEventDate:
+    """A day of the event, in the long date format of the locale the email is rendered in."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __format__(self, format_spec):
+        return self.__str__()
+
+    def __str__(self):
+        return date_format(self.value, 'DATE_FORMAT')
+
+
+class LazyEventDateRange:
+    """The event's dates as shown on the event page, in the locale the email is rendered in."""
+
+    def __init__(self, event):
+        self.event = event
+
+    def __format__(self, format_spec):
+        return self.__str__()
+
+    def __str__(self):
+        return self.event.get_date_range_display()
+
+
 class LazyExpiresDate:
     def __init__(self, expires):
         self.value = expires
