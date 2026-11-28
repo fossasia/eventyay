@@ -2044,7 +2044,19 @@ class OrderChangeManager:
                     force_invalidate=False,
                     save=False,
                 )
-                op.position.save()
+                op.position.save(
+                    update_fields=[
+                        'product',
+                        'variation',
+                        'tax_rule',
+                        'tax_rate',
+                        'tax_value',
+                        'price_before_voucher',
+                        'admission_valid_from',
+                        'admission_valid_until',
+                        'secret',
+                    ]
+                )
             elif isinstance(op, self.SeatOperation):
                 self.order.log_action(
                     'eventyay.event.order.changed.seat',
@@ -2066,7 +2078,7 @@ class OrderChangeManager:
                     force_invalidate=False,
                     save=False,
                 )
-                op.position.save()
+                op.position.save(update_fields=['seat', 'secret'])
             elif isinstance(op, self.SubeventOperation):
                 self.order.log_action(
                     'eventyay.event.order.changed.subevent',
@@ -2100,7 +2112,15 @@ class OrderChangeManager:
                             invoice_address=self._invoice_address,
                         ).gross,
                     )
-                op.position.save()
+                op.position.save(
+                    update_fields=[
+                        'subevent',
+                        'price_before_voucher',
+                        'admission_valid_from',
+                        'admission_valid_until',
+                        'secret',
+                    ]
+                )
             elif isinstance(op, self.AddFeeOperation):
                 self.order.log_action(
                     'eventyay.event.order.changed.addfee',

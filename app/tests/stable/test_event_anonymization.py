@@ -316,3 +316,20 @@ def test_anonymized_waiting_list_entry_cannot_receive_a_voucher(event):
             waiting.send_voucher()
         waiting.refresh_from_db()
         assert waiting.voucher is None
+
+
+def test_stale_waiting_list_entry_cannot_restore_the_original_address(event):
+    event.date_from = event.date_to = now() - timedelta(days=20)
+    event.save()
+    with scope(event=event, organizer=event.organizer):
+        product = Product.objects.create(event=event, name='Ticket', default_price=23)
+        Quota.objects.create(event=event, name='All', size=10).products.add(product)
+        WaitingListEntry.objects.create(event=event, product=product, email='waiter@example.org')
+        stale = WaitingListEntry.objects.get()
+        anonymize_event.apply(args=(event.pk, 'manual'), throw=True)
+        assert stale.email == 'waiter@example.org'
+        with pytest.raises(WaitingListException):
+            stale.send_voucher()
+        stored = WaitingListEntry.objects.get()
+        assert is_anonymized_email(stored.email) and stored.voucher is None
+
