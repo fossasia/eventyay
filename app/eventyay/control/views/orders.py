@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
+from typing import TypedDict
 from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
 
@@ -54,7 +55,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
-from eventyay.base.exporter import BaseExporter
+from eventyay.base.exporter import EXPORTER_CATEGORIES, BaseExporter
 from eventyay.base.i18n import language
 from eventyay.base.services.anonymize import anonymize_order, is_order_event_ended
 from eventyay.base.models import (
@@ -2742,6 +2743,57 @@ def get_banktransfer_import_context(request):
     return {}
 
 
+# The order of the exporters inside their group on the export page. Exporters that are not listed
+# here, e.g. from plugins, follow in alphabetical order.
+EXPORTER_ORDER = (
+    'orderpositionlist',
+    'orderlist',
+    'mailaddrs',
+    'answerfiles',
+    'json',
+    'paymentlist',
+    'invoices',
+    'invoicedata',
+    'ordertaxeslist',
+    'ordertaxes',
+    'pdfreport',
+    'giftcardredemptionlist',
+    'checkinlist',
+    'checkinlistpdf',
+    'checkinlog',
+    'badges',
+    'pdfoutput_all_tickets',
+    'voucherattendees',
+    'waitinglist',
+    'quotalist',
+)
+
+
+class ExporterGroup(TypedDict):
+    category: str
+    label: str
+    exporters: list[BaseExporter]
+
+
+def group_exporters(exporters: list[BaseExporter]) -> tuple[list[ExporterGroup], list[BaseExporter]]:
+    """
+    Sort the exporters into the groups of the export page. Returns the groups in the order of
+    ``EXPORTER_CATEGORIES`` and the exporters without a known category, shown as "Advanced / integrations".
+    """
+
+    def sort_key(exporter):
+        if exporter.identifier in EXPORTER_ORDER:
+            return EXPORTER_ORDER.index(exporter.identifier), ''
+        return len(EXPORTER_ORDER), str(exporter.verbose_name)
+
+    groups = [ExporterGroup(category=key, label=label, exporters=[]) for key, label in EXPORTER_CATEGORIES]
+    exporters_by_category = {group['category']: group['exporters'] for group in groups}
+    advanced = []
+    for exporter in sorted(exporters, key=sort_key):
+        exporters_by_category.get(exporter.category, advanced).append(exporter)
+    return groups, advanced
+
+
 class ExportMixin:
     @cached_property
     def exporters(self) -> list[BaseExporter]:
@@ -2778,7 +2830,14 @@ class ExportMixin:
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['exporters'] = self.exporters
+        ctx['exporter_groups'], ctx['advanced_exporters'] = group_exporters(self.exporters)
         ctx.update(get_banktransfer_import_context(self.request))
+        # The bank transfer refunds export is a link to another page, so it is hidden when one export is shown.
+        ctx['show_banktransfer_refunds'] = (
+            ctx.get('banktransfer_active', False)
+            and 'identifier' not in self.request.GET
+            and 'exporter' not in self.request.POST
+        )
 
         can_view_orders = 'can_view_orders' in self.request.eventpermset
         can_change_orders = 'can_change_orders' in self.request.eventpermset
@@ -2872,6 +2931,11 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
             self.exporter.identifier,
             self.exporter.form.cleaned_data,
         )
+
+
+class InvoiceDownloadsView(EventPermissionRequiredMixin, TemplateView):
+    permission = 'can_view_orders'
+    template_name = 'pretixcontrol/orders/invoice_downloads.html'
 
 
 class ExportView(EventPermissionRequiredMixin, ExportMixin, TemplateView):

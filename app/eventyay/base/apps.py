@@ -15,6 +15,7 @@ class EventyayBaseConfig(AppConfig):
         from . import invoice  # NOQA
         from . import notifications  # NOQA
         from . import email  # NOQA
+        from . import anonymizer  # NOQA
         from django.conf import settings
 
         try:

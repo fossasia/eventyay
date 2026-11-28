@@ -1225,6 +1225,9 @@ COMPRESS_PRECOMPILERS = (
 # We have one Vue 2 app to be built by Django-Compressor, so we need to enable compression.
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = conf.compress_offline_required
+COMPRESS_OFFLINE_CONTEXT = {
+    'basetpl': 'pretixcontrol/base.html',
+}
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass

@@ -46,7 +46,7 @@ Listing available exporters
         "results": [
           {
             "identifier": "orderlist",
-            "verbose_name": "Order data",
+            "verbose_name": "Orders",
             "input_parameters": [
               {
                 "name": "_format",
@@ -109,7 +109,7 @@ Listing available exporters
         "results": [
           {
             "identifier": "orderlist",
-            "verbose_name": "Order data",
+            "verbose_name": "Orders",
             "input_parameters": [
               {
                 "name": "events",
