@@ -26,6 +26,7 @@ from eventyay.base.models import (
     Question,
     QuestionAnswer,
     QuestionOption,
+    Quota,
     Team,
     User,
 )
@@ -730,3 +731,26 @@ def test_regenerating_secrets_invalidates_cache_after_commit(
         assert response.status_code == 302
         invalidate.assert_not_called()
     invalidate.assert_called_once_with(kwargs={'event': event.pk, 'order': order.pk})
+
+
+def test_product_change_does_not_restore_attendee_data_from_a_stale_position(event):
+    with event_scope(event):
+        old = Product.objects.create(event=event, name='Old', default_price=10)
+        new = Product.objects.create(event=event, name='New', default_price=10)
+        quota = Quota.objects.create(event=event, name='All', size=10)
+        quota.products.add(old, new)
+        order = Order.objects.create(event=event, email=EMAIL, total=10, status=Order.STATUS_PENDING, expires=now())
+        position = OrderPosition.objects.create(
+            order=order, product=old, price=10, attendee_email='attendee@example.org', attendee_name_cached='Alice'
+        )
+        manager = OrderChangeManager(order)
+        manager.change_product(position, new, None)
+        # The run anonymizes the order after the position was loaded; only the order is refreshed.
+        Order.objects.filter(pk=order.pk).update(email='anonymous@eventyay.invalid', is_anonymized=True)
+        OrderPosition.all.filter(pk=position.pk).update(attendee_email=None, attendee_name_cached=None)
+        order.refresh_from_db()
+        manager.commit(check_quotas=False)
+        stored = OrderPosition.all.get(pk=position.pk)
+        assert stored.product_id == new.pk
+        assert stored.attendee_email is None and stored.attendee_name_cached is None
+
