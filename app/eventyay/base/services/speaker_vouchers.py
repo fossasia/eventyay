@@ -255,7 +255,8 @@ def allocate_and_send_vouchers(
         'available': 0,
     }
 
-    if not settings.enabled or not settings.voucher_tag:
+    # Feature is on when a batch tag is selected; ignore legacy ``enabled``.
+    if not settings.voucher_tag:
         return result
 
     profile_ids = [p.pk for p in profiles]

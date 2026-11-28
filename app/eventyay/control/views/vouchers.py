@@ -941,6 +941,11 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
                 ]
         else:
             kwargs['instance'] = Voucher(event=self.request.event, code=None)
+            # Prefill Tag from ?tag= (e.g. Speaker Vouchers → Create a new batch).
+            tag = (self.request.GET.get('tag') or '').strip()
+            if tag:
+                kwargs.setdefault('initial', {})
+                kwargs['initial'].setdefault('tag', tag)
         return kwargs
 
     def get_async_form_kwargs(self, form_kwargs, organizer=None, event=None):

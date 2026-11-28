@@ -6,13 +6,16 @@
 {% block extra_title %}{% translate "Speaker Vouchers" %} :: {% endblock extra_title %}
 
 {% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{% static 'common/css/headers-uncompressed.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'orga/css/speaker_vouchers.css' %}">
 {% endblock stylesheets %}
 
 {% block content %}
+  {% trans "Speaker Vouchers" as header_title %}
+  {% include "common/includes/header_nav.html" with header_title=header_title %}
+
   <div class="speaker-vouchers-page">
     <header class="speaker-vouchers-hero">
-      <h2>{% translate "Speaker Vouchers" %}</h2>
       <p>
         {% blocktranslate trimmed %}
           Configure free or discounted tickets for speakers. Select a voucher batch and send individual codes to speakers.
@@ -35,7 +38,6 @@
     <div class="speaker-vouchers-layout">
       <div class="speaker-vouchers-main">
         <form method="post" class="form" id="speaker-voucher-settings-form"
-              data-saved-enabled="{{ voucher_settings.enabled|yesno:'true,false' }}"
               data-saved-voucher-tag="{{ voucher_settings.voucher_tag }}">
           {% csrf_token %}
           {% include "common/forms/errors.html" %}
@@ -49,31 +51,8 @@
             </div>
             <div class="card-body">
               <div class="form-group row speaker-voucher-row">
-                <label class="col-md-3 col-form-label speaker-voucher-label" for="{{ form.enabled.id_for_label }}">
-                  {{ form.enabled.label }}
-                </label>
-                <div class="col-md-9">
-                  <div class="speaker-voucher-control">
-                    <label class="speaker-voucher-toggle" for="{{ form.enabled.id_for_label }}">
-                      {{ form.enabled }}
-                      <span class="speaker-voucher-toggle-slider" aria-hidden="true"></span>
-                    </label>
-                  </div>
-                  {% if form.enabled.help_text %}
-                    <p class="form-text text-muted speaker-voucher-help">{{ form.enabled.help_text }}</p>
-                  {% endif %}
-                  {% for error in form.enabled.errors %}
-                    <div class="invalid-feedback d-block">{{ error }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-
-              <div class="form-group row speaker-voucher-row">
                 <label class="col-md-3 col-form-label speaker-voucher-label" for="{{ form.voucher_tag.id_for_label }}">
                   {{ form.voucher_tag.label }}
-                  {% if form.voucher_tag.field.required or form.voucher_tag.field.one_required %}
-                    <span class="text-danger" aria-hidden="true">*</span>
-                  {% endif %}
                 </label>
                 <div class="col-md-9">
                   <div class="speaker-voucher-batch-row">
@@ -186,8 +165,8 @@
                 <span>{% translate "Set up free or discounted tickets in Tickets → Vouchers." %}</span>
               </li>
               <li>
-                <strong>{% translate "Enable speaker vouchers" %}</strong>
-                <span>{% translate "Turn it on and select the batch." %}</span>
+                <strong>{% translate "Select the batch" %}</strong>
+                <span>{% translate "Choosing a batch turns speaker vouchers on for this event." %}</span>
               </li>
               <li>
                 <strong>{% translate "Send vouchers" %}</strong>

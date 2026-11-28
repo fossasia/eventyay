@@ -218,20 +218,34 @@ def test_orga_can_open_speaker_vouchers_page(orga_client, event, speaker_voucher
     response = orga_client.get(event.orga_urls.speaker_vouchers, follow=True)
     assert response.status_code == 200
     assert 'Speaker Vouchers' in response.text
-    assert 'Enable speaker vouchers' in response.text
+    assert 'id="event-nav"' in response.text
+    assert 'Enable speaker vouchers' not in response.text
+    assert 'tag=speaker' in response.text
+
+
+@pytest.mark.django_db
+def test_voucher_bulk_create_prefills_tag_from_query(rf, event):
+    from eventyay.control.views.vouchers import VoucherBulkCreate
+
+    request = rf.get('/vouchers/bulk_add', {'tag': 'speaker'})
+    request.event = event
+    view = VoucherBulkCreate()
+    view.request = request
+    view.object = None
+    kwargs = view.get_form_kwargs()
+    assert kwargs.get('initial', {}).get('tag') == 'speaker'
 
 
 @pytest.mark.django_db
 def test_orga_can_save_speaker_voucher_settings(orga_client, event, speaker_voucher_batch):
     response = orga_client.post(
         event.orga_urls.speaker_vouchers,
-        data={'enabled': 'on', 'voucher_tag': 'speakers'},
+        data={'voucher_tag': 'speakers'},
         follow=True,
     )
     assert response.status_code == 200
     with scope(event=event):
         settings_obj = SpeakerVoucherSettings.objects.get(event=event)
-        assert settings_obj.enabled is True
         assert settings_obj.voucher_tag == 'speakers'
 
 
@@ -548,7 +562,7 @@ def test_user_without_permission_cannot_access_or_send(review_client, event):
 
 
 @pytest.mark.django_db
-def test_speakers_list_hides_voucher_column_when_disabled(
+def test_speakers_list_hides_voucher_column_when_no_batch(
     orga_client, event, speaker, confirmed_submission
 ):
     response = orga_client.get(event.orga_urls.speakers, follow=True)
@@ -557,9 +571,28 @@ def test_speakers_list_hides_voucher_column_when_disabled(
 
 
 @pytest.mark.django_db
-def test_speakers_list_shows_voucher_column_when_enabled(
+def test_speakers_list_hides_voucher_column_when_tag_cleared(
     orga_client, event, speaker, confirmed_submission, speaker_voucher_settings
 ):
+    with scope(event=event):
+        speaker_voucher_settings.enabled = True
+        speaker_voucher_settings.voucher_tag = ''
+        speaker_voucher_settings.save(update_fields=['enabled', 'voucher_tag'])
+
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert 'speaker-voucher-cell' not in response.text
+
+
+@pytest.mark.django_db
+def test_speakers_list_shows_voucher_column_when_batch_selected(
+    orga_client, event, speaker, confirmed_submission, speaker_voucher_settings
+):
+    # Legacy enabled=False must not hide the column once a batch tag is set.
+    with scope(event=event):
+        speaker_voucher_settings.enabled = False
+        speaker_voucher_settings.save(update_fields=['enabled'])
+
     response = orga_client.get(event.orga_urls.speakers, follow=True)
     assert response.status_code == 200
     assert 'speaker-voucher-cell' in response.text
@@ -874,7 +907,7 @@ def test_reviewer_cannot_send_resend_or_cancel_speaker_voucher(
 
 
 @pytest.mark.django_db
-def test_voucher_sort_ignored_when_vouchers_disabled(
+def test_voucher_sort_ignored_when_no_batch(
     orga_client, event, speaker, confirmed_submission
 ):
     response = orga_client.get(f'{event.orga_urls.speakers}?sort=voucher_sort', follow=True)
@@ -883,7 +916,7 @@ def test_voucher_sort_ignored_when_vouchers_disabled(
 
 
 @pytest.mark.django_db
-def test_voucher_sort_works_when_enabled(
+def test_voucher_sort_works_when_batch_selected(
     orga_client, event, speaker, confirmed_submission, speaker_voucher_settings, speaker_voucher_batch, other_speaker
 ):
     with scope(event=event):

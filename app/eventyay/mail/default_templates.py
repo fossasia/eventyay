@@ -135,7 +135,8 @@ SPEAKER_VOUCHER_TEXT = LazyI18nString.from_gettext(
     _(
         """Hi {name},
 
-Thank you for speaking at {event_name}! Here is your ticket voucher:
+Thank you for speaking at {event_name}! Here is your ticket voucher.
+Use the code or link below when you get your ticket — it may cover a free or discounted ticket:
 
 Voucher code: {voucher_code}
 

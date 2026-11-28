@@ -108,9 +108,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     @context
     @cached_property
     def speaker_vouchers_enabled(self) -> bool:
+        """On when a voucher batch (tag) is selected; ignore legacy enabled flag."""
         try:
             with scope(event=self.request.event):
-                return bool(self.request.event.speaker_voucher_settings.enabled)
+                return bool(self.request.event.speaker_voucher_settings.voucher_tag)
         except SpeakerVoucherSettings.DoesNotExist:
             return False
 
@@ -880,7 +881,6 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
     def get_initial(self):
         settings_obj = self._get_settings()
         return {
-            'enabled': settings_obj.enabled,
             'voucher_tag': settings_obj.voucher_tag,
         }
 
@@ -901,10 +901,8 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
         return len(recipients), new_needed, remaining, max(remaining - new_needed, 0)
 
     def _send_blocker(self, settings_obj):
-        if not settings_obj.enabled:
-            return _('Enable speaker vouchers and save before sending.')
         if not settings_obj.voucher_tag:
-            return _('Select a voucher batch first.')
+            return _('Select a voucher batch and save before sending.')
         recipient_count, new_needed, remaining, _remaining_after = self._pending_send_counts(settings_obj)
         if not recipient_count:
             return _('Every eligible speaker already has a voucher.')
@@ -957,12 +955,15 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
         recipient_count, vouchers_to_use, _remaining, remaining_after = self._pending_send_counts(
             settings_obj
         )
-        create_batch_url = reverse(
-            'control:event.vouchers.bulk',
-            kwargs={
-                'organizer': self.request.event.organizer.slug,
-                'event': self.request.event.slug,
-            },
+        create_batch_url = (
+            reverse(
+                'control:event.vouchers.bulk',
+                kwargs={
+                    'organizer': self.request.event.organizer.slug,
+                    'event': self.request.event.slug,
+                },
+            )
+            + '?tag=speaker'
         )
         context.update(
             {
@@ -981,9 +982,9 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
 
     def form_valid(self, form):
         settings_obj = self._get_settings()
-        settings_obj.enabled = form.cleaned_data['enabled']
+        # Legacy ``enabled`` is ignored; selecting a batch turns the feature on.
         settings_obj.voucher_tag = form.cleaned_data['voucher_tag'] or ''
-        settings_obj.save(update_fields=['enabled', 'voucher_tag'])
+        settings_obj.save(update_fields=['voucher_tag'])
         messages.success(self.request, _('Voucher settings saved.'))
         return super().form_valid(form)
 
@@ -1004,7 +1005,7 @@ class SpeakerVoucherBulkSendView(SpeakerVoucherPermissionMixin, View):
             except SpeakerVoucherSettings.DoesNotExist:
                 settings_obj = None
 
-            if not settings_obj or not settings_obj.enabled or not settings_obj.voucher_tag:
+            if not settings_obj or not settings_obj.voucher_tag:
                 messages.error(request, _('Configure a voucher batch first.'))
                 return self._redirect_after_send(request, event)
 
@@ -1107,7 +1108,7 @@ class SpeakerVoucherActionMixin(SpeakerViewMixin):
             settings_obj = event.speaker_voucher_settings
         except SpeakerVoucherSettings.DoesNotExist:
             settings_obj = None
-        if not settings_obj or not settings_obj.enabled or not settings_obj.voucher_tag:
+        if not settings_obj or not settings_obj.voucher_tag:
             messages.error(self.request, _('Configure a voucher batch first.'))
             return None
         return settings_obj
