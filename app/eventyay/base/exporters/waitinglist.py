@@ -21,6 +21,8 @@ from ..signals import (
 class WaitingListExporter(ListExporter):
     identifier = 'waitinglist'
     verbose_name = _('Waiting list')
+    category = 'vouchers_availability'
+    description = _('Everyone on the waiting list and their status.')
 
     # map selected status to label and queryset-filter
     status_filters = [

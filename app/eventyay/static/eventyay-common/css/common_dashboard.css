@@ -840,7 +840,10 @@ body:has(.td-dashboard) #page-content {
     width: 100%;
   }
   .dashboard-timeline-container {
-    padding: 16px
+    padding: 16px 12px
+  }
+  .timeline-step {
+    min-width: 0;
   }
   .timeline-step-label,
   .timeline-step-summary {
@@ -863,6 +866,36 @@ body:has(.td-dashboard) #page-content {
   .timeline-step::after {
     top: 16px
   }
+  /* Keep the step link popups inside the screen on phones */
+  .timeline-step-links {
+    left: auto;
+    inset-inline-start: calc(50% - 16px);
+    transform: none;
+    width: max-content;
+    min-width: 0;
+    max-width: min(220px, calc(50vw + 1rem));
+  }
+  .timeline-step:nth-child(n+4) .timeline-step-links {
+    inset-inline-start: auto;
+    inset-inline-end: calc(50% - 16px);
+  }
+  /* The icon is centred in its step and is 32px wide, so its centre is
+     16px from the popup's anchored edge. Put the arrow there. */
+  .timeline-step-links::before {
+    left: auto;
+    inset-inline-start: 11px;
+    transform: rotate(45deg);
+  }
+  .timeline-step:nth-child(n+4) .timeline-step-links::before {
+    inset-inline-start: auto;
+    inset-inline-end: 11px;
+  }
+  .timeline-step-links li a,
+  .timeline-step-links li .timeline-step-text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
 }
 .td-kpi-grid .td-kpi-link {
   font-weight: 700;
@@ -3145,7 +3178,7 @@ body:has(.od-dashboard) #page-content {
 }
 .od-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(6,minmax(0,1fr));
+  grid-template-columns: repeat(auto-fit, minmax(max(170px, calc((100% - 5 * 12px) / 6)), 1fr));
   gap: 12px;
   align-items: stretch
 }
@@ -3218,7 +3251,8 @@ body:has(.od-dashboard) #page-content {
   font-weight: 800;
   color: var(--od-text);
   line-height: 1.3;
-  min-width: 0
+  min-width: 0;
+  overflow-wrap: anywhere
 }
 .od-kpi-value {
   font-family: var(--od-font-display);
@@ -3669,9 +3703,6 @@ h4.od-subchart {
   }
 }
 @media (max-width:1200px) {
-  .od-kpi-grid {
-    grid-template-columns: repeat(3,minmax(0,1fr))
-  }
   .od-action-grid {
     grid-template-columns: repeat(2,minmax(0,1fr))
   }
@@ -3684,9 +3715,6 @@ h4.od-subchart {
 @media (max-width:991px) {
   .od-analytics-grid {
     grid-template-columns: 1fr
-  }
-  .od-kpi-grid {
-    grid-template-columns: repeat(2,minmax(0,1fr))
   }
 }
 @media (max-width:767px) {
