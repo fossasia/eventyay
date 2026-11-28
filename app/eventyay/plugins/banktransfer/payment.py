@@ -59,7 +59,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                         required=False,
@@ -73,7 +72,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                     ),
@@ -85,7 +83,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                         required=False,
@@ -98,7 +95,6 @@ class BankTransfer(BasePaymentProvider):
                         widget=forms.TextInput(
                             attrs={
                                 'data-display-dependency': '#id_payment_banktransfer_bank_details_type_0',
-                                'data-required-if': '#id_payment_banktransfer_bank_details_type_0',
                             }
                         ),
                         required=False,
@@ -225,16 +221,18 @@ class BankTransfer(BasePaymentProvider):
 
     def settings_form_clean(self, cleaned_data):
         if cleaned_data.get('payment_banktransfer_bank_details_type') == 'sepa':
+            errors = {}
             for f in (
                 'bank_details_sepa_name',
                 'bank_details_sepa_bank',
                 'bank_details_sepa_bic',
                 'bank_details_sepa_iban',
             ):
-                if not cleaned_data.get('payment_banktransfer_%s' % f):
-                    raise ValidationError(
-                        {'payment_banktransfer_%s' % f: _('Please fill out your bank account details.')}
-                    )
+                key = f'payment_banktransfer_{f}'
+                if not cleaned_data.get(key):
+                    errors[key] = _('Please fill out your bank account details.')
+            if errors:
+                raise ValidationError(errors)
         else:
             if not cleaned_data.get('payment_banktransfer_bank_details'):
                 raise ValidationError(
