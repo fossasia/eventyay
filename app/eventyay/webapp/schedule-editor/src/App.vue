@@ -141,10 +141,6 @@
 			)
 				i.fa(:class="isSidebarCollapsed ? 'fa-bars' : 'fa-chevron-left'", aria-hidden="true")
 			#schedule-wrapper
-				.schedule-action-toast(v-if="scheduleActionError", role="alert")
-					span {{ scheduleActionError }}
-					button.action-toast-dismiss(type="button", @click="scheduleActionError = ''", :aria-label="$t('Dismiss')")
-						i.fa.fa-times(aria-hidden="true")
 				.schedule-controls(:style="actionsControlsStyle")
 					.date-selector(v-if="days && days.length", role="tablist", :aria-label="$t('Select date')")
 						button.day-btn(
@@ -158,6 +154,12 @@
 							@click="changeDay(day)"
 						)
 							| {{ day.format(dateFormat) }}
+				.schedule-action-toast(v-if="scheduleActionError", role="alert")
+					.action-toast-message
+						i.fa.fa-exclamation-circle(aria-hidden="true")
+						span {{ scheduleActionError }}
+					button.action-toast-dismiss(type="button", @click="scheduleActionError = ''", :aria-label="$t('Dismiss')")
+						i.fa.fa-times(aria-hidden="true")
 				grid-schedule(:sessions="sessions",
 					:density="gridDensity",
 					:timeDensityMinutes="timeDensityMinutes",
@@ -170,16 +172,18 @@
 					:draggedSession="draggedSession",
 					:isUnassigning="isUnassigning",
 					:allowOverlap="caps.allowOverlap",
+					:canEdit="caps.canEdit",
 					@changeDay="changeDay",
 					@startDragging="caps.canDrag ? startDragging($event) : null",
 					@rescheduleSession="caps.canDrag ? rescheduleSession($event) : null",
 					@createSession="caps.canEdit ? createSession($event) : null",
-					@editSession="caps.canEdit ? editorStart($event) : null",
+					@editSession="caps.canEdit && !editorSession && !editorSessionWaiting ? editorStart($event) : null",
 					@deleteSession="caps.canDelete ? deleteSessionDirect($event) : null",
 					@assignMembers="caps.canAssignMembers ? openAssignModal($event) : null",
+					@stretchBreakDrop="caps.canEdit ? onStretchBreakDrop($event) : null",
 					@unscheduleSession="caps.canDrag ? unscheduleSession($event) : null")
-			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel")
-				form#session-editor(@click.stop="", @submit.prevent="editorSave", @keydown.enter="editorSubmit")
+			#session-editor-wrapper(v-if="editorSession && caps.canEdit", @click="editorCancel", @pointerdown.stop="", @pointerup.stop="")
+				form#session-editor(@click.stop="", @pointerdown.stop="", @pointerup.stop="", @submit.prevent="editorSave", @keydown.enter="editorSubmit")
 					h3.session-editor-title(v-if="editorSession.code")
 						a(v-if="caps.showSubmissionLinks && organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
@@ -241,9 +245,17 @@
 									li(v-for="warning of warnings[editorSession.code]") {{ warning.message }}
 					.button-row
 						input(type="submit")
-						bunt-button#btn-delete(v-if="caps.canEditRoles ? editorSession.id : !editorSession.code", @click="editorDelete", :loading="editorSessionWaiting") {{ $t('Delete') }}
-						bunt-button#btn-cancel(type="button", @click="editorCancel") {{ $t('Cancel') }}
-						bunt-button#btn-save(@click="editorSave", :loading="editorSessionWaiting") {{ $t('Save') }}
+						bunt-button#btn-delete(v-if="caps.canEditRoles ? editorSession.id : !editorSession.code", type="button", @click="editorDelete", :disabled="editorSessionWaiting")
+							span(v-if="editorDeleteWaiting")
+								i.fa.fa-spinner.fa-spin
+								|  {{ $t('Deleting…') }}
+							span(v-else) {{ $t('Delete') }}
+						bunt-button#btn-cancel(type="button", @click="editorCancel", :disabled="editorSessionWaiting") {{ $t('Cancel') }}
+						bunt-button#btn-save(@click="editorSave", :disabled="editorSessionWaiting")
+							span(v-if="editorSaveWaiting")
+								i.fa.fa-spinner.fa-spin
+								|  {{ $t('Saving…') }}
+							span(v-else) {{ $t('Save') }}
 			
 			#assign-modal-wrapper(v-if="assigningSession && caps.canAssignMembers", @click="closeAssignModal")
 				#session-editor(@click.stop="")
@@ -426,8 +438,11 @@ const warnings = reactive<Record<string, Warning[]>>({})
 const currentDay = ref<Moment | null>(null)
 const draggedSession = ref<SessionData | null>(null)
 const editorSession = ref<SessionData | null>(null)
-const editorSessionWaiting = ref<boolean>(false)
+const editorSaveWaiting = ref<boolean>(false)
+const editorDeleteWaiting = ref<boolean>(false)
+const editorSessionWaiting = computed(() => editorSaveWaiting.value || editorDeleteWaiting.value)
 const editorSessionError = ref<string>('')
+let lastModalClosedAt = 0
 const assigningSession = ref<SessionData | null>(null)
 const assigningWaiting = ref<boolean>(false)
 const assignModalError = ref<string>('')
@@ -453,6 +468,7 @@ let breakDeleteId: number | string | null = null
 const pendingBreakCreations = new Map<string, { dismissed: boolean }>()
 const pendingBreakDeletions = new Set<string>()
 const deletedBreakIds = new Set<string>()
+const pendingStretchRooms = new Set<number | string>()
 
 const scheduleActionError = ref<string>('')
 let scheduleActionErrorTimer: ReturnType<typeof setTimeout> | null = null
@@ -1167,7 +1183,13 @@ interface CreateSessionEvent {
   session: Talk
 }
 
-async function createSession(e: CreateSessionEvent): Promise<void> {
+interface CreateSessionResult {
+  success: boolean
+  dismissed?: boolean
+  session?: any
+}
+
+async function createSession(e: CreateSessionEvent): Promise<CreateSessionResult> {
   stopDragging()
   const roomId = typeof e.session.room === 'object' && e.session.room !== null ? (e.session.room as any).id : e.session.room
   const startStr = typeof e.session.start === 'object' && e.session.start !== null && 'format' in e.session.start
@@ -1228,7 +1250,7 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
           pendingBreakDeletions.delete(String(realId))
         }
       }
-      return
+      return { success: false, dismissed: true }
     }
 
     if (e.session.code && Array.isArray(response.warnings)) {
@@ -1248,6 +1270,11 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
       if (idx !== -1) {
         schedule.value.talks[idx] = realSession
         schedule.value.talks = [...schedule.value.talks]
+      } else {
+        const exists = schedule.value.talks.some((s) => String(s.id) === String(realSession.id))
+        if (!exists) {
+          schedule.value.talks = [...schedule.value.talks, realSession]
+        }
       }
     }
     if (e.session.code) {
@@ -1255,16 +1282,21 @@ async function createSession(e: CreateSessionEvent): Promise<void> {
         console.error('Failed to refresh additional schedule data after create', error)
       })
     }
+    return { success: true, session: realSession }
   } catch (error) {
     pendingBreakCreations.delete(tempId)
     if (schedule.value) {
       schedule.value.talks = schedule.value.talks.filter((s) => String(s.id) !== tempId)
     }
     console.error('Failed to create session', error)
+    return { success: false, dismissed: false }
   }
 }
 
 function editorStart(session: SessionData | Talk): void {
+  if (editorSession.value || editorSessionWaiting.value || Date.now() - lastModalClosedAt < 400) return
+  editorSaveWaiting.value = false
+  editorDeleteWaiting.value = false
   editorSessionError.value = ''
   const newEditorSession = { ...session } as SessionData
   if (newEditorSession.title && typeof newEditorSession.title === 'object') {
@@ -1317,7 +1349,7 @@ function editorSubmit(event: KeyboardEvent): void {
 async function editorSave(): Promise<void> {
   if (!editorSession.value || editorSessionWaiting.value) return
 
-  editorSessionWaiting.value = true
+  editorSaveWaiting.value = true
   if (editorSession.value.start) {
     const startMoment = moment(editorSession.value.start)
     editorSession.value.end = startMoment.clone().add(editorSession.value.duration ?? 0, 'minutes')
@@ -1356,10 +1388,20 @@ async function editorSave(): Promise<void> {
       }
     }
     editorSession.value = null
+    lastModalClosedAt = Date.now()
 
     try {
       if (caps.showRoles) {
-        schedule.value = await fetchSchedule()
+        const newSched = await fetchSchedule()
+        if (schedule.value) {
+          const pendingOptimistic = schedule.value.talks.filter((s) => String(s.id).startsWith('temp-'))
+          for (const opt of pendingOptimistic) {
+            if (!newSched.talks.some((t) => String(t.id) === String(opt.id))) {
+              newSched.talks.push(opt)
+            }
+          }
+        }
+        schedule.value = newSched
       }
       await fetchAdditionalScheduleData()
     } catch {
@@ -1368,26 +1410,87 @@ async function editorSave(): Promise<void> {
   } catch {
     editorSessionError.value = $t('Failed to save. Please try again.')
   } finally {
-    editorSessionWaiting.value = false
+    editorSaveWaiting.value = false
   }
 }
 
 function editorCancel(): void {
+  if (editorSessionWaiting.value) return
+  editorSaveWaiting.value = false
+  editorDeleteWaiting.value = false
   editorSession.value = null
   editorSessionError.value = ''
+  lastModalClosedAt = Date.now()
 }
 
 async function editorDelete(): Promise<void> {
-  if (!editorSession.value) return
-  let deleted: boolean
-  if (mode === 'shifts' || mode === 'public-shifts') {
-    deleted = await deleteShiftById(editorSession.value.id)
-  } else {
-    if (editorSession.value.code) return
-    deleted = await deleteTalkBreakById(editorSession.value.id)
+  if (!editorSession.value || editorSessionWaiting.value) return
+  editorDeleteWaiting.value = true
+  try {
+    let deleted: boolean
+    if (mode === 'shifts' || mode === 'public-shifts') {
+      deleted = await deleteShiftById(editorSession.value.id)
+    } else {
+      if (editorSession.value.code) return
+      deleted = await deleteTalkBreakById(editorSession.value.id)
+    }
+    if (deleted) {
+      editorSession.value = null
+      lastModalClosedAt = Date.now()
+    }
+  } finally {
+    editorDeleteWaiting.value = false
   }
-  if (deleted) {
-    editorSession.value = null
+}
+
+async function onStretchBreakDrop(payload: {
+  session: SessionData
+  targetRooms: Room[]
+  conflicted: boolean
+}): Promise<void> {
+  if (payload.conflicted) {
+    showScheduleActionError($t('Cannot stretch break: conflicting session exists in target room.'))
+    return
+  }
+  if (!payload.targetRooms?.length) return
+
+  if (payload.targetRooms.some((room) => pendingStretchRooms.has(room.id))) {
+    showScheduleActionError($t('Cannot stretch break: an operation is already pending for target room.'))
+    return
+  }
+
+  for (const room of payload.targetRooms) {
+    pendingStretchRooms.add(room.id)
+  }
+
+  const failedRooms: string[] = []
+  try {
+    for (const room of payload.targetRooms) {
+      const newBreakData: any = {
+        title: payload.session.title,
+        duration: payload.session.duration,
+        start: payload.session.start,
+        end: payload.session.end,
+        room: { id: room.id, name: room.name },
+        uncreated: true,
+      }
+      const result = await createSession({ session: newBreakData })
+      if (!result.success && !result.dismissed) {
+        failedRooms.push(getLocalizedString(room.name) || String(room.name))
+      }
+    }
+  } finally {
+    for (const room of payload.targetRooms) {
+      pendingStretchRooms.delete(room.id)
+    }
+  }
+
+  if (failedRooms.length > 0) {
+    showScheduleActionError(
+      $t('Failed to create break in: {{rooms}}. Please retry for those rooms.', {
+        rooms: failedRooms.join(', '),
+      })
+    )
   }
 }
 
@@ -3032,14 +3135,23 @@ html.rtl
 	border: 1px solid #ef4444
 	color: #991b1b
 	padding: 8px 14px
-	margin: 8px 16px 0 16px
+	margin: 8px 16px 4px 16px
 	border-radius: 6px
 	font-size: 13px
 	font-weight: 500
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08)
 	animation: dropZoneSlideDown 0.2s ease-out both
 	position: relative
-	z-index: 50
+	z-index: 45
+	.action-toast-message
+		display: flex
+		align-items: center
+		gap: 8px
+		min-width: 0
+		i.fa
+			font-size: 14px
+			color: #dc2626
+			flex-shrink: 0
 	.action-toast-dismiss
 		background: none
 		border: none
@@ -3047,6 +3159,7 @@ html.rtl
 		cursor: pointer
 		padding: 2px 6px
 		border-radius: 4px
+		flex-shrink: 0
 		&:hover
 			background-color: rgba(239, 68, 68, 0.15)
 

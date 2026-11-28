@@ -23,17 +23,21 @@
 			session(
 				v-if="hasValidPosition(session)"
 				:session="session",
+				:canEdit="canEdit",
 				:warnings="warningsFor(session)",
 				:isDragged="draggedSession && (session.id === draggedSession.id)",
 				:style="sessionStyles.get(session.id)",
 				:showRoom="false",
 				v-bind="talkSessionBindings",
 				@startDragging="startDragging($event)",
+				@stretchBreak="startStretchingBreak($event)",
 				@editSession="emit('editSession', $event)",
 				@deleteSession="emit('deleteSession', $event)",
 				@assignMembers="emit('assignMembers', $event)",
 				v-on="talkSessionListeners",
 			)
+		.stretch-conflict-indicator(v-if="stretchingBreak && stretchConflicted", :style="stretchConflictIndicatorStyle")
+			i.fa.fa-ban(aria-hidden="true")
 		.availability(v-for="availability of visibleAvailabilities", :key="availabilityKey(availability)", :style="availabilityStyles.get(availabilityKey(availability))", :class="availability.active ? ['active'] : []")
 	#hidden-rooms.no-print(v-if="hiddenRooms.length")
 		.hidden-rooms-header
@@ -158,6 +162,7 @@ const props = defineProps<{
   density: 'compact' | 'default' | 'comfortable'
   timeDensityMinutes: number
   allowOverlap?: boolean
+  canEdit?: boolean
   isUnassigning?: boolean
 }>()
 
@@ -169,7 +174,8 @@ const emit = defineEmits([
   'unscheduleSession',
   'createSession',
   'rescheduleSession',
-  'changeDay'
+  'changeDay',
+  'stretchBreakDrop'
 ])
 
 const talkSessionBindings = mode === 'talks' ? { allowUnschedule: true } : {}
@@ -187,6 +193,32 @@ const dragScrollTimer = ref<ReturnType<typeof setInterval> | null>(null)
 const dragStart = ref<DragStartData | null>(null)
 const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
+const stretchingBreak = ref<{
+  session: SessionDatum
+  direction: 'left' | 'right'
+  originRoomId: string | number
+  pointerId: number
+  isRtl?: boolean
+} | null>(null)
+const stretchTargetRoomId = ref<string | number | null>(null)
+
+const stretchOriginRoomIndex = computed(() => {
+  if (!stretchingBreak.value) return -1
+  return visibleRooms.value.findIndex(
+    (r) => String(r.id) === String(stretchingBreak.value?.originRoomId)
+  )
+})
+
+const stretchTargetRoomIndex = computed(() => {
+  if (stretchTargetRoomId.value === null) return -1
+  return visibleRooms.value.findIndex(
+    (r) => String(r.id) === String(stretchTargetRoomId.value)
+  )
+})
+const getIsRtl = (): boolean => {
+  if (typeof document === 'undefined') return false
+  return document.documentElement.dir === 'rtl' || document.documentElement.classList.contains('rtl')
+}
 
 let cachedGrid: {
   rooms: CachedRoom[]
@@ -464,10 +496,52 @@ const gridStyle = computed(() => {
   }
 })
 
+const stretchConflicted = computed(() => {
+  if (props.allowOverlap) return false
+  if (!stretchingBreak.value || stretchTargetRoomId.value === null) return false
+  const s = stretchingBreak.value.session
+  if (!s.start || !s.end) return false
+  const startMs = moment(s.start).valueOf()
+  const endMs = moment(s.end).valueOf()
+  const origin = stretchOriginRoomIndex.value
+  const target = stretchTargetRoomIndex.value
+  if (origin === -1 || target === -1) return false
+  const minIdx = Math.min(origin, target)
+  const maxIdx = Math.max(origin, target)
+
+  for (let i = minIdx; i <= maxIdx; i++) {
+    if (i === origin) continue
+    const room = visibleRooms.value[i]
+    if (!room) continue
+    const list = sessionsByRoom.value.get(String(room.id))
+    if (!list) continue
+    const hasConflict = list.some(
+      (item) => String(item.id) !== String(s.id) && item.start < endMs && item.end > startMs
+    )
+    if (hasConflict) return true
+  }
+  return false
+})
+
+const stretchConflictIndicatorStyle = computed<Record<string, string | number>>(() => {
+  if (!stretchingBreak.value || stretchTargetRoomId.value === null) return {}
+  const s = stretchingBreak.value.session
+  if (!s.start || !s.end) return {}
+  const targetIndex = stretchTargetRoomIndex.value
+  if (targetIndex === -1) return {}
+  const targetCol = targetIndex + 2
+  return {
+    'grid-row': gridRowSpan(moment(s.start), moment(s.end)),
+    'grid-column': `${targetCol} / ${targetCol + 1}`,
+  }
+})
+
 const gridClasses = computed(() => {
   const result: string[] = []
   if (props.draggedSession) result.push('is-dragging')
   if (hoverSlice.value && props.draggedSession && !hoverSliceLegal.value) result.push('illegal-hover')
+  if (stretchingBreak.value) result.push('is-stretching-break')
+  if (stretchingBreak.value && stretchConflicted.value) result.push('illegal-stretch')
   return result
 })
 
@@ -566,7 +640,112 @@ const startDragging = ({ session, event }: DragEventPayload) => {
   emit('startDragging', { event, session })
 }
 
+const startStretchingBreak = ({
+  session,
+  event,
+  direction,
+}: {
+  session: SessionDatum
+  event: PointerEvent
+  direction: 'left' | 'right'
+}) => {
+  const roomId = typeof session.room === 'object' && session.room !== null ? session.room.id : session.room
+  const originRoom = visibleRooms.value.find((r) => String(r.id) === String(roomId))
+  if (!originRoom) return
+  refreshGridOffset()
+  stretchingBreak.value = {
+    session,
+    direction,
+    originRoomId: originRoom.id,
+    pointerId: event.pointerId,
+    isRtl: getIsRtl(),
+  }
+  stretchTargetRoomId.value = originRoom.id
+}
+
+const updateStretchRoom = (clientX: number, clientY: number) => {
+  if (!stretchingBreak.value) return
+  getTimeAndRoomFromPoint(clientX, clientY)
+  if (cachedGrid) {
+    syncCachedGridToScroll()
+    const r = cachedGrid.rooms.find((room) => clientX >= room.left && clientX < room.right)
+    if (r) {
+      const rtl = stretchingBreak.value.isRtl ?? getIsRtl()
+      const origin = stretchOriginRoomIndex.value
+      if (origin === -1) return
+      const currentTargetIndex = visibleRooms.value.findIndex(
+        (room) => String(room.id) === String(r.room.id)
+      )
+      if (currentTargetIndex === -1) return
+
+      if (stretchingBreak.value.direction === 'left') {
+        const isDisallowed = rtl ? currentTargetIndex < origin : currentTargetIndex > origin
+        stretchTargetRoomId.value = isDisallowed ? stretchingBreak.value.originRoomId : r.room.id
+      } else if (stretchingBreak.value.direction === 'right') {
+        const isDisallowed = rtl ? currentTargetIndex > origin : currentTargetIndex < origin
+        stretchTargetRoomId.value = isDisallowed ? stretchingBreak.value.originRoomId : r.room.id
+      } else {
+        stretchTargetRoomId.value = r.room.id
+      }
+    }
+  }
+}
+
+const stopStretching = (event?: PointerEvent) => {
+  if (!stretchingBreak.value) return
+  if (event && event.pointerId !== undefined && event.pointerId !== stretchingBreak.value.pointerId) {
+    return
+  }
+  const { session } = stretchingBreak.value
+  const originIndex = stretchOriginRoomIndex.value
+  const targetIndex = stretchTargetRoomIndex.value
+  const conflicted = stretchConflicted.value
+
+  const targetRooms: Room[] = []
+  if (
+    originIndex !== -1 &&
+    targetIndex !== -1 &&
+    targetIndex !== originIndex &&
+    !conflicted
+  ) {
+    const minIdx = Math.min(originIndex, targetIndex)
+    const maxIdx = Math.max(originIndex, targetIndex)
+    for (let i = minIdx; i <= maxIdx; i++) {
+      if (i !== originIndex && visibleRooms.value[i]) {
+        targetRooms.push(visibleRooms.value[i])
+      }
+    }
+  }
+
+  const hasStretchedToDifferentRoom =
+    originIndex !== -1 && targetIndex !== -1 && targetIndex !== originIndex
+
+  emit('stretchBreakDrop', {
+    session,
+    targetRooms,
+    conflicted: conflicted && hasStretchedToDifferentRoom,
+  })
+
+  stretchingBreak.value = null
+  stretchTargetRoomId.value = null
+  cachedGrid = null
+}
+
+const cancelStretching = (event?: PointerEvent) => {
+  if (!stretchingBreak.value) return
+  if (event && event.pointerId !== undefined && event.pointerId !== stretchingBreak.value.pointerId) {
+    return
+  }
+  stretchingBreak.value = null
+  stretchTargetRoomId.value = null
+  cachedGrid = null
+}
+
 const stopDragging = (event: PointerEvent) => {
+  if (stretchingBreak.value) {
+    stopStretching(event)
+    return
+  }
   if (dragStart.value && props.draggedSession) {
     const distance = Math.abs(dragStart.value.x - event.clientX) + Math.abs(dragStart.value.y - event.clientY)
     const timeDiff = moment().diff(dragStart.value.now, 'ms')
@@ -817,6 +996,10 @@ const scheduleHoverUpdate = () => {
   })
 }
 const onDocPointerMove = (e: PointerEvent) => {
+  if (stretchingBreak.value && e.pointerId === stretchingBreak.value.pointerId) {
+    updateStretchRoom(e.clientX, e.clientY)
+    return
+  }
   if (props.draggedSession && e.isPrimary) {
     lastPointerEvent = e
     scheduleHoverUpdate()
@@ -902,8 +1085,31 @@ const getRoomHeaderStyle = (room: { id: number | string }, fallbackIndex: number
 
 const sessionStyles = computed(() => {
   const map = new Map<number | string, Record<string, string | number>>()
+  const originIndex = stretchOriginRoomIndex.value
+  const targetIndex = stretchTargetRoomIndex.value
+  const isStretching =
+    stretchingBreak.value &&
+    originIndex !== -1 &&
+    targetIndex !== -1
+  const originCol = originIndex + 2
+  const targetCol = targetIndex + 2
+  const colStart = Math.min(originCol, targetCol)
+  const colEnd = Math.max(originCol, targetCol) + 1
+
   for (const session of visibleSessions.value) {
-    map.set(session.id, getSessionStyle(session))
+    const base = getSessionStyle(session)
+    if (
+      isStretching &&
+      String(session.id) === String(stretchingBreak.value?.session.id)
+    ) {
+      map.set(session.id, {
+        ...base,
+        'grid-column': `${colStart} / ${colEnd}`,
+        'z-index': 50,
+      })
+    } else {
+      map.set(session.id, base)
+    }
   }
   return map
 })
@@ -1023,6 +1229,8 @@ onMounted(async () => {
 
   // Listen on document level so touch drags (where pointer is captured elsewhere) work
   document.addEventListener('pointermove', onDocPointerMove)
+  window.addEventListener('pointerup', stopStretching)
+  window.addEventListener('pointercancel', cancelStretching)
 
   observer = new IntersectionObserver(onIntersect, {
     root: scrollParent.value,
@@ -1039,6 +1247,8 @@ onMounted(async () => {
 onUnmounted(() => {
   timesliceRefs.value = []
   document.removeEventListener('pointermove', onDocPointerMove)
+  window.removeEventListener('pointerup', stopStretching)
+  window.removeEventListener('pointercancel', cancelStretching)
   scrollParent.value?.removeEventListener('scroll', onScroll)
   if (pointerRaf !== null) {
     cancelAnimationFrame(pointerRaf)
@@ -1107,6 +1317,21 @@ onUnmounted(() => {
 			cursor: not-allowed
 			.c-linear-schedule-session
 				cursor: not-allowed
+		&.illegal-stretch
+			cursor: not-allowed
+			.c-linear-schedule-session
+				cursor: not-allowed
+		.stretch-conflict-indicator
+			z-index: 100
+			display: flex
+			align-items: center
+			justify-content: center
+			background: rgba(239, 68, 68, 0.35)
+			border: 2px dashed #dc2626
+			border-radius: 6px
+			color: #dc2626
+			font-size: 26px
+			pointer-events: none
 		&.is-dragging
 			.c-linear-schedule-session
 				transition: none
