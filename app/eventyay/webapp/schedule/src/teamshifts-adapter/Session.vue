@@ -108,6 +108,7 @@ import {
 	getCurrentUserId,
 	getCurrentUserName,
 	getCanManageShifts,
+	getCanSelfSignup,
 	getEventRoles,
 	getShiftTrackColor,
 	getShiftActionEmails,
@@ -233,6 +234,12 @@ export default {
 		},
 		canManageShifts () {
 			return getCanManageShifts(this.scheduleData)
+		},
+		canSelfSignup () {
+			return getCanSelfSignup(this.scheduleData)
+		},
+		hasStarted () {
+			return Boolean(this.now && this.session.start && !this.session.start.isAfter(this.now))
 		},
 		eventRoles () {
 			return getEventRoles(this.scheduleData)
@@ -363,6 +370,7 @@ export default {
 		},
 		canClaimRole (role) {
 			if (!this.currentUserId) return false
+			if (!this.canSelfSignup || this.hasStarted) return false
 			if (role.is_restricted) return false
 			if (this.isRoleFull(role)) return false
 			if (this.myAssignedRoleId) return false
