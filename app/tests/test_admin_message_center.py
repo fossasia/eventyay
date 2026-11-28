@@ -8,7 +8,7 @@ from django.utils.timezone import now
 
 from eventyay.base.email import TEST_EMAIL_BODY
 from eventyay.base.i18n import LazyI18nString
-from eventyay.base.models import User
+from eventyay.base.models import Event, Organizer, User
 from eventyay.base.models.admin_mail import (
     AdminEmailQueue,
     AdminEmailQueueFilter,
@@ -556,14 +556,23 @@ def _staff_login(client, user):
 
 
 @pytest.mark.django_db
-def test_users_select2_requires_three_characters(client, admin_user):
+def test_users_select2_requires_non_empty(client, admin_user):
     _staff_login(client, admin_user)
+    User.objects.create_user(email='ja@example.org', password='x', fullname='Ja')
     User.objects.create_user(email='jane@example.org', password='x', fullname='Jane Doe')
 
-    for query in ('', 'ja', '  j  '):
+    for query in ('', '   '):
         response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': query})
         assert response.status_code == 200
         assert response.json() == {'results': [], 'pagination': {'more': False}}
+
+    # Test exact match for length < 3
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'ja', 'exact': '1'})
+    assert len(response.json()['results']) == 1
+
+    # Test partial match when length >= 3
+    response = client.get(reverse('eventyay_admin:admin.users.select2'), {'query': 'jan', 'exact': '1'})
+    assert len(response.json()['results']) == 1
 
 
 @pytest.mark.django_db
@@ -602,11 +611,11 @@ def test_users_select2_rejects_non_staff(client, regular_user):
 
 
 @pytest.mark.django_db
-def test_compose_form_selectors_wait_for_three_characters():
+def test_compose_form_selectors_wait_for_one_character():
     form = AdminComposeForm()
     for name in ('selected_users', 'selected_events', 'selected_organisers'):
         attrs = form.fields[name].widget.attrs
-        assert attrs['data-minimum-input-length'] == 3
+        assert attrs['data-minimum-input-length'] == 1
         assert attrs['data-delay'] == 250
 
 
@@ -747,3 +756,17 @@ def test_send_still_validates_audience_filters(admin_client):
     response = admin_client.post('/admin/messages/compose/', data=data)
     assert 'event_date_from' in response.context['form'].errors
     assert not AdminEmailQueue.objects.exists()
+@pytest.mark.django_db
+def test_event_list_typeahead_whitespace_trimmed(client, admin_user):
+    organizer = Organizer.objects.create(name='Test Org', slug='test-org')
+    event = Event.objects.create(
+        organizer=organizer, name='Test Event', slug='test-event',
+        date_from=now()
+    )
+    _staff_login(client, admin_user)
+    
+    response = client.get(reverse('control:events.typeahead'), {'query': '  Test Event  '})
+    assert response.status_code == 200
+    results = response.json()['results']
+    assert len(results) == 1
+    assert results[0]['id'] == event.pk
