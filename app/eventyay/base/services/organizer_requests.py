@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 
 from eventyay.base.forms.organizer_request import validate_request_slug
 from eventyay.base.models import Organizer, OrganizerRequest, User
+from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.organizer_creation import create_core_team
 
@@ -72,15 +73,26 @@ def notify_approval(
 def notify_submission(application: OrganizerRequest) -> None:
     notify(
         application.email,
-        _('Organiser request received'),
-        _('Thank you for your request. We will review it within a few business days.'),
+        _('We received your organiser request'),
+        _(
+            'Thank you for your organiser request.\n\n'
+            'A platform administrator will review it within a few business days.\n\n'
+            'What happens next: we will email you at this address as soon as the request is approved '
+            'or rejected. You do not need to do anything until then. If it is approved, '
+            'that email will contain the link to your organiser.'
+        ),
     )
     review_url = absolute_url(reverse('eventyay_admin:admin.organizer_requests.detail', args=[application.pk]))
-    body = _('A new organiser request is ready for review.\n\nReview: {url}').format(url=review_url)
+    list_url = absolute_url(reverse('eventyay_admin:admin.organizer_requests'))
+    body = _(
+        'A new organiser request is waiting for review.\n\n'
+        'Open the request to read the details and decide: {review_url}\n\n'
+        'All pending requests are listed here: {list_url}'
+    ).format(review_url=review_url, list_url=list_url)
     for email in User.objects.filter(
         Q(is_staff=True) | Q(is_superuser=True), is_active=True, is_spam=False
     ).values_list('email', flat=True):
-        notify(email, _('New organiser request'), body)
+        notify(email, _('New organiser request ready for review'), body)
 
 
 @transaction.atomic
@@ -119,9 +131,16 @@ def review_request(
         application.status = OrganizerRequest.Status.REJECTED
         application.reason = reason
         subject = _('Your organiser request has been rejected')
-        body = _('Your organiser request has been rejected.')
+        body = _('Your organiser request was not approved, so no organiser has been created.')
         if reason:
-            body += '\n\n' + _('Reason: {reason}').format(reason=reason)
+            body += '\n\n' + _('Reason from the reviewer: {reason}').format(reason=reason)
+        else:
+            body += '\n\n' + _('The reviewer did not give a reason.')
+        # The request form returns 404 while organiser requests are switched off.
+        if organizer_request_enabled():
+            body += '\n\n' + _(
+                'What you can do next: if you would like to try again, you can send a new request: {url}'
+            ).format(url=absolute_url(reverse('organizer_request.create')))
     application.reviewed_by = reviewer
     application.reviewed_at = timezone.now()
     application.save()
