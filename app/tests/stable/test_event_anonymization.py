@@ -18,6 +18,7 @@ from eventyay.base.models import (
     User,
     WaitingListEntry,
 )
+from eventyay.base.models.waitinglist import WaitingListException
 from eventyay.base.services.event_anonymization import anonymize_event, flush_pending_file_deletions
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.helpers.anonymization import ANONYMIZED_NAME, is_anonymized_email
@@ -53,6 +54,7 @@ def test_event_run_resumes_and_isolates_events(event, monkeypatch):
             price=23,
             expires=event.date_to,
             attendee_email='cart@example.org',
+            job_title='CTO',
             meta_info='{"attendee_form_data": "PII"}',
         )
         recipient = EmailQueueToUser.objects.create(
@@ -103,7 +105,7 @@ def test_event_run_resumes_and_isolates_events(event, monkeypatch):
             record.refresh_from_db()
         assert is_anonymized_email(waiting.email) and is_anonymized_email(recipient.email)
         assert recipient.mail.bcc == ''
-        assert cart.attendee_email is None and cart.meta_info_data == {}
+        assert cart.attendee_email is None and cart.job_title is None and cart.meta_info_data == {}
         assert video.profile == {} and video.token_id is None and video.client_id is None
         assert video.fullname is None and video.email is None
         assert 'Alice' not in str(video) and 'alice@example.org' not in str(video)
@@ -298,3 +300,19 @@ def test_file_deletion_preserves_paths_appended_during_flush(event, monkeypatch)
         assert run.pending_file_deletions == ['concurrent.pdf']
         run.refresh_from_db()
         assert run.pending_file_deletions == ['concurrent.pdf']
+
+
+def test_anonymized_waiting_list_entry_cannot_receive_a_voucher(event):
+    event.date_from = event.date_to = now() - timedelta(days=20)
+    event.save()
+    with scope(event=event, organizer=event.organizer):
+        product = Product.objects.create(event=event, name='Ticket', default_price=23)
+        Quota.objects.create(event=event, name='All', size=10).products.add(product)
+        waiting = WaitingListEntry.objects.create(event=event, product=product, email='waiter@example.org')
+        anonymize_event.apply(args=(event.pk, 'manual'), throw=True)
+        waiting.refresh_from_db()
+        assert is_anonymized_email(waiting.email)
+        with pytest.raises(WaitingListException):
+            waiting.send_voucher()
+        waiting.refresh_from_db()
+        assert waiting.voucher is None

@@ -2143,7 +2143,7 @@ class OrderChangeManager:
                 op.position.price = op.price.gross
                 op.position.tax_rate = op.price.rate
                 op.position.tax_value = op.price.tax
-                op.position.save()
+                op.position.save(update_fields=['price', 'tax_rate', 'tax_value'])
             elif isinstance(op, self.TaxRuleOperation):
                 if isinstance(op.position, OrderPosition):
                     self.order.log_action(

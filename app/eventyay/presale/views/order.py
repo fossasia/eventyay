@@ -7,6 +7,7 @@ import os
 import re
 from collections import OrderedDict
 from decimal import Decimal
+from functools import partial
 from urllib.parse import urlparse, urlunparse
 
 import jwt
@@ -1035,7 +1036,9 @@ class OrderModify(OrderProtectedActionMixin, EventViewMixin, OrderDetailMixin, O
                     self.order.log_action('eventyay.event.order.invoice.reissued', data={'invoice': inv.pk})
                     messages.success(self.request, _('The invoice has been reissued.'))
 
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+        transaction.on_commit(
+            partial(invalidate_cache.apply_async, kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+        )
         CachedTicket.objects.filter(order_position__order=self.order).delete()
         CachedCombinedTicket.objects.filter(order=self.order).delete()
         return redirect(self.get_order_url())
