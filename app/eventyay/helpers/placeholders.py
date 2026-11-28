@@ -12,14 +12,19 @@ TEMPLATE_TOKEN = re.compile(
 # What follows a stray "{" when a placeholder was mistyped: "{ event_name }", "{event_name!x}", or
 # "{event_name" with the closing brace missing.
 ATTEMPTED_PLACEHOLDER = re.compile(r'\s*(?P<name>' + IDENTIFIER + r')(?:[^{}\s]*\s*\})?')
+# A format spec is user input and format() allocates its width, so five digits or more is never evaluated.
+EXCESSIVE_FORMAT_NUMBER = re.compile(r'\d{5,}')
 
 
 def is_placeholder(match: re.Match[str]) -> bool:
+    """Return whether a ``{name}`` token is a slot ``format_map`` can fill with a string value."""
     if len(match.group()) <= 2:
         return False
     format_spec = match.group('format_spec')
     if format_spec is None:
         return True
+    if EXCESSIVE_FORMAT_NUMBER.search(format_spec):
+        return False
     # Mail context values are strings, so a spec a string cannot take (e.g. "{note: see below}")
     # would raise ValueError in format_map. Such text is not a placeholder.
     try:
@@ -34,13 +39,18 @@ def escape_stray_braces(template: str) -> str:
 
     Organizers type braces as plain text (``"{"``, ``{}``, ``See you :}``). ``str.format_map`` raises
     ``ValueError`` on those, so they are escaped here and render literally. Placeholders with a valid
-    format spec, such as ``{name:>5}``, are kept.
+    format spec, such as ``{name:>5}``, are kept. Markdown-escaped names such as ``{join\\_online\\_event}``
+    are rewritten to the name ``format_map`` looks up.
     """
 
     def replace(match: re.Match[str]) -> str:
+        """Keep escapes and placeholders (with their canonical name) and double every other brace."""
         token = match.group()
-        if len(token) == 2 or is_placeholder(match):
+        if len(token) == 2:
             return token
+        if is_placeholder(match):
+            name = match.group('name')
+            return '{' + name.replace('\\_', '_') + token[len(name) + 1 :]
         if len(token) == 1:
             return token * 2
         return '{{' + token[1:-1] + '}}'
@@ -51,6 +61,13 @@ def escape_stray_braces(template: str) -> str:
 def find_placeholders(template: str) -> list[str]:
     """Return the ``{placeholder}`` slots ``escape_stray_braces`` keeps, with markdown escapes removed."""
     return [match.group().replace('\\_', '_') for match in TEMPLATE_TOKEN.finditer(template) if is_placeholder(match)]
+
+
+def find_placeholder_names(template: str) -> list[str]:
+    """Return the names of the ``{placeholder}`` slots ``escape_stray_braces`` keeps."""
+    return [
+        match.group('name').replace('\\_', '_') for match in TEMPLATE_TOKEN.finditer(template) if is_placeholder(match)
+    ]
 
 
 def find_malformed_placeholders(template: str, names) -> list[str]:
