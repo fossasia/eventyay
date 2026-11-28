@@ -301,14 +301,20 @@ def complete_resale(*, listing: ResaleListing, buyer_order: Order, buyer_positio
     if seller_position.canceled:
         raise ResaleError(_('The original ticket is already cancelled.'))
 
+    fee, payout = calculate_seller_payout(listing.event, listing.price)
+
     # Invalidate the seller ticket. OrderChangeManager refuses to empty an order,
-    # so single-ticket seller orders are cancelled wholesale instead.
+    # so single-ticket seller orders are cancelled wholesale. Keep the processing
+    # fee as a cancellation fee so the order is not left "overpaid" by that amount.
     remaining = (
         listing.seller_order.positions.filter(canceled=False).exclude(pk=seller_position.pk).count()
     )
     try:
         if remaining == 0:
-            _cancel_order(listing.seller_order, send_mail=True, cancel_invoice=True)
+            cancel_kwargs = {'send_mail': True, 'cancel_invoice': True}
+            if fee > Decimal('0.00'):
+                cancel_kwargs['cancellation_fee'] = fee
+            _cancel_order(listing.seller_order, **cancel_kwargs)
             listing.seller_order.refresh_from_db()
         else:
             ocm = OrderChangeManager(listing.seller_order, notify=False)
@@ -317,7 +323,6 @@ def complete_resale(*, listing: ResaleListing, buyer_order: Order, buyer_positio
     except (OrderError, Quota.QuotaExceededException) as exc:
         raise ResaleError(str(exc)) from exc
 
-    fee, payout = calculate_seller_payout(listing.event, listing.price)
     listing.fee_amount = fee
     listing.seller_payout = payout
     listing.status = ResaleListing.STATUS_SOLD
