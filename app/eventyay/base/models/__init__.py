@@ -18,6 +18,7 @@ from .devices import Device, Gate
 from .event import (
     Event,
     Event_SettingsStore,
+    EventAnonymizationRun,
     EventExtraLink,
     EventLock,
     EventMetaProperty,

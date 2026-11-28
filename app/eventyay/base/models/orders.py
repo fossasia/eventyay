@@ -212,6 +212,7 @@ class Order(LockModel, LoggedModel):
     require_approval = models.BooleanField(default=False)
     sales_channel = models.CharField(max_length=190, default='web')
     email_known_to_work = models.BooleanField(default=False, verbose_name=_('E-mail address verified'))
+    is_anonymized = models.BooleanField(default=False)
 
     objects = ScopedManager(SecureOrderQuerySet.as_manager().__class__, organizer='event__organizer')
 
@@ -948,7 +949,7 @@ class Order(LockModel, LoggedModel):
         Returns True if a user with this email is allowed to modify the order,
         based on the event's 'allow_modifications' setting.
         """
-        if not self.can_modify_answers or not email:
+        if self.is_anonymized or not self.can_modify_answers or not email:
             return False
 
         setting = self.event.settings.allow_modifications

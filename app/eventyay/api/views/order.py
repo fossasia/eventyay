@@ -3,6 +3,7 @@ import logging
 import mimetypes
 import os
 from decimal import Decimal
+from functools import partial
 
 import django_filters
 
@@ -39,7 +40,6 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 from eventyay.api.models import OAuthAccessToken
-from eventyay.base.services.anonymize import anonymize_order
 from eventyay.api.serializers.order import (
     CheckinListOrderPositionSerializer,
     InvoiceSerializer,
@@ -84,6 +84,11 @@ from eventyay.base.pdf import get_images
 from eventyay.base.secrets import assign_ticket_secret
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services import tickets
+from eventyay.base.services.anonymize import (
+    ANONYMIZED_ORDER_EDIT_ERROR,
+    anonymize_order,
+    lock_order_for_identity_edit,
+)
 from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
@@ -940,6 +945,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         with transaction.atomic():
+            serializer.instance = lock_order_for_identity_edit(serializer.instance)
+            if serializer.instance.is_anonymized and {'email', 'phone', 'invoice_address', 'comment'}.intersection(
+                self.request.data
+            ):
+                raise ValidationError(ANONYMIZED_ORDER_EDIT_ERROR)
+
             if 'comment' in self.request.data and serializer.instance.comment != self.request.data.get('comment'):
                 serializer.instance.log_action(
                     'eventyay.event.order.comment',
@@ -1394,6 +1405,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         except Quota.QuotaExceededException as e:
             raise QuotaExceededAPIException(str(e))
 
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         partial = kwargs.get('partial', False)
         if not partial:
@@ -1413,6 +1425,8 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             )
 
             op = self.get_object()
+            if lock_order_for_identity_edit(op.order).is_anonymized:
+                raise ValidationError(ANONYMIZED_ORDER_EDIT_ERROR)
             try:
                 hidden_fields = (
                     validate_badge_hidden_fields(
@@ -1446,6 +1460,9 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
 
     def perform_update(self, serializer):
         with transaction.atomic():
+            if lock_order_for_identity_edit(serializer.instance.order).is_anonymized:
+                raise ValidationError(ANONYMIZED_ORDER_EDIT_ERROR)
+
             old_data = self.get_serializer_class()(
                 instance=serializer.instance, context=self.get_serializer_context()
             ).data
@@ -1465,11 +1482,14 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                     data={'data': [dict(position=serializer.instance.pk, **log_data)]},
                 )
 
-        tickets.invalidate_cache.apply_async(
-            kwargs={
-                'event': serializer.instance.order.event.pk,
-                'order': serializer.instance.order.pk,
-            }
+        transaction.on_commit(
+            partial(
+                tickets.invalidate_cache.apply_async,
+                kwargs={
+                    'event': serializer.instance.order.event.pk,
+                    'order': serializer.instance.order.pk,
+                },
+            )
         )
         order_modified.send(sender=serializer.instance.order.event, order=serializer.instance.order)
 

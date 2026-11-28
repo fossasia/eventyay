@@ -15,6 +15,7 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.models import Voucher
 from eventyay.base.services.mail import mail
 from eventyay.base.settings import PERSON_NAME_SCHEMES
+from eventyay.helpers.anonymization import is_anonymized_email
 
 from .base import LoggedModel
 from .event import Event, SubEvent
@@ -124,10 +125,17 @@ class WaitingListEntry(LoggedModel):
             raise WaitingListException(_('This product is currently not available.'))
         if self.voucher:
             raise WaitingListException(_('A voucher has already been sent to this person.'))
-        if '@' not in self.email:
+        if '@' not in self.email or is_anonymized_email(self.email):
             raise WaitingListException(_('This entry is anonymized and can no longer be used.'))
 
         with transaction.atomic():
+            # The anonymization run can commit after this entry was loaded, so check the stored row under a lock.
+            WaitingListEntry.objects.select_for_update().filter(pk=self.pk).first()
+            self.refresh_from_db()
+            if self.voucher_id:
+                raise WaitingListException(_('A voucher has already been sent to this person.'))
+            if '@' not in self.email or is_anonymized_email(self.email):
+                raise WaitingListException(_('This entry is anonymized and can no longer be used.'))
             v = Voucher.objects.create(
                 event=self.event,
                 max_usages=1,
@@ -157,7 +165,7 @@ class WaitingListEntry(LoggedModel):
             )
             self.log_action('eventyay.waitinglist.voucher', user=user, auth=auth)
             self.voucher = v
-            self.save()
+            self.save(update_fields=['voucher'])
 
         with language(self.locale, self.event.settings.region):
             mail(

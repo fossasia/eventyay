@@ -71,6 +71,7 @@ from eventyay.base.payment import BasePaymentProvider, PaymentException
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.secrets import assign_ticket_secret
 from eventyay.base.services import tickets
+from eventyay.base.services.anonymize import ANONYMIZED_ORDER_EDIT_ERROR, lock_order_for_identity_edit
 from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
@@ -1897,11 +1898,11 @@ class OrderChangeManager:
                         id__in=self.order.positions.values_list('subevent_id', flat=True)
                     ),
                 )
-                self.order.save()
+                self.order.save(update_fields=['status', 'expires'])
         elif self.order.status in (Order.STATUS_PENDING, Order.STATUS_EXPIRED) and self._totaldiff < 0:
             if self.order.pending_sum <= Decimal('0.00') and not self.order.require_approval:
                 self.order.status = Order.STATUS_PAID
-                self.order.save()
+                self.order.save(update_fields=['status'])
             elif self.open_payment:
                 try:
                     with transaction.atomic():
@@ -2043,7 +2044,19 @@ class OrderChangeManager:
                     force_invalidate=False,
                     save=False,
                 )
-                op.position.save()
+                op.position.save(
+                    update_fields=[
+                        'product',
+                        'variation',
+                        'tax_rule',
+                        'tax_rate',
+                        'tax_value',
+                        'price_before_voucher',
+                        'admission_valid_from',
+                        'admission_valid_until',
+                        'secret',
+                    ]
+                )
             elif isinstance(op, self.SeatOperation):
                 self.order.log_action(
                     'eventyay.event.order.changed.seat',
@@ -2065,7 +2078,7 @@ class OrderChangeManager:
                     force_invalidate=False,
                     save=False,
                 )
-                op.position.save()
+                op.position.save(update_fields=['seat', 'secret'])
             elif isinstance(op, self.SubeventOperation):
                 self.order.log_action(
                     'eventyay.event.order.changed.subevent',
@@ -2099,7 +2112,15 @@ class OrderChangeManager:
                             invoice_address=self._invoice_address,
                         ).gross,
                     )
-                op.position.save()
+                op.position.save(
+                    update_fields=[
+                        'subevent',
+                        'price_before_voucher',
+                        'admission_valid_from',
+                        'admission_valid_until',
+                        'secret',
+                    ]
+                )
             elif isinstance(op, self.AddFeeOperation):
                 self.order.log_action(
                     'eventyay.event.order.changed.addfee',
@@ -2142,7 +2163,7 @@ class OrderChangeManager:
                 op.position.price = op.price.gross
                 op.position.tax_rate = op.price.rate
                 op.position.tax_value = op.price.tax
-                op.position.save()
+                op.position.save(update_fields=['price', 'tax_rate', 'tax_value'])
             elif isinstance(op, self.TaxRuleOperation):
                 if isinstance(op.position, OrderPosition):
                     self.order.log_action(
@@ -2584,6 +2605,9 @@ class OrderChangeManager:
 
         with transaction.atomic():
             with self.order.event.lock():
+                locked_order = lock_order_for_identity_edit(self.order)
+                if locked_order.is_anonymized and not self.order.is_anonymized:
+                    raise OrderError(ANONYMIZED_ORDER_EDIT_ERROR)
                 if self.order.status not in (Order.STATUS_PENDING, Order.STATUS_PAID):
                     raise OrderError(self.error_messages['not_pending_or_paid'])
                 if check_quotas:
