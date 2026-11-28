@@ -781,6 +781,50 @@ def test_field_settings_stale_form_does_not_overwrite_a_concurrent_text_edit(cli
     assert setting.help_text == 'New help'
 
 
+def test_field_settings_stale_form_cannot_overwrite_the_same_text(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    # This form was opened before the label was changed, and it edits the same label.
+    response = client.post(
+        url, {'label': 'Mine', 'initial-label': '', 'help_text': 'New help', 'initial-help_text': ''}
+    )
+    assert response.status_code == 200
+    assert 'Someone else changed this' in response.content.decode()
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    # Nothing from the stale save is written, not even the other field.
+    assert (setting.label, setting.help_text) == ('Newer label', '')
+
+
+def test_field_settings_stale_reset_does_not_erase_a_newer_edit(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    response = client.post(url, {'action': 'reset', 'initial-label': '', 'initial-help_text': ''})
+    assert response.status_code == 302
+    assert response.url == url
+    assert OrganizerRequestFieldSetting.objects.get(key='affiliation').label == 'Newer label'
+
+
+def test_field_settings_reset_works_when_the_page_is_current(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Our group', help_text='Custom help.')
+    response = client.post(url, {'action': 'reset', 'initial-label': 'Our group', 'initial-help_text': 'Custom help.'})
+    assert response.status_code == 302
+    assert response.url != url
+    setting = OrganizerRequestFieldSetting.objects.get(key='affiliation')
+    assert (setting.label, setting.help_text) == ('', '')
+
+
+def test_field_settings_error_page_keeps_the_values_it_was_opened_with(client, admin):
+    url = reverse('eventyay_admin:admin.organizer_forms.field.settings', args=['affiliation'])
+    OrganizerRequestFieldSetting.objects.filter(key='affiliation').update(label='Newer label')
+    # The label is too long, so the form is shown again. It must still carry the label it was first opened with.
+    response = client.post(url, {'label': 'x' * 201, 'initial-label': '', 'help_text': '', 'initial-help_text': ''})
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert "name='initial-label' value=''" in html
+    assert 'Newer label' not in html
+
+
 def test_admin_list_defaults_match_the_public_form(client, admin):
     from eventyay.base.forms.organizer_request import OrganizerRequestForm
     from eventyay.base.organizer_request_fields import organiser_form_rows

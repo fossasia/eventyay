@@ -157,9 +157,24 @@ class OrganizerRequestFieldSettingsForm(forms.ModelForm):
         self.fields['help_text'].widget = forms.Textarea(attrs={'rows': 3, 'placeholder': str(default.help_text or '')})
         self.fields['label'].help_text = _('Leave empty to use the default label.')
         self.fields['help_text'].help_text = _('Leave empty to use the default help text.')
-        # Render the values this form was loaded with, so the view can tell which fields this admin really changed.
-        self.fields['label'].show_hidden_initial = True
-        self.fields['help_text'].show_hidden_initial = True
+
+    @property
+    def loaded_values(self) -> dict:
+        """The text values this form was loaded with.
+
+        A submitted form carries them back as ``initial-<name>``. That keeps them the values the admin first saw, even
+        when the form is shown again after an error. A form without them falls back to the stored values.
+        """
+        values = {name: self.initial.get(name) or '' for name in ('label', 'help_text')}
+        if self.is_bound:
+            for name in values:
+                values[name] = self.data.get(f'initial-{name}', values[name])
+        return values
+
+    def changed_fields(self) -> list:
+        """The text fields this admin changed, compared with the values the form was loaded with."""
+        loaded = self.loaded_values
+        return [name for name in ('label', 'help_text') if self.cleaned_data[name] != loaded[name]]
 
     def clean_label(self):
         return self.cleaned_data['label'].strip()
