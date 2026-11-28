@@ -444,6 +444,7 @@ class CartManager:
         force_custom_price=False,
         bundled_sum=Decimal('0.00'),
         addon_to=None,
+        validate_free_price_bounds=True,
     ):
         try:
             return get_price(
@@ -457,6 +458,7 @@ class CartManager:
                 force_custom_price=force_custom_price,
                 bundled_sum=bundled_sum,
                 addon_to=addon_to,
+                validate_free_price_bounds=validate_free_price_bounds,
             )
         except TaxRule.SaleNotAllowed:
             raise CartError(error_messages['country_blocked'])
@@ -557,6 +559,7 @@ class CartManager:
                         cp_is_net=True,
                         bundled_sum=bundled_sum,
                         addon_to=cp.addon_to,
+                        validate_free_price_bounds=False,
                     )
                     price = TaxedPrice(net=price.net, gross=price.net, rate=0, tax=0, name='')
                     pbv = self._get_price(
@@ -568,6 +571,7 @@ class CartManager:
                         cp_is_net=True,
                         bundled_sum=bundled_sum,
                         addon_to=cp.addon_to,
+                        validate_free_price_bounds=False,
                     )
                     pbv = TaxedPrice(net=pbv.net, gross=pbv.net, rate=0, tax=0, name='')
                 else:
@@ -579,6 +583,7 @@ class CartManager:
                         cp.subevent,
                         bundled_sum=bundled_sum,
                         addon_to=cp.addon_to,
+                        validate_free_price_bounds=False,
                     )
                     pbv = self._get_price(
                         cp.product,
@@ -588,6 +593,7 @@ class CartManager:
                         cp.subevent,
                         bundled_sum=bundled_sum,
                         addon_to=cp.addon_to,
+                        validate_free_price_bounds=False,
                     )
 
             quotas = list(cp.quotas)
@@ -856,7 +862,15 @@ class CartManager:
                 subevent,
                 bundled_sum=bundled_sum,
             )
-            pbv = self._get_price(product, variation, None, i.get('price'), subevent, bundled_sum=bundled_sum)
+            pbv = self._get_price(
+                product,
+                variation,
+                None,
+                i.get('price'),
+                subevent,
+                bundled_sum=bundled_sum,
+                validate_free_price_bounds=False,
+            )
 
             op = self.AddOperation(
                 count=i['count'],
