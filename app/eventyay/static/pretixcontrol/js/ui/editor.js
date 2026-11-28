@@ -277,10 +277,96 @@ var editor = {
             editor.fabric.setActiveObject(objs[0]);
             editor._last_active_object = objs[0];
         } else {
-            editor.fabric.setActiveObject(new fabric.ActiveSelection(objs, {canvas: editor.fabric}));
+            var sel = new fabric.ActiveSelection(objs, {canvas: editor.fabric});
+            if (objs.some(function (o) { return !!o.pinned; })) {
+                editor._apply_lock(sel, true);
+            }
+            editor.fabric.setActiveObject(sel);
         }
         editor.fabric.renderAll();
         editor._update_toolbox();
+    },
+
+    _apply_lock: function (target, locked) {
+        locked = !!locked;
+        target.lockMovementX = locked;
+        target.lockMovementY = locked;
+        target.lockRotation = locked;
+        target.lockScalingX = locked;
+        target.lockScalingY = locked;
+        target.lockUniScaling = locked;
+        target.hasControls = !locked;
+        if (target.setCoords) {
+            target.setCoords();
+        }
+    },
+
+    _set_object_pinned: function (o, isPinned) {
+        o.pinned = !!isPinned;
+        editor._apply_lock(o, isPinned);
+    },
+
+    _update_pin_button_state: function (selected) {
+        var pinBtn = document.getElementById("toolbox-pin");
+        var disableIds = [
+            "toolbox-position-x", "toolbox-position-y", "toolbox-width", "toolbox-height",
+            "toolbox-squaresize", "toolbox-textwidth", "toolbox-textrotation"
+        ];
+        var alignBtns = document.querySelectorAll("#toolbox-object-align button, #toolbox-delete, #toolbox-cut");
+
+        if (!selected || !selected.length) {
+            if (pinBtn) {
+                pinBtn.classList.remove("active");
+                pinBtn.setAttribute("aria-pressed", "false");
+                pinBtn.setAttribute("title", gettext("Pin object in place"));
+            }
+            disableIds.forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) { el.disabled = false; }
+            });
+            alignBtns.forEach(function (btn) {
+                btn.disabled = false;
+            });
+            return;
+        }
+        var allPinned = selected.every(function (o) { return !!o.pinned; });
+        var anyPinned = selected.some(function (o) { return !!o.pinned; });
+
+        if (pinBtn) {
+            pinBtn.classList.toggle("active", allPinned);
+            pinBtn.setAttribute("aria-pressed", allPinned ? "true" : "false");
+            pinBtn.setAttribute("title", allPinned ? gettext("Unpin object") : gettext("Pin object in place"));
+        }
+
+        disableIds.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) { el.disabled = anyPinned; }
+        });
+        alignBtns.forEach(function (btn) {
+            btn.disabled = anyPinned;
+        });
+    },
+
+    _toggle_pin: function () {
+        var selected = editor._get_active_objects();
+        if (!selected || !selected.length) {
+            return;
+        }
+        var allPinned = selected.every(function (o) { return !!o.pinned; });
+        var newPinnedState = !allPinned;
+
+        selected.forEach(function (o) {
+            editor._set_object_pinned(o, newPinnedState);
+        });
+
+        var active = editor._get_active_object();
+        if (editor._is_active_selection(active)) {
+            editor._apply_lock(active, newPinnedState);
+        }
+
+        editor.fabric.renderAll();
+        editor._update_pin_button_state(selected);
+        editor._create_savepoint();
     },
 
     _remove_active: function () {
@@ -315,6 +401,12 @@ var editor = {
     _nudge_active: function (dx, dy, shiftKey) {
         var thing = editor._get_active_object();
         if (!thing) {
+            return false;
+        }
+        if (thing.pinned) {
+            return false;
+        }
+        if (editor._is_active_selection(thing) && thing.getObjects().some(function (o) { return !!o.pinned; })) {
             return false;
         }
         var step = editor._nudge_px(shiftKey);
@@ -484,6 +576,7 @@ var editor = {
                     text_i18n: o.text_i18n,
                     rotation: o.angle,
                     align: o.textAlign,
+                    pinned: !!o.pinned,
                 });
             } else  if (o.type === "imagearea") {
                 d.push({
@@ -493,6 +586,7 @@ var editor = {
                     height: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     width: editor._px2mm(o.width * o.scaleX).toFixed(2),
                     content: o.content,
+                    pinned: !!o.pinned,
                 });
             } else  if (o.type === "barcodearea") {
                 d.push({
@@ -501,6 +595,7 @@ var editor = {
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     size: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     content: o.content,
+                    pinned: !!o.pinned,
                 });
             } else  if (o.type === "poweredby") {
                 d.push({
@@ -509,6 +604,7 @@ var editor = {
                     bottom: editor._px2mm(editor.pdf_viewport.height - o.height * o.scaleY - top).toFixed(2),
                     size: editor._px2mm(o.height * o.scaleY).toFixed(2),
                     content: o.content,
+                    pinned: !!o.pinned,
                 });
             }
         }
@@ -576,6 +672,9 @@ var editor = {
         }
         o.set('left', editor._mm2px(d.left));
         o.set('top', new_top);
+        if (d.pinned) {
+            editor._set_object_pinned(o, true);
+        }
         o.setCoords();
         return o;
     },
@@ -883,6 +982,7 @@ var editor = {
         var o = editor._get_toolbox_target_object(true);
         if (!o) {
             $("#toolbox-autofit-width").prop('checked', false);
+            editor._update_pin_button_state([]);
             return;
         }
         editor._toolbox_update_in_progress = true;
@@ -899,6 +999,86 @@ var editor = {
             var groupBottom = editor.pdf_viewport.height - bound.height - bound.top;
             setVal("#toolbox-position-x", editor._px2mm(bound.left).toFixed(2));
             setVal("#toolbox-position-y", editor._px2mm(groupBottom).toFixed(2));
+
+            var selected = editor._get_active_objects();
+            var allText = selected.length > 1 && selected.every(function (item) {
+                return item.type === "textarea" || item.type === "text";
+            });
+            if (allText) {
+                var first = selected[0];
+                var sameSize = selected.every(function (item) {
+                    return editor._get_text_max_font_pt(item).toFixed(1) === editor._get_text_max_font_pt(first).toFixed(1);
+                });
+                var fontEl = document.getElementById("toolbox-fontsize");
+                if (document.activeElement !== fontEl) {
+                    setVal("#toolbox-fontsize", sameSize ? editor._get_text_max_font_pt(first).toFixed(1) : "");
+                }
+
+                var firstFill = first.fill || '#000000';
+                var firstCol = (new fabric.Color(firstFill))._source;
+                var firstHex = "#" + ((1 << 24) + (firstCol[0] << 16) + (firstCol[1] << 8) + firstCol[2]).toString(16).slice(1);
+                var sameCol = selected.every(function (item) {
+                    var col = (new fabric.Color(item.fill || '#000000'))._source;
+                    var hex = "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1);
+                    return hex.toLowerCase() === firstHex.toLowerCase();
+                });
+                var colEl = document.getElementById("toolbox-col");
+                if (sameCol) {
+                    if (colEl) {
+                        if (document.activeElement !== colEl) {
+                            colEl.value = firstHex;
+                        }
+                        var previewGroup = colEl.closest('.colorpicker-preview-group');
+                        if (previewGroup) {
+                            var preview = previewGroup.querySelector('.colorpicker-preview');
+                            if (preview) { preview.style.backgroundColor = firstHex; }
+                        }
+                    }
+                } else {
+                    if (colEl) {
+                        if (document.activeElement !== colEl) {
+                            colEl.value = "";
+                        }
+                        var previewGroup = colEl.closest('.colorpicker-preview-group');
+                        if (previewGroup) {
+                            var preview = previewGroup.querySelector('.colorpicker-preview');
+                            if (preview) { preview.style.backgroundColor = ""; }
+                        }
+                    }
+                }
+
+                var sameFont = selected.every(function (item) {
+                    return item.fontFamily === first.fontFamily;
+                });
+                setVal("#toolbox-fontfamily", sameFont ? first.fontFamily : "");
+
+                var sameBold = selected.every(function (item) { return item.fontWeight === 'bold'; });
+                var boldBtn = document.querySelector('#toolbox button[data-action=bold]');
+                if (boldBtn) { boldBtn.classList.toggle('active', sameBold); }
+
+                var sameItalic = selected.every(function (item) { return item.fontStyle === 'italic'; });
+                var italicBtn = document.querySelector('#toolbox button[data-action=italic]');
+                if (italicBtn) { italicBtn.classList.toggle('active', sameItalic); }
+
+                var sameDownward = selected.every(function (item) { return !!item.downward; });
+                var downwardBtn = document.querySelector('#toolbox button[data-action=downward]');
+                if (downwardBtn) { downwardBtn.classList.toggle('active', sameDownward); }
+
+                var sameAutofit = selected.every(function (item) { return editor._parse_autofit_width(item.autofit_width); });
+                var autofitEl = document.getElementById('toolbox-autofit-width');
+                if (autofitEl) { autofitEl.checked = sameAutofit; }
+
+                var firstAlign = first.textAlign;
+                var sameAlign = selected.every(function (item) { return item.textAlign === firstAlign; });
+                ['left', 'center', 'right'].forEach(function (act) {
+                    var btn = document.querySelector('#toolbox button[data-action=' + act + ']');
+                    if (btn) {
+                        btn.classList.toggle('active', sameAlign && firstAlign === act);
+                    }
+                });
+            }
+
+            editor._update_pin_button_state(selected);
             editor._toolbox_update_in_progress = false;
             return;
         }
@@ -953,10 +1133,11 @@ var editor = {
                 }
             }
         }
+        editor._update_pin_button_state([o]);
         editor._toolbox_update_in_progress = false;
     },
 
-    _update_values_from_toolbox: function () {
+    _update_values_from_toolbox: function (e) {
         if (editor._toolbox_update_in_progress) {
             return;
         }
@@ -966,19 +1147,117 @@ var editor = {
         }
 
         if (editor._is_active_selection(o)) {
-            var bound = editor._object_abs_rect(o);
+            var selected = editor._get_active_objects();
+            var allText = selected.length > 1 && selected.every(function (item) {
+                return item.type === "textarea" || item.type === "text";
+            });
+
             var newLeftMm = parseFloat($("#toolbox-position-x").val());
             var newBottomMm = parseFloat($("#toolbox-position-y").val());
-            if (isNaN(newLeftMm) || isNaN(newBottomMm)) {
-                return;
+            var bound = editor._object_abs_rect(o);
+            var curLeftMm = parseFloat(editor._px2mm(bound.left).toFixed(2));
+            var curBottomMm = parseFloat(editor._px2mm(editor.pdf_viewport.height - bound.height - bound.top).toFixed(2));
+
+            if (!isNaN(newLeftMm) && !isNaN(newBottomMm) && (Math.abs(newLeftMm - curLeftMm) > 0.005 || Math.abs(newBottomMm - curBottomMm) > 0.005)) {
+                if (!selected.some(function (item) { return !!item.pinned; })) {
+                    var newLeft = editor._mm2px(newLeftMm);
+                    var newTop = editor.pdf_viewport.height - editor._mm2px(newBottomMm) - bound.height;
+                    o.set({
+                        left: o.left + (newLeft - bound.left),
+                        top: o.top + (newTop - bound.top)
+                    });
+                    o.setCoords();
+                }
             }
-            var newLeft = editor._mm2px(newLeftMm);
-            var newTop = editor.pdf_viewport.height - editor._mm2px(newBottomMm) - bound.height;
-            o.set({
-                left: o.left + (newLeft - bound.left),
-                top: o.top + (newTop - bound.top)
-            });
-            o.setCoords();
+
+            if (allText) {
+                var targetEl = e && e.target ? (e.target.nodeType === 1 ? e.target : e.target.parentElement) : null;
+                var targetId = targetEl ? (targetEl.id || (targetEl.closest('[id]') ? targetEl.closest('[id]').id : null)) : null;
+                var actionBtn = targetEl ? targetEl.closest('button[data-action]') : null;
+                var targetAction = actionBtn ? actionBtn.getAttribute('data-action') : null;
+                var isColorpicker = e && e.type === 'changeColor';
+
+                var shouldUpdateFontSize = targetId === 'toolbox-fontsize';
+                var shouldUpdateColor = targetId === 'toolbox-col' || isColorpicker;
+                var shouldUpdateFont = targetId === 'toolbox-fontfamily';
+                var shouldUpdateBold = targetAction === 'bold';
+                var shouldUpdateItalic = targetAction === 'italic';
+                var shouldUpdateDownward = targetAction === 'downward';
+                var shouldUpdateAutofit = targetId === 'toolbox-autofit-width';
+                var shouldUpdateAlign = targetAction === 'left' || targetAction === 'center' || targetAction === 'right';
+
+                var fontSizeEl = document.getElementById('toolbox-fontsize');
+                var colEl = document.getElementById('toolbox-col');
+                var fontFamEl = document.getElementById('toolbox-fontfamily');
+                var boldBtn = document.querySelector('#toolbox button[data-action=bold]');
+                var italicBtn = document.querySelector('#toolbox button[data-action=italic]');
+                var downwardBtn = document.querySelector('#toolbox button[data-action=downward]');
+                var autofitEl = document.getElementById('toolbox-autofit-width');
+                var activeAlignBtn = document.querySelector('#toolbox-align button.active');
+
+                var newPt = fontSizeEl ? parseFloat(fontSizeEl.value) : NaN;
+                var newCol = colEl ? colEl.value : '';
+                var newFont = fontFamEl ? fontFamEl.value : '';
+                var isBold = boldBtn ? boldBtn.classList.contains('active') : false;
+                var isItalic = italicBtn ? italicBtn.classList.contains('active') : false;
+                var isDownward = downwardBtn ? downwardBtn.classList.contains('active') : false;
+                var isAutofit = autofitEl ? autofitEl.checked : false;
+                var align = activeAlignBtn ? activeAlignBtn.getAttribute('data-action') : null;
+
+                var hasChanges = false;
+                selected.forEach(function (textObj) {
+                    if (shouldUpdateFontSize && !isNaN(newPt) && newPt > 0) {
+                        textObj.maxFontPt = newPt;
+                        editor._apply_autofit_fontsize(textObj, newPt);
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateColor && newCol) {
+                        textObj.set('fill', newCol);
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateFont && newFont) {
+                        textObj.set('fontFamily', newFont);
+                        editor._apply_autofit_fontsize(textObj);
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateBold) {
+                        textObj.set('fontWeight', isBold ? 'bold' : 'normal');
+                        editor._apply_autofit_fontsize(textObj);
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateItalic) {
+                        textObj.set('fontStyle', isItalic ? 'italic' : 'normal');
+                        editor._apply_autofit_fontsize(textObj);
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateDownward) {
+                        textObj.downward = isDownward;
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateAutofit) {
+                        textObj.autofit_width = isAutofit;
+                        editor._apply_autofit_fontsize(textObj);
+                        hasChanges = true;
+                    }
+                    if (shouldUpdateAlign && align) {
+                        textObj.set('textAlign', align);
+                        hasChanges = true;
+                    }
+                    if (textObj.initDimensions) textObj.initDimensions();
+                    if (textObj._clearCache) textObj._clearCache();
+                    textObj.dirty = true;
+                });
+
+                if (hasChanges) {
+                    editor.fabric.discardActiveObject();
+                    editor._set_selection(selected);
+                    if (!e || e.type === 'change' || e.type === 'changeColor' || e.type === 'click') {
+                        editor._create_savepoint();
+                    }
+                    return;
+                }
+            }
+
             editor.fabric.renderAll();
             editor._update_toolbox_values();
             return;
@@ -990,35 +1269,43 @@ var editor = {
                 new_top = editor.pdf_viewport.height - editor._mm2px($("#toolbox-position-y").val());
             }
         }
-        o.set('left', editor._mm2px($("#toolbox-position-x").val()));
-        o.set('top', new_top);
+        if (!o.pinned) {
+            o.set('left', editor._mm2px($("#toolbox-position-x").val()));
+            o.set('top', new_top);
+        }
 
         if (o.type === "barcodearea") {
-            var new_h = editor._mm2px($("#toolbox-squaresize").val());
-            new_top += o.height * o.scaleY - new_h;
-            o.set('height', new_h);
-            o.set('width', new_h);
-            o.set('scaleX', 1);
-            o.set('scaleY', 1);
-            o.set('top', new_top)
+            if (!o.pinned) {
+                var new_h = editor._mm2px($("#toolbox-squaresize").val());
+                new_top += o.height * o.scaleY - new_h;
+                o.set('height', new_h);
+                o.set('width', new_h);
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                o.set('top', new_top);
+            }
         } else if (o.type === "imagearea") {
-            var new_w = editor._mm2px($("#toolbox-width").val());
-            var new_h = editor._mm2px($("#toolbox-height").val());
-            new_top += o.height * o.scaleY - new_h;
-            o.set('height', new_h);
-            o.set('width', new_w);
-            o.set('scaleX', 1);
-            o.set('scaleY', 1);
-            o.set('top', new_top)
+            if (!o.pinned) {
+                var new_w = editor._mm2px($("#toolbox-width").val());
+                var new_h = editor._mm2px($("#toolbox-height").val());
+                new_top += o.height * o.scaleY - new_h;
+                o.set('height', new_h);
+                o.set('width', new_w);
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                o.set('top', new_top);
+            }
             o.content = $("#toolbox-imagecontent").val();
         } else if (o.type === "poweredby") {
-            var new_h = Math.max(1, editor._mm2px($("#toolbox-squaresize").val()));
-            new_top += o.height * o.scaleY - new_h;
-            o.set('width', new_h / o.height * o.width);
-            o.set('height', new_h);
-            o.set('scaleX', 1);
-            o.set('scaleY', 1);
-            o.set('top', new_top)
+            if (!o.pinned) {
+                var new_h = Math.max(1, editor._mm2px($("#toolbox-squaresize").val()));
+                new_top += o.height * o.scaleY - new_h;
+                o.set('width', new_h / o.height * o.width);
+                o.set('height', new_h);
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                o.set('top', new_top);
+            }
             if ($("#toolbox-poweredby-style").val() !== o.content) {
                 var data = editor.dump([o]);
                 data[0].content = $("#toolbox-poweredby-style").val();
@@ -1047,20 +1334,23 @@ var editor = {
             if (align) {
                 o.set('textAlign', align);
             }
-            var w = parseFloat($("#toolbox-textwidth").val());
-            if (!isNaN(w)) {
-                o.set('width', editor._mm2px(w));
-                o.set('scaleX', 1);
-                o.set('scaleY', 1);
-                if (o.initDimensions) o.initDimensions();
-                if (o._clearCache) o._clearCache();
-                o.dirty = true;
-            }
-            o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
-            var r = parseFloat($("#toolbox-textrotation").val());
-            if (!isNaN(r)) {
-                o.rotate(r);
-                o.dirty = true;
+            var w;
+            if (!o.pinned) {
+                w = parseFloat($("#toolbox-textwidth").val());
+                if (!isNaN(w)) {
+                    o.set('width', editor._mm2px(w));
+                    o.set('scaleX', 1);
+                    o.set('scaleY', 1);
+                    if (o.initDimensions) o.initDimensions();
+                    if (o._clearCache) o._clearCache();
+                    o.dirty = true;
+                }
+                o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
+                var r = parseFloat($("#toolbox-textrotation").val());
+                if (!isNaN(r)) {
+                    o.rotate(r);
+                    o.dirty = true;
+                }
             }
             editor._apply_text_content_to_object(o);
             editor._apply_autofit_fontsize(o, o.maxFontPt, w);
@@ -1073,13 +1363,25 @@ var editor = {
 
     _update_toolbox: function () {
         var selected = editor.fabric.getActiveObjects();
+        var allText = selected.length > 1 && selected.every(function (item) {
+            return item.type === "textarea" || item.type === "text";
+        });
+        var toolboxEl = document.getElementById("toolbox");
         if (selected.length > 1) {
-            $("#toolbox").attr("data-type", "group");
-            $("#toolbox-heading").text(gettext("Group of objects"));
+            if (toolboxEl) {
+                toolboxEl.setAttribute("data-type", "group");
+                toolboxEl.classList.toggle("group-all-text", allText);
+            }
+            $("#toolbox-heading").text(allText ? gettext("Group of text objects") : gettext("Group of objects"));
         } else if (selected.length == 1) {
+            if (toolboxEl) {
+                toolboxEl.classList.remove("group-all-text");
+            }
             var o = selected[0];
             editor._last_active_object = o;
-            $("#toolbox").attr("data-type", o.type);
+            if (toolboxEl) {
+                toolboxEl.setAttribute("data-type", o.type);
+            }
             if (o.type === "textarea" || o.type === "text") {
                 $("#toolbox-heading").text(gettext("Text object"));
             } else if (o.type === "barcodearea") {
@@ -1092,8 +1394,16 @@ var editor = {
                 $("#toolbox-heading").text(gettext("Object"));
             }
         } else {
-            $("#toolbox").removeAttr("data-type");
+            if (toolboxEl) {
+                toolboxEl.classList.remove("group-all-text");
+                toolboxEl.removeAttribute("data-type");
+            }
             $("#toolbox-heading").text(gettext("Ticket design"));
+        }
+        var active = editor.fabric.getActiveObject();
+        if (active && editor._is_active_selection(active)) {
+            var anyPinned = active.getObjects().some(function (o) { return !!o.pinned; });
+            editor._apply_lock(active, anyPinned);
         }
         var isSingleText = selected.length === 1 && (selected[0].type === "textarea" || selected[0].type === "text");
         if (isSingleText) {
@@ -1270,6 +1580,9 @@ var editor = {
         if (!thing) {
             return;
         }
+        if (thing.pinned || (editor._is_active_selection(thing) && thing.getObjects().some(function (o) { return !!o.pinned; }))) {
+            return;
+        }
         editor._history_modification_in_progress = true;
         editor.clipboard = editor._dump_selection(thing);
         editor._remove_active();
@@ -1292,7 +1605,7 @@ var editor = {
         editor._history_modification_in_progress = true;
         var objs = [];
         for (var i in editor.clipboard) {
-            objs.push(editor._add_from_data(editor.clipboard[i]));
+            objs.push(editor._add_from_data(Object.assign({}, editor.clipboard[i], {pinned: false})));
         }
         editor._set_selection(objs);
         editor._history_modification_in_progress = false;
@@ -1300,6 +1613,13 @@ var editor = {
     },
 
     _delete: function () {
+        var thing = editor._get_active_object();
+        if (!thing) {
+            return;
+        }
+        if (thing.pinned || (editor._is_active_selection(thing) && thing.getObjects().some(function (o) { return !!o.pinned; }))) {
+            return;
+        }
         if (!editor._remove_active()) {
             return;
         }
@@ -1314,13 +1634,22 @@ var editor = {
 
     _on_object_moving: function (opt) {
         var o = opt.target;
-        if (!o || !opt.e) {
+        if (!o) {
             return;
         }
         if (!editor._drag_start) {
             editor._drag_start = {left: o.left, top: o.top};
         }
-        if (!opt.e.shiftKey) {
+        var isPinned = o.pinned || (editor._is_active_selection(o) && o.getObjects().some(function (item) { return !!item.pinned; }));
+        if (isPinned) {
+            o.set({
+                left: editor._drag_start.left,
+                top: editor._drag_start.top
+            });
+            o.setCoords();
+            return;
+        }
+        if (!opt.e || !opt.e.shiftKey) {
             return;
         }
         var step = editor._nudge_px(true);
@@ -1341,6 +1670,9 @@ var editor = {
     _align_selection: function (alignment) {
         var objs = editor._get_active_objects();
         if (objs.length < 2) {
+            return;
+        }
+        if (objs.some(function (o) { return !!o.pinned; })) {
             return;
         }
         editor.fabric.discardActiveObject();
@@ -1747,16 +2079,20 @@ var editor = {
         $("#toolbox-content").bind('change', editor._update_values_from_toolbox);
         $("#toolbox-content-other").bind('change keyup input blur', editor._update_values_from_toolbox);
         $("#toolbox-content, #toolbox-content-other").bind('change', editor._create_savepoint);
-        $("#toolbox button.toggling").bind('click change', function () {
+        $("#toolbox button.toggling").bind('click change', function (e) {
             if ($(this).is(".option")) {
                 $(this).addClass("active");
                 $(this).parent().siblings().find("button").removeClass("active");
             } else {
                 $(this).toggleClass("active");
             }
-            editor._update_values_from_toolbox();
+            editor._update_values_from_toolbox(e);
             editor._create_savepoint();
         });
+        var pinBtn = document.getElementById("toolbox-pin");
+        if (pinBtn) {
+            pinBtn.addEventListener("click", editor._toggle_pin);
+        }
         $("#toolbox .colorpickerfield").bind('changeColor', editor._update_values_from_toolbox);
         $("#toolbox .colorpickerfield").on('showPicker', function () {
             editor._color_picker_open = true;

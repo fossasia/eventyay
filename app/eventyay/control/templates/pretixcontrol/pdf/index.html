@@ -153,6 +153,12 @@
                 <div class="panel-heading">
                     <div class="pull-right object-buttons flip">
                         <div class="btn-group">
+                            <button type="button" class="btn btn-default btn-xs" id="toolbox-pin"
+                                    title="{% trans 'Pin object in place' %}"
+                                    aria-pressed="false"
+                                    aria-label="{% trans 'Pin object in place' %}">
+                                <span class="fa fa-thumb-tack" aria-hidden="true"></span>
+                            </button>
                             <button type="button" class="btn btn-default btn-xs" id="toolbox-cut"
                                     title="{% trans "Cut" %}">
                                 <span class="fa fa-cut"></span>
@@ -329,14 +335,14 @@
                             </p>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-format">
                         <div class="col-sm-12">
                             <label>{% trans "Font size (pt)" %}</label><br>
                             <input type="number" value="13" class="input-block-level form-control show-spinner" step="0.1"
                                     id="toolbox-fontsize">
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-format">
                         <div class="col-sm-12">
                             <div class="checkbox">
                                 <label for="toolbox-autofit-width"
@@ -347,7 +353,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-format">
                         <div class="col-sm-12">
                             <label>{% trans "Font style" %}</label><br>
                             <div class="btn-group btn-group-justified" role="group">
@@ -370,14 +376,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text form-group">
+                    <div class="row control-group text text-format form-group">
                         <div class="col-xs-12">
                             <label>{% trans "Text color" %}</label><br>
                             <input type="text" value="#000000" class="input-block-level form-control colorpickerfield"
                                     id="toolbox-col">
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-format">
                         <div class="col-sm-12">
                             <label>{% trans "Alignment" %}</label><br>
                             <div class="btn-group btn-group-justified" id="toolbox-align">
@@ -399,7 +405,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-format">
                         <div class="col-sm-12">
                             <label>{% trans "Font" %}</label><br>
                             <select class="input-block-level form-control" id="toolbox-fontfamily">
@@ -410,7 +416,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-individual">
                         <div class="col-sm-6">
                             <label>{% trans "Width (mm)" %}</label><br>
                             <input type="number" value="13" class="input-block-level form-control show-spinner" step="0.01"
@@ -442,7 +448,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="row control-group text">
+                    <div class="row control-group text text-individual">
                         <div class="col-sm-12">
                             <label>{% trans "Text content" %}</label><br>
                             <select class="input-block-level form-control" id="toolbox-content">
@@ -529,7 +535,7 @@
 
     <script type="text/javascript" src="{% static "pdfjs/pdf.js" %}"></script>
     <script type="text/javascript" src="{% static "fabric/fabric.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}?v=undoredo1"></script>
+    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}?v=pinned1"></script>
     <img src="{% static 'pretixpresale/pdf/powered_by_eventyay_dark.png' %}" id="poweredby-dark" class="sr-only">
     <img src="{% static 'pretixpresale/pdf/powered_by_eventyay_white.png' %}" id="poweredby-white" class="sr-only">
     {% for family, styles in fonts.items %}
