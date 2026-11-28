@@ -446,16 +446,23 @@ def submissions_for_user(event, user):
             pk__in=wip.talks.filter(submission__isnull=False).values_list('submission_id', flat=True)
         )
 
-    if user.has_perm('base.list_schedule', event):
+    if user.has_perm('base.list_schedule', event) and event.current_schedule:
         schedule = event.current_schedule
-        if not schedule:
-            return event.submissions.none()
         return event.submissions.filter(
             pk__in=schedule.talks.filter(
                 is_visible=True,
                 submission__isnull=False,
             ).values_list('submission_id', flat=True)
         )
+
+    if are_featured_submissions_visible(user, event):
+        from eventyay.base.models import SubmissionStates
+
+        return event.submissions.filter(
+            is_featured=True,
+            state__in=SubmissionStates.accepted_states,
+        )
+
     return event.submissions.none()
 
 
