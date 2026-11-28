@@ -2,9 +2,11 @@ import hashlib
 import json
 import logging
 import threading
+import urllib.parse
 
 from django.core.cache import cache
 from django.db import DatabaseError, OperationalError, transaction
+
 
 logger = logging.getLogger(__name__)
 
@@ -288,19 +290,16 @@ def talk_slots_filter_key(request, filter_fields):
     for field in sorted(filter_fields):
         value = params.get(field)
         if value is not None:
-            parts.append(f'{field}={value}')
-    search = params.get('search')
-    if search:
-        parts.append(f'search={search}')
-    ordering = params.get('ordering')
-    if ordering:
-        parts.append(f'ordering={ordering}')
+            parts.append(f'{urllib.parse.quote(str(field), safe="")}:{urllib.parse.quote(str(value), safe="")}')
+    if search := params.get('search'):
+        parts.append(f'search:{urllib.parse.quote(str(search), safe="")}')
+    if ordering := params.get('ordering'):
+        parts.append(f'ordering:{urllib.parse.quote(str(ordering), safe="")}')
     for key in ('page', 'page_size', 'limit', 'offset'):
         value = params.get(key)
         if value is not None:
-            parts.append(f'{key}={value}')
-    if not any(params.get(key) is not None for key in ('page', 'page_size', 'limit', 'offset')):
-        parts.append('page=1')
-    if not parts:
-        return 'default'
-    return hashlib.md5('|'.join(parts).encode(), usedforsecurity=False).hexdigest()
+            parts.append(f'{key}:{urllib.parse.quote(str(value), safe="")}')
+    if all(params.get(key) is None for key in ('page', 'page_size', 'limit', 'offset')):
+        parts.append('page:1')
+    raw_key = 'v2|' + '|'.join(parts)
+    return hashlib.md5(raw_key.encode(), usedforsecurity=False).hexdigest()

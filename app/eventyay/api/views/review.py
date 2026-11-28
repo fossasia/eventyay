@@ -1,15 +1,15 @@
 from django.utils.functional import cached_property
+from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import SAFE_METHODS
 
 from eventyay.api.documentation import build_expand_docs, build_search_docs
-from eventyay.api.filters.review import ReviewFilter
+from eventyay.api.filters.review import ReviewFilter, get_review_visible_submissions
 from eventyay.api.mixins import PretalxViewSetMixin, WriteRulesMixin
 from eventyay.api.serializers.review import ReviewSerializer, ReviewWriteSerializer
 from eventyay.base.models.review import Review
-from eventyay.base.models.submission import Submission
-from eventyay.talk_rules.submission import get_reviewable_submissions
 
 
 @extend_schema_view(
@@ -55,6 +55,7 @@ class ReviewViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelViewSet)
     serializer_class = ReviewSerializer
     queryset = Review.objects.none()
     search_fields = ("submission__title", "user__fullname")
+    filter_backends = (filters.DjangoFilterBackend, SearchFilter)
     filterset_class = ReviewFilter
     endpoint = "reviews"
     write_permission = "is_reviewer"
@@ -77,12 +78,7 @@ class ReviewViewSet(WriteRulesMixin, PretalxViewSetMixin, viewsets.ModelViewSet)
 
     @cached_property
     def visible_submissions(self):
-        if not self.event or self.request.user.is_anonymous:
-            return Submission.objects.none()
-        submissions = self.event.submissions.all().exclude(
-            speakers__in=[self.request.user]
-        )
-        return get_reviewable_submissions(self.event, self.request.user, submissions)
+        return get_review_visible_submissions(self.event, self.request.user)
 
     def get_queryset(self):
         if not self.event or self.request.user.is_anonymous:
