@@ -1,9 +1,11 @@
 import pytest
 from django.core import mail as djmail
+from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.control.forms.organizer_forms.team_form import TeamForm
 
 
 @pytest.fixture
@@ -394,3 +396,169 @@ def test_invite_new_user(event, admin_team, client):
     with scopes_disabled():
         assert admin_team.members.filter(email='dummy@example.org').exists()
         assert not admin_team.invites.exists()
+
+
+@pytest.mark.django_db
+def test_team_form_permission_ceiling_enforced(organizer):
+    limited_team = Team.objects.create(
+        organizer=organizer,
+        can_change_teams=True,
+        can_change_organizer_settings=True,
+        name='Limited Team',
+        all_events=True,
+    )
+    user = User.objects.create_user('manager@dummy.dummy', 'dummy')
+    limited_team.members.add(user)
+
+    # Attempt to create a team granting can_view_orders (which user does not have)
+    form = TeamForm(
+        data={
+            'name': 'Escalated Team',
+            'all_events': True,
+            'can_view_orders': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    assert not form.is_valid()
+    assert 'can_view_orders' in form.errors
+
+    # Attempt to submit an unheld permission for a field not in form.fields (reports as non-field error)
+    form_removed = TeamForm(
+        data={
+            'name': 'Absent Field Escalation',
+            'all_events': True,
+            'can_change_teams': True,
+            'can_manage_social_media': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    form_removed.fields.pop('can_manage_social_media', None)
+    assert not form_removed.is_valid()
+    assert form_removed.non_field_errors()
+
+    # Allowed when granting only permissions the user holds
+    form_ok = TeamForm(
+        data={
+            'name': 'Allowed Team',
+            'all_events': True,
+            'can_change_teams': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    assert form_ok.is_valid()
+
+
+@pytest.mark.django_db
+def test_team_form_superuser_bypasses_ceiling(organizer):
+    superuser = User.objects.create_superuser('super@dummy.dummy', 'dummy')
+    form = TeamForm(
+        data={
+            'name': 'Admin Team',
+            'all_events': True,
+            'can_view_orders': True,
+            'can_manage_bank_transfers': True,
+        },
+        organizer=organizer,
+        user=superuser,
+    )
+    assert form.is_valid()
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_organizer_teams_view_cannot_escalate_permissions(organizer, client):
+    from django.urls import reverse
+
+    limited_team = Team.objects.create(
+        organizer=organizer,
+        can_change_teams=True,
+        can_change_organizer_settings=True,
+        name='Limited Team',
+        all_events=True,
+    )
+    user = User.objects.create_user('manager2@dummy.dummy', 'dummy')
+    limited_team.members.add(user)
+
+    client.login(email='manager2@dummy.dummy', password='dummy')
+    url = reverse('eventyay_common:organizer.teams', kwargs={'organizer': organizer.slug})
+    resp = client.post(
+        url,
+        {
+            'team_action': 'create',
+            'team-create-name': 'Hacked Team',
+            'team-create-all_events': 'on',
+            'team-create-can_view_orders': 'on',
+            'team-create-can_manage_bank_transfers': 'on',
+        },
+    )
+    assert resp.status_code == 200
+    # The team should not have been created with financial permissions
+    assert not Team.objects.filter(organizer=organizer, name='Hacked Team').exists()
+
+
+@pytest.mark.django_db
+def test_team_form_cannot_clear_speaker_privacy_if_member(organizer):
+    team = Team.objects.create(
+        organizer=organizer,
+        name='Reviewer Team',
+        all_events=True,
+        can_change_teams=True,
+        is_reviewer=True,
+        force_hide_speaker_names=True,
+        force_hide_speaker_emails=True,
+    )
+    user = User.objects.create_user('reviewer@dummy.dummy', 'dummy')
+    team.members.add(user)
+
+    # Actor who belongs to this team cannot uncheck force_hide_speaker_names
+    form = TeamForm(
+        instance=team,
+        data={
+            'name': 'Reviewer Team',
+            'all_events': True,
+            'can_change_teams': True,
+            'is_reviewer': True,
+            'force_hide_speaker_names': False,
+            'force_hide_speaker_emails': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    assert not form.is_valid()
+    assert 'force_hide_speaker_names' in form.errors
+
+    # Superuser CAN clear it
+    superuser = User.objects.create_superuser('super2@dummy.dummy', 'dummy')
+    form_super = TeamForm(
+        instance=team,
+        data={
+            'name': 'Reviewer Team',
+            'all_events': True,
+            'can_change_teams': True,
+            'is_reviewer': True,
+            'force_hide_speaker_names': False,
+            'force_hide_speaker_emails': True,
+        },
+        organizer=organizer,
+        user=superuser,
+    )
+    assert form_super.is_valid()
+
+    # If privacy fields are omitted from form fields, member editing team should not trigger error
+    form_omitted = TeamForm(
+        instance=team,
+        data={
+            'name': 'Reviewer Team Updated',
+            'all_events': True,
+            'can_change_teams': True,
+            'is_reviewer': True,
+        },
+        organizer=organizer,
+        user=user,
+    )
+    form_omitted.fields.pop('force_hide_speaker_names', None)
+    form_omitted.fields.pop('force_hide_speaker_emails', None)
+    assert form_omitted.is_valid()

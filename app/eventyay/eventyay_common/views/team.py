@@ -2,6 +2,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import ManyToManyField
 from django.shortcuts import get_object_or_404, redirect
@@ -69,6 +70,18 @@ class TeamMemberView(
     def get_object(self, queryset=None):
         return get_object_or_404(Team, organizer=self.request.organizer, pk=self.kwargs.get('team'))
 
+    def _user_can_manage_team_membership(self, team: Team) -> bool:
+        """Check if acting user holds at least the permissions that the team holds."""
+        if getattr(self.request.user, 'is_superuser', False):
+            return True
+        if hasattr(self.request.user, 'has_active_staff_session') and self.request.user.has_active_staff_session(
+            self.request.session.session_key if hasattr(self.request, 'session') else None
+        ):
+            return True
+        user_perms = self.request.user.get_organizer_permission_set(self.request.organizer)
+        team_perms = team.permission_set()
+        return team_perms.issubset(user_perms)
+
     @cached_property
     def add_form(self):
         from eventyay.control.views.organizer import InviteForm
@@ -94,6 +107,8 @@ class TeamMemberView(
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        if not self._user_can_manage_team_membership(self.object):
+            raise PermissionDenied(_('You cannot manage members or tokens of a team with permissions beyond your own.'))
 
         if 'remove-member' in request.POST:
             try:
@@ -227,6 +242,8 @@ class TeamCreateView(
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organizer'] = self.request.organizer
+        kwargs['user'] = self.request.user
+        kwargs['request'] = self.request
         return kwargs
 
     def get_object(self, queryset=None):
@@ -291,6 +308,8 @@ class TeamUpdateView(
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organizer'] = self.request.organizer
+        kwargs['user'] = self.request.user
+        kwargs['request'] = self.request
         return kwargs
 
     def get_object(self, queryset=None):
