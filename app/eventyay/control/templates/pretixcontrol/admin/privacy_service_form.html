@@ -21,25 +21,25 @@
 
     <fieldset>
       <legend>{% trans 'Service' %}</legend>
-      {% bootstrap_field form.title layout='horizontal' %}
-      {% bootstrap_field form.name layout='horizontal' %}
-      {% bootstrap_field form.provider layout='horizontal' %}
-      {% bootstrap_field form.purpose layout='horizontal' %}
+      {% bootstrap_field form.title layout='control_hint' %}
+      {% bootstrap_field form.name layout='control_hint' %}
+      {% bootstrap_field form.provider layout='control_hint' %}
+      {% bootstrap_field form.purpose layout='control_hint' %}
     </fieldset>
 
     <fieldset>
       <legend>{% trans 'Consent' %}</legend>
-      {% bootstrap_field form.category layout='horizontal' %}
-      {% bootstrap_field form.enabled layout='horizontal' %}
-      {% bootstrap_field form.cookie_names layout='horizontal' %}
+      {% bootstrap_field form.category layout='control_hint' %}
+      {% bootstrap_field form.enabled layout='control_hint' %}
+      {% bootstrap_field form.cookie_names layout='control_hint' %}
     </fieldset>
 
     <fieldset>
       <legend>{% trans 'Data protection' %}</legend>
-      {% bootstrap_field form.privacy_policy_url layout='horizontal' %}
-      {% bootstrap_field form.data_processed layout='horizontal' %}
-      {% bootstrap_field form.region layout='horizontal' %}
-      {% bootstrap_field form.dpa_status layout='horizontal' %}
+      {% bootstrap_field form.privacy_policy_url layout='control_hint' %}
+      {% bootstrap_field form.data_processed layout='control_hint' %}
+      {% bootstrap_field form.region layout='control_hint' %}
+      {% bootstrap_field form.dpa_status layout='control_hint' %}
     </fieldset>
 
     <div class="form-group submit-group">

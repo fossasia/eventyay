@@ -83,6 +83,29 @@ class ControlFieldRenderer(FieldRenderer):
         return html
 
 
+class HintFieldRenderer(FieldRenderer):
+    """
+    Horizontal renderer that keeps the help text visible next to field errors.
+
+    Bootstrap renders help text and errors as identical ``.help-block`` elements,
+    so ``.has-error`` turns the permanent hint red as well. The hint gets its own
+    class here so the stylesheet can keep it in the normal help-text colour.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['layout'] = 'horizontal'
+        super().__init__(*args, **kwargs)
+
+    def append_to_field(self, html):
+        help_text = self.field_help
+        self.field_help = ''
+        html = super().append_to_field(html)
+        self.field_help = help_text
+        if help_text:
+            html += format_html('<div class="help-block help-block-hint">{}</div>', help_text)
+        return html
+
+
 class BulkEditMixin:
     def __init__(self, *args, **kwargs):
         """Initialize bulk edit renderer and suppress help text when field has errors."""

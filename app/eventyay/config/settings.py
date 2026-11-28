@@ -1530,6 +1530,7 @@ BOOTSTRAP3 = {
         'default': 'bootstrap3.renderers.FieldRenderer',
         'inline': 'bootstrap3.renderers.InlineFieldRenderer',
         'control': 'eventyay.control.forms.renderers.ControlFieldRenderer',
+        'control_hint': 'eventyay.control.forms.renderers.HintFieldRenderer',
         'bulkedit': 'eventyay.control.forms.renderers.BulkEditFieldRenderer',
         'bulkedit_inline': 'eventyay.control.forms.renderers.InlineBulkEditFieldRenderer',
         'checkout': 'eventyay.presale.forms.renderers.CheckoutFieldRenderer',
