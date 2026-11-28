@@ -24,6 +24,11 @@
         {% if order.testmode %}
             <span class="label label-warning">{% trans "TEST MODE" %}</span>
         {% endif %}
+        {% if order.meta_info_data.resale_role == "seller" %}
+            <span class="label label-warning">{% trans "RESOLD" %}</span>
+        {% elif order.meta_info_data.resale_role == "buyer" %}
+            <span class="label label-info">{% trans "RESALE" %}</span>
+        {% endif %}
         {% include "pretixcontrol/orders/fragment_order_status.html" with order=order class="pull-right flip" %}
     </h1>
     {% if 'can_change_orders' in request.eventpermset %}

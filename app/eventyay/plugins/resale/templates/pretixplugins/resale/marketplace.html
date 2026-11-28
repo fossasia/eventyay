@@ -1,0 +1,61 @@
+{% extends "pretixpresale/event/base.html" %}
+{% load i18n %}
+{% load money %}
+{% load eventurl %}
+
+{% block content %}
+  <h2>{% trans "Ticket marketplace" %}</h2>
+
+  <div class="panel panel-default">
+    <div class="panel-body">
+      <h3>{% trans "How it works" %}</h3>
+      <ol>
+        <li>{% trans "Click Buy to reserve a ticket and proceed to checkout." %}</li>
+        <li>{% trans "Complete payment within the reservation window." %}</li>
+        <li>{% trans "You receive a new ticket; the previous ticket is invalidated." %}</li>
+      </ol>
+      {% if not marketplace_open %}
+        <div class="alert alert-warning">
+          {% if suspended %}
+            {% trans "The marketplace is temporarily suspended by the organizer." %}
+          {% else %}
+            {% trans "The marketplace is currently closed." %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if marketplace_open %}
+    {% for listing in listings %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">
+            {{ listing.position.product }}
+            {% if listing.position.variation %} – {{ listing.position.variation }}{% endif %}
+          </h3>
+        </div>
+        <div class="panel-body">
+          <p>
+            <strong>{% trans "Price" %}:</strong>
+            {{ listing.price|money:request.event.currency }}
+          </p>
+          <form method="post" action="{% eventurl request.event 'plugins:resale:buy' listing=listing.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">{% trans "Buy" %}</button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="alert alert-info">
+        {% trans "No tickets available at the moment. Check back later!" %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <p class="help-block">
+    {% blocktrans trimmed %}
+      You have a ticket and want to sell it? Open the link to your order details in your order confirmation email and follow the process there.
+    {% endblocktrans %}
+  </p>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% load i18n %}
+{% load money %}
+
+<section class="panel panel-default panel-resale">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Ticket Sales" %}</h3>
+  </div>
+  <div class="panel-body">
+    <p class="help-block">
+      {% blocktrans trimmed %}
+        List a ticket you can no longer use. Buyers purchase it through the event marketplace.
+        After a successful sale you receive a refund of your asking price minus the processing fee,
+        and your original ticket is invalidated.
+      {% endblocktrans %}
+    </p>
+    <div class="table-responsive">
+      <table class="table table-condensed">
+        <thead>
+          <tr>
+            <th>{% trans "Ticket" %}</th>
+            <th>{% trans "Original price" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td>
+                {{ row.position.product }}
+                {% if row.position.variation %} – {{ row.position.variation }}{% endif %}
+              </td>
+              <td>{{ row.position.price|money:event.currency }}</td>
+              <td>
+                {% if row.listing %}
+                  {% if row.listing.status == "available" %}
+                    {% trans "Listed" %} — {{ row.listing.price|money:event.currency }}
+                  {% elif row.listing.status == "reserved" %}
+                    {% trans "Reserved by a buyer" %}
+                  {% elif row.listing.status == "sold" %}
+                    {% trans "Sold" %}
+                  {% elif row.listing.status == "withdrawn" %}
+                    {% trans "Withdrawn" %}
+                  {% else %}
+                    {{ row.listing.get_status_display }}
+                  {% endif %}
+                {% elif row.eligible %}
+                  {% trans "Eligible" %}
+                {% else %}
+                  {% trans "Not eligible" %}
+                {% endif %}
+              </td>
+              <td class="text-right">
+                {% if row.listing and row.listing.status == "available" %}
+                  <form method="post" action="{% url 'plugins:resale:withdraw' organizer=event.organizer.slug event=event.slug order=order.code secret=order.secret listing=row.listing.pk %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-default btn-sm">{% trans "Withdraw listing" %}</button>
+                  </form>
+                {% elif row.eligible and row.sell_url %}
+                  <a class="btn btn-primary btn-sm" href="{{ row.sell_url }}">
+                    {% if row.listing and row.listing.status == "withdrawn" %}
+                      {% trans "List again" %}
+                    {% else %}
+                      {% trans "Sell this ticket" %}
+                    {% endif %}
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">{% trans "No tickets on this order." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
