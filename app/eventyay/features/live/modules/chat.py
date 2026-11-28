@@ -6,7 +6,7 @@ from contextlib import suppress
 import asgiref
 import emoji
 from channels.db import database_sync_to_async
-from sentry_sdk import configure_scope
+from sentry_sdk import set_extra
 
 from eventyay.core.permissions import Permission
 from eventyay.base.services.chat import (
@@ -881,8 +881,7 @@ class ChatModule(BaseModule):
 
     async def dispatch_command(self, content):
         self.channel_id = content[2].get("channel")
-        with configure_scope() as scope:
-            scope.set_extra("last_channel", str(self.channel_id))
+        set_extra("last_channel", str(self.channel_id))
         return await super().dispatch_command(content)
 
     async def dispatch_disconnect(self, close_code):
