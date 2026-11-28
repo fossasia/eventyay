@@ -54,6 +54,25 @@ interface AssignmentResponse {
   status: string
 }
 
+/** A failed request, keeping the HTTP status so callers can tell a permission denial from other errors. */
+export class HttpError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'HttpError'
+    this.status = status
+  }
+}
+
+export function isPermissionDenied(error: unknown): boolean {
+  return error instanceof HttpError && error.status === 403
+}
+
+export function isNotFound(error: unknown): boolean {
+  return error instanceof HttpError && error.status === 404
+}
+
 const api = {
   getOrgaEventBase(): string {
     return getApiConfig().baseUrl
@@ -71,6 +90,10 @@ const api = {
     return match ? match[2] : null
   },
 
+  /**
+   * @throws {HttpError} when the request fails, the response is not JSON, or the status is not successful
+   * @throws {SyntaxError} when a successful response declares JSON but its body cannot be decoded
+   */
   async http<T>(verb: string, url: string, body: HttpRequestBody): Promise<T> {
     const headers: Record<string, string> = {}
     if (body) headers['Content-Type'] = 'application/json'
@@ -92,7 +115,7 @@ const api = {
       response = await fetch(url, options)
     } catch {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'network_error'})
-      throw new Error(`HTTP error 0: network failure`)
+      throw new HttpError(0, `HTTP error 0: network failure`)
     }
 
     if (response.status === 204) {
@@ -102,24 +125,34 @@ const api = {
     const contentType = response.headers.get('Content-Type') ?? ''
     if (!contentType.includes('application/json')) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'non_json', status: response.status})
-      throw new Error(`HTTP error ${response.status}: server returned non-JSON response`)
+      throw new HttpError(response.status, `HTTP error ${response.status}: server returned non-JSON response`)
     }
 
-    const json = await response.json()
+    let json: unknown
+    try {
+      json = await response.json()
+    } catch (error) {
+      if (response.ok) throw error
+      // Keep the status of a failed response even when its body cannot be decoded
+      logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
+      throw new HttpError(response.status, `HTTP error ${response.status}: server returned invalid JSON`)
+    }
 
     if (!response.ok) {
       logOperational({action, outcome: 'failure', backend: 'schedule_editor', error_code: 'http_error', status: response.status})
-      throw new Error(`HTTP error ${response.status}: ${JSON.stringify(json)}`)
+      throw new HttpError(response.status, `HTTP error ${response.status}: ${JSON.stringify(json)}`)
     }
 
     return json as T
   },
 
-  async fetchTalks(options?: { since?: string; warnings?: boolean }): Promise<Schedule> {
+  async fetchTalks(options?: { since?: string; warnings?: boolean; full?: boolean }): Promise<Schedule> {
     const config = getApiConfig()
     let url = `${config.baseUrl}${config.endpoints.talks}`
 
     const params = new URLSearchParams(window.location.search)
+    // `full` asks for every shift, even if the page URL has a `since` filter
+    if (options?.full) params.delete('since')
     if (options?.since) params.append('since', options.since)
     if (options?.warnings) params.append('warnings', 'true')
     const paramsString = params.toString()
