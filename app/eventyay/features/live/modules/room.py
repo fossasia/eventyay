@@ -650,7 +650,6 @@ class RoomModule(BaseModule):
             Permission.ROOM_JITSI_MODERATE,
             Permission.ROOM_JANUSCALL_MODERATE,
             Permission.ROOM_BBB_MODERATE,
-            Permission.ROOM_LOUNGEMESH_MODERATE,
         ]
     )
     async def config_get(self, body):
@@ -686,7 +685,6 @@ class RoomModule(BaseModule):
             Permission.ROOM_JITSI_MODERATE,
             Permission.ROOM_JANUSCALL_MODERATE,
             Permission.ROOM_BBB_MODERATE,
-            Permission.ROOM_LOUNGEMESH_MODERATE,
         ]
     )
     async def config_patch(self, body):
@@ -828,6 +826,9 @@ class RoomModule(BaseModule):
                 new = await database_sync_to_async(serialize_room_config)(self.room)
             if not full_edit:
                 new = strip_webhook_secrets(new)
+            if hasattr(self.consumer, "room_cache"):
+                self.consumer.room_cache.pop(str(self.room.pk), None)
+                self.consumer.room_cache.pop(self.room.pk, None)
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:

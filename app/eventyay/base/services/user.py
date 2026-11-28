@@ -774,9 +774,12 @@ def get_user(
             # On attendee side, attendee sessions only have attendee traits.
             # Strip any organizer, admin, or moderator traits.
             raw_traits = with_token.get("traits") or []
+            from eventyay.eventyay_common.video.permissions import managed_video_trait_values
+            managed_traits = managed_video_trait_values(event.slug)
             token_traits = [
                 t for t in raw_traits
                 if t != 'admin'
+                and t not in managed_traits
                 and not (isinstance(t, str) and (t.endswith('-organizer') or t.endswith('-moderator') or t.endswith('-video-moderator')))
             ]
             attendee_trait = video_attendee_trait(event.slug)

@@ -103,7 +103,11 @@ class AuthModule(BaseModule):
             is_authorized_session_user = False
             if session_user and getattr(session_user, "is_authenticated", False):
                 from eventyay.eventyay_common.video.traits_sync import is_platform_event_admin
-                is_admin = await database_sync_to_async(is_platform_event_admin)(session_user, session_key=session_key)
+                is_admin = await database_sync_to_async(is_platform_event_admin)(
+                    session_user,
+                    session_key=session_key,
+                    require_session_key=True,
+                )
                 has_perm = await database_sync_to_async(
                     lambda: session_user.has_event_permission(
                         self.consumer.event.organizer, self.consumer.event
@@ -157,11 +161,10 @@ class AuthModule(BaseModule):
                 await self.consumer.send_error(code="auth.invalid_token")
                 return
 
+            from eventyay.eventyay_common.video.traits_sync import is_organizer_token_traits
+
             token_traits = token.get("traits") or []
-            token_has_organizer = any(
-                t == "admin" or (isinstance(t, str) and t.endswith("-organizer"))
-                for t in token_traits
-            )
+            token_has_organizer = is_organizer_token_traits(self.consumer.event.slug, token_traits)
             kwargs["token"] = token
             # Only grant organizer mode to tokens if requested in organizer area AND holding organizer traits
             kwargs["is_organizer"] = bool(is_organizer_requested and token_has_organizer)
@@ -177,6 +180,12 @@ class AuthModule(BaseModule):
             return
 
         self.consumer.user = login_result.user
+        self.consumer.is_organizer = bool(kwargs.get("is_organizer", False))
+        platform_user = kwargs.get("platform_user")
+        self.consumer.platform_user = platform_user
+        self.consumer.platform_user_id = getattr(platform_user, "pk", None) if platform_user else None
+        self.consumer.session_key = kwargs.get("session_key")
+        self.consumer.platform_auth_checked = True
         self._current_view = login_result.view
 
         live_features = (getattr(self.consumer.event, "config", None) or {}).get("live_features", {})

@@ -8,7 +8,8 @@
 
 	.provider-overview-card
 		.provider-icon-wrapper(:class="providerId")
-			i.mdi(:class="providerIcon")
+			slot(name="icon")
+				i.mdi(:class="providerIcon")
 		.provider-info
 			.provider-title {{ title }}
 			.provider-subtitle {{ subtitle }}
@@ -127,8 +128,15 @@ export default {
 				color: #2563eb
 
 			&.loungemesh
-				background-color: #f5f3ff
-				color: #7c3aed
+				background-color: transparent
+				color: var(--clr-primary, #2185d0)
+				padding: 0
+				svg.loungemesh-brand-icon
+					width: 48px
+					height: 48px
+					display: block
+					border-radius: 12px
+					box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12)
 
 		.provider-info
 			.provider-title

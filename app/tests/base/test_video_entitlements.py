@@ -93,7 +93,7 @@ def test_live_room_creation_denied_before_writing(video_policy, video_event):
 def test_live_room_update_denied_before_writing(video_policy, video_event):
     video_policy[0].add('video.youtube')
     consumer = SimpleNamespace(event=video_event, send_error=AsyncMock())
-    module = SimpleNamespace(consumer=consumer)
+    module = SimpleNamespace(consumer=consumer, _can_edit_full_room_config=AsyncMock(return_value=True))
     # Invoke the command body; room_action itself is exercised below.
     async_to_sync(RoomModule.config_patch.__wrapped__.__wrapped__)(
         module, {'module_config': [{'type': 'livestream.youtube'}]}

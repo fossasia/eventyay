@@ -297,6 +297,9 @@ export function checkRoutePermission(to) {
 	if (name.startsWith('admin:users') || name === 'admin:user') {
 		return hasPerm('world:users.list')
 	}
+	if (name === 'admin:rooms:item' || name === 'admin:rooms:new') {
+		return isAdmin || hasPerm('room:update')
+	}
 	if (name.startsWith('admin:rooms') || name === 'room:manage') {
 		return hasPerm('room:update') || hasPerm('world:rooms.create.stage') || hasPerm('world:rooms.create.bbb') || hasPerm('world:rooms.create.jitsi')
 	}
