@@ -57,6 +57,7 @@ from eventyay.base.models import (
     TeamInvite,
     User,
 )
+from eventyay.base.services.organizer_creation import lock_core_team_memberships
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.helpers.dicts import merge_dicts
 from eventyay.presale.style import regenerate_organizer_css
@@ -436,6 +437,9 @@ class TeamMemberViewSet(DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     @transaction.atomic()
     def perform_destroy(self, instance):
         ensure_can_manage_team_members(self.request, self.team)
+        if self.team.is_core_team:
+            lock_core_team_memberships(Team.objects.filter(pk=self.team.pk))
+            instance.refresh_from_db(fields=['email'])
         ensure_core_team_keeps_a_member(self.team, instance)
         self.team.members.remove(instance)
         self.team.log_action(

@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Event, Organizer, Team, User
@@ -67,6 +67,16 @@ def can_manage_team_members(
     if token is not None:
         return token.active and token.team.is_core_team and token.team.organizer_id == team.organizer_id
     return False
+
+
+def lock_core_team_memberships(teams: QuerySet[Team]) -> None:
+    """Serialize membership removals and user anonymization within a transaction."""
+    list(
+        Team.members.through.objects.filter(team__in=teams.filter(is_core_team=True))
+        .order_by('pk')
+        .select_for_update()
+        .values_list('pk', flat=True)
+    )
 
 
 def removes_last_active_core_member(team: Team, user: User) -> bool:

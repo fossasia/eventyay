@@ -22,6 +22,7 @@ from eventyay.base.services.organizer_creation import (
     CORE_TEAM_MEMBERS_DENIED,
     can_manage_team_members,
     create_core_team,
+    lock_core_team_memberships,
     removes_last_active_core_member,
 )
 from eventyay.base.services.teams import TeamInviteError, invite_to_team, resend_team_invite
@@ -490,6 +491,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
 
     def _handle_remove_member(self, team, post):
         """Handle removing a member from the team."""
+        if team.is_core_team:
+            lock_core_team_memberships(Team.objects.filter(pk=team.pk))
         try:
             user = team.members.get(pk=post.get('remove-member'))
         except (User.DoesNotExist, ValueError):

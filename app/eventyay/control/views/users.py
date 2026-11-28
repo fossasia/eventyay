@@ -31,9 +31,13 @@ from allauth.socialaccount import providers
 from allauth.socialaccount.models import SocialAccount
 
 from eventyay.base.auth import get_auth_backends
-from eventyay.base.models import Team, User
+from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
-from eventyay.base.services.organizer_creation import CORE_TEAM_LAST_MEMBER, removes_last_active_core_member
+from eventyay.base.services.organizer_creation import (
+    CORE_TEAM_LAST_MEMBER,
+    lock_core_team_memberships,
+    removes_last_active_core_member,
+)
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.filter import UserFilterForm
 from eventyay.base.services.user import (
@@ -549,13 +553,7 @@ class UserAnonymizeView(
                 self.object = get_object_or_404(User.objects.select_for_update(no_key=True), pk=user_id)
                 if self.object.is_active:
                     core_teams = self.object.teams.filter(is_core_team=True)
-                    # Lock shared membership rows in the same order for every request.
-                    list(
-                        Team.members.through.objects.filter(team__in=core_teams)
-                        .order_by('pk')
-                        .select_for_update()
-                        .values_list('pk', flat=True)
-                    )
+                    lock_core_team_memberships(core_teams)
                     if any(removes_last_active_core_member(team, self.object) for team in core_teams):
                         messages.error(request, CORE_TEAM_LAST_MEMBER)
                         return redirect(self.get_error_url())
