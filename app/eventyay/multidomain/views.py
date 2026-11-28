@@ -28,6 +28,7 @@ from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.base.models import Event
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.services.event import get_event_timezone_name
+from eventyay.base.services.loungemesh import apply_loungemesh_embed_headers
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.settings import get_video_provider_visibility
 from eventyay.common.gzip import gzip_if_accepted
@@ -340,6 +341,7 @@ class VideoSPAView(View):
             html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
 
         resp = HttpResponse(html_content, content_type='text/html')
+        apply_loungemesh_embed_headers(resp, event=event)
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
         return gzip_if_accepted(request, resp)
 
