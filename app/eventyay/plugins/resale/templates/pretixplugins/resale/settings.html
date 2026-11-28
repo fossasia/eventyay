@@ -1,0 +1,33 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block inside %}
+  <h1>{% trans "Ticket resale marketplace" %}</h1>
+  <form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    <fieldset>
+      <legend>{% trans "General" %}</legend>
+      {% bootstrap_field form.resale_enabled layout="horizontal" %}
+      {% bootstrap_field form.resale_suspended layout="horizontal" %}
+      {% bootstrap_field form.resale_products layout="horizontal" %}
+    </fieldset>
+    <fieldset>
+      <legend>{% trans "Fees and prices" %}</legend>
+      {% bootstrap_field form.resale_fee_mode layout="horizontal" %}
+      {% bootstrap_field form.resale_fee_fixed layout="horizontal" %}
+      {% bootstrap_field form.resale_fee_percent layout="horizontal" %}
+      {% bootstrap_field form.resale_max_price_mode layout="horizontal" %}
+    </fieldset>
+    <fieldset>
+      <legend>{% trans "Schedule" %}</legend>
+      {% bootstrap_field form.resale_available_from layout="horizontal" %}
+      {% bootstrap_field form.resale_available_until layout="horizontal" %}
+      {% bootstrap_field form.resale_reservation_minutes layout="horizontal" %}
+    </fieldset>
+    <div class="form-group submit-group">
+      <button type="submit" class="btn btn-primary btn-lg">{% trans "Save" %}</button>
+    </div>
+  </form>
+{% endblock %}

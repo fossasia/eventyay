@@ -1,0 +1,67 @@
+{% extends "pretixcontrol/event/base.html" %}
+{% load i18n %}
+{% load money %}
+
+{% block content %}
+  <h1>{% trans "Ticket resale" %}</h1>
+  <p>
+    <a class="btn btn-default" href="{% url "plugins:resale:settings" organizer=request.event.organizer.slug event=request.event.slug %}">
+      <span class="fa fa-wrench"></span> {% trans "Settings" %}
+    </a>
+  </p>
+
+  <div class="row">
+    <div class="col-md-2"><strong>{{ counts.available }}</strong><br>{% trans "Available" %}</div>
+    <div class="col-md-2"><strong>{{ counts.reserved }}</strong><br>{% trans "Reserved" %}</div>
+    <div class="col-md-2"><strong>{{ counts.sold }}</strong><br>{% trans "Sold" %}</div>
+    <div class="col-md-2"><strong>{{ counts.withdrawn }}</strong><br>{% trans "Withdrawn" %}</div>
+    <div class="col-md-2"><strong>{{ counts.refund_pending }}</strong><br>{% trans "Pending refunds" %}</div>
+    <div class="col-md-2"><strong>{{ counts.fees|money:request.event.currency }}</strong><br>{% trans "Fees collected" %}</div>
+  </div>
+
+  <table class="table table-condensed table-hover mt-3">
+    <thead>
+      <tr>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Ticket" %}</th>
+        <th>{% trans "Price" %}</th>
+        <th>{% trans "Seller order" %}</th>
+        <th>{% trans "Buyer order" %}</th>
+        <th>{% trans "Refund" %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for listing in listings %}
+        <tr>
+          <td>{{ listing.get_status_display }}</td>
+          <td>{{ listing.position.product }}{% if listing.position.variation %} – {{ listing.position.variation }}{% endif %}</td>
+          <td>{{ listing.price|money:request.event.currency }}</td>
+          <td>
+            <a href="{% url "control:event.order" organizer=request.event.organizer.slug event=request.event.slug code=listing.seller_order.code %}">
+              {{ listing.seller_order.code }}
+            </a>
+          </td>
+          <td>
+            {% if listing.buyer_order %}
+              <a href="{% url "control:event.order" organizer=request.event.organizer.slug event=request.event.slug code=listing.buyer_order.code %}">
+                {{ listing.buyer_order.code }}
+              </a>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ listing.get_refund_status_display }}</td>
+          <td>
+            {% if listing.status == "available" %}
+              <form method="post" action="{% url "plugins:resale:admin_withdraw" organizer=request.event.organizer.slug event=request.event.slug listing=listing.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-default btn-xs">{% trans "Withdraw" %}</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7">{% trans "No listings yet." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

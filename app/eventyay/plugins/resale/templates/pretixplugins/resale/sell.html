@@ -1,0 +1,53 @@
+{% extends "pretixpresale/event/base.html" %}
+{% load i18n %}
+{% load money %}
+{% load bootstrap3 %}
+{% load static %}
+{% load eventurl %}
+
+{% block content %}
+  <h2>{% trans "Sell your ticket" %}</h2>
+  <p>
+    {% blocktrans trimmed with product=position.product %}
+      You are listing <strong>{{ product }}</strong> on the ticket marketplace.
+    {% endblocktrans %}
+  </p>
+
+  <div class="panel panel-default">
+    <div class="panel-body">
+      <dl class="dl-horizontal">
+        <dt>{% trans "Original ticket price" %}</dt>
+        <dd>{{ original_price|money:request.event.currency }}</dd>
+        <dt>{% trans "Processing fee" %}</dt>
+        <dd id="resale-fee">{{ fee|money:request.event.currency }}</dd>
+        <dt>{% trans "You receive" %}</dt>
+        <dd id="resale-payout"><strong>{{ payout|money:request.event.currency }}</strong></dd>
+      </dl>
+
+      <form method="post" class="form-horizontal" id="resale-sell-form"
+            data-fee-mode="{{ request.event.settings.resale_fee_mode }}"
+            data-fee-fixed="{{ request.event.settings.resale_fee_fixed }}"
+            data-fee-percent="{{ request.event.settings.resale_fee_percent }}"
+            data-currency="{{ request.event.currency }}">
+        {% csrf_token %}
+        {% bootstrap_form form layout="horizontal" %}
+        <div class="form-group">
+          <div class="col-md-offset-3 col-md-9">
+            <button type="submit" class="btn btn-primary">{% trans "List ticket for sale" %}</button>
+            <a class="btn btn-default" href="{% eventurl request.event "presale:event.order" order=order.code secret=order.secret %}">{% trans "Cancel" %}</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    {% blocktrans trimmed %}
+      After you confirm, your ticket appears on the public marketplace without showing your personal details.
+      When a buyer pays successfully, your original ticket is invalidated and a refund of your asking price
+      minus the processing fee is started through your original payment method when possible.
+    {% endblocktrans %}
+  </div>
+
+  <script type="module" src="{% static "pretixplugins/resale/sell.js" %}"></script>
+{% endblock %}
