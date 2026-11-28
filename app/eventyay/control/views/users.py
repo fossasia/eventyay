@@ -31,7 +31,7 @@ from allauth.socialaccount import providers
 from allauth.socialaccount.models import SocialAccount
 
 from eventyay.base.auth import get_auth_backends
-from eventyay.base.models import User
+from eventyay.base.models import Team, User
 from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.organizer_creation import CORE_TEAM_LAST_MEMBER, removes_last_active_core_member
 from eventyay.base.settings import GlobalSettingsObject
@@ -543,13 +543,23 @@ class UserAnonymizeView(
         return reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs)
 
     def post(self, request, *args, **kwargs):
-        self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
-        core_teams = self.object.teams.filter(is_core_team=True)
-        if any(removes_last_active_core_member(team, self.object) for team in core_teams):
-            messages.error(request, CORE_TEAM_LAST_MEMBER)
-            return redirect(self.get_error_url())
+        user_id = self.kwargs.get('id')
         try:
             with transaction.atomic():
+                self.object = get_object_or_404(User.objects.select_for_update(no_key=True), pk=user_id)
+                if self.object.is_active:
+                    core_teams = self.object.teams.filter(is_core_team=True)
+                    # Lock shared membership rows in the same order for every request.
+                    list(
+                        Team.members.through.objects.filter(team__in=core_teams)
+                        .order_by('pk')
+                        .select_for_update()
+                        .values_list('pk', flat=True)
+                    )
+                    if any(removes_last_active_core_member(team, self.object) for team in core_teams):
+                        messages.error(request, CORE_TEAM_LAST_MEMBER)
+                        return redirect(self.get_error_url())
+
                 self.object.log_action('eventyay.user.anonymized', user=request.user)
                 self.object.email = '{}@disabled.eventyay.com'.format(self.object.pk)
                 self.object.fullname = ''
@@ -566,7 +576,7 @@ class UserAnonymizeView(
                     le.shredded = True
                     le.save(update_fields=['data', 'shredded'])
         except DatabaseError:
-            logger.exception('Failed to anonymize user %s from admin user page.', self.object.pk)
+            logger.exception('Failed to anonymize user %s from admin user page.', user_id)
             messages.error(request, _('The user could not be anonymized. Please try again later.'))
             return redirect(self.get_error_url())
         else:

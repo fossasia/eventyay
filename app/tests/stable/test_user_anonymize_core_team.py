@@ -50,6 +50,17 @@ def test_core_member_can_be_anonymized_while_another_active_member_remains(admin
     assert not owner.is_active and owner.email.endswith('@disabled.eventyay.com')
 
 
+def test_inactive_sole_core_member_can_be_anonymized(admin_client, organizer):
+    owner = User.objects.create_user('owner@example.com', 'owner', is_active=False)
+    create_core_team(organizer, owner)
+
+    anonymize(admin_client, owner)
+
+    owner.refresh_from_db()
+    assert not owner.is_active
+    assert owner.email == f'{owner.pk}@disabled.eventyay.com'
+
+
 def test_user_outside_the_core_team_can_be_anonymized(admin_client):
     user = User.objects.create_user('someone@example.com', 'someone')
     anonymize(admin_client, user)
