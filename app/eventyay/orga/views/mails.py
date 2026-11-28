@@ -1,5 +1,5 @@
 import json
-import uuid
+import logging
 
 import nh3
 from django.contrib import messages
@@ -9,19 +9,30 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import escape
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy, npgettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, View
 from django_context_decorator import context
 
 from eventyay.base.entitlements import check_entitlement, record_usage
-from eventyay.base.models import Organizer
+from eventyay.base.models import (
+    DraftReminderBatch,
+    DraftReminderBatchStatus,
+    DraftReminderRecipient,
+    DraftReminderRecipientStatus,
+    Organizer,
+)
 from eventyay.base.models.mail import MailTemplate, QueuedMail, get_prefixed_subject
 from eventyay.base.signals import entitlement_usage_recorded
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
 from eventyay.common.mail import TolerantDict, mail_send_task
-from eventyay.common.tasks import send_scheduled_queuedmail
+from eventyay.common.tasks import (
+    reconcile_draft_reminder_batch_allowance,
+    send_draft_reminder_batch,
+    send_scheduled_queuedmail,
+)
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -44,6 +55,9 @@ from eventyay.orga.forms.mails import (
     WriteSessionMailForm,
     WriteTeamsMailForm,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_send_mail_exceptions(request):
@@ -870,61 +884,78 @@ class ComposeDraftReminders(EventPermissionRequired, FormView):
         return self.request.event.orga_urls.base
 
     def form_valid(self, form):
-        """Reserve allowance before sending, then release any unsent reminders."""
+        """Reserve allowance before dispatching the durable draft reminder batch."""
         event = self.request.event
         recipients = form.get_recipients()
         recipients_count = len(recipients)
-        source_id = uuid.uuid4().hex
+        if not recipients_count:
+            messages.info(self.request, _('No draft submissions found.'))
+            return redirect(self.get_success_url())
+
         with transaction.atomic():
             Organizer.objects.select_for_update().get(pk=event.organizer_id)
-            if recipients_count:
-                decision = check_entitlement(
-                    event.organizer,
-                    'email.bulk.monthly',
-                    event=event,
-                    quantity=recipients_count,
+            decision = check_entitlement(
+                event.organizer,
+                'email.bulk.monthly',
+                event=event,
+                quantity=recipients_count,
+            )
+            if not decision.allowed:
+                error_msg = decision.message or _(
+                    'You have reached the limit for sending bulk emails on your plan.'
                 )
-                if not decision.allowed:
-                    error_msg = decision.message or _(
-                        'You have reached the limit for sending bulk emails on your plan.'
-                    )
-                    form.add_error(None, error_msg)
-                    return self.form_invalid(form)
+                form.add_error(None, error_msg)
+                return self.form_invalid(form)
 
-                # Commit the reservation before dispatch: a usage failure must not send mail.
-                record_usage(
-                    event.organizer,
-                    'email.bulk.monthly',
-                    quantity=recipients_count,
-                    unit='emails',
-                    source_type='bulk_email',
-                    source_id=source_id,
-                    idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
-                    event=event,
-                )
+            batch = form.save(recipients=recipients, created_by=self.request.user)
+            source_id = batch.uuid.hex
+            accounting_period = (
+                batch.created_at.strftime('%Y-%m')
+                if batch.created_at
+                else now().strftime('%Y-%m')
+            )
+            record_usage(
+                event.organizer,
+                'email.bulk.monthly',
+                quantity=recipients_count,
+                unit='emails',
+                source_type='bulk_email',
+                source_id=source_id,
+                idempotency_key=f'bulk_mail_draft_reminders_{source_id}',
+                event=event,
+                accounting_period=accounting_period,
+                metadata={
+                    'batch_uuid': source_id,
+                    'batch_created_at': batch.created_at.isoformat() if batch.created_at else None,
+                    'accounting_period': accounting_period,
+                },
+            )
 
         try:
-            result = form.save(recipients=recipients)
-        finally:
-            unsent_count = recipients_count - form.sent_count
-            if unsent_count:
-                with transaction.atomic():
-                    Organizer.objects.select_for_update().get(pk=event.organizer_id)
-                    record_usage(
-                        event.organizer,
-                        'email.bulk.monthly',
-                        quantity=-unsent_count,
-                        unit='emails',
-                        source_type='bulk_email',
-                        source_id=source_id,
-                        idempotency_key=f'bulk_mail_draft_reminders_{source_id}_release',
-                        event=event,
-                    )
+            send_draft_reminder_batch.apply_async(args=[batch.pk])
+        except Exception as exc:
+            logger.exception('Failed to enqueue draft reminder batch %s: %s', batch.pk, exc)
+            with transaction.atomic():
+                b = DraftReminderBatch.objects.select_for_update().get(pk=batch.pk)
+                b.status = DraftReminderBatchStatus.FAILED
+                b.failed_count = b.total_count
+                b.completed_at = now()
+                b.save(update_fields=['status', 'failed_count', 'completed_at'])
+                DraftReminderRecipient.objects.filter(
+                    batch=b, status=DraftReminderRecipientStatus.PENDING
+                ).update(status=DraftReminderRecipientStatus.FAILED)
+                reconcile_draft_reminder_batch_allowance(b)
+            messages.error(
+                self.request,
+                _('Failed to dispatch reminder emails. Please try again.'),
+            )
+            return redirect(self.get_success_url())
+
         messages.success(
             self.request,
-            _('{count} emails have been sent.').format(count=result),
+            _('{count} reminder emails have been queued for sending.').format(count=recipients_count),
         )
-        return super().form_valid(form)
+        return redirect(self.get_success_url())
 
 
 class MailTemplateView(OrgaCRUDView):
