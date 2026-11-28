@@ -414,10 +414,12 @@ class EmailQueue(models.Model):
                 kwargs['position'] = position
             if position_or_address is not None:
                 kwargs['position_or_address'] = position_or_address
-                best_name = get_best_name(position_or_address)
-                if best_name:
-                    kwargs['name'] = best_name
-            return get_email_context(**kwargs)
+            ctx = get_email_context(**kwargs)
+            # Always expose ``name`` so {name} / the Tiptap chip resolve to a blank
+            # when the order has no attendee, invoice, or contact name.
+            if position_or_address is not None:
+                ctx['name'] = get_best_name(position_or_address) or ''
+            return ctx
         except (AttributeError, KeyError, TypeError, ValueError) as e:
             logger.exception('Error while generating email context')
             if record_errors and recipient is not None:

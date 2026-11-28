@@ -80,6 +80,49 @@ def test_sent_mail_form_resolves_attendee_name_placeholder(event, order, pos):
 
 
 @pytest.mark.django_db
+def test_sent_mail_form_blank_name_when_attendee_has_no_name(event, order, pos):
+    """Missing attendee/invoice name must resolve to blank, not leave the {name} chip."""
+    with scope(organizer=event.organizer):
+        pos.attendee_name_parts = {}
+        pos.attendee_name_cached = ''
+        pos.attendee_email = 'noname@example.com'
+        pos.save()
+        order.email = 'noname@example.com'
+        order.save(update_fields=['email'])
+
+        queue = EmailQueue.objects.create(
+            event=event,
+            composing_for=ComposingFor.ATTENDEES,
+            subject='Hello {name}',
+            message='<p>Hi <span class="tiptap-placeholder-chip" data-variable="name">{name}</span>,</p>',
+            is_draft=False,
+            sent_at=now(),
+            locale='en',
+        )
+        EmailQueueToUser.objects.create(
+            mail=queue,
+            email=pos.attendee_email,
+            orders=[order.pk],
+            positions=[pos.pk],
+        )
+        ctx = queue.placeholder_context()
+        form = EmailQueueEditForm(instance=queue, event=event, read_only=True)
+
+    assert ctx is not None
+    assert ctx.get('name') == ''
+    text = str(form.fields['text'].initial)
+    subject = str(form.fields['subject'].initial)
+    assert '{name}' not in text
+    assert 'tiptap-placeholder-chip' not in text
+    assert text == '<p>Hi ,</p>'
+    assert subject == 'Hello '
+    assert resolve_queued_mail_text(
+        '<span class="tiptap-placeholder-chip" data-variable="name">{name}</span>',
+        {'name': ''},
+    ) == ''
+
+
+@pytest.mark.django_db
 def test_outbox_mail_form_keeps_attendee_name_placeholder(event, order, pos):
     with scope(organizer=event.organizer):
         pos.attendee_name_parts = {'_legacy': 'Rachit Makwana'}

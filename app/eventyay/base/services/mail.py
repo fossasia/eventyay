@@ -760,8 +760,9 @@ def expand_email_variable_chips(body: str, context: dict[str, str]) -> str:
         if key not in context:
             return match.group(0)
         value = context[key]
-        # Skip empty / still-unresolved tolerant placeholders.
-        if value == '' or value == f'{{{key}}}' or value == key:
+        # Keep the chip only when the value is still an unresolved placeholder.
+        # An empty string is a real resolution (e.g. no attendee name) — show blank.
+        if value == f'{{{key}}}' or value == key:
             return match.group(0)
         return value
 
