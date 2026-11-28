@@ -500,3 +500,27 @@ def test_ticket_page_headline_price_ignores_expired_phases(client, event, variat
     price_text = ' '.join(headline_price.stripped_strings)
     assert '50.00' in price_text
     assert '10.00' not in price_text
+
+
+@pytest.mark.django_db
+def test_ticket_page_shows_sold_out_variants_even_when_hide_sold_out(client, event, variation_cart_setup):
+    """Sold-out variations stay as compact non-buyable rows despite hide_sold_out."""
+    with scope(organizer=event.organizer, event=event):
+        event.settings.hide_sold_out = True
+        for quota in Quota.objects.filter(event=event, variations=variation_cart_setup.shirt_red):
+            quota.size = 0
+            quota.save()
+        for quota in Quota.objects.filter(event=event, variations=variation_cart_setup.shirt_blue):
+            quota.size = 0
+            quota.save()
+        shirt_id = variation_cart_setup.shirt.id
+        red_id = variation_cart_setup.shirt_red.id
+        blue_id = variation_cart_setup.shirt_blue.id
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert f'id="item-{shirt_id}"' in html
+    assert 'variation-sold-out' in html
+    assert f'name="variation_{shirt_id}_{red_id}"' not in html
+    assert f'name="variation_{shirt_id}_{blue_id}"' not in html

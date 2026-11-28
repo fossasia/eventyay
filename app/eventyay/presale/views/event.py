@@ -455,11 +455,9 @@ def get_grouped_products(
                 and (not voucher or not voucher.quota_id or v in restrict_vars)
             ]
 
-            if event.settings.hide_sold_out and product.available_variations:
-                # Keep sold-out rows in the compact list when other phases remain
-                # visible; hide the product only if every variation is sold out.
-                if all(v.sales_state == 'sold_out' for v in product.available_variations):
-                    product.available_variations = []
+            # Do not apply hide_sold_out to variation rows: sold-out phases stay
+            # visible as compact non-buyable lines (#7674). Simple products still
+            # honor hide_sold_out earlier in this function.
 
             if voucher and voucher.variation_id:
                 product.available_variations = [v for v in product.available_variations if v.pk == voucher.variation_id]
