@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0095_roomview_jitsi_joined_at'),
+        ('base', '0096_team_is_core_team'),
     ]
 
     operations = [
