@@ -55,7 +55,10 @@
                         {% trans "Transactions" %}
                     </h3>
                 </div>
-                <form class="" method="post" action="">
+                <form id='giftcard-revert' method='post'>
+                    {% csrf_token %}
+                </form>
+                <form method='post'>
                     {% csrf_token %}
                     <table class="panel-body table">
                         <thead>
@@ -75,7 +78,7 @@
                                             {{ t.order.full_code }}
                                         </a>
                                         {% if t.refund and t.value > 0 and t.value <= card.value %}
-                                            <button type="submit" name="revert" value="{{ t.pk }}"
+                                            <button form='giftcard-revert' type="submit" name="revert" value="{{ t.pk }}"
                                                     class="btn btn-default btn-xs" data-toggle="tooltip"
                                                     title="{% trans "Create a payment on the respective order that cancels out with this transaction. The order will then likely be overpaid." %}">
                                                 <span class="fa fa-repeat"></span>

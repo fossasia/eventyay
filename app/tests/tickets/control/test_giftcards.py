@@ -182,6 +182,20 @@ def test_card_detail_view_transact_revert_refund(organizer, admin_user, gift_car
         t = gift_card.transactions.create(value=14, order=o, refund=r)
 
     client.login(email='dummy@dummy.dummy', password='dummy')
+    page = client.get(f'/control/organizer/dummy/giftcard/{gift_card.pk}/')
+    soup = BeautifulSoup(page.content, 'html.parser')
+    revert = soup.select_one(f'button[name="revert"][value="{t.pk}"]')
+    revert_form = soup.find('form', id=revert['form'])
+    assert revert_form.select_one('input[name="csrfmiddlewaretoken"]')
+
+    note = soup.select_one('tfoot input[name="text"]')
+    manual_form = note.find_parent('form')
+    assert manual_form is not revert_form
+    assert manual_form.select_one('input[name="csrfmiddlewaretoken"]')
+    assert manual_form.select_one('tfoot input[name="value"]:not([form])')
+    assert not note.has_attr('form')
+    assert manual_form.select('button:not([form])') == [soup.select_one('tfoot button')]
+
     r = client.post(
         f'/control/organizer/dummy/giftcard/{gift_card.pk}/',
         {'revert': str(t.pk)},
