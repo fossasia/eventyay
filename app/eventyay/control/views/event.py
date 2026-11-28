@@ -8,12 +8,14 @@ import re
 import tempfile
 from collections import OrderedDict
 from decimal import Decimal, InvalidOperation
+from functools import partial
 from itertools import groupby
 from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
 from django.db.models import ProtectedError, Q
@@ -36,8 +38,10 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, FormView, ListView
 from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
+from kombu.exceptions import OperationalError as BrokerOperationalError
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -46,8 +50,11 @@ from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.timezones import localize_datetime
 from eventyay.base.models import (
     Event,
+    EventAnonymizationRun,
+    Invoice,
     LogEntry,
     Order,
+    OrderPosition,
     RequiredAction,
     TaxRule,
     Voucher,
@@ -56,6 +63,8 @@ from eventyay.base.models.event import EventMetaValue
 from eventyay.base.models.global_plugin_config import GlobalPluginConfig
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services import tickets
+from eventyay.base.services.event_anonymization import anonymization_available_from, anonymize_event
+from eventyay.base.services.organizer_creation import is_event_core_team_member
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
 from eventyay.base.templatetags.rich_text import (
@@ -67,6 +76,7 @@ from eventyay.base.templatetags.rich_text import (
 from eventyay.control.forms.event import (
     CancelSettingsForm,
     CommentForm,
+    EventAnonymizeForm,
     EventDeleteForm,
     EventMetaValueForm,
     GeneralEventSettingsForm,
@@ -1270,6 +1280,112 @@ class EventDelete(RecentAuthenticationRequiredMixin, EventPermissionRequiredMixi
 
     def get_success_url(self) -> str:
         return reverse('eventyay_common:dashboard')
+
+
+class EventAnonymize(RecentAuthenticationRequiredMixin, EventPermissionRequiredMixin, FormView):
+    """
+    Anonymize the buyer and attendee identity of every order of the event.
+
+    Only members of the Core Organizing Team may open this page, and only once the event has ended and the
+    waiting period configured by the platform administrators has passed.
+    """
+
+    permission = 'can_change_event_settings'
+    template_name = 'pretixcontrol/event/anonymize.html'
+    form_class = EventAnonymizeForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not is_event_core_team_member(request.user, request.event):
+            raise PermissionDenied(_('Only members of the Core Organizing Team can anonymize ticketing data.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    @cached_property
+    def run(self):
+        return EventAnonymizationRun.objects.filter(event=self.request.event).first()
+
+    @cached_property
+    def available_from(self):
+        return anonymization_available_from(self.request.event)
+
+    @property
+    def waiting_period_over(self) -> bool:
+        return self.available_from is not None and now() >= self.available_from
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        event = self.request.event
+        orders = Order.objects.filter(event=event)
+        ctx.update(
+            run=self.run,
+            available_from=self.available_from,
+            waiting_period_over=self.waiting_period_over,
+            order_count=orders.count(),
+            remaining_order_count=orders.filter(is_anonymized=False).count(),
+            position_count=OrderPosition.all.filter(order__event=event, order__is_anonymized=False).count(),
+            invoice_count=Invoice.objects.filter(event=event, order__is_anonymized=False).count(),
+            finished=bool(self.run and self.run.status == EventAnonymizationRun.Status.COMPLETED),
+            running=bool(self.run and self.run.status == EventAnonymizationRun.Status.RUNNING),
+        )
+        return ctx
+
+    def get_success_url(self) -> str:
+        return reverse(
+            'control:event.anonymize',
+            kwargs={'organizer': self.request.organizer.slug, 'event': self.request.event.slug},
+        )
+
+    def post(self, request, *args, **kwargs):
+        if not self.waiting_period_over:
+            messages.error(request, _('The waiting period after this event has not ended.'))
+            return redirect(self.get_success_url())
+        if self.run and self.run.status != EventAnonymizationRun.Status.FAILED:
+            messages.error(request, _('The ticketing data of this event is already being anonymized or has been.'))
+            return redirect(self.get_success_url())
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        event = self.request.event
+        with transaction.atomic():
+            # Two requests must not both pass the admission check, so they queue up on the event row first.
+            Event.objects.select_for_update().filter(pk=event.pk).first()
+            run, created = EventAnonymizationRun.objects.get_or_create(
+                event=event,
+                defaults={'trigger': EventAnonymizationRun.Trigger.MANUAL, 'requested_by': self.request.user},
+            )
+            if not created and run.status != EventAnonymizationRun.Status.FAILED:
+                messages.error(
+                    self.request, _('The ticketing data of this event is already being anonymized or has been.')
+                )
+                return redirect(self.get_success_url())
+            if not created:
+                run.status = EventAnonymizationRun.Status.RUNNING
+                run.error = ''
+                run.finished = None
+                run.save(update_fields=['status', 'error', 'finished'])
+            event.log_action('eventyay.event.ticketing_data.anonymization.requested', user=self.request.user)
+            transaction.on_commit(partial(self._queue_run, run.pk, self.request.user.pk))
+        return redirect(self.get_success_url())
+
+    def _queue_run(self, run_pk: int, user_pk: int) -> None:
+        event = self.request.event
+        try:
+            anonymize_event.apply_async(args=(event.pk, EventAnonymizationRun.Trigger.MANUAL, user_pk))
+            messages.success(self.request, _('The ticketing data of this event is being anonymized.'))
+        except BrokerOperationalError:
+            logger.exception('Could not queue the anonymization of event %s', event.pk)
+            # The task never started, so leave the run in a state the page offers to resume.
+            with scope(event=event):
+                EventAnonymizationRun.objects.filter(pk=run_pk).update(
+                    status=EventAnonymizationRun.Status.FAILED, error='QueueUnavailable', finished=now()
+                )
+            messages.error(
+                self.request, _('The anonymization could not be started. Please try again in a few minutes.')
+            )
 
 
 def _csv_text(value):

@@ -185,6 +185,7 @@ urlpatterns = [
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
                 url(r'^live/$', event.EventLive.as_view(), name='event.live'),
                 url(r'^delete/$', event.EventDelete.as_view(), name='event.delete'),
+                url(r'^anonymize/$', event.EventAnonymize.as_view(), name='event.anonymize'),
                 url(r'^requiredactions/$', event.EventActions.as_view(), name='event.requiredactions'),
                 url(
                     r'^requiredactions/(?P<id>\d+)/discard$',

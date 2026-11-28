@@ -55,6 +55,7 @@ from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Orga
 from eventyay.base.models.submission import Submission, SpeakerRole
 from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.services.notifications import notify_organizer_followers
+from eventyay.base.services.organizer_creation import is_event_core_team_member
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
@@ -786,6 +787,7 @@ class EventUpdate(
         context['is_video_enabled'] = is_video_enabled(self.object)
         context['is_meetup_event'] = is_meetup_event(self.object)
         context['is_talk_event_created'] = False
+        context['can_anonymize_ticketing'] = is_event_core_team_member(self.request.user, self.object)
         from eventyay.base.gmail.models import GmailOAuthCredential
 
         context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()

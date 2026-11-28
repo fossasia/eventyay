@@ -395,6 +395,23 @@
                         </div>
                     </div>
                     
+                    {% if can_anonymize_ticketing %}
+                    <!-- Anonymize ticketing data -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Anonymize ticketing data" %}</strong>
+                                <p>{% blocktrans trimmed %}Replace buyer and attendee names, emails and addresses of all orders after the event is over. Orders, totals, answers and check-ins are kept.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'control:event.anonymize' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Anonymize data" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Delete talk data -->
                     {% if is_talk_event_created %}
                     <div class="col-md-6">

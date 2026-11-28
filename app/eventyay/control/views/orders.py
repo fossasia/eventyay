@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
+from functools import partial
 from typing import TypedDict
 from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
@@ -57,7 +58,6 @@ from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
 from eventyay.base.exporter import EXPORTER_CATEGORIES, BaseExporter
 from eventyay.base.i18n import language
-from eventyay.base.services.anonymize import anonymize_order, is_order_event_ended
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedFile,
@@ -85,6 +85,12 @@ from eventyay.base.operational_logging import OUTCOME_FAILURE, log_event
 from eventyay.base.payment import PaymentException
 from eventyay.base.secrets import assign_ticket_secret
 from eventyay.base.services import tickets
+from eventyay.base.services.anonymize import (
+    ANONYMIZED_ORDER_EDIT_ERROR,
+    anonymize_order,
+    is_order_event_ended,
+    lock_order_for_identity_edit,
+)
 from eventyay.base.services.cancelevent import cancel_event
 from eventyay.base.services.export import export
 from eventyay.base.services.invoices import (
@@ -697,10 +703,18 @@ class OrderDownload(AsyncAction, OrderView):
 class OrderComment(OrderView):
     permission = 'can_change_orders'
 
+    @transaction.atomic
     def post(self, *args, **kwargs):
         form = CommentForm(self.request.POST)
         if form.is_valid():
-            if form.cleaned_data.get('comment') != self.order.comment:
+            self.order = lock_order_for_identity_edit(self.order)
+            update_fields = ['checkin_attention']
+            comment = form.cleaned_data.get('comment')
+            if self.order.is_anonymized and comment and comment != self.order.comment:
+                messages.error(self.request, ANONYMIZED_ORDER_EDIT_ERROR)
+                return redirect(self.get_order_url())
+            if not self.order.is_anonymized and comment != self.order.comment:
+                update_fields.append('comment')
                 self.order.comment = form.cleaned_data.get('comment')
                 self.order.log_action(
                     'eventyay.event.order.comment',
@@ -715,7 +729,7 @@ class OrderComment(OrderView):
                     user=self.request.user,
                     data={'new_value': form.cleaned_data.get('checkin_attention')},
                 )
-            self.order.save(update_fields=['checkin_attention', 'comment'])
+            self.order.save(update_fields=update_fields)
             messages.success(self.request, _('The comment has been updated.'))
         else:
             messages.error(self.request, _('Could not update the comment.'))
@@ -1703,7 +1717,13 @@ class OrderInvoiceCreate(OrderView):
 class OrderCheckVATID(OrderView):
     permission = 'can_change_orders'
 
+    @transaction.atomic
     def post(self, *args, **kwargs):
+        self.order = lock_order_for_identity_edit(self.order)
+        if self.order.is_anonymized:
+            messages.error(self.request, ANONYMIZED_ORDER_EDIT_ERROR)
+            return redirect(self.get_order_url())
+
         try:
             ia = self.order.invoice_address
         except InvoiceAddress.DoesNotExist:
@@ -2291,7 +2311,13 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
             data=self.request.POST if self.request.method == 'POST' else None,
         )
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
+        self.order = lock_order_for_identity_edit(self.order)
+        if self.order.is_anonymized:
+            messages.error(self.request, ANONYMIZED_ORDER_EDIT_ERROR)
+            return redirect(self.get_order_url())
+
         failed = not self.save() or not self.invoice_form.is_valid() or not self.other_form.is_valid()
         notify = self.other_form.cleaned_data['notify'] if self.other_form.is_valid() else True
         if failed:
@@ -2334,7 +2360,12 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
             )
             messages.success(self.request, _(success_message))
 
-        tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+        transaction.on_commit(
+            partial(
+                tickets.invalidate_cache.apply_async,
+                kwargs={'event': self.request.event.pk, 'order': self.order.pk},
+            )
+        )
         from eventyay.plugins.badges.utils import invalidate_badge_cache_for_order
 
         invalidate_badge_cache_for_order(self.order)
@@ -2359,7 +2390,13 @@ class OrderContactChange(OrderView):
             data=self.request.POST if self.request.method == 'POST' else None,
         )
 
+    @transaction.atomic
     def post(self, *args, **kwargs):
+        self.order = lock_order_for_identity_edit(self.order)
+        if self.order.is_anonymized:
+            messages.error(self.request, ANONYMIZED_ORDER_EDIT_ERROR)
+            return redirect(self.get_order_url())
+
         old_email = self.order.email
         old_phone = self.order.phone
         changed = False
@@ -2397,7 +2434,12 @@ class OrderContactChange(OrderView):
                         force_invalidate=True,
                         save=True,
                     )
-                tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+                transaction.on_commit(
+                    partial(
+                        tickets.invalidate_cache.apply_async,
+                        kwargs={'event': self.request.event.pk, 'order': self.order.pk},
+                    )
+                )
                 self.order.log_action('eventyay.event.order.secret.changed', user=self.request.user)
 
             self.form.save()
@@ -2437,7 +2479,7 @@ class OrderLocaleChange(OrderView):
                 user=self.request.user,
             )
 
-            self.form.save()
+            self.form.save(commit=False).save(update_fields=['locale'])
             tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
             messages.success(self.request, _('The order has been changed.'))
             return redirect(self.get_order_url())

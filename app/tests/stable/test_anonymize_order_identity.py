@@ -26,12 +26,14 @@ from eventyay.base.models import (
     Question,
     QuestionAnswer,
     QuestionOption,
+    Quota,
     Team,
     User,
 )
 from eventyay.base.models.organizer import TeamAPIToken
 from eventyay.base.services.anonymize import anonymize_order
 from eventyay.base.services.mail import mail, mail_send_task
+from eventyay.base.services.orders import OrderChangeManager
 from eventyay.helpers.anonymization import is_anonymized_email
 from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
 from eventyay.plugins.banktransfer.payment import BankTransfer
@@ -524,6 +526,81 @@ def test_api_anonymizes(data, client, rendered_invoices, allow_all_entitlements)
     assert response.data['phone'] is None
 
 
+@pytest.mark.parametrize('identity_edit', ['email', 'phone', 'invoice_address', 'comment'])
+def test_api_rejects_identity_edits_after_anonymization(event, team, client, identity_edit, allow_all_entitlements):
+    with event_scope(event):
+        order = Order.objects.create(
+            event=event,
+            email='anonymous@eventyay.invalid',
+            total=0,
+            expires=now(),
+            is_anonymized=True,
+        )
+    token = TeamAPIToken.objects.create(team=team, name='Token')
+    url = f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/orders/{order.code}/'
+    values = {
+        'email': 'new@example.com',
+        'phone': '+12025550123',
+        'invoice_address': {'name': 'New Buyer'},
+        'comment': 'New Buyer',
+    }
+    response = client.patch(
+        url,
+        {identity_edit: values[identity_edit]},
+        content_type='application/json',
+        HTTP_AUTHORIZATION=f'Token {token.token}',
+    )
+    assert response.status_code == 400
+    assert 'Personal data cannot be edited' in str(response.json())
+
+    response = client.patch(
+        url,
+        {'checkin_attention': True},
+        content_type='application/json',
+        HTTP_AUTHORIZATION=f'Token {token.token}',
+    )
+    assert response.status_code == 200
+    refresh(event, order)
+    assert order.is_anonymized and order.checkin_attention
+    assert order.email == 'anonymous@eventyay.invalid' and not order.phone
+
+
+@override_settings(SITE_URL='https://testserver')
+def test_control_rejects_contact_edits_after_anonymization(event, team, authenticated_client, allow_all_entitlements):
+    with event_scope(event):
+        order = Order.objects.create(
+            event=event,
+            email='anonymous@eventyay.invalid',
+            total=0,
+            expires=now(),
+            is_anonymized=True,
+        )
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/contact'
+    response = authenticated_client.post(url, {'email': 'new@example.com', 'phone': '+12025550123'})
+    assert response.status_code == 302
+    refresh(event, order)
+    assert order.email == 'anonymous@eventyay.invalid' and not order.phone
+    assert order.is_anonymized
+
+
+@pytest.mark.django_db
+def test_api_rejects_attendee_edits_after_anonymization(data, client, rendered_invoices, allow_all_entitlements):
+    event, order, position = data['event'], data['order'], data['position']
+    anonymize_order(order)
+    team = Team.objects.create(organizer=event.organizer, name='API', all_events=True, can_change_orders=True)
+    token = TeamAPIToken.objects.create(team=team, name='Token')
+    response = client.patch(
+        f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/orderpositions/{position.pk}/',
+        {'attendee_email': 'new@example.com'},
+        content_type='application/json',
+        HTTP_AUTHORIZATION=f'Token {token.token}',
+    )
+    assert response.status_code == 400
+    assert 'Personal data cannot be edited' in str(response.json())
+    refresh(event, position)
+    assert position.attendee_email.endswith('@eventyay.invalid')
+
+
 def test_line_description_keeps_product_text_that_contains_the_attendee_name():
     description = 'Annual pass<br />Attendee: Ann<br />Dietary needs: Ann is vegan'
     result = anonymize_line_description(description, 'Ann')
@@ -622,3 +699,58 @@ def test_bank_transactions_are_anonymized_after_the_plugin_was_disabled(data, re
     assert data['transaction'].amount == Decimal('23.00')
     assert json.loads(data['payment'].info)['payer'] == '█'
     assert json.loads(data['payment'].info)['iban'] == '█'
+
+
+
+@pytest.mark.parametrize('initial,total,difference,expected', [
+    (Order.STATUS_PAID, 10, 10, Order.STATUS_PENDING),
+    (Order.STATUS_PENDING, 0, -10, Order.STATUS_PAID),
+])
+def test_price_change_preserves_concurrently_anonymized_identity(event, initial, total, difference, expected):
+    with event_scope(event):
+        order = Order.objects.create(event=event, email=EMAIL, total=total, status=initial, expires=now())
+        manager = OrderChangeManager(order)
+        manager._totaldiff = difference
+        Order.objects.filter(pk=order.pk).update(email='anonymous@eventyay.invalid', is_anonymized=True)
+        manager._check_paid_price_change()
+        order.refresh_from_db()
+        assert order.status == expected
+        assert order.is_anonymized and order.email == 'anonymous@eventyay.invalid'
+
+
+@override_settings(SITE_URL='https://testserver')
+def test_regenerating_secrets_invalidates_cache_after_commit(
+    event, team, authenticated_client, allow_all_entitlements, mocker, django_capture_on_commit_callbacks
+):
+    with event_scope(event):
+        order = Order.objects.create(event=event, email=EMAIL, total=0, expires=now())
+    invalidate = mocker.patch('eventyay.control.views.orders.tickets.invalidate_cache.apply_async')
+    url = f'/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/contact'
+    with django_capture_on_commit_callbacks(execute=True):
+        response = authenticated_client.post(url, {'email': EMAIL, 'regenerate_secrets': 'on'})
+        assert response.status_code == 302
+        invalidate.assert_not_called()
+    invalidate.assert_called_once_with(kwargs={'event': event.pk, 'order': order.pk})
+
+
+def test_product_change_does_not_restore_attendee_data_from_a_stale_position(event):
+    with event_scope(event):
+        old = Product.objects.create(event=event, name='Old', default_price=10)
+        new = Product.objects.create(event=event, name='New', default_price=10)
+        quota = Quota.objects.create(event=event, name='All', size=10)
+        quota.products.add(old, new)
+        order = Order.objects.create(event=event, email=EMAIL, total=10, status=Order.STATUS_PENDING, expires=now())
+        position = OrderPosition.objects.create(
+            order=order, product=old, price=10, attendee_email='attendee@example.org', attendee_name_cached='Alice'
+        )
+        manager = OrderChangeManager(order)
+        manager.change_product(position, new, None)
+        # The run anonymizes the order after the position was loaded; only the order is refreshed.
+        Order.objects.filter(pk=order.pk).update(email='anonymous@eventyay.invalid', is_anonymized=True)
+        OrderPosition.all.filter(pk=position.pk).update(attendee_email=None, attendee_name_cached=None)
+        order.refresh_from_db()
+        manager.commit(check_quotas=False)
+        stored = OrderPosition.all.get(pk=position.pk)
+        assert stored.product_id == new.pk
+        assert stored.attendee_email is None and stored.attendee_name_cached is None
+
