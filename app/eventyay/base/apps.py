@@ -15,17 +15,12 @@ class EventyayBaseConfig(AppConfig):
         from . import invoice  # NOQA
         from . import notifications  # NOQA
         from . import email  # NOQA
-        from django.conf import settings
+        from . import anonymizer  # NOQA
 
         try:
             from eventyay.celery_app import app as celery_app  # NOQA
         except ImportError:
             pass
-
-        if hasattr(settings, 'RAVEN_CONFIG'):
-            from eventyay.config.sentry import initialize
-
-            initialize()
 
         log_event('core', 'config.loaded', OUTCOME_SUCCESS)
 

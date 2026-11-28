@@ -188,3 +188,85 @@ table.transaction-list td.discard {
 .import-file-input { margin-top: 7px; }
 .import-submit-panel { margin-top: 20px; }
 .back-button-row { margin-bottom: 15px; }
+
+/* Export groups: a heading per group, and each export with its help text and file type */
+.export-group {
+  margin-bottom: 25px;
+}
+
+#page-wrapper .export-group-heading {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 10px;
+}
+
+.export-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.export-panel-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+#page-wrapper details .export-panel-name.panel-title {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+}
+
+.export-panel-description {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #555;
+}
+
+.export-panel-file-type {
+  flex: 0 0 auto;
+  padding: 1px 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.export-panel-heading > .collapse-indicator {
+  flex: 0 0 auto;
+}
+
+.export-group-advanced > summary {
+  display: inline-block;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+#page-wrapper .export-group-advanced > summary .export-group-heading {
+  display: inline;
+  color: #555;
+}
+
+details.export-group-advanced > summary .collapse-indicator {
+  margin-left: 4px;
+  transform: none;
+}
+
+details.export-group-advanced.details-open > summary .collapse-indicator {
+  transform: rotate(90deg);
+}
+
+/* An open group turns every arrow inside it, so the closed exports in it keep theirs pointing down. */
+.export-group-advanced .export-panel:not(.details-open) .collapse-indicator {
+  transform: none;
+}
+
+.export-group .export-panel,
+.export-group-advanced .export-panel {
+  margin-bottom: 10px;
+}
