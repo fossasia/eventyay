@@ -1228,7 +1228,7 @@ wheels = [
 [[package]]
 name = "eventyay-bitpay"
 version = "1.5.2"
-source = { git = "https://github.com/fossasia/eventyay-bitpay.git?branch=main#35b29ffa04586953986e3a3afcd99253d3bfa404" }
+source = { git = "https://github.com/fossasia/eventyay-bitpay.git?branch=main#e219ff05c34a4cb14fdf1ba8c450dbcb8ec6e73e" }
 dependencies = [
     { name = "btcpay-python" },
 ]
@@ -1262,7 +1262,7 @@ dependencies = [
 [[package]]
 name = "eventyay-paypal"
 version = "1.2.1"
-source = { git = "https://github.com/fossasia/eventyay-paypal.git?branch=main#1a3624216730eba5fbc723f150a08172dadf1388" }
+source = { git = "https://github.com/fossasia/eventyay-paypal.git?branch=main#0e4be67c64318ad615fba341efeb1929cdb20d64" }
 
 [[package]]
 name = "eventyay-socialmedia"
@@ -1783,7 +1783,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#2eb511c7dd13c4cc6d5bff8106f55c204c84dbc6" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?branch=main#677249b6377bd1b01e5d1e899d2fbc36fb71ca42" }
 
 [[package]]
 name = "faker"
