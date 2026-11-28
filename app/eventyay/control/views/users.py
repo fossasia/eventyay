@@ -33,6 +33,7 @@ from allauth.socialaccount.models import SocialAccount
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
+from eventyay.base.services.organizer_creation import CORE_TEAM_LAST_MEMBER, removes_last_active_core_member
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.filter import UserFilterForm
 from eventyay.base.services.user import (
@@ -543,6 +544,10 @@ class UserAnonymizeView(
 
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
+        core_teams = self.object.teams.filter(is_core_team=True)
+        if any(removes_last_active_core_member(team, self.object) for team in core_teams):
+            messages.error(request, CORE_TEAM_LAST_MEMBER)
+            return redirect(self.get_error_url())
         try:
             with transaction.atomic():
                 self.object.log_action('eventyay.user.anonymized', user=request.user)
