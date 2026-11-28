@@ -43,6 +43,11 @@ class TeamForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 event__organizer=organizer
             ).order_by("-event__date_from", "name")
 
+        if self.instance.is_core_team:
+            for name, field in self.fields.items():
+                if name != 'name':
+                    field.disabled = True
+
     @scopes_disabled()
     def save(self, *args, **kwargs):
         self.instance.organizer = self.organizer

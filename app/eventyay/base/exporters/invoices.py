@@ -110,6 +110,9 @@ class InvoiceExporterMixin:
 class InvoiceExporter(InvoiceExporterMixin, BaseExporter):
     identifier = 'invoices'
     verbose_name = _('All invoices')
+    category = 'payments_accounting'
+    description = _('Every invoice as a PDF.')
+    file_type = 'ZIP'
 
     def render(self, form_data: dict, output_file=None):
         qs = self.invoices_queryset(form_data).filter(shredded=False)
@@ -161,6 +164,8 @@ class InvoiceExporter(InvoiceExporterMixin, BaseExporter):
 class InvoiceDataExporter(InvoiceExporterMixin, MultiSheetListExporter):
     identifier = 'invoicedata'
     verbose_name = _('Invoice data')
+    category = 'payments_accounting'
+    description = _('Invoice details and line items, for your accountant.')
 
     @property
     def additional_form_fields(self):
