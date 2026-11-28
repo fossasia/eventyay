@@ -363,16 +363,20 @@ def complete_resale(*, listing: ResaleListing, buyer_order: Order, buyer_positio
     fee, payout = calculate_seller_payout(listing.event, listing.price)
 
     # Invalidate the seller ticket. OrderChangeManager refuses to empty an order,
-    # so single-ticket seller orders are cancelled wholesale. Keep the processing
-    # fee as a cancellation fee so the order is not left "overpaid" by that amount.
+    # so single-ticket seller orders are cancelled wholesale. Retain
+    # payment_credit - payout on the order (processing fee + any discount vs
+    # original paid amount) so a later payout refund does not leave an unexplained
+    # overpayment. listing.fee_amount stays the marketplace processing fee only.
     remaining = (
         listing.seller_order.positions.filter(canceled=False).exclude(pk=seller_position.pk).count()
     )
     try:
         if remaining == 0:
+            paid_credit = listing.seller_order.payment_refund_sum
+            retained = quantize_money(max(paid_credit - payout, Decimal('0.00')))
             cancel_kwargs = {'send_mail': True, 'cancel_invoice': True}
-            if fee > Decimal('0.00'):
-                cancel_kwargs['cancellation_fee'] = fee
+            if retained > Decimal('0.00'):
+                cancel_kwargs['cancellation_fee'] = retained
             _cancel_order(listing.seller_order, **cancel_kwargs)
             listing.seller_order.refresh_from_db()
         else:

@@ -331,9 +331,70 @@ def test_complete_resale_tags_seller_and_buyer_orders(resale_event, paid_positio
         listing.refresh_from_db()
 
         assert listing.status == ResaleListing.STATUS_SOLD
+        assert listing.fee_amount == Decimal('5.00')
+        assert listing.seller_payout == Decimal('195.00')
+        # Full-price resale: retain only the processing fee.
+        assert seller_order.total == Decimal('5.00')
         assert seller_order.meta_info_data['resale_role'] == RESALE_ROLE_SELLER
         assert seller_order.meta_info_data['resale_listing_id'] == listing.pk
         assert seller_order.meta_info_data['resale_related_order'] == buyer_order.code
         assert buyer_order.meta_info_data['resale_role'] == RESALE_ROLE_BUYER
         assert buyer_order.meta_info_data['resale_listing_id'] == listing.pk
         assert buyer_order.meta_info_data['resale_related_order'] == seller_order.code
+
+
+@pytest.mark.django_db
+def test_complete_resale_discounted_retains_paid_minus_payout(resale_event, paid_position, ticket_product):
+    """Discounted asking price: retain paid_credit - payout, not only the fee."""
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        seller_order = paid_position.order
+        OrderPayment.objects.create(
+            order=seller_order,
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            amount=Decimal('200.00'),
+            provider='manual',
+            payment_date=now(),
+        )
+        listing = create_listing(event=resale_event, position=paid_position, price=Decimal('150.00'))
+        reserve_listing(listing=listing, session_key='buyer-a')
+        listing.refresh_from_db()
+
+        voucher = Voucher.objects.create(
+            event=resale_event,
+            code='RESALEDISC',
+            max_usages=1,
+            redeemed=1,
+            valid_until=now() + timedelta(hours=1),
+            allow_ignore_quota=True,
+            product=ticket_product,
+            price_mode='set',
+            value=Decimal('150.00'),
+            tag=f'resale:{listing.pk}',
+        )
+        buyer_order = Order.objects.create(
+            event=resale_event,
+            status=Order.STATUS_PAID,
+            expires=now() + timedelta(days=1),
+            total=Decimal('150.00'),
+            code='BUYER3',
+            email='buyer3@example.com',
+            datetime=now(),
+            locale='en',
+        )
+        buyer_pos = OrderPosition.objects.create(
+            order=buyer_order,
+            product=ticket_product,
+            price=Decimal('150.00'),
+            voucher=voucher,
+        )
+
+        complete_resale(listing=listing, buyer_order=buyer_order, buyer_position=buyer_pos)
+
+        seller_order.refresh_from_db()
+        listing.refresh_from_db()
+
+        assert listing.fee_amount == Decimal('5.00')
+        assert listing.seller_payout == Decimal('145.00')
+        # paid 200 - payout 145 = retain 55 (discount 50 + fee 5)
+        assert seller_order.total == Decimal('55.00')
+        assert seller_order.status == Order.STATUS_PAID
