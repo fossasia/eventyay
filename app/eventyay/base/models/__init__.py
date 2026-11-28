@@ -33,6 +33,7 @@ from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from eventyay.base.gmail.models import GmailOAuthCredential
 from .global_plugin_config import GlobalPluginConfig
+from .information import SpeakerInformation
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
 from .jitsi import JitsiServer
@@ -230,6 +231,7 @@ __all__ = [
     'Seat',
     'SeatCategoryMapping',
     'SeatingPlan',
+    'SpeakerInformation',
     'SpeakerInvitation',
     'SpeakerInvitationMailStates',
     'SpeakerInvitationStates',
