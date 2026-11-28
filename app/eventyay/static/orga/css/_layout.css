@@ -3825,23 +3825,27 @@ table thead .sort-link.sort-active {
   font-size: 0.875rem;
 }
 
+/* Match Featured column: large square form-check boxes from common checkbox styles. */
 .speaker-list-table .checkbox-column {
-  width: 1.75rem;
-  min-width: 1.75rem;
-  max-width: 2rem;
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3.5rem;
   padding-left: 0.5rem;
-  padding-right: 0.25rem;
-  vertical-align: middle;
+  padding-right: 0.5rem;
+  vertical-align: middle !important;
   text-align: center;
 }
 
-.speaker-list-table .checkbox-column input[type="checkbox"] {
-  width: 13px;
-  height: 13px;
+.speaker-list-table .checkbox-column .form-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
-  vertical-align: middle;
-  cursor: pointer;
-  accent-color: #2185d0;
+}
+
+.speaker-list-table .checkbox-column input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .speaker-voucher-cell {
@@ -3907,6 +3911,13 @@ table thead .sort-link.sort-active {
 .speaker-voucher-bulk-skipped {
   margin-top: 0.65rem;
   font-size: 0.8125rem;
+}
+
+.speaker-voucher-bulk-immediate {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-weight: 500;
 }
 
 #speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary {

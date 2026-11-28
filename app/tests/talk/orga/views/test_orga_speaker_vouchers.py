@@ -234,6 +234,7 @@ def test_voucher_bulk_create_prefills_tag_from_query(rf, event):
     view.object = None
     kwargs = view.get_form_kwargs()
     assert kwargs.get('initial', {}).get('tag') == 'speaker'
+    assert kwargs.get('initial', {}).get('use_tag_as_prefix') is True
 
 
 @pytest.mark.django_db
@@ -604,6 +605,9 @@ def test_speakers_list_shows_voucher_column_when_batch_selected(
     assert 'select-all-speakers' in response.text
     assert 'id="speaker-bulk-send-btn"' in response.text
     assert 'id="speaker-voucher-bulk-confirm"' in response.text
+    assert 'Emails will be sent immediately.' in response.text
+    assert 'checkbox-column' in response.text
+    assert 'form-check' in response.text
 
 
 @pytest.mark.django_db

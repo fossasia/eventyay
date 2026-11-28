@@ -77,8 +77,11 @@
             <thead>
                 <tr>
                     {% if speaker_vouchers_enabled and can_update_speaker %}
-                        <th class="checkbox-column">
-                            <input type="checkbox" id="select-all-speakers" title="{% translate 'Select all' %}" aria-label="{% translate 'Select all' %}">
+                        <th class="checkbox-column text-center">
+                            <div class="form-check d-inline-block">
+                                <input type="checkbox" id="select-all-speakers" class="speaker-select-all" title="{% translate 'Select all' %}" aria-label="{% translate 'Select all' %}">
+                                <label for="select-all-speakers" aria-hidden="true"></label>
+                            </div>
                         </th>
                     {% endif %}
                     <th class="speaker-list-name-cell">
@@ -123,14 +126,18 @@
                 {% for profile in speakers %}
                     <tr dragsort-id="{{ profile.pk }}">
                         {% if speaker_vouchers_enabled and can_update_speaker %}
-                            <td class="checkbox-column">
-                                <input type="checkbox"
-                                       class="speaker-checkbox"
-                                       data-profile-id="{{ profile.pk }}"
-                                       data-speaker-name="{{ profile.user.get_display_name }}"
-                                       data-voucher-state="{{ profile.voucher_row_state }}"
-                                       data-voucher-needs-code="{% if profile.voucher_needs_new_code %}1{% else %}0{% endif %}"
-                                       aria-label="{% blocktranslate trimmed with name=profile.user.get_display_name %}Select {{ name }}{% endblocktranslate %}">
+                            <td class="checkbox-column text-center">
+                                <div class="form-check d-inline-block">
+                                    <input type="checkbox"
+                                           id="select_speaker_{{ profile.pk }}"
+                                           class="speaker-checkbox"
+                                           data-profile-id="{{ profile.pk }}"
+                                           data-speaker-name="{{ profile.user.get_display_name }}"
+                                           data-voucher-state="{{ profile.voucher_row_state }}"
+                                           data-voucher-needs-code="{% if profile.voucher_needs_new_code %}1{% else %}0{% endif %}"
+                                           aria-label="{% blocktranslate trimmed with name=profile.user.get_display_name %}Select {{ name }}{% endblocktranslate %}">
+                                    <label for="select_speaker_{{ profile.pk }}" aria-hidden="true"></label>
+                                </div>
                             </td>
                         {% endif %}
                         <td class="speaker-list-name-cell">
@@ -287,6 +294,9 @@
             <p id="speaker-voucher-bulk-skipped" class="speaker-voucher-bulk-skipped text-muted mb-0 d-none"></p>
             <p id="speaker-voucher-bulk-empty" class="text-muted mb-0 d-none">
                 {% translate "None of the selected speakers can receive a voucher email." %}
+            </p>
+            <p id="speaker-voucher-bulk-immediate" class="speaker-voucher-bulk-immediate mb-0">
+                {% translate "Emails will be sent immediately." %}
             </p>
             <div class="orga-confirm-dialog-actions mt-3">
                 <span class="composer-actions">

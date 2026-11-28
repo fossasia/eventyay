@@ -20,6 +20,7 @@ const bulkForm = document.getElementById("speaker-bulk-voucher-form")
 const bulkDialog = document.getElementById("speaker-voucher-bulk-confirm")
 const bulkSkipped = document.getElementById("speaker-voucher-bulk-skipped")
 const bulkEmpty = document.getElementById("speaker-voucher-bulk-empty")
+const bulkImmediate = document.getElementById("speaker-voucher-bulk-immediate")
 const bulkConfirmBtn = document.getElementById("speaker-voucher-bulk-confirm-btn")
 const bulkConfirmLabel = document.getElementById("speaker-voucher-bulk-confirm-label")
 const bulkSummaryList = document.getElementById("speaker-voucher-bulk-summary-list")
@@ -219,6 +220,7 @@ bulkSendBtn?.addEventListener("click", () => {
 
     if (bulkSummaryList) bulkSummaryList.classList.toggle("d-none", !hasActionable)
     if (bulkEmpty) bulkEmpty.classList.toggle("d-none", hasActionable)
+    if (bulkImmediate) bulkImmediate.classList.toggle("d-none", !hasActionable)
     if (bulkConfirmBtn) {
         bulkConfirmBtn.disabled = !hasActionable
         bulkConfirmBtn.classList.toggle("d-none", !hasActionable)

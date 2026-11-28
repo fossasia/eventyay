@@ -955,6 +955,7 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
         recipient_count, vouchers_to_use, _remaining, remaining_after = self._pending_send_counts(
             settings_obj
         )
+        batch_tag = (settings_obj.voucher_tag or 'speaker').strip() or 'speaker'
         create_batch_url = (
             reverse(
                 'control:event.vouchers.bulk',
@@ -963,7 +964,8 @@ class SpeakerVoucherSettingsView(SpeakerVoucherPermissionMixin, FormView):
                     'event': self.request.event.slug,
                 },
             )
-            + '?tag=speaker'
+            + '?'
+            + urlencode({'tag': batch_tag})
         )
         context.update(
             {

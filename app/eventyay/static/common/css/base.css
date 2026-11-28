@@ -1213,7 +1213,7 @@ a.event-public-text-link:visited {
     margin-right: auto;
   }
 
-  .table-flip tbody td:not(.numeric):not(.text-right):not(.action-column):not(.submission_featured):not(.speaker-actions-cell):not(.col-tags):not(.col-state) > * {
+  .table-flip tbody td:not(.numeric):not(.text-right):not(.action-column):not(.submission_featured):not(.checkbox-column):not(.speaker-actions-cell):not(.col-tags):not(.col-state) > * {
     min-width: 0;
     max-width: 100%;
     overflow-wrap: anywhere;
