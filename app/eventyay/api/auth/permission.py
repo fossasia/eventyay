@@ -156,7 +156,7 @@ class EventPermission(BasePermission):
             if not request.auth.organizers.filter(pk=request.organizer.pk).exists():
                 return False
         # Commercial API access applies to integrations, not the browser UI or public reads.
-        if isinstance(request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
+        if isinstance(request.auth, (Device, TeamAPIToken, OAuthAccessToken)):
             organizer = getattr(request, 'organizer', None)
             if organizer is None:
                 if isinstance(request.auth, Device):
@@ -172,7 +172,7 @@ class EventPermission(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """Check commercial API entitlements against the resolved target object."""
-        if isinstance(request.auth, (*_TOKEN_AUTH_TYPES, OAuthAccessToken)):
+        if isinstance(request.auth, (Device, TeamAPIToken, UserApiToken, OAuthAccessToken)):
             if isinstance(obj, Organizer):
                 organizer = obj
             elif isinstance(obj, User):
