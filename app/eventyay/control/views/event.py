@@ -8,6 +8,7 @@ import re
 import tempfile
 from collections import OrderedDict
 from decimal import Decimal, InvalidOperation
+from functools import partial
 from itertools import groupby
 from urllib.parse import urlsplit
 
@@ -37,8 +38,10 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, FormView, ListView
 from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
+from kombu.exceptions import OperationalError as BrokerOperationalError
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -1330,32 +1333,59 @@ class EventAnonymize(RecentAuthenticationRequiredMixin, EventPermissionRequiredM
         )
         return ctx
 
+    def get_success_url(self) -> str:
+        return reverse(
+            'control:event.anonymize',
+            kwargs={'organizer': self.request.organizer.slug, 'event': self.request.event.slug},
+        )
+
     def post(self, request, *args, **kwargs):
         if not self.waiting_period_over:
             messages.error(request, _('The waiting period after this event has not ended.'))
-            return redirect(request.path)
+            return redirect(self.get_success_url())
         if self.run and self.run.status != EventAnonymizationRun.Status.FAILED:
             messages.error(request, _('The ticketing data of this event is already being anonymized or has been.'))
-            return redirect(request.path)
+            return redirect(self.get_success_url())
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         event = self.request.event
         with transaction.atomic():
-            run, _created = EventAnonymizationRun.objects.get_or_create(
+            # Two requests must not both pass the admission check, so they queue up on the event row first.
+            Event.objects.select_for_update().filter(pk=event.pk).first()
+            run, created = EventAnonymizationRun.objects.get_or_create(
                 event=event,
                 defaults={'trigger': EventAnonymizationRun.Trigger.MANUAL, 'requested_by': self.request.user},
             )
-            if run.status == EventAnonymizationRun.Status.FAILED:
+            if not created and run.status != EventAnonymizationRun.Status.FAILED:
+                messages.error(
+                    self.request, _('The ticketing data of this event is already being anonymized or has been.')
+                )
+                return redirect(self.get_success_url())
+            if not created:
                 run.status = EventAnonymizationRun.Status.RUNNING
                 run.error = ''
                 run.finished = None
                 run.save(update_fields=['status', 'error', 'finished'])
             event.log_action('eventyay.event.ticketing_data.anonymization.requested', user=self.request.user)
-            args = (event.pk, EventAnonymizationRun.Trigger.MANUAL, self.request.user.pk)
-            transaction.on_commit(lambda: anonymize_event.apply_async(args=args))
+            transaction.on_commit(partial(self._queue_run, run.pk, self.request.user.pk))
         messages.success(self.request, _('The ticketing data of this event is being anonymized.'))
-        return redirect(self.request.path)
+        return redirect(self.get_success_url())
+
+    def _queue_run(self, run_pk: int, user_pk: int) -> None:
+        event = self.request.event
+        try:
+            anonymize_event.apply_async(args=(event.pk, EventAnonymizationRun.Trigger.MANUAL, user_pk))
+        except BrokerOperationalError:
+            logger.exception('Could not queue the anonymization of event %s', event.pk)
+            # The task never started, so leave the run in a state the page offers to resume.
+            with scope(event=event):
+                EventAnonymizationRun.objects.filter(pk=run_pk).update(
+                    status=EventAnonymizationRun.Status.FAILED, error='QueueUnavailable', finished=now()
+                )
+            messages.error(
+                self.request, _('The anonymization could not be started. Please try again in a few minutes.')
+            )
 
 
 def _csv_text(value):

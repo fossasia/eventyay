@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
+from kombu.exceptions import OperationalError as BrokerOperationalError
 
 from eventyay.base.models import EventAnonymizationRun, Order, Team, User
 from eventyay.base.services.organizer_creation import create_core_team
@@ -127,13 +128,51 @@ def test_valid_request_starts_the_run_after_commit(
     assert 'Anonymization is running' in client.get(url(ended_event)).content.decode()
 
 
-def test_second_request_is_refused_while_running_or_done(client, owner, ended_event, mocker):
+def test_second_request_is_refused_while_running_or_done(
+    client, owner, ended_event, mocker, django_capture_on_commit_callbacks
+):
     start = mocker.patch('eventyay.control.views.event.anonymize_event.apply_async')
     with scope(event=ended_event, organizer=ended_event.organizer):
         EventAnonymizationRun.objects.create(event=ended_event, trigger='manual')
     open_session(client, owner)
-    client.post(url(ended_event), valid_post(ended_event))
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(url(ended_event), valid_post(ended_event))
+    assert response.status_code == 302
     start.assert_not_called()
+
+
+def test_request_that_lost_the_race_does_not_queue_a_second_task(
+    client, owner, ended_event, mocker, django_capture_on_commit_callbacks
+):
+    """The page check passed, but another request created the run before this one got the event lock."""
+    start = mocker.patch('eventyay.control.views.event.anonymize_event.apply_async')
+    mocker.patch(
+        'eventyay.control.views.event.EventAnonymize.run', new_callable=mocker.PropertyMock, return_value=None
+    )
+    with scope(event=ended_event, organizer=ended_event.organizer):
+        EventAnonymizationRun.objects.create(event=ended_event, trigger='manual')
+    open_session(client, owner)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(url(ended_event), valid_post(ended_event))
+    assert response.status_code == 302
+    start.assert_not_called()
+    assert not ended_event.logentry_set.filter(
+        action_type='eventyay.event.ticketing_data.anonymization.requested'
+    ).exists()
+
+
+def test_run_can_be_resumed_when_the_broker_is_down(
+    client, owner, ended_event, mocker, django_capture_on_commit_callbacks
+):
+    mocker.patch(
+        'eventyay.control.views.event.anonymize_event.apply_async', side_effect=BrokerOperationalError('down')
+    )
+    open_session(client, owner)
+    with django_capture_on_commit_callbacks(execute=True):
+        client.post(url(ended_event), valid_post(ended_event))
+    [run] = runs(ended_event)
+    assert run.status == run.Status.FAILED and run.error == 'QueueUnavailable'
+    assert 'Resume anonymization' in client.get(url(ended_event)).content.decode()
 
 
 def test_failed_run_can_be_resumed(client, owner, ended_event, mocker, django_capture_on_commit_callbacks):
