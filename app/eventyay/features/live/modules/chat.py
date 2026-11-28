@@ -27,7 +27,7 @@ from eventyay.features.live.decorators import (
 from eventyay.eventyay_common.utils import encode_email as _encode_email
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
-from eventyay.features.live.tasks import send_chat_webhook
+from eventyay.features.live.tasks import room_webhook_meta, send_chat_webhook
 from eventyay.storage.tasks import retrieve_preview_information
 
 _CENTRALAUTH_CACHE_TTL = 3600  # 1 hour — renames are rare
@@ -222,7 +222,7 @@ class ChatModule(BaseModule):
             "message_type": message_type,
             "profile_img": None,
             "user_language": getattr(sender, "locale", None),
-            "meta": {},
+            "meta": {"room": room_webhook_meta(self.channel.room)},
         }
         if message_type == "emoji":
             payload["meta"]["target_message_id"] = event_data.get("event_id")

@@ -79,6 +79,22 @@
 						i.mdi.mdi-information-outline(aria-hidden="true")
 						span {{ $t('Every chat message and reaction will be POSTed to this URL with an HMAC-SHA256 signature in the request headers.') }}
 
+					.webhook-test(v-if="!creating && config.id")
+						.webhook-test-row
+							bunt-button.btn-test-webhook(
+								:loading="testingWebhook"
+								:disabled="!webhookConfigured"
+								@click="sendTestEvent"
+							) {{ $t('Send test event') }}
+							span.hint-small {{ $t('Sends one test message to the saved URL. Receivers do not show it to attendees.') }}
+						.webhook-test-result(
+							v-if="webhookTestResult"
+							:class="webhookTestResult.ok ? 'is-ok' : 'is-error'"
+							role="status"
+						)
+							i.mdi(:class="webhookTestResult.ok ? 'mdi-check-circle' : 'mdi-alert-circle'" aria-hidden="true")
+							span {{ webhookTestResult.text }}
+
 		.addon-row
 			.addon-info
 				.addon-icon
@@ -106,17 +122,41 @@
 </template>
 
 <script>
+import api from 'lib/api'
 import mixin from './mixin'
+
+function webhookSettings(moduleConfig) {
+	const config = (moduleConfig || []).find(m => m.type === 'chat.native')?.config
+	return {
+		url: config?.webhook_url || '',
+		secret: config?.webhook_hmac_secret || ''
+	}
+}
 
 export default {
 	mixins: [mixin],
 	data() {
 		return {
 			showWebhookConfig: false,
-			isEditingSecret: false
+			isEditingSecret: false,
+			savedWebhook: webhookSettings(this.config.module_config),
+			testingWebhook: false,
+			webhookTestResult: null
+		}
+	},
+	watch: {
+		// The editor replaces module_config with the server's copy when a room
+		// is loaded or saved; in-place edits keep the same array.
+		'config.module_config'(moduleConfig) {
+			this.savedWebhook = webhookSettings(moduleConfig)
+			this.webhookTestResult = null
 		}
 	},
 	computed: {
+		webhookDirty() {
+			const current = webhookSettings(this.config.module_config)
+			return current.url !== this.savedWebhook.url || current.secret !== this.savedWebhook.secret
+		},
 		webhookConfigured() {
 			const config = this.modules['chat.native']?.config
 			return !!(config?.webhook_url && config?.webhook_hmac_secret)
@@ -177,6 +217,37 @@ export default {
 			if (!config) return
 			config.webhook_url = ''
 			config.webhook_hmac_secret = ''
+		},
+		async sendTestEvent() {
+			this.webhookTestResult = null
+			if (this.webhookDirty) {
+				this.webhookTestResult = {
+					ok: false,
+					text: this.$t('Save the room first. The test uses the saved webhook settings.')
+				}
+				return
+			}
+			this.testingWebhook = true
+			try {
+				const { status, ok } = await api.call('room.webhook.test', { room: this.config.id })
+				this.webhookTestResult = { ok, text: this.describeWebhookStatus(status, ok) }
+			} catch (error) {
+				console.error('room.webhook.test failed for room %s: %o', this.config.id, error)
+				this.webhookTestResult = { ok: false, text: error.message || String(error) }
+			} finally {
+				this.testingWebhook = false
+			}
+		},
+		describeWebhookStatus(status, ok) {
+			if (status === null || status === undefined) {
+				return this.$t('The receiver could not be reached. Check the URL.')
+			}
+			if (ok) return this.$t('Test event delivered (HTTP {{status}}).', { status })
+			if (status === 403) return this.$t('The receiver answered HTTP 403. Check the HMAC secret.')
+			if (status === 404) {
+				return this.$t('The receiver answered HTTP 404. Check the URL, or whether the receiver\'s channel is active.')
+			}
+			return this.$t('The receiver answered HTTP {{status}}.', { status })
 		}
 	}
 }
@@ -433,6 +504,36 @@ export default {
 			margin: 2px 0 0 0
 			font-size: 12px
 			color: $clr-secondary-text-light
+
+		.webhook-test
+			margin-top: 12px
+			display: flex
+			flex-direction: column
+			gap: 8px
+			.webhook-test-row
+				display: flex
+				align-items: center
+				flex-wrap: wrap
+				gap: 12px
+			.btn-test-webhook
+				button-style(color: $clr-primary)
+			.webhook-test-result
+				display: flex
+				align-items: flex-start
+				gap: 8px
+				padding: 8px 12px
+				border-radius: 6px
+				font-size: 13px
+				line-height: 18px
+				i
+					font-size: 16px
+					flex-shrink: 0
+				&.is-ok
+					background-color: rgba(#4CAF50, 0.12)
+					color: #2E7D32
+				&.is-error
+					background-color: rgba(#D32F2F, 0.08)
+					color: #C62828
 
 		.webhook-info-banner
 			display: flex
