@@ -1,8 +1,10 @@
 <template lang="pug">
 div.c-linear-schedule-session.is-shift-session(
-	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending}",
+	:class="{'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'is-continuation': isContinuation}",
 	:style="style")
-	.time-box
+	.continuation-strip(v-if="isContinuation")
+		span.continuation-label {{ continuationLabel }}
+	.time-box(v-if="!isContinuation")
 		.start.schedule-pending(v-if="isSchedulePending")
 			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
 				rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
@@ -21,7 +23,7 @@ div.c-linear-schedule-session.is-shift-session(
 					.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
-	.info
+	.info(v-if="!isContinuation")
 		.title-row
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 			.organizer-actions(v-if="canManageShifts")
@@ -134,6 +136,10 @@ export default {
 	props: {
 		now: Object,
 		session: Object,
+		segment: {
+			type: Object,
+			default: null,
+		},
 		showRoom: {
 			type: Boolean,
 			default: true,
@@ -185,12 +191,27 @@ export default {
 			return this.scheduleData?.hasAmPm ?? this.hasAmPm
 		},
 		style () {
-			return {
+			const style = {
 				'--track-color': getShiftTrackColor(this.session?.roles),
 			}
+			if (this.isContinuation) {
+				// A continuation is a thin band marking that the shift
+				// goes on, so it must not push its row taller than the
+				// time scale says. Its margins and height stay out of
+				// the grid sizing entirely.
+				style['margin-top'] = 0
+				style['margin-bottom'] = 0
+			}
+			return style
 		},
 		isSchedulePending () {
 			return Boolean(this.session.schedule_pending || !this.session.start)
+		},
+		isContinuation () {
+			return Boolean(this.segment?.continuation)
+		},
+		continuationLabel () {
+			return this.$t('{{title}}, continued', { title: getLocalizedString(this.session.title) })
 		},
 		schedulePendingText () {
 			const m = this.translationMessages || {}
@@ -733,6 +754,31 @@ export default {
 				white-space: nowrap
 		.buffer
 			flex: auto
+	&.is-continuation
+		background-color: var(--track-color)
+		border-radius: 6px
+		min-height: 0
+		overflow: hidden
+		.continuation-strip
+			position: absolute
+			top: 0
+			left: 0
+			right: 0
+			bottom: 0
+			display: flex
+			align-items: center
+			min-width: 0
+			flex: auto
+			padding: 4px 8px
+			box-sizing: border-box
+			.continuation-label
+				color: $clr-primary-text-dark
+				font-size: 12px
+				font-weight: 600
+				line-height: 1.3
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
 	&.has-date
 		.time-box
 			width: 88px
