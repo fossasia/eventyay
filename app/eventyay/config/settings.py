@@ -160,6 +160,8 @@ class BaseSettings(_BaseSettings):
     plugin_dev_mode: bool = False
     fetch_ecb_rates: bool = True
     cache_tickets_hours: int = Field(default=24, ge=1)
+    # Number of reverse proxies in front of the app that append to X-Forwarded-For.
+    trusted_proxy_count: int = Field(default=1, ge=1)
     # Days of the month to send unpaid billing invoice reminders.
     billing_reminder_schedule: Annotated[
         list[Annotated[int, Field(ge=1, le=31)]],
@@ -1262,6 +1264,7 @@ SESSION_COOKIE_HTTPONLY = True
 # TODO: Remove. We always use Nginx or we are even behind CloudFlare,
 # so trusting X-Forwarded-For is a must, if we want to get real client IP.
 TRUST_X_FORWARDED_FOR = True
+TRUSTED_PROXY_COUNT = conf.trusted_proxy_count
 
 WSGI_APPLICATION = 'eventyay.config.wsgi.application'
 ASGI_APPLICATION = 'eventyay.config.asgi.application'

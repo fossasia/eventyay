@@ -71,6 +71,13 @@ General Settings
 ``allowed_hosts``
     A list of host/domain names that this Django site can serve.
 
+``trusted_proxy_count``
+    The number of reverse proxies in front of eventyay that append the client address to the
+    ``X-Forwarded-For`` header. The client IP (used for rate limits and logs) is read from that
+    many entries from the end of the header, because earlier entries are sent by the client.
+    Default: ``1`` (a single nginx in front). Set it to ``2`` if another proxy, such as a CDN,
+    is in front of nginx and also appends to the header.
+
 Database Settings
 ~~~~~~~~~~~~~~~~~
 
