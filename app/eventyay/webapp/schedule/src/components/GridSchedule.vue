@@ -91,7 +91,7 @@ import moment from 'moment-timezone'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
-import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll } from '../utils'
+import { getLocalizedString, daysOccupiedBySession, isDocumentScroller, readScrollOffset, writeScrollOffset, bindPassiveScroll, shouldAutoScrollSchedule } from '../utils'
 import { isShiftSchedule, computeShiftOverlapPlacement, computeShiftColumnLayout, buildShiftGridTemplateColumns } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
@@ -127,6 +127,7 @@ export default {
 		},
 		currentDay: String,
 		forceScrollDay: { type: Number, default: 0 },
+		pendingGoToNow: { type: Boolean, default: false },
 		now: Object,
 		timezone: String,
 		locale: String,
@@ -408,8 +409,8 @@ export default {
 				const next = this.timeslices[index + 1]
 				let height = baseSliceHeight
 				if (slice.gap) {
-					height = 100 * (minimumSliceMins / 30)
-			} else if (slice.datebreak) {
+					height = 40 * (minimumSliceMins / 30)
+				} else if (slice.datebreak) {
 					height = 36 * (minimumSliceMins / 30)
 				} else if (next) {
 					height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
@@ -472,9 +473,23 @@ export default {
 				this._scrollDayUpdate = false
 				return
 			}
+			if (this.pendingGoToNow || this._initialAutoScrollActive) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDayStart(day)
 		},
 		forceScrollDay () {
+			if (this.pendingGoToNow || this._initialAutoScrollActive) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDayStart(this.currentDay)
 		},
 		scrollParent () {
@@ -482,17 +497,29 @@ export default {
 		}
 	},
 	async mounted () {
+		const fragment = (window.location.hash || '').slice(1)
+		const autoScroll = (shouldAutoScrollSchedule({
+			disableAutoScroll: this.disableAutoScroll,
+			fragment,
+			currentDay: this.currentDay,
+			now: this.now,
+			timezone: this.timezone
+		}) || this.pendingGoToNow) && scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)
 		this.rebindDayTracking()
 		await this.$nextTick()
 		this.initScrollSync()
-		if (!this.$refs.now) return
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
+		if (!autoScroll) return
+		this._initialAutoScrollActive = true
+		if (this._initialAutoScrollTimer) clearTimeout(this._initialAutoScrollTimer)
+		this._initialAutoScrollTimer = setTimeout(() => {
+			this._initialAutoScrollActive = false
+		}, 1000)
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},
 	beforeUnmount () {
+		if (this._initialAutoScrollTimer) clearTimeout(this._initialAutoScrollTimer)
+		this._initialAutoScrollActive = false
 		this._scrollGeneration = (this._scrollGeneration || 0) + 1
 		if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
 		this._scrollAnim = null
@@ -537,7 +564,7 @@ export default {
 				const next = this.timeslices[index + 1]
 				let height = 60
 				if (slice.gap) {
-					height = 100
+					height = 40
 				} else if (slice.datebreak) {
 					height = 36
 				} else if (next) {
@@ -637,10 +664,14 @@ export default {
 			return slice.date.clone().tz(this.timezone).format('h:mm A')
 		},
 		changeDay (day) {
+			this._initialAutoScrollActive = false
 			this.scrollToDayStart(day)
 		},
 		scrollElementIntoViewWithClearance (el) {
 			if (!el) return
+			this._scrollGeneration = (this._scrollGeneration || 0) + 1
+			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
+			this._scrollAnim = null
 			const clearance = this.getStickyHeaderClearance()
 			const rect = el.getBoundingClientRect()
 			const scrollEl = this.scrollParent
@@ -654,8 +685,19 @@ export default {
 			}
 		},
 		scrollToNow() {
-			if (!this.$refs.now) return
-			this.scrollElementIntoViewWithClearance(this.$refs.now)
+			this._scrollGeneration = (this._scrollGeneration || 0) + 1
+			if (this._scrollAnim) cancelAnimationFrame(this._scrollAnim)
+			this._scrollAnim = null
+			if (this.$refs.now) {
+				this.scrollElementIntoViewWithClearance(this.$refs.now)
+				return
+			}
+			if (!scheduleDayShowsCurrentTime(this.now, this.occupiedDayKeys, this.timezone)) return
+			const slices = this.$el?.querySelectorAll('.grid-viewport .grid > .timeslice')
+			const lastSlice = slices?.[slices.length - 1]
+			if (lastSlice) {
+				this.scrollElementIntoViewWithClearance(lastSlice)
+			}
 		},
 		toolbarBottomY () {
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
@@ -736,7 +778,12 @@ export default {
 			const viewport = this.$refs.gridViewport
 			if (!viewport) return
 			this.updateScrollbar()
-			this._gridResizeObserver = new ResizeObserver(() => this.updateScrollbar())
+			this._gridResizeObserver = new ResizeObserver(() => {
+				this.updateScrollbar()
+				if (this._initialAutoScrollActive) {
+					this.scrollToNow()
+				}
+			})
 			const grid = viewport.querySelector('.grid')
 			if (grid) this._gridResizeObserver.observe(grid)
 			setTimeout(() => this.updateScrollbar(), 200)
@@ -979,14 +1026,15 @@ export default {
 			&::before
 				content: ''
 				display: block
-				width: 6px
-				height: calc(100% - 30px - 12px)
+				width: 4px
+				height: calc(100% - 24px - 4px)
 				position: absolute
-				top: 30px
+				top: 24px
 				left: 50%
+				transform: translateX(-50%)
 				background-image: radial-gradient(circle closest-side, $clr-grey-500 calc(100% - .5px), transparent 100%)
-				background-position: 0 0
-				background-size: 5px 15px
+				background-position: center 0
+				background-size: 4px 7px
 				background-repeat: repeat-y
 
 	.timeline
@@ -1033,6 +1081,9 @@ export default {
 	.timeslice
 		padding: 4px 6px 0 10px
 		font-size: 12px
+		&.gap::before
+			top: 16px
+			height: calc(100% - 16px - 2px)
 	.rooms-bar .rooms-inner > .room
 		font-size: 14px
 		padding: 4px 2px
@@ -1050,6 +1101,9 @@ export default {
 	.timeslice
 		padding: 12px 14px 0 20px
 		font-size: 16px
+		&.gap::before
+			top: 28px
+			height: calc(100% - 28px - 4px)
 	.rooms-bar .rooms-inner > .room
 		font-size: 20px
 		padding: 12px 6px

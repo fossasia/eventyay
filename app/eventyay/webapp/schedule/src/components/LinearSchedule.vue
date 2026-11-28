@@ -24,7 +24,7 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, normalizePopularityCount, isDocumentScroller, runWithoutSmoothScroll, bindPassiveScroll } from '../utils'
+import { getLocalizedString, normalizePopularityCount, isDocumentScroller, runWithoutSmoothScroll, bindPassiveScroll, shouldAutoScrollSchedule } from '../utils'
 import TalkSession from './Session'
 import ShiftSession from '../teamshifts-adapter/Session.vue'
 import { isShiftSchedule } from '../teamshifts-adapter'
@@ -52,6 +52,7 @@ export default {
 		},
 		currentDay: String,
 		forceScrollDay: { type: Number, default: 0 },
+		pendingGoToNow: { type: Boolean, default: false },
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
@@ -190,6 +191,13 @@ export default {
 	},
 	watch: {
 		forceScrollDay () {
+			if (this.pendingGoToNow) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDay(this.currentDay, { force: true })
 		},
 		async sortObserverKey () {
@@ -204,25 +212,28 @@ export default {
 				this._scrollDayUpdate = false
 				return
 			}
+			if (this.pendingGoToNow) {
+				this.$nextTick(async () => {
+					await new Promise(resolve => requestAnimationFrame(resolve))
+					this.scrollToNow()
+				})
+				return
+			}
 			this.scrollToDay(day)
 		}
 	},
 	async mounted () {
+		const fragment = (window.location.hash || '').slice(1)
+		const autoScroll = shouldAutoScrollSchedule({
+			disableAutoScroll: this.disableAutoScroll,
+			fragment,
+			currentDay: this.currentDay,
+			now: this.now,
+			timezone: this.timezone
+		}) || this.pendingGoToNow
 		await this.$nextTick()
 		this.rebindDayTracking()
-		// scroll to now
-		// scroll to now, unless URL overrides now
-		let fragmentIsDate = false
-		const fragment = window.location.hash.slice(1)
-		if (fragment && fragment.length === 10) {
-			const initialDay = moment.tz(fragment, this.timezone)
-			if (initialDay.isValid()) {
-				fragmentIsDate = true
-			}
-		}
-		if (this.disableAutoScroll) return
-		const today = this.now.clone().tz(this.timezone).format('YYYY-MM-DD')
-		if (this.currentDay !== today) return // Auto-scroll does not trigger when viewing a non-current day
+		if (!autoScroll) return
 		await new Promise(resolve => requestAnimationFrame(resolve))
 		this.scrollToNow()
 	},
@@ -312,16 +323,23 @@ export default {
 			return Math.max(0, offset) + toolbarHeight + versionWarning + 6
 		},
 		scrollToNow() {
+			if (!this.includeDateSortKey || !this.sessionBuckets?.length) return
 			const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
-			if (nowIndex < 0) return
-			const nowBucket = this.sessionBuckets[Math.max(0, nowIndex - 1)]
+			const nowBucket = nowIndex < 0
+				? this.sessionBuckets[this.sessionBuckets.length - 1]
+				: this.sessionBuckets[Math.max(0, nowIndex - 1)]
+			if (!nowBucket) return
 			const el = this.$refs[this.getBucketName(nowBucket.date)]?.[0]
 			if (!el) return
-			if (this.scrollParent) {
-				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - this.getStickyClearance()
-				this.scrollParent.scrollTop = top
+			const clearance = this.getStickyClearance()
+			const rect = el.getBoundingClientRect()
+			const scrollEl = this.scrollParent
+			const isWindowScroll = isDocumentScroller(scrollEl)
+			if (!isWindowScroll) {
+				const parentRect = scrollEl.getBoundingClientRect()
+				scrollEl.scrollTop += rect.top - parentRect.top - clearance
 			} else {
-				window.scroll({top: el.offsetTop + this.getOffsetTop() - this.getStickyClearance()})
+				window.scrollBy({ top: rect.top - clearance })
 			}
 		},
 		rebindDayTracking () {

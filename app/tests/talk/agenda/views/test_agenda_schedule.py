@@ -4,8 +4,10 @@ import textwrap
 from urllib.parse import quote
 
 import pytest
-from django.urls import reverse
+from django.urls import resolve, reverse
 from django_scopes import scope
+
+from eventyay.agenda.views.schedule import ScheduleView
 
 
 def _inline_schedule_payload(html):
@@ -39,6 +41,31 @@ def test_schedule_page_embeds_compact_day_without_abstract(client, event, slot):
     assert 'UniqueAbstractForCompactSchedule' in nojs.text
     talk_page = client.get(slot.submission.urls.public, follow=True)
     assert 'UniqueAbstractForCompactSchedule' in talk_page.text
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+def test_schedule_page_autoscroll_attribute(client, event, slot, rf, user):
+    with scope(event=event):
+        event.talks_published = True
+        event.save(update_fields=['talks_published'])
+    response = client.get(event.urls.schedule, follow=True, HTTP_ACCEPT='text/html')
+    assert response.status_code == 200
+    assert '<pretalx-schedule' in response.text
+    assert 'disable-auto-scroll' not in response.text
+
+    request = rf.get(f'/{event.slug}/sessions/', HTTP_ACCEPT='text/html')
+    request.event = event
+    request.user = user
+    request.session = client.session
+    request.LANGUAGE_CODE = 'en'
+    request.resolver_match = resolve(str(event.urls.schedule))
+    with scope(event=event):
+        view_response = ScheduleView.as_view()(request, event=event.slug)
+        view_response.render()
+        assert '<pretalx-schedule' in view_response.text
+        assert 'disable-auto-scroll' in view_response.text
+
 
 
 @pytest.mark.django_db
