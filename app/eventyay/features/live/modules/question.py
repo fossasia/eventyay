@@ -17,9 +17,31 @@ from eventyay.features.live.channels import (
     GROUP_ROOM_QUESTION_READ,
 )
 from eventyay.features.live.decorators import command, event, room_action
+from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
 
 logger = logging.getLogger(__name__)
+
+# Keep in sync with MAX_QUESTION_LENGTH in webapp/video/src/lib/roomInteractions.js
+MAX_QUESTION_LENGTH = 1000
+
+
+def clean_question_content(content: object) -> str:
+    """
+    Return the question text without surrounding whitespace.
+
+    :raises ConsumerException: ``question.empty`` when there is no text,
+        ``question.too_long`` when the text is longer than ``MAX_QUESTION_LENGTH``
+    """
+    text = content.strip() if isinstance(content, str) else ""
+    if not text:
+        raise ConsumerException("question.empty", "Please enter a question.")
+    if len(text) > MAX_QUESTION_LENGTH:
+        raise ConsumerException(
+            "question.too_long",
+            f"Questions can be at most {MAX_QUESTION_LENGTH} characters long.",
+        )
+    return text
 
 
 class QuestionModule(BaseModule):
@@ -35,9 +57,10 @@ class QuestionModule(BaseModule):
             await self.consumer.send_error("question.inactive")
             return
 
+        content = clean_question_content(body.get("content"))
         requires_moderation = self.module_config.get("requires_moderation", True)
         question = await create_question(
-            content=body.get("content"),
+            content=content,
             sender=self.consumer.user,
             room=self.room,
             state=(
@@ -134,13 +157,15 @@ class QuestionModule(BaseModule):
 
         try:
             question = await vote_on_question(
-                room=body.get("room"),
+                room=self.room,
                 pk=body.get("id"),
                 user=self.consumer.user,
                 vote=body.get("vote", True),
             )
-        except Exception as e:
-            await self.consumer.send_error("question.vote", message=str(e))
+        except RoomQuestion.DoesNotExist:
+            await self.consumer.send_error(
+                "question.unknown", message="This question no longer exists."
+            )
             return
 
         await self.consumer.send_success({"question": question})

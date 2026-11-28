@@ -1,5 +1,9 @@
+import uuid
+
 from channels.db import database_sync_to_async
+from django.db import transaction
 from django.db.models import Q
+from django_scopes import scope
 
 from eventyay.base.models.poll import Poll, PollOption, PollVote
 
@@ -96,16 +100,38 @@ def delete_poll(**kwargs):
     return True
 
 
+def parse_option_ids(options: object) -> frozenset[uuid.UUID]:
+    """
+    :raises PollOption.DoesNotExist: when ``options`` is not a non-empty list of option IDs
+    """
+    if not isinstance(options, list) or not options:
+        raise PollOption.DoesNotExist
+    try:
+        return frozenset(uuid.UUID(str(option)) for option in options)
+    except ValueError as e:
+        raise PollOption.DoesNotExist from e
+
+
 @database_sync_to_async
 def vote_on_poll(pk, room, user, options):
-    poll = Poll.objects.get(pk=pk, room=room, state=Poll.States.OPEN)
-    PollVote.objects.filter(sender=user, option__poll=poll).delete()
-    validated_options = PollOption.objects.filter(
-        poll=poll, id__in=options
-    ).values_list("id", flat=True)
-    PollVote.objects.bulk_create(
-        [PollVote(sender=user, option_id=option) for option in validated_options]
-    )
-    return Poll.objects.get(pk=pk).serialize_public(
-        force_results=True, answers=None
-    )  # Do not send answers, as this object will be sent to everybody with access
+    """
+    :raises Poll.DoesNotExist: when the poll is not open in ``room``
+    :raises PollOption.DoesNotExist: when ``options`` is empty or any of them is not an option of the poll
+    """
+    with scope(event=room.event):
+        poll = Poll.objects.get(pk=pk, room=room, state=Poll.States.OPEN)
+        requested_options = parse_option_ids(options)
+        validated_options = set(
+            PollOption.objects.filter(poll=poll, id__in=requested_options).values_list("id", flat=True)
+        )
+        if validated_options != requested_options:
+            raise PollOption.DoesNotExist
+        # replace the previous vote in one step, so a failed insert keeps it
+        with transaction.atomic():
+            PollVote.objects.filter(sender=user, option__poll=poll).delete()
+            PollVote.objects.bulk_create(
+                [PollVote(sender=user, option_id=option) for option in validated_options]
+            )
+        return Poll.objects.get(pk=pk).serialize_public(
+            force_results=True, answers=None
+        )  # Do not send answers, as this object will be sent to everybody with access
