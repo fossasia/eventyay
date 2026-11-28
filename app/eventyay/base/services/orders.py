@@ -1204,6 +1204,7 @@ def _perform_order(
                 ProductMetaValue.objects.filter(
                     product_id__in=product_ids,
                     property__name='limit_one_per_user',
+                    value__in=['1', 'True', 'true'],
                 ).values_list('product_id', flat=True)
             )
 
