@@ -118,6 +118,24 @@ def get_meetup_event_navigation(request: HttpRequest, event: Event) -> List[Menu
         return []
 
     nav = []
+    try:
+        dashboard_url = reverse(
+            'eventyay_common:event.index',
+            kwargs={
+                'event': event.slug,
+                'organizer': event.organizer.slug,
+            },
+        )
+        nav.append(
+            {
+                'label': _('Dashboard'),
+                'url': dashboard_url,
+                'active': (url.url_name == 'event.index'),
+                'icon': 'dashboard',
+            }
+        )
+    except NoReverseMatch:
+        pass
     has_settings_perm = request.user.has_event_permission(
         event.organizer,
         event,
@@ -256,6 +274,24 @@ def get_event_navigation(request: HttpRequest, event: Event) -> list[MenuItem]:
         return []
 
     nav = []
+    try:
+        dashboard_url = reverse(
+            'eventyay_common:event.index',
+            kwargs={
+                'event': event.slug,
+                'organizer': event.organizer.slug,
+            },
+        )
+        nav.append(
+            {
+                'label': _('Dashboard'),
+                'url': dashboard_url,
+                'active': (url.url_name == 'event.index'),
+                'icon': 'dashboard',
+            }
+        )
+    except NoReverseMatch:
+        pass
     has_settings_perm = request.user.has_event_permission(
         event.organizer,
         event,
