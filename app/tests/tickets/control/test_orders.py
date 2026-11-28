@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 import datetime
+import threading
 from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
@@ -8,7 +10,10 @@ from zoneinfo import ZoneInfo
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
-from django.test import override_settings
+from django.db import connections, transaction
+from django.db.backends.postgresql.operations import DatabaseOperations
+from django.db.models.query import QuerySet
+from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 from django_countries.fields import Country
@@ -100,6 +105,30 @@ def env():
         attendee_name_parts={'full_name': 'Lukas Gelöscht', '_scheme': 'full'},
     )
     return event, user, o, ticket
+
+
+@pytest.fixture
+def cascade_execute_sql_flush():
+    original_execute_sql_flush = DatabaseOperations.execute_sql_flush
+
+    def custom_execute_sql_flush(self, sql_list):
+        try:
+            cascade_sql = [
+                sql.replace(';', ' CASCADE;') if 'CASCADE' not in sql else sql
+                for sql in sql_list
+            ]
+            return original_execute_sql_flush(self, cascade_sql)
+        finally:
+            DatabaseOperations.execute_sql_flush = original_execute_sql_flush
+
+    DatabaseOperations.execute_sql_flush = custom_execute_sql_flush
+    yield
+
+
+@pytest.fixture(autouse=True)
+def disable_video_cache_updates():
+    with mock.patch('eventyay.base.models.cache.VersionedModel._set_cache_version_sync'):
+        yield
 
 
 @pytest.mark.django_db
@@ -2864,9 +2893,12 @@ def test_refund_propose_higher_payment(client, env):
 
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_refund_amount_does_not_match_or_invalid(client, env):
     with scopes_disabled():
         p = env[2].payments.last()
+        p.info_data = {'payer': 'Test User', 'iban': 'DE27520521540534534466'}
+        p.save()
         p.confirm()
     client.login(email='dummy@dummy.dummy', password='dummy')
     resp = client.post(
@@ -2913,7 +2945,7 @@ def test_refund_amount_does_not_match_or_invalid(client, env):
         follow=True,
     )
     assert b'alert-danger' in resp.content
-    assert b'do not match the' in resp.content
+    assert b'invalid number' in resp.content
     resp = client.post(
         '/control/event/dummy/dummy/orders/FOO/refund',
         {
@@ -3232,6 +3264,7 @@ def test_approve_cancellation_request(client, env):
     doc = BeautifulSoup(response.content.decode(), 'lxml')
     assert doc.select('input[name=refund-new-giftcard]')[0]['value'] == '10.00'
     assert not env[2].cancellation_requests.exists()
+
 
 
 @pytest.mark.django_db

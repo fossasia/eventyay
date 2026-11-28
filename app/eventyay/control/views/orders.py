@@ -50,6 +50,7 @@ from django.views.generic import (
     TemplateView,
     View,
 )
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.channels import get_all_sales_channels
@@ -163,6 +164,7 @@ from eventyay.control.forms.orders import (
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import order_search_forms
 from eventyay.control.views import PaginationMixin
+from eventyay.helpers.database import OF_SELF
 from eventyay.helpers.safedownload import check_token
 from eventyay.presale.utils import build_position_additional_fields
 
@@ -1142,6 +1144,30 @@ class OrderRefundView(OrderView):
     permission = 'can_change_orders'
 
     @cached_property
+    def available_order_balance(self):
+        order_payments_sum = (
+            self.order.payments.filter(
+                state__in=(
+                    OrderPayment.PAYMENT_STATE_CONFIRMED,
+                    OrderPayment.PAYMENT_STATE_REFUNDED,
+                )
+            ).aggregate(s=Sum('amount'))['s']
+            or Decimal('0.00')
+        )
+        order_refunds_sum = (
+            self.order.refunds.filter(
+                state__in=(
+                    OrderRefund.REFUND_STATE_DONE,
+                    OrderRefund.REFUND_STATE_TRANSIT,
+                    OrderRefund.REFUND_STATE_CREATED,
+                    OrderRefund.REFUND_STATE_EXTERNAL,
+                )
+            ).aggregate(s=Sum('amount'))['s']
+            or Decimal('0.00')
+        )
+        return max(Decimal('0.00'), order_payments_sum - order_refunds_sum)
+
+    @cached_property
     def start_form(self):
         return OrderRefundForm(
             order=self.order,
@@ -1150,16 +1176,23 @@ class OrderRefundView(OrderView):
             else (self.request.GET if 'start-action' in self.request.GET else None),
             prefix='start',
             initial={
-                'partial_amount': self.order.payment_refund_sum,
+                'partial_amount': self.available_order_balance,
                 'action': ('mark_pending' if self.order.status == Order.STATUS_PAID else 'do_nothing'),
             },
         )
 
     def choose_form(self):
+        """
+        Render and process the order refund selection form.
+
+        Locks targeted payment and order rows with select_for_update(of=OF_SELF) inside
+        an atomic transaction, rechecks available refundable balances to prevent concurrent
+        over-refunds, and persists OrderRefund records.
+        """
         payments = list(self.order.payments.filter(state=OrderPayment.PAYMENT_STATE_CONFIRMED))
         comment = self.request.POST.get('comment') or self.request.GET.get('comment') or None
         if self.start_form.cleaned_data.get('mode') == 'full':
-            full_refund = self.order.payment_refund_sum
+            full_refund = self.available_order_balance
         else:
             full_refund = self.start_form.cleaned_data.get('partial_amount')
         full_refund = round_decimal(full_refund, self.request.event.currency)
@@ -1182,13 +1215,16 @@ class OrderRefundView(OrderView):
             manual_value = self.request.POST.get('refund-manual', '0') or '0'
             manual_value = formats.sanitize_separators(manual_value)
             try:
-                manual_value = Decimal(manual_value)
+                manual_value = round_decimal(Decimal(manual_value), self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                refund_selected += manual_value
-                if manual_value:
+                if manual_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                elif manual_value > Decimal('0.00'):
+                    refund_selected += manual_value
                     refunds.append(
                         OrderRefund(
                             order=self.order,
@@ -1205,22 +1241,20 @@ class OrderRefundView(OrderView):
                         )
                     )
 
+            giftcard = None
             giftcard_value = self.request.POST.get('refund-new-giftcard', '0') or '0'
             giftcard_value = formats.sanitize_separators(giftcard_value)
             try:
-                giftcard_value = Decimal(giftcard_value)
+                giftcard_value = round_decimal(Decimal(giftcard_value), self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                if giftcard_value:
+                if giftcard_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                elif giftcard_value > Decimal('0.00'):
                     refund_selected += giftcard_value
-                    giftcard = self.request.organizer.issued_gift_cards.create(
-                        expires=self.request.organizer.default_gift_card_expiry,
-                        currency=self.request.event.currency,
-                        testmode=self.order.testmode,
-                    )
-                    giftcard.log_action('eventyay.giftcards.created', user=self.request.user, data={})
                     refunds.append(
                         OrderRefund(
                             order=self.order,
@@ -1231,19 +1265,21 @@ class OrderRefundView(OrderView):
                             amount=giftcard_value,
                             provider='giftcard',
                             comment=comment,
-                            info=json.dumps({'gift_card': giftcard.pk}),
                         )
                     )
 
             offsetting_value = self.request.POST.get('refund-offsetting', '0') or '0'
             offsetting_value = formats.sanitize_separators(offsetting_value)
             try:
-                offsetting_value = Decimal(offsetting_value)
+                offsetting_value = round_decimal(Decimal(offsetting_value), self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                if offsetting_value:
+                if offsetting_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                elif offsetting_value > Decimal('0.00'):
                     refund_selected += offsetting_value
                     try:
                         order = Order.objects.get(
@@ -1275,12 +1311,16 @@ class OrderRefundView(OrderView):
                 prof_value = self.request.POST.get(f'newrefund-{identifier}', '0') or '0'
                 prof_value = formats.sanitize_separators(prof_value)
                 try:
-                    prof_value = Decimal(prof_value)
+                    prof_value = round_decimal(Decimal(prof_value), self.request.event.currency)
                 except (DecimalException, TypeError):
                     messages.error(self.request, _('You entered an invalid number.'))
                     is_valid = False
                     continue
-                if prof_value > Decimal('0.00'):
+                if prof_value < Decimal('0.00'):
+                    messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                    continue
+                elif prof_value > Decimal('0.00'):
                     try:
                         refund = prov.new_refund_control_form_process(self.request, prof_value, self.order)
                     except ValidationError as e:
@@ -1289,6 +1329,7 @@ class OrderRefundView(OrderView):
                         is_valid = False
                         continue
                     if refund:
+                        refund.amount = round_decimal(refund.amount, self.request.event.currency)
                         refund_selected += refund.amount
                         refund.comment = comment
                         refund.source = OrderRefund.REFUND_SOURCE_ADMIN
@@ -1298,13 +1339,17 @@ class OrderRefundView(OrderView):
                 value = self.request.POST.get('refund-{}'.format(p.pk), '0') or '0'
                 value = formats.sanitize_separators(value)
                 try:
-                    value = Decimal(value)
+                    value = round_decimal(Decimal(value), self.request.event.currency)
                 except (DecimalException, TypeError):
                     messages.error(self.request, _('You entered an invalid number.'))
                     is_valid = False
                 else:
                     if value == 0:
                         continue
+                    elif value < Decimal('0.00'):
+                        messages.error(self.request, _('You entered an invalid number.'))
+                        is_valid = False
+                        break
                     elif value > p.available_amount:
                         messages.error(
                             self.request,
@@ -1336,20 +1381,176 @@ class OrderRefundView(OrderView):
             any_success = False
             refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
+                payment_ids = sorted(list({r.payment_id for r in refunds if r.payment_id}))
+                with transaction.atomic():
+                    with scope(organizer=self.request.organizer):
+                        if payment_ids:
+                            locked_payments = {
+                                p.pk: p
+                                for p in OrderPayment.objects.filter(
+                                    order=self.order,
+                                    pk__in=payment_ids,
+                                )
+                                .select_for_update(of=OF_SELF)
+                                .order_by('pk')
+                            }
+                        else:
+                            locked_payments = {}
+
+                        locked_order = (
+                            self.request.event.orders.select_for_update(of=OF_SELF).get(pk=self.order.pk)
+                        )
+                        order_payments_sum = (
+                            locked_order.payments.filter(
+                                state__in=(
+                                    OrderPayment.PAYMENT_STATE_CONFIRMED,
+                                    OrderPayment.PAYMENT_STATE_REFUNDED,
+                                )
+                            ).aggregate(s=Sum('amount'))['s']
+                            or Decimal('0.00')
+                        )
+                        order_refunds_sum = (
+                            locked_order.refunds.filter(
+                                state__in=(
+                                    OrderRefund.REFUND_STATE_DONE,
+                                    OrderRefund.REFUND_STATE_TRANSIT,
+                                    OrderRefund.REFUND_STATE_CREATED,
+                                    OrderRefund.REFUND_STATE_EXTERNAL,
+                                )
+                            ).aggregate(s=Sum('amount'))['s']
+                            or Decimal('0.00')
+                        )
+                        order_available = order_payments_sum - order_refunds_sum
+                        if refund_selected > order_available:
+                            messages.error(
+                                self.request,
+                                _(
+                                    'You can not refund more than the amount of a payment '
+                                    'that is not yet refunded.'
+                                ),
+                            )
+                            is_valid = False
+
+                        if is_valid and payment_ids:
+                            refund_sums = {
+                                item['payment']: item['s']
+                                for item in locked_order.refunds.filter(
+                                    payment_id__in=payment_ids,
+                                    state__in=(
+                                        OrderRefund.REFUND_STATE_DONE,
+                                        OrderRefund.REFUND_STATE_TRANSIT,
+                                        OrderRefund.REFUND_STATE_CREATED,
+                                        OrderRefund.REFUND_STATE_EXTERNAL,
+                                    ),
+                                )
+                                .values('payment')
+                                .annotate(s=Sum('amount'))
+                            }
+                            payment_available = {
+                                pk: p.amount - refund_sums.get(pk, Decimal('0.00'))
+                                for pk, p in locked_payments.items()
+                            }
+                            for r in refunds:
+                                if r.payment_id:
+                                    lp = locked_payments.get(r.payment_id)
+                                    available = payment_available.get(r.payment_id, Decimal('0.00'))
+                                    if lp and lp.payment_provider:
+                                        try:
+                                            full_refund_possible = (
+                                                lp.payment_provider.payment_refund_supported(lp)
+                                            )
+                                            partial_refund_possible = (
+                                                lp.payment_provider.payment_partial_refund_supported(lp)
+                                            )
+                                        except (PaymentException, ValidationError):
+                                            full_refund_possible = False
+                                            partial_refund_possible = False
+                                    else:
+                                        full_refund_possible = False
+                                        partial_refund_possible = False
+
+                                    if (
+                                        not lp
+                                        or lp.state != OrderPayment.PAYMENT_STATE_CONFIRMED
+                                        or r.amount > available
+                                    ):
+                                        messages.error(
+                                            self.request,
+                                            _(
+                                                'You can not refund more than the amount of a payment '
+                                                'that is not yet refunded.'
+                                            ),
+                                        )
+                                        is_valid = False
+                                        break
+                                    elif r.amount != lp.amount and not partial_refund_possible:
+                                        messages.error(
+                                            self.request,
+                                            _(
+                                                'You selected a partial refund for a payment method '
+                                                'that only supports full refunds.'
+                                            ),
+                                        )
+                                        is_valid = False
+                                        break
+                                    elif r.amount == lp.amount and not (
+                                        full_refund_possible or partial_refund_possible
+                                    ):
+                                        messages.error(
+                                            self.request,
+                                            _(
+                                                'You can not refund more than the amount of a payment '
+                                                'that is not yet refunded.'
+                                            ),
+                                        )
+                                        is_valid = False
+                                        break
+                                    payment_available[r.payment_id] -= r.amount
+                                    r.payment = lp
+
+                        if is_valid:
+                            for r in refunds:
+                                r.order = locked_order
+                                if r.provider == 'giftcard' and not r.payment_id and not r.info:
+                                    giftcard = self.request.organizer.issued_gift_cards.create(
+                                        expires=self.request.organizer.default_gift_card_expiry,
+                                        currency=self.request.event.currency,
+                                        testmode=locked_order.testmode,
+                                    )
+                                    giftcard.log_action('eventyay.giftcards.created', user=self.request.user, data={})
+                                    r.info = json.dumps({'gift_card': giftcard.pk})
+                                r.save()
+
+            if refund_selected == full_refund and is_valid:
                 for r in refunds:
-                    r.save()
-                    self.order.log_action(
-                        'eventyay.event.order.refund.created',
-                        {
-                            'local_id': r.local_id,
-                            'provider': r.provider,
-                        },
-                        user=self.request.user,
-                    )
+                    try:
+                        self.order.log_action(
+                            'eventyay.event.order.refund.created',
+                            {
+                                'local_id': r.local_id,
+                                'provider': r.provider,
+                            },
+                            user=self.request.user,
+                        )
+                    except Exception:
+                        logger.exception('Failed to log refund creation for refund %s', r.pk)
+
                     if r.provider != 'manual':
                         try:
                             r.payment_provider.execute_refund(r)
                         except PaymentException as e:
+                            r.state = OrderRefund.REFUND_STATE_FAILED
+                            r.save()
+                            messages.error(
+                                self.request,
+                                _(
+                                    'One of the refunds failed to be processed. You should '
+                                    'retry to refund in a different way. The error message '
+                                    'was: {}'
+                                ).format(str(e)),
+                            )
+                        except Exception as e:
+                            logger.exception('Unexpected error executing refund %s: %s', r.pk, e)
                             r.state = OrderRefund.REFUND_STATE_FAILED
                             r.save()
                             messages.error(
@@ -1430,7 +1631,7 @@ class OrderRefundView(OrderView):
                                 )
                             )
                 return redirect(self.get_order_url())
-            else:
+            elif refund_selected != full_refund:
                 messages.error(
                     self.request,
                     _('The refunds you selected do not match the selected total refund amount.'),
