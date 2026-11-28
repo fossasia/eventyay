@@ -202,6 +202,12 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
 
     shred.alters_data = True
 
+    def clean_fields(self, exclude=None):
+        # A stored short form stays valid even if it was reserved after the organizer was created.
+        if self.pk and Organizer.objects.filter(pk=self.pk, slug=self.slug).exists():
+            exclude = {*(exclude or ()), 'slug'}
+        super().clean_fields(exclude=exclude)
+
     def save(self, *args, **kwargs):
         obj = super().save(*args, **kwargs)
         self.get_cache().clear()

@@ -11,7 +11,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.test.utils import CaptureQueriesContext
-from django.urls import resolve, reverse
+from django.urls import Resolver404, URLResolver, get_resolver, resolve, reverse
 from django_otp.oath import TOTP
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -27,6 +27,8 @@ from eventyay.base.models import (
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.organizer_request_fields import organizer_request_enabled
 from eventyay.base.services.organizer_requests import review_request
+from eventyay.base.validators import OrganizerSlugBanlistValidator
+from eventyay.control.forms.organizer_forms import OrganizerUpdateForm
 from eventyay.control.views.organizer_requests import request_cursor
 from eventyay.eventyay_common.views.organizer_request import OrganizerRequestCreate
 
@@ -97,10 +99,58 @@ def test_same_form_when_logged_in(client, admin):
     assert client.get('/invite').status_code == 200
 
 
-@pytest.mark.parametrize('slug', ['UPPER', 'two words', 'control', 'invite', '-bad', 'bad/', 'a' * 51])
+@pytest.mark.parametrize(
+    'slug', ['UPPER', 'two words', 'control', 'invite', 'common', 'page', '-bad', 'bad/', 'a' * 51]
+)
 def test_invalid_slugs(client, data, slug):
     assert not OrganizerRequestForm(data={**data, 'slug': slug}).is_valid()
     assert client.get(reverse('organizer_request.slug'), {'slug': slug}).json()['available'] is False
+
+
+def test_slugs_taken_by_other_pages_are_banned():
+    def first_segments(patterns):
+        for pattern in patterns:
+            route = str(pattern.pattern).lstrip('^')
+            if isinstance(pattern, URLResolver) and not route:
+                yield from first_segments(pattern.url_patterns)
+            else:
+                yield re.split(r'[/<(\\$?]', route, maxsplit=1)[0]
+
+    def view_name(path):
+        try:
+            return resolve(path).view_name
+        except Resolver404:
+            return None
+
+    taken = {
+        segment
+        for segment in first_segments(get_resolver().url_patterns)
+        if re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?', segment)
+        and (
+            view_name(f'/{segment}/') != 'presale:organizer.index'
+            or view_name(f'/{segment}/demo-event/') != 'presale:event.index'
+        )
+    }
+    assert taken <= set(OrganizerSlugBanlistValidator.banlist)
+
+
+def test_organizer_pages_take_precedence_over_invite_links():
+    assert resolve('/abcdef/').url_name == 'anonymous.invite.redirect'
+    assert resolve('/abcdef').func.view_class is resolve('/abcdef/').func.view_class
+    Organizer.objects.create(name='Token-shaped', slug='abcdef')
+    assert resolve('/abcdef/').view_name == 'presale:organizer.index'
+
+
+def test_organizer_update_only_validates_a_changed_slug():
+    organizer = Organizer.objects.create(name='Existing', slug='page')
+    Organizer.objects.create(name='Other', slug='taken-org')
+
+    def form(slug):
+        return OrganizerUpdateForm(instance=organizer, data={'name': 'Renamed', 'slug': slug}, change_slug=True)
+
+    assert form('page').is_valid()
+    assert not form('common').is_valid()
+    assert not form('taken-org').is_valid()
 
 
 def test_taken_slug(client, data):
