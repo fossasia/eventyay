@@ -124,7 +124,7 @@
                                             </span>
                                         {% endif %}
                                     </div>
-                                    {% if var.description %}
+                                    {% if var.order_max > 0 and var.description %}
                                         <div class="variation-description">
                                             {{ var.description|event_localize|rich_text }}
                                         </div>

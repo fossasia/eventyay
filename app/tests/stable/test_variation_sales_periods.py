@@ -453,9 +453,11 @@ def test_ticket_page_shows_compact_upcoming_and_buyable_variants(client, event, 
     with scope(organizer=event.organizer, event=event):
         variation_cart_setup.shirt_red.available_from = now() - timedelta(days=1)
         variation_cart_setup.shirt_red.available_until = now() + timedelta(days=5)
+        variation_cart_setup.shirt_red.description = 'Buyable red shirt details'
         variation_cart_setup.shirt_red.save()
         variation_cart_setup.shirt_blue.available_from = now() + timedelta(days=6)
         variation_cart_setup.shirt_blue.available_until = None
+        variation_cart_setup.shirt_blue.description = 'Upcoming blue shirt should stay hidden'
         variation_cart_setup.shirt_blue.save()
         red_id = variation_cart_setup.shirt_red.id
         blue_id = variation_cart_setup.shirt_blue.id
@@ -471,3 +473,30 @@ def test_ticket_page_shows_compact_upcoming_and_buyable_variants(client, event, 
     assert 'variation-sales-date--active' in html
     assert 'input-product-count--compact' in html
     assert 'variation-toggle' in html
+    assert 'Buyable red shirt details' in html
+    assert 'Upcoming blue shirt should stay hidden' not in html
+
+
+@pytest.mark.django_db
+def test_ticket_page_headline_price_ignores_expired_phases(client, event, variation_cart_setup):
+    """Headline min/max uses buyable phases only, not historical expired prices."""
+    with scope(organizer=event.organizer, event=event):
+        variation_cart_setup.shirt_red.default_price = Decimal('50.00')
+        variation_cart_setup.shirt_red.available_from = now() - timedelta(days=1)
+        variation_cart_setup.shirt_red.available_until = now() + timedelta(days=5)
+        variation_cart_setup.shirt_red.save()
+        variation_cart_setup.shirt_blue.default_price = Decimal('10.00')
+        variation_cart_setup.shirt_blue.available_from = None
+        variation_cart_setup.shirt_blue.available_until = now() - timedelta(days=1)
+        variation_cart_setup.shirt_blue.save()
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, 'html.parser')
+    shirt_article = soup.select_one(f'#item-{variation_cart_setup.shirt.id}')
+    assert shirt_article is not None
+    headline_price = shirt_article.select_one('summary .price, .headline .price')
+    assert headline_price is not None
+    price_text = ' '.join(headline_price.stripped_strings)
+    assert '50.00' in price_text
+    assert '10.00' not in price_text

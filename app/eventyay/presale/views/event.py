@@ -465,18 +465,18 @@ def get_grouped_products(
                 product.available_variations = [v for v in product.available_variations if v.pk == voucher.variation_id]
 
             if len(product.available_variations) > 0:
-                product.min_price = min(
-                    [
-                        v.display_price.net if event.settings.display_net_prices else v.display_price.gross
-                        for v in product.available_variations
-                    ]
-                )
-                product.max_price = max(
-                    [
-                        v.display_price.net if event.settings.display_net_prices else v.display_price.gross
-                        for v in product.available_variations
-                    ]
-                )
+                # Headline range reflects currently buyable phases only so an
+                # expired Early Bird at $10 does not widen "from $10 – $50".
+                # Fall back to all visible phases when none are buyable yet.
+                price_vars = [v for v in product.available_variations if v.order_max > 0]
+                if not price_vars:
+                    price_vars = product.available_variations
+                price_values = [
+                    v.display_price.net if event.settings.display_net_prices else v.display_price.gross
+                    for v in price_vars
+                ]
+                product.min_price = min(price_values)
+                product.max_price = max(price_values)
 
             product._remove = not bool(product.available_variations)
 
