@@ -1,6 +1,7 @@
 {% extends "pretixpresale/event/base.html" %}
 {% load i18n %}
 {% load money %}
+{% load eventurl %}
 
 {% block content %}
   <h2>{% trans "Ticket marketplace" %}</h2>
@@ -39,7 +40,7 @@
             <strong>{% trans "Price" %}:</strong>
             {{ listing.price|money:request.event.currency }}
           </p>
-          <form method="post" action="{% url "plugins:resale:buy" organizer=request.event.organizer.slug event=request.event.slug listing=listing.pk %}">
+          <form method="post" action="{% eventurl request.event 'plugins:resale:buy' listing=listing.pk %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-primary">{% trans "Buy" %}</button>
           </form>

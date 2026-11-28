@@ -1,0 +1,165 @@
+/* Ticket resale control overview — aligned with tickets control text color (#222222) */
+
+.resale-overview {
+  color: #222222;
+}
+
+.resale-overview .header-nav h2,
+.resale-overview h1,
+.resale-overview h2,
+.resale-overview h3,
+.resale-overview .table,
+.resale-overview .table th,
+.resale-overview .table td {
+  color: #222222;
+}
+
+.resale-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.resale-toolbar .help-block {
+  margin: 0;
+  color: #767676;
+}
+
+.resale-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resale-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.resale-stat {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.resale-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #222222;
+}
+
+.resale-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #767676;
+}
+
+.resale-panel > .panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resale-panel > .panel-heading .panel-title {
+  color: #222222;
+}
+
+.resale-panel-body {
+  padding: 0;
+}
+
+.resale-table {
+  margin: 0;
+}
+
+.resale-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resale-status-filters a {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+  color: #222222;
+  background: #fff;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.resale-status-filters a:hover,
+.resale-status-filters a:focus {
+  border-color: #2185d0;
+  color: #2185d0;
+  text-decoration: none;
+}
+
+.resale-status-filters a.is-active {
+  background: #2185d0;
+  border-color: #2185d0;
+  color: #fff;
+}
+
+.resale-empty {
+  text-align: center;
+  padding: 36px 16px;
+  color: #767676;
+}
+
+.resale-empty .fa {
+  font-size: 36px;
+  margin-bottom: 12px;
+  color: #bbbbbb;
+}
+
+.resale-empty p {
+  margin: 0 0 8px;
+  color: #222222;
+}
+
+.resale-empty .help-block {
+  margin-bottom: 16px;
+  color: #767676;
+}
+
+.resale-table td,
+.resale-table th {
+  vertical-align: middle !important;
+}
+
+.resale-table .label {
+  font-weight: 600;
+}
+
+@media (max-width: 1199px) {
+  .resale-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .resale-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .resale-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

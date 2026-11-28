@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, View
 from django_scopes import scope
 
-from eventyay.base.models import OrderPosition, Voucher
+from eventyay.base.models import CartPosition, OrderPosition, Voucher
 from eventyay.base.services.cart import CartError, CartManager
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
@@ -34,6 +34,7 @@ from .services import (
     max_allowed_price,
     marketplace_is_open,
     release_expired_reservations,
+    release_reservation,
     reserve_listing,
     withdraw_listing,
 )
@@ -89,6 +90,8 @@ class ResaleOverviewView(EventPermissionRequiredMixin, ListView):
             ),
         }
         ctx['status_filter'] = self.request.GET.get('status', '')
+        ctx['resale_enabled'] = bool(event.settings.get('resale_enabled', as_type=bool))
+        ctx['resale_suspended'] = bool(event.settings.get('resale_suspended', as_type=bool))
         return ctx
 
 
@@ -229,13 +232,17 @@ class MarketplaceBuyView(EventViewMixin, View):
             event=request.event,
             pk=kwargs['listing'],
         )
+        reserved = False
         try:
             if not request.session.session_key:
                 request.session.create()
             listing = reserve_listing(listing=listing, session_key=request.session.session_key)
+            reserved = True
             cart_id = get_or_create_cart_id(request)
             self._add_listing_to_cart(request, listing, cart_id)
         except (ResaleError, CartError) as exc:
+            if reserved:
+                release_reservation(listing=listing)
             messages.error(request, str(exc))
             return redirect(self.get_marketplace_url())
 
@@ -254,7 +261,21 @@ class MarketplaceBuyView(EventViewMixin, View):
         )
 
     def _add_listing_to_cart(self, request, listing: ResaleListing, cart_id: str):
+        sales_channel = getattr(request, 'sales_channel', None)
+        channel = getattr(sales_channel, 'identifier', None) or 'web'
+        tag = f'resale:{listing.pk}'
         with transaction.atomic(), scope(organizer=request.event.organizer, event=request.event):
+            # Same session clicking Buy again must not create a second cart line.
+            existing = (
+                CartPosition.objects.select_related('voucher')
+                .filter(event=request.event, cart_id=cart_id, voucher__tag=tag)
+                .first()
+            )
+            if existing is not None:
+                if existing.voucher and listing.reserved_until:
+                    Voucher.objects.filter(pk=existing.voucher_id).update(valid_until=listing.reserved_until)
+                return
+
             voucher = Voucher.objects.create(
                 event=request.event,
                 code=f'RESALE-{listing.pk}-{get_random_string(8).upper()}',
@@ -263,15 +284,16 @@ class MarketplaceBuyView(EventViewMixin, View):
                 valid_until=listing.reserved_until or now(),
                 block_quota=False,
                 allow_ignore_quota=True,
+                show_hidden_products=True,
                 price_mode='set',
                 value=listing.price,
                 product=listing.position.product,
                 variation=listing.position.variation,
                 subevent=listing.position.subevent,
-                tag=f'resale:{listing.pk}',
+                tag=tag,
                 comment=_('Auto voucher for ticket resale listing {id}').format(id=listing.pk),
             )
-            cm = CartManager(event=request.event, cart_id=cart_id, sales_channel=getattr(request, 'sales_channel', 'web'))
+            cm = CartManager(event=request.event, cart_id=cart_id, sales_channel=channel)
             cm.add_new_products(
                 [
                     {
@@ -288,10 +310,4 @@ class MarketplaceBuyView(EventViewMixin, View):
             cm.commit()
 
     def get_marketplace_url(self):
-        return reverse(
-            'plugins:resale:marketplace',
-            kwargs={
-                'organizer': self.request.event.organizer.slug,
-                'event': self.request.event.slug,
-            },
-        )
+        return eventreverse(self.request.event, 'plugins:resale:marketplace', kwargs={})

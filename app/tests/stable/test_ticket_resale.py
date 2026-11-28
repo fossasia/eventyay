@@ -175,6 +175,7 @@ def test_product_filter_restricts_eligibility(resale_event, paid_position, ticke
             event=resale_event,
             name='Other',
             default_price=Decimal('10.00'),
+            admission=True,
         )
         resale_event.settings.set('resale_products', [str(other.pk)])
         ok, _reason = is_position_eligible(resale_event, paid_position)
@@ -183,3 +184,57 @@ def test_product_filter_restricts_eligibility(resale_event, paid_position, ticke
         resale_event.settings.set('resale_products', [str(ticket_product.pk)])
         ok, _reason = is_position_eligible(resale_event, paid_position)
         assert ok is True
+
+
+@pytest.mark.django_db
+def test_non_admission_product_not_eligible(resale_event, paid_position):
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        paid_position.product.admission = False
+        paid_position.product.save(update_fields=['admission'])
+        ok, reason = is_position_eligible(resale_event, paid_position)
+        assert ok is False
+        assert 'admission' in str(reason).lower()
+
+
+@pytest.mark.django_db
+def test_withdrawn_listing_can_be_relisted(resale_event, paid_position):
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        listing = create_listing(event=resale_event, position=paid_position, price=Decimal('200.00'))
+        withdraw_listing(listing=listing)
+        relisted = create_listing(event=resale_event, position=paid_position, price=Decimal('180.00'))
+        assert relisted.pk == listing.pk
+        assert relisted.status == ResaleListing.STATUS_AVAILABLE
+        assert relisted.price == Decimal('180.00')
+        assert ResaleListing.objects.filter(position=paid_position).count() == 1
+
+
+@pytest.mark.django_db
+def test_complete_resale_rejects_expired_reservation(resale_event, paid_position, ticket_product):
+    from eventyay.plugins.resale.services import complete_resale
+
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        listing = create_listing(event=resale_event, position=paid_position, price=Decimal('200.00'))
+        reserve_listing(listing=listing, session_key='buyer-a')
+        listing.reserved_until = now() - timedelta(minutes=1)
+        listing.save(update_fields=['reserved_until'])
+        release_expired_reservations(resale_event)
+        listing.refresh_from_db()
+        assert listing.status == ResaleListing.STATUS_AVAILABLE
+
+        buyer_order = Order.objects.create(
+            event=resale_event,
+            status=Order.STATUS_PAID,
+            expires=now() + timedelta(days=1),
+            total=Decimal('200.00'),
+            code='BUYER1',
+            email='buyer@example.com',
+            datetime=now(),
+            locale='en',
+        )
+        buyer_pos = OrderPosition.objects.create(
+            order=buyer_order,
+            product=ticket_product,
+            price=Decimal('200.00'),
+        )
+        with pytest.raises(ResaleError):
+            complete_resale(listing=listing, buyer_order=buyer_order, buyer_position=buyer_pos)

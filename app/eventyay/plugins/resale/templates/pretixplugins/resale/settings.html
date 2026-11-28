@@ -2,8 +2,18 @@
 {% load i18n %}
 {% load bootstrap3 %}
 
+{% block title %}{% trans "Ticket resale marketplace" %}{% endblock %}
+
 {% block inside %}
-  <h1>{% trans "Ticket resale marketplace" %}</h1>
+  {% trans "Ticket resale marketplace" as header_title %}
+  {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
+
+  <p class="help-block">
+    {% blocktrans trimmed %}
+      Configure when the marketplace is open, which products can be resold, and how fees are calculated.
+    {% endblocktrans %}
+  </p>
+
   <form action="" method="post" class="form-horizontal">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
@@ -27,6 +37,9 @@
       {% bootstrap_field form.resale_reservation_minutes layout="horizontal" %}
     </fieldset>
     <div class="form-group submit-group">
+      <a class="btn btn-default btn-lg" href="{% url 'plugins:resale:overview' organizer=request.event.organizer.slug event=request.event.slug %}">
+        {% trans "Back" %}
+      </a>
       <button type="submit" class="btn btn-primary btn-lg">{% trans "Save" %}</button>
     </div>
   </form>

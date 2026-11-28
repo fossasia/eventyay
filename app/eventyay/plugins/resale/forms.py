@@ -27,7 +27,10 @@ class ResaleSettingsForm(SettingsForm):
         required=False,
         queryset=Product.objects.none(),
         widget=forms.CheckboxSelectMultiple,
-        help_text=_('Leave empty to allow all ticket types.'),
+        help_text=_(
+            'Leave empty to allow all admission ticket types. Non-admission products '
+            '(merchandise, add-ons) are never eligible.'
+        ),
     )
     resale_fee_mode = forms.ChoiceField(
         label=_('Processing fee type'),
@@ -70,13 +73,19 @@ class ResaleSettingsForm(SettingsForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['resale_products'].queryset = self.obj.products.filter(active=True).order_by(
+        product_ids = [
+            int(p)
+            for p in (self.obj.settings.get('resale_products', as_type=list) or [])
+            if str(p).isdigit()
+        ]
+        # Keep previously configured products visible even if they were deactivated,
+        # so saving unrelated settings cannot silently clear the allow-list.
+        active = self.obj.products.filter(admission=True, active=True)
+        configured = self.obj.products.filter(pk__in=product_ids)
+        self.fields['resale_products'].queryset = (active | configured).distinct().order_by(
             'category__position', 'position', 'name'
         )
-        product_ids = self.obj.settings.get('resale_products', as_type=list) or []
-        self.initial['resale_products'] = self.fields['resale_products'].queryset.filter(
-            pk__in=[int(p) for p in product_ids if str(p).isdigit()]
-        )
+        self.initial['resale_products'] = self.fields['resale_products'].queryset.filter(pk__in=product_ids)
 
     def clean(self):
         cleaned = super().clean()
@@ -87,8 +96,10 @@ class ResaleSettingsForm(SettingsForm):
         return cleaned
 
     def save(self):
-        products = self.cleaned_data.pop('resale_products', Product.objects.none())
-        self.obj.settings.set('resale_products', [str(p.pk) for p in products])
+        # HierarkeyForm.save() reads every declared field from cleaned_data.
+        # Persist product PKs as strings; do not pop the key before super().save().
+        products = self.cleaned_data.get('resale_products') or []
+        self.cleaned_data['resale_products'] = [str(p.pk) for p in products]
         return super().save()
 
 
