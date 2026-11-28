@@ -15,7 +15,10 @@ from ..signals import register_data_exporters
 
 class AnswerFilesExporter(BaseExporter):
     identifier = 'answerfiles'
-    verbose_name = _('Answers to file upload questions')
+    verbose_name = _('Uploaded files')
+    category = 'attendees_orders'
+    description = _('All files that attendees uploaded in your questions.')
+    file_type = 'ZIP'
 
     @property
     def export_form_fields(self):

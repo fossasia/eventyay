@@ -372,14 +372,11 @@ class EnhancedSelectMultiple(EnhancedSelectMixin, SelectMultiple):
 
 
 def get_count(value, label):
-    count = None
     instance = getattr(value, 'instance', None)
-    if instance:
-        count = getattr(instance, 'count', 0)
-    count = count or getattr(label, 'count', 0)
-    if callable(count):
-        return count(label)
-    return count
+    count = getattr(instance, 'count', None)
+    if count is None:
+        count = getattr(label, 'count', 0)
+    return count if isinstance(count, int) else 0
 
 
 class SelectMultipleWithCount(EnhancedSelectMultiple):
@@ -396,9 +393,9 @@ class SelectMultipleWithCount(EnhancedSelectMultiple):
         result = []
         for index, (option_value, label) in enumerate(choices):
             count = get_count(option_value, label)
-            if count == 0:
-                continue
             selected = str(option_value) in value
+            if count == 0 and not selected:
+                continue
             result.append(
                 self.create_option(
                     name,

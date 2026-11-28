@@ -55,7 +55,9 @@ from ..signals import (
 
 class OrderListExporter(MultiSheetListExporter):
     identifier = 'orderlist'
-    verbose_name = gettext_lazy('Order data')
+    verbose_name = gettext_lazy('Orders')
+    category = 'attendees_orders'
+    description = gettext_lazy('One row per order, with buyer, total, status and payment method.')
 
     @cached_property
     def providers(self):
@@ -1035,7 +1037,8 @@ class OrderListExporter(MultiSheetListExporter):
 
 class OrderPositionListExporter(OrderListExporter):
     identifier = 'orderpositionlist'
-    verbose_name = gettext_lazy('Order positions')
+    verbose_name = gettext_lazy('Attendee list')
+    description = gettext_lazy('One row per ticket, with attendee name, email, product and answers.')
 
     @property
     def export_form_fields(self) -> dict:
@@ -1073,7 +1076,9 @@ class OrderPositionListExporter(OrderListExporter):
 
 class PaymentListExporter(ListExporter):
     identifier = 'paymentlist'
-    verbose_name = gettext_lazy('Order payments and refunds')
+    verbose_name = gettext_lazy('Payments and refunds')
+    category = 'payments_accounting'
+    description = gettext_lazy('Every payment and refund with date, amount and method.')
 
     @property
     def additional_form_fields(self):
@@ -1167,7 +1172,9 @@ class PaymentListExporter(ListExporter):
 
 class QuotaListExporter(ListExporter):
     identifier = 'quotalist'
-    verbose_name = gettext_lazy('Quota availabilities')
+    verbose_name = gettext_lazy('Ticket availability')
+    category = 'vouchers_availability'
+    description = gettext_lazy('How many tickets are sold, reserved and left per quota.')
 
     def iterate_list(self, form_data):
         has_subevents = self.event.has_subevents
@@ -1235,6 +1242,8 @@ class QuotaListExporter(ListExporter):
 class GiftcardRedemptionListExporter(ListExporter):
     identifier = 'giftcardredemptionlist'
     verbose_name = gettext_lazy('Gift card redemptions')
+    category = 'payments_accounting'
+    description = gettext_lazy('Which gift cards were used on which orders.')
 
     def iterate_list(self, form_data):
         payments = OrderPayment.objects.filter(

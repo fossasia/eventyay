@@ -32,7 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
         depValues.parentElement.appendChild(indicator);
     }
     
+    var latestRequest = 0;
+
     function updateDependencyOptions() {
+        // The saved values only apply to the first load, not after the dependency is changed.
+        var valuesToSelect = savedValues;
+        savedValues = [];
+        var request = ++latestRequest;
         removeLoadingIndicator();
         depValues.innerHTML = '';
         depValues.required = false;
@@ -65,6 +71,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(function(data) {
+                // The dependency was changed while this request was loading, so a newer request owns the list.
+                if (request !== latestRequest) {
+                    return;
+                }
                 if (data.variant === 'boolean') {
                     var optYes = document.createElement('option');
                     optYes.value = 'True';
@@ -84,9 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 
-                if (savedValues && savedValues.length > 0) {
+                if (valuesToSelect && valuesToSelect.length > 0) {
                     Array.from(depValues.options).forEach(function(opt) {
-                        if (savedValues.indexOf(opt.value) !== -1) {
+                        if (valuesToSelect.indexOf(opt.value) !== -1) {
                             opt.selected = true;
                         }
                     });
@@ -95,6 +105,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 removeLoadingIndicator();
             })
             .catch(function(error) {
+                if (request !== latestRequest) {
+                    return;
+                }
                 console.error('Failed to load dependency options', error);
                 depValues.required = false;
                 removeLoadingIndicator();
@@ -102,6 +115,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     updateDependencyOptions();
-    savedValues = [];
     depQuestion.addEventListener('change', updateDependencyOptions);
 });
