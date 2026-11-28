@@ -184,6 +184,13 @@ class OrderFilterForm(FilterForm):
             ('', _('All payment providers')),
         ],
         required=False,
+        widget=forms.Select(
+            attrs={
+                'data-searchable-select': '',
+                'data-search-placeholder': _('Search'),
+                'data-empty-text': _('No results'),
+            }
+        ),
     )
     status = forms.ChoiceField(
         label=_('Order status'),
@@ -1887,6 +1894,13 @@ class RefundFilterForm(FilterForm):
             ('', _('All payment providers')),
         ],
         required=False,
+        widget=forms.Select(
+            attrs={
+                'data-searchable-select': '',
+                'data-search-placeholder': _('Search'),
+                'data-empty-text': _('No results'),
+            }
+        ),
     )
     status = forms.ChoiceField(
         label=_('Refund status'),
