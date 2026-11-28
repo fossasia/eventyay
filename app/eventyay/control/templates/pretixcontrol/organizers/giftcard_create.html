@@ -1,6 +1,10 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% block custom_header %}
+    {{ block.super }}
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
+{% endblock %}
 {% block inner %}
     <h1>{% trans "Create a new gift card" %}</h1>
     <form class="form-horizontal" action="" method="post">
