@@ -16,14 +16,11 @@ const hintText = (element) => {
 }
 
 if (settingsForm && sendBtn) {
-    const savedEnabled = settingsForm.dataset.savedEnabled === "true"
     const savedTag = settingsForm.dataset.savedVoucherTag || ""
-    const enabledInput = settingsForm.querySelector("#id_enabled")
     const tagInput = settingsForm.querySelector("#id_voucher_tag")
 
-    const currentEnabled = () => Boolean(enabledInput && enabledInput.checked)
     const currentTag = () => (tagInput ? tagInput.value : "")
-    const isDirty = () => currentEnabled() !== savedEnabled || currentTag() !== savedTag
+    const isDirty = () => currentTag() !== savedTag
 
     sendBtn.dataset.serverBlocked = sendBtn.disabled ? "true" : "false"
 
@@ -60,7 +57,6 @@ if (settingsForm && sendBtn) {
         }
     }
 
-    enabledInput?.addEventListener("change", refreshSendButton)
     tagInput?.addEventListener("change", refreshSendButton)
     refreshSendButton()
 

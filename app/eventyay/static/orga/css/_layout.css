@@ -3799,6 +3799,158 @@ table thead .sort-link.sort-active {
   flex: 0 0 auto;
 }
 
+.speaker-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.speaker-bulk-send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border-radius: 0.25rem;
+}
+
+.speaker-bulk-send-btn .fa {
+  font-size: 0.95em;
+}
+
+.speaker-selected-count {
+  font-size: 0.875rem;
+}
+
+/* Match Featured column: large square form-check boxes from common checkbox styles. */
+.speaker-list-table .checkbox-column {
+  width: 3rem;
+  min-width: 3rem;
+  max-width: 3.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  vertical-align: middle !important;
+  text-align: center;
+}
+
+.speaker-list-table .checkbox-column .form-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.speaker-list-table .checkbox-column input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.speaker-voucher-cell {
+  min-width: 11rem;
+  max-width: 18rem;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+.speaker-voucher-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  overflow: visible;
+}
+
+.speaker-voucher-status-main {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: visible;
+}
+
+/* Match TeamShifts / Semantic UI label colors used in pretixcontrol. */
+.speaker-voucher-badge {
+  display: inline-block;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 0.3em 0.55em;
+  border-radius: 0.25em;
+  color: #fff;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.speaker-voucher-badge--claimed {
+  background-color: #21ba45;
+}
+
+.speaker-voucher-badge--sent {
+  background-color: #2185d0;
+}
+
+.speaker-voucher-badge--withdrawn {
+  background-color: #f2711c;
+}
+
+.speaker-voucher-badge--default {
+  background-color: #767676;
+}
+
+.speaker-voucher-sent-date {
+  display: block;
+  line-height: 1.3;
+}
+
+.speaker-voucher-bulk-skipped {
+  margin-top: 0.65rem;
+  font-size: 0.8125rem;
+}
+
+.speaker-voucher-bulk-immediate {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+#speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.925rem;
+}
+
+#speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary dt {
+  margin: 0;
+  font-weight: 600;
+}
+
+#speaker-voucher-bulk-confirm .speaker-voucher-confirm-summary dd {
+  margin: 0;
+}
+
+#speaker-voucher-bulk-confirm h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.speaker-voucher-ineligible {
+  white-space: nowrap;
+}
+
+.speaker-voucher-action-form {
+  display: inline-flex;
+  margin: 0;
+}
+
 .speaker-actions-cell {
   white-space: nowrap;
 }
@@ -3839,13 +3991,17 @@ button.btn-speaker-not-arrived {
     min-width: 56rem;
   }
 
-  .speaker-list-table th:first-child,
-  .speaker-list-table td:first-child {
+  .speaker-list-table--selectable {
+    min-width: 58rem;
+  }
+
+  .speaker-list-table th.speaker-list-name-cell,
+  .speaker-list-table td.speaker-list-name-cell {
     max-width: 16rem;
     min-width: 10rem;
   }
 
-  .speaker-list-table td:first-child a {
+  .speaker-list-table td.speaker-list-name-cell a {
     display: block;
     max-width: 100%;
     overflow: hidden;
@@ -3853,7 +4009,7 @@ button.btn-speaker-not-arrived {
     white-space: nowrap;
   }
 
-  .speaker-list-table td:first-child .user-name-display {
+  .speaker-list-table td.speaker-list-name-cell .user-name-display {
     display: inline;
   }
 }
@@ -3913,6 +4069,51 @@ button.btn-speaker-not-arrived {
   overflow: hidden;
   color: #333;
   z-index: 9999;
+}
+
+#speaker-voucher-bulk-confirm.orga-confirm-dialog {
+  width: min(420px, 92vw);
+  max-width: 92vw;
+  max-height: min(80vh, 520px);
+  overflow: auto;
+  padding: 1.25rem 1.35rem;
+}
+
+#speaker-voucher-bulk-confirm .orga-confirm-dialog-actions {
+  margin-top: 1rem;
+}
+
+.speaker-voucher-mail-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.speaker-voucher-mail-preview .mail-preview {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 12rem;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--color-border, #ced4da);
+  border-radius: 6px;
+  background: #fff;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.speaker-voucher-mail-preview .mail-preview > strong {
+  display: block;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e9ecef);
+  font-size: 1.05rem;
+}
+
+.speaker-voucher-preview-note {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .orga-confirm-dialog-title,

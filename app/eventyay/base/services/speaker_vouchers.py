@@ -55,15 +55,19 @@ def voucher_redeem_url(event: Event, code: str) -> str:
     return f'{redeem_base}?{urlencode({"voucher": code})}'
 
 
-def _has_email(profile: SpeakerProfile) -> bool:
+def speaker_has_email(profile: SpeakerProfile) -> bool:
     user = profile.user
     return bool(user and (user.email or '').strip())
+
+
+# Backwards-compatible alias for internal call sites.
+_has_email = speaker_has_email
 
 
 def assignment_needs_replacement(assignment: SpeakerVoucher) -> bool:
     """True when the linked ticket voucher can no longer be emailed/redeemed."""
     voucher = assignment.voucher
-    return voucher.valid_until is not None and voucher.valid_until < now()
+    return voucher.valid_until is not None and voucher.valid_until <= now()
 
 
 def eligible_speaker_profiles(event: Event):
@@ -251,7 +255,8 @@ def allocate_and_send_vouchers(
         'available': 0,
     }
 
-    if not settings.enabled or not settings.voucher_tag:
+    # Feature is on when a batch tag is selected; ignore legacy ``enabled``.
+    if not settings.voucher_tag:
         return result
 
     profile_ids = [p.pk for p in profiles]
@@ -422,30 +427,69 @@ class _InsufficientVouchers(Exception):
 
 
 def cancel_speaker_voucher(speaker_voucher: SpeakerVoucher, *, requestor=None) -> None:
-    """Expire the linked voucher so it cannot be redeemed; keep the assignment for audit."""
-    voucher = speaker_voucher.voucher
-    voucher.valid_until = now()
-    voucher.save(update_fields=['valid_until'])
-    speaker_user = (
-        speaker_voucher.speaker_profile.user
-        if speaker_voucher.speaker_profile
-        else None
-    )
-    speaker_voucher.log_action(
-        'eventyay.speaker.voucher.cancelled',
-        person=requestor,
-        orga=True,
-        data={
-            'voucher_code': voucher.code,
-            'speaker_user_id': speaker_user.pk if speaker_user else None,
-        },
-    )
+    """Expire the linked voucher so it cannot be redeemed; keep the assignment for audit.
+
+    Raises ``ValueError('claimed')`` when the voucher was already redeemed.
+    Raises ``ValueError('already_expired')`` when the voucher is already past its
+    validity window (nothing to cancel).
+    """
+    outcome = 'cancelled'
+    with transaction.atomic():
+        # Voucher rows are organizer-scoped; lock them the same way allocation does.
+        with scopes_disabled():
+            voucher = Voucher.objects.select_for_update().get(pk=speaker_voucher.voucher_id)
+        speaker_voucher.voucher = voucher
+        if speaker_voucher.status == SpeakerVoucherStatus.CLAIMED or voucher.redeemed > 0:
+            if speaker_voucher.status != SpeakerVoucherStatus.CLAIMED and voucher.redeemed > 0:
+                speaker_voucher.status = SpeakerVoucherStatus.CLAIMED
+                speaker_voucher.save(update_fields=['status'])
+            outcome = 'claimed'
+        elif assignment_needs_replacement(speaker_voucher):
+            outcome = 'already_expired'
+        else:
+            # Expire strictly in the past so shop filters (`valid_until__gte=now()`) and
+            # assignment_needs_replacement agree immediately.
+            voucher.valid_until = now() - timedelta(seconds=1)
+            with scopes_disabled():
+                voucher.save(update_fields=['valid_until'])
+            speaker_user = (
+                speaker_voucher.speaker_profile.user
+                if speaker_voucher.speaker_profile
+                else None
+            )
+            speaker_voucher.log_action(
+                'eventyay.speaker.voucher.cancelled',
+                person=requestor,
+                orga=True,
+                data={
+                    'voucher_code': voucher.code,
+                    'speaker_user_id': speaker_user.pk if speaker_user else None,
+                },
+            )
+    # Raise after the atomic block so claim sync commits instead of rolling back.
+    if outcome == 'claimed':
+        raise ValueError('claimed')
+    if outcome == 'already_expired':
+        raise ValueError('already_expired')
+
+
+def speaker_voucher_needs_new_code(profile: SpeakerProfile) -> bool:
+    """True when a send would consume a new unused code from the configured batch."""
+    try:
+        assignment = profile.voucher_assignment
+    except SpeakerVoucher.DoesNotExist:
+        return True
+    return assignment_needs_replacement(assignment)
 
 
 def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
     """Return the Speakers-list voucher display state for a profile.
 
-    One of: ``dash``, ``not_sent``, ``sent``, ``claimed``, ``withdrawn``.
+    One of: ``dash``, ``not_sent``, ``sending``, ``sent``, ``claimed``, ``withdrawn``, ``cancelled``.
+
+    Uses already-loaded ``voucher_assignment`` / ``voucher`` fields (via
+    ``select_related``) so the Speakers list stays O(1) queries per page.
+    Claim sync to the database happens in action paths, not on every list render.
     """
     try:
         assignment = profile.voucher_assignment
@@ -458,10 +502,15 @@ def speaker_voucher_row_state(profile: SpeakerProfile) -> str:
         ).count()
 
     if assignment is not None:
-        assignment.refresh_claimed_status()
-        if assignment.status == SpeakerVoucherStatus.CLAIMED or assignment.voucher.redeemed > 0:
+        voucher = assignment.voucher
+        if assignment.status == SpeakerVoucherStatus.CLAIMED or (voucher.redeemed or 0) > 0:
             return 'claimed'
-        if assignment.status in (SpeakerVoucherStatus.NOT_SENT, SpeakerVoucherStatus.SENDING):
+        if assignment_needs_replacement(assignment):
+            # Expired/cancelled code: confirmed speakers can receive a replacement.
+            return 'not_sent' if confirmed_count else 'cancelled'
+        if assignment.status == SpeakerVoucherStatus.SENDING:
+            return 'sending' if confirmed_count else 'withdrawn'
+        if assignment.status == SpeakerVoucherStatus.NOT_SENT:
             return 'not_sent' if confirmed_count else 'withdrawn'
         if confirmed_count:
             return 'sent'

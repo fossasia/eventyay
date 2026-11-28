@@ -18,16 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 class SpeakerVoucherSettingsForm(forms.Form):
-    enabled = forms.BooleanField(
-        required=False,
-        label=_('Enable speaker vouchers'),
-        help_text=_('When enabled, organisers can send ticket vouchers to speakers with confirmed sessions.'),
-    )
     voucher_tag = forms.ChoiceField(
         required=False,
         label=_('Voucher batch'),
-        help_text=_('Select the voucher batch (tag) created in Tickets → Vouchers.'),
-        widget=forms.Select,
+        help_text=_(
+            'Select a voucher batch (tag) created in Tickets → Vouchers. '
+            'Selecting a batch turns speaker vouchers on for this event.'
+        ),
+        widget=forms.Select(attrs={'class': 'form-control'}),
     )
 
     def __init__(self, *args, event=None, **kwargs):
@@ -46,15 +44,7 @@ class SpeakerVoucherSettingsForm(forms.Form):
                 )
                 tag_choices += [(tag, tag) for tag in tags]
         self.fields['voucher_tag'].choices = tag_choices
-        # Required when enabled (validated in clean); show required marker, not Optional.
-        self.fields['voucher_tag'].hide_optional = True
-        self.fields['voucher_tag'].one_required = True
 
-    def clean(self):
-        cleaned = super().clean()
-        if cleaned.get('enabled') and not cleaned.get('voucher_tag'):
-            self.add_error('voucher_tag', _('Select a voucher batch when vouchers are enabled.'))
-        return cleaned
 
 
 

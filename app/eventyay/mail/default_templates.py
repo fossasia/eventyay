@@ -130,23 +130,20 @@ The {event_name} organisers"""
     )
 )
 
-SPEAKER_VOUCHER_SUBJECT = LazyI18nString.from_gettext(_('Your ticket voucher — {event_name}'))
+SPEAKER_VOUCHER_SUBJECT = LazyI18nString.from_gettext(_('Your speaker ticket for {event_name}'))
 SPEAKER_VOUCHER_TEXT = LazyI18nString.from_gettext(
     _(
-        """Hi {name}!
+        """Hi {name},
 
-Thank you for speaking at {event_name}. As a speaker, you receive a ticket voucher.
+Thank you for speaking at {event_name}! Here is your ticket voucher.
+Use the code or link below when you get your ticket — it may cover a free or discounted ticket:
 
 Voucher code: {voucher_code}
 
-Redeem your ticket here: {voucher_url}
+Get your ticket: {voucher_url}
 
-This voucher is for your personal use and can only be redeemed once. Please use it to get your ticket before the event.
-
-If you have any questions, reply to this email and we will be happy to help.
-
-See you at {event_name}!
-The {event_name} organisers"""
+See you at the event!
+The {event_name} team"""
     )
 )
 
