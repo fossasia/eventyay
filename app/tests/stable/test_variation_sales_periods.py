@@ -477,6 +477,15 @@ def test_ticket_page_shows_compact_upcoming_and_buyable_variants(client, event, 
     assert 'Upcoming blue shirt should stay hidden' not in html
 
 
+def _headline_price_text(html, product_id):
+    soup = BeautifulSoup(html, 'html.parser')
+    article = soup.select_one(f'#item-{product_id}')
+    assert article is not None
+    headline_price = article.select_one('summary .price, .headline .price')
+    assert headline_price is not None
+    return ' '.join(headline_price.stripped_strings)
+
+
 @pytest.mark.django_db
 def test_ticket_page_headline_price_ignores_expired_phases(client, event, variation_cart_setup):
     """Headline min/max uses buyable phases only, not historical expired prices."""
@@ -492,14 +501,53 @@ def test_ticket_page_headline_price_ignores_expired_phases(client, event, variat
 
     response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
     assert response.status_code == 200
-    soup = BeautifulSoup(response.content, 'html.parser')
-    shirt_article = soup.select_one(f'#item-{variation_cart_setup.shirt.id}')
-    assert shirt_article is not None
-    headline_price = shirt_article.select_one('summary .price, .headline .price')
-    assert headline_price is not None
-    price_text = ' '.join(headline_price.stripped_strings)
+    price_text = _headline_price_text(response.content, variation_cart_setup.shirt.id)
     assert '50.00' in price_text
     assert '10.00' not in price_text
+    # Single buyable price → no range separator.
+    assert '–' not in price_text and '—' not in price_text
+
+
+@pytest.mark.django_db
+def test_ticket_page_headline_shows_range_for_buyable_and_upcoming(client, event, variation_cart_setup):
+    """Buyable Early Bird + upcoming Regular must show a headline price range."""
+    with scope(organizer=event.organizer, event=event):
+        variation_cart_setup.shirt_red.default_price = Decimal('50.00')
+        variation_cart_setup.shirt_red.available_from = now() - timedelta(days=1)
+        variation_cart_setup.shirt_red.available_until = now() + timedelta(days=5)
+        variation_cart_setup.shirt_red.save()
+        variation_cart_setup.shirt_blue.default_price = Decimal('100.00')
+        variation_cart_setup.shirt_blue.available_from = now() + timedelta(days=6)
+        variation_cart_setup.shirt_blue.available_until = None
+        variation_cart_setup.shirt_blue.save()
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    price_text = _headline_price_text(response.content, variation_cart_setup.shirt.id)
+    assert '50.00' in price_text
+    assert '100.00' in price_text
+    assert '–' in price_text or '—' in price_text
+
+
+@pytest.mark.django_db
+def test_ticket_page_headline_shows_range_for_two_buyable_prices(client, event, variation_cart_setup):
+    """Two currently buyable variants at different prices show min – max."""
+    with scope(organizer=event.organizer, event=event):
+        variation_cart_setup.shirt_red.default_price = Decimal('14.00')
+        variation_cart_setup.shirt_red.available_from = None
+        variation_cart_setup.shirt_red.available_until = None
+        variation_cart_setup.shirt_red.save()
+        variation_cart_setup.shirt_blue.default_price = Decimal('22.00')
+        variation_cart_setup.shirt_blue.available_from = None
+        variation_cart_setup.shirt_blue.available_until = None
+        variation_cart_setup.shirt_blue.save()
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    price_text = _headline_price_text(response.content, variation_cart_setup.shirt.id)
+    assert '14.00' in price_text
+    assert '22.00' in price_text
+    assert '–' in price_text or '—' in price_text
 
 
 @pytest.mark.django_db

@@ -115,6 +115,29 @@ def product_group_by_category(products):
     )
 
 
+def _headline_price_variations(variations):
+    """Pick variations whose prices feed the product headline min/max range.
+
+    Prefer currently buyable variations plus upcoming phases (so a price-phase
+    product still shows a range while Early Bird is on sale). Never mix in
+    expired prices. When nothing is buyable yet, fall back to upcoming, then
+    non-expired, then the full visible list.
+    """
+    variations = list(variations)
+    if not variations:
+        return variations
+
+    buyable = [v for v in variations if getattr(v, 'order_max', 0) > 0]
+    upcoming = [v for v in variations if getattr(v, 'sales_state', None) == 'upcoming']
+    if buyable:
+        seen = {id(v) for v in buyable}
+        return buyable + [v for v in upcoming if id(v) not in seen]
+    if upcoming:
+        return upcoming
+    current = [v for v in variations if getattr(v, 'sales_state', None) != 'expired']
+    return current or variations
+
+
 def get_grouped_products(
     event,
     subevent=None,
@@ -463,12 +486,12 @@ def get_grouped_products(
                 product.available_variations = [v for v in product.available_variations if v.pk == voucher.variation_id]
 
             if len(product.available_variations) > 0:
-                # Headline range reflects currently buyable phases only so an
-                # expired Early Bird at $10 does not widen "from $10 – $50".
-                # Fall back to all visible phases when none are buyable yet.
-                price_vars = [v for v in product.available_variations if v.order_max > 0]
-                if not price_vars:
-                    price_vars = product.available_variations
+                # Headline range uses buyable + upcoming prices so Early Bird /
+                # Regular / Late still shows e.g. "$50 – $150" while one phase is
+                # on sale. Expired (and sold-out-only) prices stay out so a past
+                # $10 Early Bird cannot widen the range. When nothing is buyable
+                # yet, prefer upcoming, then non-expired, then all visible.
+                price_vars = _headline_price_variations(product.available_variations)
                 price_values = [
                     v.display_price.net if event.settings.display_net_prices else v.display_price.gross
                     for v in price_vars
