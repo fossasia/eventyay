@@ -6,7 +6,7 @@ from django.core import mail as djmail
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.i18n import LazyI18nString
 from eventyay.base.models import (
@@ -23,6 +23,10 @@ from eventyay.base.services.mail import render_mail
 from eventyay.base.templatetags.rich_text import compile_email_body, email_body_to_editor_html
 from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.plugins.sendmail.forms import MailContentSettingsForm
+from eventyay.plugins.sendmail.models import (
+    ComposingFor,
+    EmailQueue,
+)
 
 
 @pytest.fixture

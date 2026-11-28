@@ -3,6 +3,46 @@
 
 const MESSAGE_FIELDS = /^(csrfmiddlewaretoken|action|subject_|text_|reply_to|bcc|scheduled_at|delivery_mode|skip_queue|test_email|attachment)/
 
+const SELECT2_SELECTS = "select[data-model-select2]"
+
+const select2RenderedList = (select) => {
+    const sibling = select.nextElementSibling
+    if (!sibling || !sibling.classList.contains("select2-container")) return null
+    return sibling.querySelector(".select2-selection__rendered")
+}
+
+const selectedValues = (select) => Array.from(select.selectedOptions).map((option) => option.value).join("\0")
+
+// Select2 only emits jQuery events and toggles option.selected as a property,
+// so native listeners never see a change. Watch the visible selection chips
+// instead and dispatch a bubbling native change for mail-recipients.
+const bindSelect2NativeChange = (root) => {
+    const observed = new WeakSet()
+    const watch = (select) => {
+        const rendered = select2RenderedList(select)
+        if (!rendered) return false
+        if (observed.has(select)) return true
+        observed.add(select)
+        let lastValues = selectedValues(select)
+        new MutationObserver(() => {
+            const nextValues = selectedValues(select)
+            if (nextValues === lastValues) return
+            lastValues = nextValues
+            select.dispatchEvent(new Event("change", { bubbles: true }))
+        }).observe(rendered, { childList: true })
+        return true
+    }
+    root.querySelectorAll(SELECT2_SELECTS).forEach((select) => {
+        if (watch(select)) return
+        const host = select.parentElement
+        if (!host) return
+        const ready = new MutationObserver(() => {
+            if (watch(select)) ready.disconnect()
+        })
+        ready.observe(host, { childList: true })
+    })
+}
+
 // Filters the composer was opened with live in the page URL rather than in the
 // form, so they have to be carried over separately.
 const URL_FILTER_KEYS = ["q", "question", "answer", "answer__options", "unanswered"]
@@ -225,12 +265,17 @@ const initRecipientPreview = () => {
     }
 
     let timer = null
-    form.addEventListener("change", (e) => {
-        if (MESSAGE_FIELDS.test(e.target.name || "")) return
+    const scheduleRefresh = () => {
         invalidateCount()
         window.clearTimeout(timer)
         timer = window.setTimeout(refreshCount, 300)
+    }
+    form.addEventListener("change", (e) => {
+        if (MESSAGE_FIELDS.test(e.target.name || "")) return
+        scheduleRefresh()
     })
+    const filters = form.querySelector(".composer-filters")
+    if (filters) bindSelect2NativeChange(filters)
 
     trigger.addEventListener("click", async () => {
         body.textContent = body.dataset.loadingLabel
@@ -251,12 +296,6 @@ const initRecipientPreview = () => {
             document.querySelector("#recipient-list-dialog").close()
         })
     })
-
-    if (window.jQuery) {
-        window.jQuery('.mail-composer select').on('select2:open', function () {
-            window.jQuery('body > .select2-container.select2-container--open').addClass('mail-composer-dropdown')
-        })
-    }
 
     refreshCount()
 }

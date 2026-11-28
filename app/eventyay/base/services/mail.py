@@ -204,7 +204,7 @@ def mail(
         if is_tiptap_email_html(content_plain):
             # Editor bodies are HTML; the text/plain part needs its own rendering.
             body_plain = email_html_to_plain_text(content_plain)
-        subject = escape_stray_braces(str(subject)).format_map(TolerantDict(_stringify_mail_context(context)))
+        subject = render_placeholder_string(subject, context)
         sender = sender or (event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL) or settings.DEFAULT_FROM_EMAIL
         sender_email_raw = sender
         if event:
@@ -760,12 +760,21 @@ def expand_email_variable_chips(body: str, context: dict[str, str]) -> str:
         if key not in context:
             return match.group(0)
         value = context[key]
-        # Skip empty / still-unresolved tolerant placeholders.
-        if value == '' or value == f'{{{key}}}' or value == key:
+        # Keep the chip only when the value is still an unresolved placeholder.
+        # An empty string is a real resolution (e.g. no attendee name) — show blank.
+        if value == f'{{{key}}}' or value == key:
             return match.group(0)
         return value
 
     return _DATA_VARIABLE_CHIP_RE.sub(replace_chip, body)
+
+
+def render_placeholder_string(template, context) -> str:
+    """Resolve ``{placeholder}`` slots the same way queued mail and live sending do."""
+    source = '' if template is None else str(template)
+    string_context = _stringify_mail_context(context)
+    rendered = escape_stray_braces(source).format_map(TolerantDict(string_context))
+    return expand_email_variable_chips(rendered, string_context)
 
 
 def _html_mail_context(context: dict[str, str]) -> dict[str, str]:
