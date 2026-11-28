@@ -140,6 +140,13 @@ class BillingSettingsForm(forms.ModelForm):
         required=True,
         choices=CachedCountries(),
         initial='US',
+        widget=forms.Select(
+            attrs={
+                'data-searchable-select': '',
+                'data-search-placeholder': _('Search'),
+                'data-empty-text': _('No results'),
+            }
+        ),
     )
 
     preferred_language = forms.ChoiceField(

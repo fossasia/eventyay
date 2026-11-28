@@ -76,6 +76,14 @@ class OrganizerSettingsForm(SettingsForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'region' in self.fields:
+            self.fields['region'].widget.attrs.update(
+                {
+                    'data-searchable-select': '',
+                    'data-search-placeholder': _('Search'),
+                    'data-empty-text': _('No results'),
+                }
+            )
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.ClearableFileInput):
                 field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'

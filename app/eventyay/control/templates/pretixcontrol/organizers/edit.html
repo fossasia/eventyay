@@ -10,6 +10,7 @@
     <script defer src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
     <script defer src="{% static 'eventyay-common/image_cropper.js' %}"></script>
     <script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
+    {% include 'pretixcontrol/fragment_searchable_select_assets.html' %}
 {% endblock %}
 {% block title %}{% trans "Organizer" %}{% endblock %}
 {% block content %}
