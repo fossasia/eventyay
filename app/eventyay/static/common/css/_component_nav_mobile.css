@@ -64,3 +64,18 @@
     padding-right: 6px;
   }
 }
+/* Small phones: wrap nav buttons into a 2x2 grid instead of truncating */
+@media (max-width: 480px) {
+  #event-nav .navigation .navigation-button,
+  .navigation-button {
+    flex-wrap: wrap;
+  }
+
+  #event-nav .navigation .navigation-button a.header-nav.btn,
+  .navigation-button a.header-nav.btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+  }
+}

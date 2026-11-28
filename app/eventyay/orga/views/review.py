@@ -852,7 +852,7 @@ class ReviewAssignment(EventPermissionRequired, FormView):
         rows = []
         for team in self.review_teams:
             delete_confirm_url = None
-            if can_manage_teams and bool(admin_team_ids - {team.pk}):
+            if can_manage_teams and not team.is_core_team and bool(admin_team_ids - {team.pk}):
                 delete_confirm_url = (
                     reverse(
                         'eventyay_common:organizer.team.delete',
