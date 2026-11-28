@@ -144,9 +144,6 @@ Organizer Module
 .. automodule:: eventyay.orga.views.submission
    :members:
 
-.. automodule:: eventyay.orga.tasks
-   :members:
-
 .. automodule:: eventyay.orga.receivers
    :members:
 
