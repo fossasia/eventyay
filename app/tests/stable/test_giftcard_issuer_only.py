@@ -65,6 +65,7 @@ def test_checkout_rejects_foreign_card(event, own_card, foreign_card):
     with (
         patch('eventyay.base.payment.get_cart', return_value=[]),
         patch('eventyay.base.payment.cart_session', return_value=cs),
+        patch('eventyay.base.payment.reserve_voucher_attempt', return_value=(None, True)),
         patch('eventyay.base.payment.messages') as messages,
         scopes_disabled(),
     ):
