@@ -7,8 +7,9 @@ from django.utils.functional import cached_property
 from django_scopes import ScopedManager, scopes_disabled
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
-from eventyay.helpers.json import CustomJSONEncoder
 from eventyay.base.operational_logging import emit_logged_action
+from eventyay.helpers.json import CustomJSONEncoder
+
 
 SENSITIVE_KEYS = ['password', 'secret', 'api_key']
 
@@ -85,26 +86,25 @@ class LogMixin:
             kwargs['api_token'] = api_token
 
         # Sanitize data
-        payload = data if isinstance(data, dict) else None
         if isinstance(data, dict):
-            sensitive_keys = ['password', 'secret', 'api_key']
-            for sensitive in sensitive_keys:
-                for k, v in data.items():
-                    if sensitive in k and v:
-                        data[k] = '********'
-            data = json.dumps(data, cls=CustomJSONEncoder, sort_keys=True)
+            from .log import mask_sensitive_data
+
+            sanitized_data = mask_sensitive_data(data)
+            stored_data = json.dumps(sanitized_data, cls=CustomJSONEncoder, sort_keys=True)
+            payload = sanitized_data
         elif data:
             raise TypeError(f'Logged data should always be a dictionary, not {type(data)}.')
         else:
             # If data is None, set it to empty JSON object to satisfy NOT NULL constraint
-            data = '{}'
+            stored_data = '{}'
+            payload = None
 
         log_entry = LogEntry.objects.create(
             content_object=content_object or self,
             user=user or person,
             action_type=action,
             event=event,
-            data=data,
+            data=stored_data,
             is_orga_action=orga,
             **kwargs,
         )

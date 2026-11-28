@@ -40,6 +40,7 @@ from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
+from eventyay.base.operational_logging import emit_logged_action
 from eventyay.common.image import (
     create_thumbnail,
     get_thumbnail,
@@ -48,9 +49,9 @@ from eventyay.common.image import (
 )
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.json import CustomJSONEncoder
 from eventyay.helpers.urls import build_absolute_uri
 from eventyay.talk_rules.person import is_administrator
-from eventyay.base.operational_logging import emit_logged_action
 
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
@@ -888,16 +889,23 @@ class User(
         :type person: :class:`~pretalx.person.models.user.User`
         :param orga: Was this action initiated by a privileged user?
         """
-        from eventyay.base.models.log import LogEntry
+        from eventyay.base.models.log import LogEntry, mask_sensitive_data
 
         if data is None:
             data = {}
+
+        sanitized_data = mask_sensitive_data(data)
+        stored_data = json.dumps(
+            sanitized_data,
+            cls=CustomJSONEncoder,
+            sort_keys=isinstance(sanitized_data, dict),
+        )
 
         LogEntry.objects.create(
             user=user or person or self,
             content_object=self,
             action_type=action,
-            data=data,
+            data=stored_data,
             is_orga_action=orga,
         )
         actor = user or person or self
@@ -908,7 +916,7 @@ class User(
                 user_id=getattr(actor, 'pk', None),
                 is_orga_action=orga,
                 model='User',
-                data=data,
+                data=sanitized_data,
             )
         except Exception:
             pass
