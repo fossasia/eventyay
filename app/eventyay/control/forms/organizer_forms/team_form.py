@@ -27,6 +27,98 @@ EXHIBITION_PERMISSIONS = (
 )
 
 
+# Settings that can be copied when duplicating a team, grouped like the permission form.
+DUPLICATE_SECTIONS = OrderedDict(
+    [
+        (
+            'events',
+            (
+                _('Event access'),
+                ('all_events', 'limit_events', 'can_view_event_info', 'can_change_event_settings'),
+            ),
+        ),
+        (
+            'organizer',
+            (
+                _('Organizer permissions'),
+                ('can_create_events', 'can_manage_gift_cards', 'can_change_teams', 'can_change_organizer_settings'),
+            ),
+        ),
+        (
+            'tickets',
+            (
+                _('Ticket permissions'),
+                (
+                    'can_change_items',
+                    'can_view_orders',
+                    'can_change_orders',
+                    'can_manage_bank_transfers',
+                    'can_checkin_orders',
+                    'can_view_vouchers',
+                    'can_change_vouchers',
+                ),
+            ),
+        ),
+        (
+            'talks',
+            (
+                _('Talk permissions and track access'),
+                (
+                    'can_change_submissions',
+                    'is_reviewer',
+                    'force_hide_speaker_names',
+                    'force_hide_speaker_emails',
+                    'limit_tracks',
+                ),
+            ),
+        ),
+        ('exhibition', (_('Exhibition permissions'), EXHIBITION_FIELDS)),
+        (
+            'video',
+            (
+                _('Video permissions'),
+                (
+                    'can_change_config',
+                    'can_video_manage_content',
+                    'can_video_moderate',
+                    'can_video_manage_kiosks',
+                    'can_video_view_analytics',
+                ),
+            ),
+        ),
+        ('social_media', (_('Social media permissions'), ('can_manage_social_media',))),
+        (
+            'teamshifts',
+            (
+                _('TeamShifts permissions'),
+                ('teamshifts_role', 'all_teamshifts_roles', 'limit_teamshifts_roles', 'hide_teamshifts_emails'),
+            ),
+        ),
+    ]
+)
+
+# Organizer permissions are sensitive, so they are only copied when picked explicitly.
+DUPLICATE_SECTIONS_UNCHECKED = ('organizer',)
+
+
+@scopes_disabled()
+def duplicate_team_initial(team, sections):
+    """Initial data for the create form, copied from ``team`` for the chosen sections only."""
+    initial = {'name': _('{name} (copy)').format(name=team.name)}
+    for key in sections:
+        for field in DUPLICATE_SECTIONS.get(key, (None, ()))[1]:
+            if field == 'limit_events':
+                initial[field] = list(team.limit_events.values_list('pk', flat=True))
+            elif field == 'limit_tracks':
+                initial[field] = list(team.limit_tracks.values_list('pk', flat=True))
+                initial['all_tracks'] = not initial[field]
+            elif field == 'limit_teamshifts_roles':
+                initial[field] = list(team.limit_teamshifts_roles or [])
+            else:
+                initial[field] = getattr(team, field)
+    return initial
+
+
 def event_has_exhibition(event):
     return bool(re.search(EXHIBITION_PLUGIN_REGEX, event.plugins or ''))
 
@@ -71,7 +163,7 @@ class TeamForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             self._selected_track_ids = set(self.instance.limit_tracks.values_list('pk', flat=True))
         else:
-            self._selected_track_ids = set()
+            self._selected_track_ids = set(self.initial.get('limit_tracks') or [])
 
         if not apps.is_installed("socialmedia"):
             if "can_manage_social_media" in self.fields:
@@ -225,7 +317,7 @@ class TeamForm(forms.ModelForm):
                 return set()
         if self.instance and self.instance.pk:
             return set(self.instance.limit_teamshifts_roles)
-        return set()
+        return set(self.initial.get('limit_teamshifts_roles') or [])
 
     class Meta:
         model = Team

@@ -32,9 +32,14 @@ from eventyay.control.permissions import (
 )
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
+from eventyay.eventyay_common.utils import api_token_created_message
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
-from eventyay.eventyay_common.utils import api_token_created_message
+from ...control.forms.organizer_forms.team_form import (
+    DUPLICATE_SECTIONS,
+    DUPLICATE_SECTIONS_UNCHECKED,
+    duplicate_team_initial,
+)
 from ..video.traits_sync import sync_video_traits_for_team
 
 
@@ -181,6 +186,8 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         if self.can_manage_teams:
             teams_qs = self._get_team_queryset()
             ctx['team_create_form'] = self._get_team_create_form()
+            ctx['duplicate_source'] = self.duplicate_source
+            ctx['duplicate_sections'] = self._duplicate_sections(ctx['team_create_form'])
             # Iterate within scopes_disabled to avoid scope errors when accessing related objects
             with scopes_disabled():
                 ctx['teams'] = list(teams_qs)
@@ -264,8 +271,35 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _get_team_create_form(self):
         if self._team_create_form_override is not None:
             return self._team_create_form_override
+        initial = None
+        if self.duplicate_source:
+            initial = duplicate_team_initial(self.duplicate_source, self._duplicate_selected_sections())
         with scopes_disabled():
-            return TeamForm(prefix='team-create', organizer=self.request.organizer)
+            return TeamForm(prefix='team-create', organizer=self.request.organizer, initial=initial)
+
+    @cached_property
+    def duplicate_source(self):
+        team_id = self.request.GET.get('duplicate')
+        if not self.can_manage_teams or not team_id or not team_id.isdigit():
+            return None
+        with scopes_disabled():
+            return self.request.organizer.teams.filter(pk=team_id).first()
+
+    def _duplicate_selected_sections(self):
+        return [key for key in self.request.GET.getlist('copy') if key in DUPLICATE_SECTIONS]
+
+    def _duplicate_sections(self, create_form):
+        """Sections offered in the Duplicate panel, limited to the ones this organizer's form shows."""
+        return [
+            {
+                'key': key,
+                'label': label,
+                'checked': key not in DUPLICATE_SECTIONS_UNCHECKED,
+                'sensitive': key in DUPLICATE_SECTIONS_UNCHECKED,
+            }
+            for key, (label, fields) in DUPLICATE_SECTIONS.items()
+            if any(field in create_form.fields for field in fields)
+        ]
 
     def _accepted_invite_user_ids_by_team(self, teams) -> dict[int, frozenset[int]]:
         accepted: dict[int, set[int]] = {}
