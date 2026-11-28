@@ -39,6 +39,8 @@
                     {% trans "Reserved by a buyer" %}
                   {% elif row.listing.status == "sold" %}
                     {% trans "Sold" %}
+                  {% elif row.listing.status == "withdrawn" %}
+                    {% trans "Withdrawn" %}
                   {% else %}
                     {{ row.listing.get_status_display }}
                   {% endif %}
@@ -50,12 +52,18 @@
               </td>
               <td class="text-right">
                 {% if row.listing and row.listing.status == "available" %}
-                  <form method="post" action="{% url "plugins:resale:withdraw" organizer=event.organizer.slug event=event.slug order=order.code secret=order.secret listing=row.listing.pk %}" style="display:inline">
+                  <form method="post" action="{% url 'plugins:resale:withdraw' organizer=event.organizer.slug event=event.slug order=order.code secret=order.secret listing=row.listing.pk %}" style="display:inline">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-default btn-sm">{% trans "Withdraw listing" %}</button>
                   </form>
                 {% elif row.eligible and row.sell_url %}
-                  <a class="btn btn-primary btn-sm" href="{{ row.sell_url }}">{% trans "Sell this ticket" %}</a>
+                  <a class="btn btn-primary btn-sm" href="{{ row.sell_url }}">
+                    {% if row.listing and row.listing.status == "withdrawn" %}
+                      {% trans "List again" %}
+                    {% else %}
+                      {% trans "Sell this ticket" %}
+                    {% endif %}
+                  </a>
                 {% endif %}
               </td>
             </tr>

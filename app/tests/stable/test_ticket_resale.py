@@ -7,12 +7,15 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scope
 
-from eventyay.base.models import Order, OrderPosition, Product, Quota
+from eventyay.base.models import Order, OrderPayment, OrderPosition, Product, Quota, Voucher
 from eventyay.plugins.resale.models import ResaleListing
 from eventyay.plugins.resale.services import (
+    RESALE_ROLE_BUYER,
+    RESALE_ROLE_SELLER,
     ResaleError,
     calculate_fee,
     calculate_seller_payout,
+    complete_resale,
     create_listing,
     is_position_eligible,
     marketplace_is_open,
@@ -210,8 +213,6 @@ def test_withdrawn_listing_can_be_relisted(resale_event, paid_position):
 
 @pytest.mark.django_db
 def test_complete_resale_rejects_expired_reservation(resale_event, paid_position, ticket_product):
-    from eventyay.plugins.resale.services import complete_resale
-
     with scope(organizer=resale_event.organizer, event=resale_event):
         listing = create_listing(event=resale_event, position=paid_position, price=Decimal('200.00'))
         reserve_listing(listing=listing, session_key='buyer-a')
@@ -238,3 +239,101 @@ def test_complete_resale_rejects_expired_reservation(resale_event, paid_position
         )
         with pytest.raises(ResaleError):
             complete_resale(listing=listing, buyer_order=buyer_order, buyer_position=buyer_pos)
+
+
+@pytest.mark.django_db
+def test_release_reservation_only_clears_own_session(resale_event, paid_position):
+    from eventyay.plugins.resale.services import release_reservation
+
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        listing = create_listing(event=resale_event, position=paid_position, price=Decimal('200.00'))
+        reserve_listing(listing=listing, session_key='buyer-a')
+        listing.refresh_from_db()
+        assert listing.status == ResaleListing.STATUS_RESERVED
+
+        # A different session must not clear buyer-a's hold.
+        release_reservation(listing=listing, session_key='buyer-b')
+        listing.refresh_from_db()
+        assert listing.status == ResaleListing.STATUS_RESERVED
+        assert listing.reserved_session == 'buyer-a'
+
+        release_reservation(listing=listing, session_key='buyer-a')
+        listing.refresh_from_db()
+        assert listing.status == ResaleListing.STATUS_AVAILABLE
+        assert listing.reserved_session == ''
+
+
+@pytest.mark.django_db
+def test_refunded_ticket_not_eligible(resale_event, paid_position):
+    from eventyay.base.models import OrderRefund
+
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        paid_position.order.refunds.create(
+            state=OrderRefund.REFUND_STATE_DONE,
+            source=OrderRefund.REFUND_SOURCE_ADMIN,
+            amount=Decimal('200.00'),
+            provider='manual',
+        )
+        ok, reason = is_position_eligible(resale_event, paid_position)
+        assert ok is False
+        assert 'Refunded' in str(reason)
+
+
+@pytest.mark.django_db
+def test_complete_resale_tags_seller_and_buyer_orders(resale_event, paid_position, ticket_product):
+    with scope(organizer=resale_event.organizer, event=resale_event):
+        seller_order = paid_position.order
+        OrderPayment.objects.create(
+            order=seller_order,
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            amount=Decimal('200.00'),
+            provider='manual',
+            payment_date=now(),
+        )
+        listing = create_listing(event=resale_event, position=paid_position, price=Decimal('200.00'))
+        reserve_listing(listing=listing, session_key='buyer-a')
+        listing.refresh_from_db()
+
+        voucher = Voucher.objects.create(
+            event=resale_event,
+            code='RESALEBUY',
+            max_usages=1,
+            redeemed=1,
+            valid_until=now() + timedelta(hours=1),
+            allow_ignore_quota=True,
+            product=ticket_product,
+            price_mode='set',
+            value=Decimal('200.00'),
+            tag=f'resale:{listing.pk}',
+        )
+        buyer_order = Order.objects.create(
+            event=resale_event,
+            status=Order.STATUS_PAID,
+            expires=now() + timedelta(days=1),
+            total=Decimal('200.00'),
+            code='BUYER2',
+            email='buyer2@example.com',
+            datetime=now(),
+            locale='en',
+        )
+        buyer_pos = OrderPosition.objects.create(
+            order=buyer_order,
+            product=ticket_product,
+            price=Decimal('200.00'),
+            voucher=voucher,
+        )
+
+        complete_resale(listing=listing, buyer_order=buyer_order, buyer_position=buyer_pos)
+
+        seller_order = paid_position.order
+        seller_order.refresh_from_db()
+        buyer_order.refresh_from_db()
+        listing.refresh_from_db()
+
+        assert listing.status == ResaleListing.STATUS_SOLD
+        assert seller_order.meta_info_data['resale_role'] == RESALE_ROLE_SELLER
+        assert seller_order.meta_info_data['resale_listing_id'] == listing.pk
+        assert seller_order.meta_info_data['resale_related_order'] == buyer_order.code
+        assert buyer_order.meta_info_data['resale_role'] == RESALE_ROLE_BUYER
+        assert buyer_order.meta_info_data['resale_listing_id'] == listing.pk
+        assert buyer_order.meta_info_data['resale_related_order'] == seller_order.code

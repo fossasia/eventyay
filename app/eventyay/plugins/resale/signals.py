@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from django.db.models import Q
 from django.dispatch import receiver
 from django.template.loader import get_template
 from django.urls import resolve, reverse
@@ -9,18 +10,22 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 
 from eventyay.base.signals import order_paid
-from eventyay.base.services.orders import OrderError, _cancel_order
-from eventyay.control.signals import nav_event
+from eventyay.base.services.orders import OrderChangeManager, OrderError, _cancel_order
+from eventyay.control.signals import nav_event, order_info as control_order_info
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.signals import front_page_after_content, order_info
 
 from .models import ResaleListing
 from .services import (
+    RESALE_ROLE_BUYER,
+    RESALE_ROLE_SELLER,
     ResaleError,
     complete_resale,
     is_position_eligible,
+    order_resale_meta,
     release_expired_reservations,
     seller_listings_for_order,
+    tag_order_resale,
 )
 from .settings import marketplace_is_open
 
@@ -72,17 +77,18 @@ def presale_order_info(sender, request=None, order=None, **kwargs):
         rows = []
         for position in order.positions.select_related('product', 'variation'):
             listing = getattr(position, 'resale_listing', None)
-            active_listing = (
-                listing
-                if listing and listing.status != ResaleListing.STATUS_WITHDRAWN
-                else None
-            )
             ok, _reason = is_position_eligible(sender, position) if market_open else (False, '')
-            can_sell = bool(market_open and ok and active_listing is None)
+            # Withdrawn listings stay visible for status monitoring and can be relisted.
+            blocking = listing is not None and listing.status in (
+                ResaleListing.STATUS_AVAILABLE,
+                ResaleListing.STATUS_RESERVED,
+                ResaleListing.STATUS_SOLD,
+            )
+            can_sell = bool(market_open and ok and not blocking)
             rows.append(
                 {
                     'position': position,
-                    'listing': active_listing,
+                    'listing': listing,
                     'eligible': can_sell,
                     'sell_url': reverse(
                         'plugins:resale:sell',
@@ -107,6 +113,83 @@ def presale_order_info(sender, request=None, order=None, **kwargs):
             'rows': rows,
             'listings': existing,
             'request': request,
+        },
+        request=request,
+    )
+
+
+@receiver(control_order_info, dispatch_uid='resale_control_order_info')
+def resale_control_order_info(sender, request=None, order=None, **kwargs):
+    """Show a RESOLD / resale-purchase panel on the organizer order page."""
+    if not request or not order:
+        return ''
+    if 'eventyay.plugins.resale' not in sender.get_plugins():
+        return ''
+
+    meta = order_resale_meta(order)
+    with scope(organizer=sender.organizer, event=sender):
+        listing = None
+        listing_id = meta.get('resale_listing_id')
+        if listing_id:
+            listing = (
+                ResaleListing.objects.filter(pk=listing_id, event=sender)
+                .select_related('seller_order', 'buyer_order')
+                .first()
+            )
+        if listing is None:
+            listing = (
+                ResaleListing.objects.filter(event=sender, status=ResaleListing.STATUS_SOLD)
+                .filter(Q(seller_order=order) | Q(buyer_order=order))
+                .select_related('seller_order', 'buyer_order')
+                .order_by('-sold_at', '-pk')
+                .first()
+            )
+        if listing is None and not meta:
+            return ''
+
+        role = meta.get('resale_role')
+        if not role and listing:
+            if listing.seller_order_id == order.pk:
+                role = RESALE_ROLE_SELLER
+            elif listing.buyer_order_id == order.pk:
+                role = RESALE_ROLE_BUYER
+        if role not in (RESALE_ROLE_SELLER, RESALE_ROLE_BUYER):
+            return ''
+
+        related_code = meta.get('resale_related_order')
+        if not related_code and listing:
+            if role == RESALE_ROLE_SELLER and listing.buyer_order_id:
+                related_code = listing.buyer_order.code
+            elif role == RESALE_ROLE_BUYER and listing.seller_order_id:
+                related_code = listing.seller_order.code
+
+        # Backfill durable tags for sales completed before tagging existed.
+        if listing and not meta.get('resale_role'):
+            if listing.seller_order_id:
+                tag_order_resale(
+                    listing.seller_order,
+                    role=RESALE_ROLE_SELLER,
+                    listing=listing,
+                    related_order=listing.buyer_order,
+                )
+            if listing.buyer_order_id:
+                tag_order_resale(
+                    listing.buyer_order,
+                    role=RESALE_ROLE_BUYER,
+                    listing=listing,
+                    related_order=listing.seller_order,
+                )
+
+    template = get_template('pretixplugins/resale/control_order_info.html')
+    return template.render(
+        {
+            'event': sender,
+            'order': order,
+            'request': request,
+            'role': role,
+            'listing': listing,
+            'related_code': related_code,
+            'is_seller': role == RESALE_ROLE_SELLER,
         },
         request=request,
     )
@@ -163,6 +246,28 @@ def _listing_ids_from_order(order) -> list[tuple[int, object]]:
     return found
 
 
+def _invalidate_rejected_buyer_position(order, buyer_position, listing_id: int) -> None:
+    """Cancel only the rejected resale position, or the whole order if it was the last one.
+
+    Avoids wiping other successfully completed resale positions on the same order.
+    """
+    remaining = order.positions.filter(canceled=False).exclude(pk=buyer_position.pk).count()
+    try:
+        if remaining == 0:
+            _cancel_order(order, send_mail=True, cancel_invoice=True)
+        else:
+            ocm = OrderChangeManager(order, notify=True)
+            ocm.cancel(buyer_position)
+            ocm.commit(check_quotas=False)
+    except OrderError:
+        logger.exception(
+            'Failed to invalidate rejected resale position %s on order %s (listing %s)',
+            buyer_position.pk,
+            order.code,
+            listing_id,
+        )
+
+
 @receiver(order_paid, dispatch_uid='resale_order_paid')
 def complete_resale_on_payment(sender, order=None, **kwargs):
     if not order:
@@ -185,18 +290,21 @@ def complete_resale_on_payment(sender, order=None, **kwargs):
                 order.code,
                 exc,
             )
-            # Late/invalid payment for this listing: cancel this buyer order so they
-            # are not left with a ticket that never owned the reservation.
-            if listing.status == ResaleListing.STATUS_SOLD and listing.buyer_order_id != order.pk:
-                try:
-                    _cancel_order(order, send_mail=True, cancel_invoice=True)
-                except OrderError:
-                    logger.exception(
-                        'Failed to cancel late buyer order %s after listing %s already sold',
-                        order.code,
-                        listing_id,
-                    )
-        except (OrderError, Exception):
+            listing.refresh_from_db()
+            # Any rejection (sold to someone else, expired reservation, lost hold) must
+            # not leave this buyer with a paid ticket for a listing they do not own.
+            owns_sale = (
+                listing.status == ResaleListing.STATUS_SOLD and listing.buyer_order_id == order.pk
+            )
+            if not owns_sale:
+                _invalidate_rejected_buyer_position(order, buyer_position, listing_id)
+        except OrderError:
             logger.exception(
                 'Failed to complete resale for listing %s on order %s', listing_id, order.code
+            )
+        except Exception:
+            logger.exception(
+                'Unexpected error completing resale for listing %s on order %s',
+                listing_id,
+                order.code,
             )

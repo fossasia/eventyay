@@ -104,6 +104,11 @@
         {% if order.testmode %}
             <span class="label label-warning">{% trans "TEST MODE" %}</span>
         {% endif %}
+        {% if order.meta_info_data.resale_role == "seller" %}
+            <span class="label label-warning">{% trans "RESOLD" %}</span>
+        {% elif order.meta_info_data.resale_role == "buyer" %}
+            <span class="label label-info">{% trans "RESALE" %}</span>
+        {% endif %}
         {% if backend_user %}
             <a href="{% url 'control:event.order' event=request.event.slug organizer=request.organizer.slug code=order.code %}" class="btn btn-default">
                 {% trans "View in backend" %}

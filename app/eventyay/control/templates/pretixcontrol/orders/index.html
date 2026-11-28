@@ -231,6 +231,11 @@
                                 {% if o.testmode %}
                                     <span class="label label-warning">{% trans "TEST MODE" %}</span>
                                 {% endif %}
+                                {% if o.meta_info_data.resale_role == "seller" %}
+                                    <span class="label label-warning">{% trans "RESOLD" %}</span>
+                                {% elif o.meta_info_data.resale_role == "buyer" %}
+                                    <span class="label label-info">{% trans "RESALE" %}</span>
+                                {% endif %}
                             </td>
                             <td class="orders-user-cell">
                                 {% if o.invoice_address.name %}

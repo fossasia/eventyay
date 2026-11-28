@@ -64,6 +64,7 @@ class ResaleOverviewView(EventPermissionRequiredMixin, ListView):
         qs = ResaleListing.objects.filter(event=self.request.event).select_related(
             'position',
             'position__product',
+            'position__variation',
             'seller_order',
             'buyer_order',
             'refund',
@@ -233,16 +234,19 @@ class MarketplaceBuyView(EventViewMixin, View):
             pk=kwargs['listing'],
         )
         reserved = False
+        session_key = None
         try:
             if not request.session.session_key:
                 request.session.create()
-            listing = reserve_listing(listing=listing, session_key=request.session.session_key)
+            session_key = request.session.session_key
+            listing = reserve_listing(listing=listing, session_key=session_key)
             reserved = True
             cart_id = get_or_create_cart_id(request)
             self._add_listing_to_cart(request, listing, cart_id)
         except (ResaleError, CartError) as exc:
             if reserved:
-                release_reservation(listing=listing)
+                # Only clear our own hold — never another buyer's reservation.
+                release_reservation(listing=listing, session_key=session_key)
             messages.error(request, str(exc))
             return redirect(self.get_marketplace_url())
 

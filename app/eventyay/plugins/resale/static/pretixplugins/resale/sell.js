@@ -26,7 +26,12 @@ if (form) {
         fee = Math.round(fee * 100) / 100
         const payout = Math.round((price - fee) * 100) / 100
         if (feeEl) feeEl.textContent = formatMoney(fee)
-        if (payoutEl) payoutEl.innerHTML = `<strong>${formatMoney(payout)}</strong>`
+        if (payoutEl) {
+            payoutEl.replaceChildren()
+            const strong = document.createElement("strong")
+            strong.textContent = formatMoney(payout)
+            payoutEl.appendChild(strong)
+        }
     }
 
     priceInput?.addEventListener("input", refresh)

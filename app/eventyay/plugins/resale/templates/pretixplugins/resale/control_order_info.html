@@ -1,0 +1,58 @@
+{% load i18n %}
+{% load money %}
+
+<div class="panel panel-default panel-resale-order-tag">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      {% if is_seller %}
+        <span class="label label-warning">{% trans "RESOLD" %}</span>
+        {% trans "Ticket resale" %}
+      {% else %}
+        <span class="label label-info">{% trans "RESALE" %}</span>
+        {% trans "Bought via resale" %}
+      {% endif %}
+    </h3>
+  </div>
+  <div class="panel-body">
+    {% if is_seller %}
+      <p>
+        {% blocktrans trimmed %}
+          This order’s ticket was resold on the marketplace. The original ticket is no longer valid.
+        {% endblocktrans %}
+      </p>
+      {% if related_code %}
+        <p>
+          {% trans "Buyer order:" %}
+          <a href="{% url 'control:event.order' event=event.slug organizer=event.organizer.slug code=related_code %}">
+            {{ related_code }}
+          </a>
+        </p>
+      {% endif %}
+    {% else %}
+      <p>
+        {% blocktrans trimmed %}
+          This ticket was purchased from another attendee through the resale marketplace.
+        {% endblocktrans %}
+      </p>
+      {% if related_code %}
+        <p>
+          {% trans "Seller order:" %}
+          <a href="{% url 'control:event.order' event=event.slug organizer=event.organizer.slug code=related_code %}">
+            {{ related_code }}
+          </a>
+        </p>
+      {% endif %}
+    {% endif %}
+    {% if listing %}
+      <p class="help-block" style="margin-bottom:0">
+        {% trans "Asking price:" %} {{ listing.price|money:event.currency }}
+        {% if listing.fee_amount %}
+          · {% trans "Fee:" %} {{ listing.fee_amount|money:event.currency }}
+        {% endif %}
+        {% if listing.seller_payout %}
+          · {% trans "Seller payout:" %} {{ listing.seller_payout|money:event.currency }}
+        {% endif %}
+      </p>
+    {% endif %}
+  </div>
+</div>

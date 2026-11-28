@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import logging
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import transaction
+from django.db.models import Sum
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
@@ -22,9 +24,47 @@ from .settings import (
 
 logger = logging.getLogger(__name__)
 
+# Stored on Order.meta_info so organizers can spot resale orders in control.
+RESALE_ROLE_SELLER = 'seller'
+RESALE_ROLE_BUYER = 'buyer'
+
 
 class ResaleError(Exception):
     """Domain error for marketplace operations (safe to show to users)."""
+
+
+def tag_order_resale(
+    order: Order,
+    *,
+    role: str,
+    listing: ResaleListing,
+    related_order: Order | None = None,
+) -> None:
+    """Persist a durable resale role tag on the order (seller = resold, buyer = purchase)."""
+    try:
+        meta = json.loads(order.meta_info) if order.meta_info else {}
+        if not isinstance(meta, dict):
+            meta = {}
+    except (TypeError, ValueError, json.JSONDecodeError):
+        meta = {}
+    meta['resale_role'] = role
+    meta['resale_listing_id'] = listing.pk
+    if related_order is not None:
+        meta['resale_related_order'] = related_order.code
+    order.meta_info = json.dumps(meta)
+    order.save(update_fields=['meta_info'])
+    # Drop cached property so later reads in the same request see the new tag.
+    order.__dict__.pop('meta_info_data', None)
+
+
+def order_resale_meta(order: Order) -> dict:
+    """Return resale meta keys for an order, or empty dict."""
+    meta = order.meta_info_data or {}
+    if not isinstance(meta, dict):
+        return {}
+    if meta.get('resale_role') in (RESALE_ROLE_SELLER, RESALE_ROLE_BUYER):
+        return meta
+    return {}
 
 
 def quantize_money(value: Decimal) -> Decimal:
@@ -81,14 +121,14 @@ def is_position_eligible(
         return False, _('This order is not fully paid.')
     if position.order.status != Order.STATUS_PAID:
         return False, _('Only paid tickets can be listed for resale.')
-    refund_total = position.order.refunds.filter(
+    refund_sum = position.order.refunds.filter(
         state__in=(
             OrderRefund.REFUND_STATE_DONE,
             OrderRefund.REFUND_STATE_TRANSIT,
             OrderRefund.REFUND_STATE_CREATED,
         )
-    ).exists()
-    if refund_total and position.order.payment_refund_sum < position.price:
+    ).aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
+    if refund_sum >= position.price:
         return False, _('Refunded tickets cannot be resold.')
     product_ids = eligible_product_ids(event)
     if product_ids and position.product_id not in product_ids:
@@ -193,10 +233,16 @@ def withdraw_listing(*, listing: ResaleListing) -> ResaleListing:
 
 
 @transaction.atomic
-def release_reservation(*, listing: ResaleListing) -> ResaleListing:
-    """Return a reserved listing to the available pool (e.g. after a failed cart add)."""
+def release_reservation(*, listing: ResaleListing, session_key: str | None = None) -> ResaleListing:
+    """Return a reserved listing to the available pool (e.g. after a failed cart add).
+
+    When ``session_key`` is provided, clear the reservation only if this session still
+    owns it — never wipe another buyer's active hold.
+    """
     listing = ResaleListing.objects.select_for_update().get(pk=listing.pk)
     if listing.status != ResaleListing.STATUS_RESERVED:
+        return listing
+    if session_key is not None and listing.reserved_session != session_key:
         return listing
     listing.status = ResaleListing.STATUS_AVAILABLE
     listing.reserved_until = None
@@ -279,6 +325,19 @@ def complete_resale(*, listing: ResaleListing, buyer_order: Order, buyer_positio
     )
     if listing.status == ResaleListing.STATUS_SOLD:
         if listing.buyer_order_id == buyer_order.pk:
+            # Idempotent retry: ensure both orders still carry the resale tag.
+            tag_order_resale(
+                listing.seller_order,
+                role=RESALE_ROLE_SELLER,
+                listing=listing,
+                related_order=buyer_order,
+            )
+            tag_order_resale(
+                buyer_order,
+                role=RESALE_ROLE_BUYER,
+                listing=listing,
+                related_order=listing.seller_order,
+            )
             return listing
         raise ResaleError(_('This listing has already been sold to another buyer.'))
 
@@ -333,6 +392,19 @@ def complete_resale(*, listing: ResaleListing, buyer_order: Order, buyer_positio
     listing.reserved_session = ''
     listing.refund_status = ResaleListing.REFUND_PENDING
     listing.save()
+
+    tag_order_resale(
+        listing.seller_order,
+        role=RESALE_ROLE_SELLER,
+        listing=listing,
+        related_order=buyer_order,
+    )
+    tag_order_resale(
+        buyer_order,
+        role=RESALE_ROLE_BUYER,
+        listing=listing,
+        related_order=listing.seller_order,
+    )
 
     listing.seller_order.log_action(
         'eventyay.plugins.resale.listing.sold',
@@ -430,8 +502,9 @@ def available_listings_qs(event):
 
 
 def seller_listings_for_order(order: Order):
+    """All listings for a seller order, including withdrawn (for status monitoring)."""
     return (
         ResaleListing.objects.filter(seller_order=order)
-        .exclude(status=ResaleListing.STATUS_WITHDRAWN)
-        .select_related('position', 'position__product')
+        .select_related('position', 'position__product', 'position__variation')
+        .order_by('-updated', '-pk')
     )
