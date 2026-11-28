@@ -5,7 +5,8 @@ import nh3
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import Min, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -15,6 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from django.views.generic import CreateView, DeleteView, FormView, ListView, TemplateView, UpdateView, View
+from django_scopes import scope
 
 from eventyay.base.entitlements import check_entitlement, record_usage
 from eventyay.base.i18n import language
@@ -81,32 +83,47 @@ def attendees_select2(request, **kwargs):
     except ValueError:
         page = 1
 
-    qs = OrderPosition.objects.filter(
-        order__event=request.event,
-        canceled=False
-    ).select_related('order')
+    with scope(event=request.event):
+        qs = OrderPosition.objects.filter(
+            order__event=request.event,
+            canceled=False
+        ).select_related('order')
 
-    if query:
-        qs = qs.filter(
-            Q(attendee_name_cached__icontains=query) |
-            Q(attendee_email__icontains=query) |
-            Q(order__code__icontains=query)
+        if query:
+            qs = qs.filter(
+                Q(attendee_name_cached__icontains=query) |
+                Q(attendee_email__icontains=query) |
+                Q(order__email__icontains=query) |
+                Q(order__code__icontains=query)
+            )
+
+        unique_position_ids = (
+            qs.order_by()
+            .annotate(recipient_email=Coalesce('attendee_email', 'order__email'))
+            .values('order_id', 'recipient_email')
+            .annotate(first_position_id=Min('pk'))
+            .values('first_position_id')
         )
+        qs = OrderPosition.objects.filter(
+            pk__in=Subquery(unique_position_ids),
+            order__event=request.event,
+            canceled=False,
+        ).select_related('order')
+        qs = qs.order_by('attendee_name_cached', 'order__code')
 
-    qs = qs.order_by('attendee_name_cached', 'order__code')
-
-    total = qs.count()
-    pagesize = 20
-    offset = (page - 1) * pagesize
-
-    doc = {
-        'results': [
+        total = qs.count()
+        pagesize = 20
+        offset = (page - 1) * pagesize
+        results = [
             {
                 'id': op.pk,
-                'text': f"{op.attendee_name_cached or op.attendee_email or op.order.code} ({op.order.code})",
+                'text': f"{op.attendee_email or op.order.email or op.order.code} {{{op.order.code}}}",
             }
             for op in qs[offset : offset + pagesize]
-        ],
+        ]
+
+    doc = {
+        'results': results,
         'pagination': {'more': total >= (offset + pagesize)},
     }
     return JsonResponse(doc)

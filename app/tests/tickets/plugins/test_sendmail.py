@@ -23,6 +23,7 @@ from eventyay.base.services.mail import render_mail
 from eventyay.base.templatetags.rich_text import compile_email_body, email_body_to_editor_html
 from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.plugins.sendmail.forms import MailContentSettingsForm
+from eventyay.plugins.sendmail.models import EmailQueue, EmailQueueFilter
 
 
 @pytest.fixture
@@ -98,6 +99,82 @@ def test_sendmail_view(logged_in_client, sendmail_url, expected=200):
     response = logged_in_client.get(sendmail_url)
 
     assert response.status_code == expected
+
+
+@pytest.mark.django_db
+def test_attendees_select2_search_and_labels(logged_in_client, event, order, pos):
+    order.code = 'ABCDE'
+    order.save(update_fields=['code'])
+    url = reverse(
+        'control:event.mail.attendees.select2',
+        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+    )
+    pos.attendee_name_parts = {'_legacy': 'Ada Lovelace'}
+    pos.attendee_email = 'ada@example.test'
+    pos.save(update_fields=['attendee_name_parts', 'attendee_email'])
+    no_attendee_email = OrderPosition.objects.create(order=order, product=pos.product, price=13)
+
+    response = logged_in_client.get(url, {'query': 'ada@example.test'})
+    assert response.status_code == 200
+    assert response.json()['results'] == [{'id': pos.pk, 'text': 'ada@example.test {ABCDE}'}]
+
+    response = logged_in_client.get(url, {'query': 'Lovelace'})
+    assert [result['id'] for result in response.json()['results']] == [pos.pk]
+
+    response = logged_in_client.get(url, {'query': 'ABCDE'})
+    assert {result['id'] for result in response.json()['results']} == {pos.pk, no_attendee_email.pk}
+
+    response = logged_in_client.get(url, {'query': order.email})
+    results = {result['id']: result['text'] for result in response.json()['results']}
+    assert results[no_attendee_email.pk] == 'dummy@dummy.test {ABCDE}'
+
+
+@pytest.mark.django_db
+def test_attendees_select2_deduplicates_shared_order_email(logged_in_client, event, order, pos):
+    order.code = 'ABCDE'
+    order.save(update_fields=['code'])
+    url = reverse(
+        'control:event.mail.attendees.select2',
+        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+    )
+    pos.attendee_name_parts = {'_legacy': 'Taylor One'}
+    pos.save(update_fields=['attendee_name_parts'])
+    second_position = OrderPosition.objects.create(
+        order=order,
+        product=pos.product,
+        price=13,
+        attendee_name_parts={'_legacy': 'Taylor Two'},
+    )
+
+    response = logged_in_client.get(url, {'query': 'Taylor'})
+
+    assert response.status_code == 200
+    assert response.json()['results'] == [
+        {'id': min(pos.pk, second_position.pk), 'text': 'dummy@dummy.test {ABCDE}'},
+    ]
+
+
+@pytest.mark.django_db
+def test_specific_attendee_selection_is_saved_to_outbox(logged_in_client, sendmail_url, pos):
+    pos.attendee_email = 'attendee@example.test'
+    pos.save(update_fields=['attendee_email'])
+
+    response = logged_in_client.post(
+        sendmail_url,
+        {
+            'recipients': 'individual',
+            'individual_attendees': [pos.pk],
+            'subject_0': 'Selected attendee',
+            'text_0': 'Hello attendee',
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.headers['Location'].endswith('/outbox/')
+    queued_mail = EmailQueue.objects.get(event=pos.order.event)
+    filters = EmailQueueFilter.objects.get(mail=queued_mail)
+    assert filters.individual_attendees == [pos.pk]
+    assert queued_mail.recipients.get().email == 'attendee@example.test'
 
 
 @pytest.mark.django_db
