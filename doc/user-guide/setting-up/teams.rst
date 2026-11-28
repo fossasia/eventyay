@@ -90,3 +90,14 @@ event-level review settings; they restrict what *this team* may see.
 .. thumbnail:: ../../screens/organizer/team_edit.png
    :align: center
    :class: screenshot
+
+The Core Organizing Team
+------------------------
+
+Every organizer account has one **Core Organizing Team**, created together with the account. It is marked with a
+"Core team" label. It always has every permission and access to all events, these cannot be removed, the team cannot be
+deleted, and it always keeps at least one active member. Only its own members can add, invite or remove members of the
+core team or create its API tokens.
+
+Some actions are reserved for the core team, for example anonymizing the ticketing data of a whole event. See
+:ref:`user-anonymizing-ticketing-data`.
