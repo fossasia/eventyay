@@ -4,11 +4,18 @@ Anonymizing ticketing data
 ==========================
 
 Once an event is over you usually no longer need to know *who* bought a ticket, only *that* tickets were sold.
-Anonymizing ticketing data removes the identity of buyers and attendees from an event while keeping everything you
-need for your statistics and bookkeeping.
+Anonymizing ticketing data removes the names, email addresses, phone numbers and addresses of buyers and attendees
+from an event while keeping what you need for your statistics and bookkeeping.
 
-Nothing is deleted. Orders, ticket counts, totals, payments, check-ins and the answers to your questions stay in
-place. They are simply no longer connected to a person.
+Records are not deleted. Orders, ticket counts, totals, payments, check-ins and the answers to your questions stay in
+place; the buyer and attendee identifiers on them are removed, and old invoice PDFs are deleted and generated again
+without buyer details.
+
+.. warning::
+
+   **Free-text answers are kept exactly as they are.** If an attendee typed their name, email address or other
+   personal details into an answer, that text is still there afterwards and can identify them. Review your questions
+   and the answers you keep before you anonymize.
 
 What is anonymized and what stays
 ---------------------------------

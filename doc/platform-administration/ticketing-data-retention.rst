@@ -15,8 +15,9 @@ the admin area under **Global settings → Ticketing → Data retention**. Chang
      - Meaning
    * - Minimum days after the event before manual anonymization
      - 14
-     - Organizers can anonymize an event only this many days after its end (the last date for events with several
-       dates). Set ``0`` to allow it as soon as the event is over.
+     - The whole-event **Anonymize ticketing data** action in the event danger zone is available only this many
+       days after the event's end (the last date for events with several dates). Set ``0`` to allow it as soon as the
+       event is over. Anonymizing a single order only requires the event to have ended.
    * - Retention periods offered to organizers
      - 30, 60, 90, 180, 365
      - Choices for automatic anonymization, as days after the event.
@@ -35,15 +36,15 @@ the admin area under **Global settings → Ticketing → Data retention**. Chang
 
 .. note::
 
-   The minimum days setting applies to manual anonymization today. The other settings are stored and used by the
+   The minimum days setting applies to the whole-event manual action. The other settings are stored and used by the
    automatic retention policy and the trash option as they become available.
 
 Who may anonymize
 -----------------
 
 Anonymizing a whole event is limited to members of the organizer's Core Organizing Team. Platform administrators are
-not part of that team by default. The Core Organizing Team cannot be deleted, always has every permission, and always
-keeps at least one active member.
+not part of that team by default. The Core Organizing Team cannot be deleted, always has every permission, and cannot be
+left without an active member: removing or anonymizing its last active member is refused.
 
 Orders that were anonymized cannot be restored from the application; make sure organizers understand this, and point
 them to :ref:`user-anonymizing-ticketing-data`.
