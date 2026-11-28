@@ -3,6 +3,7 @@ import logging
 import mimetypes
 import os
 from decimal import Decimal
+from functools import partial
 
 import django_filters
 
@@ -1481,11 +1482,14 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                     data={'data': [dict(position=serializer.instance.pk, **log_data)]},
                 )
 
-        tickets.invalidate_cache.apply_async(
-            kwargs={
-                'event': serializer.instance.order.event.pk,
-                'order': serializer.instance.order.pk,
-            }
+        transaction.on_commit(
+            partial(
+                tickets.invalidate_cache.apply_async,
+                kwargs={
+                    'event': serializer.instance.order.event.pk,
+                    'order': serializer.instance.order.pk,
+                },
+            )
         )
         order_modified.send(sender=serializer.instance.order.event, order=serializer.instance.order)
 

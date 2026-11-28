@@ -91,6 +91,7 @@ def anonymize_event_records(event: Event) -> dict[str, int]:
             attendee_email=None,
             city=None,
             company=None,
+            job_title=None,
             street=None,
             zipcode=None,
             state=None,
@@ -194,7 +195,9 @@ def anonymize_event(event: Event, trigger: str, user: int | None = None) -> int:
                     return run.pk
                 continue
             flush_pending_file_deletions(run)
-            with transaction.atomic():
+            # Orders are created and imported under the event lock, so taking it here means the check below
+            # cannot pass while an order is still being committed.
+            with event.lock(blocking=True, blocking_timeout=30), transaction.atomic():
                 run = EventAnonymizationRun.objects.select_for_update().get(pk=run.pk)
                 if run.status == run.Status.COMPLETED:
                     return run.pk
