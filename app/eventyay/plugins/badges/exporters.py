@@ -489,7 +489,10 @@ def render_pdf(event, positions, opt, layout_override=None):
 
 class BadgeExporter(BaseExporter):
     identifier = 'badges'
-    verbose_name = _('Attendee badges')
+    verbose_name = gettext_lazy('Attendee badges')
+    category = 'checkin'
+    description = gettext_lazy('Badges for all attendees, ready to print.')
+    file_type = 'PDF'
 
     @property
     def export_form_fields(self):
