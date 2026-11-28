@@ -200,7 +200,10 @@ class Report(ReportlabExportMixin, BaseExporter):
 class OverviewReport(Report):
     name = 'overview'
     identifier = 'pdfreport'
-    verbose_name = gettext_lazy('Order overview (PDF)')
+    verbose_name = gettext_lazy('Sales summary')
+    category = 'payments_accounting'
+    description = gettext_lazy('Tickets sold and revenue per product.')
+    file_type = 'PDF'
 
     @property
     def pagesize(self):
@@ -422,6 +425,9 @@ class OrderTaxListReportPDF(Report):
     name = 'ordertaxlist'
     identifier = 'ordertaxes'
     verbose_name = gettext_lazy('List of orders with taxes (PDF)')
+    category = 'payments_accounting'
+    description = gettext_lazy('The same, as a printable report.')
+    file_type = 'PDF'
 
     @property
     def export_form_fields(self):
@@ -626,6 +632,8 @@ class OrderTaxListReportPDF(Report):
 class OrderTaxListReport(MultiSheetListExporter):
     identifier = 'ordertaxeslist'
     verbose_name = gettext_lazy('List of orders with taxes')
+    category = 'payments_accounting'
+    description = gettext_lazy('Each order with net, tax and gross amounts.')
 
     @property
     def sheets(self):
