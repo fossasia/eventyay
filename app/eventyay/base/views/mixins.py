@@ -1,10 +1,11 @@
 import json
 from collections import OrderedDict
+from contextlib import suppress
 from decimal import Decimal
 
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, QuerySet
 from django.utils.functional import cached_property
 
@@ -152,21 +153,33 @@ class BaseQuestionsViewMixin:
 
                 group[0].pos.show_copy_answers_main_button = any(
                     set(form.fields.keys()) & set(first_group[addonidx].fields.keys())
-                    for addonidx, form in enumerate(group) if addonidx < len(first_group)
+                    for addonidx, form in enumerate(group)
+                    if addonidx < len(first_group)
                 )
 
         return storage
 
+    def is_valid(self):
+        return all([f.is_valid() for f in self.forms])
+
+    def cleanup_staged_uploads(self):
+        staged = getattr(self, '_staged_uploads', [])
+        for storage, name in staged:
+            with suppress(Exception):
+                storage.delete(name)
+        if hasattr(self, '_staged_uploads'):
+            self._staged_uploads.clear()
+
     def save(self):
         failed = False
+        if not self.is_valid():
+            return False
         for form in self.forms:
-            meta_info = form.pos.meta_info_data
             # Every form represents a CartPosition or OrderPosition with questions attached
             if not form.is_valid():
                 failed = True
             else:
-                # This form was correctly filled, so we store the data as
-                # answers to the questions / in the CartPosition object
+                meta_info = form.pos.meta_info_data
                 for k, v in form.cleaned_data.items():
                     if k == 'attendee_name_parts':
                         form.pos.attendee_name_parts = v if v else None
@@ -198,7 +211,10 @@ class BaseQuestionsViewMixin:
                                 or (isinstance(v, QuerySet) and not v.exists())
                             ):
                                 if field.answer.file:
-                                    field.answer.file.delete()
+                                    old_storage = field.answer.file.storage
+                                    old_name = field.answer.file.name
+                                    field.answer.file = None
+                                    transaction.on_commit(lambda s=old_storage, n=old_name: s.delete(n))
                                 field.answer.delete()
                             else:
                                 self._save_to_answer(field, field.answer, v)
@@ -210,8 +226,9 @@ class BaseQuestionsViewMixin:
                                 question=field.question,
                             )
                             try:
-                                self._save_to_answer(field, answer, v)
-                                answer.save()
+                                with transaction.atomic():
+                                    self._save_to_answer(field, answer, v)
+                                    answer.save()
                             except IntegrityError:
                                 # Since we prefill ``field.answer`` at form creation time, there's a possible
                                 #  race condition here if the users submits their save request a second time
@@ -244,8 +261,10 @@ class BaseQuestionsViewMixin:
 
                             invalidate_badge_cache_for_position(get_badge_config_position(form.pos))
 
-            form.pos.meta_info = json.dumps(meta_info)
-            form.pos.save()
+                form.pos.meta_info = json.dumps(meta_info)
+                form.pos.save()
+        if hasattr(self, '_staged_uploads'):
+            transaction.on_commit(lambda: getattr(self, '_staged_uploads', []).clear())
         return not failed
 
     def _save_to_answer(self, field, answer, value):
@@ -267,8 +286,16 @@ class BaseQuestionsViewMixin:
         elif isinstance(field, forms.FileField):
             if isinstance(value, UploadedFile):
                 upload = optimize_question_image(value)
+                old_file = answer.file
+                old_storage = old_file.storage if old_file else None
+                old_name = old_file.name if old_file else None
                 answer.file.save(upload.name, upload)
                 answer.answer = f'file://{answer.file.name}'
+                if not hasattr(self, '_staged_uploads'):
+                    self._staged_uploads = []
+                self._staged_uploads.append((answer.file.storage, answer.file.name))
+                if old_name and old_name != answer.file.name:
+                    transaction.on_commit(lambda s=old_storage, n=old_name: s.delete(n))
         else:
             answer.answer = value
 
@@ -374,6 +401,10 @@ class OrderQuestionsViewMixin(BaseQuestionsViewMixin):
                     f.fields[fname].disabled = val['disabled']
 
         return f
+
+    def save_invoice_form(self):
+        if hasattr(self.invoice_form, 'save'):
+            self.invoice_form.save()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
