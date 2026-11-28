@@ -214,7 +214,7 @@
                                             {% endif %}
                                         </div>
                                     {% else %}
-                                        {% include "pretixpresale/event/fragment_availability.html" with price=var.display_price.gross avail=var.cached_availability.0 event=event product=product var=var %}
+                                        {% include "pretixpresale/event/fragment_availability.html" with price=var.display_price.gross avail=var.cached_availability.0 event=event product=product var=var compact=True %}
                                     {% endif %}
                                 {% endif %}
                                 <div class="clearfix"></div>

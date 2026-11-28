@@ -186,8 +186,22 @@
     h5 {
         display: inline;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         line-height: 1.25;
+    }
+
+    // Buyable variants use <label>; override &.variation label { font-weight: normal }
+    h5 label {
+        font-weight: 700;
+    }
+
+    &.variation-upcoming,
+    &.variation-expired,
+    &.variation-sold-out {
+        h5,
+        h5 span {
+            font-weight: 400;
+        }
     }
 
     .variation-description {
@@ -223,6 +237,19 @@
 .variation-option.variation-expired,
 .variation-option.variation-sold-out {
     opacity: 0.72;
+}
+
+.product-row.variation-compact .availability-box--compact {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem 0.5rem;
+    white-space: nowrap;
+
+    a {
+        white-space: nowrap;
+    }
 }
 
 .item-with-variations {

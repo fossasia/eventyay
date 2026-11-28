@@ -426,8 +426,22 @@ header .header-row-right {
     display: inline;
     margin: 0;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.25;
+}
+
+/* Buyable variants use <label>; override .product-row.variation label { font-weight: normal } */
+.product-row.variation-compact h5 label {
+    font-weight: 700;
+}
+
+.product-row.variation-compact.variation-upcoming h5,
+.product-row.variation-compact.variation-expired h5,
+.product-row.variation-compact.variation-sold-out h5,
+.product-row.variation-compact.variation-upcoming h5 span,
+.product-row.variation-compact.variation-expired h5 span,
+.product-row.variation-compact.variation-sold-out h5 span {
+    font-weight: 400;
 }
 
 .product-row.variation-compact .price del,
@@ -487,6 +501,19 @@ header .header-row-right {
 
 .product-row.variation-compact .variation-description p {
     margin: 0;
+}
+
+.product-row.variation-compact .availability-box--compact {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem 0.5rem;
+    white-space: nowrap;
+}
+
+.product-row.variation-compact .availability-box--compact a {
+    white-space: nowrap;
 }
 
 .input-product-count--compact,

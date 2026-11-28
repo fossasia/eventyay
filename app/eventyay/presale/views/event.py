@@ -827,10 +827,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 channel=self.request.sales_channel.identifier,
             )
             context['productnum'] = len(products)
+            # allfree drives "Register" vs "Order now". Only purchasable
+            # variations count so an expired paid phase does not flip the CTA
+            # when every buyable variation is free.
             context['allfree'] = all(
                 product.display_price.gross == Decimal('0.00') for product in products if not product.has_variations
             ) and all(
-                all(var.display_price.gross == Decimal('0.00') for var in product.available_variations)
+                all(
+                    var.display_price.gross == Decimal('0.00')
+                    for var in product.available_variations
+                    if var.order_max > 0
+                )
                 for product in products
                 if product.has_variations
             )

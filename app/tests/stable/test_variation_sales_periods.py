@@ -524,3 +524,49 @@ def test_ticket_page_shows_sold_out_variants_even_when_hide_sold_out(client, eve
     assert 'variation-sold-out' in html
     assert f'name="variation_{shirt_id}_{red_id}"' not in html
     assert f'name="variation_{shirt_id}_{blue_id}"' not in html
+
+
+@pytest.mark.django_db
+def test_ticket_page_allfree_ignores_expired_paid_variations(client, event, variation_cart_setup):
+    """Expired paid phases must not flip Register to Order now when buyable ones are free."""
+    with scope(organizer=event.organizer, event=event):
+        variation_cart_setup.ticket.delete()
+        variation_cart_setup.shirt_red.default_price = Decimal('0.00')
+        variation_cart_setup.shirt_red.available_from = now() - timedelta(days=1)
+        variation_cart_setup.shirt_red.available_until = now() + timedelta(days=5)
+        variation_cart_setup.shirt_red.save()
+        variation_cart_setup.shirt_blue.default_price = Decimal('25.00')
+        variation_cart_setup.shirt_blue.available_from = None
+        variation_cart_setup.shirt_blue.available_until = now() - timedelta(days=1)
+        variation_cart_setup.shirt_blue.save()
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    assert response.context['allfree'] is True
+
+
+@pytest.mark.django_db
+def test_ticket_page_sold_out_waiting_list_stays_inline(client, event, variation_cart_setup):
+    """Sold-out compact rows keep Waiting list inline without a forced line break."""
+    with scope(organizer=event.organizer, event=event):
+        event.settings.waiting_list_enabled = True
+        variation_cart_setup.shirt.allow_waitinglist = True
+        variation_cart_setup.shirt.save()
+        for quota in Quota.objects.filter(event=event, variations=variation_cart_setup.shirt_red):
+            quota.size = 0
+            quota.save()
+        variation_cart_setup.shirt_blue.available_from = now() + timedelta(days=6)
+        variation_cart_setup.shirt_blue.save()
+        red_id = variation_cart_setup.shirt_red.id
+
+    response = client.get(f'/{event.organizer.slug}/{event.slug}/', secure=True)
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, 'html.parser')
+    sold_out_row = soup.select_one(f'#variation_{variation_cart_setup.shirt.id}_{red_id}')
+    # Input is absent; find the sold-out availability box on the compact row
+    row = soup.select_one('.variation-sold-out')
+    assert row is not None
+    box = row.select_one('.availability-box--compact')
+    assert box is not None
+    assert 'Waiting list' in box.get_text()
+    assert box.find('br') is None
