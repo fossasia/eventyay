@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from django import forms as dj_forms
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.http import Http404
 from django.template.loader import render_to_string
 
 from eventyay.base.forms import I18nMarkdownTextarea
@@ -63,6 +64,18 @@ def _make_mock_settings(stored=None):
     mock_settings._cache.side_effect = lambda: dict(data)
     mock_settings.freeze.side_effect = lambda: dict(data)
     return mock_settings
+
+
+def _patch_db_page(page=None):
+    # SystemPageView.get_page() uses Page.objects.filter(slug=...).order_by('pk').first().
+    manager = MagicMock()
+    manager.order_by.return_value.first.return_value = page
+    return patch('eventyay.control.views.pages.Page.objects.filter', return_value=manager)
+
+
+def _patch_footer_available(slugs=()):
+    # system_information asks available_system_page_slugs() which system pages have content.
+    return patch('eventyay.common.context_processors.available_system_page_slugs', return_value=set(slugs))
 
 
 def test_global_settings_form_footer_defaults():
@@ -173,14 +186,18 @@ def test_i18n_richtext_form_field_sanitizes():
 def test_context_processor_core_footer_links(rf):
     # Verify system_information context processor populates core footer links
     request = rf.get('/')
-    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso:
+    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso, \
+            _patch_footer_available(('terms', 'privacy', 'support')):
         mock_settings = _make_mock_settings({
             'footer_link_events_enabled': True,
             'footer_link_terms_enabled': True,
+            'footer_page_terms_text': 'Terms text',
             'footer_link_privacy_enabled': True,
+            'footer_page_privacy_text': 'Privacy text',
             'footer_link_pricing_enabled': True,
             'footer_link_documentation_enabled': True,
             'footer_link_support_enabled': True,
+            'footer_page_support_text': 'Support text',
         })
         mock_gso.return_value.settings = mock_settings
         ctx = system_information(request)
@@ -193,11 +210,13 @@ def test_context_processor_core_footer_links(rf):
 def test_context_processor_excludes_disabled_footer_links(rf):
     # Verify disabled footer links are excluded from context processor output
     request = rf.get('/')
-    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso:
+    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso, \
+            _patch_footer_available(('privacy',)):
         mock_settings = _make_mock_settings({
             'footer_link_events_enabled': True,
             'footer_link_terms_enabled': False,
             'footer_link_privacy_enabled': True,
+            'footer_page_privacy_text': 'Privacy text',
             'footer_link_pricing_enabled': False,
             'footer_link_documentation_enabled': True,
             'footer_link_support_enabled': False,
@@ -223,13 +242,34 @@ def test_system_page_view_slug_handling():
     view_kwargs.kwargs = {'slug': 'privacy'}
     assert view_kwargs.get_slug() == 'privacy'
 
-    with patch('eventyay.control.views.pages.Page.objects.get') as mock_get:
-        mock_page_terms = MagicMock(title='Terms of Service', slug='terms')
-        mock_page_privacy = MagicMock(title='Privacy Policy', slug='privacy')
-        mock_get.side_effect = lambda slug: mock_page_privacy if slug == 'privacy' else mock_page_terms
+    mock_page_terms = MagicMock(title='Terms of Service', slug='terms', text='Terms body')
+    mock_page_privacy = MagicMock(title='Privacy Policy', slug='privacy', text='Privacy body')
 
+    def _filter(slug):
+        manager = MagicMock()
+        manager.order_by.return_value.first.return_value = (
+            mock_page_privacy if slug == 'privacy' else mock_page_terms
+        )
+        return manager
+
+    with patch('eventyay.control.views.pages.Page.objects.filter', side_effect=_filter), \
+            patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+        mock_gso.return_value.settings = _make_mock_settings()
         assert view.get_page() == mock_page_terms
         assert view_kwargs.get_page() == mock_page_privacy
+
+
+def test_system_page_view_media_only_content_renders():
+    # A page whose only content is media (an image) renders instead of 404.
+    view = SystemPageView()
+    view.slug = 'privacy'
+
+    with _patch_db_page(), patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+        mock_gso.return_value.settings = _make_mock_settings({
+            'footer_page_privacy_text': '<p><img src="/media/x.png"></p>',
+        })
+        page = view.get_page()
+        assert str(page.text) == '<p><img src="/media/x.png"></p>'
 
 
 def test_system_page_view_custom_content():
@@ -237,7 +277,7 @@ def test_system_page_view_custom_content():
     view = SystemPageView()
     view.slug = 'privacy'
 
-    with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
+    with _patch_db_page():
         with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
             mock_settings = _make_mock_settings({
                 'footer_page_privacy_text': '# Custom Privacy Content',
@@ -248,20 +288,82 @@ def test_system_page_view_custom_content():
             assert str(page.text) == '# Custom Privacy Content'
 
 
-def test_system_page_view_default_fallback_content():
-    # Verify SystemPageView fallback content does not duplicate the page title
+@pytest.mark.parametrize('stored', [
+    {},
+    {'footer_page_terms_text': ''},
+    {'footer_page_terms_text': '{}'},
+    {'footer_page_terms_text': 'null'},
+    {'footer_page_terms_text': '{"en": ""}'},
+    {'footer_page_terms_text': '{"en": null}'},
+    {'footer_page_terms_text': '{"en": "<p></p>"}'},
+    {'footer_page_terms_text': '{"en": "&nbsp;"}'},
+    {'footer_page_terms_text': '{"en": "&#160;"}'},
+])
+def test_system_page_view_unconfigured_returns_404(stored):
+    # An enabled system page without content in any locale returns 404, not a placeholder.
     view = SystemPageView()
     view.slug = 'terms'
 
-    with patch('eventyay.control.views.pages.Page.objects.get', side_effect=Page.DoesNotExist):
+    with _patch_db_page():
         with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
-            mock_settings = _make_mock_settings()
-            mock_gso.return_value.settings = mock_settings
-            page = view.get_page()
-            assert page.title == 'Terms of Service'
-            assert 'Content for this page has not been configured yet.' in str(page.text)
-            assert 'Terms of Service' not in str(page.text)
-            assert '<h1' not in str(page.text)
+            mock_gso.return_value.settings = _make_mock_settings(stored)
+            with pytest.raises(Http404):
+                view.get_page()
+
+
+def test_system_page_view_disabled_returns_404():
+    # A disabled system page returns 404 even if content exists.
+    view = SystemPageView()
+    view.slug = 'terms'
+
+    with _patch_db_page():
+        with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+            mock_gso.return_value.settings = _make_mock_settings({
+                'footer_link_terms_enabled': False,
+                'footer_page_terms_text': 'Still here',
+            })
+            with pytest.raises(Http404):
+                view.get_page()
+
+
+def test_system_page_view_disabled_returns_404_with_matching_db_page():
+    # A disabled system page returns 404 even when a database Page shares the slug.
+    view = SystemPageView()
+    view.slug = 'terms'
+
+    with _patch_db_page(Page(slug='terms')):
+        with patch('eventyay.control.views.pages.GlobalSettingsObject') as mock_gso:
+            mock_gso.return_value.settings = _make_mock_settings({'footer_link_terms_enabled': False})
+            with pytest.raises(Http404):
+                view.get_page()
+
+
+def test_context_processor_excludes_empty_content_footer_links(rf):
+    # An enabled content page with no content must not appear in the footer (it 404s).
+    request = rf.get('/')
+    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso, \
+            _patch_footer_available(('privacy',)):
+        mock_gso.return_value.settings = _make_mock_settings({
+            'footer_link_terms_enabled': True,
+            'footer_page_terms_text': '{"en": "<p></p>"}',
+            'footer_link_privacy_enabled': True,
+            'footer_page_privacy_text': 'Real privacy text',
+        })
+        ctx = system_information(request)
+        keys = [link['key'] for link in ctx['core_footer_links']]
+        assert 'terms' not in keys
+        assert 'privacy' in keys
+
+
+def test_context_processor_keeps_footer_link_for_db_backed_page(rf):
+    # A content page with empty settings text but a database Page is still reachable.
+    request = rf.get('/')
+    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso, \
+            _patch_footer_available(('terms',)):
+        mock_gso.return_value.settings = _make_mock_settings({'footer_link_terms_enabled': True})
+        ctx = system_information(request)
+        keys = [link['key'] for link in ctx['core_footer_links']]
+        assert 'terms' in keys
 
 
 def test_core_footer_template_structure():
@@ -298,7 +400,8 @@ def test_core_footer_template_structure():
 def test_footer_context_renders_correctly(rf):
     # Verify template renders correctly from real context processor output
     request = rf.get('/')
-    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso:
+    with patch('eventyay.common.context_processors.GlobalSettingsObject') as mock_gso, \
+            _patch_footer_available(('terms',)):
         mock_settings = _make_mock_settings({
             'footer_link_events_enabled': True,
             'footer_link_terms_enabled': True,
