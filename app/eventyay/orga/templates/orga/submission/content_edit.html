@@ -25,10 +25,12 @@
         <script defer src="{% static "orga/js/submission_form.js" %}"></script>
         <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
         <script defer src="{% static "orga/js/etherpad.js" %}"></script>
-        {% if session_videos_enabled %}
-            <script defer src="{% static 'orga/js/submission_video.js' %}"></script>
-        {% endif %}
     {% endcompress %}
+    {% if session_videos_enabled %}
+        {% compress js %}
+            <script defer src="{% static 'orga/js/submission_video.js' %}"></script>
+        {% endcompress %}
+    {% endif %}
     {% if action == "create" %}
         <script type="module" src="{% static 'orga/js/submission_create_speaker.js' %}"></script>
     {% endif %}
