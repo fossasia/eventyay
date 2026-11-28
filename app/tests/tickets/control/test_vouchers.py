@@ -1,12 +1,16 @@
+import csv
 import datetime
 import decimal
 import json
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from types import SimpleNamespace
+from unittest.mock import patch
+from urllib.parse import urlencode
 
 import pytest
 from django.apps import apps
+from django.conf import settings
 from django.core import mail as djmail
 from django.core.exceptions import ValidationError
 from django.contrib.messages.storage.fallback import FallbackStorage
@@ -1152,6 +1156,202 @@ def test_concurrent_bulk_codes_are_revalidated(other_path, second_code, prefix, 
         if other_path == 'api batch' and results[1] == 'created':
             expected.append('BATCH2')
         assert sorted(code.upper() for code in codes) == sorted(expected)
+
+
+class VoucherRecipientCsvValidationTest(TestCase):
+    def setUp(self):
+        """Set up an organizer with permission to create bulk vouchers."""
+        organizer = Organizer.objects.create(name='Vouchers', slug='vouchers')
+        self.event = Event.objects.create(organizer=organizer, name='Vouchers', slug='vouchers', date_from=now())
+        user = User.objects.create_user('organizer@example.org')
+        team = Team.objects.create(organizer=organizer, all_events=True, can_change_vouchers=True)
+        team.members.add(user)
+        self.client.force_login(user)
+
+    def test_malformed_csv_returns_recipient_field_error(self):
+        """Reject malformed CSV through the bulk create form before creating or sending vouchers."""
+        for recipients in (
+            'email,number\nx@x.xx',
+            'email,number\nrecipient@example.org,1,extra',
+            'email,name\nrecipient@example.org,"Unclosed',
+            'email,email\nrecipient@example.org,other@example.org',
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"Doe, John"\n'
+                'third@example.org,Extra,Cell\n'
+                'last@example.org,' + 'A' * 1024 + "'"
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"' + 'A' * 1024 + ', Doe"\n'
+                'third@example.org,Extra,Cell\n'
+                "last@example.org,Name'"
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,Extra,Cell\n'
+                'third@example.org, "' + 'A' * 1024 + ', Doe"\n'
+                "last@example.org,Name'"
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"' + 'A' * 1024 + '",Extra\n'
+                'third@example.org, "' + 'B' * 1024 + ', Doe"\n'
+                "last@example.org,Name'"
+            ),
+        ):
+            with self.subTest(recipients=recipients):
+                response = self.post_bulk_voucher(recipients)
+                assert response.status_code == 200
+                form = response.context['form']
+                error = 'Invalid CSV input. Please check the header and rows.'
+                assert form.errors.get('send_recipients') == [error]
+                self.assertContains(response, error)
+                assert form['send_recipients'].value() == recipients
+                with scope(event=self.event, organizer=self.event.organizer):
+                    assert not self.event.vouchers.exists()
+                assert not djmail.outbox
+
+    def post_bulk_voucher(self, recipients):
+        """Submit one code through the organizer's voucher form."""
+        return self.client.post(
+            '/control/event/vouchers/vouchers/vouchers/bulk_add',
+            {
+                'codes': 'CSVTEST',
+                'max_usages': 1,
+                'price_mode': 'none',
+                'send': 'on',
+                'send_subject': 'Your voucher',
+                'send_message': 'Voucher list: {voucher_list}',
+                'send_recipients': recipients,
+            },
+        )
+
+    def test_recipient_count_must_match_codes(self):
+        """A CSV requesting too many vouchers cannot create or send the batch."""
+        response = self.post_bulk_voucher('email,number\nrecipient@example.org,2')
+        self.assertContains(response, 'You generated 1 vouchers, but entered recipients for 2 vouchers.')
+        with scope(event=self.event, organizer=self.event.organizer):
+            assert not self.event.vouchers.exists()
+        assert not djmail.outbox
+
+    def test_recipient_tag_must_fit_voucher(self):
+        """Validate the tag before the worker can create vouchers or send emails."""
+        max_length = Voucher._meta.get_field('tag').max_length
+        response = self.post_bulk_voucher('email,tag\nrecipient@example.org,' + 'a' * (max_length + 1))
+        assert response.status_code == 200
+        assert response.context['form'].errors['send_recipients'] == [
+            f'Ensure this value has at most {max_length} characters (it has {max_length + 1}).'
+        ]
+        with scope(event=self.event, organizer=self.event.organizer):
+            assert not self.event.vouchers.exists()
+        assert not djmail.outbox
+
+    def test_valid_recipient_formats(self):
+        """Keep supported recipient formats and quoted CSV field values intact."""
+        name = 'A' * 1024 + ', "Example"\nNext line'
+        long_apostrophe_name = 'A' * 1024 + ", O'Name\nNext line"
+        name_with_both_quotes = 'A' * 1024 + ',"Example", O\'Name'
+        multiline_name_with_both_quotes = 'A' * 1024 + '\n"Example", O\'Name'
+        for recipients, expected in (
+            ('email,number\nrecipient@example.org,2', [('recipient@example.org', 2, '', None)]),
+            ('email;number;name\r\nrecipient@example.org;2;Name', [('recipient@example.org', 2, 'Name', None)]),
+            ('email,name\nrecipient@example.org, "Doe, John"', [('recipient@example.org', 1, 'Doe, John', None)]),
+            ("email,name\nrecipient@example.org,'Doe, John'", [('recipient@example.org', 1, 'Doe, John', None)]),
+            ("email,name\nrecipient@example.org,'Twas", [('recipient@example.org', 1, "'Twas", None)]),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"Doe, John"\n'
+                'last@example.org,' + 'A' * 1024 + "'",
+                [
+                    ('first@example.org', 1, "'Twas", None),
+                    ('second@example.org', 1, 'Doe, John', None),
+                    ('last@example.org', 1, 'A' * 1024 + "'", None),
+                ],
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org,"' + 'A' * 1024 + ', Doe"\n'
+                "last@example.org,Name'",
+                [
+                    ('first@example.org', 1, "'Twas", None),
+                    ('second@example.org', 1, 'A' * 1024 + ', Doe', None),
+                    ('last@example.org', 1, "Name'", None),
+                ],
+            ),
+            (
+                "email,name\nfirst@example.org,'Twas\n"
+                'second@example.org, "' + 'A' * 1024 + ', Doe"\n'
+                "last@example.org,Name'",
+                [
+                    ('first@example.org', 1, "'Twas", None),
+                    ('second@example.org', 1, 'A' * 1024 + ', Doe', None),
+                    ('last@example.org', 1, "Name'", None),
+                ],
+            ),
+            ('email,name\nrecipient@example.org,John "Example"', [
+                ('recipient@example.org', 1, 'John "Example"', None),
+            ]),
+            (
+                'email,name\nrecipient@example.org,"' + 'A' * 1024 + ', ""Example""\nNext line"',
+                [('recipient@example.org', 1, name, None)],
+            ),
+            (
+                "email,name\nrecipient@example.org, '" + long_apostrophe_name.replace("'", "''") + "'",
+                [('recipient@example.org', 1, long_apostrophe_name, None)],
+            ),
+            (
+                "email,name\nrecipient@example.org,'" + name_with_both_quotes.replace("'", "''") + "'",
+                [('recipient@example.org', 1, name_with_both_quotes, None)],
+            ),
+            (
+                "email,name\nrecipient@example.org,'" + multiline_name_with_both_quotes.replace("'", "''") + "'",
+                [('recipient@example.org', 1, multiline_name_with_both_quotes, None)],
+            ),
+            (
+                "email,name\nrecipient@example.org," + 'A' * 1024 + "\nother@example.org,'Doe, John'",
+                [('recipient@example.org', 1, 'A' * 1024, None), ('other@example.org', 1, 'Doe, John', None)],
+            ),
+            (
+                'email,tag\nrecipient@example.org,' + 'X' * 255,
+                [('recipient@example.org', 1, '', 'X' * 255)],
+            ),
+            (
+                'recipient@example.org\nother@example.org',
+                [('recipient@example.org', 1, '', None), ('other@example.org', 1, '', None)],
+            ),
+        ):
+            with self.subTest(recipients=recipients), scope(event=self.event, organizer=self.event.organizer):
+                form = VoucherBulkForm(
+                    instance=Voucher(event=self.event),
+                    data={'codes': 'CSVTEST', 'max_usages': 1, 'price_mode': 'none', 'send_recipients': recipients},
+                )
+                assert form.is_valid(), form.errors
+                assert form.cleaned_data['send_recipients'] == expected
+
+    def test_recipient_input_limit(self):
+        """Reject oversized input before parsing and accept input at the field limit."""
+        field = VoucherBulkForm.base_fields['send_recipients']
+        value = '\U0001f600' * field.max_length
+        assert field.clean(value) == value
+        encoded = urlencode({'send_recipients': value})
+        assert len(encoded) < settings.DATA_UPLOAD_MAX_MEMORY_SIZE
+        with self.assertRaises(ValidationError):
+            field.clean('a' * (field.max_length + 1))
+
+    def test_dialect_detection_uses_bounded_sample(self):
+        """Limit dialect detection even when the header exceeds the sample."""
+        recipients = 'email,' + ' ' * 1100 + 'name\nrecipient@example.org, Example'
+        with patch.object(csv.Sniffer, 'sniff', autospec=True, side_effect=csv.Sniffer.sniff) as sniff:
+            with scope(event=self.event, organizer=self.event.organizer):
+                form = VoucherBulkForm(
+                    instance=Voucher(event=self.event),
+                    data={'codes': 'CSVTEST', 'max_usages': 1, 'price_mode': 'none', 'send_recipients': recipients},
+                )
+                assert form.is_valid(), form.errors
+                assert form.cleaned_data['send_recipients'] == [('recipient@example.org', 1, 'Example', None)]
+            assert sniff.call_args_list
+            assert all(len(call.args[1]) <= 1024 for call in sniff.call_args_list)
 
 
 class InvoiceVoucherFormTest(TestCase):
