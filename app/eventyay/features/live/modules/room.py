@@ -15,7 +15,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from requests import RequestException
-from sentry_sdk import add_breadcrumb, configure_scope
+from sentry_sdk import add_breadcrumb, set_extra
 
 from eventyay.base.operational_logging import OUTCOME_FAILURE, OUTCOME_SUCCESS, log_event
 from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
@@ -323,8 +323,7 @@ class RoomModule(BaseModule):
                 message=f"Entered room {self.room.pk} ({self.room.name})",
                 level="info",
             )
-            with configure_scope() as scope:
-                scope.set_extra("last_room", str(self.room.pk))
+            set_extra("last_room", str(self.room.pk))
 
     async def _leave_room(self, room):
         januscall = self.consumer.components.get("januscall")
