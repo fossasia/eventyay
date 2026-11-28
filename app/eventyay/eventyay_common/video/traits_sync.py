@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -21,6 +22,10 @@ from eventyay.eventyay_common.video.permissions import (
 )
 from eventyay.features.live.channels import GROUP_USER
 
+
+if TYPE_CHECKING:
+    from eventyay.base.models import Event
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,10 +38,23 @@ def is_organizer_token_traits(event_slug: str, traits: Iterable[str] | None) -> 
     return bool(traits_set.intersection(managed))
 
 
-def check_has_active_staff_session(user, session_key: str | None = None) -> bool:
+def check_has_active_staff_session(
+    user,
+    session_key: str | None = None,
+    *,
+    require_session_key: bool = False,
+) -> bool:
     """Check if the platform user has an active StaffSession."""
     if not user or not getattr(user, 'is_authenticated', True):
         return False
+    if require_session_key and not session_key:
+        return False
+    staff_cache = getattr(user, '_staff_session_cache', None)
+    if isinstance(staff_cache, dict):
+        if session_key:
+            staff_cache.pop(session_key, None)
+        else:
+            staff_cache.clear()
     if hasattr(user, 'has_active_staff_session'):
         try:
             if session_key:
@@ -60,13 +78,22 @@ def check_has_active_staff_session(user, session_key: str | None = None) -> bool
     return False
 
 
-def is_platform_event_admin(user, session_key: str | None = None) -> bool:
+def is_platform_event_admin(
+    user,
+    session_key: str | None = None,
+    *,
+    require_session_key: bool = False,
+) -> bool:
     """Return True if the user is a superuser or has an active staff session."""
     if not user:
         return False
     return bool(
         getattr(user, 'is_superuser', False)
-        or check_has_active_staff_session(user, session_key=session_key)
+        or check_has_active_staff_session(
+            user,
+            session_key=session_key,
+            require_session_key=require_session_key,
+        )
     )
 
 
@@ -157,7 +184,6 @@ def sync_video_traits_for_platform_users(
     Recomputes team-managed traits from current Team membership and optionally
     force-reloads connected clients so revoked access applies immediately.
     """
-    from eventyay.base.models.auth import StaffSession
     from eventyay.base.services.user import update_user
 
     users_by_token: dict[str, User] = {}
@@ -169,8 +195,13 @@ def sync_video_traits_for_platform_users(
     if not users_by_token:
         return
 
+    target_tokens = set()
+    for tok in users_by_token.keys():
+        target_tokens.add(tok)
+        target_tokens.add(f'{tok}:ORGA')
+
     filter_kwargs = {
-        '_token_id_upper__in': list(users_by_token.keys()),
+        '_token_id_upper__in': list(target_tokens),
         'deleted': False,
     }
     if organizer:
@@ -186,7 +217,9 @@ def sync_video_traits_for_platform_users(
         )
 
     for video_user in video_users:
-        platform_user = users_by_token.get((video_user.token_id or '').upper())
+        raw_token = (video_user.token_id or '').upper()
+        clean_token = raw_token.split(':')[0]
+        platform_user = users_by_token.get(clean_token)
         if not platform_user or not video_user.event_id:
             continue
 
@@ -222,7 +255,13 @@ def sync_video_traits_for_platform_users(
             try:
                 force_reload_video_user(video_user.id)
             except (OSError, RuntimeError, ConnectionError):
-                log_event('video', 'user.reload', OUTCOME_FAILURE, error_code='connection_error', object_id=video_user.id)
+                log_event(
+                    'video',
+                    'user.reload',
+                    OUTCOME_FAILURE,
+                    error_code='connection_error',
+                    object_id=video_user.id,
+                )
                 logger.exception('Failed to force-reload video user %s', video_user.id)
 
 

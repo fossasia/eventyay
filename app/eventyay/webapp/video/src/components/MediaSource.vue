@@ -304,14 +304,28 @@ watch(
 	}
 );
 
-watch(module, async (value, oldValue) => {
-	if (isEqual(value, oldValue)) return;
-	resetMainPlayerPaused();
-	destroyIframe();
-	if (shouldUseLivestream.value) return;
-	await initializeIframe(false);
-	await applyInterpretation(activeInterpretation.value);
-});
+watch(
+	() => [
+		module.value?.type,
+		module.value?.config?.prefer_server,
+		module.value?.config?.server,
+		module.value?.config?.mesh_url,
+		module.value?.config?.url,
+		module.value?.config?.ytid,
+	],
+	async (newVal, oldVal) => {
+		if (isEqual(newVal, oldVal)) return;
+		resetMainPlayerPaused();
+		destroyIframe();
+		iframeError.value = null;
+		if (shouldUseLivestream.value) return;
+		// A short pause ensures the browser network stack flushes active XMPP WebSockets
+		await new Promise((r) => setTimeout(r, 150));
+		await initializeIframe(false);
+		await applyInterpretation(activeInterpretation.value);
+	},
+	{ deep: true }
+);
 
 watch(shouldUseLivestream, async (shouldUse, oldShouldUse) => {
 	if (shouldUse === oldShouldUse) return;
@@ -1054,11 +1068,24 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
-	iframeEl.value?.remove();
-	iframeEl.value = null;
+	if (iframeEl.value) {
+		try {
+			if (iframeEl.value.contentWindow) {
+				iframeEl.value.contentWindow.postMessage(
+					{ type: 'loungemesh:leave', action: 'leave', source: 'eventyay' },
+					'*'
+				);
+			}
+			// Unload document to immediately terminate all active WebSockets/WebRTC
+			iframeEl.value.src = 'about:blank';
+		} catch (_) {}
+		iframeEl.value.remove();
+		iframeEl.value = null;
+	}
 	languageIframeUrl.value = null;
 	disconnectWhepTranslation();
 	consentBlockedUrl.value = null;
+	iframeInitInProgress = false;
 }
 
 

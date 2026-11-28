@@ -44,6 +44,10 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = None
+        self.platform_user = None
+        self.platform_user_id = None
+        self.session_key = None
+        self.platform_auth_checked = False
         self.socket_id = str(uuid.uuid4())
         self.event = None
         self.room_cache = {}

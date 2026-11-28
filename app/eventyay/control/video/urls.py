@@ -62,6 +62,7 @@ urlpatterns = [
     # LoungeMesh Server Management URLs
     path("loungemesh/", SettingsTabRedirectView.as_view(tab="loungemesh"), name="loungemeshserver.list"),
     path("loungemesh/new/", views.LoungeMeshServerCreate.as_view(), name="loungemeshserver.create"),
+    path("loungemesh/test/", views.LoungeMeshServerTestView.as_view(), name="loungemeshserver.test"),
     path("loungemesh/<uuid:pk>/delete", views.LoungeMeshServerDelete.as_view(), name="loungemeshserver.delete"),
     path("loungemesh/<uuid:pk>/", views.LoungeMeshServerUpdate.as_view(), name="loungemeshserver.update"),
     # Event Management URLs
